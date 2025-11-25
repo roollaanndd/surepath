@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import { Language, CarModelData, InsuranceType, Quote, VehicleState, UserState, TravelState, PAState, PetState } from './types';
 import { CAR_DATABASE, getOJKRate, LOCATIONS, EXPANSION_RATES, TPL_OPTIONS, TRAVEL_RATES, TRAVEL_BENEFITS, PA_PLANS, PET_PLANS } from './constants';
 import { analyzeVehiclePhoto } from './services/geminiService';
-import { Camera, Upload, Check, Shield, Zap, Truck, Anchor, Home, Car, Heart, Briefcase, ChevronRight, Search, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, Wallet, Navigation, XCircle, RefreshCw, AlertTriangle, X, FileText, PenTool, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users } from 'lucide-react';
+import { Camera, Upload, Check, Shield, Zap, Truck, Anchor, Home, Car, Heart, Briefcase, ChevronRight, Search, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, Wallet, Navigation, XCircle, RefreshCw, AlertTriangle, X, FileText, PenTool, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users, Lightbulb, Target, Globe2, Hammer, Scale, Cpu, Tractor } from 'lucide-react';
 
 function App() {
   // Changed default to Language.ID as requested
@@ -29,6 +29,7 @@ function App() {
       case 'pa-flow': return <PersonalAccidentWizard lang={lang} setPage={setPage} />;
       case 'pet-flow': return <PetInsuranceWizard lang={lang} setPage={setPage} />;
       case 'claim': return <ClaimWithAI lang={lang} />;
+      case 'contact': return <ContactPage lang={lang} />;
       case 'about': return <AboutPage lang={lang} />;
       case 'console': return <ConsolePage lang={lang} />;
       default: return <HomePage setPage={setPage} lang={lang} />;
@@ -49,17 +50,61 @@ function App() {
         {renderContent()}
       </main>
       {currentPage === 'home' && (
-        <footer className="bg-white dark:bg-black border-t border-gray-100 dark:border-white/10 py-12">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-500/20">
-                <span className="text-white font-bold">S</span>
+        <footer className="bg-gray-900 dark:bg-black text-white border-t border-gray-800 dark:border-white/10 py-20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+              <div className="md:col-span-5 space-y-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                    <span className="text-white font-bold text-xl">S</span>
+                  </div>
+                  <span className="font-bold text-3xl tracking-tight">Surepath</span>
+                </div>
+                <p className="text-gray-400 text-lg leading-relaxed max-w-sm">
+                  {lang === Language.EN 
+                    ? 'Reinventing insurance with Artificial Intelligence. Simple, transparent, and instant.'
+                    : 'Menciptakan ulang asuransi dengan Kecerdasan Buatan. Simpel, transparan, dan instan.'}
+                </p>
+                <div className="flex gap-4 pt-4">
+                  {['Twitter', 'LinkedIn', 'Instagram'].map(social => (
+                    <div key={social} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center cursor-pointer transition-colors">
+                      <span className="text-xs font-bold">{social[0]}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <span className="font-bold text-xl tracking-tight">Surepath</span>
+              
+              <div className="md:col-span-2 space-y-4">
+                <h4 className="font-bold text-lg mb-6">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
+                {['About Us', 'Careers', 'Newsroom', 'Contact'].map(item => (
+                  <div key={item} className="text-gray-400 hover:text-primary-400 cursor-pointer transition-colors">{item}</div>
+                ))}
+              </div>
+
+              <div className="md:col-span-2 space-y-4">
+                <h4 className="font-bold text-lg mb-6">{lang === Language.EN ? 'Products' : 'Produk'}</h4>
+                {['Car Insurance', 'Travel', 'Health', 'Enterprise'].map(item => (
+                  <div key={item} className="text-gray-400 hover:text-primary-400 cursor-pointer transition-colors">{item}</div>
+                ))}
+              </div>
+
+              <div className="md:col-span-3 bg-white/5 rounded-3xl p-8 border border-white/5">
+                <h4 className="font-bold text-lg mb-2">{lang === Language.EN ? 'Stay Protected' : 'Tetap Terlindungi'}</h4>
+                <p className="text-gray-400 text-sm mb-4">{lang === Language.EN ? 'Get the latest updates and tips.' : 'Dapatkan update dan tips terbaru.'}</p>
+                <div className="flex flex-col gap-3">
+                  <input type="email" placeholder="Email" className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary-500 transition-colors" />
+                  <button className="bg-primary-500 hover:bg-primary-400 text-white font-bold py-3 rounded-xl text-sm transition-colors">{lang === Language.EN ? 'Subscribe' : 'Berlangganan'}</button>
+                </div>
+              </div>
             </div>
-            <div className="text-center md:text-right">
-              <p className="text-gray-500 text-sm">© 2025 Surepath Insurtech.</p>
-              <p className="text-xs text-gray-400 mt-1">Licensed & Supervised by OJK.</p>
+            
+            <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+              <p>© 2025 Surepath Insurtech. All rights reserved.</p>
+              <div className="flex gap-6">
+                <span>Privacy Policy</span>
+                <span>Terms of Service</span>
+                <span>License: OJK-123/2025</span>
+              </div>
             </div>
           </div>
         </footer>
@@ -751,14 +796,18 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
     { title: lang === Language.EN ? 'Car Insurance' : 'Asuransi Mobil', icon: Car, desc: lang === Language.EN ? 'Comprehensive & TLO protection.' : 'Perlindungan Comprehensive & TLO.', action: () => setPage('car-flow') },
     { title: lang === Language.EN ? 'Travel' : 'Perjalanan', icon: Plane, desc: lang === Language.EN ? 'Global coverage for your trips.' : 'Perlindungan global untuk perjalanan Anda.', action: () => setPage('travel-flow') },
     { title: lang === Language.EN ? 'Personal Accident' : 'Kecelakaan Diri', icon: Shield, desc: lang === Language.EN ? 'Safety net for you and family.' : 'Jaring pengaman untuk Anda & keluarga.', action: () => setPage('pa-flow') },
-    { title: lang === Language.EN ? 'Pet Insurance' : 'Asuransi Hewan', icon: Dog, desc: lang === Language.EN ? 'Because they are family too.' : 'Karena mereka juga keluarga.', action: () => setPage('pet-flow') },
+    { title: lang === Language.EN ? 'Pet Insurance' : 'Asuransi Hewan', icon: <CatIcon size={28} />, desc: lang === Language.EN ? 'Because they are family too.' : 'Karena mereka juga keluarga.', action: () => setPage('pet-flow') },
   ];
 
   const enterpriseProducts = [
-    { title: 'Surety Bond', icon: Briefcase, desc: 'Guarantee for your projects.', action: () => {} },
-    { title: 'Marine Cargo', icon: Truck, desc: 'Secure logistics worldwide.', action: () => {} },
-    { title: 'Marine Hull', icon: Anchor, desc: 'Vessel protection.', action: () => {} },
-    { title: 'Property', icon: Home, desc: 'Asset protection for business.', action: () => {} },
+    { title: 'Surety Bond', icon: <Briefcase size={28}/>, desc: 'Guarantee for your projects.', action: () => {} },
+    { title: 'Marine Cargo', icon: <Truck size={28}/>, desc: 'Secure logistics worldwide.', action: () => {} },
+    { title: 'Marine Hull', icon: <Anchor size={28}/>, desc: 'Vessel protection.', action: () => {} },
+    { title: 'Property', icon: <Home size={28}/>, desc: 'Asset protection for business.', action: () => {} },
+    { title: 'Engineering', icon: <Hammer size={28}/>, desc: 'Construction & Erection risks.', action: () => {} },
+    { title: 'Liability', icon: <Scale size={28}/>, desc: 'Public & Product Liability.', action: () => {} },
+    { title: 'Cyber Security', icon: <Cpu size={28}/>, desc: 'Data breach & cyber attacks.', action: () => {} },
+    { title: 'Heavy Equipment', icon: <Tractor size={28}/>, desc: 'Coverage for heavy machinery.', action: () => {} },
   ];
 
   return (
@@ -790,7 +839,7 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
         {(activeTab === 'retail' ? retailProducts : enterpriseProducts).map((p, idx) => (
           <div key={idx} onClick={p.action} className="bg-white dark:bg-[#0F0F0F] p-8 rounded-3xl border border-gray-100 dark:border-white/5 hover:border-primary-500 dark:hover:border-primary-500 cursor-pointer group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-gray-200/50 dark:hover:shadow-none">
             <div className="w-14 h-14 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary-500 group-hover:text-white transition-all duration-300">
-              <p.icon size={28} strokeWidth={1.5} />
+              {React.isValidElement(p.icon) ? p.icon : <p.icon size={28} strokeWidth={1.5} />}
             </div>
             <h3 className="text-xl font-bold mb-2">{p.title}</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{p.desc}</p>
@@ -803,6 +852,71 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
     </div>
   );
 };
+
+const ContactPage = ({ lang }: { lang: Language }) => (
+  <div className="min-h-screen bg-gray-50 dark:bg-[#050505] py-20 relative overflow-hidden">
+    <AnimatedBackground />
+    <div className="max-w-6xl mx-auto px-6 relative z-10">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">{lang === Language.EN ? 'Get in Touch' : 'Hubungi Kami'}</h1>
+        <p className="text-gray-500">{lang === Language.EN ? 'We are here to help you with any questions.' : 'Kami siap membantu menjawab pertanyaan Anda.'}</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-12 bg-white/50 dark:bg-[#111]/50 backdrop-blur-xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-2xl font-bold mb-6">{lang === Language.EN ? 'Contact Information' : 'Informasi Kontak'}</h3>
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shrink-0">
+                  <MapPin size={24} />
+                </div>
+                <div>
+                  <p className="font-bold mb-1">{lang === Language.EN ? 'Office' : 'Kantor'}</p>
+                  <p className="text-gray-500 text-sm">Surepath Tower, Level 25<br/>Jl. Jend. Sudirman Kav. 52-53<br/>Jakarta Selatan 12190</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shrink-0">
+                  <Mail size={24} />
+                </div>
+                <div>
+                  <p className="font-bold mb-1">Email</p>
+                  <p className="text-gray-500 text-sm">support@surepath.id<br/>partners@surepath.id</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shrink-0">
+                  <Smartphone size={24} />
+                </div>
+                <div>
+                  <p className="font-bold mb-1">{lang === Language.EN ? 'Phone' : 'Telepon'}</p>
+                  <p className="text-gray-500 text-sm">+62 21 5050 8888 (Hunting)<br/>0812 3456 7890 (WhatsApp)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-white/5 rounded-3xl p-8 border border-gray-100 dark:border-white/10">
+          <h3 className="text-xl font-bold mb-6">{lang === Language.EN ? 'Send Message' : 'Kirim Pesan'}</h3>
+          <div className="space-y-4">
+            <FloatingLabelInput label={lang === Language.EN ? 'Name' : 'Nama'} />
+            <FloatingLabelInput label='Email' type='email' />
+            <FloatingLabelInput label={lang === Language.EN ? 'Subject' : 'Subjek'} />
+            <div className="relative group">
+              <textarea 
+                className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-4 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all min-h-[150px]"
+                placeholder={lang === Language.EN ? 'Message...' : 'Pesan...'}
+              ></textarea>
+            </div>
+            <button className="w-full btn-luxury">{lang === Language.EN ? 'Submit' : 'Kirim'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:string) => void }) => {
   const [step, setStep] = useState(1);
@@ -1284,25 +1398,31 @@ const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
 
                   <div className="space-y-6 border-t border-b border-dashed border-gray-200 dark:border-white/10 py-6 my-6">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Vehicle</span>
-                      <span className="font-bold">{vehicle.brand} {vehicle.modelCode} ({vehicle.year})</span>
+                      <span className="text-gray-500">{lang === Language.EN ? 'Vehicle' : 'Kendaraan'}</span>
+                      <span className="font-bold text-right text-sm sm:text-base">
+                        {vehicle.brand} {CAR_DATABASE.find(c => c.code === vehicle.modelCode)?.modelName || vehicle.modelCode} ({vehicle.year})
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Coverage</span>
+                      <span className="text-gray-500">{lang === Language.EN ? 'Coverage' : 'Proteksi'}</span>
                       <span className="font-bold bg-gray-100 dark:bg-white/10 px-3 py-1 rounded-lg text-sm">{vehicle.insuranceType}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Add-ons</span>
+                      <span className="text-gray-500">{lang === Language.EN ? 'Add-ons' : 'Perluasan'}</span>
                       <div className="text-right flex flex-col items-end gap-1">
-                        {Object.entries(vehicle.expansions).filter(([_, v]) => v).map(([k, v]) => (
-                          <span key={k} className="text-xs font-bold uppercase text-primary-600 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded">{k === 'tpl' && (v as number) > 0 ? `TPL ${v}jt` : k}</span>
-                        ))}
+                        {Object.entries(vehicle.expansions).filter(([_, v]) => v).length > 0 ? (
+                          Object.entries(vehicle.expansions).filter(([_, v]) => v).map(([k, v]) => (
+                            <span key={k} className="text-xs font-bold uppercase text-primary-600 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded">{k === 'tpl' && (v as number) > 0 ? `TPL ${v}jt` : k}</span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-end">
-                    <span className="text-xl font-bold text-gray-400">Total</span>
+                    <span className="text-xl font-bold text-gray-400">{lang === Language.EN ? 'Total' : 'Total'}</span>
                     <span className="text-4xl font-bold text-gray-900 dark:text-white">Rp {selectedQuote.totalPremium.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</span>
                   </div>
                 </div>
@@ -1312,7 +1432,12 @@ const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
                   <p className="text-xs text-gray-500 leading-relaxed">{lang === Language.EN ? 'By proceeding, I agree to the Terms & Conditions and Privacy Policy of Surepath Insurtech.' : 'Dengan melanjutkan, saya menyetujui Syarat & Ketentuan serta Kebijakan Privasi Surepath Insurtech.'}</p>
                 </div>
 
-                <button onClick={() => setStep(7)} className="w-full btn-luxury mt-8">{lang === Language.EN ? 'Verify Vehicle' : 'Verifikasi Kendaraan'} <Camera size={18}/></button>
+                <div className="flex flex-col gap-3 mt-8">
+                    <button onClick={() => setStep(7)} className="w-full btn-luxury">{lang === Language.EN ? 'Verify Vehicle' : 'Verifikasi Kendaraan'} <Camera size={18}/></button>
+                    <button onClick={() => setStep(2)} className="w-full py-4 rounded-xl border border-gray-200 dark:border-white/10 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        {lang === Language.EN ? 'Edit Details' : 'Ubah Data'}
+                    </button>
+                </div>
               </div>
             )}
 
@@ -1459,14 +1584,74 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => (
   </div>
 );
 
+const AnimatedBackground = () => (
+  <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    {/* Moving Grid */}
+    <div className="absolute inset-0 bg-grid-pattern opacity-20 dark:opacity-10"></div>
+    
+    {/* Floating Blobs */}
+    <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+    <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-accent-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+    <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-blue-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+  </div>
+);
+
 const AboutPage = ({ lang }: { lang: Language }) => (
-  <div className="max-w-4xl mx-auto px-6 py-24">
-    <h1 className="text-5xl font-bold mb-8">{lang === Language.EN ? 'We are Surepath.' : 'Kami Adalah Surepath.'}</h1>
-    <p className="text-2xl text-gray-500 leading-relaxed font-light">
-      {lang === Language.EN 
-        ? 'A team of dreamers, engineers, and insurance experts building the future of financial safety. We believe insurance should be invisible until you need it, and magical when you do.'
-        : 'Tim pemimpi, insinyur, dan ahli asuransi yang membangun masa depan keamanan finansial. Kami percaya asuransi harus tidak terasa sampai Anda membutuhkannya, dan ajaib saat Anda menggunakannya.'}
-    </p>
+  <div className="relative min-h-screen overflow-hidden">
+    <AnimatedBackground />
+    
+    <div className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+      {/* Hero Section */}
+      <div className="text-center max-w-4xl mx-auto mb-24 animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-sm font-medium mb-8 shadow-lg">
+          <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span>
+          {lang === Language.EN ? 'Our Vision' : 'Visi Kami'}
+        </div>
+        <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight leading-tight">
+          {lang === Language.EN ? 'Redefining Insurance for the Digital Age.' : 'Mendefinisikan Ulang Asuransi di Era Digital.'}
+        </h1>
+        <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed font-light">
+          {lang === Language.EN 
+            ? 'We are a team of engineers, data scientists, and insurance experts building the future of financial safety. Insurance should be invisible until you need it, and magical when you do.'
+            : 'Kami adalah tim insinyur, ilmuwan data, dan ahli asuransi yang membangun masa depan keamanan finansial. Asuransi harus tidak terasa sampai Anda membutuhkannya, dan ajaib saat Anda menggunakannya.'}
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-24">
+        {[
+          { val: '1k', label: lang === Language.EN ? 'Waiting List' : 'Daftar Tunggu' },
+          { val: '98%', label: lang === Language.EN ? 'Claim Approval' : 'Klaim Disetujui' },
+          { val: '8', label: lang === Language.EN ? 'Insurance Partners' : 'Mitra Asuransi' },
+          { val: '24/7', label: lang === Language.EN ? 'Support' : 'Layanan' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white/50 dark:bg-white/5 backdrop-blur-lg border border-white/10 p-8 rounded-3xl text-center group hover:bg-white/80 dark:hover:bg-white/10 transition-all duration-500 hover:-translate-y-1">
+            <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-accent-500 mb-2">
+              {stat.val}
+            </div>
+            <div className="text-sm font-bold text-gray-500 uppercase tracking-wider">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Core Values */}
+      <div className="grid md:grid-cols-3 gap-8">
+        {[
+          { icon: Lightbulb, title: lang === Language.EN ? 'Innovation First' : 'Inovasi Utama', desc: lang === Language.EN ? 'We use AI to simplify complex processes.' : 'Kami menggunakan AI untuk menyederhanakan proses rumit.' },
+          { icon: Target, title: lang === Language.EN ? 'Customer Centric' : 'Fokus Pelanggan', desc: lang === Language.EN ? 'Every feature is built to solve your problems.' : 'Setiap fitur dibuat untuk menyelesaikan masalah Anda.' },
+          { icon: Globe2, title: lang === Language.EN ? 'Transparency' : 'Transparansi', desc: lang === Language.EN ? 'No hidden fees. No fine print surprises.' : 'Tanpa biaya tersembunyi. Tanpa kejutan.' }
+        ].map((val, i) => (
+          <div key={i} className="p-8 rounded-3xl bg-white dark:bg-[#0F0F0F] border border-gray-200 dark:border-white/5 hover:border-primary-500 transition-all duration-300 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-14 h-14 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10">
+              <val.icon size={28} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 relative z-10">{val.title}</h3>
+            <p className="text-gray-500 dark:text-gray-400 relative z-10">{val.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 

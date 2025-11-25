@@ -1,3 +1,4 @@
+
 import { CarModelData } from './types';
 
 // Mocking a subset of the massive OCR data for demonstration
@@ -59,11 +60,8 @@ export const CAR_DATABASE: CarModelData[] = [
 ];
 
 // OJK Rate Logic (BATAS BAWAH / LOWER BOUND ONLY)
-// Category based on Price (in Millions IDR)
-// Cat 1: 0-125, Cat 2: 125-200, Cat 3: 200-400, Cat 4: 400-800, Cat 5: >800
 export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: 'COMPREHENSIVE' | 'TLO'): number => {
   if (type === 'COMPREHENSIVE') {
-    // Table IV.A - Batas Bawah
     if (region === '1') { // Sumatra
       if (priceMillions <= 125) return 3.82;
       if (priceMillions <= 200) return 2.67;
@@ -84,7 +82,7 @@ export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: 'CO
       return 1.05;
     }
   } else {
-    // TLO - Table IV.A Batas Bawah
+    // TLO
     if (region === '1') {
       if (priceMillions <= 125) return 0.47;
       if (priceMillions <= 200) return 0.63;
@@ -107,14 +105,13 @@ export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: 'CO
   }
 };
 
-// Additional Coverage Rates (Table IV.B)
 export const EXPANSION_RATES = {
-  FLOOD: 0.05, // Placeholder standard rate (usually varies by zone)
+  FLOOD: 0.05,
   EARTHQUAKE: 0.10,
   SRCC: { COMPREHENSIVE: 0.05, TLO: 0.035 },
   TERRORISM: { COMPREHENSIVE: 0.05, TLO: 0.035 },
-  PA_DRIVER: 0.5, // % of SI
-  PA_PASSENGER: 0.1 // % of SI
+  PA_DRIVER: 0.5,
+  PA_PASSENGER: 0.1
 };
 
 export const LOCATIONS = {
@@ -123,4 +120,77 @@ export const LOCATIONS = {
   3: "Other Regions"
 };
 
-export const TPL_OPTIONS = [0, 10, 20, 30, 40, 50]; // Millions
+export const TPL_OPTIONS = [0, 10, 20, 30, 40, 50];
+
+// --- TRAVEL INSURANCE CONSTANTS ---
+
+// Based on PDF Page 10 (Premi Internasional) & Page 13 (Premi Domestik)
+// Using 'Individu' rates for calculation simplicity
+export const TRAVEL_RATES = {
+  INTERNATIONAL: {
+    '1-4': { platinum: 224000, gold: 208000, asia: 160000 },
+    '5-6': { platinum: 304000, gold: 272000, asia: 256000 },
+    '7-8': { platinum: 416000, gold: 368000, asia: 304000 },
+    '9-10': { platinum: 480000, gold: 432000, asia: 416000 },
+    '11-15': { platinum: 544000, gold: 512000, asia: 464000 },
+    '16-20': { platinum: 672000, gold: 592000, asia: 560000 },
+    '21-25': { platinum: 752000, gold: 672000, asia: 624000 },
+    '26-30': { platinum: 768000, gold: 720000, asia: 672000 },
+  },
+  DOMESTIC: {
+    '1-4': { garuda1: 85000, garuda2: 72000 },
+    '5-6': { garuda1: 90000, garuda2: 79000 },
+    '7-8': { garuda1: 99000, garuda2: 91000 },
+    '9-10': { garuda1: 125000, garuda2: 99000 },
+    '11-15': { garuda1: 130000, garuda2: 114000 },
+    '16-20': { garuda1: 148000, garuda2: 119000 },
+    '21-25': { garuda1: 155000, garuda2: 122000 },
+    '26-30': { garuda1: 165000, garuda2: 128000 },
+  }
+};
+
+// Benefits highlights from PDF Page 7 & 12
+export const TRAVEL_BENEFITS = {
+  PLATINUM: { death: '1.6 M', medical: '960 Juta', features: ['Visa Schengen', 'Covid-19 Cover', 'No Excess'] },
+  GOLD: { death: '960 Juta', medical: '640 Juta', features: ['Worldwide', 'Baggage Delay'] },
+  ASIA: { death: '240 Juta', medical: '160 Juta', features: ['Asia Only', 'Flight Delay'] },
+  GARUDA1: { death: '100 Juta', medical: '75 Juta', features: ['Domestic', 'Trip Cancellation'] },
+  GARUDA2: { death: '50 Juta', medical: '25 Juta', features: ['Domestic', 'Baggage Loss'] },
+};
+
+// --- PERSONAL ACCIDENT CONSTANTS ---
+
+// Based on PDF Page 4 (Umum) and Page 5 (Siswa)
+// Map Plan Codes A-J to Premium and Death Benefit
+export const PA_PLANS = {
+  GENERAL: [
+    { code: 'A', premium: 25000, benefit: '6 Juta' },
+    { code: 'B', premium: 30000, benefit: '7.5 Juta' },
+    { code: 'C', premium: 40000, benefit: '10 Juta' },
+    { code: 'D', premium: 40000, benefit: '12.5 Juta' },
+    { code: 'E', premium: 50000, benefit: '15 Juta' },
+    { code: 'F', premium: 80000, benefit: '20 Juta' },
+    { code: 'G', premium: 100000, benefit: '25 Juta' },
+    { code: 'H', premium: 150000, benefit: '37.5 Juta' },
+    { code: 'I', premium: 200000, benefit: '50 Juta' },
+  ],
+  STUDENT: [
+    { code: 'A', premium: 10000, benefit: '2.5 Juta' },
+    { code: 'B', premium: 30000, benefit: '5 Juta' },
+    { code: 'C', premium: 30000, benefit: '7.5 Juta' },
+    { code: 'D', premium: 40000, benefit: '10 Juta' },
+    { code: 'E', premium: 50000, benefit: '12.5 Juta' },
+    { code: 'F', premium: 60000, benefit: '15 Juta' },
+    { code: 'G', premium: 80000, benefit: '20 Juta' },
+    { code: 'H', premium: 100000, benefit: '25 Juta' },
+    { code: 'I', premium: 150000, benefit: '37.5 Juta' },
+    { code: 'J', premium: 200000, benefit: '50 Juta' },
+  ]
+};
+
+// --- PET INSURANCE CONSTANTS (Mocked) ---
+export const PET_PLANS = [
+  { name: 'Basic', price: 500000, medical: '5 Juta', death: '2 Juta', features: ['Accident Only'] },
+  { name: 'Premium', price: 1200000, medical: '20 Juta', death: '5 Juta', features: ['Accident & Illness', 'Third Party Liability'] },
+  { name: 'Gold', price: 2500000, medical: '50 Juta', death: '10 Juta', features: ['Full Coverage', 'Theft', 'Overseas Travel'] },
+];

@@ -1,3 +1,4 @@
+
 export enum Language {
   EN = 'EN',
   ID = 'ID'
@@ -65,4 +66,39 @@ export interface Quote {
   workshops: number;
   branches: number;
   features: string[];
+  planName?: string; // For Travel/PA
+}
+
+// --- TRAVEL INSURANCE TYPES ---
+export type TravelRegion = 'DOMESTIC' | 'INTERNATIONAL';
+export type TravelType = 'INDIVIDUAL' | 'FAMILY';
+
+export interface TravelState {
+  destination: string;
+  region: TravelRegion;
+  startDate: string;
+  endDate: string;
+  type: TravelType;
+  travelersCount: number;
+}
+
+// --- PERSONAL ACCIDENT TYPES ---
+export type PAType = 'GENERAL' | 'STUDENT'; // Umum / Siswa
+
+export interface PAState {
+  occupation: string;
+  type: PAType;
+  planCode: string; // A, B, C... J
+}
+
+// --- PET INSURANCE TYPES ---
+export type PetType = 'DOG' | 'CAT';
+
+export interface PetState {
+  petName: string;
+  petType: PetType;
+  breed: string;
+  age: number;
+  gender: 'MALE' | 'FEMALE';
+  sterilized: boolean;
 }

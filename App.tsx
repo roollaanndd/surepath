@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import { Language, CarModelData, InsuranceType, Quote, VehicleState, UserState, TravelState, PAState, PetState } from './types';
 import { CAR_DATABASE, getOJKRate, LOCATIONS, EXPANSION_RATES, TPL_OPTIONS, TRAVEL_RATES, TRAVEL_BENEFITS, PA_PLANS, PET_PLANS } from './constants';
 import { analyzeVehiclePhoto } from './services/geminiService';
-import { Camera, Upload, Check, Shield, Zap, Truck, Anchor, Home, Car, Heart, Briefcase, ChevronRight, Search, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, Wallet, Navigation, XCircle, RefreshCw, AlertTriangle, X, FileText, PenTool, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users, Lightbulb, Target, Globe2, Hammer, Scale, Cpu, Tractor } from 'lucide-react';
+import { Camera, Upload, Check, Shield, Zap, Truck, Anchor, Home, Car, Heart, Briefcase, ChevronRight, Search, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, Wallet, Navigation, XCircle, RefreshCw, AlertTriangle, X, FileText, PenTool, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users, Lightbulb, Target, Globe2, Hammer, Scale, Cpu, Tractor, Newspaper, TrendingUp, ArrowRight } from 'lucide-react';
 
 function App() {
   // Changed default to Language.ID as requested
@@ -31,10 +31,19 @@ function App() {
       case 'claim': return <ClaimWithAI lang={lang} />;
       case 'contact': return <ContactPage lang={lang} />;
       case 'about': return <AboutPage lang={lang} />;
+      case 'careers': return <CareersPage lang={lang} />;
+      case 'newsroom': return <NewsroomPage lang={lang} />;
       case 'console': return <ConsolePage lang={lang} />;
       default: return <HomePage setPage={setPage} lang={lang} />;
     }
   };
+
+  const footerLinks = [
+    { label: lang === Language.EN ? 'About Us' : 'Tentang Kami', action: 'about' },
+    { label: lang === Language.EN ? 'Careers' : 'Karir', action: 'careers' },
+    { label: lang === Language.EN ? 'Newsroom' : 'Berita', action: 'newsroom' },
+    { label: lang === Language.EN ? 'Contact' : 'Hubungi Kami', action: 'contact' },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white transition-colors duration-500 selection:bg-primary-500 selection:text-white">
@@ -76,8 +85,14 @@ function App() {
               
               <div className="md:col-span-2 space-y-4">
                 <h4 className="font-bold text-lg mb-6">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
-                {['About Us', 'Careers', 'Newsroom', 'Contact'].map(item => (
-                  <div key={item} className="text-gray-400 hover:text-primary-400 cursor-pointer transition-colors">{item}</div>
+                {footerLinks.map(item => (
+                  <button 
+                    key={item.action} 
+                    onClick={() => setPage(item.action)}
+                    className="block text-left text-gray-400 hover:text-primary-400 cursor-pointer transition-colors"
+                  >
+                    {item.label}
+                  </button>
                 ))}
               </div>
 
@@ -231,183 +246,211 @@ const HeroCarousel = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
   );
 };
 
-const HomePage = ({ setPage, lang }: { setPage: (p: string) => void, lang: Language }) => (
-  <div className="space-y-20 pb-24">
-    {/* Hero Section */}
-    <section className="pt-6 px-4 md:px-6 max-w-7xl mx-auto">
-      <HeroCarousel setPage={setPage} lang={lang} />
-    </section>
+const HomePage = ({ setPage, lang }: { setPage: (p: string) => void, lang: Language }) => {
+  const [waitingListStatus, setWaitingListStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
-    {/* SuperApp Mockup Section */}
-    <section className="relative py-20">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="bg-gray-900 dark:bg-[#0A0A0A] rounded-[3rem] overflow-hidden relative border border-gray-800">
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-          <div className="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-primary-500/20 blur-[150px] rounded-full"></div>
-          <div className="absolute bottom-[-200px] right-[-200px] w-[600px] h-[600px] bg-accent-500/20 blur-[150px] rounded-full"></div>
+  const handleJoin = () => {
+    setWaitingListStatus('submitting');
+    setTimeout(() => {
+      setWaitingListStatus('success');
+    }, 1500);
+  };
 
-          <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center p-12 md:p-24">
-            <div>
-              <div className="inline-block px-4 py-1 rounded-full border border-accent-500/30 text-accent-400 text-sm font-bold mb-6 uppercase tracking-wider">Coming Soon</div>
-              <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">{lang === Language.EN ? 'One App. Total Control.' : 'Satu Aplikasi. Kendali Penuh.'}</h2>
-              <p className="text-xl text-gray-400 mb-10 font-light leading-relaxed">
-                {lang === Language.EN 
-                  ? 'Manage all your policies, file claims instantly, and track your coverage in real-time. The Surepath SuperApp is redefining insurance accessibility.'
-                  : 'Kelola semua polis, ajukan klaim instan, dan pantau perlindungan secara real-time. Surepath SuperApp mendefinisikan ulang akses asuransi.'}
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input 
-                  type="email" 
-                  placeholder={lang === Language.EN ? "Enter your email address" : "Masukan alamat email anda"}
-                  className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-primary-500 focus:bg-white/10 transition-all min-w-[300px]"
-                />
-                <button className="bg-primary-500 hover:bg-primary-400 text-gray-900 font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/20">
-                  {lang === Language.EN ? 'Join Waiting List' : 'Gabung Waiting List'}
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-4 ml-2">{lang === Language.EN ? 'Early access members get 10% off first year premium.' : 'Dapatkan diskon 10% premi tahun pertama untuk akses awal.'}</p>
-            </div>
+  return (
+    <div className="space-y-20 pb-24">
+      {/* Hero Section */}
+      <section className="pt-6 px-4 md:px-6 max-w-7xl mx-auto">
+        <HeroCarousel setPage={setPage} lang={lang} />
+      </section>
 
-            {/* Phone Mockup */}
-            <div className="relative flex justify-center lg:justify-end">
-              {/* Phone Frame */}
-              <div className="relative w-[320px] h-[650px] bg-gray-900 rounded-[3rem] border-8 border-gray-800 shadow-2xl overflow-hidden animate-float">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-800 rounded-b-2xl z-50"></div>
+      {/* SuperApp Mockup Section */}
+      <section className="relative py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="bg-gray-900 dark:bg-[#0A0A0A] rounded-[3rem] overflow-hidden relative border border-gray-800">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+            <div className="absolute top-[-200px] left-[-200px] w-[600px] h-[600px] bg-primary-500/20 blur-[150px] rounded-full"></div>
+            <div className="absolute bottom-[-200px] right-[-200px] w-[600px] h-[600px] bg-accent-500/20 blur-[150px] rounded-full"></div>
+
+            <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center p-12 md:p-24">
+              <div>
+                <div className="inline-block px-4 py-1 rounded-full border border-accent-500/30 text-accent-400 text-sm font-bold mb-6 uppercase tracking-wider">Coming Soon</div>
+                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">{lang === Language.EN ? 'One App. Total Control.' : 'Satu Aplikasi. Kendali Penuh.'}</h2>
+                <p className="text-xl text-gray-400 mb-10 font-light leading-relaxed">
+                  {lang === Language.EN 
+                    ? 'Manage all your policies, file claims instantly, and track your coverage in real-time. The Surepath SuperApp is redefining insurance accessibility.'
+                    : 'Kelola semua polis, ajukan klaim instan, dan pantau perlindungan secara real-time. Surepath SuperApp mendefinisikan ulang akses asuransi.'}
+                </p>
                 
-                {/* Screen Content */}
-                <div className="w-full h-full bg-dark-bg text-white pt-10 px-6 relative">
-                  {/* Header */}
-                  <div className="flex justify-between items-center mb-8">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
-                        <User size={16} className="text-gray-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Welcome back,</p>
-                        <p className="text-sm font-bold">Alex Doe</p>
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {waitingListStatus === 'success' ? (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-400 px-8 py-4 rounded-2xl flex items-center gap-3 font-bold animate-fade-in w-full sm:w-auto">
+                      <CheckCircle2 size={24} />
+                      {lang === Language.EN ? "You're on the list!" : "Anda sudah terdaftar!"}
                     </div>
-                    <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center relative">
-                      <Bell size={16} className="text-gray-400" />
-                      <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
-                    </div>
-                  </div>
-
-                  {/* Balance Card */}
-                  <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-6 mb-6 shadow-lg shadow-primary-500/20 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
-                    <p className="text-xs text-primary-200 mb-1">Total Coverage Value</p>
-                    <h3 className="text-2xl font-bold mb-4">Rp 1.250.000.000</h3>
-                    <div className="flex gap-3">
-                      <button className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
-                        <Wallet size={12} /> Add Policy
+                  ) : (
+                    <>
+                      <input 
+                        type="email" 
+                        placeholder={lang === Language.EN ? "Enter your email address" : "Masukan alamat email anda"}
+                        className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-primary-500 focus:bg-white/10 transition-all min-w-[300px]"
+                      />
+                      <button 
+                        onClick={handleJoin}
+                        disabled={waitingListStatus === 'submitting'}
+                        className="bg-primary-500 hover:bg-primary-400 text-gray-900 font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+                      >
+                        {waitingListStatus === 'submitting' ? (
+                          <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          lang === Language.EN ? 'Join Waiting List' : 'Gabung Waiting List'
+                        )}
                       </button>
-                      <button className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-medium">
-                        Details
-                      </button>
-                    </div>
-                  </div>
+                    </>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-4 ml-2">{lang === Language.EN ? 'Early access members get 10% off first year premium.' : 'Dapatkan diskon 10% premi tahun pertama untuk akses awal.'}</p>
+              </div>
 
-                  {/* Quick Actions */}
-                  <div className="grid grid-cols-4 gap-4 mb-8">
-                    {[
-                      { i: <Car size={20} />, l: 'Car' },
-                      { i: <Heart size={20} />, l: 'Health' },
-                      { i: <Navigation size={20} />, l: 'Travel' },
-                      { i: <Camera size={20} />, l: 'Claim' }
-                    ].map((a, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-2">
-                        <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center text-primary-400 hover:bg-gray-700 transition-colors cursor-pointer">
-                          {a.i}
-                        </div>
-                        <span className="text-[10px] text-gray-400">{a.l}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Recent Activity */}
-                  <div>
-                    <h4 className="text-sm font-bold mb-4">Active Policies</h4>
-                    <div className="space-y-3">
-                      <div className="p-4 bg-gray-800/50 rounded-xl border border-white/5 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400">
-                          <Car size={18} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-bold">Toyota Fortuner</p>
-                          <p className="text-[10px] text-gray-500">Expires in 240 days</p>
-                        </div>
-                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-md">Active</span>
-                      </div>
-                      <div className="p-4 bg-gray-800/50 rounded-xl border border-white/5 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">
-                          <Navigation size={18} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs font-bold">Japan Trip</p>
-                          <p className="text-[10px] text-gray-500">Ends 12 Oct 2025</p>
-                        </div>
-                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-md">Active</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Phone Mockup */}
+              <div className="relative flex justify-center lg:justify-end">
+                {/* Phone Frame */}
+                <div className="relative w-[320px] h-[650px] bg-gray-900 rounded-[3rem] border-8 border-gray-800 shadow-2xl overflow-hidden animate-float">
+                  {/* Notch */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-800 rounded-b-2xl z-50"></div>
                   
-                  {/* Bottom Bar Mock */}
-                  <div className="absolute bottom-0 left-0 w-full h-16 bg-gray-900/90 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-6">
-                    <Home size={20} className="text-primary-500" />
-                    <Search size={20} className="text-gray-600" />
-                    <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center -mt-6 border-4 border-gray-900">
-                      <Camera size={20} className="text-white" />
+                  {/* Screen Content */}
+                  <div className="w-full h-full bg-dark-bg text-white pt-10 px-6 relative">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-8">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Welcome back,</p>
+                          <p className="text-sm font-bold">Alex Doe</p>
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center relative">
+                        <Bell size={16} className="text-gray-400" />
+                        <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
+                      </div>
                     </div>
-                    <Wallet size={20} className="text-gray-600" />
-                    <User size={20} className="text-gray-600" />
+
+                    {/* Balance Card */}
+                    <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-2xl p-6 mb-6 shadow-lg shadow-primary-500/20 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
+                      <p className="text-xs text-primary-200 mb-1">Total Coverage Value</p>
+                      <h3 className="text-2xl font-bold mb-4">Rp 1.250.000.000</h3>
+                      <div className="flex gap-3">
+                        <button className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
+                          <Wallet size={12} /> Add Policy
+                        </button>
+                        <button className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-medium">
+                          Details
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-4 gap-4 mb-8">
+                      {[
+                        { i: <Car size={20} />, l: 'Car' },
+                        { i: <Heart size={20} />, l: 'Health' },
+                        { i: <Navigation size={20} />, l: 'Travel' },
+                        { i: <Camera size={20} />, l: 'Claim' }
+                      ].map((a, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-2">
+                          <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center text-primary-400 hover:bg-gray-700 transition-colors cursor-pointer">
+                            {a.i}
+                          </div>
+                          <span className="text-[10px] text-gray-400">{a.l}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div>
+                      <h4 className="text-sm font-bold mb-4">Active Policies</h4>
+                      <div className="space-y-3">
+                        <div className="p-4 bg-gray-800/50 rounded-xl border border-white/5 flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400">
+                            <Car size={18} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold">Toyota Fortuner</p>
+                            <p className="text-[10px] text-gray-500">Expires in 240 days</p>
+                          </div>
+                          <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-md">Active</span>
+                        </div>
+                        <div className="p-4 bg-gray-800/50 rounded-xl border border-white/5 flex items-center gap-3">
+                          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">
+                            <Navigation size={18} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold">Japan Trip</p>
+                            <p className="text-[10px] text-gray-500">Ends 12 Oct 2025</p>
+                          </div>
+                          <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-md">Active</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bottom Bar Mock */}
+                    <div className="absolute bottom-0 left-0 w-full h-16 bg-gray-900/90 backdrop-blur-md border-t border-white/5 flex justify-around items-center px-6">
+                      <Home size={20} className="text-primary-500" />
+                      <Search size={20} className="text-gray-600" />
+                      <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center -mt-6 border-4 border-gray-900">
+                        <Camera size={20} className="text-white" />
+                      </div>
+                      <Wallet size={20} className="text-gray-600" />
+                      <User size={20} className="text-gray-600" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Floating Elements around phone */}
-              <div className="absolute top-20 -left-12 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-xl animate-pulse-slow">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
-                    <Check size={14} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Claim Approved</p>
-                    <p className="text-[10px] text-gray-400">Just now</p>
+                
+                {/* Floating Elements around phone */}
+                <div className="absolute top-20 -left-12 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-xl shadow-xl animate-pulse-slow">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
+                      <Check size={14} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">Claim Approved</p>
+                      <p className="text-[10px] text-gray-400">Just now</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* Features Grid */}
-    <section className="max-w-7xl mx-auto px-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {[
-          { icon: Zap, title: lang === Language.EN ? 'Instant Quote' : 'Penawaran Kilat', desc: lang === Language.EN ? 'Get OJK-approved rates in seconds.' : 'Dapatkan tarif resmi OJK dalam hitungan detik.' },
-          { icon: Shield, title: lang === Language.EN ? 'Secure & Reliable' : 'Aman & Terpercaya', desc: lang === Language.EN ? 'Backed by top-tier insurers.' : 'Didukung oleh perusahaan asuransi ternama.' },
-          { icon: Smartphone, title: lang === Language.EN ? 'Digital First' : 'Serba Digital', desc: lang === Language.EN ? '100% paperless experience.' : 'Pengalaman 100% tanpa kertas.' }
-        ].map((f, i) => (
-          <div key={i} className="p-8 rounded-3xl bg-white dark:bg-[#0F0F0F] border border-gray-100 dark:border-white/5 hover:border-primary-500 dark:hover:border-primary-500 transition-all hover:shadow-2xl hover:shadow-primary-500/5 group">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-primary-500 mb-6 group-hover:bg-primary-500 group-hover:text-white transition-colors">
-              <f.icon size={28} strokeWidth={1.5} />
+      {/* Features Grid */}
+      <section className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { icon: Zap, title: lang === Language.EN ? 'Instant Quote' : 'Penawaran Kilat', desc: lang === Language.EN ? 'Get OJK-approved rates in seconds.' : 'Dapatkan tarif resmi OJK dalam hitungan detik.' },
+            { icon: Shield, title: lang === Language.EN ? 'Secure & Reliable' : 'Aman & Terpercaya', desc: lang === Language.EN ? 'Backed by top-tier insurers.' : 'Didukung oleh perusahaan asuransi ternama.' },
+            { icon: Smartphone, title: lang === Language.EN ? 'Digital First' : 'Serba Digital', desc: lang === Language.EN ? '100% paperless experience.' : 'Pengalaman 100% tanpa kertas.' }
+          ].map((f, i) => (
+            <div key={i} className="p-8 rounded-3xl bg-white dark:bg-[#0F0F0F] border border-gray-100 dark:border-white/5 hover:border-primary-500 dark:hover:border-primary-500 transition-all hover:shadow-2xl hover:shadow-primary-500/5 group">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-primary-500 mb-6 group-hover:bg-primary-500 group-hover:text-white transition-colors">
+                <f.icon size={28} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-bold mb-3">{f.title}</h3>
+              <p className="text-gray-500 dark:text-gray-400">{f.desc}</p>
             </div>
-            <h3 className="text-xl font-bold mb-3">{f.title}</h3>
-            <p className="text-gray-500 dark:text-gray-400">{f.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  </div>
-);
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 // Helper Component for Modern Floating Inputs
-const FloatingLabelInput = ({ label, value, onChange, type = "text", placeholder = "", disabled = false, className = "" }: any) => {
+const FloatingLabelInput = ({ label, value, onChange, type = "text", placeholder = "", disabled = false, className = "", maxLength }: any) => {
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = value && value.toString().length > 0;
 
@@ -423,6 +466,7 @@ const FloatingLabelInput = ({ label, value, onChange, type = "text", placeholder
         onFocus={() => setIsFocused(true)} 
         onBlur={() => setIsFocused(false)}
         disabled={disabled}
+        maxLength={maxLength}
         className={`w-full bg-white dark:bg-[#1a1a1a] border-2 rounded-2xl px-4 pt-6 pb-2 outline-none transition-all font-medium text-gray-900 dark:text-white shadow-sm
           ${isFocused ? 'border-primary-500 ring-4 ring-primary-500/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
           ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
@@ -481,6 +525,314 @@ const SuccessScreen = ({ lang, setPage }: { lang: Language, setPage: (p:string) 
   </div>
 );
 
+const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:string) => void }) => {
+  const [step, setStep] = useState(1);
+  const [vehicle, setVehicle] = useState<VehicleState>({
+    brand: '',
+    modelCode: '',
+    year: new Date().getFullYear(),
+    price: 0,
+    plateRegion: '2',
+    plateDetails: { code: 'B', number: '', suffix: '' },
+    usage: 'PERSONAL',
+    condition: 'NEW',
+    vin: '',
+    engineNo: '',
+    accessories: '',
+    insuranceType: InsuranceType.COMPREHENSIVE,
+    expansions: {
+      flood: false,
+      earthquake: false,
+      srcc: false,
+      terrorism: false,
+      tpl: 0,
+      paDriver: 0,
+      paPassenger: 0,
+      passengers: 1
+    }
+  });
+
+  const plateCodeRef = useRef<HTMLInputElement>(null);
+  const plateNumberRef = useRef<HTMLInputElement>(null);
+  const plateSuffixRef = useRef<HTMLInputElement>(null);
+
+  const brands = Array.from(new Set(CAR_DATABASE.map(c => c.brand)));
+  const models = CAR_DATABASE.filter(c => c.brand === vehicle.brand);
+  const years = vehicle.modelCode 
+    ? Object.keys(CAR_DATABASE.find(c => c.code === vehicle.modelCode)?.yearPrices || {}).map(Number).sort((a,b) => b-a)
+    : [];
+
+  useEffect(() => {
+    if (vehicle.modelCode && vehicle.year) {
+      const model = CAR_DATABASE.find(c => c.code === vehicle.modelCode);
+      if (model && model.yearPrices[vehicle.year]) {
+        setVehicle(v => ({ ...v, price: model.yearPrices[vehicle.year] }));
+      }
+    }
+  }, [vehicle.modelCode, vehicle.year]);
+
+  const handlePlateChange = (part: 'code' | 'number' | 'suffix', val: string) => {
+    const v = val.toUpperCase();
+    // Logic to jump focus
+    if (part === 'code') {
+      if (v.length === 2) plateNumberRef.current?.focus();
+    }
+    if (part === 'number') {
+      if (v.length === 4) plateSuffixRef.current?.focus();
+    }
+
+    setVehicle(prev => ({
+      ...prev,
+      plateDetails: { ...prev.plateDetails, [part]: v }
+    }));
+  };
+
+  const calculatePremium = () => {
+    if (!vehicle.price) return { total: 0, rate: 0 };
+    const rate = getOJKRate(vehicle.price, vehicle.plateRegion, vehicle.insuranceType);
+    const sumInsured = vehicle.price * 1000000;
+    let total = sumInsured * (rate / 100);
+
+    // Expansions
+    if (vehicle.expansions.flood) total += sumInsured * (EXPANSION_RATES.FLOOD / 100);
+    if (vehicle.expansions.earthquake) total += sumInsured * (EXPANSION_RATES.EARTHQUAKE / 100);
+    if (vehicle.expansions.srcc) {
+      const r = vehicle.insuranceType === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.SRCC.COMPREHENSIVE : EXPANSION_RATES.SRCC.TLO;
+      total += sumInsured * (r / 100);
+    }
+    if (vehicle.expansions.terrorism) {
+      const r = vehicle.insuranceType === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.TERRORISM.COMPREHENSIVE : EXPANSION_RATES.TERRORISM.TLO;
+      total += sumInsured * (r / 100);
+    }
+
+    // TPL
+    if (vehicle.expansions.tpl > 0) total += (vehicle.expansions.tpl * 1000000) * 0.01; // 1%
+
+    // PA
+    if (vehicle.expansions.paDriver > 0) total += (vehicle.expansions.paDriver * 1000000) * (EXPANSION_RATES.PA_DRIVER / 100);
+    if (vehicle.expansions.paPassenger > 0) total += (vehicle.expansions.paPassenger * 1000000) * (EXPANSION_RATES.PA_PASSENGER / 100) * vehicle.expansions.passengers;
+
+    return { total, rate };
+  };
+
+  const { total: premium, rate: appliedRate } = calculatePremium();
+
+  return (
+    <div className="max-w-3xl mx-auto py-12 px-4">
+      <div className="mb-8 flex items-center gap-4">
+        <button onClick={() => step > 1 ? setStep(step-1) : setPage('products')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronLeft/></button>
+        <h2 className="text-2xl font-bold">{lang === Language.EN ? 'Car Insurance' : 'Asuransi Mobil'}</h2>
+      </div>
+
+      {step === 1 && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'Brand' : 'Merek'}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {brands.map(b => (
+                  <button key={b} onClick={() => setVehicle({...vehicle, brand: b, modelCode: ''})} className={`p-3 rounded-xl border-2 font-bold ${vehicle.brand === b ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-800'}`}>{b}</button>
+                ))}
+              </div>
+            </div>
+            
+            {vehicle.brand && (
+              <div>
+                <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'Model' : 'Model'}</label>
+                <select 
+                  className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 bg-transparent"
+                  value={vehicle.modelCode}
+                  onChange={(e) => setVehicle({...vehicle, modelCode: e.target.value, year: 0})}
+                >
+                  <option value="">Select Model</option>
+                  {models.map(m => <option key={m.code} value={m.code}>{m.modelName}</option>)}
+                </select>
+              </div>
+            )}
+
+            {vehicle.modelCode && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                      <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'Year' : 'Tahun'}</label>
+                      <select 
+                        className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 bg-transparent"
+                        value={vehicle.year}
+                        onChange={(e) => setVehicle({...vehicle, year: Number(e.target.value)})}
+                      >
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'Plate Region' : 'Wilayah Plat'}</label>
+                      <select 
+                        className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-800 bg-transparent"
+                        value={vehicle.plateRegion}
+                        onChange={(e) => setVehicle({...vehicle, plateRegion: e.target.value as any})}
+                      >
+                        <option value="1">Sumatra</option>
+                        <option value="2">DKI/Jabar/Banten</option>
+                        <option value="3">Others</option>
+                      </select>
+                   </div>
+                </div>
+
+                {/* License Plate Visual Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'License Plate' : 'Nomor Polisi'}</label>
+                  <div className="flex gap-2 items-center">
+                    <div className="w-16">
+                      <input 
+                        ref={plateCodeRef}
+                        type="text" 
+                        maxLength={2}
+                        value={vehicle.plateDetails.code}
+                        onChange={(e) => handlePlateChange('code', e.target.value)}
+                        placeholder="B"
+                        className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-800 rounded-xl px-3 py-3 text-center font-mono font-bold text-lg uppercase focus:border-primary-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input 
+                        ref={plateNumberRef}
+                        type="text" 
+                        maxLength={4}
+                        value={vehicle.plateDetails.number}
+                        onChange={(e) => handlePlateChange('number', e.target.value)}
+                        placeholder="1234"
+                        className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-800 rounded-xl px-3 py-3 text-center font-mono font-bold text-lg focus:border-primary-500 outline-none"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <input 
+                        ref={plateSuffixRef}
+                        type="text" 
+                        maxLength={3}
+                        value={vehicle.plateDetails.suffix}
+                        onChange={(e) => handlePlateChange('suffix', e.target.value)}
+                        placeholder="XYZ"
+                        className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-200 dark:border-gray-800 rounded-xl px-3 py-3 text-center font-mono font-bold text-lg uppercase focus:border-primary-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl flex justify-between items-center">
+             <span>{lang === Language.EN ? 'Market Price' : 'Harga Pasar'}</span>
+             <span className="text-xl font-bold">Rp {vehicle.price} Juta</span>
+          </div>
+
+          <button disabled={!vehicle.price} onClick={() => setStep(2)} className="w-full btn-luxury">{lang === Language.EN ? 'Next' : 'Lanjut'}</button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-2 gap-4">
+            <button onClick={() => setVehicle({...vehicle, insuranceType: InsuranceType.COMPREHENSIVE})} className={`p-4 border-2 rounded-xl font-bold ${vehicle.insuranceType === InsuranceType.COMPREHENSIVE ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'}`}>Comprehensive</button>
+            <button onClick={() => setVehicle({...vehicle, insuranceType: InsuranceType.TLO})} className={`p-4 border-2 rounded-xl font-bold ${vehicle.insuranceType === InsuranceType.TLO ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700'}`}>TLO</button>
+          </div>
+
+          <div className="space-y-3">
+             <h4 className="font-bold">{lang === Language.EN ? 'Add-ons' : 'Perluasan'}</h4>
+             {[
+               { id: 'flood', label: 'Banjir & Topan', key: 'flood' },
+               { id: 'earthquake', label: 'Gempa Bumi & Tsunami', key: 'earthquake' },
+               { id: 'srcc', label: 'Huru-hara (SRCC)', key: 'srcc' },
+               { id: 'terrorism', label: 'Terorisme & Sabotase', key: 'terrorism' }
+             ].map((addon) => (
+                <div key={addon.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-xl">
+                   <span>{addon.label}</span>
+                   <input 
+                     type="checkbox" 
+                     checked={(vehicle.expansions as any)[addon.key]}
+                     onChange={(e) => setVehicle({...vehicle, expansions: {...vehicle.expansions, [addon.key]: e.target.checked}})}
+                     className="w-5 h-5 accent-primary-500"
+                   />
+                </div>
+             ))}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2">{lang === Language.EN ? 'Third Party Liability (TPL)' : 'Tanggung Jawab Hukum Pihak Ketiga'}</label>
+            <div className="grid grid-cols-3 gap-2">
+               {TPL_OPTIONS.map(opt => (
+                 <button key={opt} onClick={() => setVehicle({...vehicle, expansions: {...vehicle.expansions, tpl: opt}})} className={`py-2 px-1 rounded-lg text-sm font-bold border ${vehicle.expansions.tpl === opt ? 'bg-black text-white dark:bg-white dark:text-black border-transparent' : 'border-gray-200 dark:border-gray-700'}`}>
+                    {opt === 0 ? 'None' : `${opt} Jt`}
+                 </button>
+               ))}
+            </div>
+          </div>
+
+          <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-2xl flex justify-between items-center">
+             <div>
+                <p className="text-sm text-gray-500">{lang === Language.EN ? 'Total Premium' : 'Total Premi'}</p>
+                <p className="text-2xl font-bold text-primary-600">Rp {(premium/1000).toLocaleString()}k</p>
+             </div>
+             <button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-bold">{lang === Language.EN ? 'Review' : 'Tinjau'}</button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="space-y-6 animate-fade-in">
+           <div className="bg-white dark:bg-[#111] rounded-[2rem] border border-gray-200 dark:border-white/10 p-8 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-2 bg-primary-500"></div>
+             <h3 className="text-2xl font-bold mb-6 text-center">{lang === Language.EN ? 'Quote Summary' : 'Ringkasan Penawaran'}</h3>
+             
+             <div className="space-y-4 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-white/5">
+                   <span className="text-gray-500">{lang === Language.EN ? 'Vehicle' : 'Kendaraan'}</span>
+                   <span className="font-bold text-right">{vehicle.brand} {vehicle.year} <span className="block text-xs font-normal text-gray-400">{vehicle.plateDetails.code} {vehicle.plateDetails.number} {vehicle.plateDetails.suffix}</span></span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-white/5">
+                   <span className="text-gray-500">{lang === Language.EN ? 'Model' : 'Model'}</span>
+                   <span className="font-bold text-right text-xs max-w-[200px]">{CAR_DATABASE.find(c => c.code === vehicle.modelCode)?.modelName}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-white/5">
+                   <span className="text-gray-500">{lang === Language.EN ? 'Coverage' : 'Jaminan'}</span>
+                   <div className="text-right">
+                     <span className="font-bold block">{vehicle.insuranceType}</span>
+                     <span className="text-xs text-primary-500">Rate: {appliedRate.toFixed(2)}%</span>
+                   </div>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-white/5">
+                   <span className="text-gray-500">{lang === Language.EN ? 'Expansions' : 'Perluasan'}</span>
+                   <span className="font-bold text-right max-w-[150px]">
+                      {[
+                        vehicle.expansions.flood && 'Flood',
+                        vehicle.expansions.earthquake && 'EQ',
+                        vehicle.expansions.srcc && 'SRCC',
+                        vehicle.expansions.tpl > 0 && `TPL ${vehicle.expansions.tpl}jt`
+                      ].filter(Boolean).join(', ') || '-'}
+                   </span>
+                </div>
+                
+                <div className="flex justify-between pt-4">
+                   <span className="text-lg font-bold text-gray-500">{lang === Language.EN ? 'Total Premium' : 'Total Premi'}</span>
+                   <span className="text-2xl font-bold text-primary-600">Rp {premium.toLocaleString()}</span>
+                </div>
+             </div>
+          </div>
+          <div className="flex gap-4">
+            <button onClick={() => setStep(2)} className="flex-1 py-4 rounded-xl border border-gray-200 dark:border-white/10 font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+              {lang === Language.EN ? 'Edit Details' : 'Ubah Data'}
+            </button>
+            <button onClick={() => setStep(4)} className="flex-[2] btn-luxury">
+              {lang === Language.EN ? 'Purchase Policy' : 'Beli Polis'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && <SuccessScreen lang={lang} setPage={setPage} />}
+    </div>
+  );
+};
+
 const TravelInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:string) => void }) => {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<TravelState>({ destination: '', region: 'INTERNATIONAL', startDate: '', endDate: '', type: 'INDIVIDUAL', travelersCount: 1 });
@@ -513,10 +865,6 @@ const TravelInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:
     if (!rates) return 0;
 
     const basePrice = rates[planKey.toLowerCase().replace(' ', '')] || 0;
-    // Simple multiplication for Family (mock logic as PDF implies family package vs individual)
-    // PDF says: Family max 2 adult + 2 child. Often Family is 2.5x individual or specific table.
-    // For this demo, if Type is FAMILY, we multiply by 2.5 for specific premium or just use individual * count if not specified.
-    // The PDF mentions "Family Package ... uses individual premium". Let's assume simple logic for now.
     return basePrice * (data.type === 'FAMILY' ? 2.5 : data.travelersCount);
   };
 
@@ -631,7 +979,7 @@ const PersonalAccidentWizard = ({ lang, setPage }: { lang: Language, setPage: (p
       {step === 1 && (
         <div className="space-y-6 animate-fade-in">
           <div className="text-center mb-6">
-            <h3 className="text-xl font-bold mb-2">{lang === Language.EN ? 'Who are we protecting?' : 'Siapa yang dilindungi?'}</h3>
+            <h3 className="text-xl font-bold mb-2">{lang === Language.EN ? 'Who is we protecting?' : 'Siapa yang dilindungi?'}</h3>
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -808,6 +1156,7 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
     { title: 'Liability', icon: <Scale size={28}/>, desc: 'Public & Product Liability.', action: () => {} },
     { title: 'Cyber Security', icon: <Cpu size={28}/>, desc: 'Data breach & cyber attacks.', action: () => {} },
     { title: 'Heavy Equipment', icon: <Tractor size={28}/>, desc: 'Coverage for heavy machinery.', action: () => {} },
+    { title: 'Group Health', icon: <Users size={28}/>, desc: 'Comprehensive health for employees.', action: () => {} },
   ];
 
   return (
@@ -852,6 +1201,80 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
     </div>
   );
 };
+
+const CareersPage = ({ lang }: { lang: Language }) => (
+  <div className="min-h-screen bg-gray-50 dark:bg-[#050505] py-20 relative overflow-hidden">
+    <AnimatedBackground />
+    <div className="max-w-6xl mx-auto px-6 relative z-10">
+      <div className="text-center mb-24">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-sm font-medium mb-8 shadow-lg">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          {lang === Language.EN ? 'We are hiring!' : 'Kami sedang merekrut!'}
+        </div>
+        <h1 className="text-5xl md:text-7xl font-bold mb-8 tracking-tight">
+          {lang === Language.EN ? 'Join the Revolution' : 'Bergabunglah dalam Revolusi'}
+        </h1>
+        <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          {lang === Language.EN 
+            ? 'We are looking for passionate individuals to help us build the future of insurance technology.'
+            : 'Kami mencari individu bersemangat untuk membantu kami membangun masa depan teknologi asuransi.'}
+        </p>
+      </div>
+
+      <div className="grid gap-6">
+        {[
+          { role: 'Senior Frontend Engineer', dept: 'Engineering', loc: 'Remote / Jakarta' },
+          { role: 'AI Research Scientist', dept: 'Data Science', loc: 'Jakarta' },
+          { role: 'Product Manager', dept: 'Product', loc: 'Jakarta' },
+          { role: 'Insurance Underwriter', dept: 'Operations', loc: 'Jakarta' }
+        ].map((job, i) => (
+          <div key={i} className="bg-white/50 dark:bg-[#111]/50 backdrop-blur-md border border-white/10 rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center hover:border-primary-500 transition-all group cursor-pointer">
+            <div className="mb-4 md:mb-0">
+              <h3 className="text-2xl font-bold mb-2">{job.role}</h3>
+              <div className="flex gap-4 text-sm text-gray-500">
+                <span className="flex items-center gap-1"><Briefcase size={14}/> {job.dept}</span>
+                <span className="flex items-center gap-1"><MapPin size={14}/> {job.loc}</span>
+              </div>
+            </div>
+            <button className="px-6 py-3 rounded-xl bg-white dark:bg-white/10 font-bold text-sm group-hover:bg-primary-500 group-hover:text-white transition-all">
+              {lang === Language.EN ? 'Apply Now' : 'Lamar Sekarang'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const NewsroomPage = ({ lang }: { lang: Language }) => (
+  <div className="min-h-screen bg-gray-50 dark:bg-[#050505] py-20">
+    <div className="max-w-7xl mx-auto px-6">
+      <h1 className="text-4xl md:text-6xl font-bold mb-16 text-center">{lang === Language.EN ? 'Newsroom' : 'Berita Terkini'}</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[
+          { title: 'Surepath Raises Series A Funding', date: 'Oct 24, 2025', cat: 'Corporate' },
+          { title: 'Launching AI Instant Claim Feature', date: 'Sep 15, 2025', cat: 'Product' },
+          { title: 'Partnership with Top 5 Insurers in Indonesia', date: 'Aug 01, 2025', cat: 'Partnership' }
+        ].map((news, i) => (
+          <div key={i} className="bg-white dark:bg-[#0F0F0F] border border-gray-100 dark:border-white/5 rounded-3xl overflow-hidden hover:shadow-2xl transition-all group cursor-pointer">
+            <div className="h-48 bg-gray-200 dark:bg-gray-800 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+              <div className="absolute bottom-4 left-4 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-full">{news.cat}</div>
+            </div>
+            <div className="p-8">
+              <p className="text-sm text-gray-500 mb-3">{news.date}</p>
+              <h3 className="text-2xl font-bold mb-4 leading-tight group-hover:text-primary-500 transition-colors">{news.title}</h3>
+              <div className="flex items-center text-sm font-bold text-gray-400 group-hover:translate-x-2 transition-transform">
+                {lang === Language.EN ? 'Read Article' : 'Baca Artikel'} <ArrowRight size={16} className="ml-2" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const ContactPage = ({ lang }: { lang: Language }) => (
   <div className="min-h-screen bg-gray-50 dark:bg-[#050505] py-20 relative overflow-hidden">
@@ -918,654 +1341,6 @@ const ContactPage = ({ lang }: { lang: Language }) => (
   </div>
 );
 
-const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:string) => void }) => {
-  const [step, setStep] = useState(1);
-  const [user, setUser] = useState<UserState>({ name: '', ktp: '', domicile: '', email: '', phone: '', isMember: false });
-  const [vehicle, setVehicle] = useState<VehicleState>({
-    brand: '', modelCode: '', year: 2024, price: 0, plateRegion: '2', 
-    plateDetails: { code: 'B', number: '', suffix: '' },
-    usage: 'PERSONAL', condition: 'NEW', vin: '', engineNo: '', accessories: '', insuranceType: InsuranceType.COMPREHENSIVE,
-    expansions: { flood: false, earthquake: false, srcc: false, terrorism: false, tpl: 0, paDriver: 0, paPassenger: 0, passengers: 4 }
-  });
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-  const [verificationResult, setVerificationResult] = useState<any | null>(null);
-  
-  // AI Analysis States
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [vehicleImages, setVehicleImages] = useState<{ [key: string]: string | null }>({
-    front: null, back: null, left: null, right: null
-  });
-
-  // Payment State
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
-
-  const availableBrands = Array.from(new Set(CAR_DATABASE.map(c => c.brand)));
-  const availableModels = CAR_DATABASE.filter(c => c.brand === vehicle.brand);
-  
-  const steps = lang === Language.EN 
-    ? ['Details', 'Car', 'Plan', 'Extra', 'Quotes', 'Summary', 'Verify', 'Pay']
-    : ['Data', 'Mobil', 'Paket', 'Extra', 'Penawaran', 'Ringkasan', 'Verifikasi', 'Bayar'];
-
-  // Helper to calculate TPL cost based on OJK Tiers for display
-  const getTPLPremium = (limit: number) => {
-    if (limit === 0) return 0;
-    const amount = limit * 1000000;
-    let cost = 0;
-    // OJK Rules: 1% up to 25M, 0.5% for excess > 25M (simplified standard)
-    const tier1 = Math.min(amount, 25000000);
-    cost += tier1 * 0.01;
-    if (amount > 25000000) {
-      const tier2 = amount - 25000000;
-      cost += tier2 * 0.005;
-    }
-    return cost;
-  };
-
-  const calculatePremiums = () => {
-    const price = vehicle.price * 1000000; // Convert to Rupiah
-    const rate = getOJKRate(vehicle.price, vehicle.plateRegion, vehicle.insuranceType);
-    const basePremium = price * (rate / 100);
-
-    let expansionCost = 0;
-    const { expansions } = vehicle;
-
-    if (expansions.flood) expansionCost += price * EXPANSION_RATES.FLOOD / 100;
-    if (expansions.earthquake) expansionCost += price * EXPANSION_RATES.EARTHQUAKE / 100;
-    const srccRate = vehicle.insuranceType === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.SRCC.COMPREHENSIVE : EXPANSION_RATES.SRCC.TLO;
-    const tsRate = vehicle.insuranceType === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.TERRORISM.COMPREHENSIVE : EXPANSION_RATES.TERRORISM.TLO;
-    if (expansions.srcc) expansionCost += price * srccRate / 100;
-    if (expansions.terrorism) expansionCost += price * tsRate / 100;
-
-    if (expansions.tpl > 0) {
-      expansionCost += getTPLPremium(expansions.tpl);
-    }
-
-    if (expansions.paDriver > 0) expansionCost += expansions.paDriver * EXPANSION_RATES.PA_DRIVER / 100;
-    if (expansions.paPassenger > 0) {
-      expansionCost += (expansions.paPassenger * expansions.passengers) * EXPANSION_RATES.PA_PASSENGER / 100;
-    }
-
-    const providers = [
-      { name: 'Tugu Insurance', factor: 1.0, rating: 4.8, branches: 12, workshops: 450, logo: 'T' },
-      { name: 'Zurich', factor: 1.05, rating: 4.9, branches: 20, workshops: 600, logo: 'Z' },
-      { name: 'IntraAsia', factor: 0.95, rating: 4.5, branches: 8, workshops: 300, logo: 'I' },
-    ];
-
-    const generatedQuotes: Quote[] = providers.map(p => {
-      const providerBase = basePremium * p.factor;
-      const providerExpansion = expansionCost * p.factor; 
-      return {
-        provider: p.name,
-        logo: p.logo,
-        basePremium: providerBase,
-        expansionPremium: providerExpansion,
-        totalPremium: providerBase + providerExpansion,
-        rating: p.rating,
-        workshops: p.workshops,
-        branches: p.branches,
-        features: ['24/7 Support', 'Mobile Claim', 'Authorized Workshop']
-      };
-    });
-
-    generatedQuotes.sort((a, b) => a.totalPremium - b.totalPremium);
-    setQuotes(generatedQuotes);
-    setStep(5);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, side: string) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setVehicleImages(prev => ({ ...prev, [side]: ev.target?.result as string }));
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  };
-
-  const handleAIVerification = async () => {
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    setVerificationResult(null);
-    
-    const imagesToAnalyze = Object.values(vehicleImages).filter(img => img !== null) as string[];
-    
-    if (imagesToAnalyze.length === 0) {
-      setAnalysisError(lang === Language.EN ? "Please upload at least one photo." : "Silahkan unggah setidaknya satu foto.");
-      setIsAnalyzing(false);
-      return;
-    }
-
-    try {
-      const result = await analyzeVehiclePhoto(imagesToAnalyze, 'EXTERIOR');
-      if (result.success) {
-        setVerificationResult(result.data);
-      } else {
-        setAnalysisError(result.error || (lang === Language.EN ? "Verification failed." : "Verifikasi gagal."));
-      }
-    } catch (e) {
-      setAnalysisError(lang === Language.EN ? "System error." : "Kesalahan sistem.");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handlePayment = () => {
-    setPaymentStatus('processing');
-    setTimeout(() => {
-      setPaymentStatus('success');
-    }, 2000);
-  };
-
-  // Floating Estimate Component
-  const FloatingEstimate = () => {
-    if (step < 2 || !selectedQuote || step === 8) return null;
-    return (
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-md px-6 animate-fade-in-up">
-        <div className="bg-gray-900/90 dark:bg-white/10 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-white/10 flex justify-between items-center">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-400">{lang === Language.EN ? 'Total Premium' : 'Total Premi'}</p>
-            <p className="text-lg font-bold">Rp {selectedQuote.totalPremium.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</p>
-          </div>
-          <button onClick={() => setStep(8)} className="bg-primary-500 hover:bg-primary-400 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors">
-            {lang === Language.EN ? 'Pay Now' : 'Bayar'}
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] relative pb-24">
-      {/* Background Ambient */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-primary-500/5 to-transparent"></div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 pt-10 relative z-10">
-        {/* Header Navigation */}
-        <div className="flex justify-between items-center mb-8">
-          <button onClick={() => { if(step > 1) setStep(step-1); else setPage('home'); }} className="p-2 hover:bg-white dark:hover:bg-white/10 rounded-full transition-colors">
-            <ChevronLeft size={24} className="text-gray-600 dark:text-white"/>
-          </button>
-          <div className="flex items-center gap-1">
-            {steps.map((_, i) => (
-              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${step > i ? 'w-8 bg-primary-500' : step === i + 1 ? 'w-8 bg-primary-300' : 'w-2 bg-gray-200 dark:bg-white/10'}`}></div>
-            ))}
-          </div>
-          <div className="text-sm font-bold text-gray-500">{step}/{steps.length}</div>
-        </div>
-
-        {/* Main Wizard Card */}
-        <div className="bg-white dark:bg-[#0F0F0F] border border-gray-200 dark:border-white/5 rounded-[2.5rem] shadow-xl overflow-hidden relative min-h-[600px]">
-          
-          {/* Step Content */}
-          <div className="p-8 md:p-12">
-            
-            {step === 1 && (
-              <div className="animate-fade-in max-w-lg mx-auto">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Who is driving?' : 'Siapa yang berkendara?'}</h2>
-                  <p className="text-gray-500">{lang === Language.EN ? 'Enter your details for the policy.' : 'Masukan data diri untuk polis asuransi.'}</p>
-                </div>
-                <div className="space-y-5">
-                  <FloatingLabelInput label={lang === Language.EN ? "Full Name" : "Nama Lengkap"} value={user.name} onChange={(e:any) => setUser({...user, name: e.target.value})} />
-                  <FloatingLabelInput label="NIK / KTP" value={user.ktp} onChange={(e:any) => setUser({...user, ktp: e.target.value})} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FloatingLabelInput label="Email" type="email" value={user.email} onChange={(e:any) => setUser({...user, email: e.target.value})} />
-                    <FloatingLabelInput label={lang === Language.EN ? "Phone" : "Telepon"} type="tel" value={user.phone} onChange={(e:any) => setUser({...user, phone: e.target.value})} />
-                  </div>
-                  <FloatingLabelInput label={lang === Language.EN ? "Address" : "Alamat Domisili"} value={user.domicile} onChange={(e:any) => setUser({...user, domicile: e.target.value})} />
-                </div>
-                <button onClick={() => setStep(2)} className="w-full mt-10 btn-luxury">{lang === Language.EN ? 'Continue' : 'Lanjut'}</button>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="animate-fade-in">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Vehicle Details' : 'Data Kendaraan'}</h2>
-                  <p className="text-gray-500">{lang === Language.EN ? 'Select your car.' : 'Pilih mobil Anda.'}</p>
-                </div>
-                
-                <div className="space-y-8">
-                  {/* Brand Selection Grid */}
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">{lang === Language.EN ? 'Select Brand' : 'Pilih Merk'}</label>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {availableBrands.map(b => (
-                        <button 
-                          key={b} 
-                          onClick={() => setVehicle({...vehicle, brand: b, modelCode: '', price: 0})}
-                          className={`py-3 rounded-xl border-2 text-sm font-bold transition-all ${vehicle.brand === b ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'border-gray-100 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 bg-gray-50 dark:bg-white/5'}`}
-                        >
-                          {b}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Year Selection Chips */}
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 block">{lang === Language.EN ? 'Select Year' : 'Pilih Tahun'}</label>
-                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                      {[2025, 2024, 2023, 2022, 2021, 2020].map(y => (
-                        <button 
-                          key={y} 
-                          onClick={() => setVehicle({...vehicle, year: y})}
-                          className={`px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${vehicle.year === y ? 'bg-gray-900 dark:bg-white text-white dark:text-black' : 'bg-gray-100 dark:bg-white/10 text-gray-500 hover:bg-gray-200'}`}
-                        >
-                          {y}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="relative">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">{lang === Language.EN ? 'Model' : 'Tipe Model'}</label>
-                        <select 
-                          className="w-full p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl outline-none focus:border-primary-500 appearance-none font-medium"
-                          disabled={!vehicle.brand} 
-                          value={vehicle.modelCode} 
-                          onChange={(e) => {
-                            const code = e.target.value;
-                            const car = CAR_DATABASE.find(c => c.code === code);
-                            if (car) setVehicle({ ...vehicle, modelCode: code, price: car.yearPrices[vehicle.year] || 0 });
-                          }}
-                        >
-                          <option value="">{lang === Language.EN ? 'Select Model' : 'Pilih Model'}</option>
-                          {availableModels.map(m => <option key={m.code} value={m.code}>{m.modelName}</option>)}
-                        </select>
-                        <ChevronRight className="absolute right-4 top-10 rotate-90 text-gray-400 pointer-events-none" size={20} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">{lang === Language.EN ? 'Plate Number' : 'Nomor Polisi'}</label>
-                        <div className="plate-visual flex items-center justify-between px-4 py-2 rounded-2xl border-4 border-black dark:border-gray-700 bg-black text-white shadow-xl">
-                            <input 
-                                type="text" 
-                                placeholder="B" 
-                                maxLength={2}
-                                className="w-12 bg-transparent text-center text-3xl font-bold placeholder-gray-600 outline-none uppercase"
-                                value={vehicle.plateDetails.code}
-                                onChange={e => setVehicle({...vehicle, plateDetails: {...vehicle.plateDetails, code: e.target.value.toUpperCase()}})}
-                            />
-                            <input 
-                                type="text" 
-                                placeholder="1234" 
-                                maxLength={4}
-                                className="flex-1 bg-transparent text-center text-3xl font-bold placeholder-gray-600 outline-none"
-                                value={vehicle.plateDetails.number}
-                                onChange={e => setVehicle({...vehicle, plateDetails: {...vehicle.plateDetails, number: e.target.value.replace(/\D/g, '')}})}
-                            />
-                            <input 
-                                type="text" 
-                                placeholder="XYZ" 
-                                maxLength={3}
-                                className="w-20 bg-transparent text-center text-3xl font-bold placeholder-gray-600 outline-none uppercase"
-                                value={vehicle.plateDetails.suffix}
-                                onChange={e => setVehicle({...vehicle, plateDetails: {...vehicle.plateDetails, suffix: e.target.value.toUpperCase()}})}
-                            />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-gray-400 mt-2 px-2">
-                            <span>Kode</span>
-                            <span>Nomor</span>
-                            <span>Seri</span>
-                        </div>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <FloatingLabelInput label="VIN / Rangka" value={vehicle.vin} onChange={(e:any) => setVehicle({...vehicle, vin: e.target.value})} />
-                    <FloatingLabelInput label="Engine / Mesin" value={vehicle.engineNo} onChange={(e:any) => setVehicle({...vehicle, engineNo: e.target.value})} />
-                  </div>
-
-                  <button onClick={() => setStep(3)} className="w-full btn-luxury mt-6">{lang === Language.EN ? 'Next Step' : 'Selanjutnya'} <ChevronRight/></button>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="animate-fade-in">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Choose Coverage' : 'Pilih Proteksi'}</h2>
-                  <p className="text-gray-500">{lang === Language.EN ? 'How much protection do you need?' : 'Seberapa besar perlindungan yang Anda butuhkan?'}</p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  {[
-                    { type: InsuranceType.COMPREHENSIVE, title: 'Comprehensive', subtitle: 'All Risk', icon: Shield, desc: lang === Language.EN ? 'Covers everything from scratches to theft.' : 'Menanggung semua dari lecet hingga kehilangan.' },
-                    { type: InsuranceType.TLO, title: 'Total Loss Only', subtitle: 'TLO', icon: AlertTriangle, desc: lang === Language.EN ? 'Covers only major damage (>75%) or theft.' : 'Hanya menanggung kerusakan parah (>75%) atau hilang.' }
-                  ].map((opt) => (
-                    <div 
-                      key={opt.type}
-                      onClick={() => setVehicle({...vehicle, insuranceType: opt.type})}
-                      className={`relative p-8 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 hover:-translate-y-2 ${vehicle.insuranceType === opt.type ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:border-primary-300'}`}
-                    >
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${vehicle.insuranceType === opt.type ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' : 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}>
-                        <opt.icon size={28} />
-                      </div>
-                      <h3 className="text-2xl font-bold">{opt.title}</h3>
-                      <p className="text-sm font-bold text-primary-500 uppercase tracking-wider mb-4">{opt.subtitle}</p>
-                      <p className="text-gray-500 text-sm leading-relaxed">{opt.desc}</p>
-                      {vehicle.insuranceType === opt.type && (
-                        <div className="absolute top-6 right-6 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center text-white">
-                          <Check size={16} strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => setStep(4)} className="w-full btn-luxury mt-10">{lang === Language.EN ? 'Customize Add-ons' : 'Pilih Perluasan'}</button>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="animate-fade-in">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Add-ons' : 'Perluasan'}</h2>
-                  <p className="text-gray-500">{lang === Language.EN ? 'Customize your protection level.' : 'Sesuaikan tingkat perlindungan Anda.'}</p>
-                </div>
-
-                <div className="space-y-8">
-                  {/* Basic Toggles */}
-                  <div className="bg-gray-50 dark:bg-white/5 rounded-[2rem] p-6 grid md:grid-cols-2 gap-4">
-                    {[
-                      { id: 'flood', label: lang === Language.EN ? 'Flood' : 'Banjir' },
-                      { id: 'earthquake', label: lang === Language.EN ? 'Earthquake' : 'Gempa' },
-                      { id: 'srcc', label: 'SRCC (Huru-hara)' },
-                      { id: 'terrorism', label: lang === Language.EN ? 'Terrorism' : 'Terorisme' },
-                    ].map((item) => (
-                      <label key={item.id} className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all ${ (vehicle.expansions as any)[item.id] ? 'bg-white dark:bg-black shadow-md border-2 border-primary-500' : 'border-2 border-transparent hover:bg-white dark:hover:bg-white/10' }`}>
-                        <span className="font-bold">{item.label}</span>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${ (vehicle.expansions as any)[item.id] ? 'bg-primary-500 border-primary-500' : 'border-gray-300 dark:border-gray-600' }`}>
-                          {(vehicle.expansions as any)[item.id] && <Check size={14} className="text-white" />}
-                        </div>
-                        <input type="checkbox" className="hidden"
-                          checked={(vehicle.expansions as any)[item.id]}
-                          onChange={(e) => setVehicle({...vehicle, expansions: {...vehicle.expansions, [item.id]: e.target.checked}})}
-                        />
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Dynamic TPL Grid */}
-                  <div className="bg-gray-50 dark:bg-white/5 rounded-[2rem] p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Users size={20} className="text-primary-500" />
-                      <span className="font-bold text-gray-500 uppercase tracking-wider text-sm">Third Party Liability (TPL)</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {TPL_OPTIONS.map((limit) => {
-                        const cost = getTPLPremium(limit);
-                        const isRecommended = vehicle.price > 500 && limit === 50;
-                        const isActive = vehicle.expansions.tpl === limit;
-
-                        return (
-                          <button
-                            key={limit}
-                            onClick={() => setVehicle({...vehicle, expansions: {...vehicle.expansions, tpl: limit}})}
-                            className={`relative p-4 rounded-xl border-2 text-left transition-all group ${
-                              isActive 
-                                ? 'border-primary-500 bg-white dark:bg-black shadow-lg' 
-                                : 'border-transparent bg-white/50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10'
-                            }`}
-                          >
-                            {isRecommended && (
-                              <span className="absolute -top-2 -right-2 bg-accent-500 text-black text-[8px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                                RECOMMENDED
-                              </span>
-                            )}
-                            <div className={`text-lg font-bold mb-1 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                              {limit === 0 ? (lang === Language.EN ? 'None' : 'Tidak Ada') : `${limit} Juta`}
-                            </div>
-                            <div className={`text-xs font-medium ${isActive ? 'text-gray-500' : 'text-gray-400'}`}>
-                              {limit === 0 ? '-' : `+ Rp ${cost.toLocaleString('id-ID')}`}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-4 leading-relaxed">
-                      {lang === Language.EN 
-                        ? 'Covers legal liability for third-party bodily injury or property damage. Higher limits recommended for luxury vehicles.'
-                        : 'Menjamin tanggung jawab hukum terhadap pihak ketiga. Limit lebih tinggi disarankan untuk kendaraan mewah.'}
-                    </p>
-                  </div>
-                </div>
-                <button onClick={calculatePremiums} className="w-full btn-luxury mt-10">{lang === Language.EN ? 'View Quotes' : 'Lihat Penawaran'} <Zap size={18}/></button>
-              </div>
-            )}
-
-            {step === 5 && (
-              <div className="animate-fade-in">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Best Quotes' : 'Penawaran Terbaik'}</h2>
-                  <p className="text-gray-500">{lang === Language.EN ? 'Select the provider that fits you.' : 'Pilih penyedia yang cocok untuk Anda.'}</p>
-                </div>
-
-                <div className="space-y-4">
-                  {quotes.map((q, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => setSelectedQuote(q)}
-                      className={`relative group overflow-hidden rounded-3xl border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${selectedQuote?.provider === q.provider ? 'border-primary-500 bg-white dark:bg-[#111]' : 'border-gray-100 dark:border-white/10 bg-white dark:bg-white/5'}`}
-                    >
-                      <div className="p-6 flex items-center gap-6">
-                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black ${selectedQuote?.provider === q.provider ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
-                          {q.logo}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <h3 className="text-xl font-bold">{q.provider}</h3>
-                            {idx === 0 && <span className="bg-accent-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Best Value</span>}
-                          </div>
-                          <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                            <span className="flex items-center gap-1"><Star size={14} className="text-yellow-400 fill-yellow-400"/> {q.rating}</span>
-                            <span>{q.workshops} Workshops</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-400 uppercase font-bold">Yearly</p>
-                          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{(q.totalPremium / 1000000).toFixed(1)}jt</p>
-                        </div>
-                      </div>
-                      {/* Ticket Perforation Visual */}
-                      <div className="absolute -left-3 top-1/2 w-6 h-6 bg-gray-50 dark:bg-[#050505] rounded-full transform -translate-y-1/2"></div>
-                      <div className="absolute -right-3 top-1/2 w-6 h-6 bg-gray-50 dark:bg-[#050505] rounded-full transform -translate-y-1/2"></div>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => selectedQuote && setStep(6)} disabled={!selectedQuote} className="w-full btn-luxury mt-8 disabled:opacity-50 disabled:cursor-not-allowed">{lang === Language.EN ? 'Select Plan' : 'Pilih Paket'}</button>
-              </div>
-            )}
-
-            {step === 6 && selectedQuote && (
-              <div className="animate-fade-in">
-                <div className="bg-white dark:bg-[#111] rounded-[2rem] border border-gray-200 dark:border-white/10 p-8 relative overflow-hidden">
-                  {/* Receipt Pattern Top */}
-                  <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500"></div>
-                  
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-primary-500 text-white rounded-2xl flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg shadow-primary-500/30">
-                      {selectedQuote.logo}
-                    </div>
-                    <h2 className="text-2xl font-bold">{selectedQuote.provider}</h2>
-                    <p className="text-gray-500 text-sm">Insurance Policy Draft</p>
-                  </div>
-
-                  <div className="space-y-6 border-t border-b border-dashed border-gray-200 dark:border-white/10 py-6 my-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500">{lang === Language.EN ? 'Vehicle' : 'Kendaraan'}</span>
-                      <span className="font-bold text-right text-sm sm:text-base">
-                        {vehicle.brand} {CAR_DATABASE.find(c => c.code === vehicle.modelCode)?.modelName || vehicle.modelCode} ({vehicle.year})
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500">{lang === Language.EN ? 'Coverage' : 'Proteksi'}</span>
-                      <span className="font-bold bg-gray-100 dark:bg-white/10 px-3 py-1 rounded-lg text-sm">{vehicle.insuranceType}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500">{lang === Language.EN ? 'Add-ons' : 'Perluasan'}</span>
-                      <div className="text-right flex flex-col items-end gap-1">
-                        {Object.entries(vehicle.expansions).filter(([_, v]) => v).length > 0 ? (
-                          Object.entries(vehicle.expansions).filter(([_, v]) => v).map(([k, v]) => (
-                            <span key={k} className="text-xs font-bold uppercase text-primary-600 bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 rounded">{k === 'tpl' && (v as number) > 0 ? `TPL ${v}jt` : k}</span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-end">
-                    <span className="text-xl font-bold text-gray-400">{lang === Language.EN ? 'Total' : 'Total'}</span>
-                    <span className="text-4xl font-bold text-gray-900 dark:text-white">Rp {selectedQuote.totalPremium.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 mt-6">
-                  <input type="checkbox" className="mt-1 w-5 h-5 accent-primary-500" />
-                  <p className="text-xs text-gray-500 leading-relaxed">{lang === Language.EN ? 'By proceeding, I agree to the Terms & Conditions and Privacy Policy of Surepath Insurtech.' : 'Dengan melanjutkan, saya menyetujui Syarat & Ketentuan serta Kebijakan Privasi Surepath Insurtech.'}</p>
-                </div>
-
-                <div className="flex flex-col gap-3 mt-8">
-                    <button onClick={() => setStep(7)} className="w-full btn-luxury">{lang === Language.EN ? 'Verify Vehicle' : 'Verifikasi Kendaraan'} <Camera size={18}/></button>
-                    <button onClick={() => setStep(2)} className="w-full py-4 rounded-xl border border-gray-200 dark:border-white/10 font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                        {lang === Language.EN ? 'Edit Details' : 'Ubah Data'}
-                    </button>
-                </div>
-              </div>
-            )}
-
-            {step === 7 && (
-              <div className="animate-fade-in text-center">
-                {verificationResult ? (
-                  <div className="max-w-md mx-auto">
-                    <div className="w-32 h-32 mx-auto relative mb-6">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="64" cy="64" r="60" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-100 dark:text-white/10" />
-                        <circle cx="64" cy="64" r="60" stroke={verificationResult.score >= 80 ? '#10b981' : '#ef4444'} strokeWidth="8" fill="transparent" strokeDasharray={377} strokeDashoffset={377 - (377 * verificationResult.score) / 100} className="transition-all duration-1000 ease-out" strokeLinecap="round" />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-4xl font-bold">{verificationResult.score}</span>
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-2xl font-bold mb-2">{verificationResult.score >= 80 ? 'Passed' : 'Failed'}</h3>
-                    <p className="text-sm text-gray-500 mb-8">{verificationResult.damageDescription}</p>
-
-                    {verificationResult.score >= 80 ? (
-                      <button onClick={() => setStep(8)} className="w-full btn-luxury">{lang === Language.EN ? 'Proceed to Payment' : 'Lanjut Pembayaran'}</button>
-                    ) : (
-                      <button onClick={() => setVerificationResult(null)} className="w-full py-4 rounded-xl border font-bold">{lang === Language.EN ? 'Retake Photos' : 'Foto Ulang'}</button>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-20 h-20 bg-gradient-to-tr from-primary-400 to-accent-400 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-500/30">
-                      {isAnalyzing ? <RefreshCw className="animate-spin text-white" size={32} /> : <Camera className="text-white" size={32} />}
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">{lang === Language.EN ? 'AI Verification' : 'Verifikasi AI'}</h3>
-                    <p className="text-gray-500 mb-8 text-sm max-w-sm mx-auto">{lang === Language.EN ? 'Upload 4 clear photos of your vehicle.' : 'Unggah 4 foto jelas kendaraan Anda (Depan, Belakang, Kiri, Kanan).'}</p>
-
-                    {!isAnalyzing && (
-                      <div className="grid grid-cols-2 gap-4 mb-8">
-                        {['front', 'back', 'left', 'right'].map(side => (
-                          <label key={side} className="relative aspect-square bg-gray-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center hover:border-primary-500 cursor-pointer transition-all group overflow-hidden">
-                            {vehicleImages[side] ? (
-                              <img src={vehicleImages[side]!} className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
-                            ) : (
-                              <Upload className="text-gray-400 group-hover:text-primary-500 transition-colors" />
-                            )}
-                            <span className="absolute bottom-2 text-xs font-bold uppercase text-gray-400 bg-white/80 dark:bg-black/80 px-2 py-0.5 rounded">{side}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, side)} />
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {analysisError && <div className="text-red-500 text-sm font-bold mb-4 bg-red-500/10 p-3 rounded-xl">{analysisError}</div>}
-
-                    <button onClick={handleAIVerification} disabled={isAnalyzing} className="w-full btn-luxury">{isAnalyzing ? 'Analyzing...' : (lang === Language.EN ? 'Analyze Photos' : 'Analisa Foto')}</button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {step === 8 && selectedQuote && (
-              <div className="animate-fade-in text-center">
-                {paymentStatus === 'success' ? (
-                  <div className="max-w-md mx-auto">
-                    <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/40 animate-scale-in">
-                      <CheckCircle2 size={48} className="text-white" />
-                    </div>
-                    <h2 className="text-3xl font-bold mb-4">{lang === Language.EN ? 'Payment Successful!' : 'Pembayaran Berhasil!'}</h2>
-                    <p className="text-gray-500 mb-2">{lang === Language.EN ? 'Thank you for choosing Surepath.' : 'Terima kasih telah memilih Surepath.'}</p>
-                    
-                    <div className="bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 rounded-2xl p-6 mb-8 flex items-center gap-4 text-left">
-                      <div className="p-3 bg-primary-100 dark:bg-primary-500/20 rounded-xl text-primary-600 dark:text-primary-400">
-                        <Mail size={24} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-primary-700 dark:text-primary-300">{lang === Language.EN ? 'Policy Sent' : 'Polis Terkirim'}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {lang === Language.EN 
-                            ? `E-Policy has been sent to ${user.email}` 
-                            : `E-Polis telah dikirimkan ke ${user.email}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button onClick={() => setPage('home')} className="w-full btn-luxury">{lang === Language.EN ? 'Return Home' : 'Kembali ke Beranda'}</button>
-                  </div>
-                ) : paymentStatus === 'processing' ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-16 h-16 border-4 border-gray-200 dark:border-white/10 border-t-primary-500 rounded-full animate-spin mb-6"></div>
-                    <h3 className="text-xl font-bold animate-pulse">{lang === Language.EN ? 'Processing Payment...' : 'Memproses Pembayaran...'}</h3>
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-24 h-24 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-primary-500/40">
-                      <CreditCard size={48} className="text-white" />
-                    </div>
-                    <h2 className="text-3xl font-bold mb-2">{lang === Language.EN ? 'Final Step' : 'Langkah Terakhir'}</h2>
-                    <p className="text-gray-500 mb-10">{lang === Language.EN ? 'Choose your payment method.' : 'Pilih metode pembayaran.'}</p>
-
-                    <div className="space-y-4 max-w-md mx-auto mb-10">
-                      {[
-                        { icon: CreditCard, label: 'Credit Card', sub: '0% Installment' },
-                        { icon: Smartphone, label: 'QRIS', sub: 'Instant Pay' },
-                        { icon: Wallet, label: 'Virtual Account', sub: 'Bank Transfer' }
-                      ].map((m, i) => (
-                        <button key={i} onClick={handlePayment} className="w-full p-5 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-primary-500 hover:shadow-lg flex items-center justify-between group transition-all">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-xl group-hover:bg-primary-500 group-hover:text-white transition-colors"><m.icon size={20}/></div>
-                            <div className="text-left">
-                              <p className="font-bold">{m.label}</p>
-                              <p className="text-xs text-gray-500">{m.sub}</p>
-                            </div>
-                          </div>
-                          <ChevronRight className="text-gray-300 group-hover:text-primary-500" />
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-          </div>
-        </div>
-      </div>
-      <FloatingEstimate />
-    </div>
-  );
-};
-
 const ClaimWithAI = ({ lang }: { lang: Language }) => (
   <div className="max-w-2xl mx-auto px-6 py-24 text-center">
     <h2 className="text-5xl font-bold mb-6">{lang === Language.EN ? 'AI Instant Claim' : 'Klaim Instan AI'}</h2>
@@ -1585,14 +1360,20 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => (
 );
 
 const AnimatedBackground = () => (
-  <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+  <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-gray-50 dark:bg-[#050505]">
+    {/* Subtle Gradient Base */}
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white dark:from-transparent dark:via-[#050505]/50 dark:to-[#050505]"></div>
+
     {/* Moving Grid */}
-    <div className="absolute inset-0 bg-grid-pattern opacity-20 dark:opacity-10"></div>
+    <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] dark:opacity-[0.05]"></div>
     
-    {/* Floating Blobs */}
-    <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-    <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-accent-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-    <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-blue-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    {/* Floating Blobs - Slower, larger, more elegant */}
+    <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-primary-500/10 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-blob"></div>
+    <div className="absolute top-[10%] right-[-20%] w-[600px] h-[600px] bg-accent-500/10 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[80px] animate-blob animation-delay-2000"></div>
+    <div className="absolute bottom-[-20%] left-[20%] w-[700px] h-[700px] bg-blue-500/10 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[90px] animate-blob animation-delay-4000"></div>
+    
+    {/* Noise Texture for texture/luxury feel */}
+    <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
   </div>
 );
 
@@ -1641,9 +1422,9 @@ const AboutPage = ({ lang }: { lang: Language }) => (
           { icon: Target, title: lang === Language.EN ? 'Customer Centric' : 'Fokus Pelanggan', desc: lang === Language.EN ? 'Every feature is built to solve your problems.' : 'Setiap fitur dibuat untuk menyelesaikan masalah Anda.' },
           { icon: Globe2, title: lang === Language.EN ? 'Transparency' : 'Transparansi', desc: lang === Language.EN ? 'No hidden fees. No fine print surprises.' : 'Tanpa biaya tersembunyi. Tanpa kejutan.' }
         ].map((val, i) => (
-          <div key={i} className="p-8 rounded-3xl bg-white dark:bg-[#0F0F0F] border border-gray-200 dark:border-white/5 hover:border-primary-500 transition-all duration-300 group relative overflow-hidden">
+          <div key={i} className="p-8 rounded-3xl bg-white/80 dark:bg-[#0F0F0F]/80 backdrop-blur-sm border border-gray-200 dark:border-white/5 hover:border-primary-500 transition-all duration-500 group relative overflow-hidden hover:scale-105">
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="w-14 h-14 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10">
+            <div className="w-14 h-14 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 relative z-10">
               <val.icon size={28} strokeWidth={1.5} />
             </div>
             <h3 className="text-xl font-bold mb-3 relative z-10">{val.title}</h3>

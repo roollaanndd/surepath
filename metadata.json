@@ -1,0 +1,8 @@
+{
+  "name": "Surepath Insurtech",
+  "description": "Modern AI-powered insurance application for retail and enterprise needs.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

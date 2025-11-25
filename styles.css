@@ -1,0 +1,76 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-luxury {
+    @apply bg-gray-900 dark:bg-white hover:bg-primary-600 dark:hover:bg-primary-400 text-white dark:text-black font-bold py-4 px-8 rounded-xl shadow-lg shadow-gray-200/50 dark:shadow-none transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  /* Realistic License Plate Style */
+  .plate-visual {
+    @apply font-mono tracking-widest;
+    background-image: linear-gradient(to bottom, #222, #000); 
+  }
+  .dark .plate-visual {
+    background-image: linear-gradient(to bottom, #fff, #eee);
+    @apply border-gray-300 text-black;
+  }
+  /* Specific input override for the plate numbers to look stamped */
+  .plate-visual input {
+    @apply drop-shadow-md;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.1);
+  }
+  .dark .plate-visual input {
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-pulse-slow {
+    animation: pulseSlow 4s ease-in-out infinite;
+  }
+  
+  /* Hide scrollbar for horizontal lists */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}

@@ -21,10 +21,32 @@ export interface ExpansionOptions {
   earthquake: boolean;
   srcc: boolean; // Strikes, Riot, Civil Commotion
   terrorism: boolean;
+  authorizedWorkshop: boolean; // 0.2% rate
   tpl: number; // 0, 10, 20, 30, 40, 50 (Millions)
   paDriver: number; // Sum Insured
   paPassenger: number; // Sum Insured per passenger
   passengers: number; // Number of passengers
+}
+
+export interface VehiclePhotos {
+  ktp: string | null;
+  stnkFront: string | null;
+  stnkBack: string | null;
+  carFront: string | null;
+  carBack: string | null;
+  carLeft: string | null;
+  carRight: string | null;
+  dashboard: string | null;
+  accessories?: string | null;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  logo: any; // component or string url
+  adminFee: number;
+  rating: number;
+  features: string[];
 }
 
 export interface VehicleState {
@@ -45,6 +67,11 @@ export interface VehicleState {
   accessories: string;
   insuranceType: InsuranceType;
   expansions: ExpansionOptions;
+  photos: VehiclePhotos;
+  selectedProvider: Provider | null;
+  promoCode?: string;
+  discountAmount?: number;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface UserState {
@@ -56,30 +83,35 @@ export interface UserState {
   isMember: boolean;
 }
 
-export interface Quote {
-  provider: string;
-  logo: string;
-  basePremium: number;
-  expansionPremium: number;
-  totalPremium: number;
-  rating: number;
-  workshops: number;
-  branches: number;
-  features: string[];
-  planName?: string; // For Travel/PA
+// --- TRAVEL INSURANCE TYPES ---
+export type TravelRegion = 'DOMESTIC' | 'INTERNATIONAL' | 'INBOUND';
+export type TravelPlanType = 'PLATINUM' | 'GOLD' | 'ASIA_EXTRA' | 'GARUDA_1' | 'GARUDA_2';
+export type TravelParticipantType = 'INDIVIDUAL' | 'FAMILY';
+
+export interface TravelerDetails {
+  type: 'ADULT' | 'CHILD';
+  name: string;
+  dob: string;
+  passport?: string;
+  ktp?: string;
 }
 
-// --- TRAVEL INSURANCE TYPES ---
-export type TravelRegion = 'DOMESTIC' | 'INTERNATIONAL';
-export type TravelType = 'INDIVIDUAL' | 'FAMILY';
-
 export interface TravelState {
-  destination: string;
+  destination: string; // Country or City
   region: TravelRegion;
   startDate: string;
   endDate: string;
-  type: TravelType;
-  travelersCount: number;
+  duration: number;
+  tripType: 'SINGLE' | 'ANNUAL';
+  participantType: TravelParticipantType;
+  travelers: {
+    adults: number;
+    children: number;
+    details: TravelerDetails[];
+  };
+  selectedPlan: TravelPlanType | null;
+  promoCode?: string;
+  discountAmount?: number;
 }
 
 // --- PERSONAL ACCIDENT TYPES ---
@@ -102,3 +134,18 @@ export interface PetState {
   gender: 'MALE' | 'FEMALE';
   sterilized: boolean;
 }
+
+export type PaymentMethod = 'VA' | 'QRIS' | 'CC';
+
+export enum CarInsuranceStep {
+  VEHICLE = 1,
+  COVERAGE = 2,
+  PROVIDER = 3,
+  PERSONAL = 4,
+  AI_CHECK = 5,
+  SUMMARY = 6,
+  PAYMENT = 7,
+  SUCCESS = 8
+}
+
+export type DocumentType = 'KTP' | 'STNK_FRONT' | 'STNK_BACK' | 'CAR_FRONT' | 'CAR_BACK' | 'CAR_LEFT' | 'CAR_RIGHT' | 'DASHBOARD';

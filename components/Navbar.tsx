@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Moon, Sun, Globe, Menu, X, User, Briefcase, Shield, ChevronDown, LogIn } from 'lucide-react';
+import { Moon, Sun, User, Briefcase, Shield, ChevronDown, Mail, ArrowLeft, Check } from 'lucide-react';
 import { Language } from '../types';
 
 interface NavbarProps {
@@ -14,18 +14,36 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, currentPage, setPage }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [loginView, setLoginView] = useState<'options' | 'forgot'>('options');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsLoginOpen(false);
+        setLoginView('options'); // Reset view when closing
+        setResetSent(false);
+        setResetEmail('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if(resetEmail) {
+        setResetSent(true);
+        setTimeout(() => {
+            setIsLoginOpen(false);
+            setLoginView('options');
+            setResetSent(false);
+            setResetEmail('');
+        }, 2000);
+    }
+  };
 
   const menuItems = [
     { id: 'home', label: lang === Language.EN ? 'Home' : 'Beranda' },
@@ -84,7 +102,6 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, c
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             
-            {/* Login Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsLoginOpen(!isLoginOpen)}
@@ -95,39 +112,87 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, c
               </button>
 
               {isLoginOpen && (
-                <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden animate-fade-in origin-top-right p-2">
-                  {loginOptions.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        // Handle login routing here in future
-                        setIsLoginOpen(false);
-                        console.log(`Logging in as ${opt.id}`);
-                      }}
-                      className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 transition-colors"
-                    >
-                      <div className="p-1.5 bg-gray-100 dark:bg-white/5 rounded-lg">
-                        <opt.icon size={14} className="text-primary-500" />
-                      </div>
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-100 dark:border-white/10 overflow-hidden animate-fade-in origin-top-right p-2">
+                  {loginView === 'options' ? (
+                    <>
+                        {loginOptions.map((opt) => (
+                            <button
+                            key={opt.id}
+                            onClick={() => {
+                                setIsLoginOpen(false);
+                                console.log(`Logging in as ${opt.id}`);
+                            }}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 flex items-center gap-3 transition-colors"
+                            >
+                            <div className="p-1.5 bg-gray-100 dark:bg-white/5 rounded-lg">
+                                <opt.icon size={14} className="text-primary-500" />
+                            </div>
+                            {opt.label}
+                            </button>
+                        ))}
+                        <div className="border-t border-gray-100 dark:border-white/5 my-1"></div>
+                        <button 
+                            onClick={() => setLoginView('forgot')}
+                            className="w-full text-left px-4 py-2 rounded-xl text-xs font-medium text-gray-500 hover:text-primary-500 transition-colors"
+                        >
+                            {lang === Language.EN ? 'Forgot Password?' : 'Lupa Kata Sandi?'}
+                        </button>
+                    </>
+                  ) : (
+                    <div className="p-2">
+                        <button 
+                            onClick={() => { setLoginView('options'); setResetSent(false); }} 
+                            className="flex items-center text-xs text-gray-500 mb-3 hover:text-primary-500"
+                        >
+                            <ArrowLeft size={12} className="mr-1" /> {lang === Language.EN ? 'Back' : 'Kembali'}
+                        </button>
+                        
+                        {resetSent ? (
+                            <div className="text-center py-4">
+                                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500">
+                                    <Check size={20} />
+                                </div>
+                                <p className="text-sm font-bold text-green-600 dark:text-green-400">{lang === Language.EN ? 'Link Sent!' : 'Link Terkirim!'}</p>
+                                <p className="text-xs text-gray-500">{lang === Language.EN ? 'Check your email.' : 'Cek email Anda.'}</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleResetPassword} className="space-y-3">
+                                <h4 className="text-sm font-bold">{lang === Language.EN ? 'Reset Password' : 'Reset Kata Sandi'}</h4>
+                                <div className="relative">
+                                    <Mail size={14} className="absolute top-3 left-3 text-gray-400" />
+                                    <input 
+                                        type="email" 
+                                        required
+                                        placeholder="Email"
+                                        value={resetEmail}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                        className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500"
+                                    />
+                                </div>
+                                <button className="w-full bg-primary-500 hover:bg-primary-600 text-white rounded-xl py-2 text-xs font-bold transition-colors">
+                                    {lang === Language.EN ? 'Send Reset Link' : 'Kirim Link Reset'}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
           <div className="md:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 dark:text-gray-300">
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            <div onClick={() => setIsOpen(!isOpen)} className={`nav-icon ${isOpen ? 'open' : ''} text-gray-600 dark:text-gray-300`}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden bg-white dark:bg-dark-card border-b dark:border-gray-800">
+        <div className="md:hidden bg-white dark:bg-dark-card border-b dark:border-gray-800 animate-fade-in">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {menuItems.map((item) => (
               <button
@@ -142,20 +207,15 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, c
               </button>
             ))}
             <div className="border-t border-gray-200 dark:border-gray-800 my-2"></div>
-            <div className="px-3 py-2 font-bold text-gray-400 text-xs uppercase tracking-wider">Login As</div>
-            {loginOptions.map((opt) => (
-               <button key={opt.id} className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2">
-                 <opt.icon size={16} /> {opt.label}
-               </button>
-            ))}
-            <div className="border-t border-gray-200 dark:border-gray-800 my-2"></div>
-            <div className="flex items-center space-x-4 px-3 py-2">
-               <button onClick={() => setDarkMode(!darkMode)}>
-                  {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-               </button>
-               <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}>
-                  {lang}
-               </button>
+            <div className="flex items-center justify-between px-3 py-2">
+               <div className="flex gap-4">
+                 <button onClick={() => setDarkMode(!darkMode)}>
+                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                 </button>
+                 <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}>
+                    {lang}
+                 </button>
+               </div>
             </div>
           </div>
         </div>

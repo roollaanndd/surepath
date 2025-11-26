@@ -12,18 +12,31 @@ export interface AnalysisResult {
     hasDamage: boolean;
     damageDescription: string;
     score: number;
+    reasons?: string[];
     [key: string]: any;
   };
   error?: string;
 }
 
-export const analyzeVehiclePhoto = async (base64Images: string[], type: 'EXTERIOR' | 'INTERIOR' | 'DOCUMENT'): Promise<AnalysisResult> => {
+export interface ClaimAnalysisResult {
+  success: boolean;
+  data?: {
+    validImage: boolean;
+    severity: 'Low' | 'Medium' | 'High' | 'Total Loss';
+    estimatedCost: string;
+    damagePoints: string[];
+    recommendation: string;
+  };
+  error?: string;
+}
+
+export const analyzeVehiclePhoto = async (base64Images: string[], labels: string[]): Promise<AnalysisResult> => {
   if (!ai) {
     console.warn("Gemini API Key missing. Returning mock data for demo purposes.");
-    await new Promise(resolve => setTimeout(resolve, 2500)); // Slightly longer delay for "processing" multiple images
+    await new Promise(resolve => setTimeout(resolve, 3500)); // Longer delay for "comprehensive" analysis
     
-    // Mock logic: fail if only 1 image is sent (demo constraint), otherwise pass
-    const isComplete = base64Images.length >= 4;
+    const isComplete = base64Images.length >= 8;
+    const randomScore = Math.floor(Math.random() * 20) + 80; // Mock passing score between 80-100
     
     return {
       success: true,
@@ -33,34 +46,38 @@ export const analyzeVehiclePhoto = async (base64Images: string[], type: 'EXTERIO
         isWhole: isComplete,
         hasDamage: false,
         damageDescription: isComplete 
-          ? "Vehicle appears to be in excellent condition. No visible dents, scratches, or structural damage detected across all 4 angles. Paintwork is consistent." 
-          : "Incomplete submission. Please provide photos of all 4 sides.",
-        score: isComplete ? 92 : 65
+          ? "Vehicle confirmed: Brand, Color, and Plate match input. No visible dents on 4 sides. Documents are legible." 
+          : "Incomplete submission. Please provide all 8 required photos.",
+        score: isComplete ? randomScore : 65,
+        reasons: isComplete ? [] : ["Missing required angles"]
       }
     };
   }
 
   const modelId = 'gemini-2.5-flash'; 
   
-  let prompt = "";
-  if (type === 'EXTERIOR') {
-    prompt = `Analyze these ${base64Images.length} images for a car insurance claim/onboarding. 
-    Return a JSON object with the following fields: 
-    - isCar: boolean (true if a car is clearly visible in the images).
-    - isClear: boolean (true if lighting is good and images are not blurry).
-    - isWhole: boolean (true if the images collectively cover the front, back, left, and right sides).
-    - hasDamage: boolean (true if there are visible dents, scratches, rust or accidents).
-    - damageDescription: string (concise 2-3 sentence summary of the vehicle's condition and any damage found. If clean, state that).
-    - score: number (0-100 integer representing overall image quality and vehicle condition suitability for insurance. 100 is perfect. Below 80 is rejected).
-    `;
-  } else if (type === 'INTERIOR') {
-    prompt = `Analyze this car dashboard image. Return JSON: { "isDashboard": boolean, "mileageVisible": boolean, "score": number, "damageDescription": string }`;
-  } else {
-    prompt = `Analyze this document. Return JSON: { "isReadable": boolean, "documentType": "STNK" | "SIM" | "UNKNOWN", "score": number, "damageDescription": string }`;
-  }
+  const prompt = `
+    You are an expert insurance underwriter AI. Analyze these ${base64Images.length} images for car insurance verification.
+    The images correspond to: ${labels.join(', ')}.
+    
+    Strictly validate:
+    1. Completeness: Are all 8 required angles/docs present? (KTP, STNK Front/Back, Car Front/Back/Left/Right, Dashboard)
+    2. Condition: Are there dents, scratches, or pre-existing damage?
+    3. Legibility: Are documents readable?
+    4. Consistency: Does the car in all photos look like the same vehicle?
+    
+    Return JSON:
+    {
+      "isCar": boolean,
+      "isClear": boolean,
+      "hasDamage": boolean,
+      "damageDescription": string (detailed),
+      "score": number (0-100. <80 implies rejection),
+      "reasons": string[] (list of specific reasons if score < 100, e.g. "Dent on left door", "Blurry STNK")
+    }
+  `;
 
   try {
-    // Construct the payload with multiple image parts
     const parts: any[] = [{ text: prompt }];
     
     base64Images.forEach(img => {
@@ -70,43 +87,72 @@ export const analyzeVehiclePhoto = async (base64Images: string[], type: 'EXTERIO
 
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: [
-        {
-          role: "user",
-          parts: parts
-        }
-      ],
-      config: {
-        responseMimeType: "application/json"
-      }
+      contents: [{ role: "user", parts: parts }],
+      config: { responseMimeType: "application/json" }
     });
 
     const text = response.text;
-    if (!text) {
-      return { success: false, error: "The AI service did not return a response. Please try again." };
-    }
+    if (!text) return { success: false, error: "No response from AI." };
 
     try {
       const data = JSON.parse(text);
       return { success: true, data };
     } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      return { success: false, error: "Received invalid data format from verification service." };
+      return { success: false, error: "Invalid JSON format from AI." };
     }
 
   } catch (error: any) {
-    console.error("Gemini Analysis Failed:", error);
-    
-    let userMessage = "An unexpected error occurred during verification.";
-    
-    if (error.message?.includes('403') || error.message?.includes('API key')) {
-        userMessage = "Verification service authorization failed. Please contact support.";
-    } else if (error.message?.includes('429') || error.message?.includes('quota')) {
-        userMessage = "System is currently busy. Please try again in a few moments.";
-    } else if (error.message?.includes('500')) {
-        userMessage = "Our verification servers are experiencing issues. Please try again later.";
-    }
+    console.error("Analysis Failed:", error);
+    return { success: false, error: "Verification service unavailable." };
+  }
+};
 
-    return { success: false, error: userMessage };
+export const analyzeClaimPhoto = async (base64Image: string): Promise<ClaimAnalysisResult> => {
+  if (!ai) {
+    console.warn("Gemini API Key missing. Returning mock claim data.");
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return {
+      success: true,
+      data: {
+        validImage: true,
+        severity: 'Medium',
+        estimatedCost: 'Rp 2.500.000 - Rp 4.000.000',
+        damagePoints: ['Dent on front bumper', 'Scratch on left fender', 'Headlight misalignment'],
+        recommendation: 'Proceed to Authorized Workshop for panel beating and repainting.'
+      }
+    };
+  }
+
+  const modelId = 'gemini-2.5-flash';
+  const prompt = `
+    Analyze this image of a vehicle for an insurance claim.
+    Identify the damage, estimate severity, and provide a rough repair cost range in IDR (Rupiah).
+    
+    Return JSON:
+    {
+      "validImage": boolean (is this a car with damage?),
+      "severity": "Low" | "Medium" | "High" | "Total Loss",
+      "estimatedCost": string (e.g., "Rp 1.000.000 - Rp 2.000.000"),
+      "damagePoints": string[] (list of visible damages),
+      "recommendation": string (repair advice)
+    }
+  `;
+
+  try {
+    const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: cleanBase64 } }] }],
+      config: { responseMimeType: "application/json" }
+    });
+
+    const text = response.text;
+    if (!text) return { success: false, error: "No response from AI." };
+    
+    const data = JSON.parse(text);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Claim Analysis Failed:", error);
+    return { success: false, error: "AI Service Unavailable" };
   }
 };

@@ -1,5 +1,6 @@
 
-import { CarModelData } from './types';
+import { CarModelData, Provider } from './types';
+import { Shield, Zap, Star } from 'lucide-react';
 
 // Mocking a subset of the massive OCR data for demonstration
 export const CAR_DATABASE: CarModelData[] = [
@@ -114,6 +115,42 @@ export const EXPANSION_RATES = {
   PA_PASSENGER: 0.1
 };
 
+export const AUTHORIZED_WORKSHOP_RATE = 0.2; // 0.2%
+export const STAMP_DUTY = 10000;
+
+export const INSURANCE_PROVIDERS: Provider[] = [
+  {
+    id: 'zurich',
+    name: 'Zurich',
+    logo: Shield,
+    adminFee: 55000,
+    rating: 4.9,
+    features: ['Authorized Workshops', '24/7 Towing', 'Free Pickup']
+  },
+  {
+    id: 'tugu',
+    name: 'Tugu Insurance',
+    logo: Zap,
+    adminFee: 50000,
+    rating: 4.7,
+    features: ['Mobile Claim App', 'Emergency Roadside', 'Replacement Car']
+  },
+  {
+    id: 'intra',
+    name: 'Intra Asia',
+    logo: Star,
+    adminFee: 25000,
+    rating: 4.5,
+    features: ['Competitive Rates', 'Fast Approval', 'National Network']
+  }
+];
+
+export const PROMO_CODES = {
+  'SUREPATH25': 0.25,
+  'WELCOME10': 0.10,
+  'AI5': 0.05
+};
+
 export const LOCATIONS = {
   1: "Sumatera & Surroundings",
   2: "DKI Jakarta, West Java, Banten",
@@ -122,46 +159,89 @@ export const LOCATIONS = {
 
 export const TPL_OPTIONS = [0, 10, 20, 30, 40, 50];
 
-// --- TRAVEL INSURANCE CONSTANTS ---
+// --- TRAVEL INSURANCE CONSTANTS (FROM PDF) ---
 
-// Based on PDF Page 10 (Premi Internasional) & Page 13 (Premi Domestik)
-// Using 'Individu' rates for calculation simplicity
-export const TRAVEL_RATES = {
+export const TRAVEL_PRICING = {
   INTERNATIONAL: {
-    '1-4': { platinum: 224000, gold: 208000, asia: 160000 },
-    '5-6': { platinum: 304000, gold: 272000, asia: 256000 },
-    '7-8': { platinum: 416000, gold: 368000, asia: 304000 },
-    '9-10': { platinum: 480000, gold: 432000, asia: 416000 },
-    '11-15': { platinum: 544000, gold: 512000, asia: 464000 },
-    '16-20': { platinum: 672000, gold: 592000, asia: 560000 },
-    '21-25': { platinum: 752000, gold: 672000, asia: 624000 },
-    '26-30': { platinum: 768000, gold: 720000, asia: 672000 },
+    INDIVIDUAL: [
+      { maxDays: 4, rates: { PLATINUM: 224000, GOLD: 208000, ASIA_EXTRA: 160000 } },
+      { maxDays: 6, rates: { PLATINUM: 304000, GOLD: 272000, ASIA_EXTRA: 256000 } },
+      { maxDays: 8, rates: { PLATINUM: 416000, GOLD: 368000, ASIA_EXTRA: 304000 } },
+      { maxDays: 10, rates: { PLATINUM: 480000, GOLD: 432000, ASIA_EXTRA: 416000 } },
+      { maxDays: 15, rates: { PLATINUM: 544000, GOLD: 512000, ASIA_EXTRA: 464000 } },
+      { maxDays: 20, rates: { PLATINUM: 672000, GOLD: 592000, ASIA_EXTRA: 560000 } },
+      { maxDays: 25, rates: { PLATINUM: 752000, GOLD: 672000, ASIA_EXTRA: 624000 } },
+      { maxDays: 30, rates: { PLATINUM: 768000, GOLD: 720000, ASIA_EXTRA: 672000 } },
+      { maxDays: 365, rates: { PLATINUM: 1584000, GOLD: 1392000, ASIA_EXTRA: 0 } }, // Annual
+    ],
+    FAMILY: [
+      { maxDays: 4, rates: { PLATINUM: 320000, GOLD: 272000, ASIA_EXTRA: 256000 } },
+      { maxDays: 6, rates: { PLATINUM: 448000, GOLD: 384000, ASIA_EXTRA: 352000 } },
+      { maxDays: 8, rates: { PLATINUM: 592000, GOLD: 528000, ASIA_EXTRA: 432000 } },
+      { maxDays: 10, rates: { PLATINUM: 720000, GOLD: 656000, ASIA_EXTRA: 608000 } },
+      { maxDays: 15, rates: { PLATINUM: 848000, GOLD: 800000, ASIA_EXTRA: 720000 } },
+      { maxDays: 20, rates: { PLATINUM: 1008000, GOLD: 880000, ASIA_EXTRA: 832000 } },
+      { maxDays: 25, rates: { PLATINUM: 1104000, GOLD: 1040000, ASIA_EXTRA: 992000 } },
+      { maxDays: 30, rates: { PLATINUM: 1184000, GOLD: 1072000, ASIA_EXTRA: 1040000 } },
+      { maxDays: 365, rates: { PLATINUM: 2944000, GOLD: 2512000, ASIA_EXTRA: 0 } }, // Annual
+    ]
   },
   DOMESTIC: {
-    '1-4': { garuda1: 85000, garuda2: 72000 },
-    '5-6': { garuda1: 90000, garuda2: 79000 },
-    '7-8': { garuda1: 99000, garuda2: 91000 },
-    '9-10': { garuda1: 125000, garuda2: 99000 },
-    '11-15': { garuda1: 130000, garuda2: 114000 },
-    '16-20': { garuda1: 148000, garuda2: 119000 },
-    '21-25': { garuda1: 155000, garuda2: 122000 },
-    '26-30': { garuda1: 165000, garuda2: 128000 },
+    INDIVIDUAL: [
+      { maxDays: 4, rates: { GARUDA_1: 85000, GARUDA_2: 72000 } },
+      { maxDays: 6, rates: { GARUDA_1: 90000, GARUDA_2: 79000 } },
+      { maxDays: 8, rates: { GARUDA_1: 99000, GARUDA_2: 91000 } },
+      { maxDays: 10, rates: { GARUDA_1: 125000, GARUDA_2: 99000 } },
+      { maxDays: 15, rates: { GARUDA_1: 130000, GARUDA_2: 114000 } },
+      { maxDays: 20, rates: { GARUDA_1: 148000, GARUDA_2: 119000 } },
+      { maxDays: 25, rates: { GARUDA_1: 155000, GARUDA_2: 122000 } },
+      { maxDays: 30, rates: { GARUDA_1: 165000, GARUDA_2: 128000 } },
+    ]
+  },
+  INBOUND: {
+    INDIVIDUAL: [
+      { maxDays: 4, rates: { GARUDA_1: 70000, GARUDA_2: 59000 } },
+      { maxDays: 6, rates: { GARUDA_1: 75000, GARUDA_2: 65000 } },
+      { maxDays: 8, rates: { GARUDA_1: 83000, GARUDA_2: 75000 } },
+      { maxDays: 10, rates: { GARUDA_1: 105000, GARUDA_2: 82000 } },
+      { maxDays: 15, rates: { GARUDA_1: 109000, GARUDA_2: 95000 } },
+      { maxDays: 20, rates: { GARUDA_1: 124000, GARUDA_2: 99000 } },
+      { maxDays: 25, rates: { GARUDA_1: 130000, GARUDA_2: 102000 } },
+      { maxDays: 31, rates: { GARUDA_1: 139000, GARUDA_2: 107000 } },
+    ]
   }
 };
 
-// Benefits highlights from PDF Page 7 & 12
 export const TRAVEL_BENEFITS = {
-  PLATINUM: { death: '1.6 M', medical: '960 Juta', features: ['Visa Schengen', 'Covid-19 Cover', 'No Excess'] },
-  GOLD: { death: '960 Juta', medical: '640 Juta', features: ['Worldwide', 'Baggage Delay'] },
-  ASIA: { death: '240 Juta', medical: '160 Juta', features: ['Asia Only', 'Flight Delay'] },
-  GARUDA1: { death: '100 Juta', medical: '75 Juta', features: ['Domestic', 'Trip Cancellation'] },
-  GARUDA2: { death: '50 Juta', medical: '25 Juta', features: ['Domestic', 'Baggage Loss'] },
+  PLATINUM: { 
+    death: '1.6 Miliar', 
+    medical: '960 Juta', 
+    features: ['Visa Schengen Approved', 'Covid-19 Cover', 'Worldwide Coverage', 'Trip Cancellation up to 96M', 'Baggage Loss 32M'] 
+  },
+  GOLD: { 
+    death: '960 Juta', 
+    medical: '640 Juta', 
+    features: ['Worldwide Coverage', 'Trip Cancellation up to 24M', 'Baggage Loss 24M', 'Flight Delay 4M'] 
+  },
+  ASIA_EXTRA: { 
+    death: '240 Juta', 
+    medical: '160 Juta', 
+    features: ['Asia Only Coverage', 'Trip Cancellation up to 16M', 'Baggage Loss 16M', 'Flight Delay 1.6M'] 
+  },
+  GARUDA_1: { 
+    death: '100 Juta', 
+    medical: '75 Juta', 
+    features: ['Domestic Coverage', 'Trip Cancellation 5M', 'Baggage Loss 2.5M', 'Flight Delay 500k'] 
+  },
+  GARUDA_2: { 
+    death: '50 Juta', 
+    medical: '25 Juta', 
+    features: ['Domestic Coverage', 'Trip Cancellation 2.5M', 'Baggage Loss 2M', 'Flight Delay 250k'] 
+  },
 };
 
 // --- PERSONAL ACCIDENT CONSTANTS ---
 
-// Based on PDF Page 4 (Umum) and Page 5 (Siswa)
-// Map Plan Codes A-J to Premium and Death Benefit
 export const PA_PLANS = {
   GENERAL: [
     { code: 'A', premium: 25000, benefit: '6 Juta' },
@@ -188,9 +268,35 @@ export const PA_PLANS = {
   ]
 };
 
-// --- PET INSURANCE CONSTANTS (Mocked) ---
-export const PET_PLANS = [
-  { name: 'Basic', price: 500000, medical: '5 Juta', death: '2 Juta', features: ['Accident Only'] },
-  { name: 'Premium', price: 1200000, medical: '20 Juta', death: '5 Juta', features: ['Accident & Illness', 'Third Party Liability'] },
-  { name: 'Gold', price: 2500000, medical: '50 Juta', death: '10 Juta', features: ['Full Coverage', 'Theft', 'Overseas Travel'] },
+// --- PET INSURANCE CONSTANTS ---
+
+export const PET_BREEDS = {
+  DOG: ['Golden Retriever', 'Bulldog', 'Poodle', 'Beagle', 'German Shepherd', 'Chihuahua', 'Mixed Breed', 'Other'],
+  CAT: ['Persian', 'Siamese', 'Maine Coon', 'Bengal', 'Ragdoll', 'Sphynx', 'Domestic Short Hair', 'Other']
+};
+
+export const PET_COVERAGE_PLANS = [
+  { 
+    id: 'LITE', 
+    name: 'Lite', 
+    price: 75000, 
+    benefits: { medical: '5.000.000', death: '2.000.000', thirdParty: 'No' },
+    features: ['Accident Only', 'Exam Fees', 'Reimbursement']
+  },
+  { 
+    id: 'COMFORT', 
+    name: 'Comfort', 
+    price: 150000, 
+    benefits: { medical: '20.000.000', death: '5.000.000', thirdParty: '10.000.000' },
+    features: ['Accident & Illness', 'Surgery', 'Third Party Liability', 'Cashless @ Partners']
+  },
+  { 
+    id: 'ULTIMATE', 
+    name: 'Ultimate', 
+    price: 300000, 
+    benefits: { medical: '50.000.000', death: '10.000.000', thirdParty: '25.000.000' },
+    features: ['All Risk', 'Theft/Lost', 'Boarding Fees', 'Overseas Cover', 'Burial Costs']
+  }
 ];
+
+export const PET_PLANS = PET_COVERAGE_PLANS; // alias for backward compatibility

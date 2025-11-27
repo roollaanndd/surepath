@@ -67,51 +67,47 @@ const Footer = ({ lang, setPage }: { lang: Language, setPage: (p: string) => voi
   ];
 
   return (
-    <footer className="relative bg-gray-900 dark:bg-black text-white pt-24 pb-12 overflow-hidden animate-fade-in">
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none"></div>
-      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
-      <div className="absolute top-0 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-slow animation-delay-2000"></div>
+    <footer className="relative bg-black text-white pt-20 pb-10 overflow-hidden animate-fade-in">
+      {/* Abstract Background Shapes */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[100px] animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[100px] animate-pulse-slow animation-delay-2000"></div>
+        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-purple-500/10 rounded-full blur-[80px] animate-float"></div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
-          {/* Brand Column */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage('home')}>
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 border-b border-white/10 pb-16">
+          {/* Brand & Vision */}
+          <div className="md:col-span-4 space-y-6">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('home')}>
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform">
                 <span className="text-white font-bold text-2xl">S</span>
               </div>
-              <span className="font-black text-3xl tracking-tight">Surepath</span>
+              <span className="font-black text-3xl tracking-tighter group-hover:text-primary-400 transition-colors">Surepath</span>
             </div>
-            <p className="text-gray-400 leading-relaxed">
-              {lang === Language.EN
-                ? 'Reinventing insurance with Artificial Intelligence. Simple, transparent, and instant protection for everyone.'
-                : 'Menciptakan ulang asuransi dengan Kecerdasan Buatan. Perlindungan simpel, transparan, dan instan untuk semua orang.'}
+            <p className="text-gray-400 text-lg leading-relaxed">
+              {lang === Language.EN 
+                ? 'Pioneering the future of insurance with AI. We make protection simple, transparent, and instantly accessible for everyone.'
+                : 'Memelopori masa depan asuransi dengan AI. Kami membuat perlindungan menjadi sederhana, transparan, dan dapat diakses secara instan untuk semua orang.'}
             </p>
-            <div className="flex gap-4">
-              {/* Social Icons */}
-              {[
-                { Icon: Twitter, label: 'Twitter' },
-                { Icon: Linkedin, label: 'LinkedIn' },
-                { Icon: Instagram, label: 'Instagram' },
-                { Icon: Facebook, label: 'Facebook' }
-              ].map((social, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary-500 hover:text-white flex items-center justify-center transition-all duration-300 hover:-translate-y-1 border border-white/5">
-                  <social.Icon size={18} />
+            <div className="flex gap-4 pt-2">
+              {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
+                <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:scale-110 hover:text-primary-400 border border-white/5">
+                  <Icon size={18} />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Links Columns */}
-          <div className="lg:col-span-2 lg:col-start-6">
-            <h4 className="font-bold text-lg mb-6 text-white">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
-            <ul className="space-y-4">
+          {/* Navigation Links */}
+          <div className="md:col-span-2 md:col-start-6 space-y-6">
+            <h4 className="font-bold text-lg text-white/90 uppercase tracking-wider text-xs">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
+            <ul className="space-y-3">
               {footerLinks.map(item => (
                 <li key={item.action}>
-                  <button
+                  <button 
                     onClick={() => setPage(item.action)}
-                    className="text-gray-400 hover:text-primary-400 transition-colors text-sm text-left w-full"
+                    className="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-300 text-sm font-medium"
                   >
                     {item.label}
                   </button>
@@ -120,14 +116,14 @@ const Footer = ({ lang, setPage }: { lang: Language, setPage: (p: string) => voi
             </ul>
           </div>
 
-          <div className="lg:col-span-2">
-            <h4 className="font-bold text-lg mb-6 text-white">{lang === Language.EN ? 'Products' : 'Produk'}</h4>
-            <ul className="space-y-4">
+          <div className="md:col-span-2 space-y-6">
+            <h4 className="font-bold text-lg text-white/90 uppercase tracking-wider text-xs">{lang === Language.EN ? 'Products' : 'Produk'}</h4>
+            <ul className="space-y-3">
               {productLinks.map(item => (
                 <li key={item.action}>
                   <button 
                     onClick={() => setPage(item.action)}
-                    className="text-gray-400 hover:text-primary-400 transition-colors text-sm text-left w-full"
+                    className="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-300 text-sm font-medium"
                   >
                     {item.label}
                   </button>
@@ -136,31 +132,34 @@ const Footer = ({ lang, setPage }: { lang: Language, setPage: (p: string) => voi
             </ul>
           </div>
 
-          {/* Newsletter Card */}
-          <div className="lg:col-span-4">
-            <div className="bg-gradient-to-br from-white/5 to-white/0 border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
-              <h4 className="font-bold text-xl mb-2">{lang === Language.EN ? 'Stay Protected' : 'Tetap Terlindungi'}</h4>
-              <p className="text-gray-400 text-sm mb-6">{lang === Language.EN ? 'Join 10,000+ others getting the latest insurance tips.' : 'Bergabung dengan 10.000+ orang lainnya mendapatkan tips asuransi terbaru.'}</p>
-              <div className="relative">
-                <input
-                  type="email"
-                  placeholder={lang === Language.EN ? "Enter your email" : "Masukkan email Anda"}
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
-                />
-                <button className="absolute right-2 top-2 bottom-2 bg-primary-500 hover:bg-primary-400 text-white px-4 rounded-lg text-sm font-bold transition-colors">
-                  Go
-                </button>
-              </div>
-            </div>
+          {/* Newsletter Section */}
+          <div className="md:col-span-4 bg-white/5 rounded-3xl p-8 border border-white/10 backdrop-blur-sm hover:border-primary-500/30 transition-colors">
+            <h4 className="font-bold text-xl mb-3">{lang === Language.EN ? 'Stay Ahead' : 'Terus Terupdate'}</h4>
+            <p className="text-gray-400 text-sm mb-6">
+              {lang === Language.EN 
+                ? 'Join our newsletter for the latest AI insurance trends and exclusive offers.'
+                : 'Bergabung dengan newsletter kami untuk tren asuransi AI terbaru dan penawaran eksklusif.'}
+            </p>
+            <form className="relative group">
+              <input 
+                type="email" 
+                placeholder={lang === Language.EN ? "Your email address" : "Alamat email Anda"}
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all pr-12"
+              />
+              <button className="absolute right-2 top-2 bottom-2 w-10 bg-primary-500 hover:bg-primary-400 text-white rounded-lg flex items-center justify-center transition-colors shadow-lg shadow-primary-500/20">
+                <ArrowRight size={18} />
+              </button>
+            </form>
           </div>
         </div>
 
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-gray-500 text-sm">© 2025 Surepath Insurtech. All rights reserved.</p>
-          <div className="flex gap-8 text-sm text-gray-500">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <span className="flex items-center gap-2"><Shield size={14} className="text-primary-500"/> OJK-123/2025</span>
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-500">
+          <p>© 2025 Surepath Insurtech. All rights reserved.</p>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Cookies</a>
+            <span className="flex items-center gap-2 text-gray-600"><Shield size={14} /> OJK Reg.</span>
           </div>
         </div>
       </div>

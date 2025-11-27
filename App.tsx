@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
-import { Language, CarModelData, InsuranceType, VehicleState, UserState, TravelState, PAState, PetState, Provider, TravelRegion, TravelParticipantType, TravelPlanType, TravelerDetails } from './types';
-import { CAR_DATABASE, getOJKRate, LOCATIONS, EXPANSION_RATES, TPL_OPTIONS, TRAVEL_PRICING, TRAVEL_BENEFITS, PA_PLANS, PET_PLANS, PET_BREEDS, INSURANCE_PROVIDERS, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PROMO_CODES } from './constants';
+import { Language, InsuranceType, VehicleState, UserState, TravelState, PAState, PetState, TravelRegion, TravelPlanType } from './types';
+import { CAR_DATABASE, getOJKRate, EXPANSION_RATES, TPL_OPTIONS, TRAVEL_PRICING, TRAVEL_BENEFITS, PA_PLANS, PET_PLANS, PET_BREEDS, INSURANCE_PROVIDERS, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PROMO_CODES } from './constants';
 import { analyzeVehiclePhoto, analyzeClaimPhoto } from './services/geminiService';
-import { Camera, Upload, Check, Shield, Zap, Truck, Anchor, Home, Car, Heart, Briefcase, ChevronRight, Search, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, Wallet, Navigation, XCircle, RefreshCw, AlertTriangle, X, FileText, PenTool, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users, Lightbulb, Target, Globe2, Hammer, Scale, Cpu, Tractor, Newspaper, TrendingUp, ArrowRight, Lock, CreditCard as CardIcon, Calendar, Users2, ScanFace, ImagePlus, CloudRain, Activity, Wrench, Ticket, LayoutDashboard, FileCheck, PieChart, Settings, LogOut, Bone } from 'lucide-react';
+import { Camera, Shield, Zap, Anchor, Home, Car, ChevronRight, MapPin, ChevronLeft, CreditCard, Info, AlertCircle, Smartphone, Bell, User, X, FileText, Star, Mail, CheckCircle2, Plane, GraduationCap, Stethoscope, Dog, Users, Globe2, Hammer, Scale, Cpu, Tractor, ArrowRight, Lock, CreditCard as CardIcon, Users2, ScanFace, CloudRain, Activity, Wrench, Ticket, LayoutDashboard, FileCheck, PieChart, Settings, LogOut, Bone, Facebook, Linkedin, Instagram, Twitter, AlertTriangle, Check, RefreshCw, Heart, Briefcase } from 'lucide-react';
 
 // --- HELPER COMPONENTS ---
 
@@ -50,6 +50,123 @@ const FloatingLabelInput = ({ label, value, onChange, type = "text", maxLength, 
   );
 };
 
+const Footer = ({ lang, setPage }: { lang: Language, setPage: (p: string) => void }) => {
+  const footerLinks = [
+    { label: lang === Language.EN ? 'About Us' : 'Tentang Kami', action: 'about' },
+    { label: lang === Language.EN ? 'Careers' : 'Karir', action: 'careers' },
+    { label: lang === Language.EN ? 'Newsroom' : 'Berita', action: 'newsroom' },
+    { label: lang === Language.EN ? 'Contact' : 'Hubungi Kami', action: 'contact' },
+  ];
+
+  const productLinks = [
+    { label: lang === Language.EN ? 'Car Insurance' : 'Asuransi Mobil', action: 'car-flow' },
+    { label: lang === Language.EN ? 'Travel Insurance' : 'Asuransi Travel', action: 'travel-flow' },
+    { label: lang === Language.EN ? 'Personal Accident' : 'Kecelakaan Diri', action: 'pa-flow' },
+    { label: lang === Language.EN ? 'Pet Insurance' : 'Asuransi Hewan', action: 'pet-flow' },
+    { label: lang === Language.EN ? 'Enterprise' : 'Korporat', action: 'products' },
+  ];
+
+  return (
+    <footer className="relative bg-black text-white pt-20 pb-10 overflow-hidden animate-fade-in">
+      {/* Abstract Background Shapes */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/5 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] animate-pulse-slow animation-delay-2000"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
+          {/* Brand & Vision */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('home')}>
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-105 transition-transform">
+                <span className="text-white font-bold text-xl">S</span>
+              </div>
+              <span className="font-bold text-2xl tracking-tight group-hover:text-primary-400 transition-colors">Surepath</span>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
+              {lang === Language.EN 
+                ? 'Pioneering the future of insurance with AI. We make protection simple, transparent, and instantly accessible for everyone.'
+                : 'Memelopori masa depan asuransi dengan AI. Kami membuat perlindungan menjadi sederhana, transparan, dan dapat diakses secara instan untuk semua orang.'}
+            </p>
+            <div className="flex gap-3 pt-2">
+              {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
+                <a key={i} href="#" className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:scale-110 hover:text-primary-400 border border-white/5">
+                  <Icon size={16} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="lg:col-span-2 lg:col-start-6">
+            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
+            <ul className="space-y-3">
+              {footerLinks.map(item => (
+                <li key={item.action}>
+                  <button 
+                    onClick={() => setPage(item.action)}
+                    className="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-300 text-sm"
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-xs">{lang === Language.EN ? 'Products' : 'Produk'}</h4>
+            <ul className="space-y-3">
+              {productLinks.map(item => (
+                <li key={item.action}>
+                  <button 
+                    onClick={() => setPage(item.action)}
+                    className="text-gray-400 hover:text-white hover:translate-x-1 transition-all duration-300 text-sm"
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Newsletter Section */}
+          <div className="lg:col-span-4 md:col-span-2">
+            <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm hover:border-primary-500/30 transition-colors">
+              <h4 className="font-bold text-lg mb-2">{lang === Language.EN ? 'Stay Ahead' : 'Terus Terupdate'}</h4>
+              <p className="text-gray-400 text-xs mb-4">
+                {lang === Language.EN 
+                  ? 'Join our newsletter for the latest AI insurance trends.'
+                  : 'Bergabung dengan newsletter kami untuk tren asuransi AI terbaru.'}
+              </p>
+              <form className="relative group flex gap-2">
+                <input 
+                  type="email" 
+                  placeholder={lang === Language.EN ? "Email address" : "Alamat email"}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+                />
+                <button className="bg-primary-500 hover:bg-primary-400 text-white px-4 rounded-lg flex items-center justify-center transition-colors shadow-lg shadow-primary-500/20">
+                  <ArrowRight size={18} />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+          <p>© 2025 Surepath Insurtech. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <span className="flex items-center gap-1"><Shield size={12} className="text-primary-500"/> OJK Reg.</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) => void }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [
@@ -59,7 +176,8 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
       cta: lang === Language.EN ? "Try Demo" : "Coba Demo",
       action: 'claim',
       color: "from-emerald-500 to-teal-600",
-      icon: Zap
+      icon: Zap,
+      image: "https://images.unsplash.com/photo-1625047509168-a7026f36de04?q=80&w=800&auto=format&fit=crop"
     },
     {
       title: lang === Language.EN ? "Comprehensive Travel Protection" : "Perlindungan Perjalanan Lengkap",
@@ -67,7 +185,8 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
       cta: lang === Language.EN ? "Explore Plans" : "Lihat Paket",
       action: 'travel-flow',
       color: "from-blue-500 to-indigo-600",
-      icon: Plane
+      icon: Plane,
+      image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=800&auto=format&fit=crop"
     },
     {
       title: lang === Language.EN ? "Vehicle Verification" : "Verifikasi Kendaraan Pintar",
@@ -75,7 +194,8 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
       cta: lang === Language.EN ? "Get Quote" : "Dapatkan Penawaran",
       action: 'car-flow',
       color: "from-purple-500 to-pink-600",
-      icon: Camera
+      icon: Camera,
+      image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=800&auto=format&fit=crop"
     }
   ];
 
@@ -99,7 +219,7 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
           
           {/* Content Grid */}
           <div className="relative h-full max-w-7xl mx-auto px-8 md:px-12 grid grid-cols-1 md:grid-cols-2 items-center">
-            <div className={`space-y-6 ${index === currentSlide ? 'animate-fade-in' : ''}`}>
+            <div className={`space-y-6 ${index === currentSlide ? 'animate-fade-in' : ''} z-10`}>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
                 <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
                 <span className="text-xs font-medium text-white uppercase tracking-wider">Featured</span>
@@ -119,17 +239,24 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
             </div>
 
             {/* Visual Graphic Right Side */}
-            <div className="hidden md:flex justify-end relative">
-              <div className={`relative w-64 h-64 bg-gradient-to-br ${slide.color} rounded-[2rem] shadow-2xl flex items-center justify-center transform rotate-6 group transition-transform hover:rotate-0 duration-500 border border-white/10 backdrop-blur-xl ${index === currentSlide ? 'animate-float' : ''}`}>
-                <div className="absolute inset-0 bg-white/10 rounded-[2rem]"></div>
-                <slide.icon size={80} className="text-white drop-shadow-lg" />
+            <div className="hidden md:flex justify-end relative h-full items-center">
+              <div className={`relative w-[280px] h-[220px] rounded-[2rem] shadow-2xl transform rotate-3 group transition-transform hover:rotate-0 duration-500 overflow-hidden border-4 border-white/10 ${index === currentSlide ? 'animate-float' : ''}`}>
+                <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover" />
+                <div className={`absolute inset-0 bg-gradient-to-tr ${slide.color} opacity-60 mix-blend-multiply`}></div>
+                
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg">
+                        <slide.icon size={40} className="text-white drop-shadow-md" />
+                    </div>
+                </div>
                 
                 {/* Floating Elements */}
-                <div className="absolute -top-6 -right-6 w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 animate-pulse-slow animation-delay-2000">
-                  <Shield size={24} className="text-white" />
+                <div className="absolute -top-4 -right-4 w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 animate-pulse-slow animation-delay-2000">
+                  <Shield size={20} className="text-white" />
                 </div>
-                <div className="absolute -bottom-4 -left-8 w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 animate-pulse-slow">
-                  <Star size={32} className="text-yellow-300 fill-yellow-300" />
+                <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                  <span className="text-xs font-bold text-white">Live</span>
                 </div>
               </div>
             </div>
@@ -138,7 +265,7 @@ const HeroCarousel = ({ lang, setPage }: { lang: Language, setPage: (p:string) =
       ))}
 
       {/* Navigation Dots */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3">
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
         {slides.map((_, i) => (
           <button 
             key={i}
@@ -181,17 +308,17 @@ const ProductsPage = ({ setPage, lang }: { setPage: (p: string) => void, lang: L
     <h3 className="text-xl font-bold mb-6 text-gray-500 uppercase tracking-wider text-sm">{lang === Language.EN ? 'Enterprise Solutions' : 'Solusi Bisnis'}</h3>
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[
-        { title: 'Surety Bond', icon: FileText, color: 'bg-indigo-500' },
-        { title: 'Marine Cargo', icon: Anchor, color: 'bg-blue-600' },
-        { title: 'Marine Hull', icon: ShipIcon, color: 'bg-cyan-500' },
-        { title: 'Property', icon: Home, color: 'bg-orange-500' },
-        { title: 'Group Health', icon: Users, color: 'bg-rose-500' },
-        { title: 'Engineering', icon: Hammer, color: 'bg-slate-500' },
-        { title: 'Liability', icon: Scale, color: 'bg-emerald-600' },
-        { title: 'Cyber Security', icon: Cpu, color: 'bg-violet-500' },
-        { title: 'Heavy Equipment', icon: Tractor, color: 'bg-amber-600' },
+        { id: 'surety', title: 'Surety Bond', icon: FileText, color: 'bg-indigo-500' },
+        { id: 'cargo', title: 'Marine Cargo', icon: Anchor, color: 'bg-blue-600' },
+        { id: 'hull', title: 'Marine Hull', icon: ShipIcon, color: 'bg-cyan-500' },
+        { id: 'property', title: 'Property', icon: Home, color: 'bg-orange-500' },
+        { id: 'health', title: 'Group Health', icon: Users, color: 'bg-rose-500' },
+        { id: 'engineering', title: 'Engineering', icon: Hammer, color: 'bg-slate-500' },
+        { id: 'liability', title: 'Liability', icon: Scale, color: 'bg-emerald-600' },
+        { id: 'cyber', title: 'Cyber Security', icon: Cpu, color: 'bg-violet-500' },
+        { id: 'heavy', title: 'Heavy Equipment', icon: Tractor, color: 'bg-amber-600' },
       ].map((p, i) => (
-        <div key={i} className="cursor-pointer group relative overflow-hidden rounded-3xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-6 hover:border-primary-500 transition-all">
+        <div key={p.id} className="cursor-pointer group relative overflow-hidden rounded-3xl bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-6 hover:border-primary-500 transition-all">
           <div className={`w-12 h-12 ${p.color} bg-opacity-10 rounded-xl flex items-center justify-center mb-4 text-${p.color.replace('bg-', '')}`}>
             <p.icon size={24} className={p.color.replace('bg-', 'text-')} />
           </div>
@@ -732,11 +859,33 @@ const PetInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
           </div>
         </div>
       </div>
-      <button onClick={() => setStep(5)} className="w-full btn-luxury">{lang === Language.EN ? 'Pay Now' : 'Bayar Sekarang'}</button>
+      <button onClick={() => setStep(5)} className="w-full btn-luxury">{lang === Language.EN ? 'Proceed to Payment' : 'Lanjut ke Pembayaran'}</button>
     </div>
   );
 
   const renderStep5 = () => (
+    <div className="space-y-6 animate-fade-in">
+      <h3 className="text-xl font-bold mb-6">{lang === Language.EN ? 'Select Payment Method' : 'Pilih Pembayaran'}</h3>
+      {[
+        { id: 'va', label: 'Virtual Account', icon: CreditCard },
+        { id: 'qris', label: 'QRIS', icon: Smartphone },
+        { id: 'cc', label: 'Credit Card', icon: CardIcon }
+      ].map(m => (
+        <div key={m.id} onClick={() => setStep(6)} className="p-6 border-2 border-gray-200 dark:border-gray-800 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-primary-500 hover:shadow-lg transition-all bg-white dark:bg-white/5">
+          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-primary-500">
+            <m.icon size={24} />
+          </div>
+          <div>
+            <h4 className="font-bold">{m.label}</h4>
+            <p className="text-xs text-gray-500">{lang === Language.EN ? 'Instant Confirmation' : 'Konfirmasi Instan'}</p>
+          </div>
+          <ChevronRight className="ml-auto text-gray-400" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderStep6 = () => (
     <div className="animate-pop-in text-center py-12">
       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/40">
         <Bone size={48} className="text-white" />
@@ -749,16 +898,16 @@ const PetInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
-      {step < 5 && (
+      {step < 6 && (
         <div className="mb-8 flex items-center gap-4">
           <button onClick={() => step > 1 ? setStep(step-1) : setPage('products')} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronLeft/></button>
           <div className="flex-1">
             <h2 className="text-2xl font-bold">{lang === Language.EN ? 'Pet Insurance' : 'Asuransi Hewan'}</h2>
             <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 mt-2 rounded-full overflow-hidden">
-              <div className="bg-primary-500 h-full transition-all duration-500" style={{ width: `${(step/5)*100}%` }}></div>
+              <div className="bg-primary-500 h-full transition-all duration-500" style={{ width: `${(step/6)*100}%` }}></div>
             </div>
           </div>
-          <span className="text-sm font-bold text-gray-400">{step}/5</span>
+          <span className="text-sm font-bold text-gray-400">{step}/6</span>
         </div>
       )}
       {step === 1 && renderStep1()}
@@ -766,6 +915,7 @@ const PetInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
       {step === 3 && renderStep3()}
       {step === 4 && renderStep4()}
       {step === 5 && renderStep5()}
+      {step === 6 && renderStep6()}
     </div>
   );
 };
@@ -776,12 +926,15 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => {
   const [image, setImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [claimDetails, setClaimDetails] = useState({ date: '', location: '', description: '' });
 
   const handleUpload = (file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => setImage(reader.result as string);
     reader.readAsDataURL(file);
     setResult(null);
+    setSubmitted(false);
   };
 
   const analyze = async () => {
@@ -791,6 +944,25 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => {
     setResult(res.data);
     setAnalyzing(false);
   };
+
+  const handleSubmitClaim = () => {
+    if(claimDetails.date && claimDetails.location) {
+      setSubmitted(true);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 px-4 animate-pop-in text-center">
+        <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/40">
+          <CheckCircle2 size={48} className="text-white" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">{lang === Language.EN ? 'Claim Submitted!' : 'Klaim Diajukan!'}</h2>
+        <p className="text-gray-500 mb-8">{lang === Language.EN ? 'Our team will review your claim and update you shortly.' : 'Tim kami akan meninjau klaim Anda dan segera memberi kabar.'}</p>
+        <button onClick={() => { setImage(null); setResult(null); setSubmitted(false); setClaimDetails({date:'', location:'', description:''}); }} className="btn-luxury px-12">{lang === Language.EN ? 'File Another Claim' : 'Ajukan Klaim Lain'}</button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 animate-fade-in">
@@ -813,7 +985,9 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => {
         <div className="space-y-6">
           <div className="rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-800 relative">
             <img src={image} alt="Claim" className="w-full h-64 object-cover" />
-            <button onClick={() => { setImage(null); setResult(null); }} className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"><X size={20} /></button>
+            {!result && (
+                <button onClick={() => { setImage(null); setResult(null); }} className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70"><X size={20} /></button>
+            )}
           </div>
 
           {!result ? (
@@ -848,7 +1022,24 @@ const ClaimWithAI = ({ lang }: { lang: Language }) => {
                 <strong>Recommendation:</strong> {result.recommendation}
               </div>
 
-              <button className="w-full btn-luxury">{lang === Language.EN ? 'Proceed to File Claim' : 'Lanjutkan Klaim'}</button>
+              <div className="border-t border-dashed border-gray-200 dark:border-gray-700 pt-6 space-y-4">
+                <h4 className="font-bold">{lang === Language.EN ? 'Incident Details' : 'Detail Kejadian'}</h4>
+                <FloatingLabelInput label={lang === Language.EN ? "Date of Incident" : "Tanggal Kejadian"} type="date" value={claimDetails.date} onChange={(e:any) => setClaimDetails({...claimDetails, date: e.target.value})} />
+                <FloatingLabelInput label={lang === Language.EN ? "Location" : "Lokasi"} value={claimDetails.location} onChange={(e:any) => setClaimDetails({...claimDetails, location: e.target.value})} />
+                <textarea 
+                    placeholder={lang === Language.EN ? "Brief Description..." : "Deskripsi Singkat..."} 
+                    className="w-full bg-transparent border-2 border-gray-200 dark:border-gray-800 rounded-xl p-4 outline-none focus:border-primary-500 h-24"
+                    value={claimDetails.description}
+                    onChange={(e) => setClaimDetails({...claimDetails, description: e.target.value})}
+                />
+                <button 
+                    onClick={handleSubmitClaim} 
+                    disabled={!claimDetails.date || !claimDetails.location}
+                    className="w-full btn-luxury"
+                >
+                    {lang === Language.EN ? 'Submit Claim' : 'Ajukan Klaim'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -995,12 +1186,13 @@ const AboutPage = ({ lang }: { lang: Language }) => (
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
       <div className="absolute top-20 right-20 w-72 h-72 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none"></div>
     </div>
     <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
       <h2 className="text-4xl font-bold mb-6">{lang === Language.EN ? 'About Surepath' : 'Tentang Surepath'}</h2>
       <p className="text-xl text-gray-500 mb-12 leading-relaxed">
         {lang === Language.EN 
-          ? 'We are reinventing insurance with Artificial Intelligence. Our mission is to make protection simple, transparent, and instant for everyone.'
+          ? 'We are reinventing insurance with Artificial Intelligence. Our mission is to make protection simple, transparent, and instantly accessible for everyone.'
           : 'Kami menciptakan ulang asuransi dengan Kecerdasan Buatan. Misi kami adalah membuat perlindungan menjadi simpel, transparan, dan instan untuk semua orang.'}
       </p>
       <div className="grid md:grid-cols-3 gap-8">
@@ -1046,8 +1238,6 @@ const NewsroomPage = ({ lang }: { lang: Language }) => (
     </div>
   </div>
 );
-
-// --- HOME PAGE (REVAMPED) ---
 
 const HomePage = ({ setPage, lang }: { setPage: (p: string) => void, lang: Language }) => {
   const [waitlistEmail, setWaitlistEmail] = useState('');
@@ -1193,38 +1383,85 @@ const HomePage = ({ setPage, lang }: { setPage: (p: string) => void, lang: Langu
                 </div>
 
                 <div className="relative flex justify-center">
-                    {/* Phone Mockup */}
-                    <div className="relative w-[300px] h-[600px] bg-black rounded-[3rem] border-8 border-gray-800 shadow-2xl animate-float">
-                        {/* Notch */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 rounded-b-xl z-20"></div>
+                    {/* Realistic iPhone Mockup */}
+                    <div className="relative w-[320px] h-[650px] bg-black rounded-[40px] border-[8px] border-gray-800 shadow-2xl animate-float overflow-hidden">
+                        {/* Dynamic Island */}
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-30 flex justify-end items-center px-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        </div>
                         
                         {/* Screen Content */}
-                        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden bg-gray-900">
-                            {/* Mock App UI */}
-                            <div className="p-6 pt-12 space-y-6">
-                                <div className="flex justify-between items-center text-white">
-                                    <div>
-                                        <p className="text-sm text-gray-400">Hello, User</p>
-                                        <p className="text-xl font-bold">Good Morning</p>
-                                    </div>
-                                    <div className="w-10 h-10 bg-gray-700 rounded-full"></div>
+                        <div className="absolute inset-0 bg-[#0f172a] pt-14 px-5 pb-8 overflow-hidden font-sans text-white">
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <p className="text-xs text-gray-400">Welcome back,</p>
+                                    <p className="text-xl font-bold">Alex</p>
                                 </div>
-                                
-                                <div className="bg-primary-500 rounded-2xl p-6 text-white shadow-lg shadow-primary-500/30">
-                                    <p className="text-sm opacity-80">Total Protection</p>
-                                    <p className="text-3xl font-bold mt-1">Rp 500Jt</p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-gray-800 p-4 rounded-2xl h-32"></div>
-                                    <div className="bg-gray-800 p-4 rounded-2xl h-32"></div>
-                                </div>
-                                <div className="bg-gray-800 p-4 rounded-2xl h-24"></div>
+                                <div className="w-10 h-10 rounded-full bg-gray-700 border-2 border-primary-500"></div>
                             </div>
-                            
-                            {/* Bottom Nav Mock */}
-                            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gray-800/50 backdrop-blur-md flex justify-around items-center px-6">
-                                <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
+
+                            {/* Balance Card */}
+                            <div className="bg-gradient-to-br from-primary-600 to-primary-800 p-5 rounded-2xl shadow-lg shadow-primary-900/50 mb-6">
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className="text-xs font-medium text-white/70">Total Coverage</span>
+                                    <Shield size={16} className="text-white/70" />
+                                </div>
+                                <h3 className="text-3xl font-bold mb-1">Rp 1.5 M</h3>
+                                <p className="text-xs text-white/50">Across 3 active policies</p>
+                            </div>
+
+                            {/* Quick Actions Grid */}
+                            <div className="grid grid-cols-4 gap-4 mb-8">
+                                {[
+                                    { icon: Car, label: 'Car', bg: 'bg-blue-500' },
+                                    { icon: Plane, label: 'Travel', bg: 'bg-green-500' },
+                                    { icon: Heart, label: 'Health', bg: 'bg-red-500' },
+                                    { icon: Zap, label: 'Claim', bg: 'bg-yellow-500' }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex flex-col items-center gap-2">
+                                        <div className={`w-14 h-14 ${item.bg} rounded-2xl flex items-center justify-center shadow-lg`}>
+                                            <item.icon size={24} className="text-white" />
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-400">{item.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Recent Activity */}
+                            <div>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h4 className="font-bold text-sm">Recent Activity</h4>
+                                    <span className="text-xs text-primary-500">View All</span>
+                                </div>
+                                <div className="space-y-3">
+                                    {[
+                                        { title: 'Claim Approved', desc: 'Car Repair - B 1234 CD', time: '2h ago', icon: CheckCircle2, color: 'text-green-500' },
+                                        { title: 'Policy Renewal', desc: 'Travel Insurance', time: '1d ago', icon: RefreshCw, color: 'text-blue-500' }
+                                    ].map((act, i) => (
+                                        <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                                            <div className={`p-2 bg-white/5 rounded-lg ${act.color}`}>
+                                                <act.icon size={16} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold">{act.title}</p>
+                                                <p className="text-xs text-gray-500">{act.desc}</p>
+                                            </div>
+                                            <span className="text-xs text-gray-600">{act.time}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Bottom Bar Mock */}
+                            <div className="absolute bottom-6 left-5 right-5 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex justify-around items-center px-4 border border-white/5">
+                                <Home size={20} className="text-primary-500" />
+                                <FileText size={20} className="text-gray-500" />
+                                <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center -mt-8 shadow-lg border-4 border-[#0f172a]">
+                                    <Zap size={20} />
+                                </div>
+                                <Bell size={20} className="text-gray-500" />
+                                <User size={20} className="text-gray-500" />
                             </div>
                         </div>
                     </div>
@@ -1266,6 +1503,7 @@ const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
   const [showErrors, setShowErrors] = useState(false);
+  const [aiSuccess, setAiSuccess] = useState(false);
 
   const [vehicle, setVehicle] = useState<VehicleState>({
     brand: '',
@@ -1405,7 +1643,7 @@ const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
           (lang === Language.EN ? "Reasons: " : "Alasan: ") + (result.data.reasons?.join(", ") || result.data.damageDescription)
         );
       } else {
-        setStep(6);
+        setAiSuccess(true);
       }
     } else {
       setAiError(result.error || "Analysis failed");
@@ -1681,22 +1919,32 @@ const CarInsuranceWizard = ({ lang, setPage }: { lang: Language, setPage: (p:str
         </div>
       )}
 
-      <button 
-        onClick={handleAnalyze} 
-        disabled={loadingAI}
-        className="w-full btn-luxury"
-      >
-        {loadingAI ? (
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            {lang === Language.EN ? 'Analyzing...' : 'Menganalisis...'}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Zap size={18} /> {lang === Language.EN ? 'Analyze Photos' : 'Analisa Foto'}
-          </div>
-        )}
-      </button>
+      {aiSuccess ? (
+        <div className="bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-xl text-center animate-pop-in">
+            <CheckCircle2 className="mx-auto text-green-500 mb-2" size={32} />
+            <p className="font-bold text-green-700 dark:text-green-300">{lang === Language.EN ? 'Verification Successful!' : 'Verifikasi Berhasil!'}</p>
+            <button onClick={() => setStep(6)} className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors">
+                {lang === Language.EN ? 'Next' : 'Lanjut'}
+            </button>
+        </div>
+      ) : (
+        <button 
+            onClick={handleAnalyze} 
+            disabled={loadingAI}
+            className="w-full btn-luxury"
+        >
+            {loadingAI ? (
+            <div className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                {lang === Language.EN ? 'Analyzing...' : 'Menganalisis...'}
+            </div>
+            ) : (
+            <div className="flex items-center gap-2">
+                <Zap size={18} /> {lang === Language.EN ? 'Analyze Photos' : 'Analisa Foto'}
+            </div>
+            )}
+        </button>
+      )}
     </div>
   );
 
@@ -1858,7 +2106,6 @@ function App() {
     }
   }, [darkMode]);
 
-  // Page transition effect
   const handlePageChange = (page: string) => {
     setIsLoading(true);
     setTimeout(() => {
@@ -1885,13 +2132,6 @@ function App() {
     }
   };
 
-  const footerLinks = [
-    { label: lang === Language.EN ? 'About Us' : 'Tentang Kami', action: 'about' },
-    { label: lang === Language.EN ? 'Careers' : 'Karir', action: 'careers' },
-    { label: lang === Language.EN ? 'Newsroom' : 'Berita', action: 'newsroom' },
-    { label: lang === Language.EN ? 'Contact' : 'Hubungi Kami', action: 'contact' },
-  ];
-
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white transition-colors duration-500 selection:bg-primary-500 selection:text-white">
       
@@ -1912,95 +2152,9 @@ function App() {
       <main className="flex-grow relative">
         {renderContent()}
       </main>
+      
       {currentPage === 'home' && (
-        <footer className="relative bg-gray-900 dark:bg-black text-white pt-24 pb-12 overflow-hidden">
-          {/* Dynamic Background Elements */}
-          <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none"></div>
-          <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-slow"></div>
-          <div className="absolute top-0 right-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none animate-pulse-slow animation-delay-2000"></div>
-
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
-              {/* Brand Column */}
-              <div className="lg:col-span-4 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-                    <span className="text-white font-bold text-2xl">S</span>
-                  </div>
-                  <span className="font-black text-3xl tracking-tight">Surepath</span>
-                </div>
-                <p className="text-gray-400 leading-relaxed">
-                  {lang === Language.EN
-                    ? 'Reinventing insurance with Artificial Intelligence. Simple, transparent, and instant protection for everyone.'
-                    : 'Menciptakan ulang asuransi dengan Kecerdasan Buatan. Perlindungan simpel, transparan, dan instan untuk semua orang.'}
-                </p>
-                <div className="flex gap-4">
-                  {/* Social Icons */}
-                  {['Twitter', 'LinkedIn', 'Instagram', 'Facebook'].map((social, i) => (
-                    <a key={i} href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary-500 hover:text-white flex items-center justify-center transition-all duration-300 hover:-translate-y-1 border border-white/5">
-                      <span className="text-xs font-bold">{social[0]}</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/* Links Columns */}
-              <div className="lg:col-span-2 lg:col-start-6">
-                <h4 className="font-bold text-lg mb-6 text-white">{lang === Language.EN ? 'Company' : 'Perusahaan'}</h4>
-                <ul className="space-y-4">
-                  {footerLinks.map(item => (
-                    <li key={item.action}>
-                      <button
-                        onClick={() => handlePageChange(item.action)}
-                        className="text-gray-400 hover:text-primary-400 transition-colors text-sm"
-                      >
-                        {item.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="lg:col-span-2">
-                <h4 className="font-bold text-lg mb-6 text-white">{lang === Language.EN ? 'Products' : 'Produk'}</h4>
-                <ul className="space-y-4">
-                  {['Car Insurance', 'Travel', 'Health', 'Enterprise'].map(item => (
-                    <li key={item}>
-                      <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors text-sm">{item}</a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Newsletter Card */}
-              <div className="lg:col-span-4">
-                <div className="bg-gradient-to-br from-white/5 to-white/0 border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
-                  <h4 className="font-bold text-xl mb-2">{lang === Language.EN ? 'Stay Protected' : 'Tetap Terlindungi'}</h4>
-                  <p className="text-gray-400 text-sm mb-6">{lang === Language.EN ? 'Join 10,000+ others getting the latest insurance tips.' : 'Bergabung dengan 10.000+ orang lainnya mendapatkan tips asuransi terbaru.'}</p>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
-                    />
-                    <button className="absolute right-2 top-2 bottom-2 bg-primary-500 hover:bg-primary-400 text-white px-4 rounded-lg text-sm font-bold transition-colors">
-                      Go
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-              <p className="text-gray-500 text-sm">© 2025 Surepath Insurtech. All rights reserved.</p>
-              <div className="flex gap-8 text-sm text-gray-500">
-                <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-                <span className="flex items-center gap-2"><Shield size={14} className="text-primary-500"/> OJK-123/2025</span>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer lang={lang} setPage={handlePageChange} />
       )}
     </div>
   );

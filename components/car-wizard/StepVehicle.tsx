@@ -1,0 +1,302 @@
+import React, { useState, useMemo } from 'react';
+import { Database, Edit3, ChevronDown, User, Briefcase, Building2, Zap, Timer, FileSearch, Sparkles, CheckCircle2, RefreshCw, Smartphone, Hash, Palette, Cpu, UploadCloud, AlertCircle, FileDown, Loader2 } from 'lucide-react';
+import { CAR_DATABASE } from '../../constants';
+import { extractStnkData } from '../../services/geminiService';
+import { ScannerOverlay } from './WizardUI';
+import { REGEX } from '../../services/authService';
+import { jsPDF } from 'jspdf';
+
+interface StepVehicleProps {
+  vehicle: any;
+  setVehicle: (v: any) => void;
+  entryMode: 'DATABASE' | 'MANUAL';
+  setEntryMode: (m: 'DATABASE' | 'MANUAL') => void;
+  handlePlateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  formatInputCurrency: (val: string) => string;
+  loading: boolean;
+  setLoading: (l: boolean) => void;
+  loadingType: 'KTP' | 'STNK' | 'SURVEY' | null;
+  setLoadingType: (t: 'KTP' | 'STNK' | 'SURVEY' | null) => void;
+  setStnkResult?: (res: any) => void; 
+}
+
+const StepVehicle: React.FC<StepVehicleProps> = ({ 
+  vehicle, setVehicle, entryMode, setEntryMode, handlePlateChange, formatInputCurrency,
+  loading, setLoading, loadingType, setLoadingType, setStnkResult
+}) => {
+  const [extractedStnk, setExtractedStnk] = useState<any>(null);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [stnkBase64, setStnkBase64] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const isVinValid = useMemo(() => REGEX.VIN.test(vehicle.vin), [vehicle.vin]);
+  const isPlateValid = useMemo(() => REGEX.PLATE.test(vehicle.plate), [vehicle.plate]);
+
+  const generateStnkPdf = async () => {
+    if (!stnkBase64 || !extractedStnk) return;
+    setIsGeneratingPdf(true);
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Header
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text("SUREPATH NEURAL SCAN", 20, 25);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text("ARSIP DIGITAL STNK VERIFIKASI AI", 20, 32);
+
+      // Label
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(14);
+      doc.text("DATA KENDARAAN TERDETEKSI", 20, 55);
+      doc.setDrawColor(16, 185, 129);
+      doc.setLineWidth(1);
+      doc.line(20, 58, 60, 58);
+
+      // Info Grid
+      doc.setFontSize(10);
+      let y = 70;
+      const addRow = (label: string, val: string) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(label, 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(val || '-', 70, y);
+        y += 8;
+      };
+
+      addRow("Nama Pemilik:", extractedStnk.ownerName);
+      addRow("Nomor Polisi:", extractedStnk.plate);
+      addRow("Merk / Tipe:", `${extractedStnk.brand} ${extractedStnk.model}`);
+      addRow("Tahun:", extractedStnk.year);
+      addRow("No. Rangka:", extractedStnk.vin);
+      addRow("No. Mesin:", extractedStnk.engine);
+      addRow("Warna:", extractedStnk.color);
+
+      // Image
+      doc.text("FOTO DOKUMEN ASLI:", 20, y + 10);
+      try {
+        doc.addImage(stnkBase64, 'JPEG', 20, y + 15, 170, 90);
+      } catch (e) {
+        doc.text("[Gambar tidak dapat dimuat dalam PDF]", 20, y + 20);
+      }
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Dokumen ini diterbitkan secara otomatis oleh SurePath Engine pada ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, 285, { align: 'center' });
+
+      doc.save(`STNK_SurePath_${extractedStnk.plate.replace(' ', '_')}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal membuat PDF.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleStnkAutofill = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const mimeType = file.type;
+    setLoading(true);
+    setLoadingType('STNK');
+    setExtractedStnk(null);
+    setShowManualForm(false);
+    
+    const reader = new FileReader();
+    reader.onload = async () => {
+        const base64 = reader.result as string;
+        setStnkBase64(base64);
+        const response = await extractStnkData(base64, mimeType);
+        setLoading(false);
+        setLoadingType(null);
+
+        if (response.success && response.data) {
+            const data = response.data;
+            const cleanData = {
+                ownerName: data.owner || '',
+                plate: data.plate || '',
+                brand: data.brand || '',
+                model: data.model || '',
+                color: data.color || '',
+                year: data.year || '',
+                vin: data.vin || '',
+                engine: data.engine || '',
+                status: data.status || 'OK'
+            };
+
+            setExtractedStnk(cleanData);
+            if (setStnkResult) setStnkResult(cleanData);
+
+            const match = CAR_DATABASE.find(c => 
+                data.brand.toUpperCase().includes(c.brand) || 
+                (c.modelName && data.brand.toUpperCase().includes(c.modelName))
+            );
+
+            const yearInt = parseInt(data.year) || 2025;
+            const price = match ? (match.yearPrices[yearInt] || match.yearPrices[2024] || 0) * 1000000 : 0;
+
+            setVehicle((prev: any) => ({
+                ...prev,
+                brand: match?.brand || data.brand.split(' ')[0] || prev.brand,
+                model: match?.modelName || data.model || prev.model,
+                year: yearInt || prev.year,
+                plate: data.plate || prev.plate,
+                vin: data.vin || prev.vin,
+                engine: data.engine || prev.engine,
+                price: price || prev.price,
+                manualPrice: !price,
+                condition: yearInt < new Date().getFullYear() ? 'USED' : 'NEW'
+            }));
+
+            if (!match) setEntryMode('MANUAL');
+            else setEntryMode('DATABASE');
+            setShowManualForm(true);
+        } else {
+            alert('AI gagal membaca STNK. Silakan isi data secara manual.');
+            setEntryMode('MANUAL');
+            setShowManualForm(true);
+        }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in relative">
+      {loading && loadingType === 'STNK' && <ScannerOverlay label="Sedang Membaca STNK..." />}
+
+      {!extractedStnk && !showManualForm && (
+        <div className="space-y-6">
+            <div className="text-center space-y-2 mb-8">
+                <h2 className="text-3xl font-black uppercase tracking-tighter">Data <span className="text-primary-500">Mobil</span></h2>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-8">Foto STNK agar data terisi otomatis</p>
+            </div>
+
+            <label className="block w-full p-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-blue-500 rounded-[3rem] cursor-pointer shadow-2xl hover:scale-[1.02] transition-all active:scale-95 group relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <div className="bg-white dark:bg-black/40 rounded-[2.8rem] py-16 flex flex-col items-center justify-center text-center gap-6 relative z-10 border border-white/20">
+                    <div className="w-24 h-24 bg-emerald-500/10 rounded-2rem flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                        <UploadCloud size={48} className="animate-bounce" />
+                    </div>
+                    <div>
+                        <h4 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Ambil Foto STNK</h4>
+                        <p className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+                           <Sparkles size={12}/> Proses Cepat dengan AI
+                        </p>
+                    </div>
+                </div>
+                <input type="file" accept="image/*" className="hidden" onChange={handleStnkAutofill} />
+            </label>
+
+            <button 
+                onClick={() => setShowManualForm(true)}
+                className="w-full py-4 text-[0.6rem] font-black uppercase text-gray-400 hover:text-primary-500 transition-all tracking-[0.3em]"
+            >
+                Atau Isi Data Secara Manual
+            </button>
+        </div>
+      )}
+
+      {(extractedStnk || showManualForm) && (
+        <div className="space-y-6 animate-pop-in">
+           {extractedStnk && (
+             <div className="flex items-center justify-between p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-sm animate-pop-in">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg"><CheckCircle2 size={16}/></div>
+                    <span className="text-[0.65rem] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-widest">STNK Berhasil Terverifikasi</span>
+                </div>
+                <button 
+                  onClick={generateStnkPdf}
+                  disabled={isGeneratingPdf}
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/10 rounded-xl text-[0.55rem] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {isGeneratingPdf ? <Loader2 size={12} className="animate-spin"/> : <FileDown size={12}/>}
+                  Simpan PDF
+                </button>
+             </div>
+           )}
+
+           <div className="flex bg-gray-100 dark:bg-white/[0.03] p-1.5 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner">
+                <button onClick={() => setEntryMode('DATABASE')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'DATABASE' ? 'bg-white dark:bg-gray-800 shadow-xl text-primary-500 scale-100' : 'text-gray-400 scale-95'}`}><Database size={16} className="inline mr-2"/> Pilih Merk</button>
+                <button onClick={() => setEntryMode('MANUAL')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'MANUAL' ? 'bg-white dark:bg-gray-800 shadow-xl text-primary-500 scale-100' : 'text-gray-400 scale-95'}`}><Edit3 size={16} className="inline mr-2"/> Ketik Manual</button>
+           </div>
+
+           <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-[0.2em]">Merk Mobil</label>
+                    <div className="relative group">
+                        {entryMode === 'DATABASE' ? (
+                            <select 
+                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm appearance-none transition-all text-primary-500 uppercase"
+                                value={vehicle.brand}
+                                onChange={(e) => setVehicle({...vehicle, brand: e.target.value})}
+                            >
+                                <option value="">Pilih Merk</option>
+                                {Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort().map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                        ) : (
+                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.brand} onChange={e => setVehicle({...vehicle, brand: e.target.value.toUpperCase()})} />
+                        )}
+                        {entryMode === 'DATABASE' && <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>}
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-[0.2em]">Tipe / Model</label>
+                    <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
+                 <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Tahun</label>
+                    <div className="relative">
+                        <select className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm appearance-none" value={vehicle.year} onChange={e => setVehicle({...vehicle, year: parseInt(e.target.value)})}>
+                            {Array.from({ length: 11 }, (_, i) => 2025 - i).map(y => (<option key={y} value={y}>{y}</option>))}
+                        </select>
+                        <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Harga Mobil (Rp)</label>
+                    <div className="relative">
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">Rp</span>
+                        <input className="w-full pl-12 pr-5 py-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 focus:border-primary-500 outline-none font-black text-lg text-primary-500 shadow-inner" value={formatInputCurrency(vehicle.price.toString())} onChange={e => setVehicle({...vehicle, price: parseInt(e.target.value.replace(/\D/g, "") || "0"), manualPrice: true})} />
+                    </div>
+                 </div>
+                 <div className="space-y-2 col-span-2 lg:col-span-1">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Plat Nomor</label>
+                    <div className="relative h-[72px] rounded-[1.8rem] bg-white dark:bg-[#0a0a0a] border-2 p-1 flex items-center justify-center shadow-inner group transition-all overflow-hidden" style={{ borderColor: vehicle.plate.length > 0 ? (isPlateValid ? '#10b98144' : '#f43f5e44') : 'rgba(0,0,0,0.1)' }}>
+                        <input placeholder="B 1234 XYZ" className={`w-full bg-transparent text-center font-black text-2xl tracking-[0.2em] uppercase outline-none ${vehicle.plate.length > 0 ? (isPlateValid ? 'text-emerald-500' : 'text-rose-500') : 'text-black dark:text-white'}`} value={vehicle.plate} onChange={handlePlateChange} />
+                        {isPlateValid && <CheckCircle2 size={16} className="absolute right-4 text-emerald-500 animate-pop-in"/>}
+                    </div>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                 <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Nomor Rangka (VIN)</label>
+                    <div className="relative">
+                        <input maxLength={17} placeholder="Cek di STNK" className={`w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 outline-none focus:border-primary-500 font-mono font-bold text-sm uppercase transition-all ${vehicle.vin.length > 0 ? (isVinValid ? 'border-emerald-500/20 text-emerald-500' : 'border-rose-500/20 text-rose-500') : 'border-black/5'}`} value={vehicle.vin} onChange={e => setVehicle({...vehicle, vin: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")})} />
+                        {isVinValid && <CheckCircle2 size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-500 animate-pop-in"/>}
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Nomor Mesin</label>
+                    <input placeholder="Cek di STNK" className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-primary-500 font-mono font-bold text-sm uppercase transition-all" value={vehicle.engine} onChange={e => setVehicle({...vehicle, engine: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "")})} />
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StepVehicle;

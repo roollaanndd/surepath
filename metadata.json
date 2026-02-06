@@ -1,6 +1,6 @@
 {
-  "name": "Surepath Insurtech",
-  "description": "Modern AI-powered insurance application for retail and enterprise needs.",
+  "name": "SurePath - Neural Insurtech",
+  "description": "Predictive. Neural. Protected. Real-time AI claim acceleration and step-by-step transparency.",
   "requestFramePermissions": [
     "camera",
     "geolocation"

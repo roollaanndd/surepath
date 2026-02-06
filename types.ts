@@ -4,6 +4,15 @@ export enum Language {
   ID = 'ID'
 }
 
+export enum UserRole {
+  MASTER_ADMIN = 'MASTER_ADMIN',
+  ADMIN = 'ADMIN', // SurePath Admin
+  FINANCE = 'FINANCE',
+  INSURANCE_ADMIN = 'INSURANCE_ADMIN',
+  AGENT = 'AGENT',
+  CUSTOMER = 'CUSTOMER'
+}
+
 export enum InsuranceType {
   COMPREHENSIVE = 'COMPREHENSIVE',
   TLO = 'TLO'
@@ -19,133 +28,125 @@ export interface CarModelData {
 export interface ExpansionOptions {
   flood: boolean;
   earthquake: boolean;
-  srcc: boolean; // Strikes, Riot, Civil Commotion
+  srcc: boolean; 
   terrorism: boolean;
-  authorizedWorkshop: boolean; // 0.2% rate
-  tpl: number; // 0, 10, 20, 30, 40, 50 (Millions)
-  paDriver: number; // Sum Insured
-  paPassenger: number; // Sum Insured per passenger
-  passengers: number; // Number of passengers
+  authorizedWorkshop: boolean; // +0.2% rate
+  tpl: number; // TPL Amount in IDR
+  paDriver: boolean;
+  paPassenger: boolean;
 }
 
 export interface VehiclePhotos {
-  ktp: string | null;
-  stnkFront: string | null;
-  stnkBack: string | null;
+  stnk: string | null;
   carFront: string | null;
   carBack: string | null;
   carLeft: string | null;
   carRight: string | null;
-  dashboard: string | null;
-  accessories?: string | null;
+  interior: string | null;
 }
 
 export interface Provider {
   id: string;
   name: string;
-  logo: any; // component or string url
+  logo: any;
   adminFee: number;
+  stampDuty: number;
   rating: number;
-  features: string[];
+  advantages?: string[];
+  disadvantages?: string[];
+  extraCoinsPercent?: number;
+  features?: string[];
 }
 
 export interface VehicleState {
   brand: string;
-  modelCode: string;
+  model: string;
+  isOther: boolean;
   year: number;
   price: number;
-  plateRegion: '1' | '2' | '3'; // 1: Sumatra, 2: DKI/Jabar/Banten, 3: Others
-  plateDetails: {
-    code: string;
-    number: string;
-    suffix: string;
-  };
-  usage: 'PERSONAL' | 'COMMERCIAL';
+  manualPrice: boolean;
+  plate: string;
+  region: '1' | '2' | '3';
+  usage: 'PRIVATE' | 'COMMERCIAL' | 'DINAS';
   condition: 'NEW' | 'USED';
-  vin: string;
-  engineNo: string;
-  accessories: string;
-  insuranceType: InsuranceType;
-  expansions: ExpansionOptions;
-  photos: VehiclePhotos;
-  selectedProvider: Provider | null;
-  promoCode?: string;
-  discountAmount?: number;
-  paymentMethod?: PaymentMethod;
 }
 
 export interface UserState {
   name: string;
-  ktp: string;
-  domicile: string;
+  ktpNo: string;
   email: string;
   phone: string;
-  isMember: boolean;
+  address: string;
+  bankName: string;
+  bankAccountNo: string;
+  bankAccountName: string;
+  recipientName: string;
+  deliveryMethod: 'WHATSAPP' | 'EMAIL' | 'HARDCOPY';
+  ktpPhoto: string | null;
 }
 
-// --- TRAVEL INSURANCE TYPES ---
-export type TravelRegion = 'DOMESTIC' | 'INTERNATIONAL' | 'INBOUND';
+export interface Review {
+  id: string;
+  userName: string;
+  userAvatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+  sentimentScore: number;
+  aiTag: string;
+}
+
+export type TravelRegion = 'INTERNATIONAL' | 'DOMESTIC' | 'INBOUND';
 export type TravelPlanType = 'PLATINUM' | 'GOLD' | 'ASIA_EXTRA' | 'GARUDA_1' | 'GARUDA_2';
-export type TravelParticipantType = 'INDIVIDUAL' | 'FAMILY';
 
 export interface TravelerDetails {
-  type: 'ADULT' | 'CHILD';
   name: string;
-  dob: string;
-  passport?: string;
-  ktp?: string;
+  ktp: string;
+  birthDate: string;
+  passportNo?: string;
+  isMain: boolean;
 }
 
 export interface TravelState {
-  destination: string; // Country or City
+  destination: string;
   region: TravelRegion;
   startDate: string;
   endDate: string;
   duration: number;
   tripType: 'SINGLE' | 'ANNUAL';
-  participantType: TravelParticipantType;
+  participantType: 'INDIVIDUAL' | 'FAMILY';
   travelers: {
     adults: number;
     children: number;
     details: TravelerDetails[];
   };
   selectedPlan: TravelPlanType | null;
-  promoCode?: string;
-  discountAmount?: number;
 }
-
-// --- PERSONAL ACCIDENT TYPES ---
-export type PAType = 'GENERAL' | 'STUDENT'; // Umum / Siswa
 
 export interface PAState {
-  occupation: string;
-  type: PAType;
-  planCode: string; // A, B, C... J
+  category: 'GENERAL' | 'STUDENT';
+  planCode: string;
+  beneficiaryName: string;
+  beneficiaryRelation: string;
 }
-
-// --- PET INSURANCE TYPES ---
-export type PetType = 'DOG' | 'CAT';
 
 export interface PetState {
+  petType: 'DOG' | 'CAT';
   petName: string;
-  petType: PetType;
   breed: string;
   age: number;
-  gender: 'MALE' | 'FEMALE';
-  sterilized: boolean;
+  microchipNo?: string;
+  selectedPlan: string | null;
 }
 
-export type PaymentMethod = 'VA' | 'QRIS' | 'CC';
+export type MPARCategory = 'ELECTRONIC' | 'GADGET' | 'FURNITURE';
 
-export enum CarInsuranceStep {
-  VEHICLE = 1,
-  COVERAGE = 2,
-  PROVIDER = 3,
-  PERSONAL = 4,
-  AI_CHECK = 5,
-  SUMMARY = 6,
-  PAYMENT = 7,
-  SUCCESS = 8
+export interface MPARState {
+  category: MPARCategory;
+  subCategory: 'TV' | 'NON-TV' | 'SMARTPHONE' | 'LAPTOP' | 'FURNITURE_CORE';
+  itemName: string;
+  itemPrice: number;
+  itemAge: number;
+  serialNumber: string;
+  periodMonths: 6 | 12;
 }
-
-export type DocumentType = 'KTP' | 'STNK_FRONT' | 'STNK_BACK' | 'CAR_FRONT' | 'CAR_BACK' | 'CAR_LEFT' | 'CAR_RIGHT' | 'DASHBOARD';

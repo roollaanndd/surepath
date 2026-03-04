@@ -3,18 +3,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Home as HomeIcon, Zap, Wallet as WalletIcon, 
   UserCircle, LogOut, Sun, Moon, CheckCircle2, 
-  QrCode, Bell, Plus, ChevronRight, ArrowRight,
-  ShieldCheck, Info, Sparkles, Timer, Car, Plane,
-  ShoppingBag, Shield, Cpu, Radio, LayoutGrid,
-  Package, MessageCircle, Heart, ShieldAlert,
-  Search, BellRing, Smartphone, Award, Lightbulb, Bot,
-  CreditCard, TrendingUp, History
+  Bell, Car, Plane, ShoppingBag, Shield, 
+  Package, Heart, ShieldAlert, Bot, ChevronRight,
+  ShieldCheck, Lightbulb, QrCode, ArrowRight, History
 } from 'lucide-react';
 import DesktopWebsite from './components/DesktopWebsite';
 import Navbar, { SurePathLogo } from './components/Navbar';
 import AuthGate from './components/AuthGate';
-import ClaimManager from './components/ClaimManager';
-import UserProfile from './components/UserProfile';
+import ClaimManager from './ClaimManager';
+import UserProfile from './UserProfile';
 import AgentsWallet from './AgentsWallet';
 import CarInsuranceWizard from './CarInsuranceWizard';
 import TravelInsuranceWizard from './TravelInsuranceWizard';
@@ -76,9 +73,9 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
 
 const INITIAL_PRODUCTS = [
   { id: 'car', title: 'Asuransi Mobil', label: 'Asuransi Mobil', icon: Car, color: 'text-blue-500', active: true, cat: 'Retail', tech: 'AI Foto Kerusakan' },
-  { id: 'travel', title: 'Asuransi Perjalanan', label: 'Asuransi Perjalanan', icon: Plane, color: 'text-emerald-500', active: true, cat: 'Retail', tech: 'Otomatis & Cepat' },
-  { id: 'pa', title: 'Kecelakaan Diri', label: 'Kecelakaan Diri', icon: ShieldAlert, color: 'text-rose-500', active: true, cat: 'Retail', tech: 'Proteksi Penuh' },
-  { id: 'mpar', title: 'Proteksi Barang', label: 'Proteksi Barang', icon: Package, color: 'text-amber-500', active: true, cat: 'Retail', tech: 'Peralatan & Gadget' },
+  { id: 'travel', title: 'Asuransi Perjalanan', label: 'Asuransi Perjalanan', icon: Plane, color: 'text-emerald-500', active: true, cat: 'Retail', tech: 'Aktif Instan' },
+  { id: 'pa', title: 'Kecelakaan Diri', label: 'Kecelakaan Diri', icon: ShieldAlert, color: 'text-rose-500', active: true, cat: 'Retail', tech: 'Santunan Cepat' },
+  { id: 'mpar', title: 'Proteksi Barang', label: 'Proteksi Barang', icon: Package, color: 'text-amber-500', active: true, cat: 'Retail', tech: 'Elektronik & Gadget' },
 ];
 
 const App = () => {
@@ -94,11 +91,11 @@ const App = () => {
 
   const timeGreeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 11) return "Selamat Pagi";
-    if (hour < 15) return "Selamat Siang";
-    if (hour < 19) return "Selamat Sore";
-    return "Selamat Malam";
-  }, []);
+    if (hour < 11) return lang === Language.EN ? "Good Morning" : "Selamat Pagi";
+    if (hour < 15) return lang === Language.EN ? "Good Afternoon" : "Selamat Siang";
+    if (hour < 19) return lang === Language.EN ? "Good Afternoon" : "Selamat Sore";
+    return lang === Language.EN ? "Good Evening" : "Selamat Malam";
+  }, [lang]);
 
   useEffect(() => {
     seedDatabase();
@@ -120,11 +117,6 @@ const App = () => {
     localStorage.setItem('SUREPATH_SESSION', JSON.stringify(user));
     setAppMode(true);
     setPage('home');
-  };
-
-  const handleDemoLogin = async () => {
-    const user = await db.users.where('email').equals('user@surepath.ai').first();
-    if (user) handleAuthSuccess(user);
   };
 
   const handleLogout = () => {
@@ -151,7 +143,14 @@ const App = () => {
   if (!isMobile && !appMode && !currentUser) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <Navbar lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} currentPage={currentPage} setPage={setPage} onDemoLogin={handleDemoLogin} />
+        <Navbar 
+          lang={lang} 
+          setLang={setLang} 
+          darkMode={darkMode} 
+          setDarkMode={setDarkMode} 
+          currentPage={currentPage} 
+          setPage={setPage}
+        />
         <DesktopWebsite onEnterPortal={() => { setAppMode(true); setPage('auth'); }} onAdminAccess={() => { setAppMode(true); setPage('auth'); }} currentLang={lang} onLangChange={setLang} />
       </div>
     );
@@ -167,7 +166,6 @@ const App = () => {
         return (
           <PageTransition>
             <div className="space-y-10 pb-32 relative z-10 transition-all duration-700">
-              {/* HEADER DASHBOARD */}
               <div className="flex items-center justify-between px-2">
                  <div className="flex items-center gap-5">
                     <div className="relative group cursor-pointer" onClick={() => setPage('profile')}>
@@ -183,37 +181,35 @@ const App = () => {
                     <div className="space-y-1">
                        <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">{timeGreeting}, {currentUser?.name.split(' ')[0]}!</h3>
                        <p className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <ShieldCheck size={12} className="animate-pulse"/> Jaringan Terproteksi
+                          <ShieldCheck size={12} className="animate-pulse"/> {lang === Language.EN ? 'SECURE CONNECTION' : 'KONEKSI AMAN'}
                        </p>
                     </div>
                  </div>
-                 <button onClick={() => setPage('profile')} className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 text-slate-400 dark:text-gray-500 shadow-xl hover:text-primary-500 transition-all relative active:scale-90">
+                 {/* Fix: Usage of Bell icon is now valid as it's correctly imported */}
+                 <button onClick={() => setPage('profile')} className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-white/5 text-slate-400 dark:text-gray-500 shadow-xl hover:text-primary-500 transition-all relative active:scale-90">
                     <Bell size={22}/>
                     <span className="absolute top-4 right-4 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                  </button>
               </div>
 
-              {/* SLIDER PROMO/INFO */}
               <PortalHero onAction={(p) => setPage(p)} />
 
-              {/* TOMBOL CEPAT */}
               <div className="grid grid-cols-4 gap-4 px-1">
                  {[
-                   { id: 'products', label: 'Beli', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                   { id: 'claim', label: 'Klaim AI', icon: Zap, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-                   { id: 'wallet', label: 'Dompet', icon: WalletIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                   { id: 'profile', label: 'Akun', icon: UserCircle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                   { id: 'products', label: lang === Language.EN ? 'Buy' : 'Beli', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                   { id: 'claim', label: lang === Language.EN ? 'Claim' : 'Klaim', icon: Zap, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+                   { id: 'wallet', label: lang === Language.EN ? 'Wallet' : 'Dompet', icon: WalletIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                   { id: 'profile', label: lang === Language.EN ? 'Account' : 'Akun', icon: UserCircle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
                  ].map(action => (
                    <div key={action.id} onClick={() => setPage(action.id)} className="flex flex-col items-center gap-3 cursor-pointer group active:scale-90 transition-all">
                       <div className={`w-16 h-16 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
                          <action.icon size={28} strokeWidth={2.5}/>
                       </div>
-                      <span className="text-[0.65rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{action.label}</span>
+                      <span className="text-[0.65rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight">{action.label}</span>
                    </div>
                  ))}
               </div>
 
-              {/* KARTU POLIS TERBARU */}
               {latestPolicy && (
                 <div className="px-1">
                   <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-[0_30px_60px_rgba(15,23,42,0.3)] border border-white/5 group">
@@ -223,51 +219,51 @@ const App = () => {
                      <div className="relative z-10 space-y-8">
                         <div className="flex justify-between items-start">
                            <div className="space-y-1">
-                              <p className="text-[0.6rem] font-black text-primary-400 uppercase tracking-[0.4em]">Polis Kamu</p>
+                              <p className="text-[0.6rem] font-black text-primary-400 uppercase tracking-[0.4em]">{lang === Language.EN ? 'YOUR POLICY' : 'POLIS KAMU'}</p>
                               <h4 className="text-2xl font-black uppercase tracking-tighter">{latestPolicy.coverageDetails?.vehicle?.brand} {latestPolicy.coverageDetails?.vehicle?.model}</h4>
                            </div>
                            <div className="p-3 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl"><ShieldCheck size={24} className="text-emerald-400"/></div>
                         </div>
                         <div className="flex justify-between items-end">
                            <div className="space-y-1">
-                              <p className="text-[0.5rem] font-black text-slate-500 uppercase tracking-widest">Aktif Sampai</p>
-                              <p className="text-sm font-black text-emerald-400">{new Date(latestPolicy.endDate).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</p>
+                              <p className="text-[0.5rem] font-black text-slate-500 uppercase tracking-widest">{lang === Language.EN ? 'EXPIRES ON' : 'AKHIR POLIS'}</p>
+                              <p className="text-sm font-black text-emerald-400">{new Date(latestPolicy.endDate).toLocaleDateString(lang === Language.EN ? 'en-US' : 'id-ID', { month: 'long', year: 'numeric' })}</p>
                            </div>
-                           <button onClick={() => setPage('profile')} className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl active:scale-95 transition-all">Lihat Detail</button>
+                           <button onClick={() => setPage('profile')} className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl active:scale-95 transition-all">{lang === Language.EN ? 'Details' : 'Detail'}</button>
                         </div>
                      </div>
                   </div>
                 </div>
               )}
 
-              {/* TIPS AI */}
               <div className="px-1">
                  <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex gap-6 group transition-all duration-700 shadow-lg dark:shadow-none">
                     <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 shadow-inner group-hover:rotate-6 transition-transform">
                        <Lightbulb size={28}/>
                     </div>
                     <div className="space-y-1.5">
-                       <p className="text-[0.6rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">Tahukah Kamu?</p>
+                       <p className="text-[0.6rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">{lang === Language.EN ? 'DID YOU KNOW?' : 'TAHUKAH KAMU?'}</p>
                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                          Kamu bisa lapor klaim cuma lewat <span className="text-primary-600 dark:text-primary-400 font-black italic">foto HP</span>. AI kami bakal bantu prosesnya cuma dalam hitungan menit.
+                          {lang === Language.EN 
+                            ? "You can file a claim by just taking a photo. Our AI processes it in minutes." 
+                            : "Kamu bisa lapor klaim cuma lewat foto HP. AI kami bakal bantu prosesnya cuma dalam hitungan menit."}
                        </p>
                     </div>
                  </div>
               </div>
 
-              {/* AKTIVITAS TERAKHIR */}
               <div className="space-y-4 px-1 pt-2">
                   <div className="flex justify-between items-center px-4">
-                     <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Aktivitas Terakhir</h3>
-                     <button onClick={() => setPage('wallet')} className="text-[0.65rem] font-black uppercase text-primary-500 flex items-center gap-1">Lihat Semua <ChevronRight size={14}/></button>
+                     <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">{lang === Language.EN ? 'Recent Activity' : 'Aktivitas Terakhir'}</h3>
+                     <button onClick={() => setPage('wallet')} className="text-[0.65rem] font-black uppercase text-primary-500 flex items-center gap-1">{lang === Language.EN ? 'View All' : 'Lihat Semua'} <ChevronRight size={14}/></button>
                   </div>
                   <div className="space-y-3">
                      <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
                            <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><History size={20}/></div>
                            <div>
-                              <p className="text-xs font-black uppercase text-slate-900 dark:text-white">Login Berhasil</p>
-                              <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Hari ini, 10:24 WIB</p>
+                              <p className="text-xs font-black uppercase text-slate-900 dark:text-white">{lang === Language.EN ? 'Login Successful' : 'Login Berhasil'}</p>
+                              <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">{lang === Language.EN ? 'Today, 10:24 AM' : 'Hari ini, 10:24 WIB'}</p>
                            </div>
                         </div>
                         <CheckCircle2 size={18} className="text-emerald-500"/>
@@ -281,7 +277,7 @@ const App = () => {
         return (
           <PageTransition>
             <div className="space-y-8 pb-24 pt-2">
-              <h2 className="text-4xl font-black uppercase tracking-tighter px-2 text-slate-900 dark:text-white leading-none">Pilih <span className="text-primary-500">Asuransi</span></h2>
+              <h2 className="text-4xl font-black uppercase tracking-tighter px-2 text-slate-900 dark:text-white leading-none">{lang === Language.EN ? 'Select' : 'Pilih'} <span className="text-primary-500">{lang === Language.EN ? 'Insurance' : 'Asuransi'}</span></h2>
               <div className="grid gap-4">
                 {products.map(p => (
                   <div key={p.id} onClick={() => setPage(`buy-${p.id}`)} className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between active:scale-[0.98] transition-all duration-500 cursor-pointer shadow-xl dark:shadow-none hover:border-primary-500/30 group">
@@ -299,23 +295,23 @@ const App = () => {
             </div>
           </PageTransition>
         );
-      case 'claim': return <PageTransition><ClaimManager onComplete={() => setPage('home')} /></PageTransition>;
-      case 'wallet': return <PageTransition><AgentsWallet /></PageTransition>;
-      case 'profile': return <PageTransition><UserProfile currentUser={currentUser} onStartClaim={startClaimFromPolicy} /></PageTransition>;
-      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'auth': return <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />;
-      case 'bot': return <HealthChat onBack={() => setPage('home')} />;
+      case 'claim': return <PageTransition><ClaimManager onComplete={() => setPage('home')} lang={lang} /></PageTransition>;
+      case 'wallet': return <PageTransition><AgentsWallet lang={lang}/></PageTransition>;
+      case 'profile': return <PageTransition><UserProfile currentUser={currentUser} lang={lang} onLogout={handleLogout} /></PageTransition>;
+      /* Fix: Passed missing lang prop to Wizards */
+      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'bot': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
       default: return null;
     }
   };
 
   const isWizardFlow = currentPage.startsWith('buy-');
   const navItems = [
-    { id: 'home', icon: HomeIcon, label: 'Beranda' },
-    { id: 'products', icon: ShoppingBag, label: 'Produk' }, 
+    { id: 'home', icon: HomeIcon, label: lang === Language.EN ? 'Home' : 'Beranda' },
+    { id: 'products', icon: ShoppingBag, label: lang === Language.EN ? 'Products' : 'Produk' }, 
     { id: 'bot', icon: Bot, label: 'Tanya AI' },
     { id: 'claim', icon: Zap, label: 'Klaim' },
     { id: 'profile', icon: UserCircle, label: 'Akun' }
@@ -323,7 +319,6 @@ const App = () => {
 
   return (
     <div className={`${darkMode ? 'dark bg-[#0a0a0a]' : 'bg-[#fafaf9]'} h-full transition-all duration-700 font-sans flex flex-col relative overflow-hidden`}>
-      {/* BACKGROUND GRADIENT AREA */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-gradient-to-br from-primary-500/5 via-transparent to-emerald-500/5 blur-[120px]"></div>
       </div>
@@ -333,7 +328,7 @@ const App = () => {
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setPage('home')}>
             <SurePathLogo className="w-12 h-12 group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
-              <span className="font-black text-2xl tracking-tighter uppercase leading-none text-slate-900 dark:text-white">Sure<span className="text-primary-500">Path</span></span>
+              <span className="font-black text-xl tracking-tighter uppercase leading-none text-slate-900 dark:text-white">Sure<span className="text-primary-500">Path</span></span>
               <span className="text-[0.45rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.5em] mt-1.5 transition-colors duration-700">{currentUser?.name || 'Halo!'}</span>
             </div>
           </div>
@@ -348,8 +343,7 @@ const App = () => {
         </header>
       )}
 
-      {/* CONTENT AREA WITH GRADIENT BACKGROUND */}
-      <main className={`flex-1 overflow-y-auto w-full no-scrollbar z-10 relative transition-all duration-700 ${isWizardFlow ? 'p-0 h-screen' : 'px-6 py-10'} bg-gradient-to-b from-transparent to-slate-50/40 dark:to-slate-950/20`}>
+      <main className={`flex-1 overflow-y-auto w-full no-scrollbar z-10 relative transition-all duration-700 ${isWizardFlow ? 'p-0 h-screen' : (currentUser ? 'px-6 py-10' : '')} bg-gradient-to-b from-transparent to-slate-50/40 dark:to-slate-950/20`}>
         {renderPortalContent()}
       </main>
 
@@ -357,7 +351,7 @@ const App = () => {
         <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl z-[70] flex items-center justify-around px-6 rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/50 dark:border-white/10 max-w-xl mx-auto transition-all duration-700">
           {navItems.map(item => (
             <button key={item.id} onClick={() => setPage(item.id)} className={`flex flex-col items-center gap-2 flex-1 py-4 transition-all duration-500 tap-feedback ${currentPage === item.id || (currentPage.startsWith('buy') && item.id === 'products') ? 'text-primary-500 scale-110 -translate-y-1' : 'text-gray-400 dark:text-gray-600'}`}>
-              <item.icon size={26} strokeWidth={currentPage === item.id ? 2.5 : 2} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />
+              <item.icon size={26} strokeWidth={2.5} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />
               <span className={`text-[0.5rem] font-black uppercase tracking-[0.2em] ${currentPage === item.id ? 'opacity-100' : 'opacity-60'}`}>{item.label}</span>
             </button>
           ))}

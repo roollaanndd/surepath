@@ -1,5 +1,5 @@
+
 import { Provider, InsuranceType, CarModelData } from './types';
-import { Shield, Zap, Star } from 'lucide-react';
 
 // OJK Batas Bawah Rate Logic
 export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: InsuranceType): number => {
@@ -64,7 +64,7 @@ export const INSURANCE_PROVIDERS: Provider[] = [
   {
     id: 'intra',
     name: 'Intra Asia',
-    logo: Star,
+    logo: 'Star',
     adminFee: 30000,
     stampDuty: 10000,
     rating: 4.8,
@@ -76,7 +76,7 @@ export const INSURANCE_PROVIDERS: Provider[] = [
   {
     id: 'zurich',
     name: 'Zurich',
-    logo: Shield,
+    logo: 'Shield',
     adminFee: 55000,
     stampDuty: 10000,
     rating: 4.9,
@@ -88,7 +88,7 @@ export const INSURANCE_PROVIDERS: Provider[] = [
   {
     id: 'tugu',
     name: 'Tugu Insurance',
-    logo: Zap,
+    logo: 'Zap',
     adminFee: 50000,
     stampDuty: 10000,
     rating: 4.7,

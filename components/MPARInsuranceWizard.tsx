@@ -8,14 +8,15 @@ import {
   ImagePlus
 } from 'lucide-react';
 import { MPAR_PRICING, INSURANCE_PROVIDERS, STAMP_DUTY } from '../constants';
-import { MPARState, MPARCategory } from '../types';
+import { MPARState, MPARCategory, Language } from '../types';
 import { analyzeVehicleSurvey } from '../services/geminiService';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const STEPS = ['Select Category', 'Item Registry', 'Select Term', 'Neural Scan', 'Review & Pay'];
 
-const MPARInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+/* Fix: Added lang to props */
+const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [mpar, setMpar] = useState<MPARState>({
@@ -332,7 +333,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => vo
           </div>
           <div className="flex gap-2">
              {STEPS.map((s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${i === step ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : i < step ? 'bg-amber-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
+               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : i < step ? 'bg-amber-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
              ))}
           </div>
        </div>

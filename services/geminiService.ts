@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ClaimPart {
@@ -60,7 +59,6 @@ export interface PhotoFlag {
 
 /**
  * Interface for Vehicle Survey analysis results.
- * Added isDirty and cleanlinessComment to fix property check errors in StepSurvey.tsx.
  */
 export interface SurveyAnalysisResult {
   success: boolean;
@@ -148,27 +146,41 @@ export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): 
   }
 };
 
+/**
+ * Enhanced Vehicle Damage Analysis.
+ * Focused on extreme detail and accuracy for mobile claim reporting.
+ */
 export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success: boolean; data?: ClaimAnalysisData; error?: string }> => {
   const modelId = 'gemini-3-flash-preview';
-  const prompt = `Anda adalah auditor klaim asuransi kendaraan senior. Analisa foto kerusakan kendaraan ini. 
-  Berikan output dalam JSON yang sangat ketat dengan struktur berikut:
+  const prompt = `Lakukan audit investigasi kerusakan kendaraan secara mendalam dari foto ini.
+  Anda adalah Investigator Klaim Neural SurePath. Berikan rincian yang sangat presisi.
+  
+  Instruksi Khusus:
+  1. Identifikasi SETIAP panel yang terkena dampak (misal: Bumper depan kiri, Lampu utama, Fender kiri).
+  2. Berikan kondisi spesifik (misal: Goresan dalam > 10cm, Retak pada braket, Penyok struktural).
+  3. Tentukan tindakan: 'Perbaiki' untuk kerusakan ringan, 'Ganti' untuk kerusakan struktural atau pecah.
+  4. Berikan estimasi harga perbaikan/sparepart yang akurat dalam Rupiah Indonesia (IDR).
+  5. Pastikan TOTAL ESTIMASI adalah jumlah dari rincian part.
+
+  Return JSON structure:
   {
     "severity": "Ringan | Sedang | Berat | Total Loss",
     "totalEstimasi": number,
     "rincianPart": [
       {
-        "namaPart": "nama bagian kendaraan yang rusak",
-        "kondisi": "deskripsi kerusakan spesifik",
+        "namaPart": "Nama spesifik panel/part",
+        "kondisi": "Detail visual kerusakan",
         "tindakan": "Perbaiki | Ganti",
         "estimasiBiaya": number
       }
     ],
-    "aiInsight": "ringkasan eksekutif singkat",
-    "technicalReasoning": "analisa teknis mengapa tindakan tersebut diambil",
-    "rekomendasiBengkel": "tipe bengkel yang disarankan",
-    "nextSteps": ["langkah 1", "langkah 2"]
+    "aiInsight": "Analisa naratif singkat (max 2 kalimat) tentang kronologi kerusakan yang terlihat.",
+    "technicalReasoning": "Mengapa tindakan perbaikan/penggantian dipilih berdasarkan integritas panel.",
+    "rekomendasiBengkel": "Tipe bengkel (Authorized/Partner) berdasarkan tingkat kerumitan.",
+    "nextSteps": ["Langkah pembersihan", "Jadwal masuk bengkel", "Verifikasi identitas"]
   }
-  Gunakan bahasa Indonesia. Jika tidak ada kerusakan terlihat, isi rincianPart dengan estimasi inspeksi dasar.`;
+  
+  Gunakan Bahasa Indonesia formal.`;
 
   try {
     const ai = getAi();
@@ -182,8 +194,8 @@ export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success:
     if (!text) throw new Error("Empty AI response");
     return { success: true, data: JSON.parse(text) };
   } catch (error) { 
-    console.error("Gemini Error:", error);
-    return { success: false, error: "Gagal menganalisa foto klaim." }; 
+    console.error("Gemini Damage Audit Error:", error);
+    return { success: false, error: "Gagal menghubungkan ke Neural Vision Engine." }; 
   }
 };
 

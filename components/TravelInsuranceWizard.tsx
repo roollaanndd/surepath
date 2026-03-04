@@ -1,19 +1,19 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   Plane, Globe, MapPin, Calendar, Users, ChevronRight, 
   ShieldCheck, Info, Heart, Luggage, Clock, Check, 
   ChevronLeft, ArrowRight, User, AlertCircle, Loader2,
-  // Fixed: Removed non-existent 'Passport' icon from lucide-react imports
   Wallet, Star
 } from 'lucide-react';
 // Porting missing constants from root constants.ts
 import { TRAVEL_PRICING, TRAVEL_BENEFITS } from '../constants';
-import { TravelState, TravelPlanType, TravelRegion } from '../types';
+import { TravelState, TravelPlanType, TravelRegion, Language } from '../types';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
-// Added currentUser to props to fix type mismatch error in App.tsx
-const TravelInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+/* Fix: Added lang to props */
+const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [travel, setTravel] = useState<TravelState>({
     destination: '',
@@ -335,7 +335,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => 
           </div>
           <div className="flex gap-2">
              {STEPS.map((s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
+               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
              ))}
           </div>
        </div>

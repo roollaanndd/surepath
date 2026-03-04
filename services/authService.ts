@@ -47,26 +47,35 @@ export const verifyPassword = async (password: string, storedHash: string, store
 };
 
 /**
- * Encrypts sensitive data using AES-GCM 256.
- * In a real app, the key would be derived from the user's password.
+ * Creates a mock JWT session token
  */
-export const encryptField = async (text: string, secretKeyHex: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    
-    // Simple hex to bytes for demo purposes
-    const keyData = new Uint8Array(secretKeyHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-    const key = await crypto.subtle.importKey('raw', keyData, 'AES-GCM', false, ['encrypt']);
-    
-    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
-    
-    // Combine IV and Encrypted Data
-    const combined = new Uint8Array(iv.length + encrypted.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(encrypted), iv.length);
-    
-    return btoa(String.fromCharCode(...combined));
+export const createSessionToken = (user: any) => {
+  const payload = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    nodeId: user.nodeId,
+    trustScore: user.trustScore,
+    exp: Date.now() + (24 * 60 * 60 * 1000) // 24 Hour validity
+  };
+  // Base64 encode to simulate a token
+  return btoa(JSON.stringify(payload));
+};
+
+/**
+ * Verifies and parses a session token
+ */
+export const parseSessionToken = (token: string) => {
+  try {
+    const payload = JSON.parse(atob(token));
+    if (payload.exp < Date.now()) {
+      return null; // Expired
+    }
+    return payload;
+  } catch (e) {
+    return null; // Invalid
+  }
 };
 
 export const validatePasswordStrength = (pass: string) => {
@@ -84,6 +93,6 @@ export const REGEX = {
     EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
     PHONE: /^08[0-9]{8,11}$/,
     NIK: /^[0-9]{16}$/,
-    VIN: /^[A-HJ-NPR-Z0-9]{17}$/, // ISO standard excludes I, O, Q
+    VIN: /^[A-HJ-NPR-Z0-9]{17}$/, 
     PLATE: /^[A-Z]{1,2}\s[0-9]{1,4}\s[A-Z]{1,3}$/
 };

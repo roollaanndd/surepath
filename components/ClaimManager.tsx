@@ -1,15 +1,18 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { Camera, BrainCircuit, CheckCircle2, Scan, Smartphone, ArrowRight, MapPin, Calendar, Clock, FileText, AlertCircle, Loader2, FileSearch, Trash2, ShieldCheck, ChevronRight, Info, Rocket, Users, HeartPulse, Receipt, Building2, Stethoscope } from 'lucide-react';
+import { Camera, BrainCircuit, CheckCircle2, Scan, Smartphone, ArrowRight, MapPin, Calendar, Clock, FileText, AlertCircle, Loader2, FileSearch, Trash2, ShieldCheck, ChevronRight, Info, Rocket, Users, HeartPulse, Receipt, Building2, Stethoscope, RefreshCw, Car, Activity, Zap, ClipboardList } from 'lucide-react';
 import { analyzeClaimPhoto, summarizeClaimDocument, analyzeHealthReceipt, ClaimAnalysisData, DocumentSummary, HealthClaimData } from '../services/geminiService';
 import { db, Claim } from '../db';
 import { NeuralBot, NeuralProcessingView } from './car-wizard/WizardUI';
+import { Language } from '../types';
+import { Badge } from './shared/UI';
 
 const formatIDR = (num: number) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency', currency: 'IDR', minimumFractionDigits: 0
   }).format(num);
 };
+
+const DRAFT_KEY = 'SUREPATH_CLAIM_DRAFT_V1';
 
 interface ReportForm {
   chronology: string;
@@ -19,22 +22,14 @@ interface ReportForm {
   thirdPartyInvolved: boolean;
 }
 
-const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
+const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Language }) => {
   const [claimType, setClaimType] = useState<'AUTO' | 'HEALTH' | null>(null);
-  const [step, setStep] = useState<'select' | 'upload' | 'analyzing' | 'result' | 'docUpload' | 'docSummary' | 'reporting' | 'success'>('select');
+  const [step, setStep] = useState<'select' | 'upload' | 'analyzing' | 'result' | 'reporting' | 'success'>('select');
   const [claimResult, setClaimResult] = useState<ClaimAnalysisData | null>(null);
   const [healthResult, setHealthResult] = useState<HealthClaimData | null>(null);
-  const [docSummary, setDocSummary] = useState<DocumentSummary | null>(null);
-  const [isSummarizing, setIsSummarizing] = useState(false);
   const [activeTab, setActiveTab] = useState<'evidence' | 'reasoning' | 'steps'>('evidence');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [photoBase64, setPhotoBase64] = useState<string>('');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('SUREPATH_SESSION');
-    if (saved) setCurrentUser(JSON.parse(saved));
-  }, []);
-
   const [reportForm, setReportForm] = useState<ReportForm>({
     chronology: '',
     location: '',
@@ -43,6 +38,9 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
     thirdPartyInvolved: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+
+  const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
 
   const dateLimits = useMemo(() => {
     const today = new Date();
@@ -52,6 +50,49 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
     const min = minDate.toISOString().split('T')[0];
     return { min, max };
   }, []);
+
+  useEffect(() => {
+    const savedSession = localStorage.getItem('SUREPATH_SESSION');
+    if (savedSession) setCurrentUser(JSON.parse(savedSession));
+
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) setHasDraft(true);
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'success' && step !== 'select') {
+      const draftData = {
+        claimType,
+        step,
+        claimResult,
+        healthResult,
+        photoBase64,
+        reportForm,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+    }
+  }, [claimType, step, claimResult, healthResult, photoBase64, reportForm]);
+
+  const loadDraft = () => {
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      const data = JSON.parse(draft);
+      setClaimType(data.claimType);
+      setStep(data.step);
+      setClaimResult(data.claimResult);
+      setHealthResult(data.healthResult);
+      setPhotoBase64(data.photoBase64);
+      setReportForm(data.reportForm);
+      setHasDraft(false);
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasDraft(false);
+    setStep('select');
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,7 +109,7 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
           setClaimResult(response.data);
           setStep('result');
         } else {
-          alert(response.error || 'Audit neural gagal. Mohon gunakan foto yang lebih jelas.');
+          alert(t('Audit failed. Please try a clearer photo.', 'Cek gagal. Mohon gunakan foto yang lebih jelas.'));
           setStep('upload');
         }
       } else if (claimType === 'HEALTH') {
@@ -77,7 +118,7 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
           setHealthResult(response.data);
           setStep('result');
         } else {
-          alert(response.error || 'Audit neural kuitansi gagal.');
+          alert(t('Failed to read receipt.', 'Gagal membaca kuitansi.'));
           setStep('upload');
         }
       }
@@ -85,29 +126,10 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsSummarizing(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = reader.result as string;
-      const response = await summarizeClaimDocument(base64);
-      setIsSummarizing(false);
-      if (response.success && response.data) {
-        setDocSummary(response.data);
-        setStep('docSummary');
-      } else {
-        alert(response.error || 'Gagal meringkas dokumen.');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleFinalReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (reportForm.chronology.length < 20) {
-      alert("Berikan kronologi lebih detail (min. 20 karakter).");
+    if (reportForm.chronology.length < 10) {
+      alert(t("Please provide more details.", "Berikan kronologi lebih detail."));
       return;
     }
     
@@ -132,57 +154,75 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
         };
 
         await db.claims.add(newClaim);
+        localStorage.removeItem(DRAFT_KEY); 
+        
         setTimeout(() => {
             setIsSubmitting(false);
             setStep('success');
         }, 1500);
     } catch (error) {
-        console.error("Claim save failed", error);
-        alert("Gagal menyimpan klaim.");
+        console.error("Save failed", error);
+        alert(t("Error submitting claim.", "Gagal mengirim laporan."));
         setIsSubmitting(false);
     }
   };
 
   const Header = ({ title, showBack = false, onBack = () => {} }: { title: string, showBack?: boolean, onBack?: () => void }) => (
-    <div className="flex items-center gap-3 mb-3">
-      {showBack && (
-        <button onClick={onBack} className="p-2 bg-gray-100 dark:bg-white/5 rounded-full hover:text-primary-500 transition-colors">
-          <ChevronRight className="rotate-180" size={16}/>
-        </button>
-      )}
-      <div className="w-7 h-7 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-500">
-        <ShieldCheck size={16}/>
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-4">
+        {showBack && (
+          <button onClick={onBack} className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl hover:text-primary-500 transition-colors border border-black/5">
+            <ChevronRight className="rotate-180" size={20}/>
+          </button>
+        )}
+        <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner">
+          <ShieldCheck size={24}/>
+        </div>
+        <h3 className="text-xl font-black uppercase tracking-tight">{title}</h3>
       </div>
-      <h3 className="text-lg font-black uppercase tracking-tight">{title}</h3>
     </div>
   );
 
   if (step === 'select') {
     return (
-      <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center px-4">
-        <div className="text-center mb-6">
-           <h2 className="text-2xl font-black uppercase tracking-tighter text-slate-800 dark:text-white">Lapor Klaim <span className="text-primary-500">Pintar</span></h2>
-           <p className="text-xs text-gray-500 font-bold uppercase mt-2 tracking-widest">Pilih tipe asuransi kamu</p>
+      <div className="space-y-10 animate-fade-in flex flex-col h-full justify-center px-4">
+        {hasDraft && (
+           <div className="p-6 bg-amber-50 border border-amber-200 rounded-[2rem] flex flex-col gap-4 animate-pop-in">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg"><RefreshCw size={20}/></div>
+                 <p className="text-xs font-bold text-amber-800 leading-tight">Kamu punya laporan yang belum selesai. Ingin melanjutkan?</p>
+              </div>
+              <div className="flex gap-2">
+                 <button onClick={loadDraft} className="flex-1 py-3 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Lanjutkan</button>
+                 <button onClick={clearDraft} className="px-5 py-3 bg-white text-amber-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-200">Mulai Baru</button>
+              </div>
+           </div>
+        )}
+
+        <div className="text-center space-y-4">
+           <Badge variant="brand">{t('Simplified Claims', 'Lapor Klaim Mudah')}</Badge>
+           <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">{t('Submit', 'Laporkan')} <span className="text-primary-500">{t('Your Case', 'Masalahmu')}</span></h2>
+           <p className="text-sm text-gray-500 font-bold uppercase tracking-widest max-w-xs mx-auto opacity-60">{t('Fast process, no complicated forms.', 'Proses cepat, tanpa formulir ribet.')}</p>
         </div>
-        <div className="grid gap-4">
+        <div className="grid gap-5">
            <button 
              onClick={() => { setClaimType('AUTO'); setStep('upload'); }}
-             className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-lg flex items-center gap-6 group hover:border-primary-500/50 transition-all active:scale-95"
+             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-primary-500 transition-all active:scale-95"
            >
-              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500"><Smartphone size={32}/></div>
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-inner"><Car size={40}/></div>
               <div className="text-left">
-                 <h3 className="font-black text-xl uppercase tracking-tight">Klaim Kendaraan</h3>
-                 <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">Audit kerusakan visual AI</p>
+                 <h3 className="font-black text-2xl uppercase tracking-tight">{t('Car Claim', 'Klaim Mobil')}</h3>
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('Submit photos of damage', 'Kirim foto kerusakan')}</p>
               </div>
            </button>
            <button 
              onClick={() => { setClaimType('HEALTH'); setStep('upload'); }}
-             className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-lg flex items-center gap-6 group hover:border-primary-500/50 transition-all active:scale-95"
+             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-primary-500 transition-all active:scale-95"
            >
-              <div className="w-16 h-16 bg-rose-50 dark:bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500"><HeartPulse size={32}/></div>
+              <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform shadow-inner"><HeartPulse size={40}/></div>
               <div className="text-left">
-                 <h3 className="font-black text-xl uppercase tracking-tight">Klaim Kesehatan</h3>
-                 <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">Ekstraksi kuitansi medis AI</p>
+                 <h3 className="font-black text-2xl uppercase tracking-tight">{t('Medical Claim', 'Klaim Medis')}</h3>
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('Upload medical receipts', 'Kirim kuitansi rumah sakit')}</p>
               </div>
            </button>
         </div>
@@ -192,271 +232,207 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
 
   if (step === 'upload') {
     return (
-      <div className="space-y-3 animate-fade-in flex flex-col h-full justify-center">
-        <Header title={claimType === 'AUTO' ? "Klaim Kendaraan" : "Klaim Kesehatan"} showBack onBack={() => setStep('select')} />
-        <div className="aspect-[4/3] relative rounded-[2rem] overflow-hidden bg-gray-100 dark:bg-white/5 border-2 border-dashed border-primary-500/30 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
-          <div className="w-14 h-14 bg-primary-500/10 rounded-full flex items-center justify-center text-primary-500 mb-2 group-hover:scale-110 transition-transform">
-            <Camera size={28} />
+      <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center">
+        <Header title={claimType === 'AUTO' ? t("Vehicle Audit", "Cek Kendaraan") : t("Medical Audit", "Cek Kuitansi")} />
+        <div className="aspect-square relative rounded-[3rem] overflow-hidden bg-gray-50 dark:bg-white/5 border-2 border-dashed border-primary-500/20 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
+          <div className="w-24 h-24 bg-primary-500/10 rounded-[2rem] flex items-center justify-center text-primary-500 mb-6 group-hover:scale-110 transition-transform shadow-xl">
+            <Camera size={48} />
           </div>
-          <p className="text-base font-black uppercase text-gray-400 group-hover:text-primary-500 transition-colors tracking-tight">
-            {claimType === 'AUTO' ? "Foto Kerusakan" : "Foto Kuitansi RS"}
+          <p className="text-2xl font-black uppercase text-gray-400 group-hover:text-primary-500 transition-colors tracking-tight">
+            {claimType === 'AUTO' ? t("Take Photo", "Ambil Foto") : t("Upload Image", "Upload Foto")}
           </p>
-          <p className="text-[0.5rem] text-gray-400 mt-1 font-bold uppercase tracking-widest text-center px-4">
-            {claimType === 'AUTO' ? "Snap a photo of the damage." : "Unggah kuitansi atau billing medis."}
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 font-bold uppercase tracking-widest text-center px-12 opacity-60">
+            {claimType === 'AUTO' ? t("Snap the damaged part clearly.", "Foto bagian yang rusak dengan jelas.") : t("Upload your hospital billing photo.", "Unggah foto tagihan rumah sakit.")}
           </p>
           <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleUpload} />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-white dark:bg-white/5 border border-black/5 flex flex-col items-center text-center gap-1.5">
-            <Scan size={18} className="text-primary-500" />
-            <p className="text-[0.45rem] font-black uppercase tracking-widest text-gray-500">Secure Check</p>
-          </div>
-          <div className="p-3 rounded-xl bg-white dark:bg-white/5 border border-black/5 flex flex-col items-center text-center gap-1.5">
-            <Rocket size={18} className="text-primary-500" />
-            <p className="text-[0.45rem] font-black uppercase tracking-widest text-gray-500">Express Submit</p>
-          </div>
-        </div>
+        <button onClick={() => setStep('select')} className="w-full py-4 text-xs font-black uppercase text-gray-400">Kembali</button>
       </div>
     );
   }
 
   if (step === 'analyzing') {
     return (
-      <div className="glass-card rounded-[2.5rem] h-full flex flex-col items-center justify-center animate-pop-in bg-white dark:bg-midnight overflow-hidden">
+      <div className="glass-card rounded-[3rem] h-full flex flex-col items-center justify-center animate-pop-in bg-white dark:bg-midnight overflow-hidden">
         <NeuralProcessingView 
-          label={claimType === 'AUTO' ? "Damage Audit" : "Medical Audit"} 
-          sublabel={claimType === 'AUTO' ? "Calculating repair costs..." : "Parsing hospital billing data..."}
+          label={t("Analyzing Evidence...", "Menganalisa Bukti...")} 
+          sublabel={t("Our Neural Engine is parsing visual data for claim integrity.", "Neural Engine kami sedang memproses data visual untuk integritas klaim.")}
         />
       </div>
     );
   }
 
   if (step === 'result') {
-    if (claimType === 'AUTO' && claimResult) {
-      return (
-        <div className="space-y-3 animate-pop-in h-full flex flex-col pb-2">
-          <Header title="Hasil Audit AI" showBack onBack={() => setStep('upload')} />
-          <div className="p-4 glass-card rounded-[2rem] border-2 border-primary-500/20 bg-primary-500/5 relative overflow-hidden flex-shrink-0">
-            <div className="absolute top-3 right-3">
-              <div className="px-2 py-0.5 bg-primary-500 text-white rounded-md font-black text-[0.45rem] uppercase tracking-widest">{claimResult.severity} Damage</div>
+    const isAuto = claimType === 'AUTO';
+    return (
+       <div className="space-y-6 animate-pop-in h-full flex flex-col pb-6">
+          <Header title={t("Neural Audit Result", "Hasil Audit Neural")} />
+          
+          {/* Main Hero Card */}
+          <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-2xl transition-all hover:scale-[1.02]">
+            <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
+               {isAuto ? <Car size={120}/> : <HeartPulse size={120}/>}
             </div>
-            <p className="text-[0.45rem] font-black uppercase text-primary-500 tracking-[0.3em] mb-1">Estimated Repair Cost</p>
-            <h3 className="text-3xl font-black tracking-tighter mb-1">{formatIDR(claimResult.totalEstimasi)}</h3>
-            <p className="text-[0.6rem] font-bold text-gray-600 dark:text-gray-300 leading-tight border-l-2 border-primary-500 pl-2">AI Analysis: {claimResult.aiInsight}</p>
-          </div>
-
-          <div className="flex bg-gray-100 dark:bg-white/5 p-0.5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest">
-              <button onClick={() => setActiveTab('evidence')} className={`flex-1 py-1.5 rounded-md transition-all ${activeTab === 'evidence' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-500' : 'text-gray-400'}`}>Visual Analysis</button>
-              <button onClick={() => setActiveTab('reasoning')} className={`flex-1 py-1.5 rounded-md transition-all ${activeTab === 'reasoning' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-500' : 'text-gray-400'}`}>Tech Summary</button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto pr-0.5 no-scrollbar min-h-0">
-            {activeTab === 'evidence' && (
-              <div className="animate-fade-in space-y-2 p-1">
-                {claimResult.rincianPart?.map((p, i) => (
-                  <div key={i} className="p-3 bg-white dark:bg-white/5 rounded-xl border border-black/5 flex items-center justify-between shadow-sm">
-                    <div className="flex-1">
-                      <p className="font-black uppercase text-[0.6rem] tracking-tight">{p.namaPart}</p>
-                      <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{p.kondisi}</p>
-                    </div>
-                    <div className="text-right ml-4">
-                      <p className="font-black text-[0.7rem] text-primary-500 leading-none">{formatIDR(p.estimasiBiaya)}</p>
-                    </div>
+            <div className="relative z-10 space-y-5">
+               <div className="flex justify-between items-center">
+                  <p className="text-[0.6rem] font-black uppercase text-primary-400 tracking-[0.4em]">{t('Audit Payout Est.', 'Estimasi Pencairan')}</p>
+                  <div className={`px-3 py-1 rounded-lg font-black text-[0.5rem] uppercase tracking-widest border border-white/20 ${isAuto && claimResult?.severity === 'Ringan' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                     {isAuto ? `${claimResult?.severity} Severity` : 'Medical Node'}
                   </div>
-                ))}
-              </div>
-            )}
-            {activeTab === 'reasoning' && (
-              <div className="p-4 space-y-4">
-                 <div className="p-4 bg-primary-50 dark:bg-primary-900/10 rounded-2xl">
-                    <p className="text-[0.6rem] font-black text-primary-500 uppercase mb-2 tracking-widest">Rekomendasi Bengkel</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{claimResult.rekomendasiBengkel}</p>
-                 </div>
-              </div>
-            )}
-          </div>
-
-          <button onClick={() => setStep('reporting')} className="py-4 bg-primary-500 text-white rounded-xl font-black uppercase text-[0.65rem] tracking-widest shadow-lg shadow-primary-500/20 transition-all active:scale-95">Lanjut Lapor</button>
-        </div>
-      );
-    } else if (claimType === 'HEALTH' && healthResult) {
-      return (
-        <div className="space-y-4 animate-pop-in h-full flex flex-col pb-2">
-           <Header title="Neural Receipt Parsing" showBack onBack={() => setStep('upload')} />
-           <div className="p-6 bg-rose-500/5 rounded-[2.5rem] border-2 border-rose-500/20 relative overflow-hidden flex-shrink-0">
-              <div className="absolute top-0 right-0 p-6 opacity-10"><HeartPulse size={80}/></div>
-              <p className="text-[0.55rem] font-black uppercase text-rose-500 tracking-[0.3em] mb-1">Total Biaya Medis</p>
-              <h3 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{formatIDR(healthResult.totalAmount)}</h3>
-              <div className="flex items-center gap-2 mt-4">
-                 <BadgeCheck className="text-emerald-500" size={14}/>
-                 <span className="text-[0.5rem] font-bold text-emerald-600 uppercase">Validitas Dokumen: {healthResult.confidenceScore}%</span>
-              </div>
-           </div>
-
-           <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                 <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-black/5">
-                    <p className="text-[0.45rem] font-black text-gray-400 uppercase mb-1">Rumah Sakit</p>
-                    <p className="text-[0.65rem] font-black uppercase flex items-center gap-2"><Building2 size={10} className="text-primary-500"/> {healthResult.hospitalName}</p>
-                 </div>
-                 <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-black/5">
-                    <p className="text-[0.45rem] font-black text-gray-400 uppercase mb-1">Tgl Perawatan</p>
-                    <p className="text-[0.65rem] font-black uppercase flex items-center gap-2"><Calendar size={10} className="text-primary-500"/> {healthResult.treatmentDate}</p>
-                 </div>
-              </div>
-
-              <div className="p-5 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5">
-                 <p className="text-[0.5rem] font-black text-gray-400 uppercase mb-3 flex items-center gap-2"><Stethoscope size={12}/> Diagnosa / Perawatan</p>
-                 <p className="text-[0.7rem] font-medium leading-relaxed italic text-slate-700 dark:text-gray-300">"{healthResult.diagnosisSummary}"</p>
-              </div>
-
-              <div className="space-y-2">
-                 <p className="text-[0.5rem] font-black text-gray-400 uppercase ml-2 tracking-widest">Rincian Billing</p>
-                 {healthResult.billingItems?.map((item, idx) => (
-                    <div key={idx} className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl flex justify-between items-center border border-black/5">
-                       <span className="text-[0.6rem] font-bold uppercase text-gray-600 dark:text-gray-400">{item.item}</span>
-                       <span className="text-[0.65rem] font-black">{formatIDR(item.cost)}</span>
-                    </div>
-                 ))}
-              </div>
-           </div>
-
-           <button onClick={() => setStep('reporting')} className="py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-black uppercase text-[0.65rem] tracking-widest shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
-             <Rocket size={16}/> Kirim Reimbursement
-           </button>
-        </div>
-      );
-    }
-  }
-
-  if (step === 'docUpload') {
-    return (
-      <div className="space-y-4 animate-fade-in flex flex-col h-full justify-center">
-        <Header title="Accelerated Document Audit" showBack onBack={() => setStep('result')} />
-        <div className="p-6 rounded-[2rem] border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center text-center gap-3 relative bg-gray-50 dark:bg-white/5">
-          {isSummarizing ? (
-            <div className="py-6 space-y-3">
-              <Loader2 className="animate-spin text-primary-500 mx-auto" size={28}/>
-              <p className="text-[0.55rem] font-black uppercase text-gray-400 animate-pulse">Syncing to Insurer...</p>
+               </div>
+               <h3 className="text-5xl font-black tracking-tighter leading-none">{formatIDR(isAuto ? claimResult?.totalEstimasi || 0 : healthResult?.totalAmount || 0)}</h3>
+               <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                  <span className="text-[0.55rem] font-black uppercase tracking-widest text-emerald-400">{t('Real-time Verification Active', 'Verifikasi Real-time Aktif')}</span>
+               </div>
             </div>
-          ) : (
-            <>
-              <FileSearch size={32} className="text-gray-300"/>
-              <div className="space-y-0.5">
-                <p className="font-black text-xs uppercase tracking-tight">Rapid Document Upload</p>
-                <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest">Instant data extraction for claim speed</p>
-              </div>
-              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleDocUpload} />
-            </>
-          )}
-        </div>
-        {!isSummarizing && <button onClick={() => setStep('result')} className="w-full py-3 text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Kembali ke Audit</button>}
-      </div>
-    );
-  }
+          </div>
 
-  if (step === 'docSummary' && docSummary) {
-    return (
-      <div className="space-y-3 animate-pop-in h-full flex flex-col">
-        <Header title="Claim Summary" showBack onBack={() => setStep('docUpload')} />
-        <div className="p-4 bg-primary-50/5 border border-primary-500/20 rounded-xl space-y-1">
-          <p className="text-[0.4rem] font-black text-primary-500 uppercase tracking-widest">Express Path Policy</p>
-          <p className="font-black text-base tracking-tight uppercase">{docSummary.policyNumber}</p>
-        </div>
-        <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar pr-1">
-          <div className="space-y-1.5">
-             <p className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Pre-Validated Data</p>
-             <div className="grid gap-1.5">
-               {docSummary.keyPoints.map((point, i) => (
-                 <div key={i} className="flex gap-2 p-2.5 bg-white dark:bg-white/5 border border-black/5 rounded-xl text-[0.6rem] font-medium items-start">
-                   <div className="w-3 h-3 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0 mt-0.5">
-                     <CheckCircle2 size={8}/>
+          {/* Sub Navigation */}
+          <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl shadow-inner border border-black/5">
+             {[
+               { id: 'evidence', label: t('Breakdown', 'Rincian'), icon: ClipboardList },
+               { id: 'reasoning', label: t('AI Reasoning', 'Analisa'), icon: BrainCircuit },
+               { id: 'steps', label: t('Next Node', 'Langkah'), icon: Zap }
+             ].map(tab => (
+               <button 
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id as any)}
+                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-500 shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+               >
+                 <tab.icon size={14}/> {tab.label}
+               </button>
+             ))}
+          </div>
+
+          {/* Detailed Content Area */}
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 px-1 min-h-[300px]">
+             {activeTab === 'evidence' && (
+                <div className="space-y-3 animate-fade-in">
+                   {isAuto ? (
+                      claimResult?.rincianPart.map((p, i) => (
+                         <div key={i} className="p-5 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 flex items-center justify-between group hover:border-primary-500/30 transition-all shadow-sm">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
+                                  <Activity size={20}/>
+                               </div>
+                               <div>
+                                  <p className="text-[0.7rem] font-black uppercase text-slate-800 dark:text-white leading-none mb-1.5">{p.namaPart}</p>
+                                  <div className="flex items-center gap-2">
+                                     <span className={`px-2 py-0.5 rounded text-[0.45rem] font-black uppercase border ${p.tindakan === 'Ganti' ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-blue-50 border-blue-100 text-blue-600'}`}>{p.tindakan}</span>
+                                     <span className="text-[0.55rem] text-gray-400 font-medium italic">"{p.kondisi}"</span>
+                                  </div>
+                               </div>
+                            </div>
+                            <p className="text-sm font-black text-primary-500">{formatIDR(p.estimasiBiaya)}</p>
+                         </div>
+                      ))
+                   ) : (
+                      healthResult?.billingItems.map((item, i) => (
+                         <div key={i} className="p-5 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"><Receipt size={20}/></div>
+                               <div>
+                                  <p className="text-xs font-black uppercase text-slate-800 dark:text-white">{item.item}</p>
+                                  <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest mt-1">Medical Ledger Node</p>
+                               </div>
+                            </div>
+                            <p className="text-sm font-black text-rose-500">{formatIDR(item.cost)}</p>
+                         </div>
+                      ))
+                   )}
+                </div>
+             )}
+
+             {activeTab === 'reasoning' && (
+                <div className="space-y-6 animate-fade-in">
+                   <div className="p-8 bg-primary-500/5 rounded-[2.5rem] border border-primary-500/10 space-y-4">
+                      <div className="flex items-center gap-3 text-primary-500">
+                         <BrainCircuit size={20}/>
+                         <span className="text-[0.65rem] font-black uppercase tracking-widest">{t('AI Structural Analysis', 'Analisa Struktural AI')}</span>
+                      </div>
+                      <p className="text-sm font-medium leading-relaxed text-slate-700 dark:text-gray-300 italic">
+                         "{isAuto ? claimResult?.technicalReasoning : healthResult?.diagnosisSummary}"
+                      </p>
                    </div>
-                   {point}
-                 </div>
-               ))}
+                   
+                   {isAuto && (
+                     <div className="p-8 bg-blue-500/5 rounded-[2.5rem] border border-blue-500/10 flex items-center gap-6">
+                        <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg"><Building2 size={24}/></div>
+                        <div className="flex-1">
+                           <p className="text-[0.55rem] font-black uppercase text-blue-400 tracking-widest">Workshop Registry</p>
+                           <h4 className="text-lg font-black uppercase tracking-tight text-slate-800 dark:text-white leading-none mt-1">{claimResult?.rekomendasiBengkel}</h4>
+                        </div>
+                     </div>
+                   )}
+                </div>
+             )}
+
+             {activeTab === 'steps' && (
+                <div className="space-y-4 animate-fade-in">
+                   {(isAuto ? claimResult?.nextSteps : [t('Review medical record', 'Tinjau catatan medis'), t('Finalize payout node', 'Finalisasi simpul pencairan')])?.map((step, i) => (
+                      <div key={i} className="flex gap-5 items-start p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5">
+                         <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xs shrink-0">{i+1}</div>
+                         <p className="text-sm font-bold text-slate-600 dark:text-gray-400 pt-1">{step}</p>
+                      </div>
+                   ))}
+                </div>
+             )}
+          </div>
+
+          <div className="space-y-4">
+             <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-200">
+                <AlertCircle className="text-amber-500 shrink-0" size={20}/>
+                <p className="text-[0.6rem] font-bold text-amber-700 leading-tight uppercase tracking-wide">
+                   {t('Confirming this report will freeze the evidence for policy audit.', 'Mengonfirmasi laporan ini akan membekukan bukti untuk audit polis.')}
+                </p>
              </div>
+             <button onClick={() => setStep('reporting')} className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4">
+                {t('Finalize & Report', 'Finalisasi & Lapor')} <ArrowRight size={20}/>
+             </button>
           </div>
-          <div className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl space-y-1 border border-black/5">
-            <p className="text-[0.45rem] font-black uppercase text-gray-400">Submission Risk Level</p>
-            <p className="text-[0.6rem] italic font-bold leading-snug">{docSummary.riskAssessment}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 pt-2">
-          <button onClick={() => setStep('docUpload')} className="py-3 bg-white dark:bg-white/5 border border-black/5 rounded-xl font-black uppercase text-[0.5rem] tracking-widest">Rescan Docs</button>
-          <button onClick={() => setStep('reporting')} className="py-3 bg-primary-500 text-white rounded-xl font-black uppercase text-[0.5rem] tracking-widest shadow-lg">Confirm Submission</button>
-        </div>
-      </div>
+       </div>
     );
   }
 
   if (step === 'reporting') {
     return (
       <div className="animate-fade-in flex flex-col h-full">
-        <Header title="Express Incident Report" showBack onBack={() => setStep('result')} />
-        <form onSubmit={handleFinalReport} className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="text-[0.45rem] font-black uppercase tracking-widest text-gray-400 ml-1">Tanggal (Kejadian)</label>
-              <div className="relative">
-                <Calendar size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-primary-500 pointer-events-none" />
-                <input 
-                  type="date" required 
-                  min={dateLimits.min} max={dateLimits.max}
-                  className="w-full pl-8 pr-2 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-black/5 text-[0.65rem] outline-none focus:border-primary-500 font-bold" 
-                  value={reportForm.date}
-                  onChange={(e) => setReportForm({...reportForm, date: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[0.45rem] font-black uppercase tracking-widest text-gray-400 ml-1">Waktu</label>
-              <div className="relative">
-                <Clock size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-primary-500 pointer-events-none" />
-                <input 
-                  type="time" required 
-                  className="w-full pl-8 pr-2 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-black/5 text-[0.65rem] outline-none focus:border-primary-500 font-bold" 
-                  value={reportForm.time}
-                  onChange={(e) => setReportForm({...reportForm, time: e.target.value})}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[0.45rem] font-black uppercase tracking-widest text-gray-400 ml-1">Lokasi TKP</label>
+        <Header title={t("Incident Registry", "Registrasi Kejadian")} showBack onBack={() => setStep('result')} />
+        <form onSubmit={handleFinalReport} className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-6 pt-2">
+          <div className="space-y-1.5">
+            <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Where it happened?', 'Lokasi Kejadian')}</label>
             <div className="relative">
-              <MapPin size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-primary-500" />
+              <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
               <input 
-                type="text" required placeholder="Alamat detail..."
-                className="w-full pl-8 pr-2 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-black/5 text-[0.65rem] outline-none focus:border-primary-500 font-bold" 
+                type="text" required placeholder={t("Address or location...", "Alamat atau lokasi...")}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
                 value={reportForm.location}
                 onChange={(e) => setReportForm({...reportForm, location: e.target.value})}
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[0.45rem] font-black uppercase tracking-widest text-gray-400 ml-1">Kronologi Singkat</label>
+          <div className="space-y-1.5">
+            <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Describe Event', 'Ceritakan Kejadiannya')}</label>
             <textarea 
-              required rows={3} placeholder="Apa yang terjadi secara detail?"
-              className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-black/5 text-[0.6rem] outline-none focus:border-primary-500 resize-none font-medium leading-tight shadow-inner" 
+              required rows={4} placeholder={t("Explain how it happened...", "Ceritakan detail kejadiannya...")}
+              className="w-full px-6 py-4 rounded-[2rem] bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 resize-none font-medium leading-relaxed shadow-inner" 
               value={reportForm.chronology}
               onChange={(e) => setReportForm({...reportForm, chronology: e.target.value})}
             />
           </div>
 
           <div className="pt-2">
-            <label className="flex items-center gap-3 p-4 bg-white dark:bg-white/5 border border-black/5 rounded-2xl cursor-pointer hover:border-primary-500/30 transition-all">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
-                <Users size={20}/>
+            <label className={`flex items-center gap-5 p-6 bg-white dark:bg-white/5 border-2 rounded-[2.5rem] cursor-pointer transition-all shadow-sm ${reportForm.thirdPartyInvolved ? 'border-primary-500/50 bg-primary-500/5' : 'border-slate-50'}`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+                <Users size={28}/>
               </div>
               <div className="flex-1">
-                <p className="text-[0.65rem] font-black uppercase tracking-widest">Pihak Ketiga Terlibat?</p>
-                <p className="text-[0.45rem] font-bold text-gray-400 uppercase">Apakah ada orang lain yang terlibat?</p>
+                <p className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">{t('Others involved?', 'Ada orang lain terlibat?')}</p>
               </div>
-              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 border-primary-500' : 'border-gray-200'}`}>
-                {reportForm.thirdPartyInvolved && <Check size={14} className="text-white" strokeWidth={4}/>}
+              <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 border-primary-500 shadow-lg' : 'border-slate-200'}`}>
+                {reportForm.thirdPartyInvolved && <Check size={18} className="text-white" strokeWidth={3}/>}
               </div>
               <input 
                 type="checkbox" 
@@ -470,10 +446,10 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
 
         <button 
           onClick={handleFinalReport} disabled={isSubmitting}
-          className="mt-2 w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl font-black uppercase text-[0.55rem] tracking-[0.2em] shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-95"
+          className="mt-6 w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 transition-all active:scale-95 group relative overflow-hidden"
         >
-          {isSubmitting ? <Loader2 className="animate-spin" size={14}/> : <Rocket size={14}/>}
-          Kirim Klaim Kilat
+          {isSubmitting ? <Loader2 className="animate-spin" size={24}/> : <Rocket size={24} className="relative z-10"/>}
+          <span className="relative z-10">{t('Initialize Claim Transmission', 'Kirim Transmisi Klaim')}</span>
         </button>
       </div>
     );
@@ -481,21 +457,17 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
 
   if (step === 'success') {
     return (
-      <div className="text-center space-y-4 py-4 animate-pop-in flex flex-col h-full justify-center">
-        <div className="w-20 h-20 bg-emerald-500 rounded-full mx-auto flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
-          <CheckCircle2 size={40} strokeWidth={3} />
+      <div className="text-center space-y-10 py-10 animate-pop-in flex flex-col h-full justify-center items-center">
+        <div className="w-32 h-32 bg-emerald-500 rounded-[3rem] flex items-center justify-center text-white shadow-2xl border-4 border-white dark:border-[#0f172a] animate-pop-in">
+           <CheckCircle2 size={72} strokeWidth={2.5} />
         </div>
-        <div className="space-y-1">
-          <h3 className="text-xl font-black uppercase tracking-tighter">Klaim <span className="text-primary-500">Tersubmit</span></h3>
-          <p className="text-[0.55rem] text-gray-500 dark:text-gray-400 px-4 leading-relaxed font-bold uppercase tracking-widest">
-            Akselerasi Neural OS aktif. Berkas Anda telah divalidasi dan dikirim langsung ke tim asuransi. Status akan diperbarui dalam <span className="text-primary-500">60 menit</span>.
+        <div className="space-y-4 px-8">
+          <h3 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">{t('Transmission Success!', 'Transmisi Berhasil!')}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-bold uppercase tracking-widest max-w-sm">
+            {t('Report node successfully uploaded. Neural verify protocol initialized. Check status in 60 minutes.', 'Simpul laporan berhasil diunggah. Protokol verifikasi neural diinisialisasi. Cek status dalam 60 menit.')}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-black/5 text-left">
-          <p className="text-[0.4rem] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rapid Reference Hash</p>
-          <p className="text-[0.55rem] font-mono text-primary-500 break-all leading-tight">SP-SPD-{Date.now().toString().slice(-8)}</p>
-        </div>
-        <button onClick={onComplete} className="w-full py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl font-black uppercase text-[0.5rem] tracking-widest shadow-xl transition-all active:scale-95">Selesai</button>
+        <button onClick={onComplete} className="w-full max-w-sm py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl transition-all active:scale-95">{t('Back to Matrix', 'Selesai')}</button>
       </div>
     );
   }
@@ -503,19 +475,15 @@ const ClaimManager = ({ onComplete }: { onComplete: () => void }) => {
   return null;
 };
 
+const Check = ({ size, className, strokeWidth }: { size: number, className?: string, strokeWidth?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth || 2} strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
+
 const BadgeCheck = ({ className, size }: { className?: string, size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     <path d="m9 12 2 2 4-4"/>
   </svg>
-);
-
-const Wrench = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-);
-
-const Check = ({ size, className, strokeWidth }: { size: number, className?: string, strokeWidth?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth || 2} strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
 );
 
 export default ClaimManager;

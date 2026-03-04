@@ -267,13 +267,15 @@ const App = () => {
           </div>
         );
 
-      case 'claim': return <ClaimManager onComplete={() => setPage('home')} />;
+      /* Fix: Added missing lang prop to ClaimManager */
+      case 'claim': return <ClaimManager onComplete={() => setPage('home')} lang={lang} />;
       case 'wallet': return isAgent ? <AgentsWallet /> : <div className="p-10 text-center uppercase font-black text-gray-300">Customer Wallet Coming Soon</div>;
       case 'profile': return <UserProfile currentUser={currentUser} />;
-      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
+      /* Fix: Added missing lang prop to wizards */
+      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       default: return <div className="p-10 text-center uppercase font-black text-gray-300">Under Construction</div>;
     }
   };

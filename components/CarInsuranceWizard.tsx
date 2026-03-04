@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Car, RefreshCw, X, ChevronLeft, ChevronRight, Zap, ShieldCheck, CheckCircle2, FileText, ArrowRight, Wallet, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
-import { InsuranceType } from '../types';
+import { InsuranceType, Language } from '../types';
 import { db, Policy, Transaction } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
 import { formatIDR, PageTransition } from './car-wizard/WizardUI';
@@ -28,7 +28,7 @@ const STEPS = [
   { id: 'PAYMENT', label: 'Bayar' }
 ];
 
-const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<'KTP' | 'STNK' | 'SURVEY' | null>(null);
@@ -326,7 +326,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
             {step === 3 && <StepKYC kycData={kycData} setKycData={setKycData} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} verifiedFields={verifiedFields} setVerifiedFields={setVerifiedFields} />}
             {step === 4 && <StepPreSummary vehicle={vehicle} coverage={coverage} premiumBreakdown={premiumBreakdown} showBreakdown={showBreakdown} setShowBreakdown={setShowBreakdown} stnkResult={stnkResult} kycData={kycData} />}
             {step === 5 && <StepSurvey survey={survey} setSurvey={setSurvey} stnkResult={stnkResult} setStnkResult={setStnkResult} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} photoValidation={photoValidation} setPhotoValidation={setPhotoValidation} vehicle={vehicle} />}
-            {step === 6 && <StepFinal vehicle={vehicle} stnkResult={stnkResult} coverage={coverage} survey={survey} premiumBreakdown={premiumBreakdown} handleFinalPayment={handleNext} setStep={setStep} />}
+            {step === 6 && <StepFinal vehicle={vehicle} stnkResult={stnkResult} coverage={coverage} survey={survey} premiumBreakdown={premiumBreakdown} handleFinalPayment={handleNext} setStep={setStep} lang={lang} />}
             {step === 7 && <StepPayment premiumBreakdown={premiumBreakdown} onPaymentSuccess={handlePaymentResult} loading={loading} />}
           </div>
        </div>
@@ -400,18 +400,6 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
          </div>
        )}
     </div>
-  );
-};
-
-const BadgeComponent = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
-  const styles: any = {
-    primary: "bg-primary-500/10 text-primary-500 border-primary-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    blue: "bg-blue-500/10 text-blue-500 border-blue-200",
-    amber: "bg-amber-500/10 text-amber-600 border-amber-200",
-  };
-  return (
-    <span className={`px-2 py-0.5 rounded-lg text-[0.45rem] font-black uppercase tracking-widest border ${styles[color] || styles.primary}`}>{children}</span>
   );
 };
 

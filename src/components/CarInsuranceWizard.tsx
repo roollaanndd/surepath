@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Car, RefreshCw, X, ChevronLeft, ChevronRight, Zap, ShieldCheck, CheckCircle2, FileText, ArrowRight } from 'lucide-react';
-import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS } from '../constants';
-import { InsuranceType } from '../types';
+import { Car, RefreshCw, X, ChevronLeft, ChevronRight, Zap, ShieldCheck, CheckCircle2, FileText, ArrowRight, Wallet, Clock, AlertTriangle, Sparkles } from 'lucide-react';
+import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
+import { InsuranceType, Language } from '../types';
 import { db, Policy, Transaction } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
-import { formatIDR } from './car-wizard/WizardUI';
+import { formatIDR, PageTransition } from './car-wizard/WizardUI';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -17,17 +18,18 @@ import StepFinal from './car-wizard/StepFinal';
 import StepPayment from './car-wizard/StepPayment';
 
 const STEPS = [
-  { id: 'VEHICLE', label: 'Unit' },
-  { id: 'COVERAGE', label: 'Polis' },
-  { id: 'PROVIDERS', label: 'Opsi' },
-  { id: 'KYC', label: 'Nasabah' },
-  { id: 'PRESUMMARY', label: 'Rincian' },
-  { id: 'SURVEY', label: 'Audit' },
-  { id: 'REVIEW', label: 'Review' },
+  { id: 'VEHICLE', label: 'Data Mobil' },
+  { id: 'COVERAGE', label: 'Pilih Proteksi' },
+  { id: 'PROVIDERS', label: 'Pilih Perusahaan' },
+  { id: 'KYC', label: 'Data Diri' },
+  { id: 'PRESUMMARY', label: 'Cek Pesanan' },
+  { id: 'SURVEY', label: 'Cek Kondisi' },
+  { id: 'REVIEW', label: 'Ringkasan' },
   { id: 'PAYMENT', label: 'Bayar' }
 ];
 
-const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+// Added missing lang prop
+const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<'KTP' | 'STNK' | 'SURVEY' | null>(null);
@@ -36,12 +38,13 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
   const [showProviderBreakdown, setShowProviderBreakdown] = useState(false);
   const [sortBy, setSortBy] = useState<'RATING' | 'PRICE'>('RATING');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isPayLater, setIsPayLater] = useState(false);
   const [generatedPolicy, setGeneratedPolicy] = useState<Policy | null>(null);
 
   const [vehicle, setVehicle] = useState({
     brand: '', model: '', year: 2025, isOther: false, 
     price: 0, basePrice: 0, manualPrice: false, plate: '', 
-    vin: '', engine: '',
+    vin: '', engine: '', color: '',
     region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW'
   });
 
@@ -49,7 +52,9 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
     type: InsuranceType.COMPREHENSIVE as InsuranceType,
     flood: false, earthquake: false, srcc: false, 
     terrorism: false, authorized: false, 
-    tpl: 0, paDriver: false, paPassenger: false,
+    tpl: 0, 
+    paDriver: 0, 
+    paPassenger: 0,
     promo: '', discount: 0, discountType: 'NOMINAL' as 'NOMINAL' | 'PERCENT'
   });
 
@@ -99,72 +104,69 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
     if (!vehicle.price) return null;
     const baseRate = getOJKRate(vehicle.price / 1000000, vehicle.region, coverage.type);
     const basicPremium = (vehicle.price * baseRate) / 100;
+    
     const expansions = [];
     if (coverage.authorized) expansions.push({ name: 'Bengkel Resmi (Authorized)', val: (vehicle.price * AUTHORIZED_WORKSHOP_RATE) / 100, rate: AUTHORIZED_WORKSHOP_RATE });
     if (coverage.flood) expansions.push({ name: 'Banjir & Angin Ribut', val: (vehicle.price * EXPANSION_RATES.FLOOD) / 100, rate: EXPANSION_RATES.FLOOD });
     if (coverage.earthquake) expansions.push({ name: 'Gempa & Tsunami', val: (vehicle.price * EXPANSION_RATES.EARTHQUAKE) / 100, rate: EXPANSION_RATES.EARTHQUAKE });
+    
     const srccRate = coverage.type === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.SRCC.COMPREHENSIVE : EXPANSION_RATES.SRCC.TLO;
     if (coverage.srcc) expansions.push({ name: 'SRCC (Kerusuhan)', val: (vehicle.price * srccRate) / 100, rate: srccRate });
+
     const tsRate = coverage.type === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.TERRORISM.COMPREHENSIVE : EXPANSION_RATES.TERRORISM.TLO;
     if (coverage.terrorism) expansions.push({ name: 'Terorisme & Sabotase', val: (vehicle.price * tsRate) / 100, rate: tsRate });
+
     const tplPremium = (coverage.tpl / 100); 
-    const expansionTotal = expansions.reduce((acc: number, curr: any) => acc + curr.val, 0) + tplPremium;
+    const paDriverPremium = (coverage.paDriver * EXPANSION_RATES.PA_DRIVER) / 100;
+    const paPassengerPremium = (coverage.paPassenger * 4 * EXPANSION_RATES.PA_PASSENGER) / 100; // Assume 4 passengers
+
+    const expansionTotal = expansions.reduce((acc: number, curr: any) => acc + curr.val, 0) + tplPremium + paDriverPremium + paPassengerPremium;
     const grossPremium = basicPremium + expansionTotal;
+    
     const discountPercent = Math.min(coverage.discount || 0, 25);
     const discountAmount = grossPremium * (discountPercent / 100);
     const netPremium = grossPremium - discountAmount;
+
     return {
-        baseRate, basicPremium, expansions, tplPremium, grossPremium, discountPercent, discountAmount,
-        adminFee: selectedProvider?.adminFee || 0, stampDuty: STAMP_DUTY,
-        netPremium, totalPayable: netPremium + (selectedProvider?.adminFee || 0) + STAMP_DUTY
+        baseRate, basicPremium, expansions, tplPremium, paDriverPremium, paPassengerPremium, grossPremium, discountPercent, discountAmount,
+        adminFee: selectedProvider?.adminFee || 0,
+        stampDuty: STAMP_DUTY,
+        netPremium,
+        totalPayable: netPremium + (selectedProvider?.adminFee || 0) + STAMP_DUTY
     };
   }, [vehicle, coverage, selectedProvider]);
-
-  const sortedProviders = useMemo(() => {
-    return [...INSURANCE_PROVIDERS].sort((a, b) => {
-      if (sortBy === 'RATING') return b.rating - a.rating;
-      if (sortBy === 'PRICE') {
-          const priceA = (premiumBreakdown?.netPremium || 0) + a.adminFee;
-          const priceB = (premiumBreakdown?.netPremium || 0) + b.adminFee;
-          return priceA - priceB;
-      }
-      return 0;
-    });
-  }, [sortBy, premiumBreakdown]);
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => setStep(s => Math.max(s - 1, 0));
 
-  const formatInputCurrency = (value: string) => {
-    const numeric = value.replace(/\D/g, "");
-    if (!numeric) return "";
-    return new Intl.NumberFormat('id-ID').format(parseInt(numeric));
-  };
-
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const parts = val.match(/^([A-Z]{1,2})([0-9]{0,4})([A-Z]{0,3})$/);
-    if (parts) {
-      const plate = `${parts[1]}${parts[2] ? ' ' + parts[2] : ''}${parts[3] ? ' ' + parts[3] : ''}`;
-      const prefix = parts[1];
-      const regionInfo = PLATE_REGIONS[prefix];
-      setVehicle({ ...vehicle, plate, region: regionInfo?.region || '3', regionName: regionInfo ? `${regionInfo.name} (Region ${regionInfo.region})` : 'Region 3 (Lainnya)' });
-    } else { setVehicle({...vehicle, plate: val}); }
+    let inputVal = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
+    const prefix = inputVal.split(' ')[0];
+    const regionInfo = PLATE_REGIONS[prefix];
+    
+    setVehicle({
+      ...vehicle, 
+      plate: inputVal, 
+      region: regionInfo?.region || '3', 
+      regionName: regionInfo ? `${regionInfo.name} (Region ${regionInfo.region})` : 'Luar Kota'
+    });
   };
 
-  const handlePaymentSuccess = async (method: string) => {
-    if (!currentUser || !premiumBreakdown) return;
+  const handlePaymentResult = async (method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
+    if (!currentUser || !premiumBreakdown || !selectedProvider) return;
     try {
       const isManualPending = survey.verdict === 'MANUAL_REQUIRED' || survey.manualRequestStatus === 'REQUESTED';
-      
+      const status: any = resultStatus === 'PENDING_PAYMENT' ? 'PENDING' : (isManualPending ? 'PENDING' : 'ACTIVE');
+      setIsPayLater(resultStatus === 'PENDING_PAYMENT');
+
       const newPolicy: Policy = {
         userId: currentUser.id,
         type: 'CAR',
-        status: isManualPending ? 'PENDING' : 'ACTIVE',
+        status: status,
         startDate: new Date().toISOString(),
         endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
         premium: premiumBreakdown.totalPayable,
-        providerId: selectedProvider?.name || selectedProviderId || '',
+        providerId: selectedProvider.id,
         policyNumber: `POL-AUTO-${Date.now().toString().slice(-8)}`,
         createdAt: new Date().toISOString(),
         coverageDetails: { 
@@ -172,51 +174,92 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
             coverage, 
             survey, 
             kycData,
-            financials: { ...premiumBreakdown, paymentMethod: method } 
+            financials: { ...premiumBreakdown, paymentMethod: method, finalStatus: resultStatus } 
         }
       };
 
       const policyId = await db.policies.add(newPolicy);
       setGeneratedPolicy({ ...newPolicy, id: policyId });
 
+      // 1. Catat Transaksi Pembayaran Premi
       await db.transactions.add({
         userId: currentUser.id,
         type: 'PAYMENT',
         amount: premiumBreakdown.totalPayable,
-        status: 'SUCCESS',
-        description: `Payment for ${newPolicy.policyNumber} via ${method}`,
+        status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
+        description: `Pembayaran Premi ${newPolicy.policyNumber} (${selectedProvider.name})`,
         date: new Date().toISOString(),
         referenceId: policyId.toString()
       });
 
+      // 2. Hitung Komisi (25% dari Gross Premium)
+      const commissionAmount = (premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100;
+      await db.transactions.add({
+        userId: currentUser.id,
+        type: 'COMMISSION',
+        amount: commissionAmount,
+        status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
+        description: `Komisi Penjualan ${newPolicy.policyNumber}`,
+        date: new Date().toISOString(),
+        referenceId: policyId.toString()
+      });
+
+      // 3. Hitung Poin
+      const pointsPercent = selectedProvider.extraCoinsPercent || 0;
+      const pointsEarned = (premiumBreakdown.grossPremium * pointsPercent) / 100;
+      if (pointsEarned > 0) {
+        await db.transactions.add({
+          userId: currentUser.id,
+          type: 'POINTS',
+          amount: pointsEarned,
+          status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
+          description: `Reward Poin ${selectedProvider.name} untuk ${newPolicy.policyNumber}`,
+          date: new Date().toISOString(),
+          referenceId: policyId.toString()
+        });
+      }
+
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
     } catch (e) {
-      alert("Neural sync error: Gagal menyimpan data polis. " + e);
+      alert("Gagal menyimpan data polis.");
     }
   };
 
   if (isSuccess && generatedPolicy) {
      return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
-           <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8 animate-pop-in">
-              <ShieldCheck size={56} strokeWidth={2.5}/>
-           </div>
+           {isPayLater ? (
+              <div className="w-24 h-24 bg-amber-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8 animate-pop-in">
+                 <Clock size={56} strokeWidth={2.5}/>
+              </div>
+           ) : (
+              <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8 animate-pop-in">
+                 <ShieldCheck size={56} strokeWidth={2.5}/>
+              </div>
+           )}
+           
            <div className="space-y-4 mb-12">
-              <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Policy <span className="text-emerald-500">Live</span></h2>
-              <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto">
-                 Neural Node Activated. Your protection matrix has been synchronized with our core registry.
+              <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
+                 Polis <span className={isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPayLater ? "Tersimpan" : "Aktif"}</span>
+              </h2>
+              <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+                 {isPayLater 
+                   ? "Data pendaftaran telah kami simpan. Segera lakukan pembayaran di menu akun untuk mengaktifkan perlindungan Anda."
+                   : "Neural Node Teraktivasi. Perlindungan asuransi Anda telah terdaftar dan aktif secara real-time di sistem kami."}
               </p>
            </div>
 
            <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-[3rem] p-8 space-y-6 shadow-xl mb-10">
               <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-                 <span>Policy Node ID</span>
+                 <span>ID Polis</span>
                  <span className="text-primary-500 font-mono">{generatedPolicy.policyNumber}</span>
               </div>
               <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
                  <span>Status</span>
-                 <BadgeComponent color="emerald">{generatedPolicy.status}</BadgeComponent>
+                 <span className={`px-3 py-1 rounded-lg border text-[0.55rem] font-black uppercase tracking-widest ${isPayLater ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+                    {isPayLater ? 'Menunggu Pembayaran' : 'Aktif'}
+                 </span>
               </div>
               <div className="pt-6 border-t border-black/5 flex justify-between items-center">
                  <div className="flex items-center gap-3">
@@ -226,7 +269,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
                        <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">{vehicle.plate}</p>
                     </div>
                  </div>
-                 <FileText size={20} className="text-primary-500"/>
+                 {isPayLater ? <AlertTriangle size={20} className="text-amber-500"/> : <CheckCircle2 size={20} className="text-emerald-500"/>}
               </div>
            </div>
 
@@ -235,7 +278,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
                 onClick={onComplete}
                 className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
               >
-                Go to Dashboard <ArrowRight size={18}/>
+                Kembali ke Beranda <ArrowRight size={18}/>
               </button>
            </div>
         </div>
@@ -252,8 +295,8 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
                   <Car size={24} className="group-hover:rotate-12 transition-transform text-primary-500"/>
                </div>
                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tighter leading-none">Sure<span className="text-primary-500">Path</span> <span className="text-gray-400">Auto</span></h3>
-                  <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-[0.3em] mt-1.5">Penerbitan Polis AI v4.0</p>
+                  <h3 className="text-lg font-black uppercase tracking-tighter leading-none">Asuransi <span className="text-primary-500">Mobil</span></h3>
+                  <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1.5">Pendaftaran Cepat SurePath</p>
                </div>
             </div>
             <div className="flex items-center gap-2">
@@ -261,51 +304,99 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-1">
              <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-black/5">
                 <span className="text-[0.55rem] font-black text-primary-500 uppercase tracking-widest">{STEPS[step].label}</span>
              </div>
-             <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-[0.2em]">Step {step + 1} of {STEPS.length}</p>
+             <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-[0.2em]">Tahap {step + 1} / {STEPS.length}</p>
           </div>
 
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 px-1">
              {STEPS.map((s, i) => (
-               <div key={i} className={`h-1 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_#10b981]' : i < step ? 'bg-primary-500/30' : 'bg-gray-100 dark:bg-white/10'}`}></div>
+               <div key={i} className={`h-1 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_#f97316]' : i < step ? 'bg-primary-500/40' : 'bg-gray-100 dark:bg-white/10'}`}></div>
              ))}
           </div>
        </div>
 
        {/* MAIN CONTENT AREA */}
-       <div className="flex-1 overflow-y-auto px-6 py-8 no-scrollbar relative z-10">
+       <div className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar relative z-10">
           <div className="max-w-xl mx-auto">
-            {step === 0 && <StepVehicle vehicle={vehicle} setVehicle={setVehicle} entryMode={entryMode} setEntryMode={setEntryMode} handlePlateChange={handlePlateChange} formatInputCurrency={formatInputCurrency} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} setStnkResult={setStnkResult} />}
+            {step === 0 && <StepVehicle vehicle={vehicle} setVehicle={setVehicle} entryMode={entryMode} setEntryMode={setEntryMode} handlePlateChange={handlePlateChange} formatInputCurrency={(val) => new Intl.NumberFormat('id-ID').format(parseInt(val || "0"))} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} setStnkResult={setStnkResult} />}
             {step === 1 && <StepCoverage coverage={coverage} setCoverage={setCoverage} premiumBreakdown={premiumBreakdown} />}
-            {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={sortedProviders} selectedProviderId={selectedProviderId} setSelectedProviderId={setSelectedProviderId} premiumBreakdown={premiumBreakdown} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
+            {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={INSURANCE_PROVIDERS} selectedProviderId={selectedProviderId} setSelectedProviderId={setSelectedProviderId} premiumBreakdown={premiumBreakdown} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
             {step === 3 && <StepKYC kycData={kycData} setKycData={setKycData} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} verifiedFields={verifiedFields} setVerifiedFields={setVerifiedFields} />}
             {step === 4 && <StepPreSummary vehicle={vehicle} coverage={coverage} premiumBreakdown={premiumBreakdown} showBreakdown={showBreakdown} setShowBreakdown={setShowBreakdown} stnkResult={stnkResult} kycData={kycData} />}
             {step === 5 && <StepSurvey survey={survey} setSurvey={setSurvey} stnkResult={stnkResult} setStnkResult={setStnkResult} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} photoValidation={photoValidation} setPhotoValidation={setPhotoValidation} vehicle={vehicle} />}
-            {step === 6 && <StepFinal vehicle={vehicle} stnkResult={stnkResult} coverage={coverage} survey={survey} premiumBreakdown={premiumBreakdown} handleFinalPayment={handleNext} setStep={setStep} />}
-            {step === 7 && <StepPayment premiumBreakdown={premiumBreakdown} onPaymentSuccess={handlePaymentSuccess} loading={loading} />}
+            {/* Added missing lang prop to StepFinal */}
+            {step === 6 && <StepFinal vehicle={vehicle} stnkResult={stnkResult} coverage={coverage} survey={survey} premiumBreakdown={premiumBreakdown} handleFinalPayment={handleNext} setStep={setStep} lang={lang} />}
+            {step === 7 && <StepPayment premiumBreakdown={premiumBreakdown} onPaymentSuccess={handlePaymentResult} loading={loading} />}
           </div>
        </div>
 
-       {/* FOOTER */}
+       {/* REVAMPED FRIENDLY FOOTER */}
        {step < 7 && (
-         <div className="px-6 py-6 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-2xl border-t border-gray-100 dark:border-white/5 sticky bottom-0 z-[100] shadow-[0_-15px_40px_rgba(0,0,0,0.04)]">
-            <div className="max-w-xl mx-auto flex items-center justify-between gap-6">
-               <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center gap-1.5"><Zap size={10} className="text-primary-500 fill-primary-500"/><span className="text-[0.5rem] font-black uppercase text-gray-400 tracking-[0.2em]">Estimasi Premi</span></div>
-                  <p className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-none">{premiumBreakdown ? formatIDR(premiumBreakdown.totalPayable) : 'Rp 0'}</p>
+         <div className="px-6 py-5 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-3xl border-t border-gray-100 dark:border-white/10 sticky bottom-0 z-[100] shadow-[0_-25px_50px_-12px_rgba(0,0,0,0.15)] rounded-t-[2.5rem] transition-all">
+            <div className="max-w-xl mx-auto">
+               <div className="flex items-center justify-between gap-5">
+                  {/* Premium Display - More Friendly */}
+                  <div className="flex flex-col min-w-0">
+                     <div className="flex items-center gap-1.5 mb-1 opacity-70">
+                        <Sparkles size={12} className="text-primary-500 fill-primary-500"/>
+                        <span className="text-[0.6rem] font-black uppercase text-gray-500 tracking-wider">Premi Kamu</span>
+                     </div>
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-[0.7rem] font-black text-primary-500">Rp</span>
+                        <p className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                           {premiumBreakdown ? (premiumBreakdown.totalPayable / 1000).toLocaleString('id-ID') : '0'}
+                           <span className="text-[0.65rem] font-bold text-gray-400 ml-1 uppercase">rb</span>
+                        </p>
+                     </div>
+                  </div>
+                  
+                  {/* Navigation Buttons - Enhanced UX */}
+                  <div className="flex items-center gap-3">
+                     {step > 0 && (
+                        <button 
+                          onClick={handleBack} 
+                          aria-label="Kembali"
+                          className="w-12 h-12 flex items-center justify-center bg-gray-50 dark:bg-white/5 rounded-2xl text-gray-400 hover:text-slate-900 dark:hover:text-white transition-all border border-black/5 active:scale-90"
+                        >
+                           <ChevronLeft size={20} />
+                        </button>
+                     )}
+                     
+                     <button 
+                        onClick={handleNext} 
+                        disabled={(step === 5 && survey.score === 0) || (step === 6 && survey.verdict === 'REJECTED')}
+                        className={`h-14 px-8 rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl group
+                           ${step === 6 ? 'bg-brand-500 text-white shadow-brand-500/25' : 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-slate-900/15'}
+                        `}
+                     >
+                        {step === 6 ? (
+                           <>
+                              Checkout <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform"/>
+                           </>
+                        ) : (
+                           <>
+                              Lanjut, Yuk! <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform"/>
+                           </>
+                        )}
+                     </button>
+                  </div>
                </div>
-               <div className="flex items-center gap-3">
-                  {step > 0 && (<button onClick={handleBack} className="w-12 h-12 flex items-center justify-center bg-gray-50 dark:bg-white/5 rounded-2xl text-gray-400 hover:text-slate-900 dark:hover:text-white transition-all border border-black/5 active:scale-90"><ChevronLeft size={20}/></button>)}
-                  <button 
-                     onClick={handleNext} 
-                     disabled={(step === 5 && survey.score === 0) || (step === 6 && survey.verdict === 'REJECTED')}
-                     className="h-14 px-8 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.65rem] tracking-[0.2em] shadow-xl shadow-slate-900/10 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-30 group"
-                  >
-                     {step === 6 ? 'Checkout' : 'Lanjut'} <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform"/>
-                  </button>
+               
+               {/* Context Info - Micro-guidance */}
+               <div className="mt-4 flex items-center justify-center gap-2">
+                  <div className="h-1 w-1 rounded-full bg-primary-500 animate-pulse"></div>
+                  <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">
+                     {step === 0 && "Lengkapi data mobil kesayanganmu"}
+                     {step === 1 && "Pilih perlindungan yang paling pas"}
+                     {step === 2 && "Pilih perusahaan asuransi favoritmu"}
+                     {step === 3 && "Yuk, verifikasi KTP kamu sebentar"}
+                     {step === 4 && "Cek lagi detail pesananmu ya"}
+                     {step === 5 && "Saatnya audit visual pintar AI"}
+                     {step === 6 && "Sedikit lagi perlindungan aktif!"}
+                  </p>
                </div>
             </div>
          </div>

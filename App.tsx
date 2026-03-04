@@ -4,7 +4,9 @@ import {
   UserCircle, LogOut, Sun, Moon, CheckCircle2, 
   Bell, Car, Plane, ShoppingBag, Shield, 
   Package, Heart, ShieldAlert, Bot, ChevronRight,
-  ShieldCheck, Lightbulb, QrCode, ArrowRight, History
+  ShieldCheck, Lightbulb, QrCode, ArrowRight, History,
+  Search, Filter, LayoutGrid, Building2, User,
+  Network, ShieldCheck as ShieldIcon, Globe, Mail, Phone
 } from 'lucide-react';
 import DesktopWebsite from './components/DesktopWebsite';
 import Navbar, { SurePathLogo } from './components/Navbar';
@@ -19,9 +21,11 @@ import MPARInsuranceWizard from './components/MPARInsuranceWizard';
 import PortalHero from './components/PortalHero';
 import AdminPortal from './components/admin/AdminPortal';
 import HealthChat from './components/HealthChat';
+import ContactPage from './components/ContactPage';
 import { Language, UserRole } from './types';
 import { NeuralBot, PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
+import { Badge } from './components/shared/UI';
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -71,10 +75,66 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
 };
 
 const INITIAL_PRODUCTS = [
-  { id: 'car', title: 'Asuransi Mobil', label: 'Asuransi Mobil', icon: Car, color: 'text-blue-500', active: true, cat: 'Retail', tech: 'AI Foto Kerusakan' },
-  { id: 'travel', title: 'Asuransi Perjalanan', label: 'Asuransi Perjalanan', icon: Plane, color: 'text-emerald-500', active: true, cat: 'Retail', tech: 'Proteksi Perjalanan' },
-  { id: 'pa', title: 'Kecelakaan Diri', label: 'Kecelakaan Diri', icon: ShieldAlert, color: 'text-rose-500', active: true, cat: 'Retail', tech: 'Santunan Cepat' },
-  { id: 'mpar', title: 'Proteksi Barang', label: 'Proteksi Barang', icon: Package, color: 'text-amber-500', active: true, cat: 'Retail', tech: 'Peralatan & Gadget' },
+  { 
+    id: 'car', 
+    title: 'Car Protection', 
+    label: 'Asuransi Mobil', 
+    icon: Car, 
+    color: 'text-blue-500', 
+    bg: 'bg-blue-50',
+    active: true, 
+    cat: 'Retail', 
+    tech: 'Smart Scan AI',
+    desc: 'Proteksi lengkap kendaraan dengan pengecekan kerusakan instan lewat foto HP.'
+  },
+  { 
+    id: 'travel', 
+    title: 'Travel Safe', 
+    label: 'Asuransi Perjalanan', 
+    icon: Plane, 
+    color: 'text-emerald-500', 
+    bg: 'bg-emerald-50',
+    active: true, 
+    cat: 'Retail', 
+    tech: 'Direct Payout',
+    desc: 'Pembayaran otomatis untuk pesawat terlambat dan perlindungan medis dunia.'
+  },
+  { 
+    id: 'pa', 
+    title: 'Personal Safety', 
+    label: 'Kecelakaan Diri', 
+    icon: ShieldAlert, 
+    color: 'text-rose-500', 
+    bg: 'bg-rose-50',
+    active: true, 
+    cat: 'Retail', 
+    tech: 'Instant Approval',
+    desc: 'Santunan cepat kecelakaan diri dengan pendaftaran mudah cuma 60 detik.'
+  },
+  { 
+    id: 'mpar', 
+    title: 'Item Shield', 
+    label: 'Proteksi Barang', 
+    icon: Package, 
+    color: 'text-amber-500', 
+    bg: 'bg-amber-50',
+    active: true, 
+    cat: 'Retail', 
+    tech: 'Device Guard',
+    desc: 'Lindungi gadget, elektronik, dan barang berharga dari kerusakan tak terduga.'
+  },
+  { 
+    id: 'health-ind', 
+    title: 'Family Health', 
+    label: 'Kesehatan Keluarga', 
+    icon: Heart, 
+    color: 'text-pink-500', 
+    bg: 'bg-pink-50',
+    active: true, 
+    cat: 'Retail', 
+    tech: 'Health Assistant',
+    desc: 'Asuransi kesehatan individu dengan asisten medis AI yang selalu siaga.'
+  }
 ];
 
 const App = () => {
@@ -87,14 +147,6 @@ const App = () => {
   const [products] = useState(INITIAL_PRODUCTS);
   const [lang, setLang] = useState<Language>(Language.ID);
   const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
-
-  const timeGreeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 11) return "Selamat Pagi";
-    if (hour < 15) return "Selamat Siang";
-    if (hour < 19) return "Selamat Sore";
-    return "Selamat Malam";
-  }, []);
 
   useEffect(() => {
     seedDatabase();
@@ -118,11 +170,6 @@ const App = () => {
     setPage('home');
   };
 
-  const handleDemoLogin = async () => {
-    const user = await db.users.where('email').equals('user@surepath.ai').first();
-    if (user) handleAuthSuccess(user);
-  };
-
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('SUREPATH_SESSION');
@@ -130,13 +177,19 @@ const App = () => {
     setPage('home');
   };
 
-  const startClaimFromPolicy = (policy: Policy) => setPage('claim');
-
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const timeGreeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 11) return lang === Language.EN ? "Good Morning" : "Selamat Pagi";
+    if (hour < 15) return lang === Language.EN ? "Good Afternoon" : "Selamat Siang";
+    if (hour < 19) return lang === Language.EN ? "Good Afternoon" : "Selamat Sore";
+    return lang === Language.EN ? "Good Evening" : "Selamat Malam";
+  }, [lang]);
 
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
 
@@ -144,11 +197,7 @@ const App = () => {
     return <AdminPortal onLogout={handleLogout} products={products} setProducts={() => {}} userRole={currentUser.role} />;
   }
 
-  // Tampilkan AuthGate jika halaman adalah 'auth'
-  if (currentPage === 'auth' && !currentUser) {
-    return <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />;
-  }
-
+  // Desktop Website Logic
   if (!isMobile && !appMode && !currentUser) {
     return (
       <div className={darkMode ? 'dark' : ''}>
@@ -159,9 +208,18 @@ const App = () => {
           setDarkMode={setDarkMode} 
           currentPage={currentPage} 
           setPage={setPage}
-          onDemoLogin={handleDemoLogin}
         />
-        <DesktopWebsite onEnterPortal={() => { setAppMode(true); setPage('auth'); }} onAdminAccess={() => { setAppMode(true); setPage('auth'); }} currentLang={lang} onLangChange={setLang} />
+        <main className="transition-all duration-700 bg-neural-mesh dark:bg-[#0c0a09]">
+           {currentPage === 'home' || currentPage === 'products' || currentPage === 'claim' || currentPage === 'about' ? (
+             <DesktopWebsite onEnterPortal={() => { setAppMode(true); setPage('auth'); }} onAdminAccess={() => { setAppMode(true); setPage('auth'); }} currentLang={lang} onLangChange={setLang} />
+           ) : currentPage === 'contact' ? (
+             <div className="pt-40 max-w-7xl mx-auto px-6">
+                <ContactPage lang={lang} />
+             </div>
+           ) : (
+             <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />
+           )}
+        </main>
       </div>
     );
   }
@@ -180,7 +238,7 @@ const App = () => {
                  <div className="flex items-center gap-5">
                     <div className="relative group cursor-pointer" onClick={() => setPage('profile')}>
                       <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden transition-all duration-700 group-hover:scale-105 active:scale-95">
-                         <div className="w-full h-full bg-gradient-to-tr from-slate-100 to-white dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-2xl font-black text-slate-300 dark:text-slate-600">
+                         <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-emerald-400 flex items-center justify-center text-2xl font-black text-white">
                            {currentUser?.name?.[0]}
                          </div>
                       </div>
@@ -191,24 +249,24 @@ const App = () => {
                     <div className="space-y-1">
                        <h3 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">{timeGreeting}, {currentUser?.name.split(' ')[0]}!</h3>
                        <p className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <ShieldCheck size={12} className="animate-pulse"/> Jaringan Terproteksi
+                          <ShieldCheck size={12} className="animate-pulse"/> {lang === Language.EN ? 'SECURE ACCOUNT' : 'AKUN AMAN'}
                        </p>
                     </div>
                  </div>
                  <button onClick={() => setPage('profile')} className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-white/5 text-slate-400 dark:text-gray-500 shadow-xl hover:text-primary-500 transition-all relative active:scale-90">
                     <Bell size={22}/>
-                    <span className="absolute top-4 right-4 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+                    <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                  </button>
               </div>
 
-              <PortalHero onAction={(p) => setPage(p)} />
+              <PortalHero onAction={(p) => setPage(p)} lang={lang} />
 
               <div className="grid grid-cols-4 gap-4 px-1">
                  {[
-                   { id: 'products', label: 'Beli', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                   { id: 'claim', label: 'Klaim AI', icon: Zap, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-                   { id: 'wallet', label: 'Dompet', icon: WalletIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                   { id: 'profile', label: 'Akun', icon: UserCircle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                   { id: 'products', label: lang === Language.EN ? 'Buy' : 'Beli', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                   { id: 'claim', label: lang === Language.EN ? 'Claim' : 'Klaim', icon: Zap, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+                   { id: 'wallet', label: lang === Language.EN ? 'Wallet' : 'Dompet', icon: WalletIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                   { id: 'profile', label: lang === Language.EN ? 'History' : 'Histori', icon: History, color: 'text-amber-500', bg: 'bg-amber-500/10' },
                  ].map(action => (
                    <div key={action.id} onClick={() => setPage(action.id)} className="flex flex-col items-center gap-3 cursor-pointer group active:scale-90 transition-all">
                       <div className={`w-16 h-16 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
@@ -221,24 +279,24 @@ const App = () => {
 
               {latestPolicy && (
                 <div className="px-1">
-                  <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-[0_30px_60px_rgba(15,23,42,0.3)] border border-white/5 group">
-                     <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] text-slate-900 dark:text-white relative overflow-hidden shadow-2xl border border-slate-100 dark:border-white/5 group">
+                     <div className="absolute top-0 right-0 p-10 opacity-[0.05] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
                         {latestPolicy.type === 'CAR' ? <Car size={160}/> : <Plane size={160}/>}
                      </div>
                      <div className="relative z-10 space-y-8">
                         <div className="flex justify-between items-start">
                            <div className="space-y-1">
-                              <p className="text-[0.6rem] font-black text-primary-400 uppercase tracking-[0.4em]">Polis Kamu</p>
+                              <p className="text-[0.6rem] font-black text-primary-500 uppercase tracking-[0.4em]">{lang === Language.EN ? 'YOUR INSURANCE' : 'ASURANSI KAMU'}</p>
                               <h4 className="text-2xl font-black uppercase tracking-tighter">{latestPolicy.coverageDetails?.vehicle?.brand} {latestPolicy.coverageDetails?.vehicle?.model}</h4>
                            </div>
-                           <div className="p-3 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-md shadow-xl"><ShieldCheck size={24} className="text-emerald-400"/></div>
+                           <div className="p-3 bg-emerald-500/10 dark:bg-white/10 rounded-2xl border border-emerald-500/20 dark:border-white/10 backdrop-blur-md shadow-xl"><ShieldCheck size={24} className="text-emerald-500"/></div>
                         </div>
                         <div className="flex justify-between items-end">
                            <div className="space-y-1">
-                              <p className="text-[0.5rem] font-black text-slate-500 uppercase tracking-widest">Aktif Sampai</p>
-                              <p className="text-sm font-black text-emerald-400">{new Date(latestPolicy.endDate).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</p>
+                              <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest">{lang === Language.EN ? 'EXPIRES ON' : 'AKHIR POLIS'}</p>
+                              <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{new Date(latestPolicy.endDate).toLocaleDateString(lang === Language.EN ? 'en-US' : 'id-ID', { month: 'long', year: 'numeric' })}</p>
                            </div>
-                           <button onClick={() => setPage('profile')} className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl active:scale-95 transition-all">Lihat Detail</button>
+                           <button onClick={() => setPage('profile')} className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl active:scale-95 transition-all">{lang === Language.EN ? 'Details' : 'Detail'}</button>
                         </div>
                      </div>
                   </div>
@@ -251,31 +309,14 @@ const App = () => {
                        <Lightbulb size={28}/>
                     </div>
                     <div className="space-y-1.5">
-                       <p className="text-[0.6rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">Tahukah Kamu?</p>
+                       <p className="text-[0.6rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">{lang === Language.EN ? 'DID YOU KNOW?' : 'TAHUKAH KAMU?'}</p>
                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                          Kamu bisa lapor klaim cuma lewat <span className="text-primary-600 dark:text-primary-400 font-black italic">foto HP</span>. AI kami bakal bantu prosesnya cuma dalam hitungan menit.
+                          {lang === Language.EN 
+                            ? "You can file a claim by just taking a photo. Our smart assistant processes it in minutes." 
+                            : "Kamu bisa lapor klaim cuma lewat foto HP. Asisten pintar kami bakal bantu prosesnya cuma dalam hitungan menit."}
                        </p>
                     </div>
                  </div>
-              </div>
-
-              <div className="space-y-4 px-1 pt-2">
-                  <div className="flex justify-between items-center px-4">
-                     <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white">Aktivitas Terakhir</h3>
-                     <button onClick={() => setPage('wallet')} className="text-[0.65rem] font-black uppercase text-primary-500 flex items-center gap-1">Lihat Semua <ChevronRight size={14}/></button>
-                  </div>
-                  <div className="space-y-3">
-                     <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><History size={20}/></div>
-                           <div>
-                              <p className="text-xs font-black uppercase text-slate-900 dark:text-white">Login Berhasil</p>
-                              <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Hari ini, 10:24 WIB</p>
-                           </div>
-                        </div>
-                        <CheckCircle2 size={18} className="text-emerald-500"/>
-                     </div>
-                  </div>
               </div>
             </div>
           </PageTransition>
@@ -283,59 +324,63 @@ const App = () => {
       case 'products':
         return (
           <PageTransition>
-            <div className="space-y-8 pb-24 pt-2">
-              <h2 className="text-4xl font-black uppercase tracking-tighter px-2 text-slate-900 dark:text-white leading-none">Pilih <span className="text-primary-500">Asuransi</span></h2>
-              <div className="grid gap-4">
+            <div className="space-y-12 pb-32 pt-4 px-2">
+              <div className="space-y-4 text-center max-w-2xl mx-auto">
+                 <Badge variant="brand">{lang === Language.EN ? 'Simple Protection' : 'Pusat Proteksi'}</Badge>
+                 <h2 className="text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">
+                   {lang === Language.EN ? 'Choice of Plans' : 'Pilihan Paket'} <span className="text-primary-500">SurePath</span>
+                 </h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {products.map(p => (
-                  <div key={p.id} onClick={() => setPage(`buy-${p.id}`)} className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between active:scale-[0.98] transition-all duration-500 cursor-pointer shadow-xl dark:shadow-none hover:border-primary-500/30 group">
-                    <div className="flex items-center gap-6">
-                      <div className={`w-16 h-16 bg-gray-50 dark:bg-white/5 ${p.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}><p.icon size={32} strokeWidth={2.5}/></div>
-                      <div>
-                        <h4 className="font-black text-xl uppercase text-slate-900 dark:text-white leading-none mb-2">{p.title}</h4>
-                        <p className="text-[0.65rem] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-[0.2em]">{p.tech}</p>
-                      </div>
+                  <div key={p.id} onClick={() => p.active && setPage(`buy-${p.id}`)} className={`group p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${p.active ? 'cursor-pointer hover:border-primary-500/30 shadow-xl' : 'opacity-40 grayscale'}`}>
+                    <div className="relative z-10">
+                       <div className="flex justify-between items-start mb-8">
+                          <div className={`w-16 h-16 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.8rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                             <p.icon size={32} strokeWidth={2.5}/>
+                          </div>
+                          <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest text-slate-400">{p.tech}</span>
+                       </div>
+                       <h4 className="font-black text-2xl uppercase tracking-tighter text-slate-900 dark:text-white mb-2">{p.title}</h4>
+                       <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{p.desc}</p>
                     </div>
-                    <div className="w-12 h-12 rounded-full border border-slate-100 dark:border-white/10 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white group-hover:border-primary-500 transition-all"><ChevronRight size={24}/></div>
                   </div>
                 ))}
               </div>
             </div>
           </PageTransition>
         );
-      case 'claim': return <PageTransition><ClaimManager onComplete={() => setPage('home')} /></PageTransition>;
-      case 'wallet': return <PageTransition><AgentsWallet /></PageTransition>;
-      case 'profile': return <PageTransition><UserProfile currentUser={currentUser} /></PageTransition>;
-      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} />;
-      case 'bot': return <HealthChat onBack={() => setPage('home')} />;
+      case 'claim': return <PageTransition><ClaimManager onComplete={() => setPage('home')} lang={lang} /></PageTransition>;
+      case 'wallet': return <PageTransition><AgentsWallet lang={lang}/></PageTransition>;
+      case 'profile': return <PageTransition><UserProfile currentUser={currentUser} lang={lang} onLogout={handleLogout} /></PageTransition>;
+      case 'contact': return <PageTransition><ContactPage lang={lang}/></PageTransition>;
+      case 'buy-car': return <CarInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-travel': return <TravelInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
+      case 'bot': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
       default: return null;
     }
   };
 
   const isWizardFlow = currentPage.startsWith('buy-');
   const navItems = [
-    { id: 'home', icon: HomeIcon, label: 'Beranda' },
-    { id: 'products', icon: ShoppingBag, label: 'Produk' }, 
-    { id: 'bot', icon: Bot, label: 'Tanya AI' },
+    { id: 'home', icon: HomeIcon, label: lang === Language.EN ? 'Home' : 'Beranda' },
+    { id: 'products', icon: ShoppingBag, label: lang === Language.EN ? 'Buy' : 'Beli' }, 
+    { id: 'bot', icon: Bot, label: 'Chat' },
     { id: 'claim', icon: Zap, label: 'Klaim' },
     { id: 'profile', icon: UserCircle, label: 'Akun' }
   ];
 
   return (
-    <div className={`${darkMode ? 'dark bg-[#0a0a0a]' : 'bg-[#fafaf9]'} h-full transition-all duration-700 font-sans flex flex-col relative overflow-hidden`}>
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-gradient-to-br from-primary-500/5 via-transparent to-emerald-500/5 blur-[120px]"></div>
-      </div>
-      
+    <div className={`${darkMode ? 'dark bg-[#0a0a0a]' : 'bg-[#fafaf9]'} min-h-screen transition-colors duration-700 flex flex-col relative overflow-hidden`}>
       {!isWizardFlow && currentUser && (
         <header className="flex-shrink-0 h-24 glass-card px-8 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 z-[60] relative bg-white/60 dark:bg-black/20 backdrop-blur-xl transition-all duration-700">
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setPage('home')}>
             <SurePathLogo className="w-12 h-12 group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
               <span className="font-black text-xl tracking-tighter uppercase leading-none text-slate-900 dark:text-white">Sure<span className="text-primary-500">Path</span></span>
-              <span className="text-[0.45rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.5em] mt-1.5 transition-colors duration-700">{currentUser?.name || 'Halo!'}</span>
+              <span className="text-[0.45rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.5em] mt-1.5 transition-colors duration-700">Simple Insurance</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -357,7 +402,7 @@ const App = () => {
         <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl z-[70] flex items-center justify-around px-6 rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/50 dark:border-white/10 max-w-xl mx-auto transition-all duration-700">
           {navItems.map(item => (
             <button key={item.id} onClick={() => setPage(item.id)} className={`flex flex-col items-center gap-2 flex-1 py-4 transition-all duration-500 tap-feedback ${currentPage === item.id || (currentPage.startsWith('buy') && item.id === 'products') ? 'text-primary-500 scale-110 -translate-y-1' : 'text-gray-400 dark:text-gray-600'}`}>
-              <item.icon size={26} strokeWidth={2.5 : 2} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />
+              <item.icon size={26} strokeWidth={2.5} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />
               <span className={`text-[0.5rem] font-black uppercase tracking-[0.2em] ${currentPage === item.id ? 'opacity-100' : 'opacity-60'}`}>{item.label}</span>
             </button>
           ))}

@@ -7,13 +7,14 @@ import {
   ClipboardList
 } from 'lucide-react';
 import { PA_PLANS } from '../constants';
-import { PAState } from '../types';
+import { PAState, Language } from '../types';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const STEPS = ['Select Category', 'Select Plan', 'Insured Data', 'Beneficiary', 'Review'];
 
-const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+/* Fix: Added lang to props */
+const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [paData, setPaData] = useState<PAState>({
     category: 'GENERAL',

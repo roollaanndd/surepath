@@ -1,6 +1,14 @@
 import React from 'react';
 import { Cpu, Zap, ShieldCheck, Activity, Radio, Globe, Terminal } from 'lucide-react';
 
+// Reusable Page Transition Wrapper
+// Fix: Added PageTransition export to resolve "no exported member" error in src/components/CarInsuranceWizard.tsx
+export const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="animate-pop-in w-full h-full">
+    {children}
+  </div>
+);
+
 // Reusable Neural Bot Component for various states
 export const NeuralBot = ({ className = "w-24 h-24", mood = "scanning" }: { className?: string, mood?: 'happy' | 'thinking' | 'scanning' }) => (
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">

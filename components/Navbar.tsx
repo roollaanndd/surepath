@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Menu, X, Globe, ArrowRight, ShieldCheck, 
-  ChevronDown, Sun, Moon, User, LayoutGrid, LogIn
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Moon, Sun, User, Briefcase, Shield, ChevronDown, Mail, ArrowLeft, Check, Menu, X, Globe, Lock, LogOut } from 'lucide-react';
 import { Language } from '../types';
 
 interface NavbarProps {
@@ -12,142 +9,132 @@ interface NavbarProps {
   setDarkMode: (d: boolean) => void;
   currentPage: string;
   setPage: (p: string) => void;
-  onDemoLogin?: () => void;
 }
 
 export const SurePathLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
-  <div className={`flex items-center justify-center bg-brand-500 rounded-2xl p-2 shadow-lg shadow-brand-500/20 ${className} transition-transform hover:rotate-3`}>
-     <ShieldCheck className="text-white" size={24} strokeWidth={3}/>
-  </div>
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#10b981" />
+        <stop offset="100%" stopColor="#047857" />
+      </linearGradient>
+      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.2)" />
+      </filter>
+    </defs>
+    <path 
+      d="M50 5L15 18V45C15 68 30 88 50 95C70 88 85 68 85 45V18L50 5Z" 
+      fill="url(#shieldGradient)" 
+      filter="url(#dropShadow)"
+    />
+    <path 
+      d="M50 95C50 95 35 75 35 55C35 35 50 35 55 25" 
+      stroke="white" 
+      strokeWidth="6" 
+      strokeLinecap="round" 
+      fill="none"
+      opacity="0.9"
+    />
+    <path 
+      d="M55 25C55 25 65 15 70 25C75 35 65 40 55 25Z" 
+      fill="#ecfccb"
+    />
+  </svg>
 );
 
 const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, currentPage, setPage }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const menuItems = [
-    { id: 'product', en: 'Products', idn: 'Produk' },
-    { id: 'how-it-works', en: 'How it Works', idn: 'Cara Kerja' },
-    { id: 'why', en: 'Why Us', idn: 'Kenapa Kami' },
+    { id: 'home', label: lang === Language.EN ? 'Home' : 'Beranda' },
+    { id: 'products', label: lang === Language.EN ? 'Plans' : 'Produk' },
+    { id: 'claim', label: lang === Language.EN ? 'Quick Claim' : 'Klaim Cepat' },
+    { id: 'about', label: lang === Language.EN ? 'About Us' : 'Tentang Kami' },
+    { id: 'contact', label: lang === Language.EN ? 'Help' : 'Bantuan' },
   ];
 
-  const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
-
-  const handleAuthClick = () => {
-    setPage('auth');
-    setIsOpen(false);
-  };
-
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
-      scrolled ? 'glass-modern py-4 shadow-xl border-b border-black/5 dark:border-white/5' : 'bg-transparent py-8'
-    }`}>
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center">
-        {/* Brand */}
-        <div className="flex items-center cursor-pointer gap-4 group" onClick={() => setPage('home')}>
-          <SurePathLogo className="w-11 h-11" />
+    <nav className="fixed top-0 left-0 right-0 z-[1000] bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 transition-all duration-500">
+      <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
+        <div className="flex items-center cursor-pointer gap-3" onClick={() => setPage('home')}>
+          <SurePathLogo className="w-12 h-12" />
           <div className="flex flex-col">
-            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white leading-none">
-              Sure<span className="text-brand-500">Path</span>
+            <span className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white uppercase leading-none">
+              Sure<span className="text-emerald-500">Path</span>
             </span>
-            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em] leading-none mt-1.5 hidden sm:block">
-              {t('Simplified Protection', 'Asuransi Jadi Gampang')}
+            <span className="text-[0.5rem] text-gray-500 dark:text-gray-400 font-bold tracking-[0.4em] uppercase mt-1">
+              Insurance for Everyone
             </span>
           </div>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center space-x-12">
+        <div className="hidden lg:flex items-center gap-10">
           {menuItems.map((item) => (
             <button
               key={item.id}
-              className="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-bold text-[13px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-              onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => setPage(item.id)}
+              className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all relative group ${
+                currentPage === item.id ? 'text-emerald-500' : 'text-slate-500 dark:text-slate-400 hover:text-emerald-500'
+              }`}
             >
-              {t(item.en, item.idn)}
+              {item.label}
+              <span className={`absolute -bottom-2 left-0 h-0.5 bg-emerald-500 transition-all duration-300 ${currentPage === item.id ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
             </button>
           ))}
-          {/* Tambahan Menu Masuk di Desktop Nav jika diinginkan sebagai menu */}
-          <button 
-            onClick={handleAuthClick}
-            className="text-slate-600 dark:text-slate-400 hover:text-brand-500 font-bold text-[13px] uppercase tracking-widest transition-all flex items-center gap-2"
-          >
-            <LogIn size={16} className="text-brand-500"/>
-            {t('Login', 'Masuk')}
-          </button>
         </div>
 
-        {/* Actions Area */}
-        <div className="hidden md:flex items-center space-x-6">
-           <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-slate-400 dark:text-slate-500 hover:text-brand-500 transition-colors shadow-inner"
-           >
-              {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
-           </button>
+        <div className="hidden lg:flex items-center gap-6">
+          <button
+            onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
+            className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-[10px] font-bold text-slate-400 hover:text-emerald-500 transition-all border border-black/5"
+          >
+            {lang}
+          </button>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-emerald-500 transition-all border border-black/5"
+          >
+            {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
+          </button>
           
           <button 
-            className="bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-brand-500 dark:hover:bg-brand-500 dark:hover:text-white transition-all active:scale-95 shadow-xl shadow-black/10 flex items-center gap-3"
-            onClick={handleAuthClick}
+            onClick={() => setPage('auth')}
+            className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all"
           >
-            {t('Dashboard', 'Buka Dashboard')}
-            <ArrowRight size={16}/>
+            {lang === Language.EN ? 'Get Started' : 'Masuk Akun'}
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden flex items-center">
-          <button onClick={() => setIsOpen(!isOpen)} className="p-3 text-slate-900 dark:text-white bg-slate-100 dark:bg-white/5 rounded-2xl shadow-sm">
-            {isOpen ? <X size={24}/> : <Menu size={24}/>}
-          </button>
-        </div>
+        {/* Mobile Toggle */}
+        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-3 text-slate-500">
+           {isOpen ? <X size={28}/> : <Menu size={28}/>}
+        </button>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu */}
       {isOpen && (
-        <div className="fixed inset-0 top-[88px] z-[90] bg-white dark:bg-slate-950 flex flex-col p-10 space-y-12 lg:hidden animate-fade-in">
-          <div className="flex flex-col space-y-10">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                className="text-left text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter"
-                onClick={() => { setIsOpen(false); document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }); }}
-              >
-                {t(item.en, item.idn)}
-              </button>
-            ))}
-            {/* Menu Masuk di Mobile */}
-            <button
-                onClick={handleAuthClick}
-                className="text-left text-4xl font-black text-brand-500 uppercase tracking-tighter flex items-center gap-4"
-              >
-                <LogIn size={32}/>
-                {t('Login', 'Masuk')}
-            </button>
-          </div>
-
-          <div className="pt-12 border-t border-slate-100 dark:border-white/5 space-y-8">
-            <button 
-              className="w-full py-6 rounded-[2.5rem] bg-brand-500 text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-brand-500/20"
-              onClick={handleAuthClick}
-            >
-              {t('Get Started', 'Mulai Sekarang')}
-            </button>
-            <div className="flex justify-between items-center px-4">
-               <button onClick={() => setDarkMode(!darkMode)} className="text-slate-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                 {darkMode ? <Sun size={14}/> : <Moon size={14}/>} Tampilan
-               </button>
-               <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)} className="text-slate-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                 <Globe size={14}/> {lang}
-               </button>
-            </div>
-          </div>
+        <div className="lg:hidden bg-white dark:bg-[#0c0c0c] border-t border-gray-100 dark:border-white/5 p-6 animate-fade-in space-y-4 shadow-2xl">
+           {menuItems.map(item => (
+             <button 
+               key={item.id} 
+               onClick={() => { setPage(item.id); setIsOpen(false); }}
+               className={`w-full text-left py-4 px-6 rounded-2xl text-lg font-black uppercase tracking-tighter ${currentPage === item.id ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600 dark:text-slate-300'}`}
+             >
+               {item.label}
+             </button>
+           ))}
         </div>
       )}
     </nav>

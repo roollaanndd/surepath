@@ -48,7 +48,7 @@ export interface VehiclePhotos {
 export interface Provider {
   id: string;
   name: string;
-  logo: any;
+  logo: string; // Changed from any to string
   adminFee: number;
   stampDuty: number;
   rating: number;

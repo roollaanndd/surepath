@@ -3,10 +3,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, Sparkles, ShieldAlert, ChevronLeft, HeartPulse, Stethoscope } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { NeuralBot, PageTransition } from './car-wizard/WizardUI';
+import { Language } from '../types';
 
-const HealthChat = ({ onBack }: { onBack: () => void }) => {
+/* Fix: Added lang prop to HealthChat component */
+const HealthChat = ({ onBack, lang }: { onBack: () => void, lang?: Language }) => {
   const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
-    { role: 'model', text: 'Halo! Saya asisten kesehatan SurePath. Ada yang bisa saya bantu terkait keluhan kesehatan atau pertanyaan polis asuransi Anda?' }
+    { role: 'model', text: lang === Language.EN ? 'Hello! I am your SurePath health assistant. How can I help you today regarding health concerns or your insurance policy?' : 'Halo! Saya asisten kesehatan SurePath. Ada yang bisa saya bantu terkait keluhan kesehatan atau pertanyaan polis asuransi Anda?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,15 +42,15 @@ const HealthChat = ({ onBack }: { onBack: () => void }) => {
           1. Memberikan informasi kesehatan dasar secara umum.
           2. Membantu nasabah memahami istilah asuransi kesehatan mereka.
           3. Selalu berikan peringatan bahwa saran AI ini bukan diagnosa medis resmi dan mereka harus berkonsultasi ke dokter.
-          Gunakan Bahasa Indonesia yang santun dan mudah dimengerti orang awam.`,
+          Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan mudah dimengerti orang awam.`,
           temperature: 0.7,
         }
       });
 
       const aiText = response.text;
-      setMessages(prev => [...prev, { role: 'model', text: aiText || 'Maaf, sistem saya sedang mengalami kendala. Bisa ulangi?' }]);
+      setMessages(prev => [...prev, { role: 'model', text: aiText || (lang === Language.EN ? 'Sorry, my system is experiencing issues. Can you repeat that?' : 'Maaf, sistem saya sedang mengalami kendala. Bisa ulangi?') }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: 'Koneksi ke sistem AI terputus. Silakan coba beberapa saat lagi.' }]);
+      setMessages(prev => [...prev, { role: 'model', text: lang === Language.EN ? 'Connection to AI system lost. Please try again later.' : 'Koneksi ke sistem AI terputus. Silakan coba beberapa saat lagi.' }]);
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ const HealthChat = ({ onBack }: { onBack: () => void }) => {
             <div className="flex justify-start animate-pulse">
                <div className="flex gap-3 items-center bg-gray-50 dark:bg-emerald-950/20 p-4 rounded-2xl rounded-tl-none border border-emerald-50 dark:border-emerald-900/30">
                   <Loader2 size={16} className="animate-spin text-primary-500"/>
-                  <span className="text-[0.6rem] font-black uppercase tracking-widest text-gray-400">AI Sedang Mengetik...</span>
+                  <span className="text-[0.6rem] font-black uppercase tracking-widest text-gray-400">{lang === Language.EN ? 'AI is typing...' : 'AI Sedang Mengetik...'}</span>
                </div>
             </div>
           )}
@@ -115,7 +117,7 @@ const HealthChat = ({ onBack }: { onBack: () => void }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Tanya seputar kesehatan atau polis..."
+                placeholder={lang === Language.EN ? 'Ask about health or your policy...' : 'Tanya seputar kesehatan atau polis...'}
                 className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-4 px-5 pr-14 text-sm font-medium outline-none focus:border-primary-500 transition-all shadow-inner"
               />
               <button 
@@ -129,7 +131,7 @@ const HealthChat = ({ onBack }: { onBack: () => void }) => {
           </div>
           <div className="mt-4 flex items-center justify-center gap-2 opacity-40">
              <ShieldAlert size={12}/>
-             <p className="text-[0.45rem] font-bold uppercase tracking-widest">Saran AI bukan pengganti diagnosa medis resmi.</p>
+             <p className="text-[0.45rem] font-bold uppercase tracking-widest">{lang === Language.EN ? 'AI suggestions are not a medical diagnosis.' : 'Saran AI bukan pengganti diagnosa medis resmi.'}</p>
           </div>
         </div>
       </div>

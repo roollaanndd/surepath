@@ -1,254 +1,271 @@
+
 import React, { useState, useEffect } from 'react';
-import { SurePathLogo } from './Navbar';
-import { 
-  // Added ShieldCheck to imports
-  ArrowRight, Zap, Car, Plane, Package, 
-  Smartphone, CheckCircle, ShieldCheck,
-  Users, Anchor, Tractor, HeartPulse, CreditCard, Sparkles, Cpu, ShieldAlert
-} from 'lucide-react';
+import Hero from './landing/Hero';
+import Features from './landing/Features';
+import ProductModules from './landing/ProductModules';
 import { Language } from '../types';
+import { Section, Button, Badge, GlassCard } from './shared/UI';
+import { 
+  ArrowRight, LogIn, ShieldCheck, Zap, Smartphone, 
+  CheckCircle, Clock, Mail, Phone, MapPin, 
+  Twitter, Linkedin, Instagram, Facebook, ArrowUp,
+  Globe, ExternalLink
+} from 'lucide-react';
+import { SurePathLogo } from './Navbar';
 
 interface DesktopWebsiteProps {
-  onEnterPortal: () => void;
+  onEnterPortal: (mode?: 'LOGIN' | 'REGISTER') => void;
   onAdminAccess: () => void;
   currentLang: Language;
   onLangChange: (l: Language) => void;
-  section?: string;
 }
 
-const NeuralBackgroundIllustration = () => (
-  <div className="absolute inset-0 w-full h-full pointer-events-none">
-    {/* Floating Animated Blobs */}
-    <div className="absolute top-1/4 right-0 w-96 h-96 bg-brand-500/10 blur-[100px] rounded-full animate-blob"></div>
-    <div className="absolute bottom-1/4 left-10 w-[30rem] h-[30rem] bg-primary-500/5 blur-[120px] rounded-full animate-blob [animation-delay:2s]"></div>
-    
-    <svg className="w-full h-full opacity-30 dark:opacity-20" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-          <stop offset="50%" stopColor="#10b981" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      
-      {/* Abstract Paths */}
-      <path d="M-100 600 Q 200 400 400 600 T 900 300" stroke="url(#lineGrad)" strokeWidth="2" fill="none" className="animate-pulse-soft" />
-      <path d="M-50 200 Q 150 500 450 250 T 850 600" stroke="url(#lineGrad)" strokeWidth="1.5" fill="none" className="animate-pulse-soft [animation-delay:1s]" />
-      
-      {/* Neural Nodes */}
-      <circle cx="400" cy="400" r="4" fill="#10b981" className="animate-ping" />
-      <circle cx="200" cy="500" r="3" fill="#f97316" className="animate-ping [animation-delay:0.5s]" />
-      <circle cx="600" cy="300" r="3" fill="#10b981" className="animate-ping [animation-delay:1.2s]" />
-    </svg>
-    
-    {/* Particle Grid Effect */}
-    <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:40px_40px] opacity-20"></div>
-  </div>
-);
-
-const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, section }) => {
-  const [activeTab, setActiveTab] = useState<'RETAIL' | 'CORPORATE'>('RETAIL');
-
-  useEffect(() => {
-    if (section) {
-      document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [section]);
-
-  const retailProducts = [
-    { title: "Asuransi Mobil", desc: "Foto kerusakan mobilmu lewat HP, AI kami langsung hitung biaya perbaikannya.", icon: Car, color: "text-blue-500", bg: "bg-blue-50" },
-    { title: "Asuransi Travel", desc: "Proteksi delay pesawat dan bantuan medis internasional yang aktif seketika.", icon: Plane, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Kecelakaan Diri", desc: "Santunan cepat untukmu dan keluarga tanpa ribet tumpukan kertas.", icon: HeartPulse, color: "text-rose-500", bg: "bg-rose-50" },
-    { title: "Proteksi Barang", desc: "Lindungi HP, Laptop, atau furnitur kesayanganmu dari kejadian tak terduga.", icon: Package, color: "text-amber-500", bg: "bg-amber-50" }
-  ];
-
-  const corporateProducts = [
-    { title: "Kesehatan Karyawan", desc: "Asuransi grup untuk perusahaan dengan sistem klaim otomatis yang mudah.", icon: Users, color: "text-cyan-500", bg: "bg-cyan-50" },
-    { title: "Pengiriman Logistik", desc: "Lindungi aset bisnismu selama perjalanan laut atau darat secara digital.", icon: Anchor, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { title: "Alat Berat", desc: "Perlindungan aset konstruksi dan industri dengan penilaian risiko yang akurat.", icon: Tractor, color: "text-orange-500", bg: "bg-orange-50" },
-    { title: "Keamanan Siber", desc: "Proteksi data dan operasional digital perusahaan dari serangan peretas.", icon: ShieldAlert, color: "text-slate-500", bg: "bg-slate-50" }
-  ];
+const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, currentLang }) => {
+  const t = (en: string, idn: string) => currentLang === Language.EN ? en : idn;
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-primary-100">
-      {/* Hero Section with Abstract Background */}
-      <section id="home" className="hero-abstract-container pt-32 pb-32 px-8 relative border-b border-gray-100">
-        <NeuralBackgroundIllustration />
-        
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center relative z-10">
-          <div className="space-y-10 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-[11px] font-bold text-emerald-600 uppercase tracking-widest shadow-sm">
-               <Sparkles size={14} className="fill-emerald-600 animate-pulse"/> Jaringan Proteksi Neural
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#080707] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-700 overflow-x-hidden">
+      
+      {/* Dynamic Hero Section */}
+      <Hero 
+        lang={currentLang === Language.EN ? 'EN' : 'ID'} 
+        onAction={() => onEnterPortal('REGISTER')} 
+      />
+
+      {/* Trust Bar (Partners) */}
+      <div className="py-12 border-y border-slate-100 dark:border-white/5 bg-white/50 dark:bg-black/20">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] w-full text-center mb-4 text-slate-400">{t("Our Strategic Reinsurance Partners", "Mitra Strategis Reasuransi Kami")}</p>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Zurich</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Tugu</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Intra Asia</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Swiss Re</div>
+        </div>
+      </div>
+
+      {/* Features & Ecosystem Section */}
+      <Features lang={currentLang === Language.EN ? 'EN' : 'ID'} />
+
+      {/* NEW PRODUCT MODULES SECTION (Integrated from specialized component) */}
+      <ProductModules lang={currentLang} />
+
+      {/* Dashboard Call to Action */}
+      <Section className="bg-white dark:bg-[#0c0c0c]">
+         <div className="max-w-4xl mx-auto text-center space-y-12">
+            <div className="inline-flex items-center gap-4 p-4 bg-brand-500 rounded-[2rem] text-white shadow-xl animate-float">
+               <Zap size={40} fill="currentColor"/>
             </div>
-            <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
-              Asuransi Tanpa <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-primary-500 drop-shadow-sm">Kertas & Drama.</span>
-            </h1>
-            <p className="text-lg text-slate-500 max-w-lg font-medium leading-relaxed">
-              Kami menggabungkan asisten AI pintar untuk membantu Anda menerbitkan polis dalam hitungan menit dan memproses klaim secepat Anda mengambil foto.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-5 pt-4">
-              <button onClick={onEnterPortal} className="px-10 py-5 bg-primary-500 text-white rounded-2xl font-bold text-lg hover:bg-primary-600 transition-all shadow-xl shadow-primary-500/25 flex items-center justify-center gap-3 group active:scale-95">
-                Mulai Lindungi Aset <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform"/>
-              </button>
-              <button onClick={() => document.getElementById('products')?.scrollIntoView({behavior: 'smooth'})} className="px-10 py-5 bg-white text-slate-900 border-2 border-slate-100 rounded-2xl font-bold text-lg hover:border-brand-500/30 transition-all active:scale-95 shadow-sm">
-                Lihat Produk
-              </button>
+            <div className="space-y-6">
+               <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight">
+                  {t("Ready to step onto", "Siap melangkah ke")} <br/>
+                  <span className="text-brand-500">{t("The Neural Path?", "Jalur Neural?")}</span>
+               </h2>
+               <p className="text-slate-500 dark:text-slate-400 font-medium text-lg max-w-2xl mx-auto">
+                  {t(
+                    "Join over 50,000 users who have switched to a smarter, faster way of managing protection. No documents, no delays.", 
+                    "Bergabunglah dengan lebih dari 50.000 pengguna yang telah beralih ke cara cerdas dan cepat dalam mengelola proteksi. Tanpa dokumen, tanpa tunda."
+                  )}
+               </p>
+            </div>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+               <Button size="xl" onClick={() => onEnterPortal('REGISTER')} icon={ArrowRight}>
+                  {t("Join Now", "Daftar Sekarang")}
+               </Button>
+               <button 
+                  onClick={() => onEnterPortal('LOGIN')}
+                  className="px-12 py-6 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-full font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm flex items-center gap-3 border border-black/5"
+               >
+                  <LogIn size={18}/>
+                  {t("Member Login", "Masuk Member")}
+               </button>
+            </div>
+         </div>
+      </Section>
+
+      {/* RE-DESIGNED FOOTER */}
+      <footer className="bg-white dark:bg-[#050505] border-t border-slate-100 dark:border-white/5 pt-24 pb-12 overflow-hidden transition-colors duration-700">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          
+          {/* Main Footer Content */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 lg:gap-24 mb-20">
+            
+            {/* Brand Section */}
+            <div className="lg:col-span-4 space-y-8">
+              <div 
+                className="flex items-center gap-4 group cursor-pointer w-fit" 
+                onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
+              >
+                <SurePathLogo className="w-14 h-14 group-hover:scale-110 transition-transform" />
+                <div className="flex flex-col">
+                  <span className="font-black text-3xl uppercase tracking-tighter text-slate-900 dark:text-white">Sure<span className="text-emerald-500">Path</span></span>
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.4em] leading-none mt-1">Insurtech Platform</span>
+                </div>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
+                {t(
+                  "We're on a mission to simplify protection using Neural AI. Experience a zero-friction insurance ecosystem built for the digital age.",
+                  "Misi kami adalah menyederhanakan proteksi menggunakan Neural AI. Rasakan ekosistem asuransi tanpa hambatan yang dibangun untuk era digital."
+                )}
+              </p>
+              <div className="flex gap-4">
+                {[
+                  { icon: Twitter, href: "#" },
+                  { icon: Linkedin, href: "#" },
+                  { icon: Instagram, href: "#" },
+                  { icon: Facebook, href: "#" }
+                ].map((social, i) => (
+                  <a 
+                    key={i} 
+                    href={social.href} 
+                    className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-all border border-transparent hover:border-emerald-500/20"
+                  >
+                    <social.icon size={18} />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Links Columns */}
+            <div className="lg:col-span-5 grid grid-cols-2 gap-8">
+              {/* Product Navigation */}
+              <div className="space-y-8">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-gray-500">{t("Products", "Pilihan Produk")}</h4>
+                <ul className="space-y-5">
+                  {[
+                    { label: t("Auto Matrix", "Asuransi Mobil"), href: "#" },
+                    { label: t("Travel Sync", "Asuransi Perjalanan"), href: "#" },
+                    { label: t("Health Core", "Kecelakaan Diri"), href: "#" },
+                    { label: t("Property Shield", "Proteksi Barang"), href: "#" },
+                    { label: t("Business Hub", "Asuransi Bisnis"), href: "#" }
+                  ].map((link, i) => (
+                    <li key={i}>
+                      <a href={link.href} className="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2 group">
+                        {link.label}
+                        <ArrowRight size={12} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-emerald-500" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Company Navigation */}
+              <div className="space-y-8">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-gray-500">{t("Company", "Perusahaan")}</h4>
+                <ul className="space-y-5">
+                  {[
+                    { label: t("About Us", "Tentang Kami"), href: "#" },
+                    { label: t("Neural Partners", "Kemitraan"), href: "#" },
+                    { label: t("Careers", "Karir"), href: "#" },
+                    { label: t("Press Center", "Pusat Berita"), href: "#" },
+                    { label: t("Contact", "Hubungi Kami"), href: "#" }
+                  ].map((link, i) => (
+                    <li key={i}>
+                      <a href={link.href} className="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2 group">
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Contact & Support Section */}
+            <div className="lg:col-span-3 space-y-8">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-gray-500">{t("Direct Support", "Dukungan Langsung")}</h4>
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-white/5 flex items-center justify-center text-blue-500 flex-shrink-0">
+                    <Phone size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("Hotline 24/7", "Layanan 24 Jam")}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white mt-1">1500-SURE (7873)</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-white/5 flex items-center justify-center text-emerald-500 flex-shrink-0">
+                    <Mail size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("Email Support", "Dukungan Email")}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white mt-1">support@surepath.ai</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 flex-shrink-0">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{t("HQ Office", "Kantor Pusat")}</p>
+                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                      SurePath Tower, SCBD Lot 10 <br/> Jakarta Selatan, 12190
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* OJK & Trust Badges Section */}
+          <div className="py-12 border-y border-slate-100 dark:border-white/5 flex flex-col lg:flex-row items-center justify-between gap-12">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500 rounded-lg text-white">
+                  <ShieldCheck size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 leading-none">{t("Data Privacy", "Privasi Data")}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">ISO 27001 Certified</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 opacity-60">
+                <Globe size={20} className="text-blue-500" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t("Global Security Standards", "Standar Keamanan Global")}</p>
+              </div>
             </div>
             
-            {/* Trust Badges */}
-            <div className="pt-8 flex items-center gap-8 grayscale opacity-60">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={20} className="text-brand-500" />
-                <span className="text-xs font-black uppercase tracking-widest">OJK Terdaftar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle size={20} className="text-brand-500" />
-                <span className="text-xs font-black uppercase tracking-widest">ISO 27001</span>
-              </div>
+            {/* OJK Badge */}
+            <div className="flex items-center gap-6 p-6 bg-slate-50 dark:bg-white/[0.03] rounded-3xl border border-slate-100 dark:border-white/5 shadow-inner group">
+               <div className="flex flex-col items-end text-right">
+                  <p className="text-[10px] font-black uppercase text-slate-900 dark:text-white leading-none">{t("Licensed Insurtech", "Insurtech Berizin")}</p>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">{t("Registered & Supervised by OJK", "Terdaftar & Diawasi oleh OJK")}</p>
+               </div>
+               <div className="h-10 w-24 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-center p-2 group-hover:scale-105 transition-transform duration-500">
+                  {/* Mock OJK Logo - In real app, replace with actual SVG/Image */}
+                  <span className="font-black text-rose-600 text-xs italic">OJK</span>
+                  <div className="h-4 w-px bg-slate-200 mx-2"></div>
+                  <span className="font-bold text-slate-400 text-[8px]">Reg: 42/IX</span>
+               </div>
             </div>
           </div>
-          
-          <div className="hidden lg:block relative animate-float">
-             {/* Abstract Core Card replacing image */}
-             <div className="relative p-10 bg-white/40 backdrop-blur-xl rounded-[4rem] border-2 border-white/60 shadow-[0_40px_100px_-20px_rgba(16,185,129,0.15)] overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-bl-[4rem]"></div>
-                <div className="space-y-8 relative z-10">
-                   <div className="flex justify-between items-center">
-                      <div className="w-16 h-16 bg-brand-500 rounded-3xl flex items-center justify-center text-white shadow-lg"><Cpu size={32}/></div>
-                      <div className="text-right">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Neural Status</p>
-                         <p className="text-sm font-bold text-brand-600 uppercase">Synchronized</p>
-                      </div>
-                   </div>
-                   <div className="space-y-4">
-                      <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                         <div className="h-full bg-brand-500 w-3/4 animate-shimmer-fast"></div>
-                      </div>
-                      <div className="h-2 w-2/3 bg-slate-100 rounded-full overflow-hidden">
-                         <div className="h-full bg-primary-400 w-1/2 animate-shimmer-fast [animation-delay:0.5s]"></div>
-                      </div>
-                   </div>
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="p-6 bg-brand-50 rounded-3xl border border-brand-100 flex flex-col gap-2">
-                         <span className="text-[10px] font-black text-brand-600 uppercase">Klaim Terproses</span>
-                         <span className="text-3xl font-black text-brand-700 leading-none">0.4s</span>
-                      </div>
-                      <div className="p-6 bg-primary-50 rounded-3xl border border-primary-100 flex flex-col gap-2">
-                         <span className="text-[10px] font-black text-primary-600 uppercase">Akurasi Audit</span>
-                         <span className="text-3xl font-black text-primary-700 leading-none">99%</span>
-                      </div>
-                   </div>
-                   <div className="p-6 bg-slate-900 rounded-[2.5rem] flex items-center justify-between text-white shadow-2xl">
-                      <div className="flex items-center gap-3">
-                         <Zap size={20} className="text-primary-500 fill-primary-500"/>
-                         <span className="text-xs font-bold uppercase tracking-widest">Klaim Cair Langsung</span>
-                      </div>
-                      <ArrowRight size={20}/>
-                   </div>
-                </div>
-                
-                {/* Floating Elements inside the card space */}
-                <div className="absolute -bottom-6 -right-6 p-10 bg-brand-500 rounded-full blur-[50px] opacity-10"></div>
-             </div>
+
+          {/* Bottom Footer (Copyright & Legal) */}
+          <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest text-center md:text-left leading-relaxed">
+              © 2025 PT SurePath Neural Insurtech Indonesia. <br/> {t("All protection nodes active.", "Seluruh hak cipta dilindungi.")}
+            </p>
+            <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+              {[
+                { label: t("Privacy Policy", "Kebijakan Privasi"), href: "#" },
+                { label: t("Terms of Use", "Syarat & Ketentuan"), href: "#" },
+                { label: t("Cookie Registry", "Daftar Cookie"), href: "#" },
+                { label: t("Fraud Policy", "Kebijakan Fraud"), href: "#" }
+              ].map((legal, i) => (
+                <a key={i} href={legal.href} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  {legal.label}
+                </a>
+              ))}
+            </div>
+            
+            {/* Scroll to Top Button */}
+            <button 
+              onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
+              className="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500/30 transition-all shadow-sm active:scale-90 group"
+            >
+              <ArrowUp size={20} className="group-hover:-translate-y-1 transition-transform" />
+            </button>
           </div>
         </div>
-      </section>
-
-      {/* How AI Helps - Bento Grid */}
-      <section id="about" className="py-32 px-8">
-         <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-24 space-y-4">
-               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900">Teknologi yang <span className="text-primary-500">Bisa Anda Percaya.</span></h2>
-               <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium">Bukan hanya janji, tapi solusi nyata untuk memangkas birokrasi asuransi yang lama.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-               <div className="p-12 bg-white border border-slate-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all group active:scale-[0.98]">
-                  <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-inner"><Cpu size={32}/></div>
-                  <h3 className="text-2xl font-bold mb-4">Polis Kilat</h3>
-                  <p className="text-slate-500 leading-relaxed font-medium">AI kami memverifikasi data Anda dalam sekejap. Bayar premi hari ini, polis langsung terbit dan aktif menit itu juga.</p>
-               </div>
-               <div className="p-12 bg-slate-900 text-white rounded-[3.5rem] shadow-2xl relative overflow-hidden group active:scale-[0.98]">
-                  <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-700"><Smartphone size={180}/></div>
-                  <div className="relative z-10">
-                    <div className="w-16 h-16 bg-primary-500 text-white rounded-3xl flex items-center justify-center mb-8 group-hover:rotate-12 transition-transform shadow-lg shadow-primary-500/20"><Zap size={32}/></div>
-                    <h3 className="text-2xl font-bold mb-4">Audit Visual AI</h3>
-                    <p className="text-slate-400 leading-relaxed font-medium">Cukup ambil foto kerusakan mobil atau kuitansi medis. AI kami menganalisa tingkat kerusakan secara real-time untuk persetujuan dana.</p>
-                  </div>
-               </div>
-               <div className="p-12 bg-white border border-slate-100 rounded-[3.5rem] shadow-sm hover:shadow-xl transition-all group active:scale-[0.98]">
-                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-inner"><CreditCard size={32}/></div>
-                  <h3 className="text-2xl font-bold mb-4">Pembayaran Mulus</h3>
-                  <p className="text-slate-500 leading-relaxed font-medium">Integrasi pembayaran digital yang aman. Mulai dari cicilan premi hingga pencairan dana klaim langsung ke rekening Anda.</p>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* Catalog Products */}
-      <section id="products" className="py-32 px-8 bg-slate-50/50">
-         <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-20">
-               <div className="space-y-4">
-                  <h2 className="text-4xl font-extrabold text-slate-900">Perlindungan <span className="text-primary-500">Pilihan.</span></h2>
-                  <p className="text-slate-500 font-medium">Solusi lengkap yang dirancang untuk kebutuhan unik setiap nasabah.</p>
-               </div>
-               <div className="flex bg-white p-2 rounded-3xl shadow-sm border border-slate-200">
-                  <button 
-                    onClick={() => setActiveTab('RETAIL')}
-                    className={`px-10 py-3.5 rounded-[1.4rem] text-sm font-bold transition-all ${activeTab === 'RETAIL' ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Individu
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('CORPORATE')}
-                    className={`px-10 py-3.5 rounded-[1.4rem] text-sm font-bold transition-all ${activeTab === 'CORPORATE' ? 'bg-primary-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Bisnis
-                  </button>
-               </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 animate-fade-in" key={activeTab}>
-               {(activeTab === 'RETAIL' ? retailProducts : corporateProducts).map((p, i) => (
-                  <div key={i} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group cursor-pointer flex flex-col h-full active:scale-[0.98]">
-                     <div className={`w-16 h-16 ${p.bg} ${p.color} rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform shadow-inner`}>
-                        <p.icon size={32}/>
-                     </div>
-                     <h4 className="text-2xl font-bold mb-3 uppercase tracking-tight">{p.title}</h4>
-                     <p className="text-slate-500 font-medium leading-relaxed mb-10 flex-1">{p.desc}</p>
-                     <div className="flex items-center gap-2 text-xs font-black text-primary-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                        Detail <ArrowRight size={16}/>
-                     </div>
-                  </div>
-               ))}
-            </div>
-         </div>
-      </section>
-
-      {/* Footer CTA */}
-      <section className="py-32 px-8">
-         <div className="max-w-5xl mx-auto bg-slate-900 rounded-[4rem] p-16 md:p-24 text-center text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-primary-500/20 opacity-40"></div>
-            <div className="relative z-10 space-y-10">
-               <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight uppercase">Mulai Lindungi Masa Depan <br className="hidden md:block"/> Anda Sekarang.</h2>
-               <p className="text-xl text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">Bergabunglah dengan ribuan nasabah yang sudah beralih ke asuransi neural bersama SurePath.</p>
-               <div className="flex flex-col sm:flex-row justify-center gap-6">
-                  <button onClick={onEnterPortal} className="px-12 py-5 bg-primary-500 text-white rounded-2xl font-bold text-lg hover:bg-primary-600 transition-all shadow-xl shadow-primary-500/20 active:scale-95">Daftar Sekarang</button>
-                  <button className="px-12 py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-lg hover:bg-white/10 transition-all active:scale-95">Hubungi Tim Kami</button>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      <footer className="py-20 px-8 bg-white border-t border-slate-100">
-         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-            <div className="flex items-center gap-3">
-               <SurePathLogo className="w-10 h-10"/><span className="font-bold text-2xl uppercase tracking-tighter">Sure<span className="text-primary-500">Path</span></span>
-            </div>
-            <p className="text-sm text-slate-400 font-medium tracking-wide">© 2025 SurePath Technologies. Member of Insurtech Indonesia. Terdaftar & Diawasi oleh OJK.</p>
-         </div>
       </footer>
     </div>
   );

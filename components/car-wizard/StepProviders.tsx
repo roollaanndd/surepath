@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react';
-import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight } from 'lucide-react';
-import { INSURANCE_PROVIDERS, STAMP_DUTY } from '../../constants';
+import React, { useState, useEffect } from 'react';
+import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight, Shield } from 'lucide-react';
+import { STAMP_DUTY } from '../../constants';
 import { formatIDR } from './WizardUI';
+import { db, DBProvider } from '../../db';
+import { ProviderIcon } from '../shared/IconRenderer';
 
 interface StepProvidersProps {
   sortBy: 'RATING' | 'PRICE';
   setSortBy: (s: 'RATING' | 'PRICE') => void;
-  sortedProviders: any[];
+  sortedProviders: any[]; // will be replaced internally
   selectedProviderId: string | null;
   setSelectedProviderId: (id: string | null) => void;
   premiumBreakdown: any;
@@ -21,7 +23,7 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
   const comparisonData = providers.filter((p: any) => selectedIds.includes(p.id));
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
        <div className="bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col border border-white/10 shadow-2xl relative">
           <div className="p-6 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
              <div>
@@ -38,9 +40,11 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                 {comparisonData.map((p: any) => {
                    const price = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
                    return (
-                     <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-primary-500/30 transition-all">
+                     <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-primary-500/30 transition-all text-slate-900 dark:text-white">
                         <div className="text-center space-y-3 relative z-10">
-                           <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-white/10 rounded-2xl flex items-center justify-center shadow-sm text-2xl font-black text-gray-500 dark:text-gray-300">{p.name[0]}</div>
+                           <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-white/10 rounded-2xl flex items-center justify-center shadow-sm text-2xl font-black text-gray-500 dark:text-gray-300">
+                               <ProviderIcon name={p.logo} size={32}/>
+                           </div>
                            <div>
                              <h4 className="font-black text-lg uppercase tracking-tight">{p.name}</h4>
                              <div className="flex items-center justify-center gap-1.5 mt-1">
@@ -61,33 +65,9 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                            </div>
                         </div>
 
-                        <div className="space-y-3 flex-1">
-                           <p className="text-[0.55rem] font-black uppercase text-gray-400 text-center tracking-widest">Fitur AI</p>
-                           <ul className="space-y-2">
-                              {p.features?.map((f: string) => (
-                                 <li key={f} className="text-[0.6rem] font-bold text-center bg-gray-100 dark:bg-white/5 py-2 rounded-xl border border-black/5 dark:border-white/5 text-gray-600 dark:text-gray-300">{f}</li>
-                              ))}
-                           </ul>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-[0.55rem]">
-                           <div className="space-y-1">
-                              <span className="font-black uppercase text-emerald-500 tracking-widest block mb-1">Kelebihan</span>
-                              {p.advantages?.slice(0,2).map((a: string, i: number) => (
-                                <div key={i} className="flex gap-1 items-start leading-tight opacity-80"><CheckCircle2 size={8} className="text-emerald-500 mt-0.5 flex-shrink-0"/> {a}</div>
-                              ))}
-                           </div>
-                           <div className="space-y-1">
-                              <span className="font-black uppercase text-rose-500 tracking-widest block mb-1">Kekurangan</span>
-                              {p.disadvantages?.slice(0,2).map((d: string, i: number) => (
-                                <div key={i} className="flex gap-1 items-start leading-tight opacity-80"><MinusCircle size={8} className="text-rose-500 mt-0.5 flex-shrink-0"/> {d}</div>
-                              ))}
-                           </div>
-                        </div>
-
                         <button 
                           onClick={() => onSelectProvider(p.id)}
-                          className="w-full py-4 bg-midnight dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.65rem] tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                          className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.65rem] tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
                         >
                           Pilih Node Ini <ArrowRight size={14}/>
                         </button>
@@ -102,11 +82,26 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
 }
 
 const StepProviders: React.FC<StepProvidersProps> = ({
-  sortBy, setSortBy, sortedProviders, selectedProviderId, setSelectedProviderId,
+  sortBy, setSortBy, selectedProviderId, setSelectedProviderId,
   premiumBreakdown, showProviderBreakdown, setShowProviderBreakdown
 }) => {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [dynamicProviders, setDynamicProviders] = useState<DBProvider[]>([]);
+
+  useEffect(() => {
+    db.providers.where('isActive').equals(1).toArray().then(setDynamicProviders);
+  }, []);
+
+  const sortedList = [...dynamicProviders].sort((a, b) => {
+    if (sortBy === 'RATING') return b.rating - a.rating;
+    if (sortBy === 'PRICE') {
+        const priceA = (premiumBreakdown?.netPremium || 0) + a.adminFee;
+        const priceB = (premiumBreakdown?.netPremium || 0) + b.adminFee;
+        return priceA - priceB;
+    }
+    return 0;
+  });
 
   const toggleCompare = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -126,7 +121,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
        <ComparisonModal 
           isOpen={showCompareModal} 
           onClose={() => setShowCompareModal(false)}
-          providers={sortedProviders}
+          providers={sortedList}
           selectedIds={compareList}
           premiumBreakdown={premiumBreakdown}
           onSelectProvider={handleSelectFromModal}
@@ -168,7 +163,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
        </div>
 
        <div className="space-y-5">
-         {sortedProviders.map(p => {
+         {sortedList.map(p => {
            const finalPremi = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
            const isSelected = selectedProviderId === p.id;
            const isComparing = compareList.includes(p.id);
@@ -190,10 +185,10 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center font-black text-2xl shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${isSelected ? 'bg-primary-500 text-white shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
-                      {p.name[0]}
+                      <ProviderIcon name={p.logo} size={32}/>
                     </div>
                     <div>
-                       <h4 className="font-black text-lg uppercase tracking-tighter leading-tight">{p.name}</h4>
+                       <h4 className="font-black text-lg uppercase tracking-tighter leading-tight text-slate-900 dark:text-white">{p.name}</h4>
                        <div className="flex items-center gap-2 mt-1.5">
                           <div className="flex gap-0.5">
                             {[1,2,3,4,5].map(i => <Star key={i} size={11} className={`${i <= Math.floor(p.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-white/10'}`}/>)}
@@ -206,31 +201,6 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                   <div className="w-full sm:w-auto text-left sm:text-right pt-3 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5 flex flex-col justify-center">
                     <p className={`text-2xl font-black tracking-tighter leading-none transition-colors ${isSelected ? 'text-primary-500' : 'text-gray-900 dark:text-white'}`}>{formatIDR(finalPremi)}</p>
                     <p className="text-[0.5rem] text-gray-400 uppercase font-black mt-2 tracking-[0.2em] opacity-80">Total Premi Bersih</p>
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-5 border-t border-black/5 dark:border-white/5">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-emerald-500">
-                      <div className="w-5 h-5 bg-emerald-500/10 rounded-lg flex items-center justify-center"><CheckCircle2 size={12}/></div>
-                      <span className="text-[0.6rem] font-black uppercase tracking-widest">Kelebihan</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {p.advantages?.slice(0, 2).map((adv: string, idx: number) => (
-                        <li key={idx} className="text-[0.6rem] text-gray-500 dark:text-gray-400 leading-tight font-bold flex items-start gap-2"><div className="w-1 h-1 rounded-full bg-emerald-500/30 mt-1.5 flex-shrink-0"></div> {adv}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-rose-400">
-                      <div className="w-5 h-5 bg-rose-500/10 rounded-lg flex items-center justify-center"><MinusCircle size={12}/></div>
-                      <span className="text-[0.6rem] font-black uppercase tracking-widest">Kekurangan</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {p.disadvantages?.slice(0, 2).map((dis: string, idx: number) => (
-                        <li key={idx} className="text-[0.6rem] text-gray-400 opacity-60 leading-tight font-bold flex items-start gap-2"><div className="w-1 h-1 rounded-full bg-rose-500/30 mt-1.5 flex-shrink-0"></div> {dis}</li>
-                      ))}
-                    </ul>
                   </div>
                </div>
 
@@ -247,15 +217,9 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                     {showProviderBreakdown && (
                       <div className="mt-5 space-y-4 animate-fade-in px-5 py-4 bg-gray-50 dark:bg-black/40 rounded-3xl border border-black/5 dark:border-white/5 shadow-inner">
                         <div className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
-                          <span className="text-gray-400">Premi Dasar ({premiumBreakdown?.baseRate}%)</span>
+                          <span className="text-gray-400">Premi Dasar</span>
                           <span className="text-gray-900 dark:text-white font-mono">{formatIDR(premiumBreakdown?.basicPremium || 0)}</span>
                         </div>
-                        {premiumBreakdown?.expansions.map((exp: any, i: number) => (
-                          <div key={i} className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
-                            <span className="text-gray-400">{exp.name} ({exp.rate}%)</span>
-                            <span className="text-gray-900 dark:text-white font-mono">{formatIDR(exp.val)}</span>
-                          </div>
-                        ))}
                         <div className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
                           <span className="text-gray-400">Biaya Admin ({p.name})</span>
                           <span className="text-gray-900 dark:text-white font-mono">{formatIDR(p.adminFee || 0)}</span>
@@ -268,12 +232,6 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                     )}
                  </div>
                )}
-
-               <div className="flex gap-2 mt-6 overflow-x-auto no-scrollbar pb-1">
-                    {p.features?.map((f: string, i: number) => (
-                        <span key={i} className="whitespace-nowrap px-4 py-2 bg-gray-100 dark:bg-white/[0.05] rounded-full text-[0.55rem] font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest border border-black/5 dark:border-white/5 shadow-sm">{f}</span>
-                    ))}
-               </div>
 
                {isSelected && (
                   <div className="absolute top-0 right-0 p-6 pointer-events-none">

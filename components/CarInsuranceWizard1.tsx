@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Car, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS } from '../constants';
-import { InsuranceType } from '../types';
+import { InsuranceType, Language } from '../types';
 import { db, Policy, Transaction } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
 import { formatIDR } from './car-wizard/WizardUI';
@@ -28,7 +28,8 @@ const STEPS = [
 
 const STORAGE_KEY = 'SUREPATH_CAR_WIZARD_PROGRESS';
 
-const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any }) => {
+/* Fix: Added lang prop to CarInsuranceWizard component */
+const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { onComplete: () => void, currentUser?: any, lang?: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<'KTP' | 'STNK' | 'SURVEY' | null>(null);
@@ -348,6 +349,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => voi
                     coverage={coverage} survey={survey} 
                     premiumBreakdown={premiumBreakdown} handleFinalPayment={handleFinalPayment} 
                     setStep={setStep} 
+                    lang={lang}
                 />
             )}
           </div>

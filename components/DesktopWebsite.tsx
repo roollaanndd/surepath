@@ -24,7 +24,7 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, currentL
   const t = (en: string, idn: string) => currentLang === Language.EN ? en : idn;
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#080707] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-700 overflow-x-hidden">
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#050505] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-700 overflow-x-hidden selection:bg-emerald-500/30">
       
       {/* Dynamic Hero Section */}
       <Hero 
@@ -33,13 +33,13 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, currentL
       />
 
       {/* Trust Bar (Partners) */}
-      <div className="py-12 border-y border-slate-100 dark:border-white/5 bg-white/50 dark:bg-black/20">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] w-full text-center mb-4 text-slate-400">{t("Our Strategic Reinsurance Partners", "Mitra Strategis Reasuransi Kami")}</p>
-           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Zurich</div>
-           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Tugu</div>
-           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Intra Asia</div>
-           <div className="flex items-center gap-3 font-black text-xl italic uppercase">Swiss Re</div>
+      <div className="py-12 border-y border-white/5 bg-white/50 dark:bg-black/40 backdrop-blur-md relative z-20">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-50 dark:opacity-30 hover:opacity-100 transition-opacity duration-500">
+           <p className="text-[10px] font-black uppercase tracking-[0.4em] w-full text-center mb-4 text-slate-500 dark:text-slate-400">{t("Our Strategic Reinsurance Partners", "Mitra Strategis Reasuransi Kami")}</p>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase tracking-widest">Zurich</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase tracking-widest">Tugu</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase tracking-widest">Intra Asia</div>
+           <div className="flex items-center gap-3 font-black text-xl italic uppercase tracking-widest">Swiss Re</div>
         </div>
       </div>
 
@@ -50,15 +50,20 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, currentL
       <ProductModules lang={currentLang} />
 
       {/* Dashboard Call to Action */}
-      <Section className="bg-white dark:bg-[#0c0c0c]">
-         <div className="max-w-4xl mx-auto text-center space-y-12">
-            <div className="inline-flex items-center gap-4 p-4 bg-brand-500 rounded-[2rem] text-white shadow-xl animate-float">
+      <Section className="bg-[#fafaf9] dark:bg-[#050505] relative overflow-hidden">
+         <div className="absolute inset-0 bg-grid-pattern opacity-30 dark:opacity-[0.05]"></div>
+         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-t-full pointer-events-none"></div>
+
+         <div className="max-w-4xl mx-auto text-center space-y-12 relative z-10">
+            <div className="inline-flex items-center gap-4 p-5 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[2rem] text-white shadow-[0_0_40px_rgba(16,185,129,0.4)] animate-float">
                <Zap size={40} fill="currentColor"/>
             </div>
             <div className="space-y-6">
-               <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight">
+               <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-tight drop-shadow-sm">
                   {t("Ready to step onto", "Siap melangkah ke")} <br/>
-                  <span className="text-brand-500">{t("The Neural Path?", "Jalur Neural?")}</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-primary-500 filter drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                    {t("The Neural Path?", "Jalur Neural?")}
+                  </span>
                </h2>
                <p className="text-slate-500 dark:text-slate-400 font-medium text-lg max-w-2xl mx-auto">
                   {t(
@@ -67,15 +72,21 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({ onEnterPortal, currentL
                   )}
                </p>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-               <Button size="xl" onClick={() => onEnterPortal('REGISTER')} icon={ArrowRight}>
-                  {t("Join Now", "Daftar Sekarang")}
-               </Button>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-4">
+               <button 
+                  onClick={() => onEnterPortal('REGISTER')} 
+                  className="group relative px-10 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase text-sm tracking-widest rounded-2xl overflow-hidden shadow-[0_10px_40px_-10px_rgba(16,185,129,0.5)] dark:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all duration-300"
+               >
+                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                 <span className="relative z-10 flex items-center gap-3">
+                   {t("Join Now", "Daftar Sekarang")} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                 </span>
+               </button>
                <button 
                   onClick={() => onEnterPortal('LOGIN')}
-                  className="px-12 py-6 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white rounded-full font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm flex items-center gap-3 border border-black/5"
+                  className="px-10 py-5 bg-white/50 dark:bg-white/5 backdrop-blur-md text-slate-900 dark:text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm flex items-center gap-3 border border-slate-200 dark:border-white/10 glass-premium"
                >
-                  <LogIn size={18}/>
+                  <LogIn size={18} className="text-emerald-500"/>
                   {t("Member Login", "Masuk Member")}
                </button>
             </div>

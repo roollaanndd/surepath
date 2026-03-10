@@ -64,8 +64,8 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
                   {messages[messageIdx]}
                </p>
             </div>
-            <div className="w-72 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner">
-                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 shadow-[0_0_10px_#f97316]" style={{ width: `${progress}%` }}></div>
+            <div className="w-72 h-1.5 bg-gray-100/50 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner backdrop-blur-md">
+                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 shadow-[0_0_15px_rgba(249,115,22,0.8)]" style={{ width: `${progress}%` }}></div>
             </div>
           </div>
         </div>
@@ -333,13 +333,13 @@ const App = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {products.map(p => (
-                  <div key={p.id} onClick={() => p.active && setPage(`buy-${p.id}`)} className={`group p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${p.active ? 'cursor-pointer hover:border-primary-500/30 shadow-xl' : 'opacity-40 grayscale'}`}>
+                  <div key={p.id} onClick={() => p.active && setPage(`buy-${p.id}`)} className={`group p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${p.active ? 'cursor-pointer hover:border-primary-500/50 hover:shadow-2xl hover:-translate-y-1' : 'opacity-40 grayscale'} glass-premium`}>
                     <div className="relative z-10">
                        <div className="flex justify-between items-start mb-8">
-                          <div className={`w-16 h-16 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.8rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                          <div className={`w-16 h-16 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.8rem] flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_currentColor] transition-all duration-500`}>
                              <p.icon size={32} strokeWidth={2.5}/>
                           </div>
-                          <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest text-slate-400">{p.tech}</span>
+                          <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest text-slate-400 shadow-sm">{p.tech}</span>
                        </div>
                        <h4 className="font-black text-2xl uppercase tracking-tighter text-slate-900 dark:text-white mb-2">{p.title}</h4>
                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{p.desc}</p>
@@ -375,7 +375,7 @@ const App = () => {
   return (
     <div className={`${darkMode ? 'dark bg-[#0a0a0a]' : 'bg-[#fafaf9]'} min-h-screen transition-colors duration-700 flex flex-col relative overflow-hidden`}>
       {!isWizardFlow && currentUser && (
-        <header className="flex-shrink-0 h-24 glass-card px-8 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 z-[60] relative bg-white/60 dark:bg-black/20 backdrop-blur-xl transition-all duration-700">
+        <header className="flex-shrink-0 h-24 glass-premium px-8 flex items-center justify-between border-b border-white/40 dark:border-white/5 z-[60] relative transition-all duration-700">
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setPage('home')}>
             <SurePathLogo className="w-12 h-12 group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
@@ -399,7 +399,7 @@ const App = () => {
       </main>
 
       {!isWizardFlow && currentUser && (
-        <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl z-[70] flex items-center justify-around px-6 rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/50 dark:border-white/10 max-w-xl mx-auto transition-all duration-700">
+        <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 glass-premium z-[70] flex items-center justify-around px-6 rounded-[3rem] max-w-xl mx-auto transition-all duration-700 hover:shadow-[0_15px_40px_-10px_rgba(249,115,22,0.15)]">
           {navItems.map(item => (
             <button key={item.id} onClick={() => setPage(item.id)} className={`flex flex-col items-center gap-2 flex-1 py-4 transition-all duration-500 tap-feedback ${currentPage === item.id || (currentPage.startsWith('buy') && item.id === 'products') ? 'text-primary-500 scale-110 -translate-y-1' : 'text-gray-400 dark:text-gray-600'}`}>
               <item.icon size={26} strokeWidth={2.5} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />

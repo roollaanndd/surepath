@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface ClaimPart {
@@ -60,7 +59,6 @@ export interface PhotoFlag {
 
 /**
  * Interface for Vehicle Survey analysis results.
- * Added isDirty and cleanlinessComment to fix property check errors in StepSurvey.tsx.
  */
 export interface SurveyAnalysisResult {
   success: boolean;
@@ -79,7 +77,7 @@ export interface SurveyAnalysisResult {
 const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeHealthReceipt = async (base64Image: string): Promise<{ success: boolean; data?: HealthClaimData; error?: string }> => {
-  const modelId = 'gemini-3-flash-preview';
+  const modelId = 'gemini-3.1-pro-preview';
   const prompt = `Anda adalah auditor klaim asuransi kesehatan senior. Analisa kuitansi medis atau tagihan rumah sakit ini.
   Ekstrak data ke dalam JSON yang ketat dengan struktur:
   {
@@ -101,7 +99,7 @@ export const analyzeHealthReceipt = async (base64Image: string): Promise<{ succe
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: { parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
+      contents: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
       config: { responseMimeType: "application/json", temperature: 0.1 }
     });
     const text = response.text;
@@ -114,7 +112,7 @@ export const analyzeHealthReceipt = async (base64Image: string): Promise<{ succe
 };
 
 export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): Promise<{ success: boolean; data?: ProductExplanation; error?: string }> => {
-  const modelId = 'gemini-3-flash-preview';
+  const modelId = 'gemini-3.1-pro-preview';
   const prompt = `You are the SurePath Lead Neural Architect. Explain the product "${productName}" to a high-end customer.
   Use staggered, compelling, futuristic, and highly technical language.
   Focus on: Neural Underwriting, Computer Vision audits, and Zero-Trust data protocols.
@@ -148,42 +146,56 @@ export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): 
   }
 };
 
+/**
+ * Enhanced Vehicle Damage Analysis.
+ * Focused on extreme detail and accuracy for mobile claim reporting.
+ */
 export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success: boolean; data?: ClaimAnalysisData; error?: string }> => {
-  const modelId = 'gemini-3-flash-preview';
-  const prompt = `Anda adalah auditor klaim asuransi kendaraan senior. Analisa foto kerusakan kendaraan ini. 
-  Berikan output dalam JSON yang sangat ketat dengan struktur berikut:
+  const modelId = 'gemini-3.1-pro-preview';
+  const prompt = `Lakukan audit investigasi kerusakan kendaraan secara mendalam dari foto ini.
+  Anda adalah Investigator Klaim Neural SurePath. Berikan rincian yang sangat presisi.
+  
+  Instruksi Khusus:
+  1. Identifikasi SETIAP panel yang terkena dampak (misal: Bumper depan kiri, Lampu utama, Fender kiri).
+  2. Berikan kondisi spesifik (misal: Goresan dalam > 10cm, Retak pada braket, Penyok struktural).
+  3. Tentukan tindakan: 'Perbaiki' untuk kerusakan ringan, 'Ganti' untuk kerusakan struktural atau pecah.
+  4. Berikan estimasi harga perbaikan/sparepart yang akurat dalam Rupiah Indonesia (IDR).
+  5. Pastikan TOTAL ESTIMASI adalah jumlah dari rincian part.
+
+  Return JSON structure:
   {
     "severity": "Ringan | Sedang | Berat | Total Loss",
     "totalEstimasi": number,
     "rincianPart": [
       {
-        "namaPart": "nama bagian kendaraan yang rusak",
-        "kondisi": "deskripsi kerusakan spesifik",
+        "namaPart": "Nama spesifik panel/part",
+        "kondisi": "Detail visual kerusakan",
         "tindakan": "Perbaiki | Ganti",
         "estimasiBiaya": number
       }
     ],
-    "aiInsight": "ringkasan eksekutif singkat",
-    "technicalReasoning": "analisa teknis mengapa tindakan tersebut diambil",
-    "rekomendasiBengkel": "tipe bengkel yang disarankan",
-    "nextSteps": ["langkah 1", "langkah 2"]
+    "aiInsight": "Analisa naratif singkat (max 2 kalimat) tentang kronologi kerusakan yang terlihat.",
+    "technicalReasoning": "Mengapa tindakan perbaikan/penggantian dipilih berdasarkan integritas panel.",
+    "rekomendasiBengkel": "Tipe bengkel (Authorized/Partner) berdasarkan tingkat kerumitan.",
+    "nextSteps": ["Langkah pembersihan", "Jadwal masuk bengkel", "Verifikasi identitas"]
   }
-  Gunakan bahasa Indonesia. Jika tidak ada kerusakan terlihat, isi rincianPart dengan estimasi inspeksi dasar.`;
+  
+  Gunakan Bahasa Indonesia formal.`;
 
   try {
     const ai = getAi();
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: { parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
+      contents: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
       config: { responseMimeType: "application/json", temperature: 0.1 }
     });
     const text = response.text;
     if (!text) throw new Error("Empty AI response");
     return { success: true, data: JSON.parse(text) };
   } catch (error) { 
-    console.error("Gemini Error:", error);
-    return { success: false, error: "Gagal menganalisa foto klaim." }; 
+    console.error("Gemini Damage Audit Error:", error);
+    return { success: false, error: "Gagal menghubungkan ke Neural Vision Engine." }; 
   }
 };
 
@@ -192,8 +204,8 @@ export const summarizeClaimDocument = async (base64Doc: string): Promise<{ succe
     const ai = getAi();
     const cleanBase64 = base64Doc.includes(',') ? base64Doc.split(',')[1] : base64Doc;
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { parts: [{ text: "Ringkas dokumen klaim ini. JSON: { policyNumber: string, incidentDate: string, keyPoints: string[], riskAssessment: string }" }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
+      model: 'gemini-3.1-pro-preview',
+      contents: [{ text: "Ringkas dokumen klaim ini. JSON: { policyNumber: string, incidentDate: string, keyPoints: string[], riskAssessment: string }" }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
       config: { responseMimeType: 'application/json' }
     });
     const text = response.text;
@@ -207,29 +219,27 @@ export const extractStnkData = async (base64: string, mimeType: string = 'image/
     const ai = getAi();
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { 
-        parts: [
-          { text: `Lakukan audit OCR presisi tinggi pada dokumen STNK (Surat Tanda Nomor Kendaraan) Indonesia ini.
-          
-          Ekstrak data berikut seakurat mungkin (100% precision):
-          1. owner: Nama Pemilik.
-          2. plate: Nomor Polisi / Registrasi (Format: B 1234 XYZ).
-          3. brand: Merk (Contoh: TOYOTA, HONDA).
-          4. model: Tipe / Model (Contoh: AVANZA 1.3 G).
-          5. color: Warna Kendaraan.
-          6. year: Tahun Pembuatan / Perakitan.
-          7. vin: Nomor Rangka (NIK/VIN) - SANGAT PENTING.
-          8. engine: Nomor Mesin - SANGAT PENTING.
-          
-          Validasi Keamanan:
-          - status: 'OK' hanya jika dokumen terlihat asli.
-          - Jika blur/terpotong: 'UNCLEAR'.
-          
-          Output JSON: { owner, plate, brand, model, color, year, vin, engine, status }.` }, 
-          { inlineData: { mimeType: mimeType, data: cleanBase64 } }
-        ] 
-      },
+      model: 'gemini-3.1-pro-preview',
+      contents: [
+        { text: `Lakukan audit OCR presisi tinggi pada dokumen STNK (Surat Tanda Nomor Kendaraan) Indonesia ini.
+        
+        Ekstrak data berikut seakurat mungkin (100% precision):
+        1. owner: Nama Pemilik.
+        2. plate: Nomor Polisi / Registrasi (Format: B 1234 XYZ).
+        3. brand: Merk (Contoh: TOYOTA, HONDA).
+        4. model: Tipe / Model (Contoh: AVANZA 1.3 G).
+        5. color: Warna Kendaraan.
+        6. year: Tahun Pembuatan / Perakitan.
+        7. vin: Nomor Rangka (NIK/VIN) - SANGAT PENTING.
+        8. engine: Nomor Mesin - SANGAT PENTING.
+        
+        Validasi Keamanan:
+        - status: 'OK' hanya jika dokumen terlihat asli.
+        - Jika blur/terpotong: 'UNCLEAR'.
+        
+        Output JSON: { owner, plate, brand, model, color, year, vin, engine, status }.` }, 
+        { inlineData: { mimeType: mimeType, data: cleanBase64 } }
+      ],
       config: { responseMimeType: 'application/json', temperature: 0.0 }
     });
     const text = response.text;
@@ -264,13 +274,11 @@ export const validateVehiclePhoto = async (base64: string, slotLabel: string): P
     Example invalid issues: "Foto buram", "Bukan mobil", "Terlalu gelap", "Lampu flash terlalu terang".`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { 
-        parts: [
-          { text: prompt }, 
-          { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-        ] 
-      },
+      model: 'gemini-3.1-pro-preview',
+      contents: [
+        { text: prompt }, 
+        { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+      ],
       config: { responseMimeType: 'application/json', temperature: 0.1 }
     });
     const text = response.text;
@@ -337,8 +345,8 @@ export const analyzeVehicleSurvey = async (images: {id: string, data: string}[],
     }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { parts: [{ text: prompt }, ...imageParts.map(p => p)] },
+      model: 'gemini-3.1-pro-preview',
+      contents: [{ text: prompt }, ...imageParts.map(p => p)],
       config: { responseMimeType: 'application/json', temperature: 0.1 }
     });
 
@@ -363,13 +371,11 @@ export const extractKtpData = async (base64: string): Promise<{ success: boolean
     const ai = getAi();
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { 
-        parts: [
-          { text: "Analyze this Indonesian KTP. Extract: Full Name (Nama), NIK (exactly 16 digits), and Full Address (Alamat). Return a JSON object with keys 'name', 'nik', and 'address'. Ensure NIK is cleaned of any non-numeric characters. Use uppercase for name and address. If a field is missing, use null." }, 
-          { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-        ] 
-      },
+      model: 'gemini-3.1-pro-preview',
+      contents: [
+        { text: "Analyze this Indonesian KTP. Extract: Full Name (Nama), NIK (exactly 16 digits), and Full Address (Alamat). Return a JSON object with keys 'name', 'nik', and 'address'. Ensure NIK is cleaned of any non-numeric characters. Use uppercase for name and address. If a field is missing, use null." }, 
+        { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+      ],
       config: { 
         responseMimeType: 'application/json',
         temperature: 0.1

@@ -56,14 +56,19 @@
 
   /* Page Loader */
   .page-loader {
-    @apply fixed inset-0 z-[60] bg-white dark:bg-[#050505] flex items-center justify-center transition-opacity duration-500;
+    @apply fixed inset-0 z-[60] bg-white/95 dark:bg-[#050505]/95 backdrop-blur-3xl flex items-center justify-center transition-opacity duration-700;
+  }
+
+  /* Premium Glassmorphism */
+  .glass-premium {
+    @apply bg-white/60 dark:bg-[#111111]/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
   }
 
   /* Walking Path Animation */
   .path-svg {
     width: 120px;
     height: 120px;
-    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+    filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.4));
   }
   
   .path-line {
@@ -133,14 +138,30 @@
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300/50 dark:bg-gray-700/50 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400/80 dark:bg-gray-600/80;
+  }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
 @keyframes pulseSlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(50px, -30px) scale(1.05); }
-  66% { transform: translate(-30px, 40px) scale(0.95); }
-  100% { transform: translate(20px, -20px) scale(1.02); }
+  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 0.6; }
+  33% { transform: translate(30px, -50px) scale(1.1) rotate(120deg); opacity: 0.8; }
+  66% { transform: translate(-20px, 20px) scale(0.9) rotate(240deg); opacity: 0.7; }
+  100% { transform: translate(0px, 0px) scale(1) rotate(360deg); opacity: 0.6; }
 }

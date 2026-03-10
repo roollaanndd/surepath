@@ -31,7 +31,7 @@ const HealthChat = ({ onBack, lang }: { onBack: () => void, lang?: Language }) =
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.1-pro-preview',
         contents: [...messages, { role: 'user', text: userMsg }].map(m => ({
           role: m.role,
           parts: [{ text: m.text }]

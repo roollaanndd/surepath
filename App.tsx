@@ -47,25 +47,28 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   }, [onFinish]);
 
   return (
-    <div className="fixed inset-0 z-[5000] bg-[#fafaf9] dark:bg-[#0c0a09] flex flex-col items-center justify-center overflow-hidden transition-colors duration-700">
+    <div className="fixed inset-0 z-[5000] bg-[#fafaf9] dark:bg-[#050505] flex flex-col items-center justify-center overflow-hidden transition-colors duration-700">
+      <div className="absolute inset-0 bg-grid-pattern opacity-40 dark:opacity-[0.15]"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+      
       <div className="relative z-10 flex flex-col items-center animate-pop-in">
         <div className="mb-14 relative group">
-           <div className="absolute inset-0 bg-primary-500/25 rounded-full blur-[70px] animate-pulse scale-150"></div>
-           <NeuralBot className="w-56 h-56 relative drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]" mood="happy" />
+           <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-[80px] animate-pulse scale-150"></div>
+           <img src="/logo.png" alt="SurePath Logo" className="w-48 h-48 relative drop-shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-antigravity-float" />
         </div>
-        <div className="text-center space-y-8">
-          <h1 className="text-5xl font-black tracking-[-0.05em] text-slate-900 dark:text-white uppercase">
-            SURE<span className="text-primary-500">PATH</span>
+        <div className="text-center space-y-10">
+          <h1 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white uppercase drop-shadow-sm">
+            SURE<span className="text-emerald-500">PATH</span>
           </h1>
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div className="flex items-center justify-center gap-3">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-               <p className="text-[0.75rem] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.4em] h-4 transition-all duration-500">
+               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping shadow-[0_0_10px_#10b981]"></div>
+               <p className="text-[0.65rem] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.4em] h-4 transition-all duration-500">
                   {messages[messageIdx]}
                </p>
             </div>
-            <div className="w-72 h-1.5 bg-gray-100/50 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner backdrop-blur-md">
-                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 shadow-[0_0_15px_rgba(249,115,22,0.8)]" style={{ width: `${progress}%` }}></div>
+            <div className="w-80 h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mx-auto shadow-inner">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-primary-500 transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.8)]" style={{ width: `${progress}%` }}></div>
             </div>
           </div>
         </div>

@@ -12,34 +12,7 @@ interface NavbarProps {
 }
 
 export const SurePathLogo = ({ className = "w-10 h-10" }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#10b981" />
-        <stop offset="100%" stopColor="#047857" />
-      </linearGradient>
-      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.2)" />
-      </filter>
-    </defs>
-    <path 
-      d="M50 5L15 18V45C15 68 30 88 50 95C70 88 85 68 85 45V18L50 5Z" 
-      fill="url(#shieldGradient)" 
-      filter="url(#dropShadow)"
-    />
-    <path 
-      d="M50 95C50 95 35 75 35 55C35 35 50 35 55 25" 
-      stroke="white" 
-      strokeWidth="6" 
-      strokeLinecap="round" 
-      fill="none"
-      opacity="0.9"
-    />
-    <path 
-      d="M55 25C55 25 65 15 70 25C75 35 65 40 55 25Z" 
-      fill="#ecfccb"
-    />
-  </svg>
+  <img src="/logo.png" alt="SurePath Logo" className={`${className} object-contain`} />
 );
 
 const Navbar: React.FC<NavbarProps> = ({ lang, setLang, darkMode, setDarkMode, currentPage, setPage }) => {

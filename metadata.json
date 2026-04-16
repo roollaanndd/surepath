@@ -1,6 +1,6 @@
 {
-  "name": "SurePath - Neural Insurtech",
-  "description": "Predictive. Neural. Protected. Real-time AI claim acceleration and step-by-step transparency.",
+  "name": "SurePath - Smart Insurance",
+  "description": "SurePath protects you when it matters most. Experience a seamless, accelerated buying process and lightning-fast claims, all in one secure platform.",
   "requestFramePermissions": [
     "camera",
     "geolocation"

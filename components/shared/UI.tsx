@@ -40,28 +40,28 @@ export const Button: React.FC<{
   disabled = false
 }) => {
   const variants = {
-    primary: "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 shadow-xl",
-    brand: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-600/20",
-    secondary: "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50",
-    outline: "bg-transparent border-2 border-slate-200 text-slate-900 dark:text-white hover:border-emerald-500 hover:text-emerald-600",
-    ghost: "bg-transparent text-slate-500 hover:bg-slate-100"
+    primary: "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-sm",
+    brand: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
+    secondary: "bg-white dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10",
+    outline: "bg-transparent border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:border-emerald-500 hover:text-emerald-600",
+    ghost: "bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
   };
 
   const sizes = {
-    sm: "px-6 py-2.5 text-[10px] font-bold",
-    md: "px-8 py-3.5 text-xs font-bold",
-    lg: "px-10 py-5 text-sm font-black tracking-widest",
-    xl: "px-12 py-6 text-base font-black tracking-widest"
+    sm: "px-4 py-2 text-xs font-semibold",
+    md: "px-6 py-2.5 text-sm font-semibold",
+    lg: "px-8 py-3.5 text-base font-semibold",
+    xl: "px-10 py-4 text-lg font-semibold"
   };
 
   return (
     <button 
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-2xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 uppercase ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`rounded-full transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
     >
       {children}
-      {Icon && <Icon size={18} strokeWidth={2.5} />}
+      {Icon && <Icon size={18} strokeWidth={2} />}
     </button>
   );
 };

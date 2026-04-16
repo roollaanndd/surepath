@@ -8,10 +8,14 @@ import {
 
 function SurePathLogoIcon({ size, className }: any) {
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 5C50 5 15 15 15 45C15 75 50 95 50 95C50 95 85 75 85 45C85 15 50 5 50 5Z" fill="currentColor" opacity="0.2"/>
-      <path d="M50 90C50 90 35 75 35 55C35 40 45 35 50 25C52 35 65 40 75 30C72 45 60 75 50 90Z" fill="currentColor" />
-    </svg>
+    <img 
+      src="/logo.png" 
+      alt="SurePath Logo" 
+      width={100} 
+      height={100} 
+      className={`${className} object-contain`} 
+      referrerPolicy="no-referrer"
+    />
   );
 }
 

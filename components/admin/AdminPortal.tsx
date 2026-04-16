@@ -22,6 +22,8 @@ import {
 import { UserRole } from '../../types';
 import { db } from '../../db';
 
+import { SurePathLogo } from '../Navbar';
+
 const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
   <div className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl">
     <div className="flex justify-between items-start mb-6">
@@ -149,7 +151,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     <div className="flex flex-col h-full">
       <div className="mb-12 flex items-center gap-4">
           <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-             <Command size={28} />
+             <SurePathLogo className="w-8 h-8 text-white" />
           </div>
           <div>
              <h1 className="font-black text-2xl tracking-tighter uppercase leading-none">Sure<span className="text-emerald-500">Path</span></h1>

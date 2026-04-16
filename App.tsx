@@ -26,6 +26,7 @@ import { Language, UserRole } from './types';
 import { NeuralBot, PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
 import { Badge } from './components/shared/UI';
+import { auth, signOut } from './firebase';
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -47,28 +48,25 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   }, [onFinish]);
 
   return (
-    <div className="fixed inset-0 z-[5000] bg-[#fafaf9] dark:bg-[#050505] flex flex-col items-center justify-center overflow-hidden transition-colors duration-700">
-      <div className="absolute inset-0 bg-grid-pattern opacity-40 dark:opacity-[0.15]"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-      
+    <div className="fixed inset-0 z-[5000] bg-[#fafaf9] dark:bg-[#0c0a09] flex flex-col items-center justify-center overflow-hidden transition-colors duration-700">
       <div className="relative z-10 flex flex-col items-center animate-pop-in">
         <div className="mb-14 relative group">
-           <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-[80px] animate-pulse scale-150"></div>
-           <img src="/logo.png" alt="SurePath Logo" className="w-48 h-48 relative drop-shadow-[0_0_30px_rgba(16,185,129,0.3)] animate-antigravity-float" />
+           <div className="absolute inset-0 bg-primary-500/25 rounded-full blur-[70px] animate-pulse scale-150"></div>
+           <NeuralBot className="w-56 h-56 relative drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]" mood="happy" />
         </div>
-        <div className="text-center space-y-10">
-          <h1 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white uppercase drop-shadow-sm">
-            SURE<span className="text-emerald-500">PATH</span>
+        <div className="text-center space-y-8">
+          <h1 className="text-5xl font-black tracking-[-0.05em] text-slate-900 dark:text-white uppercase">
+            SURE<span className="text-primary-500">PATH</span>
           </h1>
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="flex items-center justify-center gap-3">
-               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping shadow-[0_0_10px_#10b981]"></div>
-               <p className="text-[0.65rem] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.4em] h-4 transition-all duration-500">
+               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+               <p className="text-[0.75rem] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.4em] h-4 transition-all duration-500">
                   {messages[messageIdx]}
                </p>
             </div>
-            <div className="w-80 h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mx-auto shadow-inner">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-primary-500 transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.8)]" style={{ width: `${progress}%` }}></div>
+            <div className="w-72 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner">
+                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 shadow-[0_0_10px_#f97316]" style={{ width: `${progress}%` }}></div>
             </div>
           </div>
         </div>
@@ -140,19 +138,38 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+import PlatformLanding from './src/pages/PlatformLanding';
+
 const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [currentPage, setPage] = useState('home');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [appMode, setAppMode] = useState(false); 
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+  const [appMode, setAppMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || false;
+    }
+    return false;
+  }); 
   const [products] = useState(INITIAL_PRODUCTS);
   const [lang, setLang] = useState<Language>(Language.ID);
   const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
 
   useEffect(() => {
-    seedDatabase();
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => setDarkMode(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    seedDatabase().catch(console.error);
     const savedSession = localStorage.getItem('SUREPATH_SESSION');
     if (savedSession) {
       try {
@@ -161,10 +178,10 @@ const App = () => {
         setAppMode(true);
         db.policies.where('userId').equals(user.id).toArray().then(res => {
            if (res.length > 0) setLatestPolicy(res.sort((a,b) => b.id! - a.id!)[0]);
-        });
+        }).catch(console.error);
       } catch (e) { localStorage.removeItem('SUREPATH_SESSION'); }
     }
-  }, [currentPage]);
+  }, []);
 
   const handleAuthSuccess = (user: any) => {
     setCurrentUser(user);
@@ -173,7 +190,12 @@ const App = () => {
     setPage('home');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Firebase sign out error", error);
+    }
     setCurrentUser(null);
     localStorage.removeItem('SUREPATH_SESSION');
     setAppMode(false);
@@ -200,34 +222,22 @@ const App = () => {
     return <AdminPortal onLogout={handleLogout} products={products} setProducts={() => {}} userRole={currentUser.role} />;
   }
 
-  // Desktop Website Logic
-  if (!isMobile && !appMode && !currentUser) {
+  // Website Logic (Desktop & Mobile Browser)
+  if (!appMode && !currentUser) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <Navbar 
-          lang={lang} 
-          setLang={setLang} 
-          darkMode={darkMode} 
-          setDarkMode={setDarkMode} 
-          currentPage={currentPage} 
-          setPage={setPage}
+        <PlatformLanding 
+          onSignIn={() => { setAppMode(true); setPage('auth'); }} 
+          lang={lang}
+          setLang={setLang}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
         />
-        <main className="transition-all duration-700 bg-neural-mesh dark:bg-[#0c0a09]">
-           {currentPage === 'home' || currentPage === 'products' || currentPage === 'claim' || currentPage === 'about' ? (
-             <DesktopWebsite onEnterPortal={() => { setAppMode(true); setPage('auth'); }} onAdminAccess={() => { setAppMode(true); setPage('auth'); }} currentLang={lang} onLangChange={setLang} />
-           ) : currentPage === 'contact' ? (
-             <div className="pt-40 max-w-7xl mx-auto px-6">
-                <ContactPage lang={lang} />
-             </div>
-           ) : (
-             <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />
-           )}
-        </main>
       </div>
     );
   }
 
-  if (!currentUser && (isMobile || appMode)) {
+  if (!currentUser && appMode) {
     return <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />;
   }
 
@@ -336,13 +346,13 @@ const App = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {products.map(p => (
-                  <div key={p.id} onClick={() => p.active && setPage(`buy-${p.id}`)} className={`group p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${p.active ? 'cursor-pointer hover:border-primary-500/50 hover:shadow-2xl hover:-translate-y-1' : 'opacity-40 grayscale'} glass-premium`}>
+                  <div key={p.id} onClick={() => p.active && setPage(`buy-${p.id}`)} className={`group p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${p.active ? 'cursor-pointer hover:border-primary-500/30 shadow-xl' : 'opacity-40 grayscale'}`}>
                     <div className="relative z-10">
                        <div className="flex justify-between items-start mb-8">
-                          <div className={`w-16 h-16 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.8rem] flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_currentColor] transition-all duration-500`}>
+                          <div className={`w-16 h-16 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.8rem] flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
                              <p.icon size={32} strokeWidth={2.5}/>
                           </div>
-                          <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest text-slate-400 shadow-sm">{p.tech}</span>
+                          <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.5rem] font-black uppercase tracking-widest text-slate-400">{p.tech}</span>
                        </div>
                        <h4 className="font-black text-2xl uppercase tracking-tighter text-slate-900 dark:text-white mb-2">{p.title}</h4>
                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{p.desc}</p>
@@ -378,7 +388,7 @@ const App = () => {
   return (
     <div className={`${darkMode ? 'dark bg-[#0a0a0a]' : 'bg-[#fafaf9]'} min-h-screen transition-colors duration-700 flex flex-col relative overflow-hidden`}>
       {!isWizardFlow && currentUser && (
-        <header className="flex-shrink-0 h-24 glass-premium px-8 flex items-center justify-between border-b border-white/40 dark:border-white/5 z-[60] relative transition-all duration-700">
+        <header className="flex-shrink-0 h-24 glass-card px-8 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 z-[60] relative bg-white/60 dark:bg-black/20 backdrop-blur-xl transition-all duration-700">
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setPage('home')}>
             <SurePathLogo className="w-12 h-12 group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
@@ -402,7 +412,7 @@ const App = () => {
       </main>
 
       {!isWizardFlow && currentUser && (
-        <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 glass-premium z-[70] flex items-center justify-around px-6 rounded-[3rem] max-w-xl mx-auto transition-all duration-700 hover:shadow-[0_15px_40px_-10px_rgba(249,115,22,0.15)]">
+        <nav className="flex-shrink-0 fixed bottom-8 inset-x-6 h-22 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl z-[70] flex items-center justify-around px-6 rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/50 dark:border-white/10 max-w-xl mx-auto transition-all duration-700">
           {navItems.map(item => (
             <button key={item.id} onClick={() => setPage(item.id)} className={`flex flex-col items-center gap-2 flex-1 py-4 transition-all duration-500 tap-feedback ${currentPage === item.id || (currentPage.startsWith('buy') && item.id === 'products') ? 'text-primary-500 scale-110 -translate-y-1' : 'text-gray-400 dark:text-gray-600'}`}>
               <item.icon size={26} strokeWidth={2.5} className={currentPage === item.id ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]' : ''} />

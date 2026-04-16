@@ -29,60 +29,106 @@ const StepKYC: React.FC<StepKYCProps> = ({
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       
-      // Header
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, pageWidth, 40, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
+      // --- Watermark ---
+      doc.setTextColor(240, 240, 240);
+      doc.setFontSize(80);
       doc.setFont('helvetica', 'bold');
-      doc.text("SUREPATH IDENTITY SCAN", 20, 25);
+      doc.text("SUREPATH", pageWidth / 2, pageHeight / 2 + 20, { align: 'center', angle: 45 });
+
+      // --- Header ---
+      doc.setFillColor(15, 23, 42); // slate-900
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Accent line
+      doc.setFillColor(249, 115, 22); // orange-500
+      doc.rect(0, 45, pageWidth, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.text("SUREPATH", 20, 22);
+      
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text("DOKUMEN VERIFIKASI IDENTITAS TERENKRIPSI", 20, 32);
-
-      // Label
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(14);
-      doc.text("HASIL EKSTRAKSI IDENTITAS", 20, 55);
-      doc.setDrawColor(249, 115, 22);
-      doc.setLineWidth(1);
-      doc.line(20, 58, 60, 58);
-
-      // Info
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text("IDENTITY VERIFICATION", 20, 32);
+      
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      let y = 70;
-      const addRow = (label: string, val: string) => {
+      doc.text("HASIL VERIFIKASI KTP", pageWidth - 20, 22, { align: 'right' });
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Waktu: ${date}`, pageWidth - 20, 32, { align: 'right' });
+
+      let currentY = 60;
+
+      // --- Helper for Section Titles ---
+      const addSectionTitle = (title: string, y: number) => {
+        doc.setFillColor(249, 115, 22); // orange-500
+        doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(label, 20, y);
-        doc.setFont('helvetica', 'normal');
-        doc.text(val || '-', 70, y);
-        y += 10;
+        doc.text(title, 28, y + 6);
+        return y + 20;
       };
 
-      addRow("Nama Lengkap:", kycData.name);
-      addRow("Nomor NIK:", kycData.ktp);
-      addRow("Email:", kycData.email);
-      addRow("No. Telepon:", kycData.phone);
-      doc.setFont('helvetica', 'bold');
-      doc.text("Alamat:", 20, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(kycData.address || '-', 70, y, { maxWidth: 120 });
-      y += 20;
+      // --- Section: Data Identitas ---
+      currentY = addSectionTitle("DATA IDENTITAS TERVERIFIKASI", currentY);
+      
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.roundedRect(20, currentY, pageWidth - 40, 60, 3, 3, 'FD');
 
-      // Image
-      doc.text("LAMPIRAN FOTO KTP:", 20, y);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setFont('helvetica', 'normal');
+      
+      doc.text("Nama Lengkap", 25, currentY + 10);
+      doc.text("Nomor Induk Kependudukan", 25, currentY + 20);
+      doc.text("Email", 25, currentY + 30);
+      doc.text("Nomor Telepon", 25, currentY + 40);
+      doc.text("Alamat", 25, currentY + 50);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('helvetica', 'bold');
+      doc.text(kycData?.name || '-', 80, currentY + 10);
+      doc.text(kycData?.ktp || '-', 80, currentY + 20);
+      doc.text(kycData?.email || '-', 80, currentY + 30);
+      doc.text(kycData?.phone || '-', 80, currentY + 40);
+      doc.setFont('helvetica', 'normal');
+      doc.text(kycData?.address || '-', 80, currentY + 50, { maxWidth: pageWidth - 110 });
+
+      currentY += 75;
+
+      // --- Section: Lampiran Dokumen ---
+      currentY = addSectionTitle("LAMPIRAN DOKUMEN", currentY);
+
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(20, currentY, pageWidth - 40, 70, 3, 3, 'FD');
+
       try {
-        doc.addImage(kycData.photo, 'JPEG', 20, y + 5, 85, 54);
+        // Calculate aspect ratio to fit within the box
+        // Box is 70h, let's use 60h max
+        doc.addImage(kycData.photo, 'JPEG', 25, currentY + 5, 95, 60);
       } catch (e) {
-        doc.text("[Foto KTP tidak dapat dimuat]", 20, y + 10);
+        doc.setTextColor(100, 116, 139);
+        doc.setFont('helvetica', 'italic');
+        doc.text("[Gambar KTP tidak dapat dimuat]", pageWidth / 2, currentY + 35, { align: 'center' });
       }
 
-      // Legal
+      // --- Footer ---
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, pageHeight - 30, pageWidth, 30, 'F');
+      doc.setTextColor(148, 163, 184);
       doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text("Identitas ini telah diverifikasi secara neural dan dijamin kerahasiaannya oleh protokol SurePath.", pageWidth / 2, 280, { align: 'center' });
-      doc.text(`Timestamp Verifikasi: ${new Date().toISOString()}`, pageWidth / 2, 285, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text("Identitas ini telah diverifikasi secara digital dan dijamin kerahasiaannya oleh sistem SurePath.", pageWidth / 2, pageHeight - 18, { align: 'center' });
+      doc.text(`Timestamp: ${new Date().toISOString()}`, pageWidth / 2, pageHeight - 12, { align: 'center' });
 
       doc.save(`KTP_SurePath_${kycData.name.replace(/ /g, '_')}.pdf`);
     } catch (err) {

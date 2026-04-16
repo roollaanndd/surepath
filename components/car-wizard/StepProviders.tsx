@@ -90,7 +90,11 @@ const StepProviders: React.FC<StepProvidersProps> = ({
   const [dynamicProviders, setDynamicProviders] = useState<DBProvider[]>([]);
 
   useEffect(() => {
-    db.providers.where('isActive').equals(1).toArray().then(setDynamicProviders);
+    db.providers.toArray().then(providers => {
+      // Filter active providers (checking both boolean true and number 1 for safety)
+      const activeProviders = providers.filter(p => p.isActive === true || (p.isActive as any) === 1);
+      setDynamicProviders(activeProviders);
+    });
   }, []);
 
   const sortedList = [...dynamicProviders].sort((a, b) => {
@@ -202,6 +206,47 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                     <p className={`text-2xl font-black tracking-tighter leading-none transition-colors ${isSelected ? 'text-primary-500' : 'text-gray-900 dark:text-white'}`}>{formatIDR(finalPremi)}</p>
                     <p className="text-[0.5rem] text-gray-400 uppercase font-black mt-2 tracking-[0.2em] opacity-80">Total Premi Bersih</p>
                   </div>
+               </div>
+
+               {/* Added Details Section for Mobile/Desktop Visibility */}
+               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-black/5 dark:border-white/5 pt-6 mb-2">
+                   {/* Points Badge */}
+                   <div className="col-span-1 sm:col-span-2">
+                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+                           <Coins size={14} className="fill-amber-600 dark:fill-amber-400" />
+                           <span className="text-xs font-bold">Extra Poin: {p.extraCoinsPercent}% Cashback</span>
+                       </div>
+                   </div>
+
+                   {/* Pros */}
+                   <div className="space-y-3">
+                       <p className="text-[0.55rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
+                           <CheckCircle2 size={12} /> Kelebihan
+                       </p>
+                       <ul className="space-y-2">
+                           {p.advantages?.map((adv: string, i: number) => (
+                               <li key={i} className="flex items-start gap-2">
+                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{adv}</span>
+                               </li>
+                           ))}
+                       </ul>
+                   </div>
+
+                   {/* Cons */}
+                   <div className="space-y-3">
+                       <p className="text-[0.55rem] font-black uppercase text-rose-500 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
+                           <MinusCircle size={12} /> Kekurangan
+                       </p>
+                       <ul className="space-y-2">
+                           {p.disadvantages?.map((dis: string, i: number) => (
+                               <li key={i} className="flex items-start gap-2">
+                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{dis}</span>
+                               </li>
+                           ))}
+                       </ul>
+                   </div>
                </div>
 
                {isSelected && (

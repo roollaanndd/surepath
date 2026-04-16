@@ -8,7 +8,7 @@ import { INSURANCE_PROVIDERS } from './constants';
 // --- DB INTERFACES ---
 
 export interface User {
-  id?: number;
+  id?: any;
   email: string;
   name: string;
   phone: string;
@@ -24,8 +24,8 @@ export interface User {
 }
 
 export interface Policy {
-  id?: number;
-  userId: number;
+  id?: any;
+  userId: any;
   type: 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
   status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED';
   startDate: string;
@@ -38,9 +38,11 @@ export interface Policy {
 }
 
 export interface Claim {
-  id?: number;
-  policyId?: number;
-  userId: number;
+  id?: any;
+  policyId?: any;
+  policyNumber?: string;
+  contactInfo?: string;
+  userId: any;
   date: string;
   time: string;
   location: string;
@@ -55,8 +57,8 @@ export interface Claim {
 }
 
 export interface Transaction {
-  id?: number;
-  userId: number;
+  id?: any;
+  userId: any;
   type: 'PAYMENT' | 'COMMISSION' | 'WITHDRAWAL' | 'CLAIM_PAYOUT' | 'POINTS';
   amount: number;
   status: 'SUCCESS' | 'PENDING' | 'FAILED';
@@ -66,7 +68,7 @@ export interface Transaction {
 }
 
 export interface AuditLog {
-  id?: number;
+  id?: any;
   timestamp: string;
   actor: string;
   action: string;
@@ -80,11 +82,11 @@ export interface DBProvider extends Provider {
 }
 
 export class SurePathDB extends Dexie {
-  users!: Table<User, number>;
-  policies!: Table<Policy, number>;
-  claims!: Table<Claim, number>;
-  transactions!: Table<Transaction, number>;
-  auditLogs!: Table<AuditLog, number>;
+  users!: Table<User, any>;
+  policies!: Table<Policy, any>;
+  claims!: Table<Claim, any>;
+  transactions!: Table<Transaction, any>;
+  auditLogs!: Table<AuditLog, any>;
   providers!: Table<DBProvider, string>;
 
   constructor() {
@@ -104,6 +106,14 @@ export class SurePathDB extends Dexie {
 
 export const db = new SurePathDB();
 
+db.on('populate', () => {
+  console.log('Database populated');
+});
+
+db.open().catch(err => {
+  console.error('Failed to open database:', err.stack || err);
+});
+
 export const logAdminAction = async (actor: string, domain: any, action: string, payload: any) => {
     await db.auditLogs.add({
         timestamp: new Date().toISOString(),
@@ -114,60 +124,68 @@ export const logAdminAction = async (actor: string, domain: any, action: string,
     });
 };
 
+let isSeeding = false;
+
 export const seedDatabase = async () => {
-  const userCount = await db.users.count();
-  if (userCount === 0) {
-    const adminCreds = await hashPassword('admin');
-    const userCreds = await hashPassword('user');
+  if (isSeeding) return;
+  isSeeding = true;
+  try {
+    const userCount = await db.users.count();
+    if (userCount === 0) {
+      const adminCreds = await hashPassword('admin');
+      const userCreds = await hashPassword('user');
 
-    await db.users.bulkAdd([
-      {
-        name: 'Chief Neural Architect',
-        email: 'master@surepath.ai',
-        phone: '08110000000',
-        passwordHash: adminCreds.hash,
-        salt: adminCreds.salt,
-        role: UserRole.MASTER_ADMIN,
-        nodeId: 'SP-CORE-000',
-        trustScore: 100,
-        memberSince: '2023-01-01T00:00:00.000Z',
-        verified: true
-      },
-      {
-        name: 'Financial Controller',
-        email: 'finance@surepath.ai',
-        phone: '08110000002',
-        passwordHash: adminCreds.hash,
-        salt: adminCreds.salt,
-        role: UserRole.FINANCE,
-        nodeId: 'SP-FIN-001',
-        trustScore: 100,
-        memberSince: '2023-03-10T00:00:00.000Z',
-        verified: true
-      },
-      {
-        name: 'Ahmad Sholihin',
-        email: 'user@surepath.ai',
-        phone: '081122334455',
-        passwordHash: userCreds.hash,
-        salt: userCreds.salt,
-        role: UserRole.CUSTOMER,
-        nodeId: 'SP-NODE-101',
-        trustScore: 85,
-        memberSince: '2024-11-12T00:00:00.000Z',
-        verified: true,
-        ktp: '3275000000000001',
-        address: 'Jl. AI Tech Park, Jakarta Selatan'
-      }
-    ]);
-  }
+      await db.users.bulkAdd([
+        {
+          name: 'Chief Neural Architect',
+          email: 'master@surepath.ai',
+          phone: '08110000000',
+          passwordHash: adminCreds.hash,
+          salt: adminCreds.salt,
+          role: UserRole.MASTER_ADMIN,
+          nodeId: 'SP-CORE-000',
+          trustScore: 100,
+          memberSince: '2023-01-01T00:00:00.000Z',
+          verified: true
+        },
+        {
+          name: 'Financial Controller',
+          email: 'finance@surepath.ai',
+          phone: '08110000002',
+          passwordHash: adminCreds.hash,
+          salt: adminCreds.salt,
+          role: UserRole.FINANCE,
+          nodeId: 'SP-FIN-001',
+          trustScore: 100,
+          memberSince: '2023-03-10T00:00:00.000Z',
+          verified: true
+        },
+        {
+          name: 'Ahmad Sholihin',
+          email: 'user@surepath.ai',
+          phone: '081122334455',
+          passwordHash: userCreds.hash,
+          salt: userCreds.salt,
+          role: UserRole.CUSTOMER,
+          nodeId: 'SP-NODE-101',
+          trustScore: 85,
+          memberSince: '2024-11-12T00:00:00.000Z',
+          verified: true,
+          ktp: '3275000000000001',
+          address: 'Jl. AI Tech Park, Jakarta Selatan'
+        }
+      ]).catch(e => console.warn('Seeding users failed (likely already seeded):', e));
+    }
 
-  const providerCount = await db.providers.count();
-  if (providerCount === 0) {
-      const dbProviders: DBProvider[] = INSURANCE_PROVIDERS.map(p => ({
-          ...p,
-          isActive: true
-      }));
-      await db.providers.bulkAdd(dbProviders);
+    const providerCount = await db.providers.count();
+    if (providerCount === 0) {
+        const dbProviders: DBProvider[] = INSURANCE_PROVIDERS.map(p => ({
+            ...p,
+            isActive: true
+        }));
+        await db.providers.bulkAdd(dbProviders).catch(e => console.warn('Seeding providers failed:', e));
+    }
+  } finally {
+    isSeeding = false;
   }
 };

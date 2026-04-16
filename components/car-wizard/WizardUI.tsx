@@ -82,7 +82,7 @@ export const NeuralProcessingView = ({ label, sublabel }: { label: string, subla
           <h3 className="text-xl font-black uppercase tracking-[0.4em] text-slate-900 dark:text-white">{label}</h3>
        </div>
        <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-[0.3em] max-w-[280px] mx-auto leading-relaxed">
-          {sublabel || "Menghubungkan ke sistem asuransi pintar Anda."}
+          {sublabel || "Menghubungkan ke sistem asuransi Anda."}
        </p>
        
        <div className="w-64 h-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner mt-4">
@@ -133,7 +133,7 @@ export const ScannerOverlay = ({ label }: { label: string }) => (
                 <div className="w-1 h-1 bg-primary-500 rounded-full animate-bounce delay-100"></div>
                 <div className="w-1 h-1 bg-primary-500 rounded-full animate-bounce delay-200"></div>
              </div>
-             <p className="text-[0.6rem] font-bold text-gray-300 uppercase tracking-widest">Smart Sync</p>
+             <p className="text-[0.6rem] font-bold text-gray-300 uppercase tracking-widest">Syncing</p>
           </div>
       </div>
     </div>

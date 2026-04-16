@@ -5,7 +5,6 @@ import {
   Sparkles, BadgeCheck, KeyRound, 
   Zap, UserCircle, AlertCircle, Check,
   UserPlus,
-  // Added missing icon imports
   LayoutDashboard, Smartphone
 } from 'lucide-react';
 import { SurePathLogo } from './Navbar';
@@ -13,6 +12,7 @@ import { Language, UserRole } from '../types';
 import { db, User as DBUser } from '../db';
 import { hashPassword, verifyPassword, validatePasswordStrength, REGEX, createSessionToken } from '../services/authService';
 import { NeuralBot } from './car-wizard/WizardUI';
+import { auth, googleProvider, signInWithPopup } from '../firebase';
 
 interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
@@ -47,7 +47,6 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
     setStatusMsg(t('Synchronizing with Headquarters...', 'Menyinkronkan dengan Kantor Pusat...'));
     
     try {
-      // Cari akun demo sesuai peran
       const email = targetRole === UserRole.MASTER_ADMIN ? 'master@surepath.ai' : 'user@surepath.ai';
       const user = await db.users.where('email').equals(email).first();
       
@@ -61,6 +60,42 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
       }
     } catch (err) {
       setError(t("Protocol Error.", "Kesalahan Protokol."));
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    setStatusMsg(t('Authenticating with Google...', 'Mengautentikasi dengan Google...'));
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if user exists in local DB
+      let dbUser = await db.users.where('email').equals(user.email!).first();
+      
+      if (!dbUser) {
+        // Register new user from Google
+        const newUser: DBUser = {
+          name: user.displayName || 'Google User',
+          email: user.email!,
+          phone: user.phoneNumber || '',
+          role: UserRole.CUSTOMER,
+          nodeId: `SP-NODE-${Math.floor(Math.random() * 9999)}`,
+          verified: true,
+          trustScore: 85,
+          memberSince: new Date().toISOString()
+        };
+        const id = await db.users.add(newUser);
+        dbUser = { ...newUser, id };
+      }
+      
+      const token = createSessionToken(dbUser);
+      onAuthSuccess({ ...dbUser, token });
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Google Login Failed.");
       setLoading(false);
     }
   };
@@ -109,7 +144,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
         phone: formData.phone,
         passwordHash: hash,
         salt: salt,
-        role: regRole, // Mendukung pendaftaran admin untuk demo
+        role: regRole,
         nodeId: `SP-NODE-${Math.floor(Math.random() * 9999)}`,
         verified: true,
         trustScore: regRole === UserRole.CUSTOMER ? 85 : 100,
@@ -171,7 +206,6 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
                       <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                       <input required placeholder={t("Full Name", "Nama Lengkap")} className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}/>
                     </div>
-                    {/* Role Selection for Demo/Admin purposes */}
                     <div className="grid grid-cols-2 gap-2">
                        <button type="button" onClick={() => setRegRole(UserRole.CUSTOMER)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.CUSTOMER ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-slate-100 text-slate-400'}`}>Customer</button>
                        <button type="button" onClick={() => setRegRole(UserRole.MASTER_ADMIN)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.MASTER_ADMIN ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-slate-100 text-slate-400'}`}>Admin HQ</button>
@@ -198,6 +232,28 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
                   {loading ? <RefreshCw size={18} className="animate-spin text-emerald-500"/> : (mode === 'LOGIN' ? t('AUTHORIZE', 'MASUK') : t('CREATE NODE', 'DAFTAR'))}
                 </button>
               </form>
+
+              <div className="pt-4 space-y-4">
+                <div className="relative flex items-center py-2">
+                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
+                  <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">OR</span>
+                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
+                </div>
+                
+                <button 
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  className="w-full py-4 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm active:scale-95"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.09-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  {t('Continue with Google', 'Lanjutkan dengan Google')}
+                </button>
+              </div>
 
               {mode === 'LOGIN' && (
                 <div className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">

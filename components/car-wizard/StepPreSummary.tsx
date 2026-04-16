@@ -51,107 +51,179 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
-      const date = new Date().toLocaleDateString('id-ID');
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
       const quoteNo = `QT-${Date.now().toString().slice(-6)}`;
 
-      // Header
+      // --- Watermark ---
+      doc.setTextColor(240, 240, 240);
+      doc.setFontSize(80);
+      doc.setFont('helvetica', 'bold');
+      // Rotate text for watermark
+      doc.text("SUREPATH", pageWidth / 2, pageHeight / 2 + 20, { align: 'center', angle: 45 });
+
+      // --- Header ---
       doc.setFillColor(15, 23, 42); // slate-900
-      doc.rect(0, 0, pageWidth, 40, 'F');
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Accent line
+      doc.setFillColor(249, 115, 22); // orange-500
+      doc.rect(0, 45, pageWidth, 2, 'F');
       
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
-      doc.text("SUREPATH", 20, 20);
+      doc.text("SUREPATH", 20, 22);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text("ASURANSI PINTAR & CEPAT", 20, 28);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text("SMART & FAST INSURANCE", 20, 32);
       
-      doc.text(`Tanggal: ${date}`, pageWidth - 20, 20, { align: 'right' });
-      doc.text(`No. Penawaran: ${quoteNo}`, pageWidth - 20, 28, { align: 'right' });
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.text("PENAWARAN ASURANSI", pageWidth - 20, 22, { align: 'right' });
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`No: ${quoteNo}`, pageWidth - 20, 32, { align: 'right' });
+      doc.text(`Tanggal: ${date}`, pageWidth - 20, 38, { align: 'right' });
 
-      // Title
+      let currentY = 60;
+
+      // --- Helper for Section Titles ---
+      const addSectionTitle = (title: string, y: number) => {
+        doc.setFillColor(249, 115, 22); // orange-500
+        doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, 28, y + 6);
+        return y + 20;
+      };
+
+      // --- Section: Data Nasabah & Kendaraan (Two Columns) ---
+      currentY = addSectionTitle("INFORMASI PERTANGGUNGAN", currentY);
+      
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.roundedRect(20, currentY, pageWidth - 40, 45, 3, 3, 'FD');
+
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setFont('helvetica', 'normal');
+      
+      // Col 1: Nasabah
+      doc.text("Nama Tertanggung", 25, currentY + 10);
+      doc.text("NIK", 25, currentY + 20);
+      doc.text("Email", 25, currentY + 30);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('helvetica', 'bold');
+      doc.text(kycData?.name || '-', 65, currentY + 10);
+      doc.text(kycData?.ktp || '-', 65, currentY + 20);
+      doc.text(kycData?.email || '-', 65, currentY + 30);
+
+      // Col 2: Kendaraan
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Kendaraan", pageWidth / 2 + 5, currentY + 10);
+      doc.text("Tahun / Warna", pageWidth / 2 + 5, currentY + 20);
+      doc.text("Plat Nomor", pageWidth / 2 + 5, currentY + 30);
+
       doc.setTextColor(15, 23, 42);
-      doc.setFontSize(16);
-      doc.text("PENAWARAN ASURANSI KENDARAAN", 20, 55);
-      doc.setDrawColor(249, 115, 22); // primary-500
-      doc.setLineWidth(1);
-      doc.line(20, 58, 60, 58);
-
-      // Section: Data Nasabah
-      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text("DATA NASABAH", 20, 75);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Nama Tertanggung: ${kycData?.name || '-'}`, 25, 85);
-      doc.text(`NIK: ${kycData?.ktp || '-'}`, 25, 92);
-      doc.text(`Email: ${kycData?.email || '-'}`, 25, 99);
+      doc.text(`${vehicle.brand} ${vehicle.model}`, pageWidth / 2 + 40, currentY + 10);
+      doc.text(`${vehicle.year} / ${stnkResult?.color || '-'}`, pageWidth / 2 + 40, currentY + 20);
+      doc.text(vehicle.plate, pageWidth / 2 + 40, currentY + 30);
 
-      // Section: Data Kendaraan
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text("DATA KENDARAAN", 20, 115);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Merk & Model: ${vehicle.brand} ${vehicle.model}`, 25, 125);
-      doc.text(`Tahun: ${vehicle.year}`, 25, 132);
-      doc.text(`Nomor Polisi: ${vehicle.plate}`, 25, 139);
-      doc.text(`Warna: ${stnkResult?.color || '-'}`, 25, 146);
+      currentY += 60;
 
-      // Section: Rincian Pertanggungan
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text("RINCIAN PERTANGGUNGAN", 20, 162);
+      // --- Section: Rincian Pertanggungan ---
+      currentY = addSectionTitle("PAKET & MANFAAT", currentY);
+
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(20, currentY, pageWidth - 40, 35, 3, 3, 'FD');
+
+      doc.setTextColor(100, 116, 139);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Tipe Paket: ${coverage.type === 'COMPREHENSIVE' ? 'All Risk (Lengkap)' : 'TLO (Kehilangan)'}`, 25, 172);
+      doc.text("Tipe Asuransi", 25, currentY + 10);
+      doc.text("Perluasan", 25, currentY + 20);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('helvetica', 'bold');
+      doc.text(coverage.type === 'COMPREHENSIVE' ? 'All Risk (Komprehensif)' : 'TLO (Total Loss Only)', 65, currentY + 10);
       
       let expansionText = activeExpansions.map(e => e.label).join(", ");
-      if (coverage.tpl > 0) expansionText += `, TPL ${formatIDR(coverage.tpl)}`;
-      doc.text("Manfaat Tambahan:", 25, 179);
-      doc.setFontSize(9);
-      doc.text(expansionText || "Tidak ada tambahan", 30, 186, { maxWidth: 160 });
-
-      // Section: Biaya
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text("IKHTISAR BIAYA", 20, 205);
+      if (coverage.tpl > 0) expansionText += expansionText ? `, TPL ${formatIDR(coverage.tpl)}` : `TPL ${formatIDR(coverage.tpl)}`;
       
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text("Premi Dasar", 25, 215);
-      doc.text(formatIDR(premiumBreakdown?.basicPremium || 0), pageWidth - 20, 215, { align: 'right' });
+      doc.text(expansionText || "Tidak ada perluasan tambahan", 65, currentY + 20, { maxWidth: pageWidth - 90 });
+
+      currentY += 50;
+
+      // --- Section: Ikhtisar Biaya ---
+      currentY = addSectionTitle("IKHTISAR BIAYA", currentY);
+
+      // Table Header
+      doc.setFillColor(241, 245, 249); // slate-100
+      doc.rect(20, currentY, pageWidth - 40, 10, 'F');
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text("DESKRIPSI", 25, currentY + 7);
+      doc.text("JUMLAH", pageWidth - 25, currentY + 7, { align: 'right' });
       
-      doc.text("Proteksi Tambahan", 25, 222);
+      currentY += 15;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(15, 23, 42);
+
+      const addCostRow = (desc: string, amount: number, isDiscount = false) => {
+        doc.text(desc, 25, currentY);
+        if (isDiscount) {
+          doc.setTextColor(16, 185, 129); // emerald-500
+          doc.text(`-${formatIDR(amount)}`, pageWidth - 25, currentY, { align: 'right' });
+          doc.setTextColor(15, 23, 42);
+        } else {
+          doc.text(formatIDR(amount), pageWidth - 25, currentY, { align: 'right' });
+        }
+        currentY += 8;
+      };
+
+      addCostRow("Premi Dasar", premiumBreakdown?.basicPremium || 0);
+      
       const addOnVal = (premiumBreakdown?.totalPayable || 0) - (premiumBreakdown?.basicPremium || 0) + (premiumBreakdown?.discountAmount || 0) - (premiumBreakdown?.adminFee || 0) - (premiumBreakdown?.stampDuty || 0);
-      doc.text(formatIDR(addOnVal), pageWidth - 20, 222, { align: 'right' });
-
-      doc.text("Biaya Admin & Materai", 25, 229);
-      doc.text(formatIDR((premiumBreakdown?.adminFee || 0) + (premiumBreakdown?.stampDuty || 0)), pageWidth - 20, 229, { align: 'right' });
-
-      if (premiumBreakdown?.discountAmount > 0) {
-        doc.setTextColor(16, 185, 129); // emerald-500
-        doc.text(`Potongan Komisi (${premiumBreakdown.discountPercent}%)`, 25, 236);
-        doc.text(`-${formatIDR(premiumBreakdown.discountAmount)}`, pageWidth - 20, 236, { align: 'right' });
+      if (addOnVal > 0) {
+        addCostRow("Premi Perluasan (Add-ons)", addOnVal);
       }
 
-      // Total
-      doc.setDrawColor(200, 200, 200);
-      doc.line(20, 242, pageWidth - 20, 242);
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("TOTAL PREMI BERSIH", 20, 252);
-      doc.setTextColor(249, 115, 22);
-      doc.text(formatIDR(premiumBreakdown?.totalPayable || 0), pageWidth - 20, 252, { align: 'right' });
+      addCostRow("Biaya Administrasi & Polis", premiumBreakdown?.adminFee || 0);
+      addCostRow("Biaya Materai", premiumBreakdown?.stampDuty || 0);
 
-      // Footer
-      doc.setTextColor(150, 150, 150);
+      if (premiumBreakdown?.discountAmount > 0) {
+        addCostRow(`Diskon Spesial (${premiumBreakdown.discountPercent}%)`, premiumBreakdown.discountAmount, true);
+      }
+
+      currentY += 5;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, currentY, pageWidth - 20, currentY);
+      currentY += 10;
+
+      // Total
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text("TOTAL PREMI", 25, currentY);
+      doc.setTextColor(249, 115, 22); // orange-500
+      doc.setFontSize(14);
+      doc.text(formatIDR(premiumBreakdown?.totalPayable || 0), pageWidth - 25, currentY, { align: 'right' });
+
+      // --- Footer ---
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, pageHeight - 30, pageWidth, 30, 'F');
+      doc.setTextColor(148, 163, 184);
       doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.text("Diterbitkan secara digital oleh SurePath Engine.", pageWidth / 2, 275, { align: 'center' });
-      doc.text("Terdaftar dan diawasi oleh OJK.", pageWidth / 2, 280, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text("Dokumen ini diterbitkan secara otomatis oleh sistem SurePath dan sah tanpa tanda tangan basah.", pageWidth / 2, pageHeight - 18, { align: 'center' });
+      doc.text("PT SurePath Asuransi Digital terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).", pageWidth / 2, pageHeight - 12, { align: 'center' });
 
       doc.save(`SurePath_Penawaran_${vehicle.plate.replace(' ', '_')}.pdf`);
     } catch (error) {

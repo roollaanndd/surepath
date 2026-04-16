@@ -284,7 +284,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
 
   useEffect(() => {
     if (currentUser?.id) {
-      db.policies.where('userId').equals(currentUser.id).toArray().then(res => setPolicies(res.sort((a,b) => b.id! - a.id!)));
+      db.policies.where('userId').equals(currentUser.id).toArray().then(res => setPolicies(res.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())));
       db.claims.where('userId').equals(currentUser.id).toArray().then(setClaims);
       db.transactions.where('userId').equals(currentUser.id).toArray().then(setTransactions);
     }
@@ -425,6 +425,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
                   <span className={`px-4 py-1 rounded-full text-[0.5rem] font-black uppercase tracking-[0.2em] ${c.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>{c.status}</span>
                </div>
                <div className="p-4 bg-gray-50 dark:bg-black/20 rounded-2xl border border-black/5">
+                  <div className="flex justify-between mb-2 pb-2 border-b border-black/5">
+                     <div>
+                        <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{t('Policy Number', 'Nomor Polis')}</p>
+                        <p className="text-[0.55rem] font-black uppercase">{c.policyNumber || '-'}</p>
+                     </div>
+                     <div className="text-right">
+                        <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{t('Contact', 'Kontak')}</p>
+                        <p className="text-[0.55rem] font-black uppercase">{c.contactInfo || '-'}</p>
+                     </div>
+                  </div>
                   <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('Event Chronology', 'Kronologi Kejadian')}</p>
                   <p className="text-[0.65rem] font-medium line-clamp-2 italic">"{c.chronology}"</p>
                </div>

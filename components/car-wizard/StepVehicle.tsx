@@ -38,57 +38,107 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       
-      // Header
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, 0, pageWidth, 40, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
+      // --- Watermark ---
+      doc.setTextColor(240, 240, 240);
+      doc.setFontSize(80);
       doc.setFont('helvetica', 'bold');
-      doc.text("SUREPATH NEURAL SCAN", 20, 25);
+      doc.text("SUREPATH", pageWidth / 2, pageHeight / 2 + 20, { align: 'center', angle: 45 });
+
+      // --- Header ---
+      doc.setFillColor(15, 23, 42); // slate-900
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Accent line
+      doc.setFillColor(249, 115, 22); // orange-500
+      doc.rect(0, 45, pageWidth, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.text("SUREPATH", 20, 22);
+      
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text("ARSIP DIGITAL STNK VERIFIKASI AI", 20, 32);
-
-      // Label
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(14);
-      doc.text("DATA KENDARAAN TERDETEKSI", 20, 55);
-      doc.setDrawColor(16, 185, 129);
-      doc.setLineWidth(1);
-      doc.line(20, 58, 60, 58);
-
-      // Info Grid
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text("VEHICLE VERIFICATION", 20, 32);
+      
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      let y = 70;
-      const addRow = (label: string, val: string) => {
+      doc.text("HASIL VERIFIKASI STNK", pageWidth - 20, 22, { align: 'right' });
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Waktu: ${date}`, pageWidth - 20, 32, { align: 'right' });
+
+      let currentY = 60;
+
+      // --- Helper for Section Titles ---
+      const addSectionTitle = (title: string, y: number) => {
+        doc.setFillColor(249, 115, 22); // orange-500
+        doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text(label, 20, y);
-        doc.setFont('helvetica', 'normal');
-        doc.text(val || '-', 70, y);
-        y += 8;
+        doc.text(title, 28, y + 6);
+        return y + 20;
       };
 
-      addRow("Nama Pemilik:", extractedStnk.ownerName);
-      addRow("Nomor Polisi:", extractedStnk.plate);
-      addRow("Merk / Tipe:", `${extractedStnk.brand} ${extractedStnk.model}`);
-      addRow("Tahun:", extractedStnk.year);
-      addRow("No. Rangka:", extractedStnk.vin);
-      addRow("No. Mesin:", extractedStnk.engine);
-      addRow("Warna:", extractedStnk.color);
+      // --- Section: Data Kendaraan ---
+      currentY = addSectionTitle("DATA KENDARAAN TERDETEKSI", currentY);
+      
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.roundedRect(20, currentY, pageWidth - 40, 80, 3, 3, 'FD');
 
-      // Image
-      doc.text("FOTO DOKUMEN ASLI:", 20, y + 10);
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setFont('helvetica', 'normal');
+      
+      doc.text("Nama Pemilik", 25, currentY + 10);
+      doc.text("Nomor Polisi", 25, currentY + 20);
+      doc.text("Merk / Tipe", 25, currentY + 30);
+      doc.text("Tahun", 25, currentY + 40);
+      doc.text("No. Rangka (VIN)", 25, currentY + 50);
+      doc.text("No. Mesin", 25, currentY + 60);
+      doc.text("Warna", 25, currentY + 70);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('helvetica', 'bold');
+      doc.text(extractedStnk.ownerName || '-', 80, currentY + 10);
+      doc.text(extractedStnk.plate || '-', 80, currentY + 20);
+      doc.text(`${extractedStnk.brand} ${extractedStnk.model}` || '-', 80, currentY + 30);
+      doc.text(extractedStnk.year?.toString() || '-', 80, currentY + 40);
+      doc.text(extractedStnk.vin || '-', 80, currentY + 50);
+      doc.text(extractedStnk.engine || '-', 80, currentY + 60);
+      doc.text(extractedStnk.color || '-', 80, currentY + 70);
+
+      currentY += 95;
+
+      // --- Section: Lampiran Dokumen ---
+      currentY = addSectionTitle("LAMPIRAN DOKUMEN ASLI", currentY);
+
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(20, currentY, pageWidth - 40, 95, 3, 3, 'FD');
+
       try {
-        doc.addImage(stnkBase64, 'JPEG', 20, y + 15, 170, 90);
+        doc.addImage(stnkBase64, 'JPEG', 25, currentY + 5, pageWidth - 50, 85);
       } catch (e) {
-        doc.text("[Gambar tidak dapat dimuat dalam PDF]", 20, y + 20);
+        doc.setTextColor(100, 116, 139);
+        doc.setFont('helvetica', 'italic');
+        doc.text("[Gambar STNK tidak dapat dimuat]", pageWidth / 2, currentY + 45, { align: 'center' });
       }
 
-      // Footer
+      // --- Footer ---
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, pageHeight - 30, pageWidth, 30, 'F');
+      doc.setTextColor(148, 163, 184);
       doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(`Dokumen ini diterbitkan secara otomatis oleh SurePath Engine pada ${new Date().toLocaleString('id-ID')}`, pageWidth / 2, 285, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text("Dokumen ini diterbitkan secara otomatis oleh sistem SurePath dan sah tanpa tanda tangan basah.", pageWidth / 2, pageHeight - 18, { align: 'center' });
+      doc.text(`Timestamp: ${new Date().toISOString()}`, pageWidth / 2, pageHeight - 12, { align: 'center' });
 
       doc.save(`STNK_SurePath_${extractedStnk.plate.replace(' ', '_')}.pdf`);
     } catch (err) {

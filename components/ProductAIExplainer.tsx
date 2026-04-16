@@ -49,9 +49,9 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
                <Cpu size={32} className="text-primary-500 animate-pulse"/>
             </div>
             <div>
-              <p className="text-[0.6rem] font-black uppercase text-gray-500 tracking-[0.4em] mb-1">Neural Analysis Module</p>
+              <p className="text-[0.6rem] font-black uppercase text-gray-500 tracking-[0.4em] mb-1">Product Analysis</p>
               <h3 className="text-2xl font-black uppercase tracking-tighter text-white">
-                Deep-Dive: <span className="text-primary-500">{productName}</span>
+                Details: <span className="text-primary-500">{productName}</span>
               </h3>
             </div>
           </div>
@@ -69,11 +69,11 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
                   <BrainCircuit size={64} className="text-primary-500 relative z-10" />
                </div>
                <div className="text-center space-y-3">
-                  <p className="text-[0.8rem] font-black text-white uppercase tracking-[0.6em]">Querying Neural Cluster</p>
+                  <p className="text-[0.8rem] font-black text-white uppercase tracking-[0.6em]">Analyzing Product</p>
                   <div className="w-64 h-1 bg-white/5 rounded-full overflow-hidden">
                      <div className="h-full bg-primary-500 shadow-[0_0_20px_#10b981]" style={{ width: `${progress}%` }}></div>
                   </div>
-                  <p className="text-[0.55rem] font-mono text-gray-500 uppercase tracking-widest">Protocol: 0xSP-DEEP-SCAN</p>
+                  <p className="text-[0.55rem] font-mono text-gray-500 uppercase tracking-widest">Loading Details...</p>
                </div>
             </div>
           ) : data ? (
@@ -82,7 +82,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
               <div className="space-y-6 animate-fade-in">
                  <div className="flex items-center gap-4 text-primary-500">
                     <Terminal size={18}/>
-                    <p className="text-[0.7rem] font-black uppercase tracking-[0.3em]">Architect's Brief</p>
+                    <p className="text-[0.7rem] font-black uppercase tracking-[0.3em]">Summary</p>
                  </div>
                  <p className="text-xl md:text-2xl font-medium leading-relaxed text-gray-200 border-l-4 border-primary-500 pl-8">
                     {data.technicalSummary}
@@ -117,7 +117,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
                  </div>
                  
                  <div className="p-8 bg-primary-500/10 border border-primary-500/20 rounded-3xl flex flex-col justify-center items-center text-center gap-4">
-                    <p className="text-[0.6rem] font-black text-primary-500 uppercase tracking-widest">Neural Impact Score</p>
+                    <p className="text-[0.6rem] font-black text-primary-500 uppercase tracking-widest">Impact Score</p>
                     <div className="relative w-24 h-24 flex items-center justify-center">
                        <svg className="w-full h-full transform -rotate-90">
                           <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5"/>
@@ -147,10 +147,10 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
         <div className="p-8 bg-black/40 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
            <div className="flex items-center gap-4 opacity-40">
               <Binary size={16}/>
-              <span className="text-[0.55rem] font-mono uppercase tracking-[0.4em]">JKT-CORE // SECURE_SESSION_ACTIVE</span>
+              <span className="text-[0.55rem] font-mono uppercase tracking-[0.4em]">SECURE_SESSION_ACTIVE</span>
            </div>
            <button onClick={onClose} className="px-12 py-5 bg-primary-500 text-white rounded-full font-black uppercase text-[0.7rem] tracking-[0.3em] hover:bg-primary-600 transition-all shadow-xl active:scale-95 flex items-center gap-4 group">
-              Initialize Enrollment <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform"/>
+              Get Started <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform"/>
            </button>
         </div>
       </div>

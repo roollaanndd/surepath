@@ -15,6 +15,8 @@ const formatIDR = (num: number) => {
 const DRAFT_KEY = 'SUREPATH_CLAIM_DRAFT_V1';
 
 interface ReportForm {
+  policyNumber: string;
+  contactInfo: string;
   chronology: string;
   location: string;
   date: string;
@@ -31,6 +33,8 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [photoBase64, setPhotoBase64] = useState<string>('');
   const [reportForm, setReportForm] = useState<ReportForm>({
+    policyNumber: '',
+    contactInfo: '',
     chronology: '',
     location: '',
     date: new Date().toISOString().split('T')[0],
@@ -141,6 +145,8 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
         
         const newClaim: Claim = {
             userId: currentUser.id,
+            policyNumber: reportForm.policyNumber,
+            contactInfo: reportForm.contactInfo,
             date: reportForm.date,
             time: reportForm.time,
             location: reportForm.location,
@@ -400,6 +406,32 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
       <div className="animate-fade-in flex flex-col h-full">
         <Header title={t("Incident Registry", "Registrasi Kejadian")} showBack onBack={() => setStep('result')} />
         <form onSubmit={handleFinalReport} className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-6 pt-2">
+          <div className="space-y-1.5">
+            <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Policy Number', 'Nomor Polis')}</label>
+            <div className="relative">
+              <FileText size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
+              <input 
+                type="text" required placeholder={t("e.g. POL-12345", "Contoh: POL-12345")}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
+                value={reportForm.policyNumber}
+                onChange={(e) => setReportForm({...reportForm, policyNumber: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Contact Info', 'Info Kontak')}</label>
+            <div className="relative">
+              <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
+              <input 
+                type="text" required placeholder={t("Phone / Email", "No. HP / Email")}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
+                value={reportForm.contactInfo}
+                onChange={(e) => setReportForm({...reportForm, contactInfo: e.target.value})}
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Where it happened?', 'Lokasi Kejadian')}</label>
             <div className="relative">

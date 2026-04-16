@@ -99,7 +99,7 @@ export const analyzeHealthReceipt = async (base64Image: string): Promise<{ succe
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
+      contents: { parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
       config: { responseMimeType: "application/json", temperature: 0.1 }
     });
     const text = response.text;
@@ -187,7 +187,7 @@ export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success:
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
+      contents: { parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
       config: { responseMimeType: "application/json", temperature: 0.1 }
     });
     const text = response.text;
@@ -205,7 +205,7 @@ export const summarizeClaimDocument = async (base64Doc: string): Promise<{ succe
     const cleanBase64 = base64Doc.includes(',') ? base64Doc.split(',')[1] : base64Doc;
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
-      contents: [{ text: "Ringkas dokumen klaim ini. JSON: { policyNumber: string, incidentDate: string, keyPoints: string[], riskAssessment: string }" }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }],
+      contents: { parts: [{ text: "Ringkas dokumen klaim ini. JSON: { policyNumber: string, incidentDate: string, keyPoints: string[], riskAssessment: string }" }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
       config: { responseMimeType: 'application/json' }
     });
     const text = response.text;
@@ -220,26 +220,28 @@ export const extractStnkData = async (base64: string, mimeType: string = 'image/
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
-      contents: [
-        { text: `Lakukan audit OCR presisi tinggi pada dokumen STNK (Surat Tanda Nomor Kendaraan) Indonesia ini.
-        
-        Ekstrak data berikut seakurat mungkin (100% precision):
-        1. owner: Nama Pemilik.
-        2. plate: Nomor Polisi / Registrasi (Format: B 1234 XYZ).
-        3. brand: Merk (Contoh: TOYOTA, HONDA).
-        4. model: Tipe / Model (Contoh: AVANZA 1.3 G).
-        5. color: Warna Kendaraan.
-        6. year: Tahun Pembuatan / Perakitan.
-        7. vin: Nomor Rangka (NIK/VIN) - SANGAT PENTING.
-        8. engine: Nomor Mesin - SANGAT PENTING.
-        
-        Validasi Keamanan:
-        - status: 'OK' hanya jika dokumen terlihat asli.
-        - Jika blur/terpotong: 'UNCLEAR'.
-        
-        Output JSON: { owner, plate, brand, model, color, year, vin, engine, status }.` }, 
-        { inlineData: { mimeType: mimeType, data: cleanBase64 } }
-      ],
+      contents: { 
+        parts: [
+          { text: `Lakukan audit OCR presisi tinggi pada dokumen STNK (Surat Tanda Nomor Kendaraan) Indonesia ini.
+          
+          Ekstrak data berikut seakurat mungkin (100% precision):
+          1. owner: Nama Pemilik.
+          2. plate: Nomor Polisi / Registrasi (Format: B 1234 XYZ).
+          3. brand: Merk (Contoh: TOYOTA, HONDA).
+          4. model: Tipe / Model (Contoh: AVANZA 1.3 G).
+          5. color: Warna Kendaraan.
+          6. year: Tahun Pembuatan / Perakitan.
+          7. vin: Nomor Rangka (NIK/VIN) - SANGAT PENTING.
+          8. engine: Nomor Mesin - SANGAT PENTING.
+          
+          Validasi Keamanan:
+          - status: 'OK' hanya jika dokumen terlihat asli.
+          - Jika blur/terpotong: 'UNCLEAR'.
+          
+          Output JSON: { owner, plate, brand, model, color, year, vin, engine, status }.` }, 
+          { inlineData: { mimeType: mimeType, data: cleanBase64 } }
+        ] 
+      },
       config: { responseMimeType: 'application/json', temperature: 0.0 }
     });
     const text = response.text;
@@ -275,10 +277,12 @@ export const validateVehiclePhoto = async (base64: string, slotLabel: string): P
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
-      contents: [
-        { text: prompt }, 
-        { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-      ],
+      contents: { 
+        parts: [
+          { text: prompt }, 
+          { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+        ] 
+      },
       config: { responseMimeType: 'application/json', temperature: 0.1 }
     });
     const text = response.text;
@@ -346,7 +350,7 @@ export const analyzeVehicleSurvey = async (images: {id: string, data: string}[],
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
-      contents: [{ text: prompt }, ...imageParts.map(p => p)],
+      contents: { parts: [{ text: prompt }, ...imageParts.map(p => p)] },
       config: { responseMimeType: 'application/json', temperature: 0.1 }
     });
 
@@ -372,10 +376,12 @@ export const extractKtpData = async (base64: string): Promise<{ success: boolean
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
-      contents: [
-        { text: "Analyze this Indonesian KTP. Extract: Full Name (Nama), NIK (exactly 16 digits), and Full Address (Alamat). Return a JSON object with keys 'name', 'nik', and 'address'. Ensure NIK is cleaned of any non-numeric characters. Use uppercase for name and address. If a field is missing, use null." }, 
-        { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-      ],
+      contents: { 
+        parts: [
+          { text: "Analyze this Indonesian KTP. Extract: Full Name (Nama), NIK (exactly 16 digits), and Full Address (Alamat). Return a JSON object with keys 'name', 'nik', and 'address'. Ensure NIK is cleaned of any non-numeric characters. Use uppercase for name and address. If a field is missing, use null." }, 
+          { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+        ] 
+      },
       config: { 
         responseMimeType: 'application/json',
         temperature: 0.1

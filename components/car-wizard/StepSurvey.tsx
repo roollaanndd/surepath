@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
-  FileText, FileSearch, Trash2, User, Camera, Loader2, AlertTriangle, Check, 
-  Microscope, BrainCircuit, RefreshCw, Info, Cpu, ShieldCheck, Activity, ShieldX,
+  FileText, FileSearch, Trash2, Camera, Loader2, AlertTriangle, Check, 
+  RefreshCw, Cpu, ShieldCheck, Activity, ShieldX,
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
-import { ScannerOverlay, NeuralProcessingView } from './WizardUI';
+import { ScannerOverlay, SmartProcessingView } from './WizardUI';
 import { validateVehiclePhoto, analyzeVehicleSurvey, extractStnkData } from '../../services/geminiService';
 
 interface StepSurveyProps {
@@ -269,7 +269,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
          <div className="space-y-6 pt-4">
             {loading && loadingType === 'SURVEY' ? (
               <div className="glass-card rounded-[3rem] shadow-2xl relative overflow-hidden bg-white dark:bg-black/20">
-                 <NeuralProcessingView 
+                 <SmartProcessingView 
                   label="Analisa AI" 
                   sublabel="AI SurePath sedang mengecek kecocokan data dan kondisi mobil kamu secara otomatis."
                  />

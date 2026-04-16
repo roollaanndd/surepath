@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Zap, ShieldCheck, Activity, Radio, Globe, Terminal } from 'lucide-react';
+import { Cpu, Zap } from 'lucide-react';
 
 export const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="animate-pop-in w-full h-full">
@@ -7,7 +7,7 @@ export const PageTransition: React.FC<{ children: React.ReactNode }> = ({ childr
   </div>
 );
 
-export const NeuralBot = ({ className = "w-24 h-24", mood = "scanning" }: { className?: string, mood?: 'happy' | 'thinking' | 'scanning' }) => (
+export const SmartBot = ({ className = "w-24 h-24", mood = "scanning" }: { className?: string, mood?: 'happy' | 'thinking' | 'scanning' }) => (
   <svg viewBox="0 0 200 200" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="botGradientSmall" x1="0" y1="0" x2="200" y2="200">
@@ -60,7 +60,7 @@ export const NeuralBot = ({ className = "w-24 h-24", mood = "scanning" }: { clas
   </svg>
 );
 
-export const NeuralProcessingView = ({ label, sublabel }: { label: string, sublabel?: string }) => (
+export const SmartProcessingView = ({ label, sublabel }: { label: string, sublabel?: string }) => (
   <div className="flex flex-col items-center justify-center p-12 text-center animate-fade-in relative min-h-[400px]">
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 dark:opacity-40">
        <div className="w-[300px] h-[300px] border border-primary-500 rounded-full animate-spin-slow"></div>
@@ -70,7 +70,7 @@ export const NeuralProcessingView = ({ label, sublabel }: { label: string, subla
 
     <div className="relative mb-10 group">
        <div className="absolute inset-0 bg-primary-500/20 blur-3xl rounded-full group-hover:bg-brand-500/30 transition-colors duration-1000"></div>
-       <NeuralBot className="w-40 h-40 relative z-10" mood="thinking" />
+       <SmartBot className="w-40 h-40 relative z-10" mood="thinking" />
        
        <div className="absolute top-0 right-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float"><Cpu size={16} className="text-primary-500"/></div>
        <div className="absolute bottom-4 left-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float animation-delay-2000"><Zap size={16} className="text-brand-500"/></div>
@@ -115,7 +115,7 @@ export const ScannerOverlay = ({ label }: { label: string }) => (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <div className="relative mb-8">
          <div className="absolute inset-0 bg-primary-500/20 blur-3xl rounded-full"></div>
-         <NeuralBot className="w-32 h-32 relative z-10" mood="scanning" />
+         <SmartBot className="w-32 h-32 relative z-10" mood="scanning" />
          
          <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-48 h-64 bg-gradient-to-b from-blue-400/30 to-transparent clip-path-beam animate-scan-beam z-0 pointer-events-none"></div>
       </div>

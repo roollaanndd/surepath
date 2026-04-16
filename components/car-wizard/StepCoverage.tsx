@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, Building, CloudRain, Zap, AlertCircle, Percent, Wallet, ArrowDown } from 'lucide-react';
+import { Info, Building, CloudRain, Zap, AlertCircle, Percent, ArrowDown } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 import { InsuranceType } from '../../types';
 

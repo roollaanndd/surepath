@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  X, ChevronRight, ChevronLeft, ShieldCheck, Zap, 
-  Cpu, Globe, Radio, Activity, Fingerprint, 
-  ArrowRight, Sparkles, BrainCircuit, Scan 
+  X, ChevronLeft, Zap, 
+  Radio, 
+  ArrowRight, BrainCircuit, Scan 
 } from 'lucide-react';
 
-function SurePathLogoIcon({ size, className }: any) {
+function SurePathLogoIcon({ className }: any) {
   return (
     <img 
       src="/logo.png" 

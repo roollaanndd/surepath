@@ -2,7 +2,7 @@
 import React from 'react';
 // Added comment above fix
 // Fix: Removed unused 'Card' from imports as it is not exported from './shared/UI'.
-import { Section, Button, Badge, GlassCard } from './shared/UI';
+import { Section, Button, Badge } from './shared/UI';
 import { SurePathLogo } from './Navbar';
 import ProductModules from './landing/ProductModules';
 // Added comment above fix
@@ -10,9 +10,8 @@ import ProductModules from './landing/ProductModules';
 import { Language } from '../types';
 import { 
   ArrowRight, ShieldCheck, Zap, Smartphone, 
-  Play, Users, Building2, Globe, HeartPulse, 
-  Car, Cpu, Database, Activity, Network, Shield
-} from 'lucide-react';
+  Play, Users, Building2, 
+  Car } from 'lucide-react';
 
 const DistributionDiagram = () => (
   <div className="relative w-full h-[500px] flex items-center justify-center animate-fade-in">

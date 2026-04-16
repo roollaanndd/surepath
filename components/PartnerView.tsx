@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Target, CheckCircle2, Star, Rocket, LineChart, User, Briefcase } from 'lucide-react';
+import { Target, CheckCircle2, Star, Rocket, LineChart, User } from 'lucide-react';
 
 const PartnerView = () => {
   return (
     <div className="space-y-12 animate-fade-in">
       <div className="mb-10">
         <h2 className="text-4xl font-black uppercase tracking-tighter dark:text-white leading-tight">Partner <span className="text-primary-500">Console</span></h2>
-        <p className="text-gray-500 dark:text-gray-400 font-medium mt-2">Track your neural commissions and claim velocity.</p>
+        <p className="text-gray-500 dark:text-gray-400 font-medium mt-2">Track your komisi and claim velocity.</p>
       </div>
       
       <div className="grid grid-cols-2 gap-4">
@@ -45,7 +45,7 @@ const PartnerView = () => {
         <h5 className="font-black uppercase text-[0.65rem] tracking-widest text-gray-400 ml-4">Recent Activity</h5>
         <div className="space-y-4">
           {[
-            { user: 'Budi Santoso', plan: 'Auto Neural', amount: 'Rp 4.2M', status: 'Settled' },
+            { user: 'Budi Santoso', plan: 'Auto Aktif', amount: 'Rp 4.2M', status: 'Settled' },
             { user: 'Siti Aminah', plan: 'Travel Matrix', amount: 'Rp 850k', status: 'In Audit' },
             { user: 'Randi P.', plan: 'Life Sync', amount: 'Rp 12.5M', status: 'Settled' }
           ].map((act, i) => (

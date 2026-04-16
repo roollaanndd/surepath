@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { Section, Badge, Button } from "../shared/UI";
+import { Section } from "../shared/UI";
 import {
-  Zap,
   Users,
-  ShieldCheck,
   ArrowRight,
   Box,
   Command,
@@ -12,12 +10,10 @@ import {
   Anchor,
   Car,
   Plane,
-  Info,
   Lock,
   Building2,
   Scale,
 } from "lucide-react";
-import { SurePathLogo } from "../Navbar";
 import ProductAIExplainer from "../ProductAIExplainer";
 import { Language } from "../../types";
 

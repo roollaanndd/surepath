@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Cpu, Zap, ShieldCheck, Terminal, 
-  Activity, Binary, Loader2, Target, 
-  Lock, ArrowRight, BrainCircuit
+  Activity, Binary, 
+  ArrowRight, BrainCircuit
 } from 'lucide-react';
 import { explainProductAI, ProductExplanation } from '../services/geminiService';
 import { Language } from '../types';
@@ -61,7 +61,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar bg-neural-mesh relative">
+        <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar bg-slate-900 relative">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-8 animate-pulse">
                <div className="relative">
@@ -91,7 +91,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
 
               {/* Grid Features */}
               <div className="grid md:grid-cols-2 gap-6 animate-fade-in animation-delay-200">
-                 {data.neuralBenefits.map((ben, i) => (
+                 {data.benefits.map((ben, i) => (
                     <div key={i} className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] group hover:border-primary-500/30 transition-all">
                        <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">

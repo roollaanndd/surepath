@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Camera, BrainCircuit, CheckCircle2, Scan, Smartphone, ArrowRight, MapPin, Calendar, Clock, FileText, AlertCircle, Loader2, FileSearch, Trash2, ShieldCheck, ChevronRight, Info, Rocket, Users, HeartPulse, Receipt, Building2, Stethoscope, RefreshCw, Car, Activity, Zap, ClipboardList } from 'lucide-react';
-import { analyzeClaimPhoto, summarizeClaimDocument, analyzeHealthReceipt, ClaimAnalysisData, DocumentSummary, HealthClaimData } from '../services/geminiService';
+import React, { useState, useEffect } from 'react';
+import { Camera, BrainCircuit, CheckCircle2, Smartphone, ArrowRight, MapPin, FileText, AlertCircle, Loader2, ShieldCheck, ChevronRight, Rocket, Users, HeartPulse, Receipt, Building2, RefreshCw, Car, Activity, Zap, ClipboardList } from 'lucide-react';
+import { analyzeClaimPhoto, analyzeHealthReceipt, ClaimAnalysisData, HealthClaimData } from '../services/geminiService';
 import { db, Claim } from '../db';
-import { NeuralBot, NeuralProcessingView } from './car-wizard/WizardUI';
+import { SmartProcessingView } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
 
@@ -46,14 +46,6 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
 
   const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
 
-  const dateLimits = useMemo(() => {
-    const today = new Date();
-    const max = today.toISOString().split('T')[0];
-    const minDate = new Date();
-    minDate.setDate(today.getDate() - 7);
-    const min = minDate.toISOString().split('T')[0];
-    return { min, max };
-  }, []);
 
   useEffect(() => {
     const savedSession = localStorage.getItem('SUREPATH_SESSION');
@@ -260,9 +252,9 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
   if (step === 'analyzing') {
     return (
       <div className="glass-card rounded-[3rem] h-full flex flex-col items-center justify-center animate-pop-in bg-white dark:bg-midnight overflow-hidden">
-        <NeuralProcessingView 
+        <SmartProcessingView 
           label={t("Analyzing Evidence...", "Menganalisa Bukti...")} 
-          sublabel={t("Our Neural Engine is parsing visual data for claim integrity.", "Neural Engine kami sedang memproses data visual untuk integritas klaim.")}
+          sublabel={t("Our Sistem Cerdas is parsing visual data for claim integrity.", "Sistem Cerdas kami sedang memproses data visual untuk integritas klaim.")}
         />
       </div>
     );
@@ -272,7 +264,7 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
     const isAuto = claimType === 'AUTO';
     return (
        <div className="space-y-6 animate-pop-in h-full flex flex-col pb-6">
-          <Header title={t("Neural Audit Result", "Hasil Audit Neural")} />
+          <Header title={t("Hasil Audit", "Hasil Audit")} />
           
           {/* Main Hero Card */}
           <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-2xl transition-all hover:scale-[1.02]">
@@ -496,7 +488,7 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
         <div className="space-y-4 px-8">
           <h3 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">{t('Transmission Success!', 'Transmisi Berhasil!')}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-bold uppercase tracking-widest max-w-sm">
-            {t('Report node successfully uploaded. Neural verify protocol initialized. Check status in 60 minutes.', 'Simpul laporan berhasil diunggah. Protokol verifikasi neural diinisialisasi. Cek status dalam 60 menit.')}
+            {t('Report node successfully uploaded. Protokol verifikasi initialized. Check status in 60 minutes.', 'Simpul laporan berhasil diunggah. Protokol verifikasi otomatis diinisialisasi. Cek status dalam 60 menit.')}
           </p>
         </div>
         <button onClick={onComplete} className="w-full max-w-sm py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl transition-all active:scale-95">{t('Back to Matrix', 'Selesai')}</button>
@@ -511,11 +503,5 @@ const Check = ({ size, className, strokeWidth }: { size: number, className?: str
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth || 2} strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
 );
 
-const BadgeCheck = ({ className, size }: { className?: string, size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    <path d="m9 12 2 2 4-4"/>
-  </svg>
-);
 
 export default ClaimManager;

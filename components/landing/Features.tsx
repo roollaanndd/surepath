@@ -1,5 +1,5 @@
 import React from "react";
-import { Section, Badge } from "../shared/UI";
+import { Section } from "../shared/UI";
 import { Camera, Zap, ShieldCheck, Heart } from "lucide-react";
 
 const Features = ({ lang = "ID" }: { lang?: string }) => {

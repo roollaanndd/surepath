@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  User, Lock, Eye, EyeOff, ArrowRight, 
-  Globe, ShieldCheck, RefreshCw, 
-  Sparkles, BadgeCheck, KeyRound, 
-  Zap, UserCircle, AlertCircle, Check,
-  UserPlus,
+  User, Eye, EyeOff, 
+  Globe, RefreshCw, 
+  BadgeCheck, KeyRound, 
+  AlertCircle,
   LayoutDashboard, Smartphone
 } from 'lucide-react';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
 import { db, User as DBUser } from '../db';
-import { hashPassword, verifyPassword, validatePasswordStrength, REGEX, createSessionToken } from '../services/authService';
-import { NeuralBot } from './car-wizard/WizardUI';
+import { hashPassword, verifyPassword, createSessionToken } from '../services/authService';
 import { auth, googleProvider, signInWithPopup } from '../firebase';
 
 interface AuthGateProps {
@@ -27,8 +25,8 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
   const [error, setError] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
-  const [statusMsg, setStatusMsg] = useState('Neural Access Point: Secure');
-  const [lang, setLang] = useState<Language>(initialLang);
+  const [statusMsg, setStatusMsg] = useState('Sistem Keamanan Akses: Aktif');
+  const [lang] = useState<Language>(initialLang);
   const [regRole, setRegRole] = useState<UserRole>(UserRole.CUSTOMER);
   
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
@@ -38,8 +36,6 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
   useEffect(() => {
     setMode(initialMode as any);
   }, [initialMode]);
-
-  const passwordStrength = useMemo(() => validatePasswordStrength(formData.password), [formData.password]);
 
   // Demo Access Handler
   const handleDemoAccess = async (targetRole: UserRole) => {
@@ -281,7 +277,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
         </div>
 
         <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          <BadgeCheck size={14} className="text-emerald-500"/> Secured by SurePath Neural Guard v4.2
+          <BadgeCheck size={14} className="text-emerald-500"/> Secured by SurePath Smart Security v4.2
         </p>
       </div>
     </div>

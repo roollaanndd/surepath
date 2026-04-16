@@ -2,21 +2,21 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Package, Laptop, Smartphone, Home as House, ChevronRight, 
-  ChevronLeft, Check, ShieldCheck, Wallet, Info, 
-  ArrowRight, CreditCard, Star, Camera, Zap, Cpu,
-  RefreshCw, Layers, ShieldAlert, AlertTriangle, Hammer, Trash2, Microscope,
+  ChevronLeft, Check, ShieldCheck, Wallet, 
+  Camera, Zap, 
+  Trash2, Microscope,
   ImagePlus
 } from 'lucide-react';
-import { MPAR_PRICING, INSURANCE_PROVIDERS, STAMP_DUTY } from '../constants';
-import { MPARState, MPARCategory, Language } from '../types';
+import { MPAR_PRICING } from '../constants';
+import { MPARState, Language } from '../types';
 import { analyzeVehicleSurvey } from '../services/geminiService';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
-const STEPS = ['Select Category', 'Item Registry', 'Select Term', 'Neural Scan', 'Review & Pay'];
+const STEPS = ['Select Category', 'Item Registry', 'Select Term', 'Proses Scanning', 'Review & Pay'];
 
 /* Fix: Added lang to props */
-const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [mpar, setMpar] = useState<MPARState>({
@@ -218,7 +218,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
              </div>
           </div>
           <div className="space-y-2">
-             <h4 className="text-2xl font-black uppercase tracking-tighter">Neural Item Audit</h4>
+             <h4 className="text-2xl font-black uppercase tracking-tighter">Audit Item</h4>
              <p className="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest">Scan your asset for condition verification.</p>
           </div>
           
@@ -259,7 +259,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
 
        {photos.front && !aiScore && !loading && (
           <button onClick={runAiAudit} className="w-full py-5 bg-amber-500 text-white rounded-[2rem] font-black uppercase text-[0.7rem] tracking-[0.3em] shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
-             INITIALIZE NEURAL SCAN
+             MULAI SCANNING
           </button>
        )}
     </div>
@@ -332,7 +332,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
             </div>
           </div>
           <div className="flex gap-2">
-             {STEPS.map((s, i) => (
+             {STEPS.map((_s, i) => (
                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : i < step ? 'bg-amber-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
              ))}
           </div>

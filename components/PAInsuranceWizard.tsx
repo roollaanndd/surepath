@@ -2,10 +2,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   ShieldAlert, User, Users, GraduationCap, Briefcase, 
-  ChevronRight, ChevronLeft, Check, Wallet, Info, 
-  ShieldCheck, Heart, Star, Zap, Cpu, ArrowRight,
-  ClipboardList
-} from 'lucide-react';
+  ChevronRight, ChevronLeft, Check, Wallet, 
+  ShieldCheck, Heart, Zap, Cpu } from 'lucide-react';
 import { PA_PLANS } from '../constants';
 import { PAState, Language } from '../types';
 
@@ -14,7 +12,7 @@ const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'curren
 const STEPS = ['Select Category', 'Select Plan', 'Insured Data', 'Beneficiary', 'Review'];
 
 /* Fix: Added lang to props */
-const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [paData, setPaData] = useState<PAState>({
     category: 'GENERAL',
@@ -44,7 +42,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
       <div className="p-4 bg-primary-500/10 rounded-3xl border border-primary-500/20 flex gap-4">
          <ShieldAlert className="text-primary-500 flex-shrink-0" size={24}/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
-           Neural Personal Accident OS. Protect yourself or your students with PSAKDI grade coverage.
+           Sistem Asuransi Kecelakaan Diri. Protect yourself or your students with PSAKDI grade coverage.
          </p>
       </div>
 
@@ -141,7 +139,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
                    <p className="text-lg font-black uppercase tracking-tight">Insured Member</p>
                 </div>
              </div>
-             <p className="text-[0.55rem] text-gray-400 leading-relaxed font-bold uppercase tracking-widest">Neural validation ensures instant payout eligibility.</p>
+             <p className="text-[0.55rem] text-gray-400 leading-relaxed font-bold uppercase tracking-widest">Validasi sistem ensures instant payout eligibility.</p>
           </div>
        </div>
 
@@ -195,7 +193,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
        <div className="p-6 bg-rose-500/10 rounded-[2.5rem] border border-rose-500/20 text-rose-500 flex gap-4">
           <Heart size={24} className="flex-shrink-0 animate-pulse"/>
           <p className="text-[0.65rem] font-bold leading-relaxed uppercase tracking-wider">
-            Tentukan penerima manfaat (Ahli Waris) untuk validasi klaim neural otomatis.
+            Tentukan penerima manfaat (Ahli Waris) untuk validasi klaim secara otomatis.
           </p>
        </div>
 
@@ -294,7 +292,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
             </div>
           </div>
           <div className="flex gap-2">
-             {STEPS.map((s, i) => (
+             {STEPS.map((_s, i) => (
                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
              ))}
           </div>

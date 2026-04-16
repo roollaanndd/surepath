@@ -81,6 +81,19 @@ export interface DBProvider extends Provider {
     isActive: boolean;
 }
 
+export interface CustomProduct {
+  id?: any;
+  name: string;
+  type: string; // e.g., 'INSURANCE', 'SERVICES'
+  isActive: boolean;
+  basePremium: number;
+  rate?: number;
+  description: string;
+  icon?: string;
+  color?: string;
+  bg?: string;
+}
+
 export class SurePathDB extends Dexie {
   users!: Table<User, any>;
   policies!: Table<Policy, any>;
@@ -88,18 +101,20 @@ export class SurePathDB extends Dexie {
   transactions!: Table<Transaction, any>;
   auditLogs!: Table<AuditLog, any>;
   providers!: Table<DBProvider, string>;
+  customProducts!: Table<CustomProduct, any>;
 
   constructor() {
     super('SurePathDB');
     // Added comment above fix
     // Fix: The version method is inherited from the Dexie base class; defining the schema for the database version.
-    this.version(5).stores({
+    this.version(6).stores({
       users: '++id, &email, nodeId, role, verified',
       policies: '++id, userId, type, status, policyNumber, createdAt',
       claims: '++id, userId, policyId, status, createdAt',
       transactions: '++id, userId, type, date, referenceId',
       auditLogs: '++id, timestamp, actor, domain, action',
-      providers: 'id, name, isActive'
+      providers: 'id, name, isActive',
+      customProducts: '++id, name, type, isActive'
     });
   }
 }
@@ -130,12 +145,19 @@ export const seedDatabase = async () => {
   if (isSeeding) return;
   isSeeding = true;
   try {
+    const isMigrated = localStorage.getItem('SP_DB_MIGRATED_2023');
     const userCount = await db.users.count();
-    if (userCount === 0) {
+    
+    if (!isMigrated || userCount < 3000) {
+      await db.users.clear();
+
       const adminCreds = await hashPassword('admin');
       const userCreds = await hashPassword('user');
 
-      await db.users.bulkAdd([
+      const FIRST_NAMES = ["Budi", "Siti", "Anton", "Dewi", "Agus", "Ayu", "Eko", "Putri", "Wawan", "Sari", "Rudi", "Rina", "Dwi", "Sri", "Hadi", "Yuni", "Joko", "Tari", "Iwan", "Lestari", "Andi", "Maya", "Deni", "Nita", "Hendra", "Sisca", "Fajar", "Dian"];
+      const LAST_NAMES = ["Santoso", "Wijaya", "Kusuma", "Lestari", "Pratama", "Hidayat", "Saputra", "Wahyudi", "Kurniawan", "Setiawan", "Utama", "Purnama", "Suryono", "Handayani", "Wibowo", "Nugroho"];
+      
+      const newUsers: User[] = [
         {
           name: 'Chief Neural Architect',
           email: 'master@surepath.ai',
@@ -174,7 +196,142 @@ export const seedDatabase = async () => {
           ktp: '3275000000000001',
           address: 'Jl. AI Tech Park, Jakarta Selatan'
         }
-      ]).catch(e => console.warn('Seeding users failed (likely already seeded):', e));
+      ];
+
+      for (let i = 0; i < 3000; i++) {
+         const first = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+         const last = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+         newUsers.push({
+            name: `${first} ${last}`,
+            email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@gmail.com`,
+            phone: `08${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+            role: UserRole.CUSTOMER,
+            nodeId: `SP-NODE-${4000 + i}`,
+            trustScore: 60 + Math.floor(Math.random() * 40),
+            memberSince: new Date(2023 + Math.floor(Math.random() * 3), Math.floor(Math.random() * 12), 1).toISOString(),
+            verified: true,
+            passwordHash: userCreds.hash,
+            salt: userCreds.salt
+         });
+      }
+
+      await db.users.bulkAdd(newUsers).catch(e => console.warn('Seeding users failed:', e));
+    }
+
+    const txCount = await db.transactions.count();
+    const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_2023');
+
+    if (needsMigration || txCount === 0) {
+       await db.transactions.clear(); 
+       const userDocs = await db.users.where('role').equals('CUSTOMER').toArray();
+       const userIds = userDocs.map(u => u.id);
+       
+       const bulkTransactions: Transaction[] = [];
+       const years = [2023, 2024, 2025, 2026];
+       const USD_RATE = 16000;
+       
+       const YEARLY_USD_GWP = {
+          2023: 1131141,
+          2024: 1826982,
+          2025: 2651782,
+          2026: 3000000 // Run rate for 2026
+       };
+
+       let txCounter = 1;
+       const today = new Date();
+
+       years.forEach(year => {
+           // Target MRR IDR for this specific year
+           const baseMrrIDR = (YEARLY_USD_GWP[year as keyof typeof YEARLY_USD_GWP] * USD_RATE) / 12;
+           
+           for (let month = 0; month < 12; month++) {
+              // Ensure we don't generate transactions in the future
+              if (year === today.getFullYear() && month > today.getMonth()) break;
+
+              // Up and down pattern
+              let monthMultiplier = 1 + (Math.sin(month) * 0.15) + (Math.random() * 0.1 - 0.05);
+              let targetRevenue = baseMrrIDR * monthMultiplier;
+              
+              // If it's the current month, prorate the target revenue up to the current day
+              if (year === today.getFullYear() && month === today.getMonth()) {
+                 const daysInMonth = new Date(year, month + 1, 0).getDate();
+                 targetRevenue = targetRevenue * (today.getDate() / daysInMonth);
+              }
+
+              let currentRevenue = 0;
+
+              // 120-160 active users this month
+              let activeUserCount = 120 + Math.floor(Math.random() * 40);
+              let activeUsers = [...userIds].sort(() => 0.5 - Math.random()).slice(0, activeUserCount);
+
+              // Distribute transactions to hit the target revenue
+              while (currentRevenue < targetRevenue) {
+                 for (const activeUserId of activeUsers) {
+                    if (currentRevenue >= targetRevenue) break;
+
+                    // Min 300 USD (4.8M IDR) per tx, up to 1200 USD
+                     const txUsd = 300 + Math.floor(Math.random() * 900);
+                     const txIdr = txUsd * USD_RATE;
+                     currentRevenue += txIdr;
+
+                     // Ensure the generated day is not in the future for the current month
+                     let maxDay = new Date(year, month + 1, 0).getDate();
+                     if (year === today.getFullYear() && month === today.getMonth()) {
+                        maxDay = today.getDate();
+                     }
+                     const day = 1 + Math.floor(Math.random() * maxDay);
+                     
+                     // Format date ensuring proper output (fix timezone issues by using mid-day UTC)
+                     const txDate = new Date(Date.UTC(year, month, day, 12, 0, 0)).toISOString();
+                     
+                     bulkTransactions.push({
+                        userId: activeUserId,
+                        type: 'PAYMENT',
+                        amount: txIdr,
+                        status: 'SUCCESS',
+                        description: `Pembelian Polis #${100000 + txCounter}`,
+                        date: txDate,
+                        referenceId: `TX-POL-${year}-${month}-${txCounter}`
+                     });
+
+                     bulkTransactions.push({
+                        userId: activeUserId,
+                        type: 'COMMISSION',
+                        amount: txIdr * 0.25,
+                        status: 'SUCCESS',
+                        description: `Distribusi Komisi #${100000 + txCounter}`,
+                        date: txDate,
+                        referenceId: `TX-COM-${year}-${month}-${txCounter}`
+                     });
+
+                     txCounter++;
+
+                     // 5% chance of a claim (random amount)
+                     if (Math.random() < 0.05) {
+                         const claimAmount = txIdr * (1 + Math.random() * 2); // Random claim magnitude
+                         bulkTransactions.push({
+                            userId: activeUserId,
+                            type: 'CLAIM_PAYOUT',
+                            amount: claimAmount,
+                            status: 'SUCCESS',
+                            description: `Pembayaran Klaim #${80000 + txCounter}`,
+                            date: txDate,
+                            referenceId: `TX-CLM-${year}-${month}-${txCounter}`
+                         });
+                         txCounter++;
+                     }
+                 }
+              }
+           }
+       });
+
+       // Chunk and add
+       const chunkSize = 5000;
+       for (let i = 0; i < bulkTransactions.length; i += chunkSize) {
+          await db.transactions.bulkAdd(bulkTransactions.slice(i, i + chunkSize)).catch(e => console.warn('Tx seed failed', e));
+       }
+
+       localStorage.setItem('SP_DB_MIGRATED_2023', 'true');
     }
 
     const providerCount = await db.providers.count();

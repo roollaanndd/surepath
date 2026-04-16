@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Edit3, ChevronDown, User, Briefcase, Building2, Zap, Timer, FileSearch, Sparkles, CheckCircle2, RefreshCw, Smartphone, Hash, Palette, Cpu, UploadCloud, AlertCircle, FileDown, Loader2 } from 'lucide-react';
+import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2 } from 'lucide-react';
 import { CAR_DATABASE } from '../../constants';
 import { extractStnkData } from '../../services/geminiService';
 import { ScannerOverlay } from './WizardUI';

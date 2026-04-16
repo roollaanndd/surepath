@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Sparkles, ShieldAlert, ChevronLeft, HeartPulse, Stethoscope } from 'lucide-react';
+import { Send, Bot, User, Loader2, ShieldAlert, ChevronLeft, HeartPulse } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { NeuralBot, PageTransition } from './car-wizard/WizardUI';
+import { PageTransition } from './car-wizard/WizardUI';
 import { Language } from '../types';
 
 /* Fix: Added lang prop to HealthChat component */

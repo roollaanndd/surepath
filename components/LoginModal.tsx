@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User, Lock, Mail, Phone, ChevronRight, X, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { User, Lock, Mail, ChevronRight, X, AlertCircle, Loader2 } from 'lucide-react';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -9,7 +9,7 @@ interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [role, setRole] = useState<'member' | 'partner' | 'admin'>('member');
+  const [role] = useState<'member' | 'partner' | 'admin'>('member');
   const [form, setForm] = useState({ id: '', password: '', name: '', email: '', phone: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +51,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
                     {mode === 'login' ? 'Access Gate' : 'Join Path'}
                 </h3>
                 <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                    Neural OS v3.0 Encryption
+                    Sistem Keamanan Terenkripsi
                 </p>
             </div>
 

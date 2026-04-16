@@ -2,8 +2,7 @@
 import React from 'react';
 import { 
   Car, Smartphone, ShieldCheck, CheckCircle2, Shield, Wallet, 
-  BrainCircuit, Zap, Info, Droplets, AlertCircle
-} from 'lucide-react';
+  BrainCircuit, Zap } from 'lucide-react';
 import { formatIDR, PageTransition } from './WizardUI';
 import { Language } from '../../types';
 
@@ -44,7 +43,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
                     <BrainCircuit size={32}/>
                  </div>
                  <div>
-                    <p className={`text-[0.6rem] font-black uppercase tracking-[0.3em] ${survey.score < 80 ? 'text-amber-600' : 'text-emerald-600'}`}>{t('NEURAL AUDIT SCORE', 'ANALISA KONDISI AI')}</p>
+                    <p className={`text-[0.6rem] font-black uppercase tracking-[0.3em] ${survey.score < 80 ? 'text-amber-600' : 'text-emerald-600'}`}>{t('AUDIT SCORE', 'ANALISA KONDISI')}</p>
                     <h4 className="text-2xl font-black uppercase text-slate-900 dark:text-white leading-none mt-1">{survey.score}% Verified</h4>
                  </div>
               </div>

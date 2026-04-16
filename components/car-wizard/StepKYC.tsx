@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Fingerprint, ScanFace, ImageIcon, Plus, RefreshCw, ShieldCheck, UserCheck, Cpu, CheckCircle2, AlertCircle, FileDown, Loader2 } from 'lucide-react';
+import { ScanFace, ImageIcon, Plus, RefreshCw, ShieldCheck, UserCheck, Cpu, CheckCircle2, AlertCircle, FileDown, Loader2 } from 'lucide-react';
 import { ScannerOverlay } from './WizardUI';
 import { extractKtpData } from '../../services/geminiService';
 import { REGEX } from '../../services/authService';

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Globe, Car, Zap, ShieldCheck, Heart, Sparkles, Plane, Activity, Network } from 'lucide-react';
+import { ArrowRight, Globe, Car, Zap, Sparkles, Plane, Activity } from 'lucide-react';
 import { Language } from '../types';
 
 const SLIDES = (lang: Language) => [
@@ -8,8 +8,8 @@ const SLIDES = (lang: Language) => [
     title: lang === Language.EN ? "Travel Protection" : "Proteksi Perjalanan",
     highlight: lang === Language.EN ? "Global Network" : "Jaringan Global",
     desc: lang === Language.EN 
-      ? "Neural travel protection worldwide. Instant activation with lightning-fast verification." 
-      : "Perlindungan perjalanan neural ke seluruh dunia. Aktif instan dengan protokol verifikasi secepat kilat.",
+      ? "Perlindungan perjalanan ke seluruh dunia. Instant activation with lightning-fast verification." 
+      : "Perlindungan perjalanan instan ke seluruh dunia. Aktif instan dengan protokol verifikasi secepat kilat.",
     image: null,
     bgClass: "bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900",
     pattern: (

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight, Shield } from 'lucide-react';
+import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight } from 'lucide-react';
 import { STAMP_DUTY } from '../../constants';
 import { formatIDR } from './WizardUI';
 import { db, DBProvider } from '../../db';

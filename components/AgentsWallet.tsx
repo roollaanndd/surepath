@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Wallet, ArrowUpRight, ArrowDownLeft, TrendingUp, 
-  Coins, Star, Trophy, ArrowRight, Download, 
-  Filter, Calendar, ChevronRight, PieChart, 
-  Target, Zap, History, CreditCard, Box, LayoutDashboard
-} from 'lucide-react';
+  Wallet, ArrowUpRight, ArrowDownLeft, 
+  Star, Download, 
+  PieChart, 
+  History, Box} from 'lucide-react';
 import { db, Transaction } from '../db';
 import { formatIDR } from './car-wizard/WizardUI';
 import { Language } from '../types';

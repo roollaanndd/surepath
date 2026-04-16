@@ -1,5 +1,4 @@
 import React from "react";
-import { Button, Badge } from "../shared/UI";
 import { ArrowRight, ShieldCheck, Shield, Zap } from "lucide-react";
 
 interface HeroProps {
@@ -10,8 +9,13 @@ interface HeroProps {
 
 const Hero = ({ onAction, onAdminAction, lang = "ID" }: HeroProps) => {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-[#f5f5f4] dark:bg-[#0a0a0a] transition-colors duration-700">
-      <div className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-2 h-full">
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-animated-gradient transition-colors duration-700">
+      {/* Dynamic Ambient Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/20 dark:bg-emerald-500/10 blur-[100px] animate-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 dark:bg-slate-500/20 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] rounded-full bg-amber-500/10 dark:bg-amber-500/5 blur-[80px] animate-bounce" style={{ animationDuration: '10s' }}></div>
+
+      <div className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-2 h-full relative z-10">
         {/* Left Pane: Content */}
         <div className="flex flex-col justify-center px-8 lg:px-16 py-24 lg:py-0 relative z-10">
           <div className="space-y-12 animate-fade-in max-w-2xl">

@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  User, ShieldCheck, Mail, Phone, ChevronRight, Landmark,
-  Bell, FileCheck, Award, Zap, Globe, LogOut,
-  CheckCircle2, Wallet, Lock, Package, Car, Plane,
-  Activity, X, Info, Calendar, MapPin, History,
+  User, ShieldCheck, ChevronRight, Landmark,
+  Bell, FileCheck, Zap, LogOut,
+  CheckCircle2, Lock, Package, Car, Plane,
+  Activity, X, History,
   TrendingUp, Fingerprint, ShieldAlert, BadgeCheck,
-  CreditCard, LayoutGrid, Clock, AlertCircle, Settings,
-  Cpu, Hash, Palette, Microscope, Eye, Send, Loader2
+  CreditCard, LayoutGrid, Settings,
+  Cpu, Microscope, Eye, Send, Loader2
 } from 'lucide-react';
 import { db, Policy, Claim, Transaction } from '../db';
-import { Language, UserRole } from '../types';
+import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 
 interface UserProfileProps {
@@ -65,7 +65,7 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
                 {t('Reset Password', 'Reset Kata Sandi')}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                {t('We will send a secure neural reset link to your registered email address:', 'Kami akan mengirimkan tautan reset neural aman ke alamat email terdaftar Anda:')}
+                {t('We will send a secure link reset to your registered email address:', 'Kami akan mengirimkan tautan link reset aman ke alamat email terdaftar Anda:')}
               </p>
               <p className="text-sm font-black text-primary-500 bg-primary-500/5 py-2 rounded-xl border border-primary-500/10 mt-2">
                 {email}
@@ -87,7 +87,7 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
                <Loader2 size={80} className="text-primary-500 animate-spin relative z-10" />
             </div>
             <div className="space-y-2">
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-primary-500">{t('Neural Link Handshake', 'Handshake Link Neural')}</p>
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-primary-500">{t('Proses Sinkronisasi Link', 'Proses Sinkronisasi Link')}</p>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Encrypting protocols...', 'Mengenkripsi protokol...')}</p>
             </div>
           </div>
@@ -213,7 +213,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
                       <Microscope size={18}/>
                       <span className="text-[0.7rem] font-black uppercase tracking-widest">Audit Evidence Node</span>
                    </div>
-                   <Badge color="emerald">Neural Score: {details.survey?.score}%</Badge>
+                   <Badge color="emerald">Skor Kendaraan: {details.survey?.score}%</Badge>
                 </div>
                 <div className="grid grid-cols-5 gap-3">
                    {details.survey?.photos && Object.entries(details.survey.photos).map(([key, src]: any) => (
@@ -459,7 +459,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
        <div className="space-y-3">
           <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest ml-2">{t('Node Security & Sync', 'Keamanan & Akun')}</p>
           {[
-              { id: 'biometric', label: t('Neural Biometrics', 'Login Biometrik'), icon: Fingerprint, color: 'text-blue-500', sub: 'Status: ' + t('Encrypted', 'Terenkripsi'), action: t('Update', 'Update') },
+              { id: 'biometric', label: t('Login Biometrik', 'Login Biometrik'), icon: Fingerprint, color: 'text-blue-500', sub: 'Status: ' + t('Encrypted', 'Terenkripsi'), action: t('Update', 'Update') },
               { id: 'bank', label: t('Ledger Registry', 'Data Rekening'), icon: Landmark, color: 'text-emerald-500', sub: t('Withdrawal Sync', 'Sinkronisasi Dana'), action: t('Manage', 'Kelola') },
               { id: 'password', label: t('Protocol Keys', 'Password & Keamanan'), icon: Lock, color: 'text-rose-500', sub: t('Update regularly', 'Perbarui berkala'), action: t('Change', 'Ganti') },
               { id: 'comms', label: t('Communication Hub', 'Pusat Notifikasi'), icon: Bell, color: 'text-amber-500', sub: t('Email & Push', 'Email & Notif'), action: t('Config', 'Atur') },
@@ -510,12 +510,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
           <p className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-[0.4em]">{t('Node ID', 'ID Node')}: {currentUser?.nodeId || 'SP-GENESIS'}</p>
         </div>
 
-        {/* Neural Trust Score Meter */}
+        {/* Trust Score Meter */}
         <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-black/5 space-y-4 shadow-inner">
            <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                  <Cpu size={14} className="text-primary-500"/>
-                 <span className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">{t('Neural Trust Level', 'Level Kepercayaan')}</span>
+                 <span className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">{t('Tingkat Kepercayaan', 'Level Kepercayaan')}</span>
               </div>
               <span className="text-xl font-black text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">{currentUser?.trustScore || 85}%</span>
            </div>

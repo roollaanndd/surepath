@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Users, Zap, ShieldCheck, 
-  Wallet, FileText, Settings, LogOut, Search, 
-  ChevronDown, Activity, Radio, Menu, X,
-  ShieldAlert, ClipboardCheck, UserCheck, HardDrive, RefreshCw, Globe, ArrowUpRight,
-  TrendingUp, Clock, Building2, LockKeyhole, History, Database, BarChart3,
-  Bell, Command, PieChart, BarChart, CheckCircle
+  LayoutDashboard, Users, Zap, 
+  Wallet, Settings, LogOut, Search, 
+  Activity, Menu, 
+  ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
+  TrendingUp, BarChart3,
+  Bell, CheckCircle
 } from 'lucide-react';
 import { 
   BizAdminView, 
@@ -45,16 +45,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currency, setCurrency] = useState<'USD' | 'IDR'>('USD');
   const [stats, setStats] = useState({ userCount: 0, policyCount: 0, claimCount: 0, totalPremium: 0 });
-
-  const exchangeRate = 16000;
-  
-  // Format for summary cards (converted to Millions USD as requested)
-  const formatVal = (usdM: number) => {
-    if (currency === 'IDR') return `Rp ${(usdM * exchangeRate / 1000).toFixed(1)}T`;
-    return `$${usdM}M`;
-  };
 
   const fetchStats = async () => {
       const u = await db.users.count();
@@ -79,7 +70,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'transactions', label: 'Ledger Vault', icon: Wallet, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
     { id: 'approvals', label: 'Antrean Polis', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'users', label: 'User Matrix', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'security', label: 'Neural Guard', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
+    { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
     { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
   ];
 
@@ -89,7 +80,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="animate-fade-in space-y-10">
+            <div className="animate-fade-in space-y-10">
             <div className="flex justify-between items-end">
                <div>
                   <div className="flex items-center gap-3 mb-2">
@@ -98,31 +89,18 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
                   </div>
                   <h2 className="text-4xl font-black uppercase tracking-tighter leading-none text-white">SurePath <span className="text-gray-500">Command Center</span></h2>
                </div>
-               
-               <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 shadow-inner">
-                  {(['USD', 'IDR'] as const).map(curr => (
-                    <button 
-                      key={curr} 
-                      onClick={() => setCurrency(curr)}
-                      className={`px-6 py-2 rounded-xl text-[0.6rem] font-black uppercase transition-all ${currency === curr ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
-                    >
-                      {curr}
-                    </button>
-                  ))}
-               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-               {/* GWP Target Realignment: 2680M USD and 2267M Actual */}
-               <StatCard label="FY2025 Target GWP" value={formatVal(2680)} trend="+18.2%" icon={TrendingUp} color="bg-primary-500/10 text-primary-500" />
-               <StatCard label="FY2024 Actual GWP" value={formatVal(2267)} trend="+14.4%" icon={CheckCircle} color="bg-blue-500/10 text-blue-500" />
-               <StatCard label="Live Audit Nodes" value={stats.policyCount} trend="+3" icon={Activity} color="bg-emerald-500/10 text-emerald-500" />
-               <StatCard label="Market Liquidity" value="94.2%" trend="+0.5%" icon={Zap} color="bg-amber-500/10 text-amber-500" />
+               <StatCard label="Target GWP" value="Rp 42.8T" trend="+18.2%" icon={TrendingUp} color="bg-primary-500/10 text-primary-500" />
+               <StatCard label="Aktual GWP" value="Rp 36.2T" trend="+14.4%" icon={CheckCircle} color="bg-blue-500/10 text-blue-500" />
+               <StatCard label="Total Polis" value={stats.policyCount} trend="+3" icon={Activity} color="bg-emerald-500/10 text-emerald-500" />
+               <StatCard label="Likuiditas" value="94.2%" trend="+0.5%" icon={Zap} color="bg-amber-500/10 text-amber-500" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                <div className="lg:col-span-2">
-                  <ReportsView compact externalCurrency={currency} />
+                  <ReportsView compact />
                </div>
                <div className="space-y-8">
                   <Card className="p-8">
@@ -136,9 +114,9 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
             </div>
           </div>
         );
-      case 'reports': return <ReportsView externalCurrency={currency} />;
+      case 'reports': return <ReportsView />;
       case 'inventory': return <InventoryView />;
-      case 'transactions': return <LedgerView externalCurrency={currency} />;
+      case 'transactions': return <LedgerView />;
       case 'approvals': return <ApprovalsView />;
       case 'users': return <BizAdminView section="users" />;
       case 'security': return <SecurityView />;

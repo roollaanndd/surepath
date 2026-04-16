@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Hero from "./landing/Hero";
 import Features from "./landing/Features";
 import ProductModules from "./landing/ProductModules";
 import { Language } from "../types";
-import { Section, Button, Badge, GlassCard } from "./shared/UI";
+import { Section } from "./shared/UI";
 import {
   ArrowRight,
   LogIn,
   ShieldCheck,
   Zap,
-  Smartphone,
-  CheckCircle,
-  Clock,
   Mail,
   Phone,
   MapPin,

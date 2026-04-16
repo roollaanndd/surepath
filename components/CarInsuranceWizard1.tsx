@@ -265,7 +265,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
             <div className="flex items-center gap-5">
                <div className="w-14 h-14 bg-midnight rounded-[1.8rem] flex items-center justify-center text-white shadow-2xl group border border-white/10"><Car size={28} className="group-hover:rotate-12 transition-transform text-primary-500"/></div>
                <div>
-                  <p className="text-[0.55rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1.5">Auto-Neural Module</p>
+                  <p className="text-[0.55rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1.5">Modul Otomatis</p>
                   <h3 className="text-xl font-black uppercase tracking-tighter leading-none">Sure<span className="text-primary-500">Path</span> Registry</h3>
                </div>
             </div>
@@ -290,7 +290,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
           </div>
 
           <div className="flex gap-2.5">
-             {STEPS.map((s, i) => (<div key={i} className={`h-2 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_15px_#10b981]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>))}
+             {STEPS.map((_s, i) => (<div key={i} className={`h-2 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_15px_#10b981]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>))}
           </div>
        </div>
 

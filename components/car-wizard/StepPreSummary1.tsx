@@ -78,7 +78,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
        <div className="bg-amber-50 dark:bg-amber-950/20 p-6 rounded-[2.5rem] border border-amber-200 dark:border-amber-900/30 flex gap-5 shadow-sm animate-pop-in">
           <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg flex-shrink-0 animate-pulse"><AlertCircle size={24}/></div>
           <p className="text-[0.7rem] font-black text-amber-800 dark:text-amber-200 leading-relaxed uppercase tracking-wider">
-             Langkah Selanjutnya: <span className="text-amber-600 dark:text-amber-400">Audit Digital & Registrasi STNK</span>. Siapkan dokumen fisik STNK dan unit kendaraan Anda untuk Neural Scan.
+             Langkah Selanjutnya: <span className="text-amber-600 dark:text-amber-400">Audit Digital & Registrasi STNK</span>. Siapkan dokumen fisik STNK dan unit kendaraan Anda untuk Proses Scanning.
           </p>
        </div>
     </div>

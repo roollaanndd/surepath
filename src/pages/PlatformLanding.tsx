@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Shield, Zap, Bot, Car, Plane, Heart, 
+  Zap, Bot, Car, Plane, Heart, 
   Briefcase, Users, Building, ArrowRight, 
   CheckCircle2, Globe, Sun, Moon, 
-  Smartphone, Activity, Lock, ChevronRight,
+  Activity, Lock, 
   Menu, X, Sparkles, Network, Package, User
 } from 'lucide-react';
 import { Language } from '../../types';

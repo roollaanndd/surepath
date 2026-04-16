@@ -1,11 +1,10 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Car, RefreshCw, X, ChevronLeft, ChevronRight, Zap, ShieldCheck, CheckCircle2, FileText, ArrowRight, Wallet, Clock, AlertTriangle, Sparkles } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Car, X, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
 import { InsuranceType, Language } from '../types';
-import { db, Policy, Transaction } from '../db';
+import { db, Policy } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
-import { formatIDR, PageTransition } from './car-wizard/WizardUI';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -245,7 +244,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
               <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
                  {isPayLater 
                    ? "Data pendaftaran telah kami simpan. Segera lakukan pembayaran di menu akun untuk mengaktifkan perlindungan Anda."
-                   : "Neural Node Teraktivasi. Perlindungan asuransi Anda telah terdaftar dan aktif secara real-time di sistem kami."}
+                   : "Sistem Teraktivasi. Perlindungan asuransi Anda telah terdaftar dan aktif secara real-time di sistem kami."}
               </p>
            </div>
 
@@ -311,7 +310,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
           </div>
 
           <div className="flex gap-1.5 px-1">
-             {STEPS.map((s, i) => (
+             {STEPS.map((_s, i) => (
                <div key={i} className={`h-1 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_#f97316]' : i < step ? 'bg-primary-500/40' : 'bg-gray-100 dark:bg-white/10'}`}></div>
              ))}
           </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users2, Zap, LayoutDashboard, ArrowRight, ShieldCheck, Cpu, Globe, Terminal, Briefcase } from 'lucide-react';
+import { Zap, ArrowRight, ShieldCheck, Cpu, Globe, Terminal, Briefcase } from 'lucide-react';
 
 interface AppSelectorProps {
   onSelect: (app: 'AGENT' | 'CLAIM' | 'HQ') => void;
@@ -28,7 +28,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ onSelect, userName }) => {
     { 
       id: 'HQ' as const, 
       label: 'HQ Control', 
-      desc: 'Global ledger & neural monitoring.', 
+      desc: 'Global ledger & digital monitoring.', 
       icon: Terminal, 
       color: 'bg-blue-600', 
       tag: 'Command Level'
@@ -37,7 +37,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ onSelect, userName }) => {
 
   return (
     <div className="min-h-screen bg-[#f0fdf9] flex flex-col items-center justify-center p-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-neural-grid opacity-100 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-slate-900/5 opacity-100 pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-400/10 rounded-full blur-[140px] pointer-events-none animate-pulse"></div>
       
       <div className="max-w-5xl w-full space-y-16 animate-fade-in relative z-10">
@@ -90,7 +90,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ onSelect, userName }) => {
         </div>
 
         <div className="pt-10 text-center">
-            <p className="text-[0.65rem] font-black text-emerald-800/30 uppercase tracking-[0.5em] animate-pulse">Select Environment to proceed through neural path</p>
+            <p className="text-[0.65rem] font-black text-emerald-800/30 uppercase tracking-[0.5em] animate-pulse">Select Environment to proceed through proses selanjutnya</p>
         </div>
       </div>
     </div>

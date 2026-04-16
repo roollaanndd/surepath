@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Mail, Phone, MapPin, MessageSquare, ArrowRight, ShieldCheck, Zap, Globe, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare, ArrowRight, Globe, Clock } from 'lucide-react';
 import { Language } from '../types';
-import { Badge, Button } from './shared/UI';
+import { Badge } from './shared/UI';
 
 const ContactPage = ({ lang }: { lang: Language }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -15,8 +15,8 @@ const ContactPage = ({ lang }: { lang: Language }) => {
            {t("Contact", "Hubungi")} <span className="text-primary-500">{t("Our Nodes", "Simpul Kami")}</span>
          </h2>
          <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-           {t("Need help with your policy or claim? Our neural support team is available 24/7 through multiple protocols.", 
-              "Butuh bantuan terkait polis atau klaim? Tim dukungan neural kami tersedia 24/7 melalui berbagai protokol.")}
+           {t("Need help with your policy or claim? Our tim support is available 24/7 through multiple protocols.", 
+              "Butuh bantuan terkait polis atau klaim? Tim support kami tersedia 24/7 melalui berbagai protokol.")}
          </p>
       </div>
 

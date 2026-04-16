@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Home as HomeIcon, Zap, Wallet as WalletIcon, 
-  UserCircle, LogOut, Sun, Moon, CheckCircle2, 
-  Bell, Car, Plane, ShoppingBag, Shield, 
-  Package, Heart, ShieldAlert, Bot, ChevronRight,
-  ShieldCheck, Lightbulb, QrCode, ArrowRight, History,
-  Search, Filter, LayoutGrid, Building2, User,
-  Network, ShieldCheck as ShieldIcon, Globe, Mail, Phone
+  UserCircle, LogOut, Sun, Moon, 
+  Bell, Car, Plane, ShoppingBag, 
+  Package, Heart, ShieldAlert, Bot, 
+  ShieldCheck, Lightbulb, History
 } from 'lucide-react';
-import DesktopWebsite from './components/DesktopWebsite';
-import Navbar, { SurePathLogo } from './components/Navbar';
+import { SurePathLogo } from './components/Navbar';
 import AuthGate from './components/AuthGate';
 import ClaimManager from './components/ClaimManager';
 import UserProfile from './components/UserProfile';
@@ -18,12 +15,13 @@ import CarInsuranceWizard from './components/CarInsuranceWizard';
 import TravelInsuranceWizard from './components/TravelInsuranceWizard';
 import PAInsuranceWizard from './components/PAInsuranceWizard';
 import MPARInsuranceWizard from './components/MPARInsuranceWizard';
+import CustomInsuranceWizard from './components/CustomInsuranceWizard';
 import PortalHero from './components/PortalHero';
 import AdminPortal from './components/admin/AdminPortal';
 import HealthChat from './components/HealthChat';
 import ContactPage from './components/ContactPage';
 import { Language, UserRole } from './types';
-import { NeuralBot, PageTransition } from './components/car-wizard/WizardUI';
+import { SmartBot, PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
 import { Badge } from './components/shared/UI';
 import { auth, signOut } from './firebase';
@@ -52,7 +50,7 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
       <div className="relative z-10 flex flex-col items-center animate-pop-in">
         <div className="mb-14 relative group">
            <div className="absolute inset-0 bg-primary-500/25 rounded-full blur-[70px] animate-pulse scale-150"></div>
-           <NeuralBot className="w-56 h-56 relative drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]" mood="happy" />
+           <SmartBot className="w-56 h-56 relative drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]" mood="happy" />
         </div>
         <div className="text-center space-y-8">
           <h1 className="text-5xl font-black tracking-[-0.05em] text-slate-900 dark:text-white uppercase">
@@ -142,7 +140,7 @@ import PlatformLanding from './src/pages/PlatformLanding';
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [, setIsMobile] = useState(window.innerWidth < 1024);
   const [currentPage, setPage] = useState('home');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode] = useState(() => {
@@ -157,9 +155,42 @@ const App = () => {
     }
     return false;
   }); 
-  const [products] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang] = useState<Language>(Language.ID);
   const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
+
+  useEffect(() => {
+    // Load custom products from DB and append to products list
+    const loadCustomProducts = async () => {
+      try {
+        const custom = await db.customProducts.where('isActive').equals('true').toArray() || [];
+        const activeCustom = await db.customProducts.filter(p => p.isActive).toArray();
+        if (activeCustom.length > 0) {
+          const formattedCustom = activeCustom.map(cp => ({
+            id: `custom_${cp.id}`,
+            title: cp.name,
+            label: cp.name,
+            icon: Package,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-50',
+            active: true,
+            cat: cp.type === 'SERVICES' ? 'Services' : 'Retail',
+            desc: cp.description || 'Produk asuransi komprehensif.'
+          }));
+          
+          setProducts(prev => {
+             // ensure we append uniquely
+             const coreIds = INITIAL_PRODUCTS.map(ip => ip.id);
+             const cleanPrev = prev.filter(p => coreIds.includes(p.id));
+             return [...cleanPrev, ...formattedCustom];
+          });
+        }
+      } catch(e){}
+    };
+    loadCustomProducts();
+
+    // Listen for product changes if needed
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -219,7 +250,7 @@ const App = () => {
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
 
   if (currentUser && [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(currentUser.role)) {
-    return <AdminPortal onLogout={handleLogout} products={products} setProducts={() => {}} userRole={currentUser.role} />;
+    return <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} />;
   }
 
   // Website Logic (Desktop & Mobile Browser)
@@ -372,7 +403,12 @@ const App = () => {
       case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'bot': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
-      default: return null;
+      default: 
+        if (currentPage.startsWith('buy-custom_')) {
+          const productId = currentPage.replace('buy-', '');
+          return <CustomInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} productId={productId} />;
+        }
+        return null;
     }
   };
 

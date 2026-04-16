@@ -2,10 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Plane, Globe, MapPin, Calendar, Users, ChevronRight, 
-  ShieldCheck, Info, Heart, Luggage, Clock, Check, 
-  ChevronLeft, ArrowRight, User, AlertCircle, Loader2,
-  Wallet, Star
-} from 'lucide-react';
+  ShieldCheck, Info, Check, 
+  ChevronLeft, User, AlertCircle, 
+  Wallet} from 'lucide-react';
 // Porting missing constants from root constants.ts
 import { TRAVEL_PRICING, TRAVEL_BENEFITS } from '../constants';
 import { TravelState, TravelPlanType, TravelRegion, Language } from '../types';
@@ -13,7 +12,7 @@ import { TravelState, TravelPlanType, TravelRegion, Language } from '../types';
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 /* Fix: Added lang to props */
-const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const TravelInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [travel, setTravel] = useState<TravelState>({
     destination: '',
@@ -58,7 +57,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
       <div className="p-4 bg-primary-500/10 rounded-3xl border border-primary-500/20 flex gap-4">
          <Globe className="text-primary-500 flex-shrink-0" size={24}/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
-           Neural Travel OS v3. Configure your itinerary for instant neural underwriting.
+           Sistem Asuransi Perjalanan Digital. Configure your itinerary for proses persetujuan instan.
          </p>
       </div>
 
@@ -152,7 +151,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-1">
-                    <p className="text-[0.5rem] font-black text-primary-500 uppercase tracking-widest">Neural Plan</p>
+                    <p className="text-[0.5rem] font-black text-primary-500 uppercase tracking-widest">Paket</p>
                     <h5 className="text-xl font-black uppercase tracking-tighter">{p.replace('_', ' ')}</h5>
                   </div>
                   <div className="text-right">
@@ -260,7 +259,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
           <div className="absolute right-0 top-0 p-8 opacity-5"><Plane size={120}/></div>
           <div className="flex justify-between items-start relative z-10">
              <div className="space-y-1">
-               <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-[0.3em]">Neural Trip Summary</p>
+               <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-[0.3em]">Ringkasan Perjalanan</p>
                <h4 className="text-2xl font-black uppercase tracking-tighter text-primary-500">{travel.selectedPlan?.replace('_', ' ')}</h4>
              </div>
              <div className="p-3 bg-primary-500/10 rounded-2xl text-primary-500"><ShieldCheck size={24}/></div>
@@ -334,7 +333,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
             </div>
           </div>
           <div className="flex gap-2">
-             {STEPS.map((s, i) => (
+             {STEPS.map((_s, i) => (
                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
              ))}
           </div>

@@ -2,18 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Moon,
   Sun,
-  User,
-  Briefcase,
-  Shield,
-  ChevronDown,
-  Mail,
-  ArrowLeft,
-  Check,
   Menu,
-  X,
-  Globe,
-  Lock,
-  LogOut,
+  X
 } from "lucide-react";
 import { Language } from "../types";
 
@@ -30,14 +20,33 @@ export const SurePathLogo = ({
   className = "h-14 w-auto object-contain",
 }: {
   className?: string;
-}) => (
-  <img
-    src="/logo.png"
-    alt="SurePath Logo"
-    className={`${className} object-contain`}
-    referrerPolicy="no-referrer"
-  />
-);
+}) => {
+  const [src, setSrc] = useState("/logo.png");
+
+  useEffect(() => {
+    const customLogo = localStorage.getItem('surepath_custom_logo');
+    if (customLogo) setSrc(customLogo);
+
+    const handleUpdate = () => {
+      const updated = localStorage.getItem('surepath_custom_logo');
+      if (updated) setSrc(updated);
+      else setSrc("/logo.png");
+    };
+    
+    window.addEventListener('logo-updated', handleUpdate);
+    return () => window.removeEventListener('logo-updated', handleUpdate);
+  }, []);
+
+  return (
+    <img
+      src={src}
+      alt="SurePath Logo"
+      className={`${className} object-contain`}
+      referrerPolicy="no-referrer"
+      onError={() => setSrc("/logo.png")}
+    />
+  );
+};
 
 const Navbar: React.FC<NavbarProps> = ({
   lang,

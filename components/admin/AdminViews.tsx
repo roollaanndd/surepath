@@ -1,49 +1,21 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  TrendingUp, TrendingDown, Users, Zap, ShieldCheck, 
-  CreditCard, ArrowUpRight, Activity, Database, 
-  AlertCircle, CheckCircle2, Clock, MapPin, Search,
-  Eye, FileText, Download, Filter, MoreHorizontal, User, Briefcase,
-  ClipboardCheck, UserCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
-  HardDrive, Upload, FileUp, Cpu, RefreshCw, Layers, Sliders, Code,
-  ChevronRight, Trash2, Smartphone, Plane, Package,
-  Car, Lock, Terminal, Shield, ShieldX, Radio, Server,
-  Fingerprint, ZapOff, Globe, Wallet, CheckSquare, Plus, Calendar, MoreVertical, X, FileDown,
-  Gift, Percent, Landmark
+  TrendingUp, Users, Zap, ShieldCheck, 
+  ArrowUpRight, Activity, 
+  CheckCircle2, Search,
+  Eye, FileText, 
+  ClipboardCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
+  HardDrive, Cpu, RefreshCw, 
+  
+  Car, Terminal, ShieldX, 
+  Globe, FileDown, Upload, Plus
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
-import { db, User as DBUser, Policy, Transaction, AuditLog } from '../../db';
+import { db, User as DBUser, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-const USD_TO_IDR = 16000;
-
-// NEW FINANCIAL CONSTANTS
-// GWP 2024: 2267M, GWP 2025: 2680M
-const FINANCIAL_REPORTS = {
-  "2024": {
-    gwp: [175, 182, 178, 185, 192, 188, 205, 195, 185, 198, 190, 194], // Total: 2267
-    commission: [], // Calculated 25%
-    promo: [],       // Calculated 10%
-    others: [],      // Calculated 5%
-    claims: [15.2, 18.4, 17.5, 20.1, 19.8, 22.4, 25.1, 23.2, 21.5, 24.0, 20.8, 22.1]
-  },
-  "2025": {
-    gwp: [210, 225, 215, 230, 220, 245, 235, 228, 218, 212, 215, 227], // Total: 2680
-    commission: [], // Calculated 25%
-    promo: [],       // Calculated 10%
-    others: [],      // Calculated 5%
-    claims: [24.5, 28.1, 26.8, 30.2, 28.5, 34.0, 31.8, 29.5, 27.2, 26.4, 25.8, 27.5]
-  }
-};
-
-// Auto-calculate ratios
-(["2024", "2025"] as const).forEach(year => {
-    FINANCIAL_REPORTS[year].commission = FINANCIAL_REPORTS[year].gwp.map(v => v * 0.25);
-    FINANCIAL_REPORTS[year].promo = FINANCIAL_REPORTS[year].gwp.map(v => v * 0.10);
-    FINANCIAL_REPORTS[year].others = FINANCIAL_REPORTS[year].gwp.map(v => v * 0.05);
-});
 
 const downloadCSV = (data: any[], filename: string) => {
   if (data.length === 0) return;
@@ -105,15 +77,40 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
 );
 
 export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, section?: string }) => {
-  const [users, setUsers] = useState<DBUser[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
+  const [userStats, setUserStats] = useState<any>({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
         const allUsers = await db.users.toArray();
         const allPolicies = await db.policies.toArray();
-        setUsers(allUsers);
         setPolicies(allPolicies);
+
+        if (section === 'users') {
+           const allTx = await db.transactions.toArray();
+           const stats: any = {};
+           
+           allTx.forEach(tx => {
+               if (!stats[tx.userId]) stats[tx.userId] = { sales: 0, commission: 0 };
+               if (tx.type === 'PAYMENT') stats[tx.userId].sales += tx.amount;
+               if (tx.type === 'COMMISSION') stats[tx.userId].commission += tx.amount;
+           });
+           
+           setUserStats(stats);
+
+           // Map stats to users and sort by sales descending
+           const mappedUsers = allUsers.map(u => ({
+              ...u,
+              totalSales: stats[u.id!]?.sales || 0,
+              totalCommission: stats[u.id!]?.commission || 0
+           })).sort((a, b) => b.totalSales - a.totalSales);
+
+           setUsers(mappedUsers);
+        } else {
+           setUsers(allUsers);
+        }
     };
     fetchData();
   }, [section]);
@@ -144,38 +141,74 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
      )
   }
 
+  const filteredUsers = searchTerm ? users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())) : users;
+
   return (
   <div className="space-y-8 animate-fade-in">
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-primary-500/10 text-primary-500" />
-      <StatCard label="Partner Nodes" value="842" trend="+12" icon={Users} color="bg-blue-500/10 text-blue-500" />
-      <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-emerald-500" />
-    </div>
+    {isDashboard && (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-primary-500/10 text-primary-500" />
+        <StatCard label="Partner Nodes" value={users.length} trend="+12" icon={Users} color="bg-blue-500/10 text-blue-500" />
+        <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-emerald-500" />
+      </div>
+    )}
+    
     {!isDashboard && (section === 'users') && (
       <Card>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="font-black uppercase tracking-widest text-sm">User Directory</h3>
+          <h3 className="font-black uppercase tracking-widest text-sm">Direktori Partner (Top Aktif)</h3>
           <div className="flex items-center gap-3">
-             <span className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{users.length} Users Synced</span>
-             <Search size={18} className="text-gray-500"/>
+             <span className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{users.length} Total Terdaftar</span>
+             <div className="relative">
+                <Search size={14} className="text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
+                <input 
+                  type="text" 
+                  placeholder="Cari user..." 
+                  className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+             </div>
           </div>
         </div>
-        <div className="space-y-4 max-h-[500px] overflow-y-auto no-scrollbar">
-          {users.map((u, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary-500/20 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{u.name[0]}</div>
-                <div>
-                  <p className="text-xs font-black uppercase text-white">{u.name}</p>
-                  <p className="text-[0.5rem] text-gray-500 uppercase tracking-widest">{u.role} • {u.nodeId}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                 <Badge color={u.verified ? "blue" : "yellow"}>{u.verified ? 'Verified' : 'Pending'}</Badge>
-                 <p className="text-[0.4rem] font-mono text-gray-500 mt-1 uppercase tracking-wider">{new Date(u.memberSince).toLocaleDateString()}</p>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto no-scrollbar">
+           <table className="w-full text-left whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+                  <th className="pb-4 pl-4">Partner Info</th>
+                  <th className="pb-4">No. HP</th>
+                  <th className="pb-4">Sales (GWP)</th>
+                  <th className="pb-4">Komisi (25%)</th>
+                  <th className="pb-4 text-right pr-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="text-xs">
+                {filteredUsers.slice(0, 200).map((u, i) => (
+                  <tr key={i} className="border-b border-white/[0.02] hover:bg-white/[0.01]">
+                    <td className="py-4 pl-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{u.name[0]}</div>
+                        <div>
+                          <p className="text-xs font-black uppercase text-white">{u.name}</p>
+                          <p className="text-[0.5rem] text-gray-500 tracking-widest">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 font-mono text-[0.6rem] text-gray-400">{u.phone}</td>
+                    <td className="py-4 font-black text-emerald-500">{formatIDR(u.totalSales || 0)}</td>
+                    <td className="py-4 font-black text-amber-500">{formatIDR(u.totalCommission || 0)}</td>
+                    <td className="py-4 text-right pr-4">
+                       <Badge color={u.totalSales > 0 ? "emerald" : "gray"}>{u.totalSales > 0 ? 'Active Seller' : 'Registered'}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+           </table>
+           {filteredUsers.length > 200 && (
+             <div className="p-4 text-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+               Menampilkan Top 200 dari {filteredUsers.length} Partner. Gunakan pencarian untuk User lainnya.
+             </div>
+           )}
         </div>
       </Card>
     )}
@@ -212,7 +245,7 @@ export const SecurityView = () => {
             <div className="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(16,185,129,0.4)] flex items-center gap-4 border border-white/20">
                <ShieldCheck size={20} className="animate-pulse"/>
                <div className="space-y-0.5">
-                  <p className="text-[0.55rem] font-black uppercase tracking-[0.2em] opacity-80">Neural Guard Active</p>
+                  <p className="text-[0.55rem] font-black uppercase tracking-[0.2em] opacity-80">Sistem Keamanan Aktif</p>
                   <p className="text-xs font-bold tracking-tight">{lastNotification}</p>
                </div>
             </div>
@@ -220,10 +253,10 @@ export const SecurityView = () => {
        )}
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Live Threats Blocked" value={pulse.threatsBlocked24h.toLocaleString()} trend={`+${Math.floor(Math.random() * 5)}`} icon={ShieldAlert} color="bg-primary-500/10 text-primary-500" />
-          <StatCard label="Neural Load" value={`${pulse.neuralLoad.toFixed(2)}%`} trend="-0.4%" icon={Cpu} color="bg-blue-500/10 text-blue-500" />
-          <StatCard label="AI Shield Latency" value="0.38ms" trend="-0.01" icon={Zap} color="bg-orange-500/10 text-orange-500" />
-          <StatCard label="Global Uptime" value={pulse.globalUptime} icon={Globe} color="bg-emerald-500/10 text-emerald-500" />
+          <StatCard label="Celah Keamanan Difilter" value={pulse.threatsBlocked24h.toLocaleString()} trend={`+${Math.floor(Math.random() * 5)}`} icon={ShieldAlert} color="bg-primary-500/10 text-primary-500" />
+          <StatCard label="Beban Sistem" value={`${pulse.neuralLoad.toFixed(2)}%`} trend="-0.4%" icon={Cpu} color="bg-blue-500/10 text-blue-500" />
+          <StatCard label="Latensi Server" value="0.38ms" trend="-0.01" icon={Zap} color="bg-orange-500/10 text-orange-500" />
+          <StatCard label="Uptime Server" value={pulse.globalUptime} icon={Globe} color="bg-emerald-500/10 text-emerald-500" />
        </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -232,7 +265,7 @@ export const SecurityView = () => {
                 <div className="flex items-center gap-4">
                    <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><Terminal size={20}/></div>
                    <div>
-                      <h3 className="font-black uppercase tracking-widest text-sm">Real-time Traffic Neural Mesh</h3>
+                      <h3 className="font-black uppercase tracking-widest text-sm">Monitoring Trafik Real-time</h3>
                       <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">24/7 Backend Protection Monitoring</p>
                    </div>
                 </div>
@@ -257,7 +290,7 @@ export const SecurityView = () => {
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                    <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500"><ShieldX size={20}/></div>
-                   <h3 className="font-black uppercase tracking-widest text-sm">Mitigation Log</h3>
+                   <h3 className="font-black uppercase tracking-widest text-sm">Log Mitigasi</h3>
                 </div>
                 <Badge color="rose">Live Feed</Badge>
              </div>
@@ -269,7 +302,7 @@ export const SecurityView = () => {
                             <Badge color={t.type === 'HIJACKING_ATTEMPT' ? 'rose' : 'yellow'}>{t.type.split('_')[0]}</Badge>
                             <span className="text-[0.6rem] font-mono text-gray-500 truncate">{t.ip}</span>
                          </div>
-                         <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-widest">{t.timestamp} • AI-Neutralized</p>
+                         <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-widest">{t.timestamp} • Auto-Neutralized</p>
                       </div>
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-primary-500 text-white animate-bounce' : 'bg-emerald-500/10 text-emerald-500'}`}>
                          <Check size={16} strokeWidth={3}/>
@@ -283,231 +316,212 @@ export const SecurityView = () => {
   );
 };
 
-export const ReportsView = ({ compact, externalCurrency }: { compact?: boolean, externalCurrency?: 'USD' | 'IDR' }) => {
-  const [year, setYear] = useState<"2024" | "2025">("2025");
-  const [metric, setMetric] = useState<"gwp" | "commission" | "promo" | "others" | "claims">("gwp");
-  const [currency, setCurrency] = useState<'USD' | 'IDR'>(externalCurrency || 'USD');
-
-  useEffect(() => {
-    if (externalCurrency) setCurrency(externalCurrency);
-  }, [externalCurrency]);
-
-  const data = FINANCIAL_REPORTS[year][metric];
-  const maxVal = Math.max(...data);
-
-  const getMetricLabel = () => {
-    const unit = currency === 'USD' ? 'USD Million' : 'IDR Trillion';
-    if (metric === "gwp") return `Gross Written Premium (${unit})`;
-    if (metric === "commission") return `Commission Matrix (25%) (${unit})`;
-    if (metric === "promo") return `Promotional Allocation (10%) (${unit})`;
-    if (metric === "others") return `Operational Expenses (5%) (${unit})`;
-    return `Neural Claim Payouts (${unit})`;
-  };
-
-  const formatDisplay = (val: number) => {
-    if (currency === 'IDR') return `Rp ${(val * USD_TO_IDR / 1000).toFixed(2)}T`;
-    return `$${val}M`;
-  };
-
-  const getYearTotal = () => {
-     const sum = data.reduce((a,b) => a + b, 0);
-     return formatDisplay(sum);
-  };
-
-  const handleExport = () => {
-    const csvData = MONTHS.map((m, i) => ({
-      Month: m,
-      Year: year,
-      Currency: currency,
-      GWP_M: FINANCIAL_REPORTS[year].gwp[i],
-      Commission_M: FINANCIAL_REPORTS[year].commission[i],
-      Promo_M: FINANCIAL_REPORTS[year].promo[i],
-      Others_M: FINANCIAL_REPORTS[year].others[i],
-      Claims_M: FINANCIAL_REPORTS[year].claims[i]
-    }));
-    downloadCSV(csvData, `SurePath_Finance_${year}_${currency}`);
-  };
-
-  return (
-    <div className={`space-y-8 ${compact ? '' : 'animate-fade-in text-white'}`}>
-       {!compact && (
-          <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
-             <div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Performance <span className="text-primary-500">Analytics</span></h2>
-                <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Multi-Year Financial Matrix Decomposition</p>
-             </div>
-             <div className="flex gap-4">
-                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
-                   {(["2024", "2025"] as const).map(y => (
-                      <button 
-                        key={y} 
-                        onClick={() => setYear(y)}
-                        className={`px-6 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${year === y ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                      >
-                         FY {y}
-                      </button>
-                   ))}
-                </div>
-                {!externalCurrency && (
-                   <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
-                      {(['USD', 'IDR'] as const).map(c => (
-                        <button key={c} onClick={() => setCurrency(c)} className={`px-4 py-3 rounded-xl text-[0.6rem] font-black transition-all ${currency === c ? 'bg-white/10 text-white' : 'text-gray-500'}`}>{c}</button>
-                      ))}
-                   </div>
-                )}
-                <button onClick={handleExport} className="flex items-center gap-3 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all">
-                   <FileDown size={18}/> Export Excel
-                </button>
-             </div>
-          </div>
-       )}
-
-       <Card className={compact ? 'p-0 bg-transparent border-0 shadow-none' : ''}>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-             <div className="space-y-2">
-                <p className="text-[0.65rem] font-black text-primary-500 uppercase tracking-[0.4em]">{getMetricLabel()}</p>
-                <h3 className="text-4xl font-black tracking-tighter">{getYearTotal()}</h3>
-             </div>
-             
-             <div className="flex flex-wrap bg-white/5 p-1 rounded-2xl border border-white/5">
-                {[
-                  { id: 'gwp', label: 'GWP', icon: Wallet },
-                  { id: 'commission', label: 'Comm', icon: TrendingUp },
-                  { id: 'promo', label: 'Promo', icon: Gift },
-                  { id: 'others', label: 'Exp', icon: Percent },
-                  { id: 'claims', label: 'Claims', icon: Zap }
-                ].map(m => (
-                   <button 
-                     key={m.id} 
-                     onClick={() => setMetric(m.id as any)}
-                     className={`flex items-center gap-2 px-4 py-3 rounded-xl text-[0.6rem] font-black uppercase transition-all ${metric === m.id ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
-                   >
-                      <m.icon size={14}/>
-                      {m.label}
-                   </button>
-                ))}
-             </div>
-          </div>
-
-          <div className="relative h-[320px] w-full flex items-end justify-between px-2 gap-2 md:gap-4 group/chart">
-             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-5">
-                {[1,2,3,4].map(i => <div key={i} className="w-full border-t border-white"></div>)}
-             </div>
-
-             {data.map((val, i) => {
-                const height = (val / maxVal) * 100;
-                const metricColors: any = {
-                    gwp: 'bg-primary-500 shadow-[0_0_20px_rgba(249,115,22,0.3)]',
-                    commission: 'bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]',
-                    promo: 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]',
-                    others: 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]',
-                    claims: 'bg-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]'
-                };
-                return (
-                   <div key={i} className="flex-1 flex flex-col items-center gap-3 group/bar">
-                      <div className="relative w-full h-[250px] flex items-end">
-                         <div 
-                           className={`w-full rounded-t-xl transition-all duration-1000 ease-out relative overflow-hidden ${metricColors[metric]}`}
-                           style={{ height: `${height}%`, transitionDelay: `${i * 50}ms` }}
-                         >
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                         </div>
-                         
-                         <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-slate-900 px-3 py-1.5 rounded-lg text-[0.65rem] font-black shadow-2xl opacity-0 group-hover/bar:opacity-100 transition-all pointer-events-none whitespace-nowrap z-30">
-                            {formatDisplay(val)}
-                         </div>
-                      </div>
-                      <span className="text-[0.6rem] font-black text-gray-500 uppercase tracking-widest">{MONTHS[i]}</span>
-                   </div>
-                );
-             })}
-          </div>
-       </Card>
-    </div>
-  );
-};
-
-export const LedgerView = ({ externalCurrency }: { externalCurrency?: 'USD' | 'IDR' }) => {
+export const LedgerView = () => {
     const [txs, setTxs] = useState<Transaction[]>([]);
-    const [year, setYear] = useState<"2024" | "2025">("2025");
-    const [currency, setCurrency] = useState<'USD' | 'IDR'>(externalCurrency || 'USD');
     
-    useEffect(() => {
-        if (externalCurrency) setCurrency(externalCurrency);
-    }, [externalCurrency]);
-
     useEffect(() => {
         db.transactions.toArray().then(res => setTxs(res.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
     }, []);
 
-    const convert = (usdM: number) => {
-        if (currency === 'IDR') return `Rp ${(usdM * USD_TO_IDR / 1000).toFixed(2)}T`;
-        return `$${usdM}M`;
+    const convert = (val: number) => {
+        return `Rp ${(val).toLocaleString('id-ID')}`;
     };
 
     const handleExport = () => {
         const data = txs.map(t => ({
             ID: t.id,
-            Date: t.date,
-            Type: t.type,
-            Amount: t.amount,
+            Tanggal: t.date,
+            Tipe: t.type,
+            Jumlah: t.amount,
             Status: t.status,
-            Reference: t.referenceId,
-            Description: t.description
+            Ref: t.referenceId,
+            Deskripsi: t.description
         }));
-        downloadCSV(data, `SurePath_Finance_Ledger_${currency}`);
+        downloadCSV(data, `Buku_Besar_Transaksi`);
     };
 
     return (
-        <div className="space-y-8 text-white">
+        <div className="space-y-8 animate-fade-in text-white">
            <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
               <div>
-                 <h2 className="text-3xl font-black uppercase tracking-tighter">Vault <span className="text-emerald-500">Registry</span></h2>
-                 <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Real-time Node Transaction Reconciliation</p>
+                 <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-emerald-500">Besar</span></h2>
+                 <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Sistem Pencatatan Transaksi Real-time</p>
               </div>
               <div className="flex gap-4">
                  <button onClick={handleExport} className="flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl shadow-emerald-500/10 active:scale-95 transition-all">
-                    <FileDown size={18}/> Download Ledger (Excel)
+                    <FileDown size={18}/> Unduh Excel
                  </button>
               </div>
            </div>
 
-           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-3">
-                 <Card>
-                    <div className="flex justify-between items-center mb-8">
-                       <h3 className="text-sm font-black uppercase tracking-widest">Monthly Financial Performance Audit</h3>
-                       <div className="flex gap-4">
-                          <div className="flex bg-white/5 p-1 rounded-xl">
-                             {(["2024", "2025"] as const).map(y => (
-                                <button key={y} onClick={() => setYear(y)} className={`px-4 py-1.5 rounded-lg text-[0.6rem] font-black uppercase transition-all ${year === y ? 'bg-primary-500 text-white' : 'text-gray-500'}`}>{y}</button>
-                             ))}
+           <Card>
+              <div className="overflow-x-auto no-scrollbar">
+                 <table className="w-full text-left min-w-[600px]">
+                    <thead>
+                       <tr className="text-[0.55rem] font-black text-gray-500 uppercase tracking-widest border-b border-white/5">
+                          <th className="pb-4 pl-4">Tanggal</th>
+                          <th className="pb-4">Tipe Transaksi</th>
+                          <th className="pb-4">Deskripsi</th>
+                          <th className="pb-4">Jumlah (Rp)</th>
+                          <th className="pb-4 text-right pr-4">Status</th>
+                       </tr>
+                    </thead>
+                    <tbody className="text-[0.7rem] font-bold">
+                       {txs.slice(0, 100).map((t, i) => (
+                          <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                             <td className="py-4 pl-4 text-gray-400">{new Date(t.date).toLocaleString('id-ID')}</td>
+                             <td className="py-4 text-primary-500 font-mono">{t.type}</td>
+                             <td className="py-4 text-white max-w-xs truncate" title={t.description}>{t.description}</td>
+                             <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-emerald-500">+{convert(t.amount)}</span>}</td>
+                             <td className="py-4 text-right pr-4">
+                                <Badge color={t.status === 'SUCCESS' ? 'emerald' : t.status === 'PENDING' ? 'yellow' : 'rose'}>{t.status}</Badge>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              </div>
+           </Card>
+        </div>
+    );
+};
+
+export const ReportsView = ({ compact }: { compact?: boolean }) => {
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [viewType, setViewType] = useState<'daily'|'monthly'|'yearly'>('monthly');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    useEffect(() => {
+        db.transactions.toArray().then(setTransactions);
+    }, []);
+
+    const convert = (val: number) => {
+        if(val === 0) return '-';
+        return `Rp ${(val / 1000000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})}Jt`;
+    };
+
+    const getAggregatedData = () => {
+        const result: any[] = [];
+        const today = new Date();
+        
+        if (viewType === 'monthly') {
+            for(let i=0; i<12; i++) {
+                const txs = transactions.filter(t => {
+                   const d = new Date(t.date);
+                   return d.getFullYear() === selectedYear && d.getMonth() === i;
+                });
+                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
+                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
+                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
+                result.push({ period: `${MONTHS[i]} ${selectedYear}`, gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+            }
+        } else if (viewType === 'yearly') {
+            const currentYear = new Date().getFullYear();
+            const years = [currentYear - 1, currentYear];
+            years.forEach(y => {
+                const txs = transactions.filter(t => new Date(t.date).getFullYear() === y);
+                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
+                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
+                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
+                result.push({ period: `Tahun ${y}`, gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+            });
+        } else if (viewType === 'daily') {
+            for(let i=6; i>=0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const txs = transactions.filter(t => new Date(t.date).toDateString() === d.toDateString());
+                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
+                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
+                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
+                result.push({ period: d.toLocaleDateString('id-ID', { day:'numeric', month:'short' }), gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+            }
+        }
+        return result;
+    };
+
+    const aggregatedData = getAggregatedData();
+    const totalGwp = aggregatedData.reduce((acc, r) => acc + r.gwp, 0);
+    const totalClaim = aggregatedData.reduce((acc, r) => acc + r.claims, 0);
+    const expenses = aggregatedData.reduce((acc, r) => acc + r.commissions + r.promo + r.others, 0);
+    const combinedRatio = totalGwp > 0 ? (((totalClaim + expenses) / totalGwp) * 100).toFixed(1) : "0.0";
+
+    const handleExport = () => {
+        downloadCSV(aggregatedData, `Laporan_Keuangan_${viewType}_${selectedYear}`);
+    };
+
+    return (
+        <div className={`space-y-8 ${compact ? '' : 'animate-fade-in text-white'}`}>
+           {!compact && (
+              <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
+                 <div>
+                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-primary-500">Keuangan</span></h2>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
+                 </div>
+                 <div className="flex gap-4">
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                       {[2023, 2024, 2025, 2026].map(y => (
+                          <button 
+                            key={y} 
+                            onClick={() => setSelectedYear(y)}
+                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${selectedYear === y ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                          >
+                             {y}
+                          </button>
+                       ))}
+                    </div>
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                       {(['daily', 'monthly', 'yearly'] as const).map(v => (
+                          <button 
+                            key={v} 
+                            onClick={() => setViewType(v)}
+                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                          >
+                             {v === 'daily' ? 'Harian' : v === 'monthly' ? 'Bulanan' : 'Tahunan'}
+                          </button>
+                       ))}
+                    </div>
+                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all">
+                       <FileDown size={18}/> Unduh Excel
+                    </button>
+                 </div>
+              </div>
+           )}
+
+           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+              <div className="lg:col-span-3 space-y-6">
+                 <Card className="p-0">
+                    <div className="p-8 border-b border-white/5 flex justify-between items-center">
+                       <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white"><FileText size={24}/></div>
+                          <div>
+                             <h3 className="font-black uppercase tracking-widest text-lg text-white">Ringkasan {viewType === 'daily' ? 'Harian' : viewType === 'monthly' ? 'Bulanan' : 'Tahunan'}</h3>
+                             <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Berdasarkan Total Transaksi Masuk</p>
                           </div>
                        </div>
                     </div>
                     
-                    <div className="overflow-x-auto no-scrollbar">
-                       <table className="w-full text-left">
-                          <thead>
-                             <tr className="text-[0.55rem] font-black text-gray-500 uppercase tracking-widest border-b border-white/5">
-                                <th className="pb-4 pl-4">Month Cycle</th>
-                                <th className="pb-4">GWP</th>
-                                <th className="pb-4">Comm (25%)</th>
-                                <th className="pb-4">Promo (10%)</th>
-                                <th className="pb-4">Others (5%)</th>
-                                <th className="pb-4">Claims</th>
-                                <th className="pb-4 text-right pr-4">Health</th>
+                    <div className="w-full overflow-x-auto">
+                       <table className="w-full text-left min-w-[700px]">
+                          <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-gray-500 font-black">
+                             <tr>
+                                <th className="py-4 pl-4 font-bold border-b border-white/5">Periode</th>
+                                <th className="py-4 font-bold border-b border-white/5">Premi Masuk</th>
+                                <th className="py-4 font-bold border-b border-white/5">Komisi</th>
+                                <th className="py-4 font-bold border-b border-white/5">Promo/Marketing</th>
+                                <th className="py-4 font-bold border-b border-white/5">Operasional</th>
+                                <th className="py-4 font-bold border-b border-white/5">Klaim Dibayar</th>
+                                <th className="py-4 border-b border-white/5 text-right pr-4">Status</th>
                              </tr>
                           </thead>
                           <tbody className="text-[0.7rem] font-bold">
-                             {MONTHS.map((m, i) => (
+                             {aggregatedData.map((row, i) => (
                                 <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
-                                   <td className="py-4 pl-4 uppercase text-white font-black">{m} {year}</td>
-                                   <td className="py-4 text-primary-500 font-mono">{convert(FINANCIAL_REPORTS[year].gwp[i])}</td>
-                                   <td className="py-4 text-blue-400 font-mono">{convert(FINANCIAL_REPORTS[year].commission[i])}</td>
-                                   <td className="py-4 text-emerald-400 font-mono">{convert(FINANCIAL_REPORTS[year].promo[i])}</td>
-                                   <td className="py-4 text-indigo-400 font-mono">{convert(FINANCIAL_REPORTS[year].others[i])}</td>
-                                   <td className="py-4 text-rose-500 font-mono">{convert(FINANCIAL_REPORTS[year].claims[i])}</td>
+                                   <td className="py-4 pl-4 uppercase text-white font-black">{row.period}</td>
+                                   <td className="py-4 text-primary-500 font-mono">{convert(row.gwp)}</td>
+                                   <td className="py-4 text-blue-400 font-mono">{convert(row.commissions)}</td>
+                                   <td className="py-4 text-emerald-400 font-mono">{convert(row.promo)}</td>
+                                   <td className="py-4 text-indigo-400 font-mono">{convert(row.others)}</td>
+                                   <td className="py-4 text-rose-500 font-mono">{convert(row.claims)}</td>
                                    <td className="py-4 text-right pr-4">
                                       <div className="flex items-center justify-end gap-2 text-emerald-500">
                                          <CheckCircle2 size={12}/>
@@ -525,34 +539,16 @@ export const LedgerView = ({ externalCurrency }: { externalCurrency?: 'USD' | 'I
                  <Card className="bg-primary-500/5 border-primary-500/10">
                     <div className="flex items-center gap-4 mb-6">
                        <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-lg"><Activity size={20}/></div>
-                       <h3 className="text-sm font-black uppercase tracking-tight">System Audit</h3>
+                       <h3 className="text-sm font-black uppercase tracking-tight">Performa Bisnis</h3>
                     </div>
                     <div className="space-y-4">
                        <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Total GWP FY {year}</p>
-                          <p className="text-2xl font-black text-white">{convert(FINANCIAL_REPORTS[year].gwp.reduce((a,b)=>a+b,0))}</p>
+                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Total GWP</p>
+                          <p className="text-2xl font-black text-white">{convert(totalGwp)}</p>
                        </div>
                        <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Combined Ratio</p>
-                          <p className="text-2xl font-black text-emerald-500">~52.5%</p>
-                       </div>
-                    </div>
-                 </Card>
-                 
-                 <Card>
-                    <h3 className="text-xs font-black uppercase tracking-widest mb-6">Expense Decomposition</h3>
-                    <div className="space-y-3">
-                       <div className="p-3 bg-white/5 rounded-xl flex justify-between items-center">
-                          <span className="text-[0.6rem] font-black uppercase text-blue-400">Commission</span>
-                          <span className="text-xs font-mono">25%</span>
-                       </div>
-                       <div className="p-3 bg-white/5 rounded-xl flex justify-between items-center">
-                          <span className="text-[0.6rem] font-black uppercase text-emerald-400">Promo</span>
-                          <span className="text-xs font-mono">10%</span>
-                       </div>
-                       <div className="p-3 bg-white/5 rounded-xl flex justify-between items-center">
-                          <span className="text-[0.6rem] font-black uppercase text-indigo-400">Others</span>
-                          <span className="text-xs font-mono">5%</span>
+                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Rasio Gabungan (Combined Ratio)</p>
+                          <p className={`text-2xl font-black ${Number(combinedRatio) > 100 ? 'text-rose-500' : 'text-emerald-500'}`}>~{combinedRatio}%</p>
                        </div>
                     </div>
                  </Card>
@@ -671,24 +667,162 @@ export const InventoryView = () => (
 );
 
 export const SettingsView = ({ products, setProducts }: { products: any[], setProducts: any }) => {
+  const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
+  const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
+
+  useEffect(() => {
+    db.customProducts.toArray().then(setCustomProducts);
+  }, []);
+
+  const handleAddCustomProduct = async () => {
+    if (!newProduct.name) return;
+    await db.customProducts.add({ ...newProduct, isActive: true });
+    setNewProduct({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
+    db.customProducts.toArray().then(setCustomProducts);
+  };
+
   const toggleProduct = (id: string) => {
     setProducts(products.map((p: any) => p.id === id ? { ...p, active: !p.active } : p));
   };
 
+  const toggleCustomProduct = async (product: CustomProduct) => {
+    await db.customProducts.update(product.id!, { isActive: !product.isActive });
+    db.customProducts.toArray().then(setCustomProducts);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Ukuran logo maksimal 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        localStorage.setItem('surepath_custom_logo', reader.result as string);
+        window.dispatchEvent(new Event('logo-updated'));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Ensure default products is an array to fix map issue
+  const safeProducts = Array.isArray(products) ? products : [];
+
   return (
-    <div className="space-y-8 animate-fade-in text-white">
+    <div className="space-y-8 animate-fade-in text-white pb-32">
        <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><Settings size={22}/></div>
-          <h3 className="font-black uppercase tracking-widest text-sm">Neural Product Configuration</h3>
+          <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Sistem</h3>
        </div>
+
        <div className="grid gap-4">
-          {products.map(p => (
+          <Card className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 text-gray-400`}><Upload size={24}/></div>
+              <div>
+                <p className="font-black uppercase text-sm">Logo Perusahaan</p>
+                <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Update Logo Platform (Maks 2MB)</p>
+              </div>
+            </div>
+            <label className="cursor-pointer px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-white/10 hover:bg-white/20 text-white">
+              Pilih File
+              <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+            </label>
+          </Card>
+       </div>
+
+       <div className="grid gap-4 mt-8">
+          <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Tambah Produk Baru</h3>
+          <Card className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input 
+                type="text" 
+                placeholder="Nama Produk (Cth: Asuransi Gempa)" 
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                value={newProduct.name}
+                onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+              />
+              <select 
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono [&>option]:bg-slate-900"
+                value={newProduct.type}
+                onChange={e => setNewProduct({...newProduct, type: e.target.value})}
+              >
+                <option value="INSURANCE">Standard Insurance</option>
+                <option value="SERVICES">Additional Services</option>
+              </select>
+              <div className="relative">
+                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">Rp</span>
+                 <input 
+                   type="number" 
+                   placeholder="Basic Premium" 
+                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                   value={newProduct.basePremium}
+                   onChange={e => setNewProduct({...newProduct, basePremium: Number(e.target.value)})}
+                 />
+              </div>
+              <div className="relative">
+                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">% Rate</span>
+                 <input 
+                   type="number" 
+                   step="0.01"
+                   placeholder="Multiplier Rate (e.g. 0.05)" 
+                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                   value={newProduct.rate}
+                   onChange={e => setNewProduct({...newProduct, rate: Number(e.target.value)})}
+                 />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Deskripsi Singkat" 
+                className="w-full md:col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                value={newProduct.description}
+                onChange={e => setNewProduct({...newProduct, description: e.target.value})}
+              />
+            </div>
+            <div className="mt-4 flex justify-end">
+               <button 
+                 onClick={handleAddCustomProduct}
+                 className="flex items-center gap-2 px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-emerald-500 text-white shadow-emerald-500/20 shadow-xl hover:bg-emerald-600 active:scale-95"
+               >
+                 <Plus size={16}/> SIMPAN PRODUK
+               </button>
+            </div>
+          </Card>
+       </div>
+
+       {customProducts.length > 0 && (
+         <div className="grid gap-4 mt-8">
+            <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Daftar Produk Tambahan</h3>
+            {customProducts.map(p => (
+              <Card key={p.id} className="flex items-center justify-between py-6">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500`}><FileText size={24}/></div>
+                  <div>
+                    <p className="font-black uppercase text-sm">{p.name}</p>
+                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => toggleCustomProduct(p)}
+                  className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.isActive ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-primary-500 text-white shadow-primary-500/20'}`}
+                >
+                  {p.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                </button>
+              </Card>
+            ))}
+         </div>
+       )}
+
+       <div className="grid gap-4 mt-8">
+          <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Manajemen Modul Platform</h3>
+          {safeProducts.map(p => (
             <Card key={p.id} className="flex items-center justify-between py-6">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 ${p.color}`}><p.icon size={24}/></div>
                 <div>
                   <p className="font-black uppercase text-sm">{p.label}</p>
-                  <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{p.active ? 'Deployment Active' : 'Neural Core Standby'}</p>
+                  <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
                 </div>
               </div>
               <button 

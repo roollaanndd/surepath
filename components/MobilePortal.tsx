@@ -2,11 +2,11 @@
 import React from 'react';
 // Added comment above fix
 // Fix: Removed unused 'Card' from imports as it is not exported from './shared/UI'.
-import { Badge, GlassCard } from './shared/UI';
+import { Badge } from './shared/UI';
 import { 
-  Car, Plane, Heart, Package, Zap, Clock, 
+  Car, Zap, 
   ShieldCheck, ChevronRight, MessageCircle, 
-  ShoppingBag, Bell, Star, ArrowUpRight, Activity
+  ShoppingBag, Bell, ArrowUpRight, Activity
 } from 'lucide-react';
 import { formatIDR } from './car-wizard/WizardUI';
 

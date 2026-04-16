@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { 
-  CreditCard, Wallet, Smartphone, Landmark, Check, 
-  ChevronRight, Lock, ShieldCheck, Zap, ArrowRight,
-  Clock, Copy, AlertCircle, Loader2, Info, CalendarClock
+  CreditCard, Smartphone, Landmark, Check, 
+  Lock, ShieldCheck, Zap, 
+  Loader2, Info, CalendarClock
 } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 
@@ -13,7 +13,7 @@ interface StepPaymentProps {
   loading: boolean;
 }
 
-const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSuccess, loading }) => {
+const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSuccess }) => {
   const [method, setMethod] = useState<'VA' | 'EWALLET' | 'CC' | null>(null);
   const [selectedSubMethod, setSelectedSubMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

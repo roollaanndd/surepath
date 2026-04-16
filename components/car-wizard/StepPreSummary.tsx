@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
 import { 
-  ShieldCheck, Car, Smartphone, Shield, 
-  AlertCircle, Hash, Palette, User, FileText, 
-  Scale, Building2, Wallet, Zap, Layers,
-  CheckCircle2, Plus, Package, Calendar, Users,
-  BadgePercent, ArrowDown, FileDown, Loader2
+  Car, Smartphone, Shield, 
+  AlertCircle, Palette, User, 
+  Wallet, Zap, Layers,
+  CheckCircle2, Plus, Calendar, 
+  BadgePercent, FileDown, Loader2
 } from 'lucide-react';
-import { formatIDR, Badge } from './WizardUI';
+import { formatIDR } from './WizardUI';
 import { jsPDF } from 'jspdf';
 
 interface StepPreSummaryProps {
@@ -21,7 +21,7 @@ interface StepPreSummaryProps {
 }
 
 const StepPreSummary: React.FC<StepPreSummaryProps> = ({
-  vehicle, coverage, premiumBreakdown, showBreakdown, setShowBreakdown, stnkResult, kycData
+  vehicle, coverage, premiumBreakdown, stnkResult, kycData
 }) => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 

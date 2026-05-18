@@ -21,7 +21,7 @@ export const SurePathLogo = ({
 }: {
   className?: string;
 }) => {
-  const [src, setSrc] = useState("/logo.png");
+  const [src, setSrc] = useState("/logo.svg");
 
   useEffect(() => {
     const customLogo = localStorage.getItem('surepath_custom_logo');
@@ -30,7 +30,7 @@ export const SurePathLogo = ({
     const handleUpdate = () => {
       const updated = localStorage.getItem('surepath_custom_logo');
       if (updated) setSrc(updated);
-      else setSrc("/logo.png");
+      else setSrc("/logo.svg");
     };
     
     window.addEventListener('logo-updated', handleUpdate);
@@ -43,7 +43,7 @@ export const SurePathLogo = ({
       alt="SurePath Logo"
       className={`${className} object-contain`}
       referrerPolicy="no-referrer"
-      onError={() => setSrc("/logo.png")}
+      onError={() => setSrc("/logo.svg")}
     />
   );
 };

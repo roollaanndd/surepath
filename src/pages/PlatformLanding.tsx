@@ -37,9 +37,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 py-3' : 'bg-transparent py-5'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Logo Placeholder - Users can replace src with their uploaded logo */}
-            <img src="https://picsum.photos/seed/insurepath/100/100" alt="InsurePath Logo" className="w-10 h-10 rounded-xl shadow-lg object-cover" referrerPolicy="no-referrer" />
-            <span className="font-black text-2xl tracking-tighter uppercase">Insure<span className="text-emerald-500">Path</span></span>
+            <img src="/logo.svg" alt="SurePath Logo" className="w-10 h-10 rounded-xl shadow-lg object-contain" />
+            <span className="font-black text-2xl tracking-tighter uppercase">Sure<span className="text-emerald-500">Path</span></span>
           </div>
           
           <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-gray-300">
@@ -134,7 +133,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     <Bot className="w-6 h-6 text-emerald-500" />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg">InsureBot 🤖</h3>
+                    <h3 className="font-black text-lg">SureBot 🤖</h3>
                     <p className="text-xs text-emerald-500 font-bold uppercase tracking-widest">{t('Ready to help!', 'Siap bantu kamu!')}</p>
                   </div>
                 </div>
@@ -364,7 +363,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent" />
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl lg:text-6xl font-black tracking-tighter mb-6 uppercase">{t('Ready to step into the future?', 'Siap melangkah ke masa depan?')}</h2>
-          <p className="text-xl text-slate-600 dark:text-gray-400 mb-10">{t('Join thousands of users and businesses already protected by InsurePath.', 'Bergabunglah dengan ribuan pengguna dan bisnis yang sudah dilindungi oleh InsurePath.')}</p>
+          <p className="text-xl text-slate-600 dark:text-gray-400 mb-10">{t('Join thousands of users and businesses already protected by SurePath.', 'Bergabunglah dengan ribuan pengguna dan bisnis yang sudah dilindungi oleh SurePath.')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button onClick={onSignIn} className="bg-slate-900 dark:bg-white text-white dark:text-black px-10 py-5 rounded-full text-sm font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl">
               {t('Create Free Account', 'Buat Akun Gratis')}
@@ -381,8 +380,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-6">
-              <img src="https://picsum.photos/seed/insurepath/100/100" alt="InsurePath Logo" className="w-6 h-6 rounded-md object-cover" referrerPolicy="no-referrer" />
-              <span className="font-black text-slate-900 dark:text-white uppercase tracking-tighter">InsurePath</span>
+              <img src="/logo.svg" alt="SurePath Logo" className="w-6 h-6 rounded-md object-contain" />
+              <span className="font-black text-slate-900 dark:text-white uppercase tracking-tighter">SurePath</span>
             </div>
             <p className="max-w-xs">{t('AI-Powered Insurance Infrastructure for Southeast Asia.', 'Infrastruktur Asuransi Bertenaga AI untuk Asia Tenggara.')}</p>
           </div>
@@ -414,7 +413,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           </div>
         </div>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center pt-8 border-t border-slate-200 dark:border-white/10">
-          <p>© 2026 InsurePath. All rights reserved.</p>
+          <p>© 2026 SurePath. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <span className="flex items-center gap-2"><Globe className="w-4 h-4"/> {lang === Language.EN ? 'Global' : 'Indonesia'}</span>
           </div>

@@ -403,6 +403,7 @@ const App = () => {
       case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'bot': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
+      case 'buy-health-ind': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
       default: 
         if (currentPage.startsWith('buy-custom_')) {
           const productId = currentPage.replace('buy-', '');

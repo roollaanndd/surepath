@@ -25,6 +25,7 @@ import { SmartBot, PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
 import { Badge } from './components/shared/UI';
 import { auth, signOut } from './firebase';
+import { getAgentByEmail } from './services/supabaseService';
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -164,7 +165,6 @@ const App = () => {
     // Load custom products from DB and append to products list
     const loadCustomProducts = async () => {
       try {
-        const custom = await db.customProducts.where('isActive').equals('true').toArray() || [];
         const activeCustom = await db.customProducts.filter(p => p.isActive).toArray();
         if (activeCustom.length > 0) {
           const formattedCustom = activeCustom.map(cp => ({
@@ -215,9 +215,14 @@ const App = () => {
     }
   }, []);
 
-  const handleAuthSuccess = (user: any) => {
-    setCurrentUser(user);
-    localStorage.setItem('SUREPATH_SESSION', JSON.stringify(user));
+  const handleAuthSuccess = async (user: any) => {
+    let enrichedUser = user;
+    if (user.role === UserRole.AGENT && !user.supabaseId) {
+      const spUser = await getAgentByEmail(user.email).catch(() => null);
+      if (spUser) enrichedUser = { ...user, supabaseId: spUser.id, agent_code: spUser.agent_code };
+    }
+    setCurrentUser(enrichedUser);
+    localStorage.setItem('SUREPATH_SESSION', JSON.stringify(enrichedUser));
     setAppMode(true);
     setPage('home');
   };

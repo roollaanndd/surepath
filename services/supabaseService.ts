@@ -92,10 +92,18 @@ export async function getAgentProfile(agentId: string): Promise<SpUser | null> {
     .select('*')
     .eq('id', agentId)
     .single();
-  if (error) {
-    console.error('getAgentProfile error:', error);
-    return null;
-  }
+  if (error) return null;
+  return data as SpUser;
+}
+
+export async function getAgentByEmail(email: string): Promise<SpUser | null> {
+  const { data, error } = await supabase
+    .from('sp_users')
+    .select('*')
+    .eq('email', email)
+    .eq('role', 'AGENT')
+    .single();
+  if (error) return null;
   return data as SpUser;
 }
 
@@ -401,4 +409,91 @@ export async function seedDemoAgentData(agentId: string): Promise<void> {
   });
 
   await supabase.from('sp_policies').insert(policies);
+}
+
+// ─── Expiring Policies ────────────────────────────────────────────────────────
+
+export async function getExpiringPolicies(
+  agentId: string,
+  daysAhead = 30,
+): Promise<Array<SpPolicy & { client_name_resolved: string }>> {
+  const today = new Date();
+  const future = new Date(today);
+  future.setDate(today.getDate() + daysAhead);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const futureStr = future.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('sp_policies')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('status', 'ACTIVE')
+    .gte('end_date', todayStr)
+    .lte('end_date', futureStr)
+    .order('end_date', { ascending: true });
+
+  if (error) return [];
+
+  const policies = (data ?? []) as SpPolicy[];
+
+  const clientIds = policies
+    .map((p) => p.client_id)
+    .filter((id): id is string => !!id);
+
+  let clientMap: Record<string, string> = {};
+
+  if (clientIds.length > 0) {
+    const { data: clientRows } = await supabase
+      .from('sp_clients')
+      .select('id, name')
+      .in('id', clientIds);
+
+    (clientRows ?? []).forEach((c: any) => {
+      clientMap[c.id] = c.name;
+    });
+  }
+
+  return policies.map((p) => ({
+    ...p,
+    client_name_resolved: p.client_id
+      ? (clientMap[p.client_id] ?? p.client_name)
+      : p.client_name,
+  }));
+}
+
+// ─── Agent Registration ───────────────────────────────────────────────────────
+
+export async function registerAgent(data: {
+  name: string;
+  email: string;
+  phone: string;
+  ktp?: string;
+  address?: string;
+}): Promise<SpUser | null> {
+  const agentCode =
+    'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000));
+
+  const payload = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    ktp: data.ktp ?? null,
+    address: data.address ?? null,
+    role: 'AGENT',
+    agent_code: agentCode,
+    commission_rate: 0.1,
+    monthly_target: 50000000,
+    trust_score: 80,
+    verified: false,
+  };
+
+  const { data: result, error } = await supabase
+    .from('sp_users')
+    .insert(payload)
+    .select()
+    .single();
+
+  if (error) return null;
+  return result as SpUser;
 }

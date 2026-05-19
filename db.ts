@@ -195,6 +195,20 @@ export const seedDatabase = async () => {
           verified: true,
           ktp: '3275000000000001',
           address: 'Jl. AI Tech Park, Jakarta Selatan'
+        },
+        {
+          name: 'Ahmad Rizki Pratama',
+          email: 'agent@surepath.ai',
+          phone: '081234567890',
+          passwordHash: userCreds.hash,
+          salt: userCreds.salt,
+          role: UserRole.AGENT,
+          nodeId: 'SP-AGT-001',
+          trustScore: 92,
+          memberSince: '2024-01-01T00:00:00.000Z',
+          verified: true,
+          ktp: '3175000000000001',
+          address: 'Jl. Sudirman No.1, Jakarta'
         }
       ];
 

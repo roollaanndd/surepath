@@ -137,6 +137,7 @@ const INITIAL_PRODUCTS = [
 ];
 
 import PlatformLanding from './src/pages/PlatformLanding';
+import AgentPortal from './components/agent/AgentPortal';
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -251,6 +252,13 @@ const App = () => {
 
   if (currentUser && [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(currentUser.role)) {
     return <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} />;
+  }
+
+  if (currentUser && currentUser.role === UserRole.AGENT) {
+    const agentWithSupabaseId = currentUser.supabaseId
+      ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
+      : { ...currentUser, agent_code: currentUser.nodeId };
+    return <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />;
   }
 
   // Website Logic (Desktop & Mobile Browser)

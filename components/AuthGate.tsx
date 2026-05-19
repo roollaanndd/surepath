@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, Eye, EyeOff, 
-  Globe, RefreshCw, 
-  BadgeCheck, KeyRound, 
+import {
+  User, Eye, EyeOff,
+  Globe, RefreshCw,
+  BadgeCheck, KeyRound,
   AlertCircle,
-  LayoutDashboard, Smartphone
+  LayoutDashboard, Smartphone, Briefcase
 } from 'lucide-react';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
@@ -43,13 +43,19 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
     setStatusMsg(t('Synchronizing with Headquarters...', 'Menyinkronkan dengan Kantor Pusat...'));
     
     try {
-      const email = targetRole === UserRole.MASTER_ADMIN ? 'master@surepath.ai' : 'user@surepath.ai';
+      const emailMap: Record<string, string> = {
+        [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
+        [UserRole.AGENT]: 'agent@surepath.ai',
+        [UserRole.CUSTOMER]: 'user@surepath.ai',
+      };
+      const email = emailMap[targetRole] || 'user@surepath.ai';
       const user = await db.users.where('email').equals(email).first();
       
       if (user) {
         setStatusMsg(t('Access Authorized!', 'Otorisasi Berhasil!'));
         const token = createSessionToken(user);
-        setTimeout(() => onAuthSuccess({ ...user, token }), 800);
+        const supabaseAgentId = targetRole === UserRole.AGENT ? 'aaaaaaaa-0000-0000-0000-000000000001' : undefined;
+        setTimeout(() => onAuthSuccess({ ...user, token, supabaseId: supabaseAgentId }), 800);
       } else {
         setError(t("Demo node unavailable.", "Node demo tidak tersedia."));
         setLoading(false);
@@ -254,20 +260,27 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
               {mode === 'LOGIN' && (
                 <div className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
                   <p className="text-center text-[0.55rem] font-black text-gray-400 uppercase tracking-widest">{t('Demo Environments', 'Evaluasi Cepat (Demo)')}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
                       onClick={() => handleDemoAccess(UserRole.MASTER_ADMIN)}
-                      className="p-4 bg-primary-50/5 hover:bg-primary-500/10 border border-primary-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
+                      className="p-3 bg-primary-50/5 hover:bg-primary-500/10 border border-primary-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
                     >
-                      <LayoutDashboard size={24} className="text-primary-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[0.55rem] font-black uppercase text-primary-600">Admin Dashboard</span>
+                      <LayoutDashboard size={22} className="text-primary-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-[0.5rem] font-black uppercase text-primary-600 text-center leading-tight">Admin HQ</span>
                     </button>
-                    <button 
-                      onClick={() => handleDemoAccess(UserRole.CUSTOMER)}
-                      className="p-4 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
+                    <button
+                      onClick={() => handleDemoAccess(UserRole.AGENT)}
+                      className="p-3 bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
                     >
-                      <Smartphone size={24} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[0.55rem] font-black uppercase text-emerald-600">Customer App</span>
+                      <Briefcase size={22} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-[0.5rem] font-black uppercase text-blue-600 text-center leading-tight">Agent Portal</span>
+                    </button>
+                    <button
+                      onClick={() => handleDemoAccess(UserRole.CUSTOMER)}
+                      className="p-3 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
+                    >
+                      <Smartphone size={22} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-[0.5rem] font-black uppercase text-emerald-600 text-center leading-tight">Customer</span>
                     </button>
                   </div>
                 </div>

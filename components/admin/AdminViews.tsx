@@ -12,7 +12,7 @@ import {
   Globe, FileDown, Upload, Plus
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
-import { db, User as DBUser, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
+import { db, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
@@ -79,7 +79,6 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
 export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, section?: string }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
-  const [userStats, setUserStats] = useState<any>({});
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -98,8 +97,6 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                if (tx.type === 'COMMISSION') stats[tx.userId].commission += tx.amount;
            });
            
-           setUserStats(stats);
-
            // Map stats to users and sort by sales descending
            const mappedUsers = allUsers.map(u => ({
               ...u,

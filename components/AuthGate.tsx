@@ -11,6 +11,7 @@ import { Language, UserRole } from '../types';
 import { db, User as DBUser } from '../db';
 import { hashPassword, verifyPassword, createSessionToken } from '../services/authService';
 import { auth, googleProvider, signInWithPopup } from '../firebase';
+import AgentOnboarding from './agent/AgentOnboarding';
 
 interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
@@ -30,6 +31,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
   const [regRole, setRegRole] = useState<UserRole>(UserRole.CUSTOMER);
   
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
+  const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
 
   const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
 
@@ -124,6 +126,9 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
           setError(t("Node not found.", "Node tidak ditemukan."));
           setLoading(false);
         }
+      } else if (regRole === UserRole.AGENT) {
+        setLoading(false);
+        setShowAgentOnboarding(true);
       } else {
         const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
         setGeneratedOtp(newOtp);
@@ -161,6 +166,18 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
       setLoading(false);
     }
   };
+
+  if (showAgentOnboarding) {
+    return (
+      <AgentOnboarding
+        lang={lang}
+        onBack={() => setShowAgentOnboarding(false)}
+        onSuccess={(agent) => {
+          onAuthSuccess({ ...agent, supabaseId: agent.id });
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fafaf9] dark:bg-[#080707] flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-700">
@@ -208,9 +225,10 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
                       <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
                       <input required placeholder={t("Full Name", "Nama Lengkap")} className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}/>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                        <button type="button" onClick={() => setRegRole(UserRole.CUSTOMER)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.CUSTOMER ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-slate-100 text-slate-400'}`}>Customer</button>
                        <button type="button" onClick={() => setRegRole(UserRole.MASTER_ADMIN)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.MASTER_ADMIN ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-slate-100 text-slate-400'}`}>Admin HQ</button>
+                       <button type="button" onClick={() => setRegRole(UserRole.AGENT)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.AGENT ? 'border-blue-500 bg-blue-500/5 text-blue-600' : 'border-slate-100 text-slate-400'}`}>{t('Ins. Agent', 'Agen Ins.')}</button>
                     </div>
                   </div>
                 )}

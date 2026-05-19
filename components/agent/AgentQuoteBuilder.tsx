@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users
+  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
   saveQuote, createPolicy, addCommission,
-  type SpClient, type SpQuote
+  type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
+import { generatePolicyCertPDF } from '../../services/pdfService';
 
 interface Props {
   agentId: string;
   clients: SpClient[];
   lang: Language;
   onBack: () => void;
+  agent?: any;
 }
 
 type ProductType = 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
@@ -55,7 +57,7 @@ const calcPremium = (product: ProductType, inputs: any): number => {
 
 const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
 
-const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack }) => {
+const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [step, setStep] = useState<Step>('client');
@@ -72,6 +74,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack }) 
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
   const [savedQuote, setSavedQuote] = useState<SpQuote | null>(null);
+  const [createdPolicy, setCreatedPolicy] = useState<SpPolicy | null>(null);
 
   const clientName = clientMode === 'select'
     ? (clients.find(c => c.id === selectedClientId)?.name ?? '')
@@ -162,6 +165,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack }) 
         if (savedQuote) {
           // quote already saved; could update status but skip for simplicity
         }
+        setCreatedPolicy(policy);
         setStep('success');
       }
     } finally {
@@ -180,6 +184,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack }) 
     setPAInputs({ category: 'GENERAL', plan: 'BASIC' });
     setMPARInputs({ category: 'GADGET', itemName: '', price: 0, period: 12 });
     setSavedQuote(null);
+    setCreatedPolicy(null);
   };
 
   const stepIndex = ['client', 'product', 'inputs', 'summary'].indexOf(step);
@@ -205,6 +210,27 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack }) 
           <p className="font-black text-2xl text-emerald-600 dark:text-emerald-400 mt-1">{formatIDR(premium)}</p>
           <p className="text-xs text-emerald-500 font-bold mt-1">{t('Annual Premium', 'Premi Tahunan')}</p>
         </div>
+        <button
+          onClick={() => {
+            const today = new Date();
+            const endDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+            generatePolicyCertPDF({
+              policyNumber: createdPolicy?.policy_number ?? `SP-${product}-CERT`,
+              holderName: clientName,
+              productType: product ?? '',
+              premium,
+              startDate: createdPolicy?.start_date ?? today.toISOString().split('T')[0],
+              endDate: createdPolicy?.end_date ?? endDate.toISOString().split('T')[0],
+              agentName: agent?.name ?? '',
+              agentCode: agent?.agent_code ?? '',
+              coverageDetails: createdPolicy?.coverage_details,
+            });
+          }}
+          className="w-full py-3.5 rounded-2xl bg-primary-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-orange-500/20"
+        >
+          <Download size={14} />
+          {t('Download Certificate (PDF)', 'Unduh Sertifikat (PDF)')}
+        </button>
         <div className="flex gap-3 w-full">
           <button onClick={reset} className="flex-1 py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-black font-black text-xs uppercase tracking-widest">
             {t('New Quote', 'Kuotasi Baru')}

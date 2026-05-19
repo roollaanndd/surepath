@@ -83,6 +83,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         return (
           <AgentHome
             agent={agent}
+            agentId={agent?.id ?? ''}
             stats={stats}
             recentCommissions={commissions.slice(0, 5)}
             onNavigate={setActiveTab}
@@ -98,6 +99,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             clients={clients}
             lang={lang}
             onBack={() => setActiveTab('home')}
+            agent={agent}
           />
         );
       case 'commission':

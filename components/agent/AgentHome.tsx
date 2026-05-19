@@ -5,16 +5,18 @@ import {
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
+import RenewalAlerts from './RenewalAlerts';
 
 interface Props {
   agent: any;
+  agentId: string;
   stats: any;
   recentCommissions: any[];
   onNavigate: (tab: string) => void;
   lang: Language;
 }
 
-const AgentHome: React.FC<Props> = ({ agent, stats, recentCommissions, onNavigate, lang }) => {
+const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const monthlyTarget = agent?.monthly_target ?? 10000000;
@@ -181,6 +183,9 @@ const AgentHome: React.FC<Props> = ({ agent, stats, recentCommissions, onNavigat
           </p>
         )}
       </div>
+
+      {/* Renewal Alerts */}
+      <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
       {/* Quick Action Buttons */}
       <div className="grid grid-cols-3 gap-3">

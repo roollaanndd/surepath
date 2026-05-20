@@ -8,15 +8,17 @@ import {
   TrendingUp, BarChart3,
   Bell, CheckCircle
 } from 'lucide-react';
-import { 
-  BizAdminView, 
-  ApprovalsView, 
-  SettingsView, 
-  InventoryView, 
-  SecurityView, 
-  LedgerView, 
+import {
+  BizAdminView,
+  ApprovalsView,
+  SettingsView,
+  InventoryView,
+  SecurityView,
+  LedgerView,
   AuditLogView,
   ReportsView,
+  AgentManagementView,
+  ClaimsAdminView,
   Badge
 } from './AdminViews';
 import { UserRole } from '../../types';
@@ -70,6 +72,8 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'transactions', label: 'Ledger Vault', icon: Wallet, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
     { id: 'approvals', label: 'Antrean Polis', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'users', label: 'User Matrix', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'agents', label: 'Agent Management', icon: Bell, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'claims_admin', label: 'Claims Queue', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
     { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
   ];
@@ -119,6 +123,8 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
       case 'transactions': return <LedgerView />;
       case 'approvals': return <ApprovalsView />;
       case 'users': return <BizAdminView section="users" />;
+      case 'agents': return <AgentManagementView />;
+      case 'claims_admin': return <ClaimsAdminView />;
       case 'security': return <SecurityView />;
       case 'settings': return <SettingsView products={products} setProducts={setProducts} />;
       default: return null;

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
+import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, LogOut, ShieldCheck, Bell, ClipboardList } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentCommissions,
   getAgentClients,
   getAgentStats,
+  getNotifications,
   type SpCommission,
   type SpClient,
   type AgentStats,
@@ -14,6 +15,8 @@ import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
 import AgentCommission from './AgentCommission';
 import AgentLeaderboard from './AgentLeaderboard';
+import AgentClaims from './AgentClaims';
+import { AgentNotifications } from './AgentNotifications';
 
 interface Props {
   agent: any;
@@ -22,11 +25,12 @@ interface Props {
 }
 
 const TABS = [
-  { id: 'home', labelEn: 'Home', labelId: 'Beranda', Icon: Home },
-  { id: 'clients', labelEn: 'Clients', labelId: 'Klien', Icon: Users },
-  { id: 'quotes', labelEn: 'Quotes', labelId: 'Kuotasi', Icon: FileText },
-  { id: 'commission', labelEn: 'Wallet', labelId: 'Komisi', Icon: Wallet },
-  { id: 'leaderboard', labelEn: 'Rank', labelId: 'Peringkat', Icon: Trophy },
+  { id: 'home',        labelEn: 'Home',    labelId: 'Beranda',  Icon: Home },
+  { id: 'clients',     labelEn: 'Clients', labelId: 'Klien',    Icon: Users },
+  { id: 'quotes',      labelEn: 'Quotes',  labelId: 'Kuotasi',  Icon: FileText },
+  { id: 'claims',      labelEn: 'Claims',  labelId: 'Klaim',    Icon: ClipboardList },
+  { id: 'commission',  labelEn: 'Wallet',  labelId: 'Komisi',   Icon: Wallet },
+  { id: 'leaderboard', labelEn: 'Rank',    labelId: 'Peringkat',Icon: Trophy },
 ];
 
 const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
@@ -34,6 +38,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [stats, setStats] = useState<AgentStats>({
     totalCommissionMonth: 0,
@@ -58,14 +64,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     if (!agent?.id) return;
     setLoading(true);
     try {
-      const [statsData, commissionsData, clientsData] = await Promise.all([
+      const [statsData, commissionsData, clientsData, notifData] = await Promise.all([
         getAgentStats(agent.id),
         getAgentCommissions(agent.id),
         getAgentClients(agent.id),
+        getNotifications(agent.id),
       ]);
       setStats(statsData);
       setCommissions(commissionsData);
       setClients(clientsData);
+      setUnreadCount(notifData.filter(n => !n.read).length);
     } catch (err) {
       console.error('Error loading agent data:', err);
     } finally {
@@ -73,9 +81,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, [agent?.id]);
+  useEffect(() => { loadData(); }, [agent?.id]);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -102,6 +108,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agent={agent}
           />
         );
+      case 'claims':
+        return <AgentClaims agentId={agent?.id ?? ''} lang={lang} />;
       case 'commission':
         return <AgentCommission agentId={agent?.id ?? ''} lang={lang} />;
       case 'leaderboard':
@@ -144,6 +152,19 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               </div>
             </div>
 
+            {/* Notification bell */}
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+            >
+              <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary-500 text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
@@ -173,23 +194,23 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation */}
-      <nav className="fixed bottom-6 inset-x-4 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
-        <div className="flex items-center justify-around px-2 py-3">
+      {/* Bottom Tab Navigation — 6 tabs */}
+      <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
+        <div className="flex items-center justify-around px-1 py-2.5">
           {TABS.map(({ id, labelEn, labelId, Icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-200 ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
                   active
                     ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
-                <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-                <span className="text-[9px] font-black uppercase tracking-widest leading-none">
+                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                <span className="text-[8px] font-black uppercase tracking-widest leading-none">
                   {lang === Language.EN ? labelEn : labelId}
                 </span>
               </button>
@@ -197,6 +218,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           })}
         </div>
       </nav>
+
+      {/* Notification drawer */}
+      {showNotifications && (
+        <AgentNotifications
+          agentId={agent?.id ?? ''}
+          lang={lang}
+          onClose={() => { setShowNotifications(false); setUnreadCount(0); }}
+          onNavigate={setActiveTab}
+        />
+      )}
     </div>
   );
 };

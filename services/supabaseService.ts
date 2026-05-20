@@ -462,6 +462,131 @@ export async function getExpiringPolicies(
   }));
 }
 
+// ─── Claims ───────────────────────────────────────────────────────────────────
+
+export interface SpClaim {
+  id: string;
+  policy_id?: string;
+  user_id?: string;
+  agent_id?: string;
+  claim_number?: string;
+  client_name?: string;
+  policy_number?: string;
+  product_type?: string;
+  date?: string;
+  location?: string;
+  chronology?: string;
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'CLOSED';
+  amount_estimated?: number;
+  amount_approved?: number;
+  photos?: string[];
+  admin_notes?: string;
+  created_at?: string;
+}
+
+export async function getAgentClaims(agentId: string): Promise<SpClaim[]> {
+  const { data, error } = await supabase
+    .from('sp_claims')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAgentClaims:', error); return []; }
+  return (data ?? []) as SpClaim[];
+}
+
+export async function submitClaim(data: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'>): Promise<SpClaim | null> {
+  const { data: result, error } = await supabase
+    .from('sp_claims')
+    .insert(data)
+    .select()
+    .single();
+  if (error) { console.error('submitClaim:', error); return null; }
+  return result as SpClaim;
+}
+
+export async function updateClaimStatus(id: string, status: SpClaim['status'], admin_notes?: string): Promise<boolean> {
+  const payload: any = { status };
+  if (admin_notes !== undefined) payload.admin_notes = admin_notes;
+  const { error } = await supabase.from('sp_claims').update(payload).eq('id', id);
+  if (error) { console.error('updateClaimStatus:', error); return false; }
+  return true;
+}
+
+export async function getAllClaims(): Promise<SpClaim[]> {
+  const { data, error } = await supabase
+    .from('sp_claims')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllClaims:', error); return []; }
+  return (data ?? []) as SpClaim[];
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export interface SpNotification {
+  id: string;
+  agent_id: string;
+  type: 'COMMISSION_EARNED' | 'CLAIM_UPDATE' | 'RENEWAL_ALERT' | 'QUOTE_ACCEPTED' | 'SYSTEM';
+  title: string;
+  body: string;
+  read: boolean;
+  metadata?: any;
+  created_at?: string;
+}
+
+export async function getNotifications(agentId: string): Promise<SpNotification[]> {
+  const { data, error } = await supabase
+    .from('sp_notifications')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) { console.error('getNotifications:', error); return []; }
+  return (data ?? []) as SpNotification[];
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await supabase.from('sp_notifications').update({ read: true }).eq('id', id);
+}
+
+export async function markAllNotificationsRead(agentId: string): Promise<void> {
+  await supabase.from('sp_notifications').update({ read: true }).eq('agent_id', agentId).eq('read', false);
+}
+
+export async function addNotification(data: Omit<SpNotification, 'id' | 'created_at' | 'read'>): Promise<void> {
+  await supabase.from('sp_notifications').insert({ ...data, read: false });
+}
+
+// ─── Admin: Agent Management ──────────────────────────────────────────────────
+
+export async function getAllAgents(): Promise<SpUser[]> {
+  const { data, error } = await supabase
+    .from('sp_users')
+    .select('*')
+    .eq('role', 'AGENT')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllAgents:', error); return []; }
+  return (data ?? []) as SpUser[];
+}
+
+export async function updateAgentVerification(agentId: string, verified: boolean): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_users')
+    .update({ verified, updated_at: new Date().toISOString() })
+    .eq('id', agentId);
+  if (error) { console.error('updateAgentVerification:', error); return false; }
+  return true;
+}
+
+export async function updateAgentCommissionRate(agentId: string, rate: number): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_users')
+    .update({ commission_rate: rate, updated_at: new Date().toISOString() })
+    .eq('id', agentId);
+  if (error) { console.error('updateAgentCommissionRate:', error); return false; }
+  return true;
+}
+
 // ─── Agent Registration ───────────────────────────────────────────────────────
 
 export async function registerAgent(data: {

@@ -739,3 +739,46 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
   const { data } = supabase.storage.from('policy-documents').getPublicUrl(path);
   return data.publicUrl;
 }
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+
+export interface SpPayment {
+  id: string;
+  order_id: string;
+  external_id: string;
+  xendit_invoice_id?: string;
+  invoice_url?: string;
+  amount: number;
+  currency: string;
+  status: string; // PENDING | PAID | EXPIRED | FAILED
+  payment_method?: string;
+  payment_channel?: string;
+  paid_amount?: number;
+  paid_at?: string;
+  payer_email?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getOrderPayment(orderId: string): Promise<SpPayment | null> {
+  const { data, error } = await supabase
+    .from('sp_payments')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) { console.error('getOrderPayment:', error); return null; }
+  return data as SpPayment | null;
+}
+
+export async function getPaymentsByOrderIds(orderIds: string[]): Promise<SpPayment[]> {
+  if (orderIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('sp_payments')
+    .select('*')
+    .in('order_id', orderIds)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getPaymentsByOrderIds:', error); return []; }
+  return (data ?? []) as SpPayment[];
+}

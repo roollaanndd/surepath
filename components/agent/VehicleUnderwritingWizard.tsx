@@ -14,6 +14,7 @@ import {
   createPolicyOrder, uploadVehicleImage, addNotification,
   type SpClient,
 } from '../../services/supabaseService';
+import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -180,9 +181,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ── Step 7: Order ──
   const [submitting, setSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
   const [orderError, setOrderError] = useState('');
   const orderStarted = useRef(false);
+
+  // ── Payment ──
+  const [payLoading, setPayLoading] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
+  const [payError, setPayError] = useState('');
 
   // ─── Derived ───────────────────────────────────────────────────────────────
 
@@ -312,6 +319,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         if (!order) throw new Error('Gagal membuat order.');
 
         const num = order.order_number ?? order.id;
+        setOrderId(order.id);
         setOrderNumber(num);
 
         await addNotification({
@@ -1109,6 +1117,33 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     );
   };
 
+  const handlePay = async () => {
+    if (!orderId) return;
+    setPayLoading(true);
+    setPayError('');
+    const clientName = useManualClient ? manualClient.name : (selectedClient?.name ?? '');
+    const clientPhone = useManualClient ? manualClient.phone : (selectedClient?.phone ?? '');
+    const clientEmail = useManualClient ? undefined : (selectedClient?.email ?? undefined);
+    const { name: productName } = productInfo(vehicleType, coverageType);
+    const breakdown = calcPremium(vehicleType, coverageType, sumInsured, zone, addons);
+    const result = await createXenditInvoice({
+      order_id: orderId,
+      order_number: orderNumber,
+      client_name: clientName,
+      client_email: clientEmail,
+      client_phone: clientPhone || undefined,
+      product_name: productName,
+      total_premium: breakdown.total,
+    });
+    setPayLoading(false);
+    if (!result?.invoice_url) {
+      setPayError('Gagal membuat invoice pembayaran. Silakan coba lagi.');
+      return;
+    }
+    setInvoiceUrl(result.invoice_url);
+    window.open(result.invoice_url, '_blank', 'noopener,noreferrer');
+  };
+
   const renderStep7 = () => (
     <div className="flex flex-col items-center gap-6 py-8">
       {submitting && (
@@ -1134,20 +1169,50 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           </div>
           <h3 className="text-xl font-black text-slate-800 dark:text-white mb-1">Order Berhasil Diajukan!</h3>
           <p className="text-slate-400 text-sm mb-4">
-            Order Anda sedang direview. Anda akan diberitahu setelah polis disetujui.
+            Order Anda sedang direview. Lakukan pembayaran premi untuk melanjutkan proses.
           </p>
           <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-6 py-4 mb-6">
             <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Nomor Order</p>
             <p className="text-2xl font-black text-primary-500">{orderNumber}</p>
           </div>
-          <PrimaryBtn
+
+          {/* Payment section */}
+          {!invoiceUrl ? (
+            <div className="flex flex-col gap-3 w-full mb-4">
+              <PrimaryBtn onClick={handlePay} disabled={payLoading}>
+                {payLoading ? (
+                  <><Loader2 className="inline w-4 h-4 mr-2 animate-spin" />Membuat Invoice…</>
+                ) : (
+                  'Bayar Premi Sekarang'
+                )}
+              </PrimaryBtn>
+              {payError && (
+                <p className="text-xs text-rose-500 text-center">{payError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="w-full mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl text-center">
+              <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-1">Invoice Berhasil Dibuat</p>
+              <p className="text-xs text-slate-400 mb-3">Halaman pembayaran telah dibuka di tab baru.</p>
+              <button
+                type="button"
+                onClick={() => window.open(invoiceUrl, '_blank', 'noopener,noreferrer')}
+                className="text-xs font-bold text-primary-500 underline"
+              >
+                Buka Kembali Link Pembayaran
+              </button>
+            </div>
+          )}
+
+          <SecondaryBtn
             onClick={() => {
               onOrderCreated?.(orderNumber);
               onBack();
             }}
           >
             Kembali ke Beranda
-          </PrimaryBtn>
+          </SecondaryBtn>
         </SectionCard>
       )}
     </div>

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  FileText, Clock, Eye, CheckCircle, XCircle, Download, ChevronRight, Car, Bike, RefreshCw
+  FileText, Clock, Eye, CheckCircle, XCircle, Download, ChevronRight, Car, Bike, RefreshCw,
+  CreditCard, Loader2, ExternalLink,
 } from 'lucide-react';
 import { Language } from '../../types';
-import { getAgentOrders, type SpPolicyOrder } from '../../services/supabaseService';
+import {
+  getAgentOrders, getPaymentsByOrderIds,
+  type SpPolicyOrder, type SpPayment,
+} from '../../services/supabaseService';
+import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 interface Props {
@@ -21,7 +26,14 @@ const STATUS_META: Record<SpPolicyOrder['status'], { en: string; id: string; col
 
 // ── Detail Sheet ─────────────────────────────────────────────────────────────
 
-const OrderSheet: React.FC<{ order: SpPolicyOrder; lang: Language; onClose: () => void }> = ({ order, lang, onClose }) => {
+const OrderSheet: React.FC<{
+  order: SpPolicyOrder;
+  lang: Language;
+  onClose: () => void;
+  payment?: SpPayment | null;
+  onPay?: () => void;
+  paying?: boolean;
+}> = ({ order, lang, onClose, payment, onPay, paying }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const meta = STATUS_META[order.status];
   const v    = order.vehicle_details ?? {};
@@ -90,6 +102,51 @@ const OrderSheet: React.FC<{ order: SpPolicyOrder; lang: Language; onClose: () =
           </div>
         )}
 
+        {/* Payment section */}
+        {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
+          <div className={`p-4 rounded-2xl mb-4 ${
+            payment?.status === 'PAID'
+              ? 'bg-emerald-50 dark:bg-emerald-500/10'
+              : payment?.status === 'PENDING'
+              ? 'bg-amber-50 dark:bg-amber-500/10'
+              : 'bg-slate-50 dark:bg-white/5'
+          }`}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5">
+              <CreditCard size={10} /> {t('Payment', 'Pembayaran')}
+            </p>
+            {payment?.status === 'PAID' ? (
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                ✓ {t('Premium Paid', 'Premi Telah Dibayar')}
+                {payment.paid_at && ` · ${new Date(payment.paid_at).toLocaleDateString('id-ID')}`}
+              </p>
+            ) : payment?.status === 'PENDING' && payment.invoice_url ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  {t('Awaiting payment', 'Menunggu pembayaran')}
+                </p>
+                <a
+                  href={payment.invoice_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs font-black text-white bg-amber-500 rounded-xl px-4 py-2.5 justify-center active:scale-95 transition-transform"
+                >
+                  <ExternalLink size={12} />
+                  {t('Continue Payment', 'Lanjutkan Pembayaran')}
+                </a>
+              </div>
+            ) : (
+              <button
+                onClick={onPay}
+                disabled={paying}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-500 disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-transform"
+              >
+                {paying ? <Loader2 size={12} className="animate-spin" /> : <CreditCard size={12} />}
+                {paying ? t('Creating Invoice…', 'Membuat Invoice…') : t('Pay Premium', 'Bayar Premi')}
+              </button>
+            )}
+          </div>
+        )}
+
         {order.policy_document_url && (
           <a
             href={order.policy_document_url}
@@ -115,12 +172,49 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('ALL');
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
+  const [payments, setPayments] = useState<Record<string, SpPayment>>({});
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     const data = await getAgentOrders(agentId);
     setOrders(data);
+    if (data.length > 0) {
+      const pmts = await getPaymentsByOrderIds(data.map(o => o.id));
+      const map: Record<string, SpPayment> = {};
+      pmts.forEach(p => { if (!map[p.order_id]) map[p.order_id] = p; });
+      setPayments(map);
+    }
     setLoading(false);
+  };
+
+  const handlePay = async (order: SpPolicyOrder) => {
+    setPayingOrderId(order.id);
+    const result = await createXenditInvoice({
+      order_id: order.id,
+      order_number: order.order_number ?? order.id,
+      client_name: order.client_name,
+      client_phone: order.client_phone ?? undefined,
+      product_name: order.product_name,
+      total_premium: order.total_premium,
+    });
+    if (result?.invoice_url) {
+      setPayments(prev => ({
+        ...prev,
+        [order.id]: {
+          id: result.xendit_invoice_id,
+          order_id: order.id,
+          external_id: result.external_id,
+          xendit_invoice_id: result.xendit_invoice_id,
+          invoice_url: result.invoice_url,
+          amount: order.total_premium,
+          currency: 'IDR',
+          status: 'PENDING',
+        } as SpPayment,
+      }));
+      window.open(result.invoice_url, '_blank', 'noopener,noreferrer');
+    }
+    setPayingOrderId(null);
   };
 
   useEffect(() => { load(); }, [agentId]);
@@ -199,6 +293,24 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                       {lang === Language.EN ? meta.en : meta.id}
                     </span>
                     <span className="text-[9px] font-bold text-primary-500">{formatIDR(order.total_premium)}</span>
+                    {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (() => {
+                      const pmt = payments[order.id];
+                      if (pmt?.status === 'PAID') return (
+                        <span className="text-[9px] font-bold text-emerald-500 flex items-center gap-0.5">
+                          <CheckCircle size={9} /> {t('Paid', 'Lunas')}
+                        </span>
+                      );
+                      if (pmt?.status === 'PENDING') return (
+                        <span className="text-[9px] font-bold text-amber-500 flex items-center gap-0.5">
+                          <CreditCard size={9} /> {t('Pending', 'Bayar')}
+                        </span>
+                      );
+                      return (
+                        <span className="text-[9px] font-bold text-slate-400 flex items-center gap-0.5">
+                          <CreditCard size={9} /> {t('Unpaid', 'Belum Bayar')}
+                        </span>
+                      );
+                    })()}
                     {order.policy_document_url && (
                       <span className="text-[9px] font-bold text-emerald-500 flex items-center gap-0.5">
                         <Download size={9} /> {t('Download', 'Unduh')}
@@ -213,7 +325,14 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
       )}
 
       {selected && (
-        <OrderSheet order={selected} lang={lang} onClose={() => setSelected(null)} />
+        <OrderSheet
+          order={selected}
+          lang={lang}
+          onClose={() => setSelected(null)}
+          payment={payments[selected.id]}
+          onPay={() => handlePay(selected)}
+          paying={payingOrderId === selected.id}
+        />
       )}
     </div>
   );

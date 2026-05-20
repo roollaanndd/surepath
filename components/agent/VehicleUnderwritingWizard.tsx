@@ -7,9 +7,12 @@ import { Language } from '../../types';
 import { analyzeVehicleSurvey, SurveyAnalysisResult } from '../../services/geminiService';
 import {
   calcPremium, getZone, getVehicleCategory, PROVINCES,
-  CAR_MAKES, MOTO_MAKES, VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
+  MOTO_MAKES, VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
   type VehicleType, type CoverageType, type Zone, type PremiumBreakdown, type AddOns,
 } from '../../services/ojkRates';
+import {
+  CAR_BRANDS, getModelsForBrand, getMarketValue,
+} from '../../services/vehicleDatabase';
 import {
   createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
   type SpClient, type SpProductConfig,
@@ -554,7 +557,27 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   );
 
   const renderStep3 = () => {
-    const makes = vehicleType === 'CAR' ? CAR_MAKES : MOTO_MAKES;
+    const isCar = vehicleType === 'CAR';
+    const brandList = isCar ? CAR_BRANDS : MOTO_MAKES;
+    const modelOptions = isCar ? getModelsForBrand(vehicleDetails.make) : [];
+    const autoValue = isCar ? getMarketValue(vehicleDetails.make, vehicleDetails.model) : null;
+
+    const handleModelChange = (model: string) => {
+      handleVehicleDetailChange('model', model);
+      if (isCar) {
+        const mv = getMarketValue(vehicleDetails.make, model);
+        if (mv && mv > 0) {
+          setSumInsured(mv);
+          setSumInsuredDisplay(mv.toLocaleString('id-ID'));
+        }
+      }
+    };
+
+    const handleMakeChange = (make: string) => {
+      handleVehicleDetailChange('make', make);
+      handleVehicleDetailChange('model', '');
+    };
+
     return (
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-black text-slate-800 dark:text-white">Detail Kendaraan</h2>
@@ -566,30 +589,55 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               <select
                 value={vehicleDetails.make}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleVehicleDetailChange('make', e.target.value)
+                  handleMakeChange(e.target.value)
                 }
                 className={inputCls}
               >
                 <option value="">Pilih merek...</option>
-                {makes.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
+                {brandList.map((m) => (
+                  <option key={m} value={m}>{m}</option>
                 ))}
               </select>
             </div>
-            {/* Model */}
+            {/* Model — searchable datalist for cars */}
             <div>
               <Label>Model *</Label>
-              <input
-                type="text"
-                value={vehicleDetails.model}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleVehicleDetailChange('model', e.target.value)
-                }
-                className={inputCls}
-                placeholder="Contoh: Avanza, Beat, dll"
-              />
+              {isCar ? (
+                <>
+                  <input
+                    type="text"
+                    list="vehicle-model-list"
+                    value={vehicleDetails.model}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleModelChange(e.target.value)
+                    }
+                    className={inputCls}
+                    placeholder={vehicleDetails.make ? 'Ketik untuk cari model...' : 'Pilih merek dulu'}
+                    disabled={!vehicleDetails.make}
+                  />
+                  <datalist id="vehicle-model-list">
+                    {modelOptions.map((m) => (
+                      <option key={m.model} value={m.model} />
+                    ))}
+                  </datalist>
+                  {autoValue && autoValue > 0 && (
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
+                    </p>
+                  )}
+                </>
+              ) : (
+                <input
+                  type="text"
+                  value={vehicleDetails.model}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleVehicleDetailChange('model', e.target.value)
+                  }
+                  className={inputCls}
+                  placeholder="Contoh: Beat, Vario, dll"
+                />
+              )}
             </div>
             {/* Year */}
             <div>
@@ -729,7 +777,21 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
           {/* Sum Insured */}
           <div>
-            <Label>Uang Pertanggungan (IDR) *</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Uang Pertanggungan (IDR) *</Label>
+              {vehicleType === 'CAR' && vehicleDetails.make && vehicleDetails.model && (() => {
+                const dbVal = getMarketValue(vehicleDetails.make, vehicleDetails.model);
+                return dbVal ? (
+                  <button
+                    type="button"
+                    onClick={() => { setSumInsured(dbVal); setSumInsuredDisplay(dbVal.toLocaleString('id-ID')); }}
+                    className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hover:underline"
+                  >
+                    Pakai nilai pasar (Rp {(dbVal / 1_000_000).toFixed(0)}jt)
+                  </button>
+                ) : null;
+              })()}
+            </div>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
                 Rp
@@ -743,6 +805,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 inputMode="numeric"
               />
             </div>
+            {vehicleType === 'CAR' && sumInsured > 0 && (
+              <p className="text-[10px] text-slate-400 font-bold mt-1">
+                Kategori OJK: {getVehicleCategory(sumInsured)} · {['','≤125jt','125–200jt','200–400jt','400–800jt','>800jt'][getVehicleCategory(sumInsured)]}
+              </p>
+            )}
           </div>
 
           {/* Coverage Type */}

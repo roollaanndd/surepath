@@ -21,6 +21,7 @@ import {
   ClaimsAdminView,
   Badge
 } from './AdminViews';
+import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import { UserRole } from '../../types';
 import { db } from '../../db';
 
@@ -72,6 +73,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'transactions', label: 'Ledger Vault', icon: Wallet, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
     { id: 'approvals', label: 'Antrean Polis', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'users', label: 'User Matrix', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'policy_orders', label: 'Policy Orders', icon: Activity, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
     { id: 'agents', label: 'Agent Management', icon: Bell, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'claims_admin', label: 'Claims Queue', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
@@ -123,6 +125,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
       case 'transactions': return <LedgerView />;
       case 'approvals': return <ApprovalsView />;
       case 'users': return <BizAdminView section="users" />;
+      case 'policy_orders': return <PolicyOrdersAdmin />;
       case 'agents': return <AgentManagementView />;
       case 'claims_admin': return <ClaimsAdminView />;
       case 'security': return <SecurityView />;

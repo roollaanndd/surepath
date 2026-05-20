@@ -622,3 +622,120 @@ export async function registerAgent(data: {
   if (error) return null;
   return result as SpUser;
 }
+
+// ─── Policy Orders ────────────────────────────────────────────────────────────
+
+export interface SpPolicyOrder {
+  id: string;
+  order_number?: string;
+  agent_id: string;
+  client_id?: string;
+  client_name: string;
+  client_phone?: string;
+  client_ktp?: string;
+  product_code: string;
+  product_name: string;
+  vehicle_type?: 'CAR' | 'MOTORCYCLE';
+  vehicle_details: any;
+  vehicle_image_url?: string;
+  ai_score?: number;
+  ai_verdict?: string;
+  ai_findings?: any[];
+  coverage_type: 'COMPREHENSIVE' | 'TLO';
+  sum_insured: number;
+  zone: number;
+  vehicle_category: number;
+  addons: any;
+  base_premium: number;
+  addon_premium: number;
+  admin_fee: number;
+  stamp_duty: number;
+  total_premium: number;
+  ojk_rate?: number;
+  start_date?: string;
+  end_date?: string;
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'ISSUED' | 'REJECTED';
+  reviewer_id?: string;
+  reviewer_notes?: string;
+  reviewed_at?: string;
+  policy_number?: string;
+  policy_document_url?: string;
+  issued_at?: string;
+  sp_policy_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function createPolicyOrder(data: Omit<SpPolicyOrder, 'id' | 'order_number' | 'created_at' | 'updated_at'>): Promise<SpPolicyOrder | null> {
+  const { data: result, error } = await supabase
+    .from('sp_policy_orders')
+    .insert(data)
+    .select()
+    .single();
+  if (error) { console.error('createPolicyOrder:', error); return null; }
+  return result as SpPolicyOrder;
+}
+
+export async function getAgentOrders(agentId: string): Promise<SpPolicyOrder[]> {
+  const { data, error } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAgentOrders:', error); return []; }
+  return (data ?? []) as SpPolicyOrder[];
+}
+
+export async function getAllOrders(): Promise<SpPolicyOrder[]> {
+  const { data, error } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllOrders:', error); return []; }
+  return (data ?? []) as SpPolicyOrder[];
+}
+
+export async function updateOrderStatus(
+  id: string,
+  status: SpPolicyOrder['status'],
+  extras?: { reviewer_notes?: string; policy_number?: string; policy_document_url?: string; sp_policy_id?: string }
+): Promise<boolean> {
+  const payload: any = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+  if (status === 'UNDER_REVIEW' || status === 'APPROVED' || status === 'REJECTED') {
+    payload.reviewed_at = new Date().toISOString();
+  }
+  if (status === 'ISSUED') {
+    payload.issued_at = new Date().toISOString();
+  }
+  if (extras) Object.assign(payload, extras);
+
+  const { error } = await supabase.from('sp_policy_orders').update(payload).eq('id', id);
+  if (error) { console.error('updateOrderStatus:', error); return false; }
+  return true;
+}
+
+// ─── Storage: Upload vehicle image ────────────────────────────────────────────
+
+export async function uploadVehicleImage(file: File, orderId: string): Promise<string | null> {
+  const ext  = file.name.split('.').pop() ?? 'jpg';
+  const path = `${orderId}/vehicle.${ext}`;
+  const { error } = await supabase.storage
+    .from('vehicle-images')
+    .upload(path, file, { upsert: true });
+  if (error) { console.error('uploadVehicleImage:', error); return null; }
+  const { data } = supabase.storage.from('vehicle-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function uploadPolicyDocument(file: File, orderNumber: string): Promise<string | null> {
+  const path = `${orderNumber}/policy.pdf`;
+  const { error } = await supabase.storage
+    .from('policy-documents')
+    .upload(path, file, { upsert: true, contentType: 'application/pdf' });
+  if (error) { console.error('uploadPolicyDocument:', error); return null; }
+  const { data } = supabase.storage.from('policy-documents').getPublicUrl(path);
+  return data.publicUrl;
+}

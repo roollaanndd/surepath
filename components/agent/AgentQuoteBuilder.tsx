@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download
+  ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone, Bike,
+  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -10,6 +10,8 @@ import {
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
 import { generatePolicyCertPDF } from '../../services/pdfService';
+import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
+import AgentOrderStatus from './AgentOrderStatus';
 
 interface Props {
   agentId: string;
@@ -19,23 +21,25 @@ interface Props {
   agent?: any;
 }
 
-type ProductType = 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
+type ProductType = 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
 type Step = 'client' | 'product' | 'inputs' | 'summary' | 'success';
+type QuoteTab = 'new' | 'orders';
 
 interface CarInputs { brand: string; model: string; year: number; price: number; coverage: 'COMPREHENSIVE' | 'TLO'; }
 interface TravelInputs { destination: string; startDate: string; endDate: string; adults: number; plan: 'PLATINUM' | 'GOLD'; }
 interface PAInputs { category: 'GENERAL' | 'STUDENT'; plan: 'BASIC' | 'PREMIUM' | 'ELITE'; }
 interface MPARInputs { category: 'ELECTRONIC' | 'GADGET'; itemName: string; price: number; period: 6 | 12; }
 
-const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgColor: string; enLabel: string; idLabel: string; enDesc: string; idDesc: string }[] = [
-  { type: 'CAR', icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10', enLabel: 'Auto Insurance', idLabel: 'Asuransi Mobil', enDesc: 'Comprehensive & TLO', idDesc: 'Komprehensif & TLO' },
-  { type: 'TRAVEL', icon: Plane, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance', idLabel: 'Asuransi Perjalanan', enDesc: 'Domestic & International', idDesc: 'Domestik & Internasional' },
-  { type: 'PA', icon: Shield, color: 'text-violet-500', bgColor: 'bg-violet-500/10', enLabel: 'Personal Accident', idLabel: 'Kecelakaan Diri', enDesc: 'General & Student Plans', idDesc: 'Umum & Pelajar' },
-  { type: 'MPAR', icon: Smartphone, color: 'text-amber-500', bgColor: 'bg-amber-500/10', enLabel: 'Gadget / MPAR', idLabel: 'Gadget / MPAR', enDesc: 'Electronics & Gadgets', idDesc: 'Elektronik & Gadget' },
+const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgColor: string; enLabel: string; idLabel: string; enDesc: string; idDesc: string; ojk?: boolean }[] = [
+  { type: 'CAR',        icon: Car,        color: 'text-blue-500',    bgColor: 'bg-blue-500/10',    enLabel: 'Auto (Roda 4)',       idLabel: 'Kendaraan Roda 4',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
+  { type: 'MOTORCYCLE', icon: Bike,       color: 'text-cyan-500',    bgColor: 'bg-cyan-500/10',    enLabel: 'Motorcycle (Roda 2)', idLabel: 'Kendaraan Roda 2',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
+  { type: 'TRAVEL',     icon: Plane,      color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance',    idLabel: 'Asuransi Perjalanan',  enDesc: 'Domestic & International',        idDesc: 'Domestik & Internasional' },
+  { type: 'PA',         icon: Shield,     color: 'text-violet-500',  bgColor: 'bg-violet-500/10',  enLabel: 'Personal Accident',   idLabel: 'Kecelakaan Diri',      enDesc: 'General & Student Plans',         idDesc: 'Umum & Pelajar' },
+  { type: 'MPAR',       icon: Smartphone, color: 'text-amber-500',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
 ];
 
 const calcPremium = (product: ProductType, inputs: any): number => {
-  if (product === 'CAR') {
+  if (product === 'CAR' || product === 'MOTORCYCLE') {
     const rate = inputs.coverage === 'COMPREHENSIVE' ? 0.025 : 0.018;
     return Math.round((inputs.price ?? 0) * rate);
   }
@@ -55,10 +59,28 @@ const calcPremium = (product: ProductType, inputs: any): number => {
   return 0;
 };
 
-const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
+const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
 
 const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+
+  const [quoteTab, setQuoteTab] = useState<QuoteTab>('new');
+  const [vehicleWizardType, setVehicleWizardType] = useState<'CAR' | 'MOTORCYCLE' | null>(null);
+
+  // Route OJK products to full underwriting wizard
+  if (vehicleWizardType) {
+    return (
+      <VehicleUnderwritingWizard
+        agentId={agentId}
+        agent={agent}
+        clients={clients}
+        lang={lang}
+        initialVehicleType={vehicleWizardType}
+        onBack={() => setVehicleWizardType(null)}
+        onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
+      />
+    );
+  }
 
   const [step, setStep] = useState<Step>('client');
   const [clientMode, setClientMode] = useState<'select' | 'onetime'>('select');
@@ -245,6 +267,32 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
+      {/* Tab switcher */}
+      <div className="flex gap-2 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
+        <button
+          onClick={() => setQuoteTab('new')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            quoteTab === 'new' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400'
+          }`}
+        >
+          <RefreshCw size={12} /> {t('New Quote', 'Kuotasi Baru')}
+        </button>
+        <button
+          onClick={() => setQuoteTab('orders')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            quoteTab === 'orders' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400'
+          }`}
+        >
+          <ClipboardList size={12} /> {t('My Orders', 'Order Saya')}
+        </button>
+      </div>
+
+      {/* Orders tab */}
+      {quoteTab === 'orders' && (
+        <AgentOrderStatus agentId={agentId} lang={lang} />
+      )}
+
+      {quoteTab === 'new' && (<>
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={step === 'client' ? onBack : () => {
@@ -375,16 +423,29 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                     {lang === Language.EN ? p.enDesc : p.idDesc}
                   </p>
                   {active && <CheckCircle2 size={14} className="text-primary-500 mt-2" />}
+                  {p.ojk && (
+                    <span className="mt-1.5 inline-block text-[8px] font-black uppercase tracking-widest bg-primary-500/10 text-primary-500 px-2 py-0.5 rounded-full">OJK</span>
+                  )}
                 </button>
               );
             })}
           </div>
           <button
             disabled={!product}
-            onClick={() => setStep('inputs')}
+            onClick={() => {
+              // OJK products launch underwriting wizard
+              if (product === 'CAR' || product === 'MOTORCYCLE') {
+                setVehicleWizardType(product);
+              } else {
+                setStep('inputs');
+              }
+            }}
             className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {t('Next', 'Lanjut')} <ChevronRight size={16} />
+            {product === 'CAR' || product === 'MOTORCYCLE'
+              ? t('Start Underwriting', 'Mulai Underwriting')
+              : t('Next', 'Lanjut')}
+            <ChevronRight size={16} />
           </button>
         </div>
       )}
@@ -582,6 +643,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           </button>
         </div>
       )}
+      </>)}
     </div>
   );
 };

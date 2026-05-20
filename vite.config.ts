@@ -15,11 +15,14 @@ export default defineConfig(({ mode }) => {
         VitePWA({
           registerType: 'autoUpdate',
           includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+          workbox: {
+            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
+          },
           manifest: {
-            name: 'MyInsurePath OS',
-            short_name: 'MyInsurePath',
-            description: 'AI-Powered Insurance Infrastructure',
-            theme_color: '#0A0A0A',
+            name: 'SurePath',
+            short_name: 'SurePath',
+            description: 'AI-Powered Insurance Platform',
+            theme_color: '#f97316',
             background_color: '#0A0A0A',
             display: 'standalone',
             icons: [
@@ -40,6 +43,19 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'react-vendor': ['react', 'react-dom'],
+              'supabase': ['@supabase/supabase-js'],
+              'pdf': ['jspdf', 'html2canvas'],
+              'lucide': ['lucide-react'],
+            },
+          },
+        },
+        chunkSizeWarningLimit: 1000,
       },
       resolve: {
         alias: {

@@ -169,24 +169,40 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       </nav>
 
       {/* Hero Section */}
-      <main className="pt-32 pb-20 px-6 relative z-10 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center min-h-[70vh]">
+      <main className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* Animated Video Background */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="w-full h-full object-cover opacity-20 dark:opacity-[0.15]"
+          >
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-network-connections-background-12349-large.mp4" type="video/mp4" />
+          </video>
+          {/* Gradient map to fade video smoothly into background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white dark:via-[#0a0a0a]/80 dark:to-[#0a0a0a]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-white dark:from-[#0a0a0a] dark:to-[#0a0a0a] opacity-80"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center min-h-[70vh] relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="space-y-8"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-widest border border-emerald-500/20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-widest border border-emerald-500/20 backdrop-blur-md">
               <Zap size={14} className="text-emerald-500" /> {t('Welcome to the Future of Insurance', 'Masa Depan Asuransi Ada di Sini')}
             </div>
             
-            <h1 className="text-5xl lg:text-7xl xl:text-8xl font-black tracking-tight leading-[1] text-slate-900 dark:text-white">
+            <h1 className="text-5xl lg:text-7xl xl:text-8xl font-black tracking-tight leading-[1] text-slate-900 dark:text-white drop-shadow-sm">
               {t('Insurance,', 'Asuransi,')}<br/>
               <span className="text-emerald-500">{t('simplified.', 'tanpa ribet.')}</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed font-medium">
+            <p className="text-lg md:text-xl text-slate-700 dark:text-slate-300 max-w-xl leading-relaxed font-medium">
               {t('Experience lightning-fast claims powered by AI, honest pricing, and an ecosystem built for you. Whether buying protection or joining as a partner.', 'Rasakan cepatnya proses klaim hitungan menit dibantu AI. Harga jujur, proses transparan, baik bagi Anda yang butuh proteksi maupun yang ingin jadi mitra.')}
             </p>
             
@@ -194,23 +210,23 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                <button onClick={onSignIn} className="px-8 py-4 bg-emerald-500 text-white rounded-full text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-600 shadow-xl shadow-emerald-500/25 active:scale-95 transition-all">
                   {t('Get Protected', 'Cari Asuransi')} <ArrowRight size={18} />
                </button>
-               <button onClick={onSignIn} className="px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-full text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/5 active:scale-95 transition-all">
+               <button onClick={onSignIn} className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-full text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 shadow-lg active:scale-95 transition-all">
                   {t('Partner With Us', 'Jadi Mitra Kami')}
                </button>
             </div>
 
             {/* Micro proof points */}
-            <div className="flex items-center gap-6 pt-8 text-sm font-medium text-slate-500">
-               <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> AI Document Scan</div>
-               <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Instant Payouts</div>
+            <div className="flex items-center gap-6 pt-8 text-sm font-bold tracking-tight text-slate-600 dark:text-slate-400">
+               <div className="flex items-center gap-2"><Check size={18} className="text-emerald-500"/> AI Document Scan</div>
+               <div className="flex items-center gap-2"><Check size={18} className="text-emerald-500"/> Instant Payouts</div>
             </div>
           </motion.div>
           
           <motion.div 
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="hidden lg:block relative"
+            className="relative lg:block mt-12 lg:mt-0"
           >
             <AnimatedPhoneHero />
           </motion.div>

@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SurePath — D2C Design Preview</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --em: #10b981; --em2: #059669; --em3: #34d399;
+    --slate900: #0f172a; --slate800: #1e293b; --slate700: #334155;
+    --slate600: #475569; --slate400: #94a3b8; --slate200: #e2e8f0;
+    --white: #ffffff;
+    --radius: 16px;
+    --shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, 'Inter', 'Segoe UI', sans-serif; background: var(--slate900); color: var(--white); overflow-x: hidden; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(15,23,42,0.6); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; }
+  .nav-logo-dot { width: 28px; height: 28px; background: linear-gradient(135deg,#10b981,#059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .nav-links { display: flex; gap: 32px; font-size: 14px; color: var(--slate400); }
+  .nav-links a { text-decoration: none; color: inherit; transition: color .2s; }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta { display: flex; gap: 12px; align-items: center; }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--white); padding: 9px 20px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: all .2s; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+  .btn-primary { background: linear-gradient(135deg,#10b981,#059669); color: white; border: none; padding: 10px 22px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all .2s; box-shadow: 0 4px 20px rgba(16,185,129,0.4); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(16,185,129,0.5); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 48px;
+    padding: 120px 48px 80px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 800px 600px at 80% 50%, rgba(16,185,129,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 600px 400px at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 50%);
+  }
+  .hero-left { position: relative; z-index: 2; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+    color: var(--em3); padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .hero-badge-dot { width: 6px; height: 6px; background: var(--em); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+  .hero h1 { font-size: clamp(36px, 4.5vw, 60px); font-weight: 900; line-height: 1.1; margin-bottom: 20px; letter-spacing: -2px; }
+  .hero h1 .highlight { background: linear-gradient(135deg,#10b981,#34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: 17px; color: var(--slate400); line-height: 1.6; margin-bottom: 36px; max-width: 460px; }
+
+  /* ── QUOTE WIDGET ── */
+  .quote-widget {
+    background: rgba(30,41,59,0.8); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+    padding: 24px; max-width: 480px;
+  }
+  .qw-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--slate400); margin-bottom: 16px; font-weight: 600; }
+  .product-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .ptab {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 8px 14px; cursor: pointer; font-size: 13px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .ptab.active { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.5); color: var(--em3); }
+  .ptab-icon { font-size: 16px; }
+  .qw-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .qw-field { display: flex; flex-direction: column; gap: 6px; }
+  .qw-field.full { grid-column: 1/-1; }
+  .qw-field label { font-size: 11px; color: var(--slate400); font-weight: 500; }
+  .qw-field select, .qw-field input {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white); border-radius: 10px; padding: 10px 12px; font-size: 13px;
+    outline: none; transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  .qw-field select:focus, .qw-field input:focus { border-color: var(--em); }
+  .qw-field select option { background: var(--slate800); }
+  .btn-quote {
+    width: 100%; padding: 14px; background: linear-gradient(135deg,#10b981,#059669);
+    color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all .2s;
+    box-shadow: 0 4px 24px rgba(16,185,129,0.45);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-quote:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(16,185,129,0.6); }
+
+  .price-preview {
+    margin-top: 12px; padding: 14px 16px;
+    background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .price-from { font-size: 11px; color: var(--slate400); }
+  .price-amount { font-size: 22px; font-weight: 800; color: var(--em3); }
+  .price-period { font-size: 11px; color: var(--slate400); }
+  .price-cta { background: var(--em2); color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; white-space: nowrap; transition: all .2s; }
+  .price-cta:hover { background: #047857; }
+
+  /* ── HERO RIGHT — PHONE MOCKUP ── */
+  .hero-right { position: relative; z-index: 2; display: flex; justify-content: center; }
+  .phone-wrap {
+    position: relative;
+    width: 320px; height: 640px;
+  }
+  .phone-glow {
+    position: absolute; inset: -40px;
+    background: radial-gradient(ellipse, rgba(16,185,129,0.2) 0%, transparent 70%);
+    animation: floatGlow 4s ease-in-out infinite;
+  }
+  @keyframes floatGlow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+  .phone-frame {
+    position: relative; width: 100%; height: 100%;
+    background: var(--slate800); border-radius: 40px;
+    border: 2px solid rgba(255,255,255,0.12);
+    overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+    animation: floatPhone 4s ease-in-out infinite;
+  }
+  @keyframes floatPhone { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-12px) rotate(0.5deg)} }
+  .phone-notch { width: 100px; height: 28px; background: var(--slate900); border-radius: 0 0 20px 20px; margin: 0 auto; }
+  .phone-screen { padding: 12px 16px; }
+  .phone-header { font-size: 10px; color: var(--slate400); margin-bottom: 12px; display: flex; justify-content: space-between; }
+  .phone-hero-card {
+    background: linear-gradient(135deg,#065f46,#059669);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  }
+  .phc-label { font-size: 9px; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+  .phc-title { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+  .phc-sub { font-size: 9px; color: rgba(255,255,255,0.7); margin-bottom: 10px; }
+  .phc-progress { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-bottom: 8px; }
+  .phc-progress-bar { height: 100%; width: 72%; background: rgba(255,255,255,0.9); border-radius: 2px; }
+  .phc-stats { display: flex; gap: 12px; }
+  .phc-stat { font-size: 9px; color: rgba(255,255,255,0.8); }
+  .phc-stat strong { display: block; font-size: 13px; color: white; font-weight: 800; }
+
+  .phone-product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .ppg-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 10px; cursor: pointer;
+  }
+  .ppg-icon { font-size: 18px; margin-bottom: 4px; }
+  .ppg-name { font-size: 9px; color: var(--slate400); margin-bottom: 2px; }
+  .ppg-price { font-size: 10px; font-weight: 700; color: var(--em3); }
+
+  .phone-claim-card {
+    background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .pcc-icon { width: 32px; height: 32px; background: rgba(16,185,129,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .pcc-title { font-size: 10px; font-weight: 700; }
+  .pcc-sub { font-size: 9px; color: var(--slate400); }
+  .pcc-badge { margin-left: auto; background: var(--em2); color: white; font-size: 8px; font-weight: 700; padding: 3px 7px; border-radius: 6px; flex-shrink: 0; }
+
+  /* Floating cards around phone */
+  .float-card {
+    position: absolute; background: rgba(30,41,59,0.95); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 16px;
+    font-size: 12px; white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .fc1 { top: 60px; right: -120px; animation: floatCard1 3s ease-in-out infinite; }
+  .fc2 { bottom: 140px; left: -120px; animation: floatCard2 3.5s ease-in-out infinite; }
+  @keyframes floatCard1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes floatCard2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+  .fc-title { color: var(--slate400); font-size: 10px; margin-bottom: 2px; }
+  .fc-val { font-weight: 800; font-size: 15px; color: var(--em3); }
+  .fc-sub { font-size: 10px; color: var(--slate400); }
+
+  /* ── TICKER ── */
+  .ticker { background: var(--em2); padding: 12px 0; overflow: hidden; white-space: nowrap; }
+  .ticker-inner { display: inline-flex; gap: 48px; animation: marquee 30s linear infinite; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .ticker-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); }
+  .ticker-sep { color: rgba(255,255,255,0.4); }
+
+  /* ── TRUST BAR ── */
+  .trust-bar {
+    padding: 24px 48px; display: flex; align-items: center; justify-content: center; gap: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .trust-item { display: flex; align-items: center; gap: 10px; color: var(--slate400); font-size: 13px; }
+  .trust-icon { font-size: 20px; }
+  .trust-val { font-weight: 700; color: var(--white); }
+
+  /* ── PRODUCT SECTION ── */
+  .section { padding: 80px 48px; }
+  .section-header { text-align: center; margin-bottom: 48px; }
+  .section-tag {
+    display: inline-block; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+    color: var(--em3); padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;
+  }
+  .section h2 { font-size: clamp(28px,3.5vw,44px); font-weight: 900; letter-spacing: -1.5px; margin-bottom: 12px; }
+  .section-sub { color: var(--slate400); font-size: 16px; max-width: 540px; margin: 0 auto; line-height: 1.6; }
+
+  .products-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .prod-card {
+    background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 24px 20px; cursor: pointer;
+    transition: all .25s; position: relative; overflow: hidden;
+  }
+  .prod-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(16,185,129,0.08), transparent);
+    opacity: 0; transition: opacity .25s;
+  }
+  .prod-card:hover { transform: translateY(-6px); border-color: rgba(16,185,129,0.4); box-shadow: 0 20px 50px rgba(16,185,129,0.15); }
+  .prod-card:hover::before { opacity: 1; }
+  .pc-emoji { font-size: 32px; margin-bottom: 14px; }
+  .pc-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .pc-type { font-size: 11px; color: var(--slate400); margin-bottom: 16px; }
+  .pc-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 14px; }
+  .pc-from { font-size: 10px; color: var(--slate400); margin-bottom: 2px; }
+  .pc-price { font-size: 20px; font-weight: 800; color: var(--em3); }
+  .pc-period { font-size: 11px; color: var(--slate400); }
+  .pc-btn {
+    width: 100%; margin-top: 16px; padding: 10px;
+    background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+    color: var(--em3); border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all .2s;
+  }
+  .pc-btn:hover { background: var(--em2); color: white; border-color: transparent; }
+  .pc-popular {
+    position: absolute; top: 14px; right: 14px;
+    background: var(--em2); color: white; font-size: 9px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .hiw-section { padding: 80px 48px; background: rgba(30,41,59,0.3); }
+  .hiw-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 32px; max-width: 900px; margin: 0 auto; }
+  .hiw-item { text-align: center; position: relative; }
+  .hiw-item:not(:last-child)::after {
+    content: '→'; position: absolute; top: 28px; right: -16px;
+    font-size: 24px; color: var(--em2); font-weight: 900;
+  }
+  .hiw-num {
+    width: 60px; height: 60px; background: linear-gradient(135deg,#10b981,#059669);
+    border-radius: 20px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 900; margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.4);
+  }
+  .hiw-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .hiw-desc { font-size: 14px; color: var(--slate400); line-height: 1.6; }
+
+  /* ── INSTANT QUOTE FLOW ── */
+  .iq-section { padding: 80px 48px; }
+  .iq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+  .iq-visual {
+    background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px; padding: 32px; position: relative; overflow: hidden;
+  }
+  .iq-visual::before {
+    content: ''; position: absolute; top: -100px; right: -100px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%);
+  }
+  .iq-steps { display: flex; flex-direction: column; gap: 16px; }
+  .iq-step {
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; padding: 14px 18px;
+    transition: all .2s;
+  }
+  .iq-step.active { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3); }
+  .iq-step-num {
+    width: 32px; height: 32px; background: rgba(16,185,129,0.15); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800;
+    color: var(--em3); flex-shrink: 0;
+  }
+  .iq-step.active .iq-step-num { background: var(--em2); color: white; }
+  .iq-step-text { flex: 1; }
+  .iq-step-title { font-size: 14px; font-weight: 700; }
+  .iq-step-sub { font-size: 12px; color: var(--slate400); }
+  .iq-step-check { color: var(--em3); font-size: 16px; }
+  .iq-right h2 { font-size: 38px; font-weight: 900; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 16px; }
+  .iq-right p { color: var(--slate400); font-size: 16px; line-height: 1.6; margin-bottom: 28px; }
+  .iq-features { display: flex; flex-direction: column; gap: 14px; }
+  .iq-feat { display: flex; align-items: flex-start; gap: 12px; }
+  .iq-feat-icon { width: 36px; height: 36px; background: rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .iq-feat-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .iq-feat-text span { font-size: 13px; color: var(--slate400); }
+
+  /* ── TESTIMONIALS ── */
+  .test-section { padding: 80px 48px; }
+  .test-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .test-card {
+    background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; padding: 28px;
+  }
+  .test-stars { color: #f59e0b; font-size: 14px; margin-bottom: 14px; }
+  .test-text { font-size: 14px; color: var(--slate400); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+  .test-author { display: flex; align-items: center; gap: 12px; }
+  .test-avatar { width: 40px; height: 40px; background: linear-gradient(135deg,#10b981,#059669); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; }
+  .test-name { font-size: 14px; font-weight: 700; }
+  .test-meta { font-size: 12px; color: var(--slate400); }
+
+  /* ── CTA SECTION ── */
+  .cta-section {
+    margin: 0 48px 80px; padding: 64px;
+    background: linear-gradient(135deg, #065f46, #047857, #10b981);
+    border-radius: 28px; text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-section::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .cta-section h2 { font-size: 40px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 12px; position: relative; }
+  .cta-section p { font-size: 16px; color: rgba(255,255,255,0.8); margin-bottom: 32px; position: relative; }
+  .cta-btns { display: flex; gap: 16px; justify-content: center; position: relative; }
+  .btn-white { background: white; color: #065f46; padding: 14px 32px; border-radius: 12px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+  .btn-outline-white { background: transparent; color: white; border: 2px solid rgba(255,255,255,0.5); padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-outline-white:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 48px 48px 32px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+  }
+  .footer-brand p { font-size: 13px; color: var(--slate400); line-height: 1.7; margin: 14px 0 20px; max-width: 260px; }
+  .trust-badges { display: flex; gap: 10px; }
+  .badge { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--slate400); }
+  .footer-col h4 { font-size: 13px; font-weight: 700; margin-bottom: 16px; }
+  .footer-col a { display: block; font-size: 13px; color: var(--slate400); text-decoration: none; margin-bottom: 10px; transition: color .2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--slate400); grid-column: 1/-1; }
+
+  /* ── SECTION ANNOTATIONS ── */
+  .annotation {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(239,68,68,0.1); border: 1px dashed rgba(239,68,68,0.4);
+    color: #fca5a5; font-size: 10px; padding: 3px 8px; border-radius: 6px;
+    margin-left: 8px; vertical-align: middle; font-weight: 600;
+  }
+
+  /* ── PREVIEW HEADER ── */
+  .preview-header {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: rgba(15,23,42,0.95); backdrop-filter: blur(20px);
+    border: 1px solid rgba(16,185,129,0.4); border-radius: 16px;
+    padding: 16px 20px; max-width: 280px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .ph-title { font-size: 12px; color: var(--em3); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .ph-item { font-size: 11px; color: var(--slate400); display: flex; gap: 6px; margin-bottom: 4px; }
+  .ph-item::before { content: '✓'; color: var(--em3); }
+
+  /* ── MOBILE RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .hero { grid-template-columns: 1fr; padding: 100px 24px 60px; }
+    .hero-right { display: none; }
+    .products-grid { grid-template-columns: repeat(3,1fr); }
+    .footer { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .section, .hiw-section, .iq-section, .test-section { padding: 60px 24px; }
+    .trust-bar { padding: 16px 24px; gap: 24px; flex-wrap: wrap; }
+    .products-grid { grid-template-columns: repeat(2,1fr); }
+    .test-grid, .hiw-grid, .iq-grid { grid-template-columns: 1fr; }
+    .cta-section { margin: 0 16px 60px; padding: 40px 24px; }
+    footer { padding: 40px 24px 24px; grid-template-columns: 1fr; }
+    .preview-header { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ PREVIEW LEGEND ══ -->
+<div class="preview-header">
+  <div class="ph-title">D2C Design Preview</div>
+  <div class="ph-item">Instant quote widget above the fold</div>
+  <div class="ph-item">Price shown before any click</div>
+  <div class="ph-item">3-click buy flow baked in</div>
+  <div class="ph-item">Product cards with live pricing</div>
+  <div class="ph-item">Social proof + OJK trust signals</div>
+  <div class="ph-item">Floating phone mockup hero</div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-dot">S</div>
+    SurePath
+  </div>
+  <div class="nav-links">
+    <a href="#">Produk</a>
+    <a href="#">Klaim</a>
+    <a href="#">Mitra</a>
+    <a href="#">Tentang</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn-ghost">Masuk</button>
+    <button class="btn-primary">Mulai Gratis →</button>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <!-- LEFT: Headline + Quote Widget -->
+  <div class="hero-left">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      OJK Terdaftar · 50,000+ Polis Aktif
+    </div>
+    <h1>Asuransi yang<br/><span class="highlight">Langsung Beli,</span><br/>Langsung Terlindungi</h1>
+    <p class="hero-sub">Bandingkan harga, beli polis, dan ajukan klaim — semuanya dalam satu platform. Tanpa antri, tanpa kertas, tanpa pusing.</p>
+
+    <!-- QUOTE WIDGET -->
+    <div class="quote-widget">
+      <div class="qw-label">Hitung Premi Sekarang <span class="annotation">↑ D2C Core — Above the fold</span></div>
+
+      <div class="product-tabs">
+        <div class="ptab active"><span class="ptab-icon">🚗</span> Kendaraan</div>
+        <div class="ptab"><span class="ptab-icon">✈️</span> Perjalanan</div>
+        <div class="ptab"><span class="ptab-icon">🛡️</span> Jiwa</div>
+        <div class="ptab"><span class="ptab-icon">📱</span> Gadget</div>
+      </div>
+
+      <div class="qw-form">
+        <div class="qw-field">
+          <label>Merek Kendaraan</label>
+          <select>
+            <option>Toyota</option>
+            <option>Honda</option>
+            <option>Suzuki</option>
+            <option>Daihatsu</option>
+          </select>
+        </div>
+        <div class="qw-field">
+          <label>Tahun</label>
+          <select>
+            <option>2023</option>
+            <option>2022</option>
+            <option>2021</option>
+            <option>2020</option>
+          </select>
+        </div>
+        <div class="qw-field">
+          <label>Tipe Perlindungan</label>
+          <select>
+            <option>Komprehensif (All Risk)</option>
+            <option>Total Loss Only (TLO)</option>
+          </select>
+        </div>
+        <div class="qw-field">
+          <label>Provinsi</label>
+          <select>
+            <option>DKI Jakarta</option>
+            <option>Jawa Barat</option>
+            <option>Banten</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-quote">
+        🔍 Lihat Pilihan &amp; Harga
+      </button>
+
+      <!-- Price preview (shows after "submit") -->
+      <div class="price-preview">
+        <div>
+          <div class="price-from">Mulai dari</div>
+          <div class="price-amount">Rp 1,2 Jt</div>
+          <div class="price-period">/ tahun</div>
+        </div>
+        <button class="price-cta">Beli Sekarang →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Phone Mockup -->
+  <div class="hero-right">
+    <div class="phone-wrap">
+      <div class="phone-glow"></div>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-header">
+            <span>SurePath</span><span>09:41 ✦</span>
+          </div>
+          <div class="phone-hero-card">
+            <div class="phc-label">Polis Aktif</div>
+            <div class="phc-title">Asuransi Kendaraan</div>
+            <div class="phc-sub">Toyota Avanza · Komprehensif</div>
+            <div class="phc-progress"><div class="phc-progress-bar"></div></div>
+            <div class="phc-stats">
+              <div class="phc-stat"><strong>72%</strong> Coverage</div>
+              <div class="phc-stat"><strong>8 Bln</strong> Tersisa</div>
+              <div class="phc-stat"><strong>Aktif</strong> Status</div>
+            </div>
+          </div>
+          <div class="phone-product-grid">
+            <div class="ppg-card"><div class="ppg-icon">✈️</div><div class="ppg-name">Perjalanan</div><div class="ppg-price">Rp 89k/trip</div></div>
+            <div class="ppg-card"><div class="ppg-icon">🛡️</div><div class="ppg-name">Jiwa</div><div class="ppg-price">Rp 120k/bln</div></div>
+            <div class="ppg-card"><div class="ppg-icon">📱</div><div class="ppg-name">Gadget</div><div class="ppg-price">Rp 45k/bln</div></div>
+            <div class="ppg-card"><div class="ppg-icon">🏥</div><div class="ppg-name">Kesehatan</div><div class="ppg-price">Rp 250k/bln</div></div>
+          </div>
+          <div class="phone-claim-card">
+            <div class="pcc-icon">✅</div>
+            <div>
+              <div class="pcc-title">Klaim Disetujui</div>
+              <div class="pcc-sub">Rp 14.500.000 · 2 hari</div>
+            </div>
+            <div class="pcc-badge">LUNAS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating info cards -->
+      <div class="float-card fc1">
+        <div class="fc-title">Klaim Dibayar</div>
+        <div class="fc-val">2 Hari</div>
+        <div class="fc-sub">Rata-rata proses</div>
+      </div>
+      <div class="float-card fc2">
+        <div class="fc-title">Total Perlindungan</div>
+        <div class="fc-val">Rp 2T+</div>
+        <div class="fc-sub">Nilai polis aktif</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TICKER ══ -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">🛡️ 50.000+ Polis Aktif</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">💰 Rp 2T+ Nilai Klaim Dibayar</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">⚡ Klaim Cair dalam 2 Hari</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">✅ OJK Terdaftar &amp; Diawasi</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">⭐ Rating 4.9/5 dari 8.000+ Pengguna</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">🏆 InsurTech Award 2024</span>
+    <span class="ticker-sep">·</span>
+    <!-- duplicate for seamless loop -->
+    <span class="ticker-item">🛡️ 50.000+ Polis Aktif</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">💰 Rp 2T+ Nilai Klaim Dibayar</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">⚡ Klaim Cair dalam 2 Hari</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">✅ OJK Terdaftar &amp; Diawasi</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">⭐ Rating 4.9/5 dari 8.000+ Pengguna</span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item">🏆 InsurTech Award 2024</span>
+    <span class="ticker-sep">·</span>
+  </div>
+</div>
+
+<!-- ══ TRUST BAR ══ -->
+<div class="trust-bar">
+  <div class="trust-item"><span class="trust-icon">🏛️</span><div><div class="trust-val">OJK Terdaftar</div><div>No. KEP-24/D.05/2023</div></div></div>
+  <div class="trust-item"><span class="trust-icon">⭐</span><div><div class="trust-val">4.9 / 5.0</div><div>8.400+ ulasan pengguna</div></div></div>
+  <div class="trust-item"><span class="trust-icon">⚡</span><div><div class="trust-val">&lt; 48 Jam</div><div>Rata-rata klaim cair</div></div></div>
+  <div class="trust-item"><span class="trust-icon">🔒</span><div><div class="trust-val">ISO 27001</div><div>Keamanan Data</div></div></div>
+  <div class="trust-item"><span class="trust-icon">💳</span><div><div class="trust-val">Tanpa DP</div><div>Cicil mulai Rp 100rb/bln</div></div></div>
+</div>
+
+<!-- ══ PRODUCTS ══ -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-tag">Produk Retail</div>
+    <h2>Pilih Proteksi,<br/>Langsung Beli</h2>
+    <p class="section-sub">Harga transparan. Tidak ada biaya tersembunyi. Beli dalam 3 menit tanpa dokumen fisik.</p>
+  </div>
+  <div class="products-grid">
+    <div class="prod-card">
+      <div class="pc-popular">Terlaris</div>
+      <div class="pc-emoji">🚗</div>
+      <div class="pc-name">Asuransi Kendaraan</div>
+      <div class="pc-type">Komprehensif / TLO</div>
+      <div class="pc-divider"></div>
+      <div class="pc-from">Mulai dari</div>
+      <div class="pc-price">Rp 1,2 Jt</div>
+      <div class="pc-period">/ tahun</div>
+      <button class="pc-btn">Hitung &amp; Beli →</button>
+    </div>
+    <div class="prod-card">
+      <div class="pc-emoji">✈️</div>
+      <div class="pc-name">Asuransi Perjalanan</div>
+      <div class="pc-type">Domestik / Internasional</div>
+      <div class="pc-divider"></div>
+      <div class="pc-from">Mulai dari</div>
+      <div class="pc-price">Rp 89 Rb</div>
+      <div class="pc-period">/ perjalanan</div>
+      <button class="pc-btn">Hitung &amp; Beli →</button>
+    </div>
+    <div class="prod-card">
+      <div class="pc-emoji">🛡️</div>
+      <div class="pc-name">Jiwa &amp; Kecelakaan</div>
+      <div class="pc-type">PA Individual</div>
+      <div class="pc-divider"></div>
+      <div class="pc-from">Mulai dari</div>
+      <div class="pc-price">Rp 120 Rb</div>
+      <div class="pc-period">/ bulan</div>
+      <button class="pc-btn">Hitung &amp; Beli →</button>
+    </div>
+    <div class="prod-card">
+      <div class="pc-emoji">📱</div>
+      <div class="pc-name">Proteksi Gadget</div>
+      <div class="pc-type">HP / Laptop / Tablet</div>
+      <div class="pc-divider"></div>
+      <div class="pc-from">Mulai dari</div>
+      <div class="pc-price">Rp 45 Rb</div>
+      <div class="pc-period">/ bulan</div>
+      <button class="pc-btn">Hitung &amp; Beli →</button>
+    </div>
+    <div class="prod-card">
+      <div class="pc-emoji">🏥</div>
+      <div class="pc-name">Kesehatan</div>
+      <div class="pc-type">Rawat Inap + Jalan</div>
+      <div class="pc-divider"></div>
+      <div class="pc-from">Mulai dari</div>
+      <div class="pc-price">Rp 250 Rb</div>
+      <div class="pc-period">/ bulan</div>
+      <button class="pc-btn">Hitung &amp; Beli →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="hiw-section">
+  <div class="section-header">
+    <div class="section-tag">Cara Kerja</div>
+    <h2>3 Langkah, Terlindungi</h2>
+    <p class="section-sub">Tidak ada telepon sales. Tidak ada antrian. Semua selesai di layarmu.</p>
+  </div>
+  <div class="hiw-grid">
+    <div class="hiw-item">
+      <div class="hiw-num">1</div>
+      <div class="hiw-title">Pilih &amp; Isi Data</div>
+      <div class="hiw-desc">Pilih produk, isi detail kendaraan atau perjalanan kamu. Kurang dari 2 menit.</div>
+    </div>
+    <div class="hiw-item">
+      <div class="hiw-num">2</div>
+      <div class="hiw-title">Bandingkan Harga</div>
+      <div class="hiw-desc">AI kami menampilkan penawaran terbaik dari 15+ perusahaan asuransi OJK.</div>
+    </div>
+    <div class="hiw-item">
+      <div class="hiw-num">3</div>
+      <div class="hiw-title">Bayar &amp; Polis Langsung</div>
+      <div class="hiw-desc">Bayar dengan GoPay, OVO, atau kartu kredit. Polis digital diterima seketika.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ INSTANT QUOTE FLOW ══ -->
+<section class="iq-section">
+  <div class="iq-grid">
+    <div class="iq-visual">
+      <div class="iq-steps">
+        <div class="iq-step active">
+          <div class="iq-step-num">1</div>
+          <div class="iq-step-text">
+            <div class="iq-step-title">Pilih Produk &amp; Isi Detail</div>
+            <div class="iq-step-sub">Kendaraan, tahun, dan tipe perlindungan</div>
+          </div>
+          <div class="iq-step-check">✓</div>
+        </div>
+        <div class="iq-step active">
+          <div class="iq-step-num">2</div>
+          <div class="iq-step-text">
+            <div class="iq-step-title">Lihat &amp; Bandingkan Penawaran</div>
+            <div class="iq-step-sub">Dari 15+ insurer, diurutkan harga terbaik</div>
+          </div>
+          <div class="iq-step-check">✓</div>
+        </div>
+        <div class="iq-step">
+          <div class="iq-step-num">3</div>
+          <div class="iq-step-text">
+            <div class="iq-step-title">Bayar &amp; Terima Polis Digital</div>
+            <div class="iq-step-sub">Transfer, e-wallet, kartu kredit/debit</div>
+          </div>
+        </div>
+        <div class="iq-step">
+          <div class="iq-step-num">4</div>
+          <div class="iq-step-text">
+            <div class="iq-step-title">Klaim Kapan Saja via App</div>
+            <div class="iq-step-sub">Foto kerusakan → AI analisis → Cair 48 jam</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="iq-right">
+      <div class="section-tag">Kenapa SurePath?</div>
+      <h2>Beli Asuransi<br/>Semudah<br/><span style="color:#34d399">Pesan Ojol</span></h2>
+      <p>Kami rancang SurePath untuk orang yang sibuk dan tidak mau ribet. Dari pilih sampai polis — semuanya bisa diselesaikan sambil nunggu kopi.</p>
+      <div class="iq-features">
+        <div class="iq-feat">
+          <div class="iq-feat-icon">🤖</div>
+          <div class="iq-feat-text">
+            <strong>AI Underwriting Instan</strong>
+            <span>Tidak ada survey manual. AI kami nilai risiko dalam hitungan detik.</span>
+          </div>
+        </div>
+        <div class="iq-feat">
+          <div class="iq-feat-icon">💸</div>
+          <div class="iq-feat-text">
+            <strong>Harga Transparan &amp; Kompetitif</strong>
+            <span>Bandingkan harga OJK-regulated dari semua insurer sekaligus.</span>
+          </div>
+        </div>
+        <div class="iq-feat">
+          <div class="iq-feat-icon">📲</div>
+          <div class="iq-feat-text">
+            <strong>Polis &amp; Klaim 100% Digital</strong>
+            <span>Tidak perlu ke kantor. Semua bisa dari HP, 24/7.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TESTIMONIALS ══ -->
+<section class="test-section">
+  <div class="section-header">
+    <div class="section-tag">Ulasan Pengguna</div>
+    <h2>Mereka Sudah Terlindungi</h2>
+  </div>
+  <div class="test-grid">
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"Daftar polis kendaraan cuma 5 menit. Kecelakaan bulan lalu, klaim langsung foto via HP, 2 hari uang masuk. Gila kenceng banget prosesnya."</p>
+      <div class="test-author">
+        <div class="test-avatar">B</div>
+        <div>
+          <div class="test-name">Budi Santoso</div>
+          <div class="test-meta">Pengguna Kendaraan · Jakarta</div>
+        </div>
+      </div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"Sebelumnya premi asuransi perjalanan harus via agen, ribet banget. Sekarang beli sendiri 3 menit sebelum check-in bandara. Recommended!"</p>
+      <div class="test-author">
+        <div class="test-avatar">D</div>
+        <div>
+          <div class="test-name">Dewi Kusuma</div>
+          <div class="test-meta">Frequent Traveler · Surabaya</div>
+        </div>
+      </div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-text">"Sebagai agen, SurePath bikin pekerjaan saya jauh lebih efisien. Nasabah bisa langsung pilih dan bayar sendiri, komisi tetap masuk ke saya."</p>
+      <div class="test-author">
+        <div class="test-avatar">A</div>
+        <div>
+          <div class="test-name">Ahmad Rizki</div>
+          <div class="test-meta">Agen SurePath · Bandung</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA ══ -->
+<div class="cta-section">
+  <h2>Mulai Terlindungi Sekarang</h2>
+  <p>Bergabung dengan 50.000+ orang yang sudah memilih SurePath.<br/>Beli polis pertama kamu dalam 3 menit.</p>
+  <div class="cta-btns">
+    <button class="btn-white">🚗 Hitung Premi Kendaraan</button>
+    <button class="btn-outline-white">Lihat Semua Produk →</button>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-brand">
+    <div class="nav-logo" style="margin-bottom:0">
+      <div class="nav-logo-dot">S</div>
+      SurePath
+    </div>
+    <p>Platform insurtech Indonesia yang memudahkan pembelian dan klaim asuransi secara digital. Terdaftar dan diawasi OJK.</p>
+    <div class="trust-badges">
+      <div class="badge">🏛️ OJK</div>
+      <div class="badge">🔒 ISO 27001</div>
+      <div class="badge">⭐ 4.9/5</div>
+    </div>
+  </div>
+  <div class="footer-col">
+    <h4>Produk</h4>
+    <a href="#">Asuransi Kendaraan</a>
+    <a href="#">Asuransi Perjalanan</a>
+    <a href="#">Jiwa &amp; PA</a>
+    <a href="#">Proteksi Gadget</a>
+    <a href="#">Asuransi Kesehatan</a>
+  </div>
+  <div class="footer-col">
+    <h4>Perusahaan</h4>
+    <a href="#">Tentang Kami</a>
+    <a href="#">Mitra Insurer</a>
+    <a href="#">Karir</a>
+    <a href="#">Blog</a>
+    <a href="#">Press Kit</a>
+  </div>
+  <div class="footer-col">
+    <h4>Bantuan</h4>
+    <a href="#">Cara Klaim</a>
+    <a href="#">FAQ</a>
+    <a href="#">Hubungi Kami</a>
+    <a href="#">Kebijakan Privasi</a>
+    <a href="#">Syarat &amp; Ketentuan</a>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 SurePath Neural InsurTech. Terdaftar di OJK.</span>
+    <span>Dibuat dengan ♥ di Indonesia 🇮🇩</span>
+  </div>
+</footer>
+
+</body>
+</html>

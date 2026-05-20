@@ -980,3 +980,164 @@ export async function getAdminStats(): Promise<AdminStats> {
     topAgents,
   };
 }
+
+// ─── Insurer & Product Terms ──────────────────────────────────────────────────
+
+export interface SpInsurer {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface SpInsurerProduct {
+  id: string;
+  insurer_id: string;
+  product_type: string;
+  vehicle_coverage: string;
+  max_vehicle_age_years?: number | null;
+  base_commission_rate: number;
+  max_discount_rate: number;
+  coin_rate: number;
+  stamp_duty: number;
+  policy_cost: number;
+  authorized_garage_rate: number;
+  authorized_garage_max_age_years: number;
+  is_active: boolean;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  // joined
+  insurer_name?: string;
+  insurer_code?: string;
+}
+
+// ─── Vehicle Overrides ────────────────────────────────────────────────────────
+
+export interface SpVehicleOverride {
+  id: string;
+  brand: string;
+  model: string;
+  ref_year: number;
+  list_price_m: number;
+  market_value_rp: number;
+  discount_rate: number;
+  is_active: boolean;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ─── Insurer CRUD ─────────────────────────────────────────────────────────────
+
+export async function getInsurers(): Promise<SpInsurer[]> {
+  const { data, error } = await supabase
+    .from('sp_insurers')
+    .select('*')
+    .order('name');
+  if (error) { console.error('getInsurers:', error); return []; }
+  return (data ?? []) as SpInsurer[];
+}
+
+export async function createInsurer(payload: Omit<SpInsurer, 'id' | 'created_at'>): Promise<SpInsurer | null> {
+  const { data, error } = await supabase
+    .from('sp_insurers')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) { console.error('createInsurer:', error); return null; }
+  return data as SpInsurer;
+}
+
+export async function updateInsurer(id: string, payload: Partial<SpInsurer>): Promise<boolean> {
+  const { error } = await supabase.from('sp_insurers').update(payload).eq('id', id);
+  if (error) { console.error('updateInsurer:', error); return false; }
+  return true;
+}
+
+export async function deleteInsurer(id: string): Promise<boolean> {
+  const { error } = await supabase.from('sp_insurers').delete().eq('id', id);
+  if (error) { console.error('deleteInsurer:', error); return false; }
+  return true;
+}
+
+// ─── Insurer Product CRUD ─────────────────────────────────────────────────────
+
+export async function getInsurerProducts(insurer_id?: string): Promise<SpInsurerProduct[]> {
+  let q = supabase
+    .from('sp_insurer_products')
+    .select('*, sp_insurers(name, code)');
+  if (insurer_id) q = q.eq('insurer_id', insurer_id);
+  const { data, error } = await q.order('product_type').order('vehicle_coverage');
+  if (error) { console.error('getInsurerProducts:', error); return []; }
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    insurer_name: r.sp_insurers?.name,
+    insurer_code: r.sp_insurers?.code,
+  })) as SpInsurerProduct[];
+}
+
+export async function getAvailableInsurerProducts(
+  vehicleType: string,
+  coverageType: string,
+  vehicleAgeYears: number,
+): Promise<SpInsurerProduct[]> {
+  const { data, error } = await supabase
+    .from('sp_insurer_products')
+    .select('*, sp_insurers!inner(name, code, is_active)')
+    .eq('product_type', vehicleType)
+    .eq('is_active', true)
+    .or(`vehicle_coverage.eq.${coverageType},vehicle_coverage.eq.ALL`);
+  if (error) { console.error('getAvailableInsurerProducts:', error); return []; }
+  return (data ?? [])
+    .filter((r: any) => r.sp_insurers?.is_active)
+    .filter((r: any) => !r.max_vehicle_age_years || vehicleAgeYears <= r.max_vehicle_age_years)
+    .map((r: any) => ({
+      ...r,
+      insurer_name: r.sp_insurers?.name,
+      insurer_code: r.sp_insurers?.code,
+    })) as SpInsurerProduct[];
+}
+
+export async function createInsurerProduct(payload: Omit<SpInsurerProduct, 'id' | 'created_at' | 'updated_at' | 'insurer_name' | 'insurer_code'>): Promise<boolean> {
+  const { error } = await supabase.from('sp_insurer_products').insert(payload);
+  if (error) { console.error('createInsurerProduct:', error); return false; }
+  return true;
+}
+
+export async function updateInsurerProduct(id: string, payload: Partial<SpInsurerProduct>): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_insurer_products')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { console.error('updateInsurerProduct:', error); return false; }
+  return true;
+}
+
+export async function deleteInsurerProduct(id: string): Promise<boolean> {
+  const { error } = await supabase.from('sp_insurer_products').delete().eq('id', id);
+  if (error) { console.error('deleteInsurerProduct:', error); return false; }
+  return true;
+}
+
+// ─── Vehicle Override CRUD ────────────────────────────────────────────────────
+
+export async function getVehicleOverrides(): Promise<SpVehicleOverride[]> {
+  const { data, error } = await supabase
+    .from('sp_vehicle_overrides')
+    .select('*')
+    .order('brand')
+    .order('model');
+  if (error) { console.error('getVehicleOverrides:', error); return []; }
+  return (data ?? []) as SpVehicleOverride[];
+}
+
+export async function upsertVehicleOverride(payload: Omit<SpVehicleOverride, 'id' | 'created_at'>): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_vehicle_overrides')
+    .upsert({ ...payload, updated_at: new Date().toISOString() }, { onConflict: 'brand,model' });
+  if (error) { console.error('upsertVehicleOverride:', error); return false; }
+  return true;
+}

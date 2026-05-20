@@ -15,7 +15,8 @@ import {
 } from '../../services/vehicleDatabase';
 import {
   createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
-  type SpClient, type SpProductConfig,
+  getAvailableInsurerProducts,
+  type SpClient, type SpProductConfig, type SpInsurerProduct,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -175,6 +176,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     paPassengerSeats: 0,
   });
 
+  // ── Step 4b: Insurer Selection ──
+  const [availableProducts, setAvailableProducts] = useState<SpInsurerProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [selectedInsurerProduct, setSelectedInsurerProduct] = useState<SpInsurerProduct | null>(null);
+
   // ── Step 5: Photo + AI ──
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -271,6 +277,16 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     // product code in DB uses dash: MRKB4-COMP; productInfo returns MRKB4-COMP (already)
     getProductConfig(code).then(cfg => setProductConfig(cfg ?? null));
   }, [step, vehicleType, coverageType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!province || !sumInsured || !coverageType) return;
+    setSelectedInsurerProduct(null);
+    setLoadingProducts(true);
+    const vehicleAge = currentYear - vehicleDetails.year;
+    getAvailableInsurerProducts('CAR', coverageType, vehicleAge)
+      .then(setAvailableProducts)
+      .finally(() => setLoadingProducts(false));
+  }, [province, sumInsured, coverageType, vehicleDetails.year]);
 
   // ─── Step 7: Submit on mount ───────────────────────────────────────────────
 
@@ -962,6 +978,46 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               )}
             </div>
           </div>
+        </SectionCard>
+      )}
+
+      {/* Insurer Selection */}
+      {province && sumInsured > 0 && coverageType && (
+        <SectionCard>
+          <h3 className="font-black text-slate-700 dark:text-slate-200 mb-4 text-sm uppercase tracking-widest">
+            Pilih Perusahaan Asuransi
+          </h3>
+          {loadingProducts ? (
+            <p className="text-xs text-slate-400">Memuat daftar insurer...</p>
+          ) : availableProducts.length === 0 ? (
+            <p className="text-xs text-slate-400">Tidak ada produk tersedia untuk konfigurasi ini.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {availableProducts.map(p => {
+                const selected = selectedInsurerProduct?.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedInsurerProduct(selected ? null : p)}
+                    className={`text-left rounded-2xl border-2 p-4 transition ${
+                      selected
+                        ? 'border-primary-500 bg-primary-500/10'
+                        : 'border-slate-200 dark:border-white/10 hover:border-primary-300'
+                    }`}
+                  >
+                    <p className={`font-black text-sm ${selected ? 'text-primary-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                      {p.insurer_name ?? p.insurer_code}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Komisi {(p.base_commission_rate * 100).toFixed(1)}% · Maks diskon {(p.max_discount_rate * 100).toFixed(1)}%
+                      {p.max_vehicle_age_years ? ` · Maks usia ${p.max_vehicle_age_years} thn` : ''}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </SectionCard>
       )}
 

@@ -6,7 +6,7 @@ import {
   Activity, Menu,
   ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
   TrendingUp, BarChart3,
-  Bell, CheckCircle, Coins, DollarSign, Package
+  Bell, CheckCircle, Coins, DollarSign, Package, Building2, Car
 } from 'lucide-react';
 import {
   BizAdminView,
@@ -23,6 +23,8 @@ import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
 import FinancialAdmin from './FinancialAdmin';
 import CommissionLedger from './CommissionLedger';
+import InsurerAdmin from './InsurerAdmin';
+import VehiclePricelistAdmin from './VehiclePricelistAdmin';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -77,6 +79,8 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'financial', label: 'Keuangan', icon: DollarSign, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
     { id: 'commission_ledger', label: 'Ledger Komisi', icon: Coins, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
     { id: 'product_config', label: 'Konfigurasi Produk', icon: Package, roles: [UserRole.MASTER_ADMIN] },
+    { id: 'insurers', label: 'Perusahaan Asuransi', icon: Building2, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'vehicle_pricelist', label: 'Database Kendaraan', icon: Car, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
     { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
   ];
@@ -188,6 +192,8 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
       case 'agents': return <AgentManagementView />;
       case 'claims_admin': return <ClaimsAdminView />;
       case 'financial': return <FinancialAdmin />;
+      case 'insurers': return <InsurerAdmin />;
+      case 'vehicle_pricelist': return <VehiclePricelistAdmin />;
       case 'commission_ledger': return <CommissionLedger />;
       case 'product_config': return <ProductConfigAdmin />;
       case 'security': return <SecurityView />;

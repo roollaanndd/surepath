@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ChevronRight, CheckCircle2, Package } from 'lucide-react';
-import { User, Language } from '../types';
+import { ChevronRight, Package } from 'lucide-react';
+import { Language } from '../types';
+import { User } from '../db';
 import { db, CustomProduct } from '../db';
 import { Badge, formatIDR } from './car-wizard/WizardUI';
 
@@ -17,16 +18,16 @@ const Header = ({ title, subtitle }: { title: string, subtitle: string }) => (
   </div>
 );
 
-export default function CustomInsuranceWizard({ 
-  onComplete, 
-  currentUser, 
-  lang,
+export default function CustomInsuranceWizard({
+  onComplete,
+  currentUser,
+  lang: _lang,
   productId
-}: { 
-  onComplete: () => void, 
-  currentUser: User, 
+}: {
+  onComplete: () => void,
+  currentUser: User,
   lang: Language,
-  productId: string 
+  productId: string
 }) {
   const [product, setProduct] = useState<CustomProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,10 @@ export default function CustomInsuranceWizard({
       policyNumber: `CST-${Date.now().toString().slice(-6)}`,
       createdAt: new Date().toISOString(),
       premium: product.basePremium,
-      coverageAmount: product.basePremium * 100 // Example
+      coverageDetails: { coverageAmount: product.basePremium * 100 },
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
+      providerId: 'CUSTOM'
     });
     
     await db.transactions.add({

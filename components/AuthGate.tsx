@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, Eye, EyeOff, 
-  Globe, RefreshCw, 
-  BadgeCheck, KeyRound, 
-  AlertCircle,
-  LayoutDashboard, Smartphone
+import {
+  Eye, EyeOff, Mail, KeyRound, User,
+  AlertCircle, LayoutDashboard, Smartphone, Briefcase,
+  ArrowRight, Shield, CheckCircle2
 } from 'lucide-react';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
-import { db, User as DBUser } from '../db';
-import { hashPassword, verifyPassword, createSessionToken } from '../services/authService';
-import { auth, googleProvider, signInWithPopup } from '../firebase';
+import { supabase, getAgentProfile, getAgentByEmail } from '../services/supabaseService';
+import AgentOnboarding from './agent/AgentOnboarding';
 
 interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
@@ -18,246 +15,360 @@ interface AuthGateProps {
   initialMode?: 'LOGIN' | 'REGISTER';
 }
 
-const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Language.ID, initialMode = 'LOGIN' }) => {
-  const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'VERIFY'>(initialMode as any);
+// ─── Demo access (still uses local DB seed) ──────────────────────────────────
+async function demoLogin(role: UserRole) {
+  const emailMap: Record<string, string> = {
+    [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
+    [UserRole.AGENT]:        'agent@surepath.ai',
+    [UserRole.CUSTOMER]:     'user@surepath.ai',
+  };
+  return {
+    id: `demo-${role}`,
+    name: role === UserRole.MASTER_ADMIN ? 'Master Admin' : role === UserRole.AGENT ? 'Demo Agent' : 'Demo User',
+    email: emailMap[role],
+    role,
+    supabaseId: role === UserRole.AGENT ? 'aaaaaaaa-0000-0000-0000-000000000001' : undefined,
+    nodeId: `SP-DEMO-${role.slice(0, 3)}`,
+    trustScore: 100,
+  };
+}
+
+// ─── Animated background orbs ─────────────────────────────────────────────────
+const Orbs = () => (
+  <>
+    <div className="absolute top-[-20%] right-[-15%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+    <div className="absolute bottom-[-15%] left-[-10%] w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1.5s' }} />
+    <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
+    {/* grid */}
+    <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
+      style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
+  </>
+);
+
+const AuthGate: React.FC<AuthGateProps> = ({
+  onAuthSuccess,
+  initialLang = Language.ID,
+  initialMode = 'LOGIN',
+}) => {
+  const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'CHECK_EMAIL'>(initialMode as any);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [otp, setOtp] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [statusMsg, setStatusMsg] = useState('Sistem Keamanan Akses: Aktif');
   const [lang] = useState<Language>(initialLang);
   const [regRole, setRegRole] = useState<UserRole>(UserRole.CUSTOMER);
-  
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
 
-  const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
+  useEffect(() => { setMode(initialMode as any); }, [initialMode]);
 
-  useEffect(() => {
-    setMode(initialMode as any);
-  }, [initialMode]);
+  const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
-  // Demo Access Handler
-  const handleDemoAccess = async (targetRole: UserRole) => {
+  // ── Demo access ──────────────────────────────────────────────────────────────
+  const handleDemoAccess = async (role: UserRole) => {
     setLoading(true);
-    setStatusMsg(t('Synchronizing with Headquarters...', 'Menyinkronkan dengan Kantor Pusat...'));
-    
-    try {
-      const email = targetRole === UserRole.MASTER_ADMIN ? 'master@surepath.ai' : 'user@surepath.ai';
-      const user = await db.users.where('email').equals(email).first();
-      
-      if (user) {
-        setStatusMsg(t('Access Authorized!', 'Otorisasi Berhasil!'));
-        const token = createSessionToken(user);
-        setTimeout(() => onAuthSuccess({ ...user, token }), 800);
-      } else {
-        setError(t("Demo node unavailable.", "Node demo tidak tersedia."));
-        setLoading(false);
-      }
-    } catch (err) {
-      setError(t("Protocol Error.", "Kesalahan Protokol."));
-      setLoading(false);
-    }
+    const user = await demoLogin(role);
+    setTimeout(() => onAuthSuccess(user), 600);
   };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    setStatusMsg(t('Authenticating with Google...', 'Mengautentikasi dengan Google...'));
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      
-      // Check if user exists in local DB
-      let dbUser = await db.users.where('email').equals(user.email!).first();
-      
-      if (!dbUser) {
-        // Register new user from Google
-        const newUser: DBUser = {
-          name: user.displayName || 'Google User',
-          email: user.email!,
-          phone: user.phoneNumber || '',
-          role: UserRole.CUSTOMER,
-          nodeId: `SP-NODE-${Math.floor(Math.random() * 9999)}`,
-          verified: true,
-          trustScore: 85,
-          memberSince: new Date().toISOString()
-        };
-        const id = await db.users.add(newUser);
-        dbUser = { ...newUser, id };
-      }
-      
-      const token = createSessionToken(dbUser);
-      onAuthSuccess({ ...dbUser, token });
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Google Login Failed.");
-      setLoading(false);
-    }
-  };
-
-  const handleAuth = async (e: React.FormEvent) => {
+  // ── Supabase login ───────────────────────────────────────────────────────────
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setStatusMsg(t('Verifying Identity...', 'Memverifikasi Identitas...'));
-    
-    try {
-      if (mode === 'LOGIN') {
-        const user = await db.users.where('email').equals(formData.email).first();
-        if (user && user.passwordHash && user.salt) {
-          const isValid = await verifyPassword(formData.password, user.passwordHash, user.salt);
-          if (isValid) {
-            const token = createSessionToken(user);
-            onAuthSuccess({ ...user, token });
-          } else {
-            setError(t("Invalid password.", "Sandi tidak valid."));
-            setLoading(false);
-          }
-        } else {
-          setError(t("Node not found.", "Node tidak ditemukan."));
-          setLoading(false);
-        }
-      } else {
-        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        setGeneratedOtp(newOtp);
-        setMode('VERIFY');
-        setLoading(false);
-      }
-    } catch (err) {
-      setError("Technical Fault.");
+
+    const { data, error: authErr } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    });
+
+    if (authErr || !data.user) {
+      setError(authErr?.message ?? 'Login gagal. Coba lagi.');
       setLoading(false);
+      return;
     }
+
+    const profile =
+      (await getAgentProfile(data.user.id).catch(() => null)) ??
+      (await getAgentByEmail(data.user.email!).catch(() => null));
+
+    const userObj = profile
+      ? {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          role: profile.role as UserRole,
+          supabaseId: profile.id,
+          nodeId: profile.agent_code ?? `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
+          trustScore: profile.trust_score ?? 85,
+        }
+      : {
+          id: data.user.id,
+          name: data.user.user_metadata?.name ?? data.user.email!.split('@')[0],
+          email: data.user.email!,
+          role: UserRole.CUSTOMER,
+          supabaseId: data.user.id,
+          nodeId: `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
+          trustScore: 85,
+        };
+
+    onAuthSuccess(userObj);
   };
 
-  const finalizeRegistration = async () => {
-    setLoading(true);
-    try {
-      const { hash, salt } = await hashPassword(formData.password);
-      const newUser: DBUser = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        passwordHash: hash,
-        salt: salt,
-        role: regRole,
-        nodeId: `SP-NODE-${Math.floor(Math.random() * 9999)}`,
-        verified: true,
-        trustScore: regRole === UserRole.CUSTOMER ? 85 : 100,
-        memberSince: new Date().toISOString()
-      };
-      const id = await db.users.add(newUser);
-      const userWithId = { ...newUser, id };
-      const token = createSessionToken(userWithId);
-      onAuthSuccess({ ...userWithId, token });
-    } catch (err) {
-      setError("Node Creation Failed.");
-      setLoading(false);
+  // ── Supabase register ────────────────────────────────────────────────────────
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (regRole === UserRole.AGENT) {
+      setShowAgentOnboarding(true);
+      return;
     }
+    setLoading(true);
+    setError(null);
+
+    const { data, error: authErr } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: { data: { name: formData.name } },
+    });
+
+    if (authErr || !data.user) {
+      setError(authErr?.message ?? 'Registrasi gagal. Coba lagi.');
+      setLoading(false);
+      return;
+    }
+
+    // Upsert profile in sp_users
+    await supabase.from('sp_users').upsert({
+      id: data.user.id,
+      name: formData.name,
+      email: formData.email,
+      phone: '',
+      role: UserRole.CUSTOMER,
+      agent_code: `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
+      trust_score: 85,
+    });
+
+    // If email confirmation required, show check-email screen
+    if (!data.session) {
+      setMode('CHECK_EMAIL');
+      setLoading(false);
+      return;
+    }
+
+    onAuthSuccess({
+      id: data.user.id,
+      name: formData.name,
+      email: formData.email,
+      role: UserRole.CUSTOMER,
+      supabaseId: data.user.id,
+      nodeId: `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
+      trustScore: 85,
+    });
   };
+
+  // ── Agent onboarding ─────────────────────────────────────────────────────────
+  if (showAgentOnboarding) {
+    return (
+      <AgentOnboarding
+        lang={lang}
+        onBack={() => setShowAgentOnboarding(false)}
+        onSuccess={(agent) => onAuthSuccess({ ...agent, supabaseId: agent.id })}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#080707] flex flex-col items-center justify-center p-6 relative overflow-hidden transition-all duration-700">
-      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-5 relative overflow-hidden">
+      <Orbs />
 
-      <div className="w-full max-w-md flex flex-col items-center space-y-10 relative z-10">
-        <div className="text-center space-y-4">
-          <div className="p-6 bg-white dark:bg-[#111] rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-white/5 inline-block animate-float">
-             <SurePathLogo className="w-16 h-16" />
+      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-8">
+
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/30 rounded-full blur-2xl scale-150 animate-pulse" />
+            <div className="relative w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 rounded-[2rem] flex items-center justify-center backdrop-blur-sm shadow-2xl">
+              <SurePathLogo className="w-12 h-12" />
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">Sure<span className="text-emerald-500">Path</span></h1>
-            <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-[0.4em] mt-3">{statusMsg}</p>
+          <div className="text-center">
+            <h1 className="text-3xl font-black tracking-[-0.05em] uppercase leading-none">
+              Sure<span className="text-emerald-500">Path</span>
+            </h1>
+            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-[0.4em] mt-2">
+              {t('Smart Insurance Platform', 'Platform Asuransi Pintar')}
+            </p>
           </div>
         </div>
 
-        <div className="w-full bg-white dark:bg-[#0c0c0c] rounded-[3rem] p-8 shadow-2xl border border-slate-100 dark:border-white/5 transition-all">
-          {mode === 'VERIFY' ? (
-            <div className="space-y-8 text-center py-4 animate-pop-in">
-              <h3 className="text-xl font-black uppercase">{t('Verify Protocol', 'Verifikasi Protokol')}</h3>
-              <input 
-                type="tel" maxLength={6} placeholder="000000"
-                className="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 text-center text-4xl font-black tracking-[0.4em] text-emerald-500 outline-none focus:border-emerald-500 transition-all font-mono"
-                value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g,''))}
-              />
-              <button 
-                onClick={finalizeRegistration} 
-                className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+        {/* Check email screen */}
+        {mode === 'CHECK_EMAIL' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm text-center space-y-5">
+            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.5rem] flex items-center justify-center mx-auto">
+              <CheckCircle2 size={32} className="text-emerald-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-gray-400 text-sm mt-2 leading-relaxed">
+                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}<span className="text-emerald-400 font-bold">{formData.email}</span>.
+              </p>
+            </div>
+            <button
+              onClick={() => setMode('LOGIN')}
+              className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+            >
+              {t('Back to Login', 'Kembali ke Login')}
+            </button>
+          </div>
+        )}
+
+        {/* Main form */}
+        {mode !== 'CHECK_EMAIL' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-7 backdrop-blur-sm space-y-6">
+
+            {/* Tab switcher */}
+            <div className="flex bg-white/[0.05] p-1 rounded-2xl border border-white/5">
+              <button
+                onClick={() => { setMode('LOGIN'); setError(null); }}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-500 hover:text-gray-300'}`}
               >
-                {t('Initialize Access', 'Inisialisasi Akses')}
+                {t('Sign In', 'Masuk')}
               </button>
-              <p className="text-[0.5rem] font-bold text-gray-400 uppercase">DEBUG_OTP: {generatedOtp}</p>
+              <button
+                onClick={() => { setMode('REGISTER'); setError(null); }}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                {t('Register', 'Daftar')}
+              </button>
             </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-2xl border border-black/5">
-                <button onClick={() => setMode('LOGIN')} className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-gray-400'}`}>{t('LOG IN', 'MASUK')}</button>
-                <button onClick={() => setMode('REGISTER')} className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' : 'text-gray-400'}`}>{t('REGISTER', 'DAFTAR')}</button>
-              </div>
 
-              <form onSubmit={handleAuth} className="space-y-4">
-                {mode === 'REGISTER' && (
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
-                      <input required placeholder={t("Full Name", "Nama Lengkap")} className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                       <button type="button" onClick={() => setRegRole(UserRole.CUSTOMER)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.CUSTOMER ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-slate-100 text-slate-400'}`}>Customer</button>
-                       <button type="button" onClick={() => setRegRole(UserRole.MASTER_ADMIN)} className={`py-2 rounded-xl text-[0.5rem] font-black uppercase border-2 transition-all ${regRole === UserRole.MASTER_ADMIN ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-slate-100 text-slate-400'}`}>Admin HQ</button>
-                    </div>
+            <form onSubmit={mode === 'LOGIN' ? handleLogin : handleRegister} className="space-y-3">
+              {mode === 'REGISTER' && (
+                <>
+                  {/* Name */}
+                  <div className="relative">
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input
+                      required
+                      placeholder={t('Full Name', 'Nama Lengkap')}
+                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
                   </div>
-                )}
 
-                <div className="relative">
-                  <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input required type="email" placeholder="email@surepath.ai" className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})}/>
-                </div>
+                  {/* Role selector */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRegRole(UserRole.CUSTOMER)}
+                      className={`py-3 rounded-2xl text-[0.55rem] font-black uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
+                    >
+                      <Smartphone size={14} /> {t('Customer', 'Nasabah')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegRole(UserRole.AGENT)}
+                      className={`py-3 rounded-2xl text-[0.55rem] font-black uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
+                    >
+                      <Briefcase size={14} /> {t('Agent', 'Agen')}
+                    </button>
+                  </div>
+                </>
+              )}
 
-                <div className="relative">
-                  <KeyRound size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input required type={showPass ? 'text' : 'password'} placeholder="Password" className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})}/>
-                  <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-emerald-500 transition-colors">
-                    {showPass ? <EyeOff size={18}/> : <Eye size={18}/>}
-                  </button>
-                </div>
+              {/* Email */}
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  required
+                  type="email"
+                  placeholder="email@contoh.com"
+                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
 
-                {error && <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-[0.6rem] font-bold flex items-center gap-2"><AlertCircle size={14}/> {error}</div>}
-
-                <button type="submit" disabled={loading} className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50">
-                  {loading ? <RefreshCw size={18} className="animate-spin text-emerald-500"/> : (mode === 'LOGIN' ? t('AUTHORIZE', 'MASUK') : t('CREATE NODE', 'DAFTAR'))}
-                </button>
-              </form>
-
-              <div className="pt-4 space-y-4">
-                <div className="relative flex items-center py-2">
-                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-                  <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-widest">OR</span>
-                  <div className="flex-grow border-t border-slate-200 dark:border-white/10"></div>
-                </div>
-                
-                <button 
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full py-4 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm active:scale-95"
+              {/* Password */}
+              <div className="relative">
+                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  required
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Password"
+                  minLength={6}
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-400 transition-colors"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.09-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  {t('Continue with Google', 'Lanjutkan dengan Google')}
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
 
-              {/* Demo Environments Removed for final production phase */}
-            </div>
-          )}
-        </div>
+              {/* Error */}
+              {error && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle size={14} className="flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-        <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-          <BadgeCheck size={14} className="text-emerald-500"/> Secured by SurePath Smart Security v4.2
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    {mode === 'LOGIN' ? t('Sign In', 'Masuk') : (regRole === UserRole.AGENT ? t('Continue to Agent Setup', 'Lanjut ke Setup Agen') : t('Create Account', 'Buat Akun'))}
+                    <ArrowRight size={14} />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Demo access */}
+        {mode === 'LOGIN' && (
+          <div className="w-full space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[0.55rem] font-black text-gray-600 uppercase tracking-widest">Demo</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { role: UserRole.MASTER_ADMIN, label: 'Admin HQ', icon: LayoutDashboard, color: 'text-orange-400 border-orange-500/20 hover:bg-orange-500/10' },
+                { role: UserRole.AGENT,        label: 'Agen',     icon: Briefcase,      color: 'text-blue-400  border-blue-500/20  hover:bg-blue-500/10'  },
+                { role: UserRole.CUSTOMER,     label: 'Nasabah',  icon: Smartphone,     color: 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10' },
+              ].map(({ role, label, icon: Icon, color }) => (
+                <button
+                  key={role}
+                  onClick={() => handleDemoAccess(role)}
+                  disabled={loading}
+                  className={`p-3 bg-white/[0.03] border rounded-2xl flex flex-col items-center gap-1.5 transition-all active:scale-95 disabled:opacity-40 ${color}`}
+                >
+                  <Icon size={20} />
+                  <span className="text-[0.5rem] font-black uppercase">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <p className="text-[0.5rem] font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
+          <Shield size={10} className="text-emerald-700" />
+          Secured by SurePath Smart Security v4.2
         </p>
       </div>
     </div>

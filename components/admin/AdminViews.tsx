@@ -12,7 +12,11 @@ import {
   Globe, FileDown, Upload, Plus
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
-import { db, User as DBUser, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
+import { db, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
+import {
+  getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
+  type SpUser, type SpClaim,
+} from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
@@ -79,7 +83,6 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
 export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, section?: string }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
-  const [userStats, setUserStats] = useState<any>({});
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -98,8 +101,6 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                if (tx.type === 'COMMISSION') stats[tx.userId].commission += tx.amount;
            });
            
-           setUserStats(stats);
-
            // Map stats to users and sort by sales descending
            const mappedUsers = allUsers.map(u => ({
               ...u,
@@ -825,7 +826,7 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
                   <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => toggleProduct(p.id)}
                 className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.active ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-primary-500 text-white shadow-primary-500/20'}`}
               >
@@ -834,6 +835,279 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
             </Card>
           ))}
        </div>
+    </div>
+  );
+};
+
+// ── Agent Management View ────────────────────────────────────────────────────
+
+const STATUS_LABEL: Record<string, string> = {
+  SUBMITTED: 'Submitted', UNDER_REVIEW: 'Under Review',
+  APPROVED: 'Approved', REJECTED: 'Rejected', CLOSED: 'Closed',
+};
+const STATUS_COLOR: Record<string, string> = {
+  SUBMITTED: 'bg-amber-500/10 text-amber-400',
+  UNDER_REVIEW: 'bg-blue-500/10 text-blue-400',
+  APPROVED: 'bg-emerald-500/10 text-emerald-400',
+  REJECTED: 'bg-rose-500/10 text-rose-400',
+  CLOSED: 'bg-white/5 text-gray-400',
+};
+
+export const AgentManagementView = () => {
+  const [agents, setAgents] = useState<SpUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editRate, setEditRate] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAllAgents().then(data => { setAgents(data); setLoading(false); });
+  }, []);
+
+  const handleVerify = async (agentId: string, verified: boolean) => {
+    setSaving(agentId);
+    await updateAgentVerification(agentId, verified);
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, verified } : a));
+    setSaving(null);
+  };
+
+  const handleRateUpdate = async (agentId: string) => {
+    const rate = parseFloat(editRate[agentId] ?? '');
+    if (isNaN(rate) || rate < 0 || rate > 1) return;
+    setSaving(agentId);
+    await updateAgentCommissionRate(agentId, rate);
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, commission_rate: rate } as SpUser : a));
+    setEditRate(prev => { const n = { ...prev }; delete n[agentId]; return n; });
+    setSaving(null);
+  };
+
+  const pending = agents.filter(a => !(a as any).verified);
+  const active  = agents.filter(a => (a as any).verified);
+
+  if (loading) return (
+    <div className="flex justify-center py-20">
+      <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+    </div>
+  );
+
+  const AgentRow: React.FC<{ a: SpUser }> = ({ a }) => {
+    const verified = !!(a as any).verified;
+    const rate     = (a as any).commission_rate ?? 0.1;
+    const editing  = editRate[a.id] !== undefined;
+    return (
+      <Card key={a.id} className="py-5">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          {/* Avatar + info */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center font-black text-sm flex-shrink-0">
+              {a.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="font-black text-sm truncate">{a.name}</p>
+              <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest truncate">{a.email}</p>
+              <p className="text-[0.6rem] font-bold text-primary-500 uppercase tracking-widest">{(a as any).agent_code ?? '-'}</p>
+            </div>
+          </div>
+
+          {/* Commission rate editor */}
+          <div className="flex items-center gap-2">
+            {editing ? (
+              <>
+                <input
+                  type="number"
+                  step="0.01" min="0" max="1"
+                  value={editRate[a.id]}
+                  onChange={e => setEditRate(prev => ({ ...prev, [a.id]: e.target.value }))}
+                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-500"
+                />
+                <button
+                  disabled={saving === a.id}
+                  onClick={() => handleRateUpdate(a.id)}
+                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white"
+                >
+                  {saving === a.id ? '…' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditRate(prev => { const n = { ...prev }; delete n[a.id]; return n; })}
+                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400"
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setEditRate(prev => ({ ...prev, [a.id]: String(rate) }))}
+                className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Rate: {(rate * 100).toFixed(0)}%
+              </button>
+            )}
+          </div>
+
+          {/* Verify/Reject button */}
+          <button
+            disabled={saving === a.id}
+            onClick={() => handleVerify(a.id, !verified)}
+            className={`px-6 py-2.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex-shrink-0 ${
+              verified
+                ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white'
+                : 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
+            }`}
+          >
+            {saving === a.id ? '…' : verified ? 'Revoke' : 'Approve'}
+          </button>
+        </div>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Total Agents', value: agents.length, color: 'text-white' },
+          { label: 'Active', value: active.length, color: 'text-emerald-400' },
+          { label: 'Pending', value: pending.length, color: 'text-amber-400' },
+        ].map(({ label, value, color }) => (
+          <Card key={label} className="py-5 text-center">
+            <p className={`text-2xl font-black ${color}`}>{value}</p>
+            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-widest mt-1">{label}</p>
+          </Card>
+        ))}
+      </div>
+
+      {pending.length > 0 && (
+        <div>
+          <h3 className="font-black uppercase tracking-widest text-xs text-amber-400 mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse inline-block" />
+            Pending Approval ({pending.length})
+          </h3>
+          <div className="space-y-3">
+            {pending.map(a => <AgentRow key={a.id} a={a} />)}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-4">
+          Active Agents ({active.length})
+        </h3>
+        {active.length === 0 ? (
+          <Card className="text-center py-10 text-gray-500 text-sm font-bold">No active agents yet.</Card>
+        ) : (
+          <div className="space-y-3">
+            {active.map(a => <AgentRow key={a.id} a={a} />)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Claims Admin View ────────────────────────────────────────────────────────
+
+export const ClaimsAdminView = () => {
+  const [claims, setClaims] = useState<SpClaim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>('ALL');
+
+  useEffect(() => {
+    getAllClaims().then(data => { setClaims(data); setLoading(false); });
+  }, []);
+
+  const handleStatus = async (id: string, status: SpClaim['status']) => {
+    await import('../../services/supabaseService').then(m => m.updateClaimStatus(id, status));
+    setClaims(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+  };
+
+  const visible = filter === 'ALL' ? claims : claims.filter(c => c.status === filter);
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Filter */}
+      <div className="flex gap-2 flex-wrap">
+        {['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+              filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            {f === 'ALL' ? 'All' : STATUS_LABEL[f] ?? f}
+            {f === 'ALL' ? ` (${claims.length})` : ` (${claims.filter(c => c.status === f).length})`}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+        </div>
+      ) : visible.length === 0 ? (
+        <Card className="text-center py-12 text-gray-500 text-sm font-bold">No claims found.</Card>
+      ) : (
+        <div className="space-y-3">
+          {visible.map(claim => (
+            <Card key={claim.id} className="py-5">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-black text-sm">{claim.client_name ?? '—'}</p>
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${STATUS_COLOR[claim.status] ?? 'bg-white/5 text-gray-400'}`}>
+                      {STATUS_LABEL[claim.status] ?? claim.status}
+                    </span>
+                  </div>
+                  <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">
+                    {claim.claim_number ?? '-'} · {claim.product_type ?? '-'} · {claim.date ?? '-'}
+                  </p>
+                  {claim.location && (
+                    <p className="text-xs text-gray-400 mt-1 truncate">{claim.location}</p>
+                  )}
+                  {claim.amount_estimated && (
+                    <p className="text-xs font-bold text-primary-500 mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
+                  )}
+                </div>
+                {/* Quick status actions */}
+                <div className="flex gap-2 flex-wrap flex-shrink-0">
+                  {claim.status === 'SUBMITTED' && (
+                    <button
+                      onClick={() => handleStatus(claim.id, 'UNDER_REVIEW')}
+                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+                    >
+                      Review
+                    </button>
+                  )}
+                  {(claim.status === 'SUBMITTED' || claim.status === 'UNDER_REVIEW') && (
+                    <>
+                      <button
+                        onClick={() => handleStatus(claim.id, 'APPROVED')}
+                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleStatus(claim.id, 'REJECTED')}
+                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {claim.status === 'APPROVED' && (
+                    <button
+                      onClick={() => handleStatus(claim.id, 'CLOSED')}
+                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400 hover:bg-white/10 transition-colors"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,505 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  FileText, CheckCircle, XCircle, Clock, Eye, Upload,
+  Car, Bike, ChevronDown, Search, Download, RefreshCw
+} from 'lucide-react';
+import {
+  getAllOrders, updateOrderStatus, uploadPolicyDocument,
+  addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
+  type SpPolicyOrder,
+} from '../../services/supabaseService';
+import { formatIDR } from '../car-wizard/WizardUI';
+
+const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
+  SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-400',     Icon: Eye },
+  APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-400', Icon: CheckCircle },
+  ISSUED:       { label: 'Issued',       color: 'bg-primary-500/10 text-primary-500', Icon: FileText },
+  REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400',     Icon: XCircle },
+};
+
+const AI_SCORE_COLOR = (score?: number) => {
+  if (!score) return 'text-slate-400';
+  if (score >= 80) return 'text-emerald-400';
+  if (score >= 60) return 'text-amber-400';
+  return 'text-rose-400';
+};
+
+// ── Order Detail Modal ───────────────────────────────────────────────────────
+
+interface DetailProps {
+  order: SpPolicyOrder;
+  onClose: () => void;
+  onStatusChange: (id: string, status: SpPolicyOrder['status'], extras?: any) => void;
+}
+
+const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChange }) => {
+  const [notes, setNotes] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const v = order.vehicle_details ?? {};
+
+  const handleApprove = async () => {
+    setSaving(true);
+    await onStatusChange(order.id, 'APPROVED', { reviewer_notes: notes });
+    setSaving(false);
+  };
+
+  const handleReject = async () => {
+    if (!notes.trim()) { alert('Wajib isi catatan penolakan.'); return; }
+    setSaving(true);
+    await onStatusChange(order.id, 'REJECTED', { reviewer_notes: notes });
+    setSaving(false);
+  };
+
+  const handleReview = async () => {
+    setSaving(true);
+    await onStatusChange(order.id, 'UNDER_REVIEW');
+    setSaving(false);
+  };
+
+  const handleUploadPolicy = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    const docUrl = await uploadPolicyDocument(file, order.order_number ?? order.id);
+    if (!docUrl) { setUploading(false); alert('Upload gagal.'); return; }
+
+    const policyNumber = order.policy_number
+      ?? `SP-${(order.product_code ?? 'MRKB').replace(/_/g, '-')}-${Date.now().toString(36).toUpperCase()}`;
+
+    await onStatusChange(order.id, 'ISSUED', {
+      policy_number: policyNumber,
+      policy_document_url: docUrl,
+    });
+
+    // Fetch product config for commission & coin rates
+    const productConfig = await getProductConfig(order.product_code);
+    const agentProfile = await getAgentProfile(order.agent_id);
+
+    // Commission: use order's stored rate if set, else product config, else agent default
+    const discountRate = order.discount_rate ?? 0;
+    const baseCommRate = productConfig?.base_commission_rate
+      ?? (agentProfile as any)?.commission_rate
+      ?? 0.10;
+    const effectiveCommRate = Math.max(0, baseCommRate - discountRate);
+    const commissionAmount = Math.round(order.total_premium * effectiveCommRate);
+
+    // Coin reward: use order's stored value if set, else calculate from product config
+    const coinRate = productConfig?.coin_rate ?? 0.05;
+    const coinReward = order.coin_reward && order.coin_reward > 0
+      ? order.coin_reward
+      : Math.floor(order.total_premium * coinRate / 1000);
+
+    await addCommission({
+      agent_id: order.agent_id,
+      client_name: order.client_name,
+      product_type: 'CAR',
+      premium_amount: order.total_premium,
+      commission_amount: commissionAmount,
+      discount_rate: discountRate,
+      coin_reward: coinReward,
+      order_id: order.id,
+      order_number: order.order_number,
+      status: 'PENDING',
+    });
+
+    // Award coins
+    if (coinReward > 0) {
+      await awardCoins(
+        order.agent_id,
+        coinReward,
+        order.id,
+        `Koin dari order ${order.order_number} – ${order.client_name}`
+      );
+    }
+
+    // Notify agent — policy issued
+    await addNotification({
+      agent_id: order.agent_id,
+      type: 'SYSTEM',
+      title: `Polis ${policyNumber} Telah Diterbitkan!`,
+      body: `Order ${order.order_number} untuk ${order.client_name} telah disetujui dan polis dapat diunduh.`,
+      metadata: { link: 'quotes', order_id: order.id, policy_document_url: docUrl },
+    });
+
+    // Notify agent — commission + coins earned
+    await addNotification({
+      agent_id: order.agent_id,
+      type: 'COMMISSION_EARNED',
+      title: `Komisi & Koin Diperoleh!`,
+      body: `Komisi ${formatIDR(commissionAmount)} + ${coinReward} koin (Rp ${(coinReward * 1000).toLocaleString('id-ID')}) dari order ${order.order_number}.`,
+      metadata: { link: 'wallet' },
+    });
+
+    setUploading(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm overflow-y-auto py-8 px-4">
+      <div className="bg-[#111] rounded-[2.5rem] border border-white/10 w-full max-w-2xl shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
+          <div>
+            <h3 className="font-black text-lg tracking-tight">{order.order_number ?? '—'}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+              {order.product_name}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {(() => { const m = STATUS_META[order.status]; return (
+              <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${m.color}`}>
+                <m.Icon size={10} /> {m.label}
+              </span>
+            ); })()}
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-400 hover:text-white">✕</button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Client info */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Informasi Klien</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Nama', order.client_name],
+                ['Telepon', order.client_phone ?? '-'],
+                ['KTP', order.client_ktp ?? '-'],
+              ].map(([k, v]) => (
+                <div key={k} className="bg-white/5 rounded-2xl p-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{k}</p>
+                  <p className="text-sm font-bold mt-0.5">{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vehicle details */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Detail Kendaraan</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Jenis', order.vehicle_type === 'MOTORCYCLE' ? 'Roda 2 (Motor)' : 'Roda 4 (Mobil)'],
+                ['Merk / Model', `${v.make ?? '-'} ${v.model ?? ''}`],
+                ['Tahun', v.year ?? '-'],
+                ['Warna', v.color ?? '-'],
+                ['Plat Nomor', v.plate ?? '-'],
+                ['No. Rangka', v.chassis ?? '-'],
+                ['No. Mesin', v.engine ?? '-'],
+                ['Penggunaan', v.usage ?? '-'],
+                ['Provinsi / Zona', `${v.province ?? '-'} (Zona ${order.zone})`],
+              ].map(([k, val]) => (
+                <div key={k} className="bg-white/5 rounded-2xl p-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{k}</p>
+                  <p className="text-sm font-bold mt-0.5 break-all">{val}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vehicle image + AI score */}
+          <div className="grid grid-cols-2 gap-4">
+            {order.vehicle_image_url && (
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Foto Kendaraan</p>
+                <img
+                  src={order.vehicle_image_url}
+                  alt="Vehicle"
+                  className="rounded-2xl w-full object-cover max-h-40 border border-white/10"
+                />
+              </div>
+            )}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Skor AI Survey</p>
+              <div className="bg-white/5 rounded-2xl p-4 text-center">
+                <p className={`text-4xl font-black ${AI_SCORE_COLOR(order.ai_score)}`}>
+                  {order.ai_score ?? '—'}
+                </p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">
+                  {order.ai_verdict ?? '-'}
+                </p>
+              </div>
+              {Array.isArray(order.ai_findings) && order.ai_findings.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {(order.ai_findings as any[]).slice(0, 3).map((f: any, i: number) => (
+                    <p key={i} className="text-[10px] text-slate-400 truncate">• {f.description ?? f}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Premium breakdown */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Rincian Premi</p>
+            <div className="bg-white/5 rounded-2xl p-4 space-y-2">
+              {[
+                ['Jenis Pertanggungan', order.coverage_type],
+                ['Harga Pertanggungan', formatIDR(order.sum_insured)],
+                ['OJK Rate', order.ojk_rate ? `${(order.ojk_rate * 100).toFixed(2)}%` : '-'],
+                ['Premi Dasar', formatIDR(order.base_premium)],
+                ['Premi Add-on', formatIDR(order.addon_premium)],
+                ['Biaya Admin', formatIDR(order.admin_fee)],
+                ['Bea Materai', formatIDR(order.stamp_duty)],
+              ].map(([k, val]) => (
+                <div key={k} className="flex justify-between text-xs">
+                  <span className="text-slate-400 font-medium">{k}</span>
+                  <span className="font-bold">{val}</span>
+                </div>
+              ))}
+              <div className="border-t border-white/10 pt-2 flex justify-between">
+                <span className="text-xs font-black uppercase tracking-widest text-slate-300">Total Premi</span>
+                <span className="font-black text-primary-500">{formatIDR(order.total_premium)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Reviewer notes */}
+          {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
+                Catatan Reviewer
+              </label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Catatan persetujuan atau alasan penolakan…"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 resize-none"
+              />
+            </div>
+          )}
+
+          {order.reviewer_notes && (
+            <div className="p-4 bg-blue-500/10 rounded-2xl">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Catatan Admin</p>
+              <p className="text-sm text-blue-300">{order.reviewer_notes}</p>
+            </div>
+          )}
+
+          {/* Issued policy link */}
+          {order.policy_document_url && (
+            <a
+              href={order.policy_document_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 text-emerald-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-colors"
+            >
+              <Download size={14} />
+              Download Polis ({order.policy_number ?? '—'})
+            </a>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-3 pt-2">
+            {order.status === 'SUBMITTED' && (
+              <button
+                disabled={saving}
+                onClick={handleReview}
+                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+              >
+                {saving ? '…' : 'Mulai Review'}
+              </button>
+            )}
+            {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
+              <>
+                <button
+                  disabled={saving}
+                  onClick={handleApprove}
+                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                >
+                  {saving ? '…' : 'Setujui'}
+                </button>
+                <button
+                  disabled={saving}
+                  onClick={handleReject}
+                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                >
+                  {saving ? '…' : 'Tolak'}
+                </button>
+              </>
+            )}
+            {order.status === 'APPROVED' && (
+              <>
+                <input ref={fileRef} type="file" accept=".pdf" onChange={handleUploadPolicy} className="hidden" />
+                <button
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                >
+                  <Upload size={14} />
+                  {uploading ? 'Mengupload…' : 'Upload Polis PDF → Terbitkan'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Main Component ────────────────────────────────────────────────────────────
+
+const PolicyOrdersAdmin: React.FC = () => {
+  const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<string>('ALL');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const data = await getAllOrders();
+    setOrders(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const handleStatusChange = async (id: string, status: SpPolicyOrder['status'], extras?: any) => {
+    await updateOrderStatus(id, status, extras);
+    setOrders(prev => prev.map(o =>
+      o.id === id ? { ...o, status, ...extras } : o
+    ));
+    setSelected(prev => prev && prev.id === id ? { ...prev, status, ...extras } : prev);
+  };
+
+  const FILTERS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED'];
+
+  const visible = orders.filter(o => {
+    if (filter !== 'ALL' && o.status !== filter) return false;
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      (o.client_name ?? '').toLowerCase().includes(q) ||
+      (o.order_number ?? '').toLowerCase().includes(q) ||
+      (o.product_name ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  const counts: Record<string, number> = { ALL: orders.length };
+  FILTERS.slice(1).forEach(f => { counts[f] = orders.filter(o => o.status === f).length; });
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {FILTERS.slice(1).map(f => {
+          const m = STATUS_META[f as SpPolicyOrder['status']];
+          return (
+            <div
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`p-4 rounded-[1.5rem] border cursor-pointer transition-all ${
+                filter === f ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/5 bg-white/[0.02] hover:border-white/10'
+              }`}
+            >
+              <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-400' : 'text-white'}`}>{counts[f]}</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">{m.label}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-48">
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Cari order, klien, produk…"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary-500"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+              }`}
+            >
+              {f === 'ALL' ? 'Semua' : STATUS_META[f as SpPolicyOrder['status']].label}
+              {` (${counts[f]})`}
+            </button>
+          ))}
+        </div>
+        <button onClick={load} className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white">
+          <RefreshCw size={14} />
+        </button>
+      </div>
+
+      {/* Order list */}
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="text-center py-20 text-slate-500 text-sm font-bold">Tidak ada order ditemukan.</div>
+      ) : (
+        <div className="space-y-3">
+          {visible.map(order => {
+            const m = STATUS_META[order.status];
+            const VIcon = order.vehicle_type === 'MOTORCYCLE' ? Bike : Car;
+            return (
+              <div
+                key={order.id}
+                onClick={() => setSelected(order)}
+                className="p-5 bg-white/[0.02] border border-white/5 rounded-[2rem] cursor-pointer hover:border-white/10 hover:bg-white/[0.04] transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                    <VIcon size={20} className="text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <div>
+                        <p className="font-black text-sm">{order.client_name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {order.order_number} · {order.product_name}
+                        </p>
+                      </div>
+                      <span className={`flex-shrink-0 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${m.color}`}>
+                        <m.Icon size={9} /> {m.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-[10px] font-bold text-primary-500">{formatIDR(order.total_premium)}/tahun</span>
+                      {order.ai_score !== undefined && order.ai_score !== null && (
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${AI_SCORE_COLOR(order.ai_score)}`}>
+                          AI Score: {order.ai_score}
+                        </span>
+                      )}
+                      <span className="text-[9px] text-slate-500">
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID') : ''}
+                      </span>
+                      <span className="text-[9px] font-bold text-slate-400">Zona {order.zone} · {order.coverage_type}</span>
+                    </div>
+                  </div>
+                  <ChevronDown size={14} className="text-slate-500 flex-shrink-0 -rotate-90 mt-1" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {selected && (
+        <OrderDetailModal
+          order={selected}
+          onClose={() => setSelected(null)}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+    </div>
+  );
+};
+
+export default PolicyOrdersAdmin;

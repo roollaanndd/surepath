@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["CUSTOMER", "AGENT", "FINANCE", "ADMIN", "MASTER_ADMIN"] },
+        "nodeId": { "type": "string" },
+        "ktp": { "type": "string" },
+        "address": { "type": "string" },
+        "trustScore": { "type": "number" },
+        "memberSince": { "type": "string" },
+        "verified": { "type": "boolean" }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "policy": {
+      "title": "Policy",
+      "description": "Insurance policy data",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "premium": { "type": "number" },
+        "providerId": { "type": "string" },
+        "policyNumber": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "type", "status", "premium", "policyNumber", "createdAt"]
+    },
+    "claim": {
+      "title": "Claim",
+      "description": "Insurance claim data",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "policyId": { "type": "string" },
+        "policyNumber": { "type": "string" },
+        "contactInfo": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "chronology": { "type": "string" },
+        "thirdPartyInvolved": { "type": "boolean" },
+        "status": { "type": "string" },
+        "amountEstimated": { "type": "number" },
+        "amountApproved": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "policyId", "status", "createdAt"]
+    },
+    "transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction data",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "referenceId": { "type": "string" }
+      },
+      "required": ["userId", "type", "amount", "status", "date"]
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "description": "Action history logs",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string" },
+        "actor": { "type": "string" },
+        "action": { "type": "string" },
+        "domain": { "type": "string" },
+        "payload": { "type": "string" }
+      },
+      "required": ["timestamp", "actor", "action", "domain"]
+    },
+    "provider": {
+      "title": "Provider",
+      "description": "Insurance provider definition",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["name", "isActive"]
+    },
+    "customProduct": {
+      "title": "Custom Product",
+      "description": "Custom insurance product created by Admin",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "basePremium": { "type": "number" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "type", "isActive", "basePremium", "description"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "user",
+      "description": "User profiles collection"
+    },
+    "policies": {
+      "schema": "policy",
+      "description": "Policies purchased by users"
+    },
+    "claims": {
+      "schema": "claim",
+      "description": "Claims submitted by users"
+    },
+    "transactions": {
+      "schema": "transaction",
+      "description": "Financial transactions"
+    },
+    "auditLogs": {
+      "schema": "auditLog",
+      "description": "Logs for admin actions"
+    },
+    "providers": {
+      "schema": "provider",
+      "description": "List of insurance providers"
+    },
+    "customProducts": {
+      "schema": "customProduct",
+      "description": "Custom dynamic products"
+    }
+  }
+}

@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- PRIMARY SEO -->
+    <title>SurePath | Asuransi Pintar & Cepat</title>
+    <meta name="description" content="SurePath adalah asuransi modern yang dirancang untuk memberi ketenangan dengan proses klaim secepat kilat dan pembelian yang mudah." />
+    <meta name="keywords" content="asuransi, beli asuransi, asuransi mobil, asuransi kesehatan, asuransi jiwa, klaim asuransi cepat, asuransi pintar, surepath" />
+    <meta name="author" content="SurePath" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SurePath | Asuransi Pintar & Cepat" />
+    <meta property="og:description" content="SurePath adalah asuransi modern yang dirancang untuk memberi ketenangan dengan proses klaim secepat kilat dan pembelian yang mudah." />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="SurePath | Asuransi Pintar & Cepat" />
+    <meta property="twitter:description" content="SurePath adalah asuransi modern yang dirancang untuk memberi ketenangan dengan proses klaim secepat kilat dan pembelian yang mudah." />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: { 
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace']
+            },
+            colors: {
+              primary: { 
+                50: '#fff7ed', 
+                100: '#ffedd5', 
+                200: '#fed7aa', 
+                300: '#fdba74', 
+                400: '#fb923c', 
+                500: '#f97316', // Warm Orange
+                600: '#ea580c', 
+                700: '#c2410c',
+              },
+              brand: {
+                50: '#ecfccb',
+                400: '#34d399',
+                500: '#10b981', // Trust Emerald
+                600: '#059669',
+              },
+              slate: {
+                900: '#0f172a',
+                950: '#020617',
+              }
+            },
+            animation: {
+              'mesh': 'mesh 20s ease infinite',
+              'float': 'float 5s ease-in-out infinite',
+              'pop-in': 'popIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'shimmer-fast': 'shimmer 1.5s infinite linear',
+              'blob': 'blob 10s infinite alternate ease-in-out',
+              'pulse-soft': 'pulseSoft 4s ease-in-out infinite',
+              'flow': 'flow 30s linear infinite',
+              'draw-check': 'drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards',
+            },
+            keyframes: {
+              mesh: {
+                '0%, 100%': { 'background-position': '0% 50%' },
+                '50%': { 'background-position': '100% 50%' },
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-15px)' },
+              },
+              popIn: {
+                '0%': { transform: 'scale(0.95)', opacity: 0 },
+                '100%': { transform: 'scale(1)', opacity: 1 },
+              },
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' },
+              },
+              blob: {
+                '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                '100%': { transform: 'translate(0px, 0px) scale(1)' },
+              },
+              pulseSoft: {
+                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                '50%': { opacity: 0.8, transform: 'scale(1.05)' },
+              },
+              flow: {
+                '0%': { 'stroke-dashoffset': '1000' },
+                '100%': { 'stroke-dashoffset': '0' }
+              },
+              drawCheck: {
+                'to': { 'stroke-dashoffset': '0' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      html { scroll-behavior: smooth; }
+      body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: #fafaf9; color: #1e293b; }
+      
+      @keyframes blob {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+      }
+      .animate-blob {
+        animation: blob 7s infinite;
+      }
+      .animation-delay-2000 {
+        animation-delay: 2s;
+      }
+      .animation-delay-4000 {
+        animation-delay: 4s;
+      }
+
+      .bg-mesh {
+        background: linear-gradient(-45deg, #fefce8, #f0fdf4, #fff7ed, #fafaf9);
+        background-size: 400% 400%;
+        animation: mesh 15s ease infinite;
+      }
+
+      .hero-abstract-container {
+        position: relative;
+        background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(249, 115, 22, 0.08) 0%, transparent 40%);
+        overflow: hidden;
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(12px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .dark .glass-card {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .text-glow-primary {
+        text-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+      }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      
+      .tap-feedback:active { transform: scale(0.96); transition: transform 0.1s; }
+      
+      @media (min-width: 1024px) {
+        .desktop-grid {
+          background-size: 60px 60px;
+          background-image: radial-gradient(circle, #e2e8f0 1.5px, transparent 1.5px);
+        }
+      }
+
+      .animate-path {
+        stroke-dasharray: 1000;
+        animation: flow 20s linear infinite;
+      }
+
+      @media print {
+        .no-print { display: none !important; }
+      }
+    </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "dexie": "https://esm.sh/dexie@^4.2.1",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-Co3IMSgv.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BIhid0I-.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body class="bg-mesh">
+    <div class="desktop-grid fixed inset-0 pointer-events-none opacity-20"></div>
+    <div id="root"></div>
+  </body>
+</html>

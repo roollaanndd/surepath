@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
-  addNotification,
+  addNotification, addCommission, getAgentProfile,
   type SpPolicyOrder,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -76,13 +76,35 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       policy_document_url: docUrl,
     });
 
-    // Notify agent
+    // Auto-create commission record
+    const agentProfile = await getAgentProfile(order.agent_id);
+    const commissionRate = (agentProfile as any)?.commission_rate ?? 0.10;
+    const commissionAmount = Math.round(order.total_premium * commissionRate);
+    await addCommission({
+      agent_id: order.agent_id,
+      client_name: order.client_name,
+      product_type: 'CAR',
+      premium_amount: order.total_premium,
+      commission_amount: commissionAmount,
+      status: 'PENDING',
+    });
+
+    // Notify agent — policy issued
     await addNotification({
       agent_id: order.agent_id,
       type: 'SYSTEM',
       title: `Polis ${policyNumber} Telah Diterbitkan!`,
       body: `Order ${order.order_number} untuk ${order.client_name} telah disetujui dan polis dapat diunduh.`,
       metadata: { link: 'quotes', order_id: order.id, policy_document_url: docUrl },
+    });
+
+    // Notify agent — commission earned
+    await addNotification({
+      agent_id: order.agent_id,
+      type: 'COMMISSION_EARNED',
+      title: `Komisi Diperoleh – ${formatIDR(commissionAmount)}`,
+      body: `Komisi ${(commissionRate * 100).toFixed(0)}% dari premi ${formatIDR(order.total_premium)} untuk ${order.client_name} telah dicatat.`,
+      metadata: { link: 'wallet' },
     });
 
     setUploading(false);

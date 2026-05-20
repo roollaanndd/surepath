@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, Users, Zap, 
-  Wallet, Settings, LogOut, Search, 
-  Activity, Menu, 
+import {
+  LayoutDashboard, Users, Zap,
+  Wallet, Settings, LogOut, Search,
+  Activity, Menu,
   ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
   TrendingUp, BarChart3,
-  Bell, CheckCircle
+  Bell, CheckCircle, Coins, DollarSign, Package
 } from 'lucide-react';
 import {
   BizAdminView,
@@ -20,6 +20,9 @@ import {
   ClaimsAdminView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
+import ProductConfigAdmin from './ProductConfigAdmin';
+import FinancialAdmin from './FinancialAdmin';
+import CommissionLedger from './CommissionLedger';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -71,6 +74,9 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'policy_orders', label: 'Policy Orders', icon: Activity, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
     { id: 'agents', label: 'Agent Management', icon: Bell, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'claims_admin', label: 'Claims Queue', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+    { id: 'financial', label: 'Keuangan', icon: DollarSign, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+    { id: 'commission_ledger', label: 'Ledger Komisi', icon: Coins, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+    { id: 'product_config', label: 'Konfigurasi Produk', icon: Package, roles: [UserRole.MASTER_ADMIN] },
     { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
     { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
   ];
@@ -181,6 +187,9 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
       case 'policy_orders': return <PolicyOrdersAdmin />;
       case 'agents': return <AgentManagementView />;
       case 'claims_admin': return <ClaimsAdminView />;
+      case 'financial': return <FinancialAdmin />;
+      case 'commission_ledger': return <CommissionLedger />;
+      case 'product_config': return <ProductConfigAdmin />;
       case 'security': return <SecurityView />;
       case 'settings': return <SettingsView products={products} setProducts={setProducts} />;
       default: return null;

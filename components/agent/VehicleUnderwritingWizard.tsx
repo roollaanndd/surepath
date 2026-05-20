@@ -11,8 +11,8 @@ import {
   type VehicleType, type CoverageType, type Zone, type PremiumBreakdown, type AddOns,
 } from '../../services/ojkRates';
 import {
-  createPolicyOrder, uploadVehicleImage, addNotification,
-  type SpClient,
+  createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
+  type SpClient, type SpProductConfig,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -179,6 +179,10 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const [aiResult, setAiResult] = useState<SurveyAnalysisResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ── Step 6: Discount ──
+  const [productConfig, setProductConfig] = useState<SpProductConfig | null>(null);
+  const [discountRate, setDiscountRate] = useState(0); // 0.00 – max_discount_rate
+
   // ── Step 7: Order ──
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -256,6 +260,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     }
   };
 
+  // ─── Fetch product config when step 6 is reached ──────────────────────────
+
+  useEffect(() => {
+    if (step !== 6) return;
+    const { code } = productInfo(vehicleType, coverageType);
+    // product code in DB uses dash: MRKB4-COMP; productInfo returns MRKB4-COMP (already)
+    getProductConfig(code).then(cfg => setProductConfig(cfg ?? null));
+  }, [step, vehicleType, coverageType]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Step 7: Submit on mount ───────────────────────────────────────────────
 
   useEffect(() => {
@@ -278,6 +291,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
         const breakdown = calcPremium(vehicleType, coverageType, sumInsured, zone, addons);
         const { code: productCode, name: productName } = productInfo(vehicleType, coverageType);
+
+        // Commission & coin calculations
+        const baseCommRate = productConfig?.base_commission_rate ?? 0.10;
+        const effectiveCommRate = Math.max(0, baseCommRate - discountRate);
+        const discountAmount = Math.round(breakdown.total * discountRate);
+        const netPremium = breakdown.total - discountAmount;
+        const commissionAmount = Math.round(breakdown.total * effectiveCommRate);
+        const coinRate = productConfig?.coin_rate ?? 0.05;
+        const coinReward = Math.floor(breakdown.total * coinRate / 1000);
 
         // Upload image first
         let vehicleImageUrl: string | undefined;
@@ -311,6 +333,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           stamp_duty: breakdown.stampDuty,
           total_premium: breakdown.total,
           ojk_rate: breakdown.rate,
+          discount_rate: discountRate,
+          discount_amount: discountAmount,
+          net_premium: netPremium,
+          commission_rate: effectiveCommRate,
+          commission_amount: commissionAmount,
+          coin_reward: coinReward,
           start_date: todayISO,
           end_date: oneYearLater,
           status: 'SUBMITTED',
@@ -1089,12 +1117,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Total */}
-          <div className="mt-4 rounded-2xl bg-primary-500/10 px-5 py-4 flex justify-between items-center">
+          {/* Total (before discount) */}
+          <div className="mt-4 rounded-2xl bg-slate-50 dark:bg-white/5 px-5 py-4 flex justify-between items-center">
             <span className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">
-              Total Premi
+              Total Premi OJK
             </span>
-            <span className="font-black text-primary-500 text-2xl">{formatIDR(breakdown.total)}</span>
+            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total)}</span>
           </div>
 
           {/* Dates */}
@@ -1109,6 +1137,78 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </div>
           </div>
         </SectionCard>
+
+        {/* Discount & Commission Panel */}
+        {(() => {
+          const baseCommRate = productConfig?.base_commission_rate ?? 0.10;
+          const maxDisc = productConfig?.max_discount_rate ?? 0;
+          const effectiveComm = Math.max(0, baseCommRate - discountRate);
+          const discountAmt = Math.round(breakdown.total * discountRate);
+          const netPrem = breakdown.total - discountAmt;
+          const commAmt = Math.round(breakdown.total * effectiveComm);
+          const coinRate = productConfig?.coin_rate ?? 0.05;
+          const coins = Math.floor(breakdown.total * coinRate / 1000);
+
+          return (
+            <SectionCard>
+              <h3 className="font-black text-slate-700 dark:text-slate-200 text-sm uppercase tracking-widest mb-4">
+                Diskon & Komisi Agen
+              </h3>
+
+              {/* Discount slider */}
+              {maxDisc > 0 ? (
+                <div className="mb-5">
+                  <div className="flex justify-between items-center mb-2">
+                    <Label>Diskon untuk Klien</Label>
+                    <span className="text-sm font-black text-primary-500">{(discountRate * 100).toFixed(1)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.round(maxDisc * 1000)}
+                    step={5}
+                    value={Math.round(discountRate * 1000)}
+                    onChange={e => setDiscountRate(parseInt(e.target.value, 10) / 1000)}
+                    className="w-full accent-orange-500"
+                  />
+                  <div className="flex justify-between text-[9px] text-slate-400 mt-1">
+                    <span>0%</span><span>Max {(maxDisc * 100).toFixed(0)}%</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 mb-4">Produk ini tidak mendukung diskon.</p>
+              )}
+
+              {/* Summary table */}
+              <div className="divide-y divide-slate-100 dark:divide-white/5 text-sm">
+                {discountRate > 0 && (
+                  <div className="flex justify-between py-2.5">
+                    <span className="text-slate-500">Diskon Klien ({(discountRate*100).toFixed(1)}%)</span>
+                    <span className="font-semibold text-rose-500">– {formatIDR(discountAmt)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2.5">
+                  <span className="font-black text-slate-700 dark:text-slate-200">Net Premi Klien</span>
+                  <span className="font-black text-primary-500 text-lg">{formatIDR(netPrem)}</span>
+                </div>
+              </div>
+
+              {/* Agent earnings preview */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl p-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Komisi Anda</p>
+                  <p className="text-base font-black text-emerald-600 dark:text-emerald-400">{formatIDR(commAmt)}</p>
+                  <p className="text-[9px] text-slate-400">{(effectiveComm*100).toFixed(1)}% dari premi</p>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl p-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mb-1">Reward Koin</p>
+                  <p className="text-base font-black text-amber-600 dark:text-amber-400">{coins.toLocaleString('id-ID')}</p>
+                  <p className="text-[9px] text-slate-400">= {formatIDR(coins * 1000)}</p>
+                </div>
+              </div>
+            </SectionCard>
+          );
+        })()}
 
         <PrimaryBtn onClick={() => setStep(7)}>
           Ajukan Order Polis <ChevronRight className="inline w-4 h-4 ml-1" />

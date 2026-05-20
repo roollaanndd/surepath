@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
-  addNotification, addCommission, getAgentProfile,
+  addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
   type SpPolicyOrder,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -76,18 +76,46 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       policy_document_url: docUrl,
     });
 
-    // Auto-create commission record
+    // Fetch product config for commission & coin rates
+    const productConfig = await getProductConfig(order.product_code);
     const agentProfile = await getAgentProfile(order.agent_id);
-    const commissionRate = (agentProfile as any)?.commission_rate ?? 0.10;
-    const commissionAmount = Math.round(order.total_premium * commissionRate);
+
+    // Commission: use order's stored rate if set, else product config, else agent default
+    const discountRate = order.discount_rate ?? 0;
+    const baseCommRate = productConfig?.base_commission_rate
+      ?? (agentProfile as any)?.commission_rate
+      ?? 0.10;
+    const effectiveCommRate = Math.max(0, baseCommRate - discountRate);
+    const commissionAmount = Math.round(order.total_premium * effectiveCommRate);
+
+    // Coin reward: use order's stored value if set, else calculate from product config
+    const coinRate = productConfig?.coin_rate ?? 0.05;
+    const coinReward = order.coin_reward && order.coin_reward > 0
+      ? order.coin_reward
+      : Math.floor(order.total_premium * coinRate / 1000);
+
     await addCommission({
       agent_id: order.agent_id,
       client_name: order.client_name,
       product_type: 'CAR',
       premium_amount: order.total_premium,
       commission_amount: commissionAmount,
+      discount_rate: discountRate,
+      coin_reward: coinReward,
+      order_id: order.id,
+      order_number: order.order_number,
       status: 'PENDING',
     });
+
+    // Award coins
+    if (coinReward > 0) {
+      await awardCoins(
+        order.agent_id,
+        coinReward,
+        order.id,
+        `Koin dari order ${order.order_number} – ${order.client_name}`
+      );
+    }
 
     // Notify agent — policy issued
     await addNotification({
@@ -98,12 +126,12 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       metadata: { link: 'quotes', order_id: order.id, policy_document_url: docUrl },
     });
 
-    // Notify agent — commission earned
+    // Notify agent — commission + coins earned
     await addNotification({
       agent_id: order.agent_id,
       type: 'COMMISSION_EARNED',
-      title: `Komisi Diperoleh – ${formatIDR(commissionAmount)}`,
-      body: `Komisi ${(commissionRate * 100).toFixed(0)}% dari premi ${formatIDR(order.total_premium)} untuk ${order.client_name} telah dicatat.`,
+      title: `Komisi & Koin Diperoleh!`,
+      body: `Komisi ${formatIDR(commissionAmount)} + ${coinReward} koin (Rp ${(coinReward * 1000).toLocaleString('id-ID')}) dari order ${order.order_number}.`,
       metadata: { link: 'wallet' },
     });
 

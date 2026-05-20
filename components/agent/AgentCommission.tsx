@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, CheckCircle2, Car, Plane, Shield, Smartphone } from 'lucide-react';
+import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, CheckCircle2, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
 import { Language } from '../../types';
-import { getAgentCommissions, type SpCommission } from '../../services/supabaseService';
+import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   lang: Language;
 }
 
-type TabId = 'all' | 'pending' | 'paid' | 'byproduct';
+type TabId = 'all' | 'pending' | 'paid' | 'byproduct' | 'coins';
 
 const statusColors: Record<string, string> = {
   PAID: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
@@ -32,6 +32,8 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [commissions, setCommissions] = useState<SpCommission[]>([]);
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [coinLedger, setCoinLedger] = useState<SpCoinLedger[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [toastVisible, setToastVisible] = useState(false);
@@ -40,8 +42,14 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
     if (!agentId) return;
     setLoading(true);
     try {
-      const data = await getAgentCommissions(agentId);
+      const [data, balance, ledger] = await Promise.all([
+        getAgentCommissions(agentId),
+        getAgentCoinBalance(agentId),
+        getAgentCoinLedger(agentId),
+      ]);
       setCommissions(data);
+      setCoinBalance(balance);
+      setCoinLedger(ledger);
     } finally {
       setLoading(false);
     }
@@ -102,6 +110,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
     { id: 'pending', enLabel: 'Pending', idLabel: 'Pending' },
     { id: 'paid', enLabel: 'Paid', idLabel: 'Dibayar' },
     { id: 'byproduct', enLabel: 'By Product', idLabel: 'Per Produk' },
+    { id: 'coins', enLabel: 'Coins', idLabel: 'Koin' },
   ];
 
   return (
@@ -147,6 +156,27 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
           <ArrowDownToLine size={14} />
           {t('Request Withdrawal', 'Minta Pencairan')}
         </button>
+      </div>
+
+      {/* Coins Balance Card */}
+      <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 rounded-[2rem] p-5 text-white shadow-xl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/40">
+              <Coins size={16} className="text-white" />
+            </div>
+            <p className="text-amber-400 text-xs font-black uppercase tracking-widest">{t('SurePath Coins', 'Koin SurePath')}</p>
+          </div>
+          <button onClick={() => setActiveTab('coins')} className="text-[10px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest">
+            {t('History', 'Riwayat')} →
+          </button>
+        </div>
+        <div className="flex items-end gap-3">
+          <div>
+            <p className="font-black text-4xl tracking-tighter text-amber-400">{coinBalance.toLocaleString('id-ID')}</p>
+            <p className="text-amber-400/60 text-[10px] font-bold mt-0.5">{t('coins', 'koin')} · {formatIDR(coinBalance * 1000)} {t('value', 'nilai')}</p>
+          </div>
+        </div>
       </div>
 
       {/* Month Stats */}
@@ -221,8 +251,45 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
         </div>
       )}
 
+      {/* Coin Ledger View */}
+      {activeTab === 'coins' && (
+        <div className="space-y-3">
+          {coinLedger.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 p-8 text-center shadow-lg">
+              <Coins size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
+              <p className="font-black text-slate-400">{t('No coin history yet', 'Belum ada riwayat koin')}</p>
+              <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">
+                {t('Earn coins when policies are issued.', 'Dapatkan koin saat polis diterbitkan.')}
+              </p>
+            </div>
+          ) : (
+            coinLedger.map((entry, i) => {
+              const isEarned = entry.type === 'EARNED';
+              const isRedeemed = entry.type === 'REDEEMED';
+              return (
+                <div key={entry.id ?? i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${isEarned ? 'bg-amber-500/10 text-amber-500' : isRedeemed ? 'bg-rose-500/10 text-rose-500' : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-400'}`}>
+                    <Coins size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-sm truncate">{entry.description ?? (isEarned ? t('Coins Earned', 'Koin Diperoleh') : t('Coins Redeemed', 'Koin Digunakan'))}</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">{entry.created_at ? new Date(entry.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className={`font-black text-sm ${isEarned ? 'text-amber-500' : 'text-rose-500'}`}>
+                      {isEarned ? '+' : '-'}{entry.coins.toLocaleString('id-ID')} koin
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-bold">{formatIDR(entry.rp_value)}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
       {/* List View */}
-      {activeTab !== 'byproduct' && (
+      {activeTab !== 'byproduct' && activeTab !== 'coins' && (
         <div className="space-y-3">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (

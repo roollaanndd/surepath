@@ -54,10 +54,14 @@ export interface SpCommission {
   id: string;
   agent_id: string;
   policy_id?: string;
+  order_id?: string;
+  order_number?: string;
   client_name: string;
   product_type: 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
   premium_amount: number;
   commission_amount: number;
+  discount_rate?: number;
+  coin_reward?: number;
   status: 'PENDING' | 'PAID' | 'CANCELLED';
   created_at?: string;
   paid_at?: string;
@@ -652,6 +656,12 @@ export interface SpPolicyOrder {
   stamp_duty: number;
   total_premium: number;
   ojk_rate?: number;
+  discount_rate?: number;
+  discount_amount?: number;
+  net_premium?: number;
+  commission_rate?: number;
+  commission_amount?: number;
+  coin_reward?: number;
   start_date?: string;
   end_date?: string;
   status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'ISSUED' | 'REJECTED';
@@ -740,7 +750,130 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
   return data.publicUrl;
 }
 
-// ─── Payments ─────────────────────────────────────────────────────────────────
+// ─── Product Commission & Coin Configs ───────────────────────────────────────
+
+export interface SpProductConfig {
+  id: string;
+  product_code: string;
+  product_name: string;
+  vehicle_type: string;
+  coverage_type: string;
+  base_commission_rate: number; // 0.0 – 0.25
+  max_discount_rate: number;    // 0.0 – base_commission_rate
+  coin_rate: number;            // 0.05 – 0.25
+  is_active: boolean;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getProductConfigs(): Promise<SpProductConfig[]> {
+  const { data, error } = await supabase
+    .from('sp_product_configs')
+    .select('*')
+    .order('product_code');
+  if (error) { console.error('getProductConfigs:', error); return []; }
+  return (data ?? []) as SpProductConfig[];
+}
+
+export async function getProductConfig(productCode: string): Promise<SpProductConfig | null> {
+  const { data, error } = await supabase
+    .from('sp_product_configs')
+    .select('*')
+    .eq('product_code', productCode)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) { console.error('getProductConfig:', error); return null; }
+  return data as SpProductConfig | null;
+}
+
+export async function updateProductConfig(id: string, updates: Partial<SpProductConfig>): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_product_configs')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { console.error('updateProductConfig:', error); return false; }
+  return true;
+}
+
+export async function createProductConfig(
+  data: Omit<SpProductConfig, 'id' | 'created_at' | 'updated_at'>
+): Promise<SpProductConfig | null> {
+  const { data: result, error } = await supabase
+    .from('sp_product_configs')
+    .insert(data)
+    .select()
+    .single();
+  if (error) { console.error('createProductConfig:', error); return null; }
+  return result as SpProductConfig;
+}
+
+// ─── Coin Ledger ─────────────────────────────────────────────────────────────
+
+export interface SpCoinLedger {
+  id: string;
+  agent_id: string;
+  type: 'EARNED' | 'REDEEMED' | 'ADJUSTED';
+  coins: number;
+  rp_value: number;
+  order_id?: string;
+  description?: string;
+  created_at?: string;
+}
+
+export async function getAgentCoinLedger(agentId: string): Promise<SpCoinLedger[]> {
+  const { data, error } = await supabase
+    .from('sp_coin_ledger')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) { console.error('getAgentCoinLedger:', error); return []; }
+  return (data ?? []) as SpCoinLedger[];
+}
+
+export async function getAgentCoinBalance(agentId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('sp_coin_ledger')
+    .select('type, coins')
+    .eq('agent_id', agentId);
+  if (error) { console.error('getAgentCoinBalance:', error); return 0; }
+  return (data ?? []).reduce((sum: number, row: any) => {
+    return sum + (row.type === 'REDEEMED' ? -row.coins : row.coins);
+  }, 0);
+}
+
+export async function awardCoins(
+  agentId: string, coins: number, orderId: string, description: string
+): Promise<void> {
+  await supabase.from('sp_coin_ledger').insert({
+    agent_id: agentId,
+    type: 'EARNED',
+    coins,
+    rp_value: coins * 1000,
+    order_id: orderId,
+    description,
+  });
+  // Update cached balance on sp_users
+  await supabase.rpc('increment_coins_balance', { p_agent_id: agentId, p_delta: coins }).then(() => {});
+}
+
+export async function redeemCoins(
+  agentId: string, coins: number, description: string
+): Promise<boolean> {
+  const balance = await getAgentCoinBalance(agentId);
+  if (balance < coins) return false;
+  const { error } = await supabase.from('sp_coin_ledger').insert({
+    agent_id: agentId,
+    type: 'REDEEMED',
+    coins: -Math.abs(coins),
+    rp_value: -(coins * 1000),
+    description,
+  });
+  if (error) { console.error('redeemCoins:', error); return false; }
+  await supabase.rpc('increment_coins_balance', { p_agent_id: agentId, p_delta: -coins }).then(() => {});
+  return true;
+}
 
 export interface SpPayment {
   id: string;

@@ -21,55 +21,85 @@ import AdminPortal from './components/admin/AdminPortal';
 import HealthChat from './components/HealthChat';
 import ContactPage from './components/ContactPage';
 import { Language, UserRole } from './types';
-import { SmartBot, PageTransition } from './components/car-wizard/WizardUI';
+import { PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
 import { Badge } from './components/shared/UI';
-import { auth, signOut } from './firebase';
-import { getAgentByEmail } from './services/supabaseService';
+import { supabase, getAgentByEmail } from './services/supabaseService';
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
   const [messageIdx, setMessageIdx] = useState(0);
+  const [fadeOut, setFadeOut] = useState(false);
 
   const messages = [
-    "Menyapa Server...",
-    "Menyiapkan Proteksi Pintar...",
+    "Menyiapkan Sistem...",
+    "Memuat Data Proteksi...",
     "Mengecek Penawaran Terbaik...",
     "Koneksi Aman...",
-    "Selesai!"
+    "Selesai!",
   ];
 
   useEffect(() => {
-    const timer = setInterval(() => setProgress(p => (p >= 100 ? 100 : p + 2)), 30);
-    const msgTimer = setInterval(() => setMessageIdx(i => (i < messages.length - 1 ? i + 1 : i)), 700);
+    const timer    = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 28);
+    const msgTimer = setInterval(() => setMessageIdx(i => Math.min(i + 1, messages.length - 1)), 600);
+    const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
     const finishTimer = setTimeout(onFinish, 3200);
-    return () => { clearInterval(timer); clearInterval(msgTimer); clearTimeout(finishTimer); };
+    return () => { clearInterval(timer); clearInterval(msgTimer); clearTimeout(fadeTimer); clearTimeout(finishTimer); };
   }, [onFinish]);
 
   return (
-    <div className="fixed inset-0 z-[5000] bg-[#fafaf9] dark:bg-[#0c0a09] flex flex-col items-center justify-center overflow-hidden transition-colors duration-700">
-      <div className="relative z-10 flex flex-col items-center animate-pop-in">
-        <div className="mb-14 relative group">
-           <div className="absolute inset-0 bg-primary-500/25 rounded-full blur-[70px] animate-pulse scale-150"></div>
-           <SmartBot className="w-56 h-56 relative drop-shadow-[0_0_20px_rgba(249,115,22,0.3)]" mood="happy" />
+    <div className={`fixed inset-0 z-[5000] bg-[#050505] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+      {/* Background orbs */}
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[130px] animate-pulse" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-orange-500/8 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+      {/* grid */}
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '50px 50px' }} />
+
+      <div className="relative z-10 flex flex-col items-center gap-12">
+        {/* Logo mark */}
+        <div className="relative flex flex-col items-center gap-6">
+          {/* Outer glow ring */}
+          <div className="absolute w-40 h-40 rounded-full bg-emerald-500/15 blur-2xl animate-pulse" />
+          {/* Icon container */}
+          <div className="relative w-28 h-28 bg-emerald-500/10 border border-emerald-500/30 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-emerald-500/20 backdrop-blur-sm">
+            <SurePathLogo className="w-16 h-16" />
+          </div>
+
+          {/* Wordmark */}
+          <div className="text-center">
+            <h1 className="text-5xl font-black tracking-[-0.05em] text-white uppercase leading-none">
+              SURE<span className="text-emerald-500">PATH</span>
+            </h1>
+            <p className="text-[0.6rem] font-bold text-gray-600 uppercase tracking-[0.5em] mt-3">
+              Asuransi Pintar untuk Semua
+            </p>
+          </div>
         </div>
-        <div className="text-center space-y-8">
-          <h1 className="text-5xl font-black tracking-[-0.05em] text-slate-900 dark:text-white uppercase">
-            SURE<span className="text-primary-500">PATH</span>
-          </h1>
-          <div className="space-y-5">
-            <div className="flex items-center justify-center gap-3">
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-               <p className="text-[0.75rem] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.4em] h-4 transition-all duration-500">
-                  {messages[messageIdx]}
-               </p>
-            </div>
-            <div className="w-72 h-1.5 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner">
-                <div className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-300 shadow-[0_0_10px_#f97316]" style={{ width: `${progress}%` }}></div>
-            </div>
+
+        {/* Progress section */}
+        <div className="flex flex-col items-center gap-4 w-72">
+          <div className="flex items-center gap-2.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+            <p className="text-[0.65rem] font-black text-gray-500 uppercase tracking-[0.35em] transition-all duration-500">
+              {messages[messageIdx]}
+            </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%`, boxShadow: '0 0 12px rgba(16,185,129,0.6)' }}
+            />
           </div>
         </div>
       </div>
+
+      {/* Bottom tag */}
+      <p className="absolute bottom-10 text-[0.45rem] font-bold text-gray-800 uppercase tracking-[0.5em]">
+        Powered by Supabase · Xendit · Gemini AI
+      </p>
     </div>
   );
 };
@@ -229,11 +259,7 @@ const App = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Firebase sign out error", error);
-    }
+    await supabase.auth.signOut().catch(() => {});
     setCurrentUser(null);
     localStorage.removeItem('SUREPATH_SESSION');
     setAppMode(false);

@@ -782,3 +782,68 @@ export async function getPaymentsByOrderIds(orderIds: string[]): Promise<SpPayme
   if (error) { console.error('getPaymentsByOrderIds:', error); return []; }
   return (data ?? []) as SpPayment[];
 }
+
+// ─── Admin Analytics ──────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  totalOrders: number;
+  ordersByStatus: Record<string, number>;
+  totalPremiumIssued: number;
+  totalPremiumPaid: number;
+  activeAgents: number;
+  pendingCommissions: number;
+  topAgents: Array<{ agent_id: string; name: string; premium: number; orders: number }>;
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const [ordersRes, paymentsRes, agentsRes, commissionsRes] = await Promise.all([
+    supabase.from('sp_policy_orders').select('status, total_premium, agent_id'),
+    supabase.from('sp_payments').select('status, paid_amount'),
+    supabase.from('sp_users').select('id, name').eq('role', 'AGENT'),
+    supabase.from('sp_commissions').select('status, commission_amount').eq('status', 'PENDING'),
+  ]);
+
+  const orders = (ordersRes.data ?? []) as any[];
+  const payments = (paymentsRes.data ?? []) as any[];
+  const agents = (agentsRes.data ?? []) as any[];
+  const commissions = (commissionsRes.data ?? []) as any[];
+
+  const ordersByStatus: Record<string, number> = {};
+  let totalPremiumIssued = 0;
+  const agentPremiumMap: Record<string, { premium: number; orders: number }> = {};
+
+  orders.forEach((o: any) => {
+    ordersByStatus[o.status] = (ordersByStatus[o.status] ?? 0) + 1;
+    if (o.status === 'ISSUED') totalPremiumIssued += o.total_premium ?? 0;
+    if (o.agent_id) {
+      if (!agentPremiumMap[o.agent_id]) agentPremiumMap[o.agent_id] = { premium: 0, orders: 0 };
+      agentPremiumMap[o.agent_id].premium += o.total_premium ?? 0;
+      agentPremiumMap[o.agent_id].orders += 1;
+    }
+  });
+
+  const agentNameMap: Record<string, string> = {};
+  agents.forEach((a: any) => { agentNameMap[a.id] = a.name; });
+
+  const topAgents = Object.entries(agentPremiumMap)
+    .map(([agent_id, v]) => ({ agent_id, name: agentNameMap[agent_id] ?? 'Agent', ...v }))
+    .sort((a, b) => b.premium - a.premium)
+    .slice(0, 5);
+
+  const totalPremiumPaid = payments
+    .filter((p: any) => p.status === 'PAID')
+    .reduce((sum: number, p: any) => sum + (p.paid_amount ?? 0), 0);
+
+  const pendingCommissions = commissions
+    .reduce((sum: number, c: any) => sum + (c.commission_amount ?? 0), 0);
+
+  return {
+    totalOrders: orders.length,
+    ordersByStatus,
+    totalPremiumIssued,
+    totalPremiumPaid,
+    activeAgents: agents.length,
+    pendingCommissions,
+    topAgents,
+  };
+}

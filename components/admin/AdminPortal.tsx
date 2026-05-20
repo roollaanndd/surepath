@@ -15,15 +15,14 @@ import {
   InventoryView,
   SecurityView,
   LedgerView,
-  AuditLogView,
   ReportsView,
   AgentManagementView,
   ClaimsAdminView,
-  Badge
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import { UserRole } from '../../types';
-import { db } from '../../db';
+import { getAdminStats, type AdminStats } from '../../services/supabaseService';
+import { formatIDR } from '../car-wizard/WizardUI';
 
 import { SurePathLogo } from '../Navbar';
 
@@ -48,15 +47,11 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [stats, setStats] = useState({ userCount: 0, policyCount: 0, claimCount: 0, totalPremium: 0 });
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
 
   const fetchStats = async () => {
-      const u = await db.users.count();
-      const p = await db.policies.count();
-      const c = await db.claims.count();
-      const allPolicies = await db.policies.toArray();
-      const total = allPolicies.reduce((acc, curr) => acc + curr.premium, 0);
-      setStats({ userCount: u, policyCount: p, claimCount: c, totalPremium: total });
+      const as_ = await getAdminStats();
+      setAdminStats(as_);
   };
 
   useEffect(() => {
@@ -97,26 +92,84 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
                </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-               <StatCard label="Target GWP" value="Rp 42.8T" trend="+18.2%" icon={TrendingUp} color="bg-primary-500/10 text-primary-500" />
-               <StatCard label="Aktual GWP" value="Rp 36.2T" trend="+14.4%" icon={CheckCircle} color="bg-blue-500/10 text-blue-500" />
-               <StatCard label="Total Polis" value={stats.policyCount} trend="+3" icon={Activity} color="bg-emerald-500/10 text-emerald-500" />
-               <StatCard label="Likuiditas" value="94.2%" trend="+0.5%" icon={Zap} color="bg-amber-500/10 text-amber-500" />
+            {/* Real-data KPI row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+               <StatCard
+                 label="Total Orders"
+                 value={adminStats?.totalOrders ?? '—'}
+                 trend={adminStats?.ordersByStatus?.SUBMITTED ? `+${adminStats.ordersByStatus.SUBMITTED} pending` : undefined}
+                 icon={Activity}
+                 color="bg-primary-500/10 text-primary-500"
+               />
+               <StatCard
+                 label="Premi Diterbitkan"
+                 value={adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—'}
+                 icon={TrendingUp}
+                 color="bg-emerald-500/10 text-emerald-500"
+               />
+               <StatCard
+                 label="Premi Dibayar"
+                 value={adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—'}
+                 icon={CheckCircle}
+                 color="bg-blue-500/10 text-blue-500"
+               />
+               <StatCard
+                 label="Agen Aktif"
+                 value={adminStats?.activeAgents ?? '—'}
+                 icon={Zap}
+                 color="bg-amber-500/10 text-amber-500"
+               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-               <div className="lg:col-span-2">
-                  <ReportsView compact />
-               </div>
-               <div className="space-y-8">
-                  <Card className="p-8">
-                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Security Audit Feed</h3>
-                        <Badge color="rose">Live</Badge>
-                     </div>
-                     <AuditLogView compact />
-                  </Card>
-               </div>
+            {/* Order funnel + top agents */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               {/* Order funnel */}
+               <Card className="p-6">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-5">Order Funnel</p>
+                  {adminStats && (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
+                    const count = adminStats.ordersByStatus[st] ?? 0;
+                    const pct = adminStats.totalOrders > 0 ? (count / adminStats.totalOrders) * 100 : 0;
+                    const colors: Record<string, string> = {
+                      SUBMITTED: 'bg-amber-500', UNDER_REVIEW: 'bg-blue-500',
+                      APPROVED: 'bg-emerald-500', ISSUED: 'bg-primary-500', REJECTED: 'bg-rose-500',
+                    };
+                    return (
+                      <div key={st} className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-400 font-bold capitalize">{st.replace('_', ' ')}</span>
+                          <span className="font-black text-white">{count}</span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div className={`h-full ${colors[st]} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!adminStats && <p className="text-slate-500 text-xs">Loading…</p>}
+               </Card>
+
+               {/* Top agents */}
+               <Card className="p-6">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-5">Top Agents by Premium</p>
+                  {adminStats?.topAgents.length === 0 && <p className="text-slate-500 text-xs">Belum ada data.</p>}
+                  {adminStats?.topAgents.map((a, i) => (
+                    <div key={a.agent_id} className="flex items-center gap-3 mb-3">
+                       <span className="text-[10px] font-black text-gray-500 w-4">{i + 1}</span>
+                       <div className="flex-1 min-w-0">
+                         <p className="text-xs font-bold truncate">{a.name}</p>
+                         <p className="text-[9px] text-gray-500">{a.orders} order</p>
+                       </div>
+                       <span className="text-[10px] font-black text-primary-500">{formatIDR(a.premium)}</span>
+                    </div>
+                  ))}
+                  {!adminStats && <p className="text-slate-500 text-xs">Loading…</p>}
+                  {adminStats && adminStats.pendingCommissions > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/5 flex justify-between text-xs">
+                      <span className="text-gray-400">Komisi pending</span>
+                      <span className="font-black text-amber-400">{formatIDR(adminStats.pendingCommissions)}</span>
+                    </div>
+                  )}
+               </Card>
             </div>
           </div>
         );

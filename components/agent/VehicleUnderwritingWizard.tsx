@@ -311,13 +311,17 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const breakdown = calcPremium(vehicleType, coverageType, sumInsured, zone, addons);
         const { code: productCode, name: productName } = productInfo(vehicleType, coverageType);
 
-        // Commission & coin calculations
-        const baseCommRate = productConfig?.base_commission_rate ?? 0.10;
-        const effectiveCommRate = Math.max(0, baseCommRate - discountRate);
-        const discountAmount = Math.round(breakdown.total * discountRate);
+        // Commission & coin calculations — insurer product rates take priority
+        const baseCommRate = selectedInsurerProduct?.base_commission_rate
+          ?? productConfig?.base_commission_rate ?? 0.10;
+        const cappedDiscountRate = selectedInsurerProduct
+          ? Math.min(discountRate, selectedInsurerProduct.max_discount_rate)
+          : discountRate;
+        const effectiveCommRate = Math.max(0, baseCommRate - cappedDiscountRate);
+        const discountAmount = Math.round(breakdown.total * cappedDiscountRate);
         const netPremium = breakdown.total - discountAmount;
         const commissionAmount = Math.round(breakdown.total * effectiveCommRate);
-        const coinRate = productConfig?.coin_rate ?? 0.05;
+        const coinRate = selectedInsurerProduct?.coin_rate ?? productConfig?.coin_rate ?? 0.05;
         const coinReward = Math.floor(breakdown.total * coinRate / 1000);
 
         // Upload image first
@@ -358,6 +362,8 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           commission_rate: effectiveCommRate,
           commission_amount: commissionAmount,
           coin_reward: coinReward,
+          insurer_id: selectedInsurerProduct?.insurer_id,
+          insurer_name: selectedInsurerProduct?.insurer_name,
           start_date: todayISO,
           end_date: oneYearLater,
           status: 'SUBMITTED',
@@ -1200,6 +1206,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               <FileText className="w-3.5 h-3.5" />
               {code} — {name}
             </span>
+            {selectedInsurerProduct && (
+              <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-3 py-1 rounded-full">
+                {selectedInsurerProduct.insurer_name ?? selectedInsurerProduct.insurer_code}
+              </span>
+            )}
             <ZoneBadge zone={zone} />
           </div>
 
@@ -1263,13 +1274,16 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
         {/* Discount & Commission Panel */}
         {(() => {
-          const baseCommRate = productConfig?.base_commission_rate ?? 0.10;
-          const maxDisc = productConfig?.max_discount_rate ?? 0;
-          const effectiveComm = Math.max(0, baseCommRate - discountRate);
-          const discountAmt = Math.round(breakdown.total * discountRate);
+          const baseCommRate = selectedInsurerProduct?.base_commission_rate
+            ?? productConfig?.base_commission_rate ?? 0.10;
+          const maxDisc = selectedInsurerProduct?.max_discount_rate
+            ?? productConfig?.max_discount_rate ?? 0;
+          const cappedDisc = Math.min(discountRate, maxDisc);
+          const effectiveComm = Math.max(0, baseCommRate - cappedDisc);
+          const discountAmt = Math.round(breakdown.total * cappedDisc);
           const netPrem = breakdown.total - discountAmt;
           const commAmt = Math.round(breakdown.total * effectiveComm);
-          const coinRate = productConfig?.coin_rate ?? 0.05;
+          const coinRate = selectedInsurerProduct?.coin_rate ?? productConfig?.coin_rate ?? 0.05;
           const coins = Math.floor(breakdown.total * coinRate / 1000);
 
           return (

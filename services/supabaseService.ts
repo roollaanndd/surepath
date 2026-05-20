@@ -672,6 +672,8 @@ export interface SpPolicyOrder {
   policy_document_url?: string;
   issued_at?: string;
   sp_policy_id?: string;
+  insurer_id?: string;
+  insurer_name?: string;
   created_at?: string;
   updated_at?: string;
 }

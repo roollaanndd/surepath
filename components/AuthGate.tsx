@@ -251,27 +251,7 @@ const AuthGate: React.FC<AuthGateProps> = ({ onAuthSuccess, initialLang = Langua
                 </button>
               </div>
 
-              {mode === 'LOGIN' && (
-                <div className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
-                  <p className="text-center text-[0.55rem] font-black text-gray-400 uppercase tracking-widest">{t('Demo Environments', 'Evaluasi Cepat (Demo)')}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      onClick={() => handleDemoAccess(UserRole.MASTER_ADMIN)}
-                      className="p-4 bg-primary-50/5 hover:bg-primary-500/10 border border-primary-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
-                    >
-                      <LayoutDashboard size={24} className="text-primary-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[0.55rem] font-black uppercase text-primary-600">Admin Dashboard</span>
-                    </button>
-                    <button 
-                      onClick={() => handleDemoAccess(UserRole.CUSTOMER)}
-                      className="p-4 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex flex-col items-center gap-2 group transition-all"
-                    >
-                      <Smartphone size={24} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                      <span className="text-[0.55rem] font-black uppercase text-emerald-600">Customer App</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Demo Environments Removed for final production phase */}
             </div>
           )}
         </div>

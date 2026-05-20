@@ -77,7 +77,7 @@ export interface SurveyAnalysisResult {
 const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeHealthReceipt = async (base64Image: string): Promise<{ success: boolean; data?: HealthClaimData; error?: string }> => {
-  const modelId = 'gemini-3.1-pro-preview';
+  const modelId = 'gemini-2.5-flash';
   const prompt = `Anda adalah auditor klaim asuransi kesehatan senior. Analisa kuitansi medis atau tagihan rumah sakit ini.
   Ekstrak data ke dalam JSON yang ketat dengan struktur:
   {
@@ -112,7 +112,7 @@ export const analyzeHealthReceipt = async (base64Image: string): Promise<{ succe
 };
 
 export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): Promise<{ success: boolean; data?: ProductExplanation; error?: string }> => {
-  const modelId = 'gemini-3.1-pro-preview';
+  const modelId = 'gemini-2.5-flash';
   const prompt = `You are the SurePath Lead Neural Architect. Explain the product "${productName}" to a high-end customer.
   Use staggered, compelling, futuristic, and highly technical language.
   Focus on: Neural Underwriting, Computer Vision audits, and Zero-Trust data protocols.
@@ -151,7 +151,7 @@ export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): 
  * Focused on extreme detail and accuracy for mobile claim reporting.
  */
 export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success: boolean; data?: ClaimAnalysisData; error?: string }> => {
-  const modelId = 'gemini-3.1-pro-preview';
+  const modelId = 'gemini-2.5-flash';
   const prompt = `Lakukan audit investigasi kerusakan kendaraan secara mendalam dari foto ini.
   Anda adalah Investigator Klaim Neural SurePath. Berikan rincian yang sangat presisi.
   
@@ -204,7 +204,7 @@ export const summarizeClaimDocument = async (base64Doc: string): Promise<{ succe
     const ai = getAi();
     const cleanBase64 = base64Doc.includes(',') ? base64Doc.split(',')[1] : base64Doc;
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: "Ringkas dokumen klaim ini. JSON: { policyNumber: string, incidentDate: string, keyPoints: string[], riskAssessment: string }" }, { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }] },
       config: { responseMimeType: 'application/json' }
     });
@@ -219,7 +219,7 @@ export const extractStnkData = async (base64: string, mimeType: string = 'image/
     const ai = getAi();
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: { 
         parts: [
           { text: `Lakukan audit OCR presisi tinggi pada dokumen STNK (Surat Tanda Nomor Kendaraan) Indonesia ini.
@@ -276,7 +276,7 @@ export const validateVehiclePhoto = async (base64: string, slotLabel: string): P
     Example invalid issues: "Foto buram", "Bukan mobil", "Terlalu gelap", "Lampu flash terlalu terang".`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: { 
         parts: [
           { text: prompt }, 
@@ -349,7 +349,7 @@ export const analyzeVehicleSurvey = async (images: {id: string, data: string}[],
     }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }, ...imageParts.map(p => p)] },
       config: { responseMimeType: 'application/json', temperature: 0.1 }
     });
@@ -375,7 +375,7 @@ export const extractKtpData = async (base64: string): Promise<{ success: boolean
     const ai = getAi();
     const cleanBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-2.5-flash',
       contents: { 
         parts: [
           { text: "Analyze this Indonesian KTP. Extract: Full Name (Nama), NIK (exactly 16 digits), and Full Address (Alamat). Return a JSON object with keys 'name', 'nik', and 'address'. Ensure NIK is cleaned of any non-numeric characters. Use uppercase for name and address. If a field is missing, use null." }, 

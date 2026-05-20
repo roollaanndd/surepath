@@ -25,6 +25,7 @@ import { SmartBot, PageTransition } from './components/car-wizard/WizardUI';
 import { db, seedDatabase, Policy } from './db';
 import { Badge } from './components/shared/UI';
 import { auth, signOut } from './firebase';
+import { InstallPrompt } from './components/InstallPrompt';
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const [progress, setProgress] = useState(0);
@@ -136,7 +137,7 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
-import PlatformLanding from './src/pages/PlatformLanding';
+import PlatformLanding from './components/PlatformLanding';
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -403,7 +404,6 @@ const App = () => {
       case 'buy-pa': return <PAInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'buy-mpar': return <MPARInsuranceWizard onComplete={() => setPage('home')} currentUser={currentUser} lang={lang} />;
       case 'bot': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
-      case 'buy-health-ind': return <HealthChat onBack={() => setPage('home')} lang={lang} />;
       default: 
         if (currentPage.startsWith('buy-custom_')) {
           const productId = currentPage.replace('buy-', '');
@@ -458,6 +458,8 @@ const App = () => {
           ))}
         </nav>
       )}
+
+      <InstallPrompt lang={lang === Language.EN ? 'en' : 'id'} />
     </div>
   );
 };

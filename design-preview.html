@@ -1,1314 +1,1259 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark" data-lang="id">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SurePath — D2C Redesign v2</title>
+<title>SurePath — Preview v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
-/* ─── RESET & TOKENS ─── */
+/* ─── RESET ─── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:   #06060f;
-  --ink2:  #0d0d1e;
-  --ink3:  #12122a;
-  --muted: #1e1e38;
-  --line:  rgba(255,255,255,.07);
-  --grey:  #6b7280;
-  --mid:   #9ca3af;
-  --light: #e5e7eb;
-  --white: #ffffff;
-  --v:     #7c3aed;   /* violet */
-  --v2:    #6d28d9;
-  --vl:    #a78bfa;
-  --b:     #2563eb;   /* blue */
-  --bl:    #60a5fa;
-  --g:     #059669;   /* emerald — only for success/CTA */
-  --gl:    #34d399;
-  --gold:  #f59e0b;
-  --r:     16px;
-  --easing: cubic-bezier(.23,1,.32,1);
-}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;transition:background .4s,color .4s}
 
-/* ─── HERO ANIMATED BG ─── */
-@keyframes meshShift{
-  0%  {background-position:0% 50%}
-  50% {background-position:100% 50%}
-  100%{background-position:0% 50%}
+/* ─── TOKENS — DARK (default) ─── */
+[data-theme="dark"]{
+  --bg:      #080c14;
+  --bg2:     #0c1120;
+  --bg3:     #111827;
+  --surface: rgba(255,255,255,.04);
+  --border:  rgba(255,255,255,.08);
+  --muted:   #6b7280;
+  --mid:     #9ca3af;
+  --text:    #f9fafb;
+  --sub:     #d1d5db;
+  --v:       #7c3aed;
+  --v2:      #6d28d9;
+  --vl:      #a78bfa;
+  --b:       #2563eb;
+  --bl:      #93c5fd;
+  --g:       #059669;
+  --gl:      #34d399;
+  --gold:    #f59e0b;
+  --shadow:  rgba(0,0,0,.6);
+  --nav-bg:  rgba(8,12,20,.75);
 }
-@keyframes gridPulse{
-  0%,100%{opacity:.35} 50%{opacity:.6}
-}
-@keyframes orbFloat{
-  0%,100%{transform:translate(0,0) scale(1)}
-  33%{transform:translate(30px,-20px) scale(1.05)}
-  66%{transform:translate(-20px,15px) scale(.97)}
-}
-@keyframes cardHover{
-  0%,100%{transform:translateY(0) rotate(-3deg)}
-  50%{transform:translateY(-10px) rotate(-3deg)}
-}
-@keyframes cardHover2{
-  0%,100%{transform:translateY(0) rotate(2deg)}
-  50%{transform:translateY(-14px) rotate(2deg)}
-}
-@keyframes countUp{
-  from{opacity:0;transform:translateY(12px)}
-  to{opacity:1;transform:translateY(0)}
-}
-@keyframes ticker{
-  from{transform:translateX(0)}
-  to{transform:translateX(-50%)}
-}
-@keyframes shimmer{
-  0%{background-position:-200% center}
-  100%{background-position:200% center}
-}
-@keyframes revealUp{
-  from{opacity:0;transform:translateY(32px)}
-  to{opacity:1;transform:translateY(0)}
-}
-@keyframes lineGrow{
-  from{width:0}
-  to{width:100%}
-}
-@keyframes spin{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
+/* ─── TOKENS — LIGHT ─── */
+[data-theme="light"]{
+  --bg:      #f8fafc;
+  --bg2:     #f1f5f9;
+  --bg3:     #e2e8f0;
+  --surface: rgba(0,0,0,.03);
+  --border:  rgba(0,0,0,.08);
+  --muted:   #6b7280;
+  --mid:     #374151;
+  --text:    #0f172a;
+  --sub:     #1f2937;
+  --v:       #7c3aed;
+  --v2:      #6d28d9;
+  --vl:      #7c3aed;
+  --b:       #2563eb;
+  --bl:      #1d4ed8;
+  --g:       #059669;
+  --gl:      #047857;
+  --gold:    #d97706;
+  --shadow:  rgba(0,0,0,.15);
+  --nav-bg:  rgba(248,250,252,.85);
 }
 
-/* ─── REUSABLE REVEAL ─── */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s var(--easing),transform .7s var(--easing)}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-delay-1{transition-delay:.1s}
-.reveal-delay-2{transition-delay:.2s}
-.reveal-delay-3{transition-delay:.3s}
-.reveal-delay-4{transition-delay:.4s}
+body{background:var(--bg);color:var(--text)}
 
 /* ─── NAV ─── */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:200;
   display:flex;align-items:center;justify-content:space-between;
-  padding:20px 56px;
-  transition:background .4s,border-color .4s;
+  padding:18px 52px;
+  background:transparent;
+  transition:background .35s,border .35s;
 }
-nav.scrolled{
-  background:rgba(6,6,15,.82);
-  backdrop-filter:blur(24px) saturate(1.4);
-  border-bottom:1px solid var(--line);
+nav.stuck{
+  background:var(--nav-bg);
+  backdrop-filter:blur(20px) saturate(1.3);
+  border-bottom:1px solid var(--border);
 }
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--white)}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--text)}
 .logo-mark{
-  width:32px;height:32px;
+  width:30px;height:30px;border-radius:9px;
   background:linear-gradient(135deg,var(--v),var(--b));
-  border-radius:10px;
   display:grid;place-items:center;
-  box-shadow:0 0 20px rgba(124,58,237,.5);
+  box-shadow:0 0 16px rgba(124,58,237,.45);
 }
-.logo-mark svg{width:16px;height:16px;fill:none;stroke:white;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.5px}
-.nav-links{display:flex;gap:36px;list-style:none}
-.nav-links a{font-size:13.5px;color:var(--mid);text-decoration:none;letter-spacing:.2px;transition:color .2s}
-.nav-links a:hover{color:var(--white)}
-.nav-actions{display:flex;align-items:center;gap:12px}
-.nav-login{font-size:13.5px;color:var(--mid);background:none;border:none;cursor:pointer;padding:8px 16px;border-radius:10px;transition:all .2s}
-.nav-login:hover{color:var(--white);background:rgba(255,255,255,.06)}
-.nav-cta{
-  font-size:13.5px;font-weight:600;color:var(--white);
+.logo-mark svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:17px;font-weight:800;letter-spacing:-.5px}
+.nav-mid{display:flex;align-items:center;gap:28px}
+.nav-mid a{font-size:13.5px;color:var(--muted);text-decoration:none;transition:color .2s;font-weight:500}
+.nav-mid a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:8px}
+
+/* control buttons */
+.ctrl-btn{
+  background:var(--surface);border:1px solid var(--border);color:var(--mid);
+  padding:7px 14px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;
+  transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:5px;
+}
+.ctrl-btn:hover{border-color:var(--v);color:var(--text)}
+.ctrl-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-cta{
   background:linear-gradient(135deg,var(--v),var(--b));
-  border:none;padding:10px 22px;border-radius:10px;cursor:pointer;
-  transition:all .25s var(--easing);
-  box-shadow:0 4px 20px rgba(124,58,237,.4);
+  color:#fff;border:none;padding:9px 20px;border-radius:10px;
+  font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;
+  box-shadow:0 4px 18px rgba(124,58,237,.4);
+  transition:all .25s cubic-bezier(.23,1,.32,1);
 }
-.nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(124,58,237,.55)}
+.btn-cta:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(124,58,237,.55)}
 
 /* ─── HERO ─── */
 .hero{
   min-height:100vh;
-  display:grid;grid-template-columns:1fr 1fr;
-  align-items:center;gap:40px;
-  padding:130px 56px 90px;
   position:relative;overflow:hidden;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;gap:48px;
+  padding:120px 52px 80px;
 }
-/* animated mesh background */
-.hero-bg{
-  position:absolute;inset:0;z-index:0;
+
+/* canvas video-like bg */
+#hero-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  opacity:.75;
+  transition:opacity .4s;
+}
+[data-theme="light"] #hero-canvas{opacity:.35}
+
+/* dark vignette over canvas */
+.hero-vignette{
+  position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 900px 700px at 65% 40%, rgba(124,58,237,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 700px 500px at 10% 80%, rgba(37,99,235,.12) 0%, transparent 50%),
-    radial-gradient(ellipse 500px 400px at 90% 90%, rgba(5,150,105,.08) 0%, transparent 50%);
+    radial-gradient(ellipse 60% 70% at 30% 50%, transparent 0%, var(--bg) 80%),
+    radial-gradient(ellipse 100% 30% at 50% 100%, var(--bg) 0%, transparent 60%);
+  pointer-events:none;
 }
-/* subtle dot grid */
-.hero-grid{
-  position:absolute;inset:0;z-index:0;
-  background-image:radial-gradient(circle,rgba(255,255,255,.15) 1px,transparent 1px);
-  background-size:40px 40px;
-  animation:gridPulse 6s ease-in-out infinite;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+[data-theme="light"] .hero-vignette{
+  background:
+    radial-gradient(ellipse 60% 70% at 30% 50%, transparent 0%, var(--bg) 85%),
+    radial-gradient(ellipse 100% 30% at 50% 100%, var(--bg) 0%, transparent 60%);
 }
-/* glowing orbs */
-.orb{position:absolute;border-radius:50%;filter:blur(80px);z-index:0;pointer-events:none}
-.orb1{width:500px;height:500px;background:rgba(124,58,237,.2);top:-100px;right:5%;animation:orbFloat 12s ease-in-out infinite}
-.orb2{width:400px;height:400px;background:rgba(37,99,235,.15);bottom:10%;left:-5%;animation:orbFloat 9s ease-in-out infinite reverse}
 
-.hero-left{position:relative;z-index:1}
-.hero-eyebrow{
+.hero-left,.hero-right{position:relative;z-index:2}
+
+.eyebrow{
   display:inline-flex;align-items:center;gap:8px;
-  font-size:11.5px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;
-  color:var(--vl);margin-bottom:28px;
+  font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--vl);margin-bottom:22px;
 }
-.hero-eyebrow-line{width:24px;height:1.5px;background:var(--vl);border-radius:2px}
+.eyebrow-line{width:20px;height:1.5px;background:var(--vl);border-radius:1px;flex-shrink:0}
 
-.hero-h1{
-  font-family:'Syne',sans-serif;
-  font-size:clamp(42px,5.2vw,72px);
-  font-weight:800;
-  line-height:1.0;
-  letter-spacing:-2.5px;
-  margin-bottom:22px;
+h1{
+  font-size:clamp(36px,4.5vw,60px);
+  font-weight:900;line-height:1.05;letter-spacing:-2px;
+  margin-bottom:18px;color:var(--text);
 }
-.hero-h1 .word-anim{display:inline-block;transition:transform .4s var(--easing)}
-.grad-text{
-  background:linear-gradient(90deg,#a78bfa,#60a5fa,#34d399,#a78bfa);
-  background-size:300%;
+.grad{
+  background:linear-gradient(90deg,var(--vl),var(--bl),var(--gl));
+  background-size:200%;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:shimmer 5s linear infinite;
+  animation:gradShift 5s linear infinite;
 }
+@keyframes gradShift{0%{background-position:0%}100%{background-position:200%}}
+
 .hero-sub{
-  font-size:16.5px;color:var(--mid);line-height:1.65;
-  max-width:440px;margin-bottom:40px;
+  font-size:16px;color:var(--mid);line-height:1.65;
+  max-width:420px;margin-bottom:32px;
 }
-.hero-sub strong{color:var(--light)}
+.hero-sub strong{color:var(--sub);font-weight:600}
 
-/* ─── QUOTE CARD ─── */
-.quote-card{
-  background:rgba(13,13,30,.75);
-  backdrop-filter:blur(28px) saturate(1.2);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:20px;
-  padding:28px;
-  max-width:480px;
-  box-shadow:0 24px 64px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);
+/* ─── QUOTE WIDGET ─── */
+.qw{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:18px;padding:24px;max-width:460px;
+  box-shadow:0 20px 60px var(--shadow),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:background .4s,border .4s;
 }
-.qc-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:20px;
-}
-.qc-title{font-size:13px;font-weight:700;color:var(--light);letter-spacing:.2px}
-.qc-badge{
-  font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
-  background:rgba(5,150,105,.15);color:#6ee7b7;
-  border:1px solid rgba(5,150,105,.3);
-  padding:4px 10px;border-radius:6px;
+[data-theme="light"] .qw{box-shadow:0 10px 40px rgba(0,0,0,.1)}
+
+.qw-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.qw-label{font-size:12.5px;font-weight:700;color:var(--sub)}
+.qw-badge{
+  font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  background:rgba(5,150,105,.12);color:var(--gl);
+  border:1px solid rgba(5,150,105,.25);
+  padding:3px 9px;border-radius:6px;
 }
 
-.tabs{display:flex;gap:6px;margin-bottom:22px;
-  background:rgba(255,255,255,.04);
-  border:1px solid var(--line);
-  border-radius:12px;padding:4px;
+.tabs{
+  display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+  border-radius:11px;padding:3px;margin-bottom:18px;
 }
 .tab{
-  flex:1;text-align:center;padding:9px 8px;border-radius:9px;
-  font-size:12px;font-weight:600;cursor:pointer;
-  color:var(--grey);transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:6px;
+  flex:1;text-align:center;padding:8px 4px;border-radius:8px;
+  font-size:11.5px;font-weight:600;cursor:pointer;color:var(--muted);
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;
 }
-.tab.active{
-  background:rgba(124,58,237,.2);color:var(--vl);
-  box-shadow:0 1px 0 rgba(124,58,237,.3);
-}
-.tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{background:rgba(124,58,237,.18);color:var(--vl)}
+.tab svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-.form-full{grid-column:1/-1}
-.field label{display:block;font-size:11px;font-weight:500;color:var(--grey);margin-bottom:6px;letter-spacing:.3px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.ff{grid-column:1/-1}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px;letter-spacing:.2px}
 .field select,.field input{
-  width:100%;background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.09);
-  color:var(--white);border-radius:10px;
-  padding:11px 14px;font-size:13px;outline:none;
-  transition:border-color .2s,background .2s;
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:9px;padding:10px 12px;font-size:13px;
+  outline:none;transition:border-color .2s,background .2s;
   -webkit-appearance:none;font-family:inherit;
 }
-.field select:focus,.field input:focus{
-  border-color:rgba(124,58,237,.6);
-  background:rgba(124,58,237,.06);
-}
-.field select option{background:#0d0d1e;color:var(--white)}
+.field select:focus,.field input:focus{border-color:rgba(124,58,237,.5)}
+.field select option{background:var(--bg)}
 
-.btn-quote{
-  width:100%;padding:14px;
+.btn-q{
+  width:100%;padding:13px;
   background:linear-gradient(135deg,var(--v),var(--b));
-  color:white;border:none;border-radius:12px;
-  font-size:14.5px;font-weight:700;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:all .25s var(--easing);
-  box-shadow:0 4px 24px rgba(124,58,237,.4);
-  font-family:inherit;
-  letter-spacing:.2px;
+  color:#fff;border:none;border-radius:11px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .25s cubic-bezier(.23,1,.32,1);
+  box-shadow:0 4px 20px rgba(124,58,237,.38);
 }
-.btn-quote:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(124,58,237,.55)}
-.btn-quote svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-q:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,.55)}
+.btn-q svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 
-.price-pill{
-  margin-top:14px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(5,150,105,.07);
-  border:1px solid rgba(5,150,105,.2);
-  border-radius:12px;padding:14px 18px;
+.price-row{
+  margin-top:12px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);
+  border-radius:11px;padding:13px 16px;
 }
-.pp-left{display:flex;align-items:baseline;gap:6px}
-.pp-from{font-size:11px;color:var(--grey)}
-.pp-val{font-size:22px;font-weight:800;color:var(--gl)}
-.pp-per{font-size:11px;color:var(--grey)}
-.pp-cta{
-  background:var(--g);color:white;border:none;
-  padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;
-  cursor:pointer;font-family:inherit;
-  transition:all .2s;white-space:nowrap;
+.pr-left .from{font-size:10.5px;color:var(--muted)}
+.pr-left .amount{font-size:21px;font-weight:800;color:var(--gl)}
+.pr-left .per{font-size:10.5px;color:var(--muted)}
+.pr-cta{
+  background:var(--g);color:#fff;border:none;
+  padding:9px 16px;border-radius:9px;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;
 }
-.pp-cta:hover{background:#047857;transform:scale(1.03)}
+.pr-cta:hover{background:#047857}
 
 /* ─── HERO RIGHT: CARD STACK ─── */
-.hero-right{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;height:500px}
-.card-stack{position:relative;width:340px;height:420px}
-
-/* insurance card base */
+.hero-right{display:flex;align-items:center;justify-content:center}
+.stack{position:relative;width:320px;height:400px}
 .ins-card{
-  position:absolute;
-  width:300px;height:176px;
-  border-radius:20px;
-  padding:24px;
+  position:absolute;width:290px;height:168px;
+  border-radius:18px;padding:22px;
   display:flex;flex-direction:column;justify-content:space-between;
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 16px 48px rgba(0,0,0,.5);
+  transition:transform .4s cubic-bezier(.23,1,.32,1);
 }
-.ic1{
-  background:linear-gradient(135deg,#1e1b4b,#3730a3,#4f46e5);
-  top:0;left:20px;
-  animation:cardHover 5s ease-in-out infinite;
-  z-index:3;
+.c1{
+  top:0;left:16px;z-index:3;
+  background:linear-gradient(135deg,#1e1b4b 0%,#3730a3 60%,#4f46e5 100%);
+  animation:cf1 6s ease-in-out infinite;
 }
-.ic2{
-  background:linear-gradient(135deg,#064e3b,#065f46,#059669);
-  top:90px;left:0;
-  animation:cardHover2 6s ease-in-out infinite;
-  z-index:2;
+.c2{
+  top:80px;left:0;z-index:2;
+  background:linear-gradient(135deg,#064e3b 0%,#065f46 60%,#059669 100%);
+  animation:cf2 7s ease-in-out infinite;
 }
-.ic3{
-  background:linear-gradient(135deg,#1c1917,#292524,#44403c);
-  top:180px;left:30px;
-  animation:cardHover 7s ease-in-out infinite .5s;
-  z-index:1;
+.c3{
+  top:162px;left:22px;z-index:1;
+  background:linear-gradient(135deg,#1c1917 0%,#292524 60%,#57534e 100%);
+  animation:cf1 8s ease-in-out infinite .6s;
 }
-.ic-chip{
-  width:32px;height:24px;
-  background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.1));
-  border-radius:5px;
-  border:1px solid rgba(255,255,255,.15);
-}
-.ic-type{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5)}
-.ic-brand{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.5px;color:white}
-.ic-bottom{display:flex;justify-content:space-between;align-items:flex-end}
-.ic-number{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;font-variant-numeric:tabular-nums}
-.ic-status{
-  font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-  padding:4px 10px;border-radius:6px;
-}
-.ic-status.active{background:rgba(52,211,153,.15);color:#6ee7b7;border:1px solid rgba(52,211,153,.3)}
-.ic-status.pending{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+@keyframes cf1{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-2deg)}}
+@keyframes cf2{0%,100%{transform:translateY(0) rotate(1.5deg)}50%{transform:translateY(-13px) rotate(1.5deg)}}
 
-/* floating data pills */
-.data-pill{
-  position:absolute;
-  background:rgba(13,13,30,.92);
-  backdrop-filter:blur(16px);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:14px;
-  padding:12px 16px;
-  font-size:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  z-index:10;
+.chip{width:30px;height:22px;border-radius:4px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.1)}
+.card-type{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.card-name{font-size:14.5px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.card-bottom{display:flex;justify-content:space-between;align-items:flex-end}
+.card-num{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.8px;font-variant-numeric:tabular-nums}
+.card-status{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 9px;border-radius:5px}
+.status-active{background:rgba(52,211,153,.15);color:#6ee7b7;border:1px solid rgba(52,211,153,.28)}
+.status-pending{background:rgba(245,158,11,.1);color:#fcd34d;border:1px solid rgba(245,158,11,.22)}
+
+.float-pill{
+  position:absolute;z-index:10;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:11px 14px;
+  box-shadow:0 8px 24px var(--shadow);
+  transition:background .4s;
 }
-.dp1{top:10px;right:-20px;animation:cardHover2 4s ease-in-out infinite}
-.dp2{bottom:50px;left:-30px;animation:cardHover 5s ease-in-out infinite}
-.dp-label{font-size:10px;color:var(--grey);margin-bottom:3px;letter-spacing:.3px}
-.dp-val{font-weight:800;font-size:17px}
-.dp-val.green{color:var(--gl)}
-.dp-val.blue{color:var(--bl)}
-.dp-sub{font-size:10px;color:var(--grey);margin-top:2px}
-.dp-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
-  background:var(--gl);margin-right:5px;
-  box-shadow:0 0 8px rgba(52,211,153,.6);
-}
+.fp1{top:16px;right:-24px;animation:fp1 4s ease-in-out infinite}
+.fp2{bottom:56px;left:-28px;animation:fp2 5s ease-in-out infinite}
+@keyframes fp1{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes fp2{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+.fp-label{font-size:9.5px;color:var(--muted);margin-bottom:2px;font-weight:500}
+.fp-val{font-size:16px;font-weight:800}
+.fp-val.g{color:var(--gl)}
+.fp-val.b{color:var(--bl)}
+.fp-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.fp-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gl);margin-right:4px;box-shadow:0 0 6px rgba(52,211,153,.6)}
 
 /* ─── TICKER ─── */
 .ticker-wrap{
-  border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);
-  padding:14px 0;overflow:hidden;white-space:nowrap;
-  position:relative;
+  position:relative;overflow:hidden;padding:12px 0;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--bg2);transition:background .4s;
 }
 .ticker-wrap::before,.ticker-wrap::after{
-  content:'';position:absolute;top:0;bottom:0;width:100px;z-index:2;
+  content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none;
 }
-.ticker-wrap::before{left:0;background:linear-gradient(90deg,var(--ink),transparent)}
-.ticker-wrap::after{right:0;background:linear-gradient(-90deg,var(--ink),transparent)}
-.ticker-track{display:inline-flex;gap:0;animation:ticker 32s linear infinite}
+.ticker-wrap::before{left:0;background:linear-gradient(90deg,var(--bg2),transparent)}
+.ticker-wrap::after{right:0;background:linear-gradient(-90deg,var(--bg2),transparent)}
+.ticker-inner{display:inline-flex;white-space:nowrap;animation:tkr 30s linear infinite}
+@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ti{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:0 36px;font-size:13px;color:var(--mid);
-  border-right:1px solid var(--line);font-weight:500;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:0 32px;font-size:13px;color:var(--muted);font-weight:500;
+  border-right:1px solid var(--border);
 }
-.ti strong{color:var(--light);font-weight:700}
-.ti-icon{width:16px;height:16px;stroke:var(--vl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ti strong{color:var(--sub);font-weight:700}
+.ti svg{width:14px;height:14px;stroke:var(--vl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
 /* ─── TRUST STRIP ─── */
-.trust-strip{
+.trust{
   display:flex;align-items:center;justify-content:center;
-  gap:0;padding:28px 0;
-  border-bottom:1px solid var(--line);
+  border-bottom:1px solid var(--border);
+  background:var(--bg);transition:background .4s;
 }
-.ts-item{
+.trust-item{
   display:flex;align-items:center;gap:12px;
-  padding:0 44px;
-  border-right:1px solid var(--line);
+  padding:22px 40px;border-right:1px solid var(--border);flex-shrink:0;
 }
-.ts-item:last-child{border-right:none}
-.ts-icon{
-  width:40px;height:40px;
-  background:rgba(124,58,237,.1);
-  border:1px solid rgba(124,58,237,.2);
-  border-radius:12px;
+.trust-item:last-child{border-right:none}
+.ti-icon{
+  width:38px;height:38px;border-radius:11px;
+  background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.18);
   display:grid;place-items:center;flex-shrink:0;
 }
-.ts-icon svg{width:18px;height:18px;stroke:var(--vl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ts-val{font-size:15px;font-weight:800;color:var(--white)}
-.ts-label{font-size:12px;color:var(--grey)}
+.ti-icon svg{width:17px;height:17px;stroke:var(--vl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ti-val{font-size:14.5px;font-weight:800;color:var(--text)}
+.ti-label{font-size:11.5px;color:var(--muted)}
 
-/* ─── SECTION SHELL ─── */
-.section{padding:96px 56px}
-.section-pre{
-  display:inline-flex;align-items:center;gap:8px;
-  font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
-  color:var(--vl);margin-bottom:16px;
+/* ─── SECTIONS ─── */
+.section{padding:88px 52px;transition:background .4s}
+.section.alt{background:var(--bg2)}
+.section.alt2{background:var(--bg3)}
+
+.pre{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--vl);margin-bottom:14px;
 }
-.section-pre-line{width:20px;height:1.5px;background:var(--vl);border-radius:2px}
-h2.display{
-  font-family:'Syne',sans-serif;
-  font-size:clamp(30px,4vw,52px);
-  font-weight:800;letter-spacing:-2px;line-height:1.05;
-  margin-bottom:14px;
-}
-.section-sub{font-size:15.5px;color:var(--mid);line-height:1.65;max-width:520px}
+.pre-line{width:18px;height:1.5px;background:var(--vl);border-radius:1px;flex-shrink:0}
+h2{font-size:clamp(28px,3.8vw,48px);font-weight:900;line-height:1.06;letter-spacing:-1.8px;margin-bottom:12px;color:var(--text)}
+.sub{font-size:15.5px;color:var(--mid);line-height:1.65;max-width:500px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .65s cubic-bezier(.23,1,.32,1),transform .65s cubic-bezier(.23,1,.32,1)}
+.rv.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
 
 /* ─── PRODUCTS ─── */
-.products-section{padding:96px 56px;background:var(--ink2)}
-.prod-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:56px}
-.prod-card{
-  background:rgba(255,255,255,.03);
-  border:1px solid var(--line);
-  border-radius:18px;padding:24px 20px;
-  cursor:pointer;position:relative;
-  transition:all .3s var(--easing);
-  overflow:hidden;
+.pg{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:48px}
+.pc{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:22px 18px;cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.23,1,.32,1),border-color .3s,box-shadow .3s;
+  transform-style:preserve-3d;
 }
-.prod-card::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(37,99,235,.06));
-  opacity:0;transition:opacity .3s;
-}
-.prod-card:hover{
-  transform:translateY(-8px);
-  border-color:rgba(124,58,237,.4);
-  box-shadow:0 20px 50px rgba(124,58,237,.15);
-}
-.prod-card:hover::after{opacity:1}
+.pc:hover{transform:translateY(-7px) rotateX(-3deg) rotateY(2deg);border-color:rgba(124,58,237,.4);box-shadow:0 18px 48px rgba(124,58,237,.15)}
 .pc-badge{
-  position:absolute;top:14px;right:14px;
-  font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  position:absolute;top:12px;right:12px;
+  font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
   background:linear-gradient(135deg,var(--v),var(--b));
-  color:white;padding:4px 10px;border-radius:6px;
+  color:#fff;padding:3px 8px;border-radius:5px;
 }
 .pc-icon{
-  width:44px;height:44px;border-radius:14px;
-  display:grid;place-items:center;margin-bottom:16px;
-  background:rgba(124,58,237,.12);
-  border:1px solid rgba(124,58,237,.2);
+  width:42px;height:42px;border-radius:12px;
+  background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.18);
+  display:grid;place-items:center;margin-bottom:14px;
 }
-.pc-icon svg{width:22px;height:22px;stroke:var(--vl);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pc-name{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--white)}
-.pc-desc{font-size:11.5px;color:var(--grey);margin-bottom:18px;line-height:1.5}
-.pc-sep{height:1px;background:var(--line);margin-bottom:14px}
-.pc-price-label{font-size:10px;color:var(--grey);margin-bottom:4px;letter-spacing:.3px}
-.pc-price{font-size:21px;font-weight:800;color:var(--gl)}
-.pc-per{font-size:11px;color:var(--grey);margin-bottom:16px}
+.pc-icon svg{width:20px;height:20px;stroke:var(--vl);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pc-name{font-size:14.5px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.pc-desc{font-size:11.5px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.pc-sep{height:1px;background:var(--border);margin-bottom:12px}
+.pc-from{font-size:10px;color:var(--muted);margin-bottom:3px;letter-spacing:.2px}
+.pc-price{font-size:20px;font-weight:800;color:var(--gl)}
+.pc-per{font-size:11px;color:var(--muted);margin-bottom:14px}
 .pc-btn{
-  width:100%;padding:10px;border-radius:10px;
-  background:rgba(255,255,255,.05);border:1px solid var(--line);
-  color:var(--mid);font-size:12.5px;font-weight:600;cursor:pointer;
-  font-family:inherit;
-  transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:9px;border-radius:9px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;
 }
-.pc-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.prod-card:hover .pc-btn{
-  background:linear-gradient(135deg,var(--v),var(--b));
-  color:white;border-color:transparent;
-}
+.pc-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.pc:hover .pc-btn{background:linear-gradient(135deg,var(--v),var(--b));color:#fff;border-color:transparent}
 
-/* ─── HOW IT WORKS ─── */
-.hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:64px;position:relative}
-.hiw-grid::after{
-  content:'';position:absolute;top:28px;left:calc(16.6% + 28px);right:calc(16.6% + 28px);
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--vl),var(--bl),transparent);
-  opacity:.4;
-  z-index:0;
+/* ─── CLAIM SECTION — EASY REPORT ANGLE ─── */
+.claim-section{
+  padding:88px 52px;
+  background:var(--bg2);transition:background .4s;
 }
-.hiw-card{
-  background:rgba(255,255,255,.02);
-  border:1px solid var(--line);
-  border-radius:20px;padding:32px;
-  position:relative;z-index:1;
-  transition:all .3s var(--easing);
-}
-.hiw-card:hover{border-color:rgba(124,58,237,.3);transform:translateY(-4px)}
-.hiw-num{
-  width:52px;height:52px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(37,99,235,.15));
-  border:1px solid rgba(124,58,237,.3);
-  display:grid;place-items:center;
-  font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--vl);
-  margin-bottom:20px;
-}
-.hiw-title{font-size:17px;font-weight:700;margin-bottom:10px;color:var(--white)}
-.hiw-desc{font-size:14px;color:var(--grey);line-height:1.65}
-.hiw-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
-.hiw-tag{
-  font-size:11px;font-weight:500;padding:4px 10px;border-radius:6px;
-  background:rgba(255,255,255,.05);color:var(--grey);border:1px solid var(--line);
-}
+.claim-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center;margin-top:0}
+.claim-steps{display:flex;flex-direction:column;gap:10px;margin-top:48px}
+.claim-left{display:flex;flex-direction:column}
 
-/* ─── FULL-WIDTH QUOTE DEMO ─── */
-.quote-demo{
-  margin:0 56px;
-  background:linear-gradient(135deg,#0d0b24,#0b1529);
-  border:1px solid rgba(124,58,237,.2);
-  border-radius:28px;padding:72px;
-  display:grid;grid-template-columns:1fr 1fr;gap:72px;
-  align-items:center;position:relative;overflow:hidden;
-}
-.quote-demo::before{
-  content:'';position:absolute;
-  width:600px;height:600px;border-radius:50%;
-  background:radial-gradient(circle,rgba(124,58,237,.12) 0%,transparent 70%);
-  top:-200px;right:-100px;pointer-events:none;
-}
-.qd-left h2{margin-bottom:16px}
-.qd-left p{font-size:15px;color:var(--mid);line-height:1.65;margin-bottom:32px}
-.qd-features{display:flex;flex-direction:column;gap:16px}
-.qd-feat{display:flex;align-items:flex-start;gap:14px}
-.qd-feat-icon{
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;
-  background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);
-  display:grid;place-items:center;
-}
-.qd-feat-icon svg{width:16px;height:16px;stroke:var(--vl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.qd-feat-body strong{display:block;font-size:14px;font-weight:700;margin-bottom:3px;color:var(--light)}
-.qd-feat-body span{font-size:13px;color:var(--grey)}
-
-/* the right panel is a live funnel mockup */
-.funnel-steps{display:flex;flex-direction:column;gap:10px}
-.fs{
-  background:rgba(255,255,255,.03);
-  border:1px solid var(--line);
-  border-radius:14px;padding:16px 20px;
-  display:flex;align-items:center;gap:14px;
+.cs{
+  display:flex;align-items:flex-start;gap:16px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;
   transition:all .3s;
 }
-.fs.done{border-color:rgba(5,150,105,.25);background:rgba(5,150,105,.05)}
-.fs.active{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
-.fs-num{
-  width:30px;height:30px;border-radius:9px;flex-shrink:0;
+.cs.hl{
+  background:rgba(124,58,237,.07);
+  border-color:rgba(124,58,237,.28);
+}
+.cs-num{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
   display:grid;place-items:center;font-size:13px;font-weight:800;
 }
-.fs.done .fs-num{background:rgba(5,150,105,.2);color:var(--gl)}
-.fs.active .fs-num{background:rgba(124,58,237,.2);color:var(--vl)}
-.fs:not(.done):not(.active) .fs-num{background:rgba(255,255,255,.06);color:var(--grey)}
-.fs-text strong{display:block;font-size:13.5px;font-weight:700;margin-bottom:2px}
-.fs-text span{font-size:12px;color:var(--grey)}
-.fs-check{margin-left:auto;width:22px;height:22px;border-radius:50%;background:rgba(5,150,105,.2);display:grid;place-items:center;flex-shrink:0}
-.fs-check svg{width:12px;height:12px;stroke:var(--gl);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.fs-time{
-  margin-left:auto;font-size:11px;color:var(--grey);
-  background:rgba(255,255,255,.05);padding:3px 8px;border-radius:6px;font-weight:500;flex-shrink:0;
+.cs.hl .cs-num{background:rgba(124,58,237,.18);color:var(--vl)}
+.cs:not(.hl) .cs-num{background:var(--surface);color:var(--muted)}
+.cs-icon{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  background:rgba(5,150,105,.12);border:1px solid rgba(5,150,105,.2);
+  display:grid;place-items:center;
+}
+.cs-icon svg{width:16px;height:16px;stroke:var(--gl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cs-body strong{display:block;font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:2px}
+.cs-body span{font-size:12px;color:var(--muted)}
+.cs-time{
+  margin-left:auto;font-size:11px;color:var(--muted);
+  background:var(--surface);padding:3px 9px;border-radius:6px;font-weight:500;flex-shrink:0;
+  align-self:flex-start;white-space:nowrap;
 }
 
-.funnel-result{
-  margin-top:12px;
-  background:linear-gradient(135deg,rgba(5,150,105,.1),rgba(16,185,129,.06));
-  border:1px solid rgba(5,150,105,.25);
-  border-radius:14px;padding:18px 20px;
-  display:flex;justify-content:space-between;align-items:center;
+.claim-phones{
+  display:flex;gap:16px;align-items:flex-start;
 }
-.fr-left .fr-label{font-size:11px;color:var(--grey);margin-bottom:4px}
-.fr-left .fr-val{font-size:24px;font-weight:800;color:var(--gl)}
-.fr-left .fr-sub{font-size:11px;color:var(--grey)}
-.fr-btn{
-  background:var(--g);color:white;border:none;
-  padding:12px 20px;border-radius:10px;
-  font-size:13.5px;font-weight:700;cursor:pointer;
-  font-family:inherit;transition:all .2s;
-  display:flex;align-items:center;gap:8px;
+.phone-mock{
+  width:160px;border-radius:28px;overflow:hidden;
+  background:var(--bg3);border:1.5px solid var(--border);
+  box-shadow:0 24px 60px var(--shadow);
+  transition:background .4s;
 }
-.fr-btn svg{width:14px;height:14px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.fr-btn:hover{background:#047857;transform:translateX(2px)}
+.pm-notch{height:22px;background:var(--bg);border-radius:0 0 14px 14px;width:70px;margin:0 auto}
+.pm-screen{padding:12px}
+.pm-h{font-size:9px;font-weight:700;color:var(--text);margin-bottom:10px}
+/* camera viewfinder */
+.pm-cam{
+  width:100%;aspect-ratio:1;border-radius:12px;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;margin-bottom:8px;position:relative;overflow:hidden;
+}
+.pm-cam::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(37,99,235,.1));
+}
+.cam-target{
+  width:56px;height:56px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.cam-target::before,.cam-target::after{
+  content:'';position:absolute;
+  border:2px solid var(--vl);
+}
+.cam-target::before{top:0;left:0;right:0;bottom:0;border-radius:8px;opacity:.5}
+.cam-target::after{
+  top:8px;left:8px;right:8px;bottom:8px;border-radius:4px;
+  animation:camPulse 2s ease-in-out infinite;
+}
+@keyframes camPulse{0%,100%{opacity:.3;transform:scale(.95)}50%{opacity:1;transform:scale(1.05)}}
+.cam-target svg{width:22px;height:22px;stroke:var(--vl);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;z-index:1}
+.cam-label{font-size:9px;color:var(--muted);z-index:1}
+.pm-btn{
+  width:100%;padding:7px;border-radius:8px;
+  background:linear-gradient(135deg,var(--v),var(--b));
+  color:#fff;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;
+}
 
-/* ─── STATS SECTION ─── */
-.stats-section{padding:80px 56px;text-align:center;background:var(--ink3)}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:56px;border:1px solid var(--line);border-radius:20px;overflow:hidden}
-.stat-item{
-  padding:36px;border-right:1px solid var(--line);
-  transition:background .3s;
+/* second phone: confirmation */
+.phone-mock2{animation:cf1 5s ease-in-out infinite .5s}
+.confirm-card{
+  border-radius:10px;padding:10px;margin-bottom:6px;
+  background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);
 }
-.stat-item:last-child{border-right:none}
-.stat-item:hover{background:rgba(124,58,237,.05)}
-.stat-num{
-  font-family:'Syne',sans-serif;font-size:clamp(32px,3.5vw,48px);font-weight:800;
+.cc-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cc-check{
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(5,150,105,.2);display:grid;place-items:center;flex-shrink:0;
+}
+.cc-check svg{width:10px;height:10px;stroke:var(--gl);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.cc-title{font-size:10px;font-weight:700;color:var(--text)}
+.cc-sub{font-size:9px;color:var(--muted);margin-bottom:6px}
+.cc-status{
+  font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;
+  background:rgba(5,150,105,.15);color:var(--gl);
+  border:1px solid rgba(5,150,105,.25);display:inline-block;
+}
+.timeline-mini{display:flex;flex-direction:column;gap:5px}
+.tm-item{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--muted)}
+.tm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tm-dot.done{background:var(--gl)}
+.tm-dot.now{background:var(--vl);box-shadow:0 0 5px var(--vl)}
+.tm-dot.next{background:var(--border)}
+
+/* connector between phones */
+.phone-arrow{
+  display:flex;align-items:center;align-self:center;
+  flex-shrink:0;
+}
+.phone-arrow svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ─── HOW IT WORKS ─── */
+.hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px;position:relative}
+.hiw-grid::after{
+  content:'';position:absolute;
+  top:26px;left:calc(16.7% + 26px);right:calc(16.7% + 26px);
+  height:1px;background:linear-gradient(90deg,transparent,var(--vl) 30%,var(--bl) 70%,transparent);
+  opacity:.35;
+}
+.hw{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px;
+  position:relative;z-index:1;
+  transition:all .3s cubic-bezier(.23,1,.32,1);
+}
+.hw:hover{border-color:rgba(124,58,237,.3);transform:translateY(-4px)}
+.hw-n{
+  width:48px;height:48px;border-radius:14px;
+  background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.2);
+  display:grid;place-items:center;
+  font-size:19px;font-weight:900;color:var(--vl);
+  margin-bottom:18px;
+}
+.hw-title{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.hw-desc{font-size:13.5px;color:var(--muted);line-height:1.65}
+.hw-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px}
+.hw-chip{font-size:10.5px;padding:3px 9px;border-radius:5px;background:var(--surface);color:var(--muted);border:1px solid var(--border);font-weight:500}
+
+/* ─── STATS ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.stat{
+  padding:32px;border-right:1px solid var(--border);
+  transition:background .2s;
+}
+.stat:last-child{border-right:none}
+.stat:hover{background:rgba(124,58,237,.04)}
+.stat-n{
+  font-size:clamp(28px,3vw,42px);font-weight:900;letter-spacing:-1.5px;
   background:linear-gradient(135deg,var(--vl),var(--bl));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:8px;line-height:1;
+  margin-bottom:6px;
 }
-.stat-label{font-size:14px;color:var(--grey)}
+.stat-l{font-size:13px;color:var(--muted)}
 
 /* ─── TESTIMONIALS ─── */
-.test-section{padding:96px 56px;overflow:hidden}
 .test-track{
-  display:flex;gap:20px;margin-top:56px;
-  overflow-x:auto;padding-bottom:16px;
-  scrollbar-width:none;
-  scroll-snap-type:x mandatory;
+  display:flex;gap:16px;margin-top:48px;
+  overflow-x:auto;padding-bottom:8px;
+  scrollbar-width:none;scroll-snap-type:x mandatory;
 }
 .test-track::-webkit-scrollbar{display:none}
-.test-card{
-  flex-shrink:0;
-  width:320px;
-  background:rgba(255,255,255,.03);
-  border:1px solid var(--line);
-  border-radius:20px;padding:28px;
-  scroll-snap-align:start;
+.tc{
+  flex-shrink:0;width:290px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:24px;scroll-snap-align:start;
   transition:all .3s;
 }
-.test-card:hover{border-color:rgba(124,58,237,.25);transform:translateY(-4px)}
-.test-rating{display:flex;gap:3px;margin-bottom:14px}
-.star{width:14px;height:14px;fill:#f59e0b;stroke:none}
-.test-text{font-size:14px;color:var(--mid);line-height:1.7;margin-bottom:20px;font-style:italic}
-.test-author{display:flex;align-items:center;gap:12px}
-.test-avatar{
-  width:38px;height:38px;border-radius:50%;
+.tc:hover{border-color:rgba(124,58,237,.25);transform:translateY(-4px)}
+.tc-stars{display:flex;gap:2px;margin-bottom:12px}
+.star{width:13px;height:13px;fill:var(--gold)}
+.tc-text{font-size:13.5px;color:var(--mid);line-height:1.7;margin-bottom:18px;font-style:italic}
+.tc-author{display:flex;align-items:center;gap:10px}
+.tc-av{
+  width:36px;height:36px;border-radius:50%;flex-shrink:0;
   background:linear-gradient(135deg,var(--v),var(--b));
-  display:grid;place-items:center;
-  font-family:'Syne',sans-serif;font-weight:800;font-size:15px;
-  flex-shrink:0;
+  display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;
 }
-.test-name{font-size:14px;font-weight:700;color:var(--light)}
-.test-meta{font-size:12px;color:var(--grey)}
+.tc-name{font-size:13.5px;font-weight:700;color:var(--text)}
+.tc-meta{font-size:11.5px;color:var(--muted)}
 
 /* ─── INSURER LOGOS ─── */
-.logos-section{padding:60px 56px;border-top:1px solid var(--line)}
-.logos-label{text-align:center;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);margin-bottom:40px}
-.logos-grid{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px}
+.logos-row{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:36px}
 .logo-chip{
-  background:rgba(255,255,255,.04);border:1px solid var(--line);
-  border-radius:10px;padding:12px 22px;
-  font-size:12.5px;font-weight:700;color:var(--grey);
-  letter-spacing:.5px;transition:all .2s;
+  font-size:12px;font-weight:600;padding:9px 18px;border-radius:9px;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);
+  transition:all .2s;
 }
-.logo-chip:hover{color:var(--light);border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.06)}
+.logo-chip:hover{border-color:rgba(124,58,237,.3);color:var(--text)}
 
 /* ─── CTA ─── */
 .cta-section{
-  margin:0 56px 96px;
-  background:linear-gradient(135deg,#180f36,#1a1035,#0f1f3d);
+  margin:0 52px 88px;padding:72px;
+  background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(37,99,235,.08));
   border:1px solid rgba(124,58,237,.2);
-  border-radius:28px;padding:80px;
-  text-align:center;position:relative;overflow:hidden;
+  border-radius:24px;text-align:center;position:relative;overflow:hidden;
 }
 .cta-section::before{
   content:'';position:absolute;
   top:-200px;left:50%;transform:translateX(-50%);
-  width:800px;height:600px;
-  background:radial-gradient(ellipse,rgba(124,58,237,.15) 0%,transparent 65%);
+  width:700px;height:500px;
+  background:radial-gradient(ellipse,rgba(124,58,237,.12) 0%,transparent 65%);
   pointer-events:none;
 }
-/* animated ring */
-.cta-ring{
-  position:absolute;top:50%;left:50%;
-  width:500px;height:500px;
-  border:1px solid rgba(124,58,237,.1);
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  animation:spin 20s linear infinite;
+.cta-section h2{position:relative;margin-bottom:12px}
+.cta-section p{font-size:15.5px;color:var(--mid);position:relative;margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative}
+.btn-pri{
+  padding:13px 28px;border-radius:11px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,var(--v),var(--b));color:#fff;border:none;
+  box-shadow:0 4px 20px rgba(124,58,237,.4);
+  transition:all .25s cubic-bezier(.23,1,.32,1);
+  display:inline-flex;align-items:center;gap:7px;
 }
-.cta-ring::after{
-  content:'';position:absolute;top:-4px;left:50%;
-  width:8px;height:8px;border-radius:50%;
-  background:var(--vl);
-  box-shadow:0 0 12px var(--vl);
-  transform:translateX(-50%);
+.btn-pri svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-pri:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,.55)}
+.btn-sec{
+  padding:13px 28px;border-radius:11px;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;
+  background:var(--surface);color:var(--text);border:1px solid var(--border);
+  transition:all .2s;display:inline-flex;align-items:center;gap:7px;
 }
-.cta-section h2{position:relative;margin-bottom:14px}
-.cta-section p{font-size:16px;color:var(--mid);position:relative;margin-bottom:36px}
-.cta-btns{display:flex;gap:14px;justify-content:center;position:relative}
-.btn-hero{
-  padding:14px 32px;border-radius:12px;font-size:14.5px;font-weight:700;
-  cursor:pointer;font-family:inherit;transition:all .25s var(--easing);
-  display:inline-flex;align-items:center;gap:8px;
-}
-.btn-hero svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.btn-hero-primary{
-  background:linear-gradient(135deg,var(--v),var(--b));
-  color:white;border:none;
-  box-shadow:0 4px 24px rgba(124,58,237,.45);
-}
-.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(124,58,237,.6)}
-.btn-hero-ghost{
-  background:rgba(255,255,255,.06);color:var(--light);
-  border:1px solid rgba(255,255,255,.12);
-}
-.btn-hero-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+.btn-sec svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-sec:hover{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.06)}
 
 /* ─── FOOTER ─── */
 footer{
-  border-top:1px solid var(--line);
-  padding:56px 56px 40px;
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;
+  border-top:1px solid var(--border);padding:52px 52px 36px;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:44px;
+  background:var(--bg);transition:background .4s;
 }
-.footer-brand .logo{margin-bottom:16px}
-.footer-brand p{font-size:13px;color:var(--grey);line-height:1.7;max-width:260px;margin-bottom:24px}
-.footer-badges{display:flex;flex-wrap:wrap;gap:8px}
-.fbadge{
-  font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;
-  background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--grey);
-}
-.footer-col h4{font-size:13px;font-weight:700;color:var(--light);margin-bottom:18px;letter-spacing:.2px}
-.footer-col a{
-  display:block;font-size:13px;color:var(--grey);text-decoration:none;
-  margin-bottom:11px;transition:color .2s;
-}
-.footer-col a:hover{color:var(--light)}
-.footer-bottom{
-  grid-column:1/-1;
-  padding-top:28px;border-top:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;
-  font-size:12px;color:var(--grey);
-}
+.fb p{font-size:13px;color:var(--muted);line-height:1.7;max-width:250px;margin:14px 0 20px}
+.fb-badges{display:flex;flex-wrap:wrap;gap:6px}
+.fb-badge{font-size:11px;font-weight:600;padding:5px 11px;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+.fc h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px}
+.fc a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:9px;transition:color .2s}
+.fc a:hover{color:var(--text)}
+.footer-bot{grid-column:1/-1;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 
-/* ─── MISC ─── */
-@media (max-width:1100px){
-  nav{padding:18px 32px}
-  .hero,.section,.products-section,.logos-section{padding-left:32px;padding-right:32px}
+/* ─── RESPONSIVE ─── */
+@media(max-width:1100px){
+  nav,.hero,.section,.claim-section,.cta-section,footer{padding-left:32px;padding-right:32px}
   .hero{grid-template-columns:1fr;min-height:auto;padding-top:100px}
   .hero-right{display:none}
-  .prod-grid{grid-template-columns:repeat(3,1fr)}
+  .pg{grid-template-columns:repeat(3,1fr)}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
   footer{grid-template-columns:1fr 1fr;padding:40px 32px 28px}
-  .quote-demo,.cta-section{margin:0 32px}
-  .cta-section{padding:60px 32px}
-  .quote-demo{grid-template-columns:1fr;gap:40px;padding:48px 32px}
+  .cta-section{margin:0 32px 72px;padding:56px 40px}
+  .claim-grid{grid-template-columns:1fr;gap:40px}
+  .claim-phones{justify-content:center}
 }
-@media (max-width:720px){
-  .nav-links,.nav-login{display:none}
-  .hero{padding:90px 24px 60px}
-  .section,.products-section,.logos-section,.test-section,.stats-section{padding-left:24px;padding-right:24px}
-  .prod-grid{grid-template-columns:1fr 1fr}
-  .hiw-grid{grid-template-columns:1fr;gap:14px}
+@media(max-width:720px){
+  nav{padding:14px 20px}
+  .nav-mid{display:none}
+  .hero,.section,.claim-section{padding-left:20px;padding-right:20px}
+  .pg{grid-template-columns:1fr 1fr}
+  .hiw-grid{grid-template-columns:1fr;gap:12px}
   .hiw-grid::after{display:none}
   .stats-grid{grid-template-columns:1fr 1fr}
-  .trust-strip{flex-direction:column;gap:20px;padding:28px 24px}
-  .ts-item{border-right:none;border-bottom:1px solid var(--line);padding:0 0 20px;width:100%;justify-content:center}
-  .ts-item:last-child{border-bottom:none;padding-bottom:0}
-  .cta-section,.quote-demo{margin:0 16px;padding:40px 24px}
-  footer{padding:40px 24px 24px;grid-template-columns:1fr;gap:32px}
-  .footer-bottom{flex-direction:column;gap:8px;text-align:center}
+  .trust{flex-wrap:wrap;padding:16px 20px;gap:0}
+  .trust-item{padding:16px 20px;border-right:none;border-bottom:1px solid var(--border);width:50%}
+  .cta-section{margin:0 16px 60px;padding:40px 24px}
+  footer{grid-template-columns:1fr;padding:36px 20px 24px;gap:28px}
+  .footer-bot{flex-direction:column;gap:6px}
 }
 </style>
 </head>
 <body>
 
-<!-- ──────────────────── NAV ──────────────────── -->
+<!-- SVG for cam icon referenced below -->
+<svg style="display:none"><defs>
+  <symbol id="ico-car" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></symbol>
+  <symbol id="ico-plane" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 0112 18.69a19.5 19.5 0 01-5-5 19.79 19.79 0 01-3.07-8.67A2 2 0 015.7 3h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L9.37 11a16 16 0 006.08 6.08"/><path d="M14 2a4 4 0 010 8"/><path d="M20 2v8M23 5h-6"/></symbol>
+  <symbol id="ico-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="ico-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></symbol>
+  <symbol id="ico-heart" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="ico-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+  <symbol id="ico-zap" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="ico-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="ico-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></symbol>
+  <symbol id="ico-dollar" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></symbol>
+  <symbol id="ico-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ico-arrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+  <symbol id="ico-cam" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="ico-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+  <symbol id="ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></symbol>
+  <symbol id="ico-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="ico-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
+  <symbol id="ico-logo" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></symbol>
+  <symbol id="ico-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+</defs></svg>
+
+<!-- ═══ NAV ═══ -->
 <nav id="nav">
   <a href="#" class="logo">
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-    </div>
-    <span class="logo-text">SurePath</span>
+    <div class="logo-mark"><svg><use href="#ico-logo"/></svg></div>
+    <span class="logo-name">SurePath</span>
   </a>
-  <ul class="nav-links">
-    <li><a href="#">Produk</a></li>
-    <li><a href="#">Klaim</a></li>
-    <li><a href="#">Mitra</a></li>
-    <li><a href="#">Blog</a></li>
-  </ul>
-  <div class="nav-actions">
-    <button class="nav-login">Masuk</button>
-    <button class="nav-cta">Mulai Gratis
-      <svg style="width:14px;height:14px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;display:inline;margin-left:6px;vertical-align:middle" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  <div class="nav-mid">
+    <a href="#" class="t" data-id="Produk" data-en="Products">Produk</a>
+    <a href="#" class="t" data-id="Klaim" data-en="Claims">Klaim</a>
+    <a href="#" class="t" data-id="Mitra" data-en="Partners">Mitra</a>
+    <a href="#" class="t" data-id="Tentang" data-en="About">Tentang</a>
+  </div>
+  <div class="nav-right">
+    <button class="ctrl-btn" id="lang-btn" title="Switch language">
+      <svg><use href="#ico-grid"/></svg>
+      <span id="lang-label">EN</span>
     </button>
+    <button class="ctrl-btn" id="theme-btn" title="Toggle theme">
+      <svg id="theme-icon"><use href="#ico-moon"/></svg>
+    </button>
+    <button class="ctrl-btn t" data-id="Masuk" data-en="Login">Masuk</button>
+    <button class="btn-cta t" data-id="Mulai Gratis" data-en="Get Started">Mulai Gratis</button>
   </div>
 </nav>
 
-<!-- ──────────────────── HERO ──────────────────── -->
+<!-- ═══ HERO ═══ -->
 <section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
+  <!-- animated video-like bg -->
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-vignette"></div>
 
-  <!-- Left: headline + quote widget -->
+  <!-- LEFT -->
   <div class="hero-left">
-    <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> Platform Asuransi Digital #1 Indonesia</div>
-
-    <h1 class="hero-h1">
-      Ngapain Ribet<br/>Beli <span class="grad-text">Asuransi?</span>
+    <div class="eyebrow"><span class="eyebrow-line"></span><span class="t" data-id="Platform Asuransi Digital — OJK Terdaftar" data-en="Digital Insurance Platform — OJK Licensed">Platform Asuransi Digital — OJK Terdaftar</span></div>
+    <h1>
+      <span class="t" data-id="Ngapain Ribet" data-en="Why Bother">Ngapain Ribet</span><br/>
+      <span class="t" data-id="Beli" data-en="Buying"></span><span class="grad t" data-id=" Asuransi?" data-en=" Insurance?"> Asuransi?</span>
     </h1>
     <p class="hero-sub">
-      Bandingkan, beli, dan klaim asuransi dari <strong>15+ insurer OJK</strong> —
-      semuanya dalam satu platform. Tanpa agen, tanpa dokumen fisik, tanpa pusing.
+      <span class="t" data-id="Bandingkan, beli, dan laporkan klaim dari " data-en="Compare, buy, and file claims from ">Bandingkan, beli, dan laporkan klaim dari </span><strong class="t" data-id="15+ insurer OJK" data-en="15+ OJK-licensed insurers">15+ insurer OJK</strong><span class="t" data-id=" — semuanya dalam satu platform. Tanpa agen, tanpa antri." data-en=" — all in one platform. No agents, no queues."> — semuanya dalam satu platform. Tanpa agen, tanpa antri.</span>
     </p>
 
-    <div class="quote-card">
-      <div class="qc-header">
-        <span class="qc-title">Hitung Premi Sekarang</span>
-        <span class="qc-badge">Instan · OJK Rate</span>
+    <!-- QUOTE WIDGET -->
+    <div class="qw">
+      <div class="qw-top">
+        <span class="qw-label t" data-id="Hitung Premi Sekarang" data-en="Get Instant Quote">Hitung Premi Sekarang</span>
+        <span class="qw-badge t" data-id="Instan · Tarif OJK" data-en="Instant · OJK Rate">Instan · Tarif OJK</span>
       </div>
-
       <div class="tabs">
-        <div class="tab active">
-          <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          Kendaraan
+        <div class="tab on">
+          <svg><use href="#ico-car"/></svg>
+          <span class="t" data-id="Kendaraan" data-en="Vehicle">Kendaraan</span>
         </div>
         <div class="tab">
-          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.77 8.94 19.79 19.79 0 01.69 0.27 2 2 0 012.68 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L7.37 9a16 16 0 006.08 6.08"/><path d="M14 2a4 4 0 010 8"/><path d="M20 2v8"/><path d="M23 5h-6"/></svg>
-          Perjalanan
+          <svg><use href="#ico-plane"/></svg>
+          <span class="t" data-id="Perjalanan" data-en="Travel">Perjalanan</span>
         </div>
         <div class="tab">
-          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Jiwa
+          <svg><use href="#ico-shield"/></svg>
+          <span class="t" data-id="Jiwa" data-en="Life">Jiwa</span>
         </div>
         <div class="tab">
-          <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-          Gadget
+          <svg><use href="#ico-phone"/></svg>
+          <span class="t" data-id="Gadget" data-en="Gadget">Gadget</span>
         </div>
       </div>
-
-      <div class="form-grid">
+      <div class="fg">
         <div class="field">
-          <label>Merek Kendaraan</label>
-          <select><option>Toyota</option><option>Honda</option><option>Suzuki</option><option>Daihatsu</option><option>Mitsubishi</option></select>
+          <label class="t" data-id="Merek" data-en="Brand">Merek</label>
+          <select><option>Toyota</option><option>Honda</option><option>Suzuki</option><option>Daihatsu</option></select>
         </div>
         <div class="field">
-          <label>Tahun Kendaraan</label>
-          <select><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option></select>
+          <label class="t" data-id="Tahun" data-en="Year">Tahun</label>
+          <select><option>2024</option><option>2023</option><option>2022</option><option>2021</option></select>
         </div>
-        <div class="field form-full">
-          <label>Tipe Perlindungan</label>
-          <select><option>Komprehensif (All Risk) — Semua risiko ditanggung</option><option>Total Loss Only (TLO) — Kehilangan total</option></select>
+        <div class="field ff">
+          <label class="t" data-id="Perlindungan" data-en="Coverage">Perlindungan</label>
+          <select>
+            <option class="t" data-id="Komprehensif (All Risk)" data-en="Comprehensive (All Risk)">Komprehensif (All Risk)</option>
+            <option class="t" data-id="Total Loss Only (TLO)" data-en="Total Loss Only (TLO)">Total Loss Only (TLO)</option>
+          </select>
         </div>
         <div class="field">
-          <label>Harga Kendaraan</label>
-          <input type="text" value="Rp 250.000.000" placeholder="Nilai kendaraan"/>
+          <label class="t" data-id="Nilai Kendaraan" data-en="Vehicle Value">Nilai Kendaraan</label>
+          <input type="text" value="Rp 250.000.000"/>
         </div>
         <div class="field">
-          <label>Provinsi</label>
-          <select><option>DKI Jakarta</option><option>Jawa Barat</option><option>Banten</option><option>Jawa Timur</option></select>
+          <label class="t" data-id="Provinsi" data-en="Province">Provinsi</label>
+          <select><option>DKI Jakarta</option><option>Jawa Barat</option><option>Banten</option></select>
         </div>
       </div>
-
-      <button class="btn-quote">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Bandingkan Harga Terbaik
+      <button class="btn-q">
+        <svg><use href="#ico-search"/></svg>
+        <span class="t" data-id="Bandingkan Harga Terbaik" data-en="Compare Best Prices">Bandingkan Harga Terbaik</span>
       </button>
-
-      <div class="price-pill">
-        <div class="pp-left">
-          <span class="pp-from">Mulai dari</span>
-          <span class="pp-val">Rp 1,2 Jt</span>
-          <span class="pp-per">/ tahun</span>
+      <div class="price-row">
+        <div class="pr-left">
+          <div class="from t" data-id="Mulai dari" data-en="Starting from">Mulai dari</div>
+          <div class="amount">Rp 1,2 Jt</div>
+          <div class="per t" data-id="/ tahun" data-en="/ year">/ tahun</div>
         </div>
-        <button class="pp-cta">Pilih &amp; Beli →</button>
+        <button class="pr-cta t" data-id="Pilih &amp; Beli →" data-en="Choose &amp; Buy →">Pilih &amp; Beli →</button>
       </div>
     </div>
   </div>
 
-  <!-- Right: stacked insurance cards -->
+  <!-- RIGHT: Card stack -->
   <div class="hero-right">
-    <div class="card-stack">
-      <!-- Card 1 — Active car policy -->
-      <div class="ins-card ic1">
+    <div class="stack">
+      <div class="ins-card c1">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div class="ic-chip"></div>
-          <svg style="width:28px;height:28px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <div class="chip"></div>
+          <svg style="width:26px;height:26px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ico-car"/></svg>
         </div>
-        <div class="ic-bottom">
+        <div class="card-bottom">
           <div>
-            <div class="ic-type">Asuransi Kendaraan</div>
-            <div class="ic-brand">Toyota Avanza</div>
+            <div class="card-type t" data-id="Asuransi Kendaraan" data-en="Vehicle Insurance">Asuransi Kendaraan</div>
+            <div class="card-name">Toyota Avanza</div>
           </div>
-          <div class="ic-status active">● Aktif</div>
+          <div class="card-status status-active t" data-id="● Aktif" data-en="● Active">● Aktif</div>
+        </div>
+      </div>
+      <div class="ins-card c2">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="chip"></div>
+          <svg style="width:26px;height:26px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ico-plane"/></svg>
+        </div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-type t" data-id="Perjalanan Internasional" data-en="International Travel">Perjalanan Internasional</div>
+            <div class="card-name t" data-id="Singapore · 7 Hari" data-en="Singapore · 7 Days">Singapore · 7 Hari</div>
+          </div>
+          <div class="card-status status-active t" data-id="● Aktif" data-en="● Active">● Aktif</div>
+        </div>
+      </div>
+      <div class="ins-card c3">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="chip"></div>
+          <svg style="width:26px;height:26px;stroke:rgba(255,255,255,.45);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#ico-shield"/></svg>
+        </div>
+        <div class="card-bottom">
+          <div>
+            <div class="card-type t" data-id="Kecelakaan Diri" data-en="Personal Accident">Kecelakaan Diri</div>
+            <div class="card-name">Ahmad Rizki</div>
+          </div>
+          <div class="card-status status-pending t" data-id="◌ Pending" data-en="◌ Pending">◌ Pending</div>
         </div>
       </div>
 
-      <!-- Card 2 — Travel policy -->
-      <div class="ins-card ic2">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div class="ic-chip"></div>
-          <svg style="width:28px;height:28px;stroke:rgba(255,255,255,.5);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07"/><path d="M14.05 2a9 9 0 018 7.94"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
-        </div>
-        <div class="ic-bottom">
-          <div>
-            <div class="ic-type">Perjalanan Internasional</div>
-            <div class="ic-brand">Singapore · 7 Hari</div>
-          </div>
-          <div class="ic-status active">● Aktif</div>
-        </div>
+      <div class="float-pill fp1">
+        <div class="fp-label t" data-id="Laporan Klaim" data-en="Claim Filed">Laporan Klaim</div>
+        <div class="fp-val g"><span class="fp-dot"></span><span class="t" data-id="Terkirim" data-en="Submitted">Terkirim</span></div>
+        <div class="fp-sub t" data-id="Proses &lt; 48 jam" data-en="Processing &lt; 48 hrs">Proses &lt; 48 jam</div>
       </div>
-
-      <!-- Card 3 — PA policy -->
-      <div class="ins-card ic3">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div class="ic-chip"></div>
-          <svg style="width:28px;height:28px;stroke:rgba(255,255,255,.4);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        <div class="ic-bottom">
-          <div>
-            <div class="ic-type">Kecelakaan Diri</div>
-            <div class="ic-brand">Ahmad Rizki</div>
-          </div>
-          <div class="ic-status pending">◌ Pending</div>
-        </div>
-      </div>
-
-      <!-- Floating pills -->
-      <div class="data-pill dp1">
-        <div class="dp-label">Klaim Terakhir</div>
-        <div class="dp-val green"><span class="dp-dot"></span>Rp 14,5 Jt</div>
-        <div class="dp-sub">Cair dalam 38 jam</div>
-      </div>
-      <div class="data-pill dp2">
-        <div class="dp-label">Total Premi Hemat</div>
-        <div class="dp-val blue">22%</div>
-        <div class="dp-sub">vs. agen konvensional</div>
+      <div class="float-pill fp2">
+        <div class="fp-label t" data-id="Hemat vs. Agen" data-en="Saved vs. Agent">Hemat vs. Agen</div>
+        <div class="fp-val b">22%</div>
+        <div class="fp-sub t" data-id="Tarif OJK langsung" data-en="Direct OJK Rate">Tarif OJK langsung</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ──────────────────── TICKER ──────────────────── -->
+<!-- ═══ TICKER ═══ -->
 <div class="ticker-wrap">
-  <div class="ticker-track">
-    <!-- set 1 -->
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-      <strong>50.000+</strong> Polis Aktif
-    </div>
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-      <strong>Rp 2T+</strong> Klaim Dibayar
-    </div>
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      Klaim Cair <strong>&lt; 48 Jam</strong>
-    </div>
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <strong>OJK</strong> Terdaftar &amp; Diawasi
-    </div>
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      Rating <strong>4.9/5</strong> · 8.400+ Ulasan
-    </div>
-    <div class="ti">
-      <svg class="ti-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-      <strong>15+</strong> Perusahaan Asuransi
-    </div>
-    <!-- set 2 (duplicate for loop) -->
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><strong>50.000+</strong> Polis Aktif</div>
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><strong>Rp 2T+</strong> Klaim Dibayar</div>
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Klaim Cair <strong>&lt; 48 Jam</strong></div>
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><strong>OJK</strong> Terdaftar &amp; Diawasi</div>
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Rating <strong>4.9/5</strong> · 8.400+ Ulasan</div>
-    <div class="ti"><svg class="ti-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg><strong>15+</strong> Perusahaan Asuransi</div>
+  <div class="ticker-inner">
+    <div class="ti"><svg><use href="#ico-users"/></svg><strong class="t" data-id="50.000+" data-en="50K+">50.000+</strong><span class="t" data-id="Polis Aktif" data-en="Active Policies">Polis Aktif</span></div>
+    <div class="ti"><svg><use href="#ico-dollar"/></svg><strong class="t" data-id="Rp 2T+" data-en="Rp 2T+">Rp 2T+</strong><span class="t" data-id="Total Pertanggungan" data-en="Total Coverage">Total Pertanggungan</span></div>
+    <div class="ti"><svg><use href="#ico-zap"/></svg><span class="t" data-id="Laporan Klaim" data-en="Claim Filing">Laporan Klaim</span><strong class="t" data-id="60 Detik" data-en="60 Seconds">60 Detik</strong></div>
+    <div class="ti"><svg><use href="#ico-lock"/></svg><strong>OJK</strong><span class="t" data-id="Terdaftar &amp; Diawasi" data-en="Licensed &amp; Regulated">Terdaftar &amp; Diawasi</span></div>
+    <div class="ti"><svg><use href="#ico-star"/></svg><strong>4.9/5</strong><span class="t" data-id="8.400+ Ulasan" data-en="8,400+ Reviews">8.400+ Ulasan</span></div>
+    <div class="ti"><svg><use href="#ico-grid"/></svg><strong class="t" data-id="15+" data-en="15+">15+</strong><span class="t" data-id="Insurer OJK" data-en="OJK Insurers">Insurer OJK</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="ti"><svg><use href="#ico-users"/></svg><strong class="t" data-id="50.000+" data-en="50K+">50.000+</strong><span class="t" data-id="Polis Aktif" data-en="Active Policies">Polis Aktif</span></div>
+    <div class="ti"><svg><use href="#ico-dollar"/></svg><strong class="t" data-id="Rp 2T+" data-en="Rp 2T+">Rp 2T+</strong><span class="t" data-id="Total Pertanggungan" data-en="Total Coverage">Total Pertanggungan</span></div>
+    <div class="ti"><svg><use href="#ico-zap"/></svg><span class="t" data-id="Laporan Klaim" data-en="Claim Filing">Laporan Klaim</span><strong class="t" data-id="60 Detik" data-en="60 Seconds">60 Detik</strong></div>
+    <div class="ti"><svg><use href="#ico-lock"/></svg><strong>OJK</strong><span class="t" data-id="Terdaftar &amp; Diawasi" data-en="Licensed &amp; Regulated">Terdaftar &amp; Diawasi</span></div>
+    <div class="ti"><svg><use href="#ico-star"/></svg><strong>4.9/5</strong><span class="t" data-id="8.400+ Ulasan" data-en="8,400+ Reviews">8.400+ Ulasan</span></div>
+    <div class="ti"><svg><use href="#ico-grid"/></svg><strong class="t" data-id="15+" data-en="15+">15+</strong><span class="t" data-id="Insurer OJK" data-en="OJK Insurers">Insurer OJK</span></div>
   </div>
 </div>
 
-<!-- ──────────────────── TRUST STRIP ──────────────────── -->
-<div class="trust-strip">
-  <div class="ts-item">
-    <div class="ts-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-    <div><div class="ts-val">OJK Terdaftar</div><div class="ts-label">KEP-24/D.05/2023</div></div>
-  </div>
-  <div class="ts-item">
-    <div class="ts-icon"><svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-    <div><div class="ts-val">&lt; 48 Jam</div><div class="ts-label">Rata-rata klaim cair</div></div>
-  </div>
-  <div class="ts-item">
-    <div class="ts-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-    <div><div class="ts-val">ISO 27001</div><div class="ts-label">Keamanan data terverifikasi</div></div>
-  </div>
-  <div class="ts-item">
-    <div class="ts-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-    <div><div class="ts-val">50.000+</div><div class="ts-label">Pengguna aktif</div></div>
-  </div>
-  <div class="ts-item">
-    <div class="ts-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-    <div><div class="ts-val">4.9 / 5.0</div><div class="ts-label">8.400+ ulasan verified</div></div>
-  </div>
+<!-- ═══ TRUST ═══ -->
+<div class="trust">
+  <div class="trust-item"><div class="ti-icon"><svg><use href="#ico-lock"/></svg></div><div><div class="ti-val">OJK</div><div class="ti-label t" data-id="Terdaftar Resmi" data-en="Official License">Terdaftar Resmi</div></div></div>
+  <div class="trust-item"><div class="ti-icon"><svg><use href="#ico-zap"/></svg></div><div><div class="ti-val t" data-id="60 Detik" data-en="60 Seconds">60 Detik</div><div class="ti-label t" data-id="Laporan klaim" data-en="Claim filing">Laporan klaim</div></div></div>
+  <div class="trust-item"><div class="ti-icon"><svg><use href="#ico-shield"/></svg></div><div><div class="ti-val">ISO 27001</div><div class="ti-label t" data-id="Keamanan data" data-en="Data security">Keamanan data</div></div></div>
+  <div class="trust-item"><div class="ti-icon"><svg><use href="#ico-users"/></svg></div><div><div class="ti-val">50K+</div><div class="ti-label t" data-id="Pengguna aktif" data-en="Active users">Pengguna aktif</div></div></div>
+  <div class="trust-item"><div class="ti-icon"><svg><use href="#ico-star"/></svg></div><div><div class="ti-val">4.9 ★</div><div class="ti-label t" data-id="8.400+ ulasan" data-en="8,400+ reviews">8.400+ ulasan</div></div></div>
 </div>
 
-<!-- ──────────────────── PRODUCTS ──────────────────── -->
-<section class="products-section">
-  <div class="section-pre reveal"><span class="section-pre-line"></span>Produk Retail</div>
-  <h2 class="display reveal reveal-delay-1">Pilih Proteksi,<br/>Langsung Beli</h2>
-  <p class="section-sub reveal reveal-delay-2">Harga transparan, tanpa biaya tersembunyi. Beli dalam 3 menit, polis digital langsung ke email.</p>
-
-  <div class="prod-grid">
-    <div class="prod-card reveal reveal-delay-1">
-      <div class="pc-badge">Terlaris</div>
-      <div class="pc-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
-      <div class="pc-name">Kendaraan</div>
-      <div class="pc-desc">Komprehensif / TLO untuk semua jenis kendaraan</div>
+<!-- ═══ PRODUCTS ═══ -->
+<section class="section rv">
+  <div class="pre rv"><span class="pre-line"></span><span class="t" data-id="Produk Retail" data-en="Retail Products">Produk Retail</span></div>
+  <h2 class="rv d1 t" data-id="Pilih Proteksi, Langsung Beli" data-en="Choose Coverage, Buy Instantly">Pilih Proteksi, Langsung Beli</h2>
+  <p class="sub rv d2 t" data-id="Harga transparan. Tidak ada biaya tersembunyi. Beli dalam 3 menit, polis digital langsung ke email." data-en="Transparent pricing. No hidden fees. Buy in 3 minutes, digital policy straight to your email.">Harga transparan. Tidak ada biaya tersembunyi. Beli dalam 3 menit, polis digital langsung ke email.</p>
+  <div class="pg">
+    <div class="pc rv d1">
+      <div class="pc-badge t" data-id="Terlaris" data-en="Best Seller">Terlaris</div>
+      <div class="pc-icon"><svg><use href="#ico-car"/></svg></div>
+      <div class="pc-name t" data-id="Kendaraan" data-en="Vehicle">Kendaraan</div>
+      <div class="pc-desc t" data-id="Komprehensif / TLO untuk semua jenis mobil" data-en="Comprehensive / TLO for all car types">Komprehensif / TLO untuk semua jenis mobil</div>
       <div class="pc-sep"></div>
-      <div class="pc-price-label">Mulai dari</div>
+      <div class="pc-from t" data-id="Mulai dari" data-en="From">Mulai dari</div>
       <div class="pc-price">Rp 1,2 Jt</div>
-      <div class="pc-per">/ tahun</div>
-      <button class="pc-btn">Hitung &amp; Beli <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="pc-per t" data-id="/ tahun" data-en="/ year">/ tahun</div>
+      <button class="pc-btn t" data-id="Hitung &amp; Beli" data-en="Quote &amp; Buy">Hitung &amp; Beli <svg><use href="#ico-arrow"/></svg></button>
     </div>
-    <div class="prod-card reveal reveal-delay-2">
-      <div class="pc-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.77 8.94 19.79 19.79 0 01.7.27 2 2 0 012.68 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.37 9a16 16 0 006.08 6.08"/><path d="M14 2a4 4 0 010 8"/><path d="M20 2v8M23 5h-6"/></svg></div>
-      <div class="pc-name">Perjalanan</div>
-      <div class="pc-desc">Domestik & internasional, per trip atau tahunan</div>
+    <div class="pc rv d2">
+      <div class="pc-icon"><svg><use href="#ico-plane"/></svg></div>
+      <div class="pc-name t" data-id="Perjalanan" data-en="Travel">Perjalanan</div>
+      <div class="pc-desc t" data-id="Domestik &amp; internasional, per trip atau tahunan" data-en="Domestic &amp; international, per trip or annual">Domestik &amp; internasional, per trip atau tahunan</div>
       <div class="pc-sep"></div>
-      <div class="pc-price-label">Mulai dari</div>
+      <div class="pc-from t" data-id="Mulai dari" data-en="From">Mulai dari</div>
       <div class="pc-price">Rp 89 Rb</div>
-      <div class="pc-per">/ perjalanan</div>
-      <button class="pc-btn">Hitung &amp; Beli <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="pc-per t" data-id="/ perjalanan" data-en="/ trip">/ perjalanan</div>
+      <button class="pc-btn t" data-id="Hitung &amp; Beli" data-en="Quote &amp; Buy">Hitung &amp; Beli <svg><use href="#ico-arrow"/></svg></button>
     </div>
-    <div class="prod-card reveal reveal-delay-3">
-      <div class="pc-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <div class="pc-name">Jiwa &amp; PA</div>
-      <div class="pc-desc">Perlindungan diri dan keluarga dari risiko fatal</div>
+    <div class="pc rv d3">
+      <div class="pc-icon"><svg><use href="#ico-shield"/></svg></div>
+      <div class="pc-name t" data-id="Jiwa &amp; PA" data-en="Life &amp; PA">Jiwa &amp; PA</div>
+      <div class="pc-desc t" data-id="Perlindungan diri dan keluarga" data-en="Personal and family protection">Perlindungan diri dan keluarga</div>
       <div class="pc-sep"></div>
-      <div class="pc-price-label">Mulai dari</div>
+      <div class="pc-from t" data-id="Mulai dari" data-en="From">Mulai dari</div>
       <div class="pc-price">Rp 120 Rb</div>
-      <div class="pc-per">/ bulan</div>
-      <button class="pc-btn">Hitung &amp; Beli <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="pc-per t" data-id="/ bulan" data-en="/ month">/ bulan</div>
+      <button class="pc-btn t" data-id="Hitung &amp; Beli" data-en="Quote &amp; Buy">Hitung &amp; Beli <svg><use href="#ico-arrow"/></svg></button>
     </div>
-    <div class="prod-card reveal reveal-delay-4">
-      <div class="pc-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
-      <div class="pc-name">Gadget</div>
-      <div class="pc-desc">HP, laptop, dan tablet dari pecah, hilang, banjir</div>
+    <div class="pc rv d4">
+      <div class="pc-icon"><svg><use href="#ico-phone"/></svg></div>
+      <div class="pc-name t" data-id="Gadget" data-en="Gadget">Gadget</div>
+      <div class="pc-desc t" data-id="HP, laptop, tablet — pecah, hilang, banjir" data-en="Phone, laptop, tablet — crack, loss, flood">HP, laptop, tablet — pecah, hilang, banjir</div>
       <div class="pc-sep"></div>
-      <div class="pc-price-label">Mulai dari</div>
+      <div class="pc-from t" data-id="Mulai dari" data-en="From">Mulai dari</div>
       <div class="pc-price">Rp 45 Rb</div>
-      <div class="pc-per">/ bulan</div>
-      <button class="pc-btn">Hitung &amp; Beli <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="pc-per t" data-id="/ bulan" data-en="/ month">/ bulan</div>
+      <button class="pc-btn t" data-id="Hitung &amp; Beli" data-en="Quote &amp; Buy">Hitung &amp; Beli <svg><use href="#ico-arrow"/></svg></button>
     </div>
-    <div class="prod-card reveal reveal-delay-4">
-      <div class="pc-icon"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <div class="pc-name">Kesehatan</div>
-      <div class="pc-desc">Rawat inap, rawat jalan, dan gigi pilihan</div>
+    <div class="pc rv d4">
+      <div class="pc-icon"><svg><use href="#ico-heart"/></svg></div>
+      <div class="pc-name t" data-id="Kesehatan" data-en="Health">Kesehatan</div>
+      <div class="pc-desc t" data-id="Rawat inap, rawat jalan, dan gigi" data-en="Inpatient, outpatient, and dental">Rawat inap, rawat jalan, dan gigi</div>
       <div class="pc-sep"></div>
-      <div class="pc-price-label">Mulai dari</div>
+      <div class="pc-from t" data-id="Mulai dari" data-en="From">Mulai dari</div>
       <div class="pc-price">Rp 250 Rb</div>
-      <div class="pc-per">/ bulan</div>
-      <button class="pc-btn">Hitung &amp; Beli <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+      <div class="pc-per t" data-id="/ bulan" data-en="/ month">/ bulan</div>
+      <button class="pc-btn t" data-id="Hitung &amp; Beli" data-en="Quote &amp; Buy">Hitung &amp; Beli <svg><use href="#ico-arrow"/></svg></button>
     </div>
   </div>
 </section>
 
-<!-- ──────────────────── HOW IT WORKS ──────────────────── -->
-<section class="section">
-  <div class="section-pre reveal"><span class="section-pre-line"></span>Cara Kerja</div>
-  <h2 class="display reveal reveal-delay-1">3 Langkah,<br/>Terlindungi</h2>
-  <p class="section-sub reveal reveal-delay-2">Tidak perlu telepon agen. Tidak perlu antri. Selesai sambil nunggu kopi.</p>
+<!-- ═══ CLAIM — EASY REPORT ═══ -->
+<section class="claim-section">
+  <div class="claim-grid">
+    <div class="claim-left">
+      <div class="pre rv"><span class="pre-line"></span><span class="t" data-id="Proses Klaim" data-en="Claims Process">Proses Klaim</span></div>
+      <h2 class="rv d1 t" data-id="Laporkan Insiden dalam 60 Detik" data-en="Report an Incident in 60 Seconds">Laporkan Insiden dalam 60 Detik</h2>
+      <p class="sub rv d2 t" data-id="Tidak perlu ke kantor. Tidak perlu dokumen tumpukan. Cukup foto, isi form, kirim — tim kami yang proses selebihnya." data-en="No office visit. No stacks of paperwork. Just photo, fill form, submit — our team handles the rest.">Tidak perlu ke kantor. Tidak perlu dokumen tumpukan. Cukup foto, isi form, kirim — tim kami yang proses selebihnya.</p>
+      <div class="claim-steps">
+        <div class="cs hl rv d1">
+          <div class="cs-icon"><svg><use href="#ico-cam"/></svg></div>
+          <div class="cs-body">
+            <strong class="t" data-id="Foto Kerusakan atau Insiden" data-en="Photograph the Damage or Incident">Foto Kerusakan atau Insiden</strong>
+            <span class="t" data-id="Ambil foto langsung dari HP. AI kami bantu verifikasi otomatis." data-en="Take photos directly from your phone. Our AI helps verify automatically.">Ambil foto langsung dari HP. AI kami bantu verifikasi otomatis.</span>
+          </div>
+          <div class="cs-time t" data-id="~15 detik" data-en="~15 sec">~15 detik</div>
+        </div>
+        <div class="cs rv d2">
+          <div class="cs-icon"><svg><use href="#ico-file"/></svg></div>
+          <div class="cs-body">
+            <strong class="t" data-id="Isi Detail Kejadian" data-en="Fill in Event Details">Isi Detail Kejadian</strong>
+            <span class="t" data-id="Waktu, lokasi, kronologi singkat. Form kami yang panduan kamu." data-en="Time, location, brief chronology. Our form guides you through.">Waktu, lokasi, kronologi singkat. Form kami yang panduan kamu.</span>
+          </div>
+          <div class="cs-time t" data-id="~30 detik" data-en="~30 sec">~30 detik</div>
+        </div>
+        <div class="cs rv d3">
+          <div class="cs-icon"><svg><use href="#ico-arrow"/></svg></div>
+          <div class="cs-body">
+            <strong class="t" data-id="Kirim — Selesai" data-en="Submit — Done">Kirim — Selesai</strong>
+            <span class="t" data-id="Tim klaim kami notifikasi dalam 1 jam kerja. Prosesnya transparan, bisa dipantau real-time." data-en="Our claims team notifies you within 1 business hour. Track progress in real-time.">Tim klaim kami notifikasi dalam 1 jam kerja. Prosesnya transparan, bisa dipantau real-time.</span>
+          </div>
+          <div class="cs-time t" data-id="~15 detik" data-en="~15 sec">~15 detik</div>
+        </div>
+        <div class="cs rv d4">
+          <div class="cs-icon"><svg><use href="#ico-check"/></svg></div>
+          <div class="cs-body">
+            <strong class="t" data-id="Pantau Status Kapan Saja" data-en="Track Status Anytime">Pantau Status Kapan Saja</strong>
+            <span class="t" data-id="Dashboard real-time. Setiap update, kamu dapat notifikasi push." data-en="Real-time dashboard. Every update triggers a push notification.">Dashboard real-time. Setiap update, kamu dapat notifikasi push.</span>
+          </div>
+          <div class="cs-time t" data-id="Real-time" data-en="Real-time">Real-time</div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Phone mockups -->
+    <div class="claim-phones rv d2">
+      <!-- Phone 1: Camera/capture -->
+      <div class="phone-mock">
+        <div class="pm-notch"></div>
+        <div class="pm-screen">
+          <div class="pm-h t" data-id="Laporkan Klaim" data-en="File a Claim">Laporkan Klaim</div>
+          <div class="pm-cam">
+            <div class="cam-target"><svg><use href="#ico-cam"/></svg></div>
+            <span class="cam-label t" data-id="Arahkan ke kerusakan" data-en="Point at the damage">Arahkan ke kerusakan</span>
+          </div>
+          <button class="pm-btn t" data-id="📸 Ambil Foto" data-en="📸 Take Photo">📸 Ambil Foto</button>
+        </div>
+      </div>
+
+      <div class="phone-arrow">
+        <svg><use href="#ico-arrow"/></svg>
+      </div>
+
+      <!-- Phone 2: Confirmation -->
+      <div class="phone-mock phone-mock2">
+        <div class="pm-notch"></div>
+        <div class="pm-screen">
+          <div class="pm-h t" data-id="Status Klaim" data-en="Claim Status">Status Klaim</div>
+          <div class="confirm-card">
+            <div class="cc-row">
+              <div class="cc-check"><svg><use href="#ico-check"/></svg></div>
+              <div class="cc-title t" data-id="Laporan Diterima" data-en="Report Received">Laporan Diterima</div>
+            </div>
+            <div class="cc-sub t" data-id="Toyota Avanza · Tabrakan ringan" data-en="Toyota Avanza · Minor collision">Toyota Avanza · Tabrakan ringan</div>
+            <div class="cc-status t" data-id="Dalam Proses" data-en="In Progress">Dalam Proses</div>
+          </div>
+          <div class="timeline-mini">
+            <div class="tm-item"><div class="tm-dot done"></div><span class="t" data-id="Laporan dikirim" data-en="Report submitted">Laporan dikirim</span></div>
+            <div class="tm-item"><div class="tm-dot done"></div><span class="t" data-id="AI verifikasi foto" data-en="AI photo verify">AI verifikasi foto</span></div>
+            <div class="tm-item"><div class="tm-dot now"></div><span class="t" data-id="Tim adjuster review" data-en="Adjuster reviewing">Tim adjuster review</span></div>
+            <div class="tm-item"><div class="tm-dot next"></div><span class="t" data-id="Keputusan klaim" data-en="Claim decision">Keputusan klaim</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="section rv">
+  <div class="pre"><span class="pre-line"></span><span class="t" data-id="Cara Kerja" data-en="How It Works">Cara Kerja</span></div>
+  <h2 class="rv d1 t" data-id="3 Langkah, Terlindungi" data-en="3 Steps, You're Covered">3 Langkah, Terlindungi</h2>
+  <p class="sub rv d2 t" data-id="Tanpa telepon agen. Tanpa antrian. Selesai sambil nunggu kopi." data-en="No sales calls. No queues. Done while waiting for your coffee.">Tanpa telepon agen. Tanpa antrian. Selesai sambil nunggu kopi.</p>
   <div class="hiw-grid">
-    <div class="hiw-card reveal reveal-delay-1">
-      <div class="hiw-num">01</div>
-      <div class="hiw-title">Isi Detail &amp; Pilih Produk</div>
-      <div class="hiw-desc">Masukkan data kendaraan, perjalanan, atau profil kamu. AI kami kalkulasi risiko dalam 3 detik.</div>
-      <div class="hiw-tags"><span class="hiw-tag">Form 2 menit</span><span class="hiw-tag">Tanpa dokumen fisik</span></div>
+    <div class="hw rv d1">
+      <div class="hw-n">01</div>
+      <div class="hw-title t" data-id="Isi Detail &amp; Pilih Produk" data-en="Enter Details &amp; Pick Product">Isi Detail &amp; Pilih Produk</div>
+      <div class="hw-desc t" data-id="Masukkan data kendaraan atau profil. AI kami kalkulasi risiko dan tampilkan penawaran dalam 3 detik." data-en="Enter vehicle data or profile. Our AI calculates risk and shows quotes in 3 seconds.">Masukkan data kendaraan atau profil. AI kami kalkulasi risiko dan tampilkan penawaran dalam 3 detik.</div>
+      <div class="hw-chips"><span class="hw-chip t" data-id="Form 2 menit" data-en="2-min form">Form 2 menit</span><span class="hw-chip t" data-id="Tanpa dokumen fisik" data-en="No physical docs">Tanpa dokumen fisik</span></div>
     </div>
-    <div class="hiw-card reveal reveal-delay-2">
-      <div class="hiw-num">02</div>
-      <div class="hiw-title">Bandingkan &amp; Pilih Insurer</div>
-      <div class="hiw-desc">Lihat penawaran dari 15+ perusahaan asuransi OJK, diurutkan dari harga terbaik dan rating klaim.</div>
-      <div class="hiw-tags"><span class="hiw-tag">15+ Insurer</span><span class="hiw-tag">Harga transparan</span></div>
+    <div class="hw rv d2">
+      <div class="hw-n">02</div>
+      <div class="hw-title t" data-id="Bandingkan &amp; Pilih Insurer" data-en="Compare &amp; Choose Insurer">Bandingkan &amp; Pilih Insurer</div>
+      <div class="hw-desc t" data-id="Lihat penawaran dari 15+ insurer OJK, diurutkan harga terbaik dan track record klaim." data-en="See offers from 15+ OJK insurers, ranked by best price and claims track record.">Lihat penawaran dari 15+ insurer OJK, diurutkan harga terbaik dan track record klaim.</div>
+      <div class="hw-chips"><span class="hw-chip t" data-id="15+ Insurer" data-en="15+ Insurers">15+ Insurer</span><span class="hw-chip t" data-id="Harga OJK resmi" data-en="Official OJK rates">Harga OJK resmi</span></div>
     </div>
-    <div class="hiw-card reveal reveal-delay-3">
-      <div class="hiw-num">03</div>
-      <div class="hiw-title">Bayar &amp; Polis Langsung</div>
-      <div class="hiw-desc">Bayar via GoPay, OVO, VA, atau kartu kredit. Polis digital diterima instan di email dan app.</div>
-      <div class="hiw-tags"><span class="hiw-tag">GoPay · OVO · Kartu</span><span class="hiw-tag">Polis instan</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ──────────────────── QUOTE DEMO / WHY US ──────────────────── -->
-<div class="quote-demo reveal">
-  <div class="qd-left">
-    <div class="section-pre"><span class="section-pre-line"></span>Kenapa SurePath?</div>
-    <h2 class="display">Beli Asuransi<br/>Semudah<br/><span class="grad-text">Pesan Ojol</span></h2>
-    <p>Kami rancang SurePath untuk orang yang sibuk dan tidak mau ribet. Dari pilih sampai polis — semua bisa diselesaikan sambil nunggu lift.</p>
-    <div class="qd-features">
-      <div class="qd-feat">
-        <div class="qd-feat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="qd-feat-body"><strong>AI Underwriting Instan</strong><span>Tidak ada survey manual. AI kami nilai risiko dalam hitungan detik dari foto dan data kendaraan.</span></div>
-      </div>
-      <div class="qd-feat">
-        <div class="qd-feat-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
-        <div class="qd-feat-body"><strong>Harga OJK, Tidak Ada Mark-Up</strong><span>Kami pakai tarif resmi OJK dengan diskon langsung ke konsumen. Hemat 15–22% vs. agen konvensional.</span></div>
-      </div>
-      <div class="qd-feat">
-        <div class="qd-feat-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.77 8.94"/><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5"/><polyline points="11 11 22 2"/></svg></div>
-        <div class="qd-feat-body"><strong>Klaim 100% Digital</strong><span>Foto kerusakan di app → AI analisis → Uang cair dalam 48 jam. Tidak perlu ke kantor, tidak perlu antri.</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div>
-    <div style="font-size:12px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-bottom:16px">Flow Pembelian Live</div>
-    <div class="funnel-steps">
-      <div class="fs done">
-        <div class="fs-num">1</div>
-        <div class="fs-text"><strong>Pilih Produk Kendaraan</strong><span>Toyota Avanza 2022, Komprehensif, DKI Jakarta</span></div>
-        <div class="fs-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      </div>
-      <div class="fs done">
-        <div class="fs-num">2</div>
-        <div class="fs-text"><strong>AI Kalkulasi Premi</strong><span>Risiko sedang · Tarif OJK zona 2 · 3 penawaran</span></div>
-        <div class="fs-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      </div>
-      <div class="fs active">
-        <div class="fs-num">3</div>
-        <div class="fs-text"><strong>Pilih Insurer Terbaik</strong><span>Asuransi Sinarmas — Rp 1.240.000/th · Rating A</span></div>
-        <div class="fs-time">Sedang</div>
-      </div>
-      <div class="fs">
-        <div class="fs-num">4</div>
-        <div class="fs-text"><strong>Bayar &amp; Terima Polis</strong><span>GoPay · OVO · VA · Kartu Kredit</span></div>
-        <div class="fs-time">&lt; 2 mnt</div>
-      </div>
-    </div>
-    <div class="funnel-result">
-      <div class="fr-left">
-        <div class="fr-label">Premi Terbaik Ditemukan</div>
-        <div class="fr-val">Rp 1.240.000</div>
-        <div class="fr-sub">/ tahun · Komprehensif · OJK Rate</div>
-      </div>
-      <button class="fr-btn">
-        Beli Sekarang
-        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ──────────────────── STATS ──────────────────── -->
-<section class="stats-section">
-  <div class="section-pre" style="justify-content:center"><span class="section-pre-line"></span>Angka Bicara</div>
-  <h2 class="display reveal">Dipercaya Ribuan<br/>Pengguna Indonesia</h2>
-  <div class="stats-grid reveal">
-    <div class="stat-item">
-      <div class="stat-num">50K+</div>
-      <div class="stat-label">Polis Aktif</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">Rp 2T+</div>
-      <div class="stat-label">Total Klaim Dibayar</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">48 Jam</div>
-      <div class="stat-label">Rata-rata Klaim Cair</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num">4.9★</div>
-      <div class="stat-label">Rating dari 8.400+ Ulasan</div>
+    <div class="hw rv d3">
+      <div class="hw-n">03</div>
+      <div class="hw-title t" data-id="Bayar &amp; Polis Instan" data-en="Pay &amp; Get Policy Instantly">Bayar &amp; Polis Instan</div>
+      <div class="hw-desc t" data-id="GoPay, OVO, VA, atau kartu kredit. Polis digital diterima langsung di email dan app." data-en="GoPay, OVO, VA, or credit card. Digital policy received instantly via email and app.">GoPay, OVO, VA, atau kartu kredit. Polis digital diterima langsung di email dan app.</div>
+      <div class="hw-chips"><span class="hw-chip">GoPay · OVO</span><span class="hw-chip t" data-id="Polis instan" data-en="Instant policy">Polis instan</span></div>
     </div>
   </div>
 </section>
 
-<!-- ──────────────────── TESTIMONIALS ──────────────────── -->
-<section class="test-section">
-  <div class="section-pre reveal"><span class="section-pre-line"></span>Cerita Pengguna</div>
-  <h2 class="display reveal reveal-delay-1">Mereka Sudah<br/>Terlindungi</h2>
+<!-- ═══ STATS ═══ -->
+<section class="section alt2 rv">
+  <div class="pre" style="justify-content:center"><span class="pre-line"></span><span class="t" data-id="Angka Bicara" data-en="By the Numbers">Angka Bicara</span></div>
+  <h2 class="rv d1" style="text-align:center"><span class="t" data-id="Dipercaya Puluhan Ribu Pengguna" data-en="Trusted by Tens of Thousands">Dipercaya Puluhan Ribu Pengguna</span></h2>
+  <div class="stats-grid rv d2">
+    <div class="stat"><div class="stat-n">50K+</div><div class="stat-l t" data-id="Polis Aktif" data-en="Active Policies">Polis Aktif</div></div>
+    <div class="stat"><div class="stat-n">Rp 2T+</div><div class="stat-l t" data-id="Total Pertanggungan" data-en="Total Coverage Value">Total Pertanggungan</div></div>
+    <div class="stat"><div class="stat-n">60 Dtk</div><div class="stat-l t" data-id="Laporan klaim rata-rata" data-en="Average claim filing time">Laporan klaim rata-rata</div></div>
+    <div class="stat"><div class="stat-n">4.9 ★</div><div class="stat-l t" data-id="8.400+ ulasan pengguna" data-en="8,400+ user reviews">8.400+ ulasan pengguna</div></div>
+  </div>
+</section>
 
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="section rv">
+  <div class="pre"><span class="pre-line"></span><span class="t" data-id="Cerita Pengguna" data-en="User Stories">Cerita Pengguna</span></div>
+  <h2 class="rv d1 t" data-id="Mereka Sudah Terlindungi" data-en="They're Already Covered">Mereka Sudah Terlindungi</h2>
   <div class="test-track">
-    <div class="test-card">
-      <div class="test-rating">
-        <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        <svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      </div>
-      <p class="test-text">"Daftar polis kendaraan cuma 5 menit. Kecelakaan bulan lalu, foto via HP, 2 hari uang masuk. Gila kencengnya."</p>
-      <div class="test-author"><div class="test-avatar">B</div><div><div class="test-name">Budi Santoso</div><div class="test-meta">Pengguna Kendaraan · Jakarta</div></div></div>
-    </div>
-    <div class="test-card">
-      <div class="test-rating"><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      <p class="test-text">"Beli asuransi perjalanan 3 menit sebelum check-in bandara. Beneran semudah itu. Tidak ada basa-basi agen."</p>
-      <div class="test-author"><div class="test-avatar">D</div><div><div class="test-name">Dewi Kusuma</div><div class="test-meta">Frequent Traveler · Surabaya</div></div></div>
-    </div>
-    <div class="test-card">
-      <div class="test-rating"><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      <p class="test-text">"Sebagai agen, workflow saya jadi 10x lebih cepat. Nasabah bisa beli sendiri, komisi tetap masuk ke saya."</p>
-      <div class="test-author"><div class="test-avatar">A</div><div><div class="test-name">Ahmad Rizki</div><div class="test-meta">Agen SurePath · Bandung</div></div></div>
-    </div>
-    <div class="test-card">
-      <div class="test-rating"><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      <p class="test-text">"Harga premi kendaraan saya lebih murah 18% dibanding yang sebelumnya lewat agen. Polis sama, insurer sama."</p>
-      <div class="test-author"><div class="test-avatar">R</div><div><div class="test-name">Rina Handayani</div><div class="test-meta">Pengguna Kendaraan · Medan</div></div></div>
-    </div>
-    <div class="test-card">
-      <div class="test-rating"><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg class="star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      <p class="test-text">"Proses klaim paling gampang yang pernah saya rasakan. Tidak perlu antar dokumen, foto dari HP sudah cukup."</p>
-      <div class="test-author"><div class="test-avatar">F</div><div><div class="test-name">Fajar Pratama</div><div class="test-meta">PA + Kendaraan · Yogyakarta</div></div></div>
-    </div>
+    <div class="tc"><div class="tc-stars"><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg></div><p class="tc-text t" data-id='"Klaim kendaraan — foto dari HP, isi form 1 menit, langsung ada tim yang follow up. Tidak perlu ke kantor sama sekali."' data-en='"Vehicle claim — photo from phone, fill 1-min form, team followed up immediately. Zero office visit required."'>"Klaim kendaraan — foto dari HP, isi form 1 menit, langsung ada tim yang follow up. Tidak perlu ke kantor sama sekali."</p><div class="tc-author"><div class="tc-av">B</div><div><div class="tc-name">Budi Santoso</div><div class="tc-meta t" data-id="Kendaraan · Jakarta" data-en="Vehicle · Jakarta">Kendaraan · Jakarta</div></div></div></div>
+    <div class="tc"><div class="tc-stars"><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg></div><p class="tc-text t" data-id='"Beli asuransi perjalanan 3 menit sebelum check-in. Premi 18% lebih murah dari yang biasanya saya beli lewat agen."' data-en='"Bought travel insurance 3 minutes before check-in. Premium 18% cheaper than what I used to pay through an agent."'>"Beli asuransi perjalanan 3 menit sebelum check-in. Premi 18% lebih murah dari yang biasanya saya beli lewat agen."</p><div class="tc-author"><div class="tc-av">D</div><div><div class="tc-name">Dewi Kusuma</div><div class="tc-meta t" data-id="Perjalanan · Surabaya" data-en="Travel · Surabaya">Perjalanan · Surabaya</div></div></div></div>
+    <div class="tc"><div class="tc-stars"><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg></div><p class="tc-text t" data-id='"Saya lapor klaim kecelakaan ringan lewat app. Upload 3 foto, isi kronologi singkat, kirim. Dalam 2 jam sudah ada respon dari tim."' data-en='"Filed a minor accident claim via app. Uploaded 3 photos, filled brief description, submitted. Within 2 hours the team responded."'>"Saya lapor klaim kecelakaan ringan lewat app. Upload 3 foto, isi kronologi singkat, kirim. Dalam 2 jam sudah ada respon dari tim."</p><div class="tc-author"><div class="tc-av">R</div><div><div class="tc-name">Rina Handayani</div><div class="tc-meta t" data-id="Kendaraan · Medan" data-en="Vehicle · Medan">Kendaraan · Medan</div></div></div></div>
+    <div class="tc"><div class="tc-stars"><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg></div><p class="tc-text t" data-id='"Dashboard klaim-nya transparan banget. Saya bisa lihat posisi klaim saya ada di tahap mana, kapan estimasi selesai. Zero drama."' data-en='"The claims dashboard is super transparent. I can see exactly which stage my claim is at and when it will finish. Zero drama."'>"Dashboard klaim-nya transparan banget. Saya bisa lihat posisi klaim saya ada di tahap mana, kapan estimasi selesai. Zero drama."</p><div class="tc-author"><div class="tc-av">F</div><div><div class="tc-name">Fajar Pratama</div><div class="tc-meta t" data-id="PA + Kendaraan · Yogyakarta" data-en="PA + Vehicle · Yogyakarta">PA + Kendaraan · Yogyakarta</div></div></div></div>
+    <div class="tc"><div class="tc-stars"><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg><svg class="star" viewBox="0 0 24 24"><use href="#ico-star"/></svg></div><p class="tc-text t" data-id='"Sebagai agen, SurePath bikin kerja saya 10x lebih efisien. Nasabah bisa beli sendiri, laporan klaim pun mereka urus sendiri."' data-en='"As an agent, SurePath made my work 10x more efficient. Clients can buy themselves, and even handle their own claims."'>"Sebagai agen, SurePath bikin kerja saya 10x lebih efisien. Nasabah bisa beli sendiri, laporan klaim pun mereka urus sendiri."</p><div class="tc-author"><div class="tc-av">A</div><div><div class="tc-name">Ahmad Rizki</div><div class="tc-meta t" data-id="Agen SurePath · Bandung" data-en="SurePath Agent · Bandung">Agen SurePath · Bandung</div></div></div></div>
   </div>
 </section>
 
-<!-- ──────────────────── INSURER LOGOS ──────────────────── -->
-<div class="logos-section reveal">
-  <div class="logos-label">Didukung 15+ Perusahaan Asuransi OJK Terpercaya</div>
-  <div class="logos-grid">
-    <div class="logo-chip">Sinarmas</div>
-    <div class="logo-chip">Astra Insurance</div>
-    <div class="logo-chip">Allianz</div>
-    <div class="logo-chip">Adira Insurance</div>
-    <div class="logo-chip">Zurich</div>
-    <div class="logo-chip">ACA</div>
-    <div class="logo-chip">Tugu Insurance</div>
-    <div class="logo-chip">Sompo</div>
-    <div class="logo-chip">MSIG</div>
-    <div class="logo-chip">Prudential</div>
-    <div class="logo-chip">Manulife</div>
-    <div class="logo-chip">AXA Mandiri</div>
-    <div class="logo-chip">+3 lainnya</div>
+<!-- ═══ INSURER LOGOS ═══ -->
+<section class="section alt rv" style="padding-top:48px;padding-bottom:60px">
+  <p class="logos-label" style="text-align:center;font-size:11.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:28px" class="t" data-id="Didukung 15+ Perusahaan Asuransi OJK" data-en="Backed by 15+ OJK-Licensed Insurers">Didukung 15+ Perusahaan Asuransi OJK</p>
+  <div class="logos-row">
+    <div class="logo-chip">Sinarmas</div><div class="logo-chip">Astra Insurance</div><div class="logo-chip">Allianz</div><div class="logo-chip">Adira Insurance</div><div class="logo-chip">Zurich</div><div class="logo-chip">ACA</div><div class="logo-chip">Tugu Insurance</div><div class="logo-chip">Sompo</div><div class="logo-chip">MSIG</div><div class="logo-chip">Prudential</div><div class="logo-chip">Manulife</div><div class="logo-chip">AXA Mandiri</div><div class="logo-chip">+3 lainnya</div>
   </div>
-</div>
+</section>
 
-<!-- ──────────────────── CTA ──────────────────── -->
-<div class="cta-section reveal">
-  <div class="cta-ring"></div>
-  <div class="section-pre" style="justify-content:center;margin-bottom:16px"><span class="section-pre-line"></span>Mulai Sekarang</div>
-  <h2 class="display">Terlindungi dalam<br/><span class="grad-text">3 Menit.</span></h2>
-  <p>Bergabung dengan 50.000+ pengguna yang sudah memilih SurePath.<br/>Tidak perlu kartu kredit untuk mulai.</p>
+<!-- ═══ CTA ═══ -->
+<div class="cta-section rv">
+  <div class="pre" style="justify-content:center;margin-bottom:14px"><span class="pre-line"></span><span class="t" data-id="Mulai Sekarang" data-en="Start Now">Mulai Sekarang</span></div>
+  <h2 class="t" data-id="Terlindungi dalam 3 Menit." data-en="Covered in 3 Minutes.">Terlindungi dalam 3 Menit.</h2>
+  <p class="t" data-id="Bergabung dengan 50.000+ pengguna SurePath. Tidak perlu kartu kredit untuk mulai." data-en="Join 50,000+ SurePath users. No credit card required to get started.">Bergabung dengan 50.000+ pengguna SurePath. Tidak perlu kartu kredit untuk mulai.</p>
   <div class="cta-btns">
-    <button class="btn-hero btn-hero-primary">
-      <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      Hitung Premi Kendaraan
+    <button class="btn-pri">
+      <svg><use href="#ico-car"/></svg>
+      <span class="t" data-id="Hitung Premi Kendaraan" data-en="Get Vehicle Quote">Hitung Premi Kendaraan</span>
     </button>
-    <button class="btn-hero btn-hero-ghost">
-      Lihat Semua Produk
-      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    <button class="btn-sec">
+      <span class="t" data-id="Lihat Semua Produk" data-en="View All Products">Lihat Semua Produk</span>
+      <svg><use href="#ico-arrow"/></svg>
     </button>
   </div>
 </div>
 
-<!-- ──────────────────── FOOTER ──────────────────── -->
+<!-- ═══ FOOTER ═══ -->
 <footer>
-  <div class="footer-brand">
+  <div class="fb">
     <a href="#" class="logo">
-      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-      <span class="logo-text">SurePath</span>
+      <div class="logo-mark"><svg><use href="#ico-logo"/></svg></div>
+      <span class="logo-name">SurePath</span>
     </a>
-    <p>Platform insurtech Indonesia. Beli, kelola, dan klaim asuransi 100% digital. Terdaftar dan diawasi OJK.</p>
-    <div class="footer-badges">
-      <span class="fbadge">OJK Terdaftar</span>
-      <span class="fbadge">ISO 27001</span>
-      <span class="fbadge">4.9★</span>
-    </div>
+    <p class="t" data-id="Platform insurtech Indonesia. Beli, kelola, dan laporkan klaim asuransi 100% digital." data-en="Indonesia's insurtech platform. Buy, manage, and file insurance claims 100% digitally.">Platform insurtech Indonesia. Beli, kelola, dan laporkan klaim asuransi 100% digital.</p>
+    <div class="fb-badges"><span class="fb-badge">OJK</span><span class="fb-badge">ISO 27001</span><span class="fb-badge">4.9 ★</span></div>
   </div>
-  <div class="footer-col">
-    <h4>Produk</h4>
-    <a href="#">Asuransi Kendaraan</a>
-    <a href="#">Asuransi Perjalanan</a>
-    <a href="#">Jiwa &amp; PA</a>
-    <a href="#">Proteksi Gadget</a>
-    <a href="#">Kesehatan</a>
+  <div class="fc">
+    <h4 class="t" data-id="Produk" data-en="Products">Produk</h4>
+    <a href="#" class="t" data-id="Kendaraan" data-en="Vehicle">Kendaraan</a>
+    <a href="#" class="t" data-id="Perjalanan" data-en="Travel">Perjalanan</a>
+    <a href="#" class="t" data-id="Jiwa &amp; PA" data-en="Life &amp; PA">Jiwa &amp; PA</a>
+    <a href="#" class="t" data-id="Gadget" data-en="Gadget">Gadget</a>
+    <a href="#" class="t" data-id="Kesehatan" data-en="Health">Kesehatan</a>
   </div>
-  <div class="footer-col">
-    <h4>Perusahaan</h4>
-    <a href="#">Tentang Kami</a>
-    <a href="#">Mitra Insurer</a>
-    <a href="#">Agen &amp; Broker</a>
-    <a href="#">Karir</a>
-    <a href="#">Press</a>
+  <div class="fc">
+    <h4 class="t" data-id="Perusahaan" data-en="Company">Perusahaan</h4>
+    <a href="#" class="t" data-id="Tentang" data-en="About">Tentang</a>
+    <a href="#" class="t" data-id="Mitra Insurer" data-en="Insurer Partners">Mitra Insurer</a>
+    <a href="#" class="t" data-id="Agen &amp; Broker" data-en="Agents &amp; Brokers">Agen &amp; Broker</a>
+    <a href="#" class="t" data-id="Karir" data-en="Careers">Karir</a>
   </div>
-  <div class="footer-col">
-    <h4>Bantuan</h4>
-    <a href="#">Cara Klaim</a>
-    <a href="#">FAQ</a>
-    <a href="#">Hubungi CS</a>
-    <a href="#">Kebijakan Privasi</a>
-    <a href="#">Syarat &amp; Ketentuan</a>
+  <div class="fc">
+    <h4 class="t" data-id="Bantuan" data-en="Help">Bantuan</h4>
+    <a href="#" class="t" data-id="Cara Klaim" data-en="How to Claim">Cara Klaim</a>
+    <a href="#" class="t" data-id="FAQ" data-en="FAQ">FAQ</a>
+    <a href="#" class="t" data-id="Hubungi CS" data-en="Contact Support">Hubungi CS</a>
+    <a href="#" class="t" data-id="Kebijakan Privasi" data-en="Privacy Policy">Kebijakan Privasi</a>
   </div>
-  <div class="footer-bottom">
-    <span>© 2025 SurePath Neural InsurTech. Terdaftar di OJK No. KEP-24/D.05/2023.</span>
-    <span>Dibuat di Indonesia 🇮🇩</span>
+  <div class="footer-bot">
+    <span class="t" data-id="© 2025 SurePath Neural InsurTech. OJK No. KEP-24/D.05/2023." data-en="© 2025 SurePath Neural InsurTech. OJK No. KEP-24/D.05/2023.">© 2025 SurePath Neural InsurTech. OJK No. KEP-24/D.05/2023.</span>
+    <span>🇮🇩 Indonesia</span>
   </div>
 </footer>
 
-<!-- ──────────────────── JS ──────────────────── -->
+<!-- ═══ JS ═══ -->
 <script>
-// Nav scroll effect
+// ── CANVAS: animated video-like background ──
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, t = 0;
+
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize, {passive:true});
+
+  // Color blobs with Lissajous paths — looks like slow video
+  const blobs = [
+    { cx:0.65, cy:0.35, ax:0.22, ay:0.18, fx:0.17, fy:0.11, hue:260, sat:80, lit:45, r:0.55, op:0.6 },
+    { cx:0.25, cy:0.60, ax:0.18, ay:0.22, fx:0.13, fy:0.19, hue:220, sat:85, lit:48, r:0.45, op:0.45 },
+    { cx:0.70, cy:0.75, ax:0.15, ay:0.12, fx:0.09, fy:0.14, hue:170, sat:70, lit:40, r:0.35, op:0.35 },
+    { cx:0.15, cy:0.20, ax:0.12, ay:0.15, fx:0.07, fy:0.11, hue:280, sat:75, lit:42, r:0.30, op:0.30 },
+  ];
+
+  function draw(){
+    t += 0.004;
+    ctx.clearRect(0, 0, W, H);
+
+    blobs.forEach(b => {
+      const x = (b.cx + Math.sin(t * b.fx * 6.28) * b.ax) * W;
+      const y = (b.cy + Math.cos(t * b.fy * 6.28) * b.ay) * H;
+      const r = b.r * Math.max(W, H);
+
+      // Subtle hue drift
+      const hue = b.hue + 20 * Math.sin(t * 0.3);
+
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r);
+      grd.addColorStop(0,   `hsla(${hue},${b.sat}%,${b.lit}%,${b.op})`);
+      grd.addColorStop(0.5, `hsla(${hue+15},${b.sat}%,${b.lit-5}%,${b.op*0.5})`);
+      grd.addColorStop(1,   `hsla(${hue},${b.sat}%,${b.lit}%,0)`);
+
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── NAV stuck ──
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 40);
-}, { passive: true });
+  nav.classList.toggle('stuck', window.scrollY > 48);
+}, {passive:true});
 
-// Scroll reveal
-const revealEls = document.querySelectorAll('.reveal');
-const revealObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+// ── SCROLL REVEAL ──
+const rvEls = document.querySelectorAll('.rv');
+const rvObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); rvObs.unobserve(e.target); } });
+}, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
+rvEls.forEach(el => rvObs.observe(el));
+
+// ── THEME TOGGLE ──
+const themeBtn = document.getElementById('theme-btn');
+const themeIcon = document.getElementById('theme-icon');
+themeBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  themeIcon.innerHTML = isDark
+    ? '<use href="#ico-sun"/>'
+    : '<use href="#ico-moon"/>';
+});
+
+// ── LANGUAGE TOGGLE ──
+let lang = 'id';
+const langBtn = document.getElementById('lang-btn');
+const langLabel = document.getElementById('lang-label');
+
+function applyLang(l){
+  document.documentElement.setAttribute('data-lang', l);
+  document.querySelectorAll('.t').forEach(el => {
+    const val = el.dataset[l];
+    if(val !== undefined) el.innerHTML = val;
   });
-}, { threshold: 0.12, rootMargin: '0px 0px -48px 0px' });
-revealEls.forEach(el => revealObs.observe(el));
+  langLabel.textContent = l === 'id' ? 'EN' : 'ID';
+}
 
-// Product tab switching
+langBtn.addEventListener('click', () => {
+  lang = lang === 'id' ? 'en' : 'id';
+  applyLang(lang);
+});
+
+// ── TAB SWITCH ──
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    tab.classList.add('on');
   });
 });
 
-// Magnetic hover on primary buttons
-document.querySelectorAll('.btn-quote, .nav-cta, .btn-hero-primary').forEach(btn => {
-  btn.addEventListener('mousemove', (e) => {
-    const rect = btn.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    btn.style.transform = `translate(${x * 0.12}px, ${y * 0.18}px) translateY(-2px)`;
+// ── MAGNETIC BUTTONS ──
+document.querySelectorAll('.btn-q, .btn-cta, .btn-pri').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width/2;
+    const y = e.clientY - r.top - r.height/2;
+    btn.style.transform = `translate(${x*.1}px,${y*.15}px) translateY(-2px)`;
   });
   btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
 });
 
-// Card 3D tilt
-document.querySelectorAll('.prod-card,.hiw-card,.test-card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    card.style.transform = `translateY(-8px) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`;
+// ── CARD 3D TILT ──
+document.querySelectorAll('.pc,.hw,.tc').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const x = (e.clientX - r.left)/r.width - 0.5;
+    const y = (e.clientY - r.top)/r.height - 0.5;
+    card.style.transform = `translateY(-7px) rotateX(${-y*6}deg) rotateY(${x*6}deg)`;
   });
   card.addEventListener('mouseleave', () => { card.style.transform = ''; });
 });

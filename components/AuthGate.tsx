@@ -66,6 +66,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // ── Demo access ──────────────────────────────────────────────────────────────
   const handleDemoAccess = async (role: UserRole) => {
     setLoading(true);
+    const emailMap: Record<string, string> = {
+      [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
+      [UserRole.AGENT]:        'agent@surepath.ai',
+      [UserRole.CUSTOMER]:     'user@surepath.ai',
+    };
+    setFormData({ name: '', email: emailMap[role], password: 'user' });
     const user = await demoLogin(role);
     setTimeout(() => onAuthSuccess(user), 600);
   };
@@ -296,7 +302,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   required
                   type={showPass ? 'text' : 'password'}
                   placeholder="Password"
-                  minLength={6}
+                  minLength={4}
                   className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}

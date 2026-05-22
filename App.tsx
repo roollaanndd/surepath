@@ -40,10 +40,10 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   ];
 
   useEffect(() => {
-    const timer    = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 28);
-    const msgTimer = setInterval(() => setMessageIdx(i => Math.min(i + 1, messages.length - 1)), 600);
-    const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
-    const finishTimer = setTimeout(onFinish, 3200);
+    const timer    = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 13);
+    const msgTimer = setInterval(() => setMessageIdx(i => Math.min(i + 1, messages.length - 1)), 270);
+    const fadeTimer = setTimeout(() => setFadeOut(true), 1200);
+    const finishTimer = setTimeout(onFinish, 1500);
     return () => { clearInterval(timer); clearInterval(msgTimer); clearTimeout(fadeTimer); clearTimeout(finishTimer); };
   }, [onFinish]);
 

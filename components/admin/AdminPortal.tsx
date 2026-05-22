@@ -6,7 +6,8 @@ import {
   Activity, Menu,
   ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
   TrendingUp, BarChart3,
-  Bell, CheckCircle, Coins, DollarSign, Package, Building2, Car
+  Bell, CheckCircle, Coins, DollarSign, Package, Building2, Car,
+  ArrowLeft
 } from 'lucide-react';
 import {
   BizAdminView,
@@ -18,6 +19,7 @@ import {
   ReportsView,
   AgentManagementView,
   ClaimsAdminView,
+  UserManagementView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
@@ -30,6 +32,10 @@ import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 import { SurePathLogo } from '../Navbar';
+
+const Card = ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+  <div className={`bg-white/[0.03] border border-white/5 rounded-[2.5rem] ${className ?? ''}`}>{children}</div>
+);
 
 const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
   <div className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl">
@@ -48,7 +54,7 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
   </div>
 );
 
-const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: () => void, products: any[], setProducts: any, userRole: UserRole }) => {
+const AdminPortal = ({ onLogout, products, setProducts, userRole, currentUser }: { onLogout: () => void, products: any[], setProducts: any, userRole: UserRole, currentUser?: any }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -73,6 +79,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     { id: 'transactions', label: 'Ledger Vault', icon: Wallet, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
     { id: 'approvals', label: 'Antrean Polis', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
     { id: 'users', label: 'User Matrix', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'user_mgmt', label: 'Kelola User', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'policy_orders', label: 'Policy Orders', icon: Activity, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
     { id: 'agents', label: 'Agent Management', icon: Bell, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'claims_admin', label: 'Claims Queue', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
@@ -188,6 +195,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
       case 'transactions': return <LedgerView />;
       case 'approvals': return <ApprovalsView />;
       case 'users': return <BizAdminView section="users" />;
+      case 'user_mgmt': return <UserManagementView />;
       case 'policy_orders': return <PolicyOrdersAdmin />;
       case 'agents': return <AgentManagementView />;
       case 'claims_admin': return <ClaimsAdminView />;
@@ -202,8 +210,19 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     }
   };
 
+  const formatRoleLabel = (role: string) =>
+    role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
   const Sidebar = () => (
     <div className="flex flex-col h-full">
+      {/* Back to Website */}
+      <button
+        onClick={onLogout}
+        className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-300 transition-colors text-[0.55rem] font-bold uppercase tracking-widest"
+      >
+        <ArrowLeft size={12} /> Kembali ke Website
+      </button>
+
       <div className="mb-12 flex items-center gap-4">
           <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
              <SurePathLogo className="w-8 h-8 text-white" />
@@ -216,9 +235,9 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
 
       <nav className="flex-1 space-y-1">
         {filteredMenu.map((item) => (
-          <button 
-            key={item.id} 
-            onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }} 
+          <button
+            key={item.id}
+            onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all group ${activeTab === item.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
           >
             <item.icon size={20} />
@@ -231,8 +250,8 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
          <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs">{userRole[0]}</div>
             <div className="text-left overflow-hidden">
-               <p className="text-xs font-black uppercase truncate">{userRole.replace('_', ' ')}</p>
-               <p className="text-[0.5rem] font-bold text-emerald-500 uppercase">Authenticated</p>
+               <p className="text-xs font-black uppercase truncate">{formatRoleLabel(userRole)}</p>
+               <p className="text-[0.5rem] font-bold text-gray-400 truncate">{currentUser?.email ?? 'Admin User'}</p>
             </div>
          </div>
          <button onClick={onLogout} className="w-full py-3 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2">
@@ -269,6 +288,12 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
             </div>
           </div>
           <div className="flex items-center gap-4">
+             {currentUser?.email && (
+               <span className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">
+                 <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-[0.5rem]">{(currentUser.name ?? currentUser.email)[0].toUpperCase()}</span>
+                 {currentUser.email}
+               </span>
+             )}
              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 animate-pulse"><Activity size={20} /></div>
              <button className="p-3 bg-white/5 rounded-xl relative text-gray-400"><Bell size={20} /><span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#050505]"></span></button>
           </div>
@@ -281,7 +306,5 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole }: { onLogout: 
     </div>
   );
 };
-
-const Card = ({ children, className }: any) => <div className={`bg-white/[0.03] border border-white/5 rounded-[2.5rem] ${className}`}>{children}</div>;
 
 export default AdminPortal;

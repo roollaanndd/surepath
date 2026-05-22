@@ -288,7 +288,7 @@ const App = () => {
   if (pathname === '/payment/failed') return <PaymentRedirect status="failed" />;
 
   if (currentUser && [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(currentUser.role)) {
-    return <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} />;
+    return <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} currentUser={currentUser} />;
   }
 
   if (currentUser && currentUser.role === UserRole.AGENT) {

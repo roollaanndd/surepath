@@ -1,23 +1,25 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  TrendingUp, Users, Zap, ShieldCheck, 
-  ArrowUpRight, Activity, 
+import {
+  TrendingUp, Users, Zap, ShieldCheck,
+  ArrowUpRight, Activity,
   CheckCircle2, Search,
-  Eye, FileText, 
+  Eye, FileText,
   ClipboardCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
-  HardDrive, Cpu, RefreshCw, 
-  
-  Car, Terminal, ShieldX, 
-  Globe, FileDown, Upload, Plus
+  HardDrive, Cpu, RefreshCw,
+
+  Car, Terminal, ShieldX,
+  Globe, FileDown, Upload, Plus,
+  UserPlus, ChevronDown, Pencil
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
-import { db, Policy, Transaction, AuditLog, CustomProduct } from '../../db';
+import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   type SpUser, type SpClaim,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { UserRole } from '../../types';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
 
@@ -1106,6 +1108,282 @@ export const ClaimsAdminView = () => {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── User Management View ─────────────────────────────────────────────────────
+
+type UserWithActive = User & { isActive?: boolean };
+
+const ROLE_FILTERS = ['All', 'MASTER_ADMIN', 'ADMIN', 'FINANCE', 'INSURANCE_ADMIN', 'AGENT', 'CUSTOMER'] as const;
+
+const ROLE_COLOR: Record<string, string> = {
+  MASTER_ADMIN: 'rose',
+  ADMIN: 'primary',
+  FINANCE: 'blue',
+  INSURANCE_ADMIN: 'indigo',
+  AGENT: 'yellow',
+  CUSTOMER: 'emerald',
+};
+
+export const UserManagementView = () => {
+  const [users, setUsers] = useState<UserWithActive[]>([]);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('All');
+  const [editRoleId, setEditRoleId] = useState<number | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: UserRole.CUSTOMER as UserRole });
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const load = () => db.users.toArray().then(all => setUsers(all as UserWithActive[]));
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = users.filter(u => {
+    const matchSearch =
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = roleFilter === 'All' || u.role === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  const handleRoleChange = async (u: UserWithActive, newRole: UserRole) => {
+    if (u.id == null) return;
+    await db.users.update(u.id, { role: newRole });
+    setEditRoleId(null);
+    load();
+  };
+
+  const handleToggleActive = async (u: UserWithActive) => {
+    if (u.id == null) return;
+    await db.users.update(u.id, { isActive: !(u.isActive !== false) } as Partial<User>);
+    load();
+  };
+
+  const handleAddUser = async () => {
+    setAddError(null);
+    if (!newUser.name.trim() || !newUser.email.trim()) {
+      setAddError('Nama dan email wajib diisi.');
+      return;
+    }
+    const existing = await db.users.where('email').equals(newUser.email).first();
+    if (existing) {
+      setAddError('Email sudah terdaftar.');
+      return;
+    }
+    await db.users.add({
+      name: newUser.name.trim(),
+      email: newUser.email.trim(),
+      role: newUser.role,
+      phone: '',
+      nodeId: `SP-NODE-${Date.now()}`,
+      trustScore: 70,
+      memberSince: new Date().toISOString(),
+      verified: false,
+    });
+    setShowAddModal(false);
+    setNewUser({ name: '', email: '', role: UserRole.CUSTOMER });
+    load();
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in text-white">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-emerald-500">User</span></h2>
+          <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
+        >
+          <UserPlus size={16} /> Tambah Admin
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Cari nama atau email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {ROLE_FILTERS.map(rf => (
+            <button
+              key={rf}
+              onClick={() => setRoleFilter(rf)}
+              className={`px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+                roleFilter === rf ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+            >
+              {rf === 'All' ? 'All' : rf.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <Card className="p-0 overflow-hidden">
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="w-full text-left whitespace-nowrap min-w-[700px]">
+            <thead>
+              <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+                <th className="py-4 pl-6">Nama</th>
+                <th className="py-4">Email</th>
+                <th className="py-4">Role</th>
+                <th className="py-4">Status</th>
+                <th className="py-4">Member Sejak</th>
+                <th className="py-4 text-right pr-6">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs">
+              {filtered.slice(0, 100).map(u => {
+                const isActive = u.isActive !== false;
+                const isEditingRole = editRoleId === u.id;
+                return (
+                  <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3.5 pl-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0">
+                          {u.name[0].toUpperCase()}
+                        </div>
+                        <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 font-mono text-[0.65rem] text-gray-400">{u.email}</td>
+                    <td className="py-3.5">
+                      {isEditingRole ? (
+                        <div className="flex items-center gap-2">
+                          <select
+                            defaultValue={u.role}
+                            onChange={e => handleRoleChange(u, e.target.value as UserRole)}
+                            className="bg-[#0a0a0a] border border-white/10 rounded-lg px-2 py-1.5 text-[0.6rem] font-black uppercase text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-slate-900"
+                            autoFocus
+                            onBlur={() => setEditRoleId(null)}
+                          >
+                            {Object.values(UserRole).map(r => (
+                              <option key={r} value={r}>{r.replace('_', ' ')}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="text-gray-500" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Badge color={ROLE_COLOR[u.role] ?? 'primary'}>{u.role.replace('_', ' ')}</Badge>
+                          <button
+                            onClick={() => setEditRoleId(u.id)}
+                            className="p-1 text-gray-600 hover:text-emerald-400 transition-colors"
+                            title="Edit Role"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3.5">
+                      <Badge color={isActive ? 'emerald' : 'rose'}>{isActive ? 'Aktif' : 'Nonaktif'}</Badge>
+                    </td>
+                    <td className="py-3.5 text-[0.6rem] text-gray-500 font-mono">
+                      {u.memberSince ? new Date(u.memberSince).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                    </td>
+                    <td className="py-3.5 text-right pr-6">
+                      <button
+                        onClick={() => handleToggleActive(u)}
+                        className={`px-3 py-1.5 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${
+                          isActive
+                            ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white'
+                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                        }`}
+                      >
+                        {isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length > 100 && (
+            <p className="text-center text-[0.6rem] text-gray-500 font-bold uppercase tracking-widest py-4">
+              Menampilkan 100 dari {filtered.length} user. Gunakan filter/pencarian.
+            </p>
+          )}
+          {filtered.length === 0 && (
+            <p className="text-center text-[0.7rem] text-gray-600 font-bold py-10">Tidak ada user ditemukan.</p>
+          )}
+        </div>
+      </Card>
+
+      {/* Add Admin Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="relative z-10 w-full max-w-md mx-4 bg-[#0d0d0d] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
+            <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
+              <UserPlus size={18} className="text-emerald-500" /> Tambah Admin Baru
+            </h3>
+            {addError && (
+              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{addError}</div>
+            )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
+                <input
+                  type="text"
+                  value={newUser.name}
+                  onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                  placeholder="Cth: Budi Santoso"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={newUser.email}
+                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="admin@surepath.id"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Role</label>
+                <select
+                  value={newUser.role}
+                  onChange={e => setNewUser({ ...newUser, role: e.target.value as UserRole })}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-slate-900"
+                >
+                  {Object.values(UserRole).map(r => (
+                    <option key={r} value={r}>{r.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setShowAddModal(false); setAddError(null); }}
+                className="flex-1 py-3 bg-white/5 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddUser}
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95"
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

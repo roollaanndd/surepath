@@ -1165,3 +1165,86 @@ export async function getVehicleMarketValue(brand: string, model: string, year: 
   }
   return null;
 }
+
+// ─── Review Tokens ────────────────────────────────────────────────────────────
+
+export interface SpReviewToken {
+  id: string;
+  token: string;
+  order_id: string;
+  created_by?: string;
+  expires_at: string;
+  accessed_count: number;
+  last_accessed_at?: string;
+  insurer_action?: 'APPROVED' | 'REJECTED';
+  insurer_notes?: string;
+  actioned_at?: string;
+  created_at: string;
+}
+
+export async function createReviewToken(orderId: string, createdBy?: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('sp_review_tokens')
+    .insert({
+      order_id: orderId,
+      created_by: createdBy ?? null,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+    .select('token')
+    .single();
+  if (error) { console.error('createReviewToken:', error); return null; }
+  return (data as any).token as string;
+}
+
+export async function getOrderByToken(
+  token: string
+): Promise<{ order: SpPolicyOrder; tokenRecord: SpReviewToken } | null> {
+  const { data: tokenData, error: tokenError } = await supabase
+    .from('sp_review_tokens')
+    .select('*')
+    .eq('token', token)
+    .maybeSingle();
+  if (tokenError || !tokenData) return null;
+  const tr = tokenData as SpReviewToken;
+  if (new Date(tr.expires_at) < new Date()) return null;
+
+  const { data: orderData, error: orderError } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .eq('id', tr.order_id)
+    .maybeSingle();
+  if (orderError || !orderData) return null;
+
+  supabase
+    .from('sp_review_tokens')
+    .update({ accessed_count: tr.accessed_count + 1, last_accessed_at: new Date().toISOString() })
+    .eq('id', tr.id)
+    .then(() => {});
+
+  return { order: orderData as SpPolicyOrder, tokenRecord: tr };
+}
+
+export async function submitInsurerReview(
+  tokenId: string,
+  orderId: string,
+  action: 'APPROVED' | 'REJECTED',
+  notes: string
+): Promise<boolean> {
+  const now = new Date().toISOString();
+  const [tokenRes, orderRes] = await Promise.all([
+    supabase.from('sp_review_tokens').update({
+      insurer_action: action,
+      insurer_notes: notes,
+      actioned_at: now,
+    }).eq('id', tokenId),
+    supabase.from('sp_policy_orders').update({
+      status: action,
+      reviewer_notes: notes,
+      reviewed_at: now,
+      updated_at: now,
+    }).eq('id', orderId),
+  ]);
+  if (tokenRes.error) { console.error('submitInsurerReview (token):', tokenRes.error); return false; }
+  if (orderRes.error) { console.error('submitInsurerReview (order):', orderRes.error); return false; }
+  return true;
+}

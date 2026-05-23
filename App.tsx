@@ -196,6 +196,7 @@ const INITIAL_PRODUCTS = [
 import PlatformLanding from './src/pages/PlatformLanding';
 import AgentPortal from './components/agent/AgentPortal';
 import PaymentRedirect from './components/PaymentRedirect';
+import InsuranceReviewPage from './components/InsuranceReviewPage';
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -317,6 +318,10 @@ const App = () => {
   const { pathname } = window.location;
   if (pathname === '/payment/success') return <PaymentRedirect status="success" />;
   if (pathname === '/payment/failed') return <PaymentRedirect status="failed" />;
+
+  // Insurer review link — public, no login required
+  const reviewMatch = pathname.match(/^\/review\/([0-9a-f-]{36})$/i);
+  if (reviewMatch) return <InsuranceReviewPage token={reviewMatch[1]} />;
 
   if (currentUser && [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(currentUser.role)) {
     return <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} currentUser={currentUser} />;

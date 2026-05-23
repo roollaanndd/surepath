@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText, CheckCircle, XCircle, Clock, Eye, Upload,
-  Car, Bike, ChevronDown, Search, Download, RefreshCw
+  Car, Bike, ChevronDown, Search, Download, RefreshCw, Link
 } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
+  createReviewToken,
   type SpPolicyOrder,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -37,7 +38,22 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleSendReviewLink = async () => {
+    setGeneratingLink(true);
+    const token = await createReviewToken(order.id);
+    setGeneratingLink(false);
+    if (!token) { alert('Gagal membuat link. Coba lagi.'); return; }
+    const url = `${window.location.origin}/review/${token}`;
+    await navigator.clipboard.writeText(url).catch(() => {
+      prompt('Salin link berikut:', url);
+    });
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 3000);
+  };
 
   const v = order.vehicle_details ?? {};
 
@@ -295,7 +311,22 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2 flex-wrap">
+            {/* Send review link — available for all non-issued/rejected orders */}
+            {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW' || order.status === 'APPROVED') && (
+              <button
+                disabled={generatingLink}
+                onClick={handleSendReviewLink}
+                className={`flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors ${
+                  linkCopied
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-violet-500/10 text-violet-400 hover:bg-violet-500/20'
+                }`}
+              >
+                <Link size={12} />
+                {generatingLink ? '…' : linkCopied ? 'Link Tersalin!' : 'Kirim Link Review'}
+              </button>
+            )}
             {order.status === 'SUBMITTED' && (
               <button
                 disabled={saving}
@@ -375,10 +406,13 @@ const PolicyOrdersAdmin: React.FC = () => {
     if (filter !== 'ALL' && o.status !== filter) return false;
     const q = search.toLowerCase();
     if (!q) return true;
+    const plate = (o.vehicle_details?.plate ?? '').toLowerCase();
     return (
       (o.client_name ?? '').toLowerCase().includes(q) ||
       (o.order_number ?? '').toLowerCase().includes(q) ||
-      (o.product_name ?? '').toLowerCase().includes(q)
+      (o.product_name ?? '').toLowerCase().includes(q) ||
+      (o.client_ktp ?? '').toLowerCase().includes(q) ||
+      plate.includes(q)
     );
   });
 
@@ -413,7 +447,7 @@ const PolicyOrdersAdmin: React.FC = () => {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Cari order, klien, produk…"
+            placeholder="Cari order, klien, KTP, plat, produk…"
             className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary-500"
           />
         </div>

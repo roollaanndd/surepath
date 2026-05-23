@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Eye, EyeOff, Mail, KeyRound, User,
-  AlertCircle, LayoutDashboard, Smartphone, Briefcase,
-  ArrowRight, Shield, CheckCircle2
+  AlertCircle, Smartphone, Briefcase,
+  ArrowRight, Shield, CheckCircle2, RefreshCw
 } from 'lucide-react';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
@@ -15,7 +15,7 @@ interface AuthGateProps {
   initialMode?: 'LOGIN' | 'REGISTER';
 }
 
-// ─── Demo access (still uses local DB seed) ──────────────────────────────────
+// ─── Demo access ──────────────────────────────────────────────────────────────
 async function demoLogin(role: UserRole) {
   const emailMap: Record<string, string> = {
     [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
@@ -23,27 +23,80 @@ async function demoLogin(role: UserRole) {
     [UserRole.CUSTOMER]:     'user@surepath.ai',
   };
   return {
-    id: `demo-${role}`,
-    name: role === UserRole.MASTER_ADMIN ? 'Master Admin' : role === UserRole.AGENT ? 'Demo Agent' : 'Demo User',
-    email: emailMap[role],
+    id:         `demo-${role}`,
+    name:       role === UserRole.MASTER_ADMIN ? 'Master Admin' : role === UserRole.AGENT ? 'Demo Agent' : 'Demo User',
+    email:      emailMap[role],
     role,
     supabaseId: role === UserRole.AGENT ? 'aaaaaaaa-0000-0000-0000-000000000001' : undefined,
-    nodeId: `SP-DEMO-${role.slice(0, 3)}`,
+    nodeId:     `SP-DEMO-${role.slice(0, 3)}`,
     trustScore: 100,
   };
 }
 
-// ─── Animated background orbs ─────────────────────────────────────────────────
-const Orbs = () => (
-  <>
-    <div className="absolute top-[-20%] right-[-15%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-    <div className="absolute bottom-[-15%] left-[-10%] w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDelay: '1.5s' }} />
-    <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
-    {/* grid */}
-    <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
-      style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
-  </>
-);
+// ─── Animated canvas background ───────────────────────────────────────────────
+const AnimatedBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const blobs = [
+      { size: 520, color: '16,185,129',  phase: 0,   speedX: 0.7, speedY: 0.5  },  // emerald
+      { size: 420, color: '249,115,22',  phase: 2.1, speedX: 0.5, speedY: 0.8  },  // orange
+      { size: 360, color: '99,102,241',  phase: 4.2, speedX: 0.9, speedY: 0.6  },  // indigo
+      { size: 280, color: '6,182,212',   phase: 1.0, speedX: 0.6, speedY: 0.9  },  // cyan
+    ];
+
+    let frame = 0;
+    let animId = 0;
+
+    const draw = () => {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const t = frame * 0.0015;
+
+      blobs.forEach((blob) => {
+        const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(t * blob.speedX + blob.phase)));
+        const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(t * blob.speedY + blob.phase * 1.4)));
+
+        const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
+        grd.addColorStop(0, `rgba(${blob.color},0.18)`);
+        grd.addColorStop(0.5, `rgba(${blob.color},0.06)`);
+        grd.addColorStop(1, `rgba(${blob.color},0)`);
+
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      });
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+    />
+  );
+};
 
 const AuthGate: React.FC<AuthGateProps> = ({
   onAuthSuccess,
@@ -51,27 +104,74 @@ const AuthGate: React.FC<AuthGateProps> = ({
   initialMode = 'LOGIN',
 }) => {
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'CHECK_EMAIL'>(initialMode as any);
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lang] = useState<Language>(initialLang);
-  const [regRole, setRegRole] = useState<UserRole>(UserRole.CUSTOMER);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [showPass, setShowPass]     = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [resending, setResending]   = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+  const [lang]                      = useState<Language>(initialLang);
+  const [regRole, setRegRole]       = useState<UserRole>(UserRole.CUSTOMER);
+  const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
 
   useEffect(() => { setMode(initialMode as any); }, [initialMode]);
+
+  // Handle email confirmation redirect — detect existing session on mount
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveSession = async (user: any) => {
+      const profile =
+        (await getAgentProfile(user.id).catch(() => null)) ??
+        (await getAgentByEmail(user.email!).catch(() => null));
+
+      const userObj = profile
+        ? {
+            id:         profile.id,
+            name:       profile.name,
+            email:      profile.email,
+            role:       profile.role as UserRole,
+            supabaseId: profile.id,
+            nodeId:     profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
+            trustScore: profile.trust_score ?? 85,
+          }
+        : {
+            id:         user.id,
+            name:       user.user_metadata?.name ?? user.email!.split('@')[0],
+            email:      user.email!,
+            role:       UserRole.CUSTOMER,
+            supabaseId: user.id,
+            nodeId:     `SP-${user.id.slice(0, 8).toUpperCase()}`,
+            trustScore: 85,
+          };
+
+      if (mounted) onAuthSuccess(userObj);
+    };
+
+    // Check for session from email confirmation redirect
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted && session?.user) {
+        resolveSession(session.user);
+      }
+    });
+
+    // Also listen for auth state changes (email link clicks while page is open)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && mounted) {
+        resolveSession(session.user);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   // ── Demo access ──────────────────────────────────────────────────────────────
   const handleDemoAccess = async (role: UserRole) => {
     setLoading(true);
-    const emailMap: Record<string, string> = {
-      [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
-      [UserRole.AGENT]:        'agent@surepath.ai',
-      [UserRole.CUSTOMER]:     'user@surepath.ai',
-    };
-    setFormData({ name: '', email: emailMap[role], password: 'user' });
     const user = await demoLogin(role);
     setTimeout(() => onAuthSuccess(user), 600);
   };
@@ -83,7 +183,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setError(null);
 
     const { data, error: authErr } = await supabase.auth.signInWithPassword({
-      email: formData.email,
+      email:    formData.email,
       password: formData.password,
     });
 
@@ -92,32 +192,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
       setLoading(false);
       return;
     }
-
-    const profile =
-      (await getAgentProfile(data.user.id).catch(() => null)) ??
-      (await getAgentByEmail(data.user.email!).catch(() => null));
-
-    const userObj = profile
-      ? {
-          id: profile.id,
-          name: profile.name,
-          email: profile.email,
-          role: profile.role as UserRole,
-          supabaseId: profile.id,
-          nodeId: profile.agent_code ?? `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
-          trustScore: profile.trust_score ?? 85,
-        }
-      : {
-          id: data.user.id,
-          name: data.user.user_metadata?.name ?? data.user.email!.split('@')[0],
-          email: data.user.email!,
-          role: UserRole.CUSTOMER,
-          supabaseId: data.user.id,
-          nodeId: `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
-          trustScore: 85,
-        };
-
-    onAuthSuccess(userObj);
+    // onAuthStateChange listener above will handle calling onAuthSuccess
   };
 
   // ── Supabase register ────────────────────────────────────────────────────────
@@ -131,9 +206,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setError(null);
 
     const { data, error: authErr } = await supabase.auth.signUp({
-      email: formData.email,
+      email:    formData.email,
       password: formData.password,
-      options: { data: { name: formData.name } },
+      options:  { data: { name: formData.name } },
     });
 
     if (authErr || !data.user) {
@@ -142,36 +217,34 @@ const AuthGate: React.FC<AuthGateProps> = ({
       return;
     }
 
-    // Upsert profile in sp_users
+    // Upsert profile
     await supabase.from('sp_users').upsert({
-      id: data.user.id,
-      name: formData.name,
-      email: formData.email,
-      phone: '',
-      role: UserRole.CUSTOMER,
+      id:         data.user.id,
+      name:       formData.name,
+      email:      formData.email,
+      phone:      '',
+      role:       UserRole.CUSTOMER,
       agent_code: `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
       trust_score: 85,
     });
 
-    // If email confirmation required, show check-email screen
+    // If email confirmation required
     if (!data.session) {
       setMode('CHECK_EMAIL');
       setLoading(false);
       return;
     }
-
-    onAuthSuccess({
-      id: data.user.id,
-      name: formData.name,
-      email: formData.email,
-      role: UserRole.CUSTOMER,
-      supabaseId: data.user.id,
-      nodeId: `SP-${data.user.id.slice(0, 8).toUpperCase()}`,
-      trustScore: 85,
-    });
+    // If no email confirmation needed, onAuthStateChange handles the rest
   };
 
-  // ── Agent onboarding ─────────────────────────────────────────────────────────
+  // ── Resend confirmation email ─────────────────────────────────────────────
+  const handleResend = async () => {
+    if (!formData.email || resending) return;
+    setResending(true);
+    await supabase.auth.resend({ type: 'signup', email: formData.email }).catch(() => {});
+    setTimeout(() => setResending(false), 5000);
+  };
+
   if (showAgentOnboarding) {
     return (
       <AgentOnboarding
@@ -183,44 +256,65 @@ const AuthGate: React.FC<AuthGateProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-5 relative overflow-hidden">
-      <Orbs />
+    <div className="min-h-screen bg-[#060818] text-white flex flex-col items-center justify-center p-5 relative overflow-hidden">
 
-      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-8">
+      {/* Animated canvas background */}
+      <AnimatedBackground />
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4">
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.018]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)',
+          backgroundSize: '60px 60px'
+        }}
+      />
+
+      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-7">
+
+        {/* Logo — premium sizing */}
+        <div className="flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/30 rounded-full blur-2xl scale-150 animate-pulse" />
-            <div className="relative w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 rounded-[2rem] flex items-center justify-center backdrop-blur-sm shadow-2xl">
-              <SurePathLogo className="w-12 h-12" />
+            <div className="absolute inset-0 bg-emerald-500/25 rounded-[3rem] blur-3xl scale-150 animate-pulse" />
+            <div className="relative w-28 h-28 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/40 rounded-[2.5rem] flex items-center justify-center backdrop-blur-sm shadow-2xl shadow-emerald-500/20">
+              <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-black tracking-[-0.05em] uppercase leading-none">
-              Sure<span className="text-emerald-500">Path</span>
+            <h1 className="text-4xl font-black tracking-[-0.05em] uppercase leading-none">
+              Sure<span className="text-emerald-400">Path</span>
             </h1>
-            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-[0.4em] mt-2">
+            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-[0.45em] mt-2">
               {t('Smart Insurance Platform', 'Platform Asuransi Pintar')}
             </p>
           </div>
         </div>
 
-        {/* Check email screen */}
+        {/* Check-email screen */}
         {mode === 'CHECK_EMAIL' && (
           <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm text-center space-y-5">
             <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.5rem] flex items-center justify-center mx-auto">
-              <CheckCircle2 size={32} className="text-emerald-500" />
+              <CheckCircle2 size={32} className="text-emerald-400" />
             </div>
             <div>
               <h3 className="text-xl font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
               <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}<span className="text-emerald-400 font-bold">{formData.email}</span>.
+                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
+                <span className="text-emerald-400 font-bold">{formData.email}</span>.
+                {t(' Click it to activate your account.', ' Klik untuk mengaktifkan akunmu.')}
               </p>
             </div>
             <button
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full py-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl font-black text-xs uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
+              {resending ? t('Sent!', 'Terkirim!') : t('Resend Email', 'Kirim Ulang Email')}
+            </button>
+            <button
               onClick={() => setMode('LOGIN')}
-              className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
             >
               {t('Back to Login', 'Kembali ke Login')}
             </button>
@@ -229,7 +323,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Main form */}
         {mode !== 'CHECK_EMAIL' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-7 backdrop-blur-sm space-y-6">
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.5rem] p-7 backdrop-blur-sm space-y-6">
 
             {/* Tab switcher */}
             <div className="flex bg-white/[0.05] p-1 rounded-2xl border border-white/5">
@@ -248,6 +342,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             </div>
 
             <form onSubmit={mode === 'LOGIN' ? handleLogin : handleRegister} className="space-y-3">
+
               {mode === 'REGISTER' && (
                 <>
                   {/* Name */}
@@ -302,7 +397,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   required
                   type={showPass ? 'text' : 'password'}
                   placeholder="Password"
-                  minLength={4}
+                  minLength={mode === 'REGISTER' ? 6 : 1}
                   className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -315,6 +410,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {mode === 'REGISTER' && formData.password.length > 0 && formData.password.length < 6 && (
+                <p className="text-[0.6rem] text-amber-400 font-bold px-1">
+                  {t('Password must be at least 6 characters', 'Password minimal 6 karakter')}
+                </p>
+              )}
 
               {/* Error */}
               {error && (
@@ -334,7 +434,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    {mode === 'LOGIN' ? t('Sign In', 'Masuk') : (regRole === UserRole.AGENT ? t('Continue to Agent Setup', 'Lanjut ke Setup Agen') : t('Create Account', 'Buat Akun'))}
+                    {mode === 'LOGIN'
+                      ? t('Sign In', 'Masuk')
+                      : regRole === UserRole.AGENT
+                        ? t('Continue to Agent Setup', 'Lanjut ke Setup Agen')
+                        : t('Create Account', 'Buat Akun')}
                     <ArrowRight size={14} />
                   </>
                 )}
@@ -343,7 +447,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* Demo access */}
+        {/* Demo — customer only (admin & agent demo disabled) */}
         {mode === 'LOGIN' && (
           <div className="w-full space-y-3">
             <div className="flex items-center gap-3">
@@ -351,29 +455,22 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <span className="text-[0.55rem] font-black text-gray-600 uppercase tracking-widest">Demo</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { role: UserRole.MASTER_ADMIN, label: 'Admin HQ', icon: LayoutDashboard, color: 'text-orange-400 border-orange-500/20 hover:bg-orange-500/10' },
-                { role: UserRole.AGENT,        label: 'Agen',     icon: Briefcase,      color: 'text-blue-400  border-blue-500/20  hover:bg-blue-500/10'  },
-                { role: UserRole.CUSTOMER,     label: 'Nasabah',  icon: Smartphone,     color: 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10' },
-              ].map(({ role, label, icon: Icon, color }) => (
-                <button
-                  key={role}
-                  onClick={() => handleDemoAccess(role)}
-                  disabled={loading}
-                  className={`p-3 bg-white/[0.03] border rounded-2xl flex flex-col items-center gap-1.5 transition-all active:scale-95 disabled:opacity-40 ${color}`}
-                >
-                  <Icon size={20} />
-                  <span className="text-[0.5rem] font-black uppercase">{label}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => handleDemoAccess(UserRole.CUSTOMER)}
+              disabled={loading}
+              className="w-full p-3.5 bg-white/[0.03] border border-emerald-500/20 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-40 text-emerald-400 hover:bg-emerald-500/10"
+            >
+              <Smartphone size={18} />
+              <span className="text-[0.6rem] font-black uppercase tracking-widest">
+                {t('Try as Customer', 'Coba sebagai Nasabah')}
+              </span>
+            </button>
           </div>
         )}
 
         {/* Footer */}
         <p className="text-[0.5rem] font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
-          <Shield size={10} className="text-emerald-700" />
+          <Shield size={10} className="text-emerald-800" />
           Secured by SurePath Smart Security v4.2
         </p>
       </div>

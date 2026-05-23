@@ -14,6 +14,7 @@ serve(async (req) => {
     const XENDIT_WEBHOOK_TOKEN = Deno.env.get('XENDIT_WEBHOOK_TOKEN') ?? '';
     const SUPABASE_URL          = Deno.env.get('SUPABASE_URL')          ?? '';
     const SUPABASE_SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const APP_URL               = Deno.env.get('APP_URL') ?? 'https://surepath.app';
 
     // Verify Xendit callback token
     const callbackToken = req.headers.get('x-callback-token') ?? '';
@@ -52,36 +53,98 @@ serve(async (req) => {
 
     if (payErr || !payment) {
       console.error('Payment update error:', payErr);
-      // Still return 200 so Xendit doesn't retry indefinitely
       return new Response('ok', { status: 200, headers: CORS });
     }
 
-    // If payment is PAID — advance the policy order to UNDER_REVIEW and notify agent
+    // If PAID — advance order to UNDER_REVIEW, auto-generate review token, notify all parties
     if (status === 'PAID' && payment.order_id) {
-      // Get order details for the notification
+      // Fetch full order details
       const { data: order } = await supabase
         .from('sp_policy_orders')
-        .select('agent_id, order_number, client_name, product_name, total_premium')
+        .select('agent_id, order_number, client_name, client_phone, product_name, total_premium, insurer_name')
         .eq('id', payment.order_id)
         .single();
 
-      // Move order status: SUBMITTED → UNDER_REVIEW (payment confirmed)
+      // Move order status: SUBMITTED → UNDER_REVIEW
       await supabase
         .from('sp_policy_orders')
-        .update({
-          status:     'UNDER_REVIEW',
-          updated_at: new Date().toISOString(),
-        })
+        .update({ status: 'UNDER_REVIEW', updated_at: new Date().toISOString() })
         .eq('id', payment.order_id)
-        .in('status', ['SUBMITTED']); // only advance if still at SUBMITTED
+        .in('status', ['SUBMITTED']);
 
-      // Notify agent
+      if (order) {
+        // Auto-generate review token if not already exists
+        const { data: existingToken } = await supabase
+          .from('sp_review_tokens')
+          .select('token, review_url')
+          .eq('order_id', payment.order_id)
+          .limit(1)
+          .maybeSingle();
+
+        let reviewUrl = existingToken?.review_url;
+
+        if (!existingToken) {
+          const { data: newToken } = await supabase
+            .from('sp_review_tokens')
+            .insert({
+              order_id:   payment.order_id,
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            .select('token')
+            .single();
+
+          if (newToken) {
+            reviewUrl = `${APP_URL}/review/${(newToken as any).token}`;
+            await supabase
+              .from('sp_review_tokens')
+              .update({ review_url: reviewUrl })
+              .eq('token', (newToken as any).token);
+          }
+        }
+
+        // Create admin broadcast notification with review link
+        await supabase.from('sp_admin_notifications').insert({
+          type:       'PAYMENT_CONFIRMED',
+          title:      `Pembayaran Diterima – ${order.order_number ?? ''}`,
+          body:       `Premi ${order.product_name} untuk ${order.client_name} telah dibayar. Order masuk antrean review.`,
+          order_id:   payment.order_id,
+          review_url: reviewUrl ?? null,
+          metadata:   {
+            amount:        paid_amount,
+            payment_method,
+            insurer_name:  order.insurer_name,
+          },
+          read: false,
+        });
+
+        // Notify agent
+        if (order.agent_id) {
+          await supabase.from('sp_notifications').insert({
+            agent_id: order.agent_id,
+            type:     'SYSTEM',
+            title:    `Pembayaran Diterima – ${order.order_number ?? ''}`,
+            body:     `Premi ${order.product_name ?? 'asuransi'} untuk ${order.client_name ?? ''} telah dibayar. Order sedang dalam review.`,
+            metadata: { link: 'quotes', order_id: payment.order_id, review_url: reviewUrl ?? null },
+            read:     false,
+          });
+        }
+      }
+    }
+
+    // If EXPIRED — update order and notify agent
+    if (status === 'EXPIRED' && payment.order_id) {
+      const { data: order } = await supabase
+        .from('sp_policy_orders')
+        .select('agent_id, order_number, product_name, client_name')
+        .eq('id', payment.order_id)
+        .single();
+
       if (order?.agent_id) {
         await supabase.from('sp_notifications').insert({
           agent_id: order.agent_id,
           type:     'SYSTEM',
-          title:    `Pembayaran Diterima – ${order.order_number ?? ''}`,
-          body:     `Premi ${order.product_name ?? 'asuransi'} untuk ${order.client_name ?? ''} telah dibayar. Order sedang dalam review.`,
+          title:    `Invoice Kadaluarsa – ${order.order_number ?? ''}`,
+          body:     `Invoice pembayaran untuk ${order.client_name} telah kadaluarsa. Buat invoice baru jika diperlukan.`,
           metadata: { link: 'quotes', order_id: payment.order_id },
           read:     false,
         });
@@ -92,7 +155,6 @@ serve(async (req) => {
 
   } catch (err) {
     console.error('xendit-webhook error:', err);
-    // Return 200 to prevent Xendit from retrying on our bug
     return new Response('ok', { status: 200, headers: CORS });
   }
 });

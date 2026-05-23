@@ -1248,3 +1248,115 @@ export async function submitInsurerReview(
   if (orderRes.error) { console.error('submitInsurerReview (order):', orderRes.error); return false; }
   return true;
 }
+
+// ─── Admin Notifications ──────────────────────────────────────────────────────
+
+export interface SpAdminNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  order_id?: string;
+  review_url?: string;
+  metadata?: any;
+  read: boolean;
+  created_at: string;
+}
+
+export async function createAdminNotification(data: Omit<SpAdminNotification, 'id' | 'created_at' | 'read'>): Promise<void> {
+  await supabase.from('sp_admin_notifications').insert({ ...data, read: false });
+}
+
+export async function getAdminNotifications(unreadOnly = false): Promise<SpAdminNotification[]> {
+  let q = supabase.from('sp_admin_notifications').select('*').order('created_at', { ascending: false }).limit(50);
+  if (unreadOnly) q = q.eq('read', false);
+  const { data, error } = await q;
+  if (error) { console.error('getAdminNotifications:', error); return []; }
+  return (data ?? []) as SpAdminNotification[];
+}
+
+export async function markAdminNotificationRead(id: string): Promise<void> {
+  await supabase.from('sp_admin_notifications').update({ read: true }).eq('id', id);
+}
+
+// ─── Auto-send review link on order submission ────────────────────────────────
+
+export async function autoSendReviewLink(
+  orderId: string,
+  orderNumber: string,
+  clientName: string,
+  insurerWa?: string
+): Promise<string | null> {
+  const token = await createReviewToken(orderId);
+  if (!token) return null;
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://surepath.app';
+  const reviewUrl = `${origin}/review/${token}`;
+
+  // Update token with the review URL
+  await supabase.from('sp_review_tokens').update({ review_url: reviewUrl }).eq('token', token);
+
+  // Create admin notification with the link
+  await createAdminNotification({
+    type: 'NEW_ORDER',
+    title: `Order Baru: ${orderNumber}`,
+    body: `Order dari ${clientName} siap ditinjau. Salin link dan kirimkan ke penanggung.`,
+    order_id: orderId,
+    review_url: reviewUrl,
+    metadata: { insurer_wa: insurerWa ?? null },
+  });
+
+  return reviewUrl;
+}
+
+// ─── AI Policy Review ─────────────────────────────────────────────────────────
+
+export interface AIPolicyReview {
+  recommendation: 'APPROVE' | 'REJECT' | 'REQUEST_INFO';
+  confidence: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  reasoning: string;
+  flags: string[];
+  suggested_notes: string;
+  order_id?: string;
+}
+
+export async function runAIPolicyReview(orderId: string): Promise<AIPolicyReview | null> {
+  const { data: order, error } = await supabase.from('sp_policy_orders').select('*').eq('id', orderId).single();
+  if (error || !order) return null;
+
+  const { data: fnData, error: fnError } = await supabase.functions.invoke('ai-policy-review', {
+    body: { order_id: orderId, order },
+  });
+  if (fnError) { console.error('runAIPolicyReview:', fnError); return null; }
+  return fnData as AIPolicyReview;
+}
+
+// ─── AI Finance Review ────────────────────────────────────────────────────────
+
+export interface AIFinanceReview {
+  health_score: number;
+  summary: {
+    total_gwp: number;
+    total_commissions: number;
+    total_claims: number;
+    commission_ratio: number;
+    claim_ratio: number;
+    net_revenue: number;
+  };
+  anomalies: Array<{ severity: string; description: string; amount: number | null }>;
+  recommendations: Array<{ priority: string; action: string; impact: string }>;
+  insights: string;
+  alerts: string[];
+  period_days?: number;
+  generated_at?: string;
+  raw_metrics?: any;
+}
+
+export async function runAIFinanceReview(periodDays = 30): Promise<AIFinanceReview | null> {
+  const { data: fnData, error: fnError } = await supabase.functions.invoke('ai-finance-review', {
+    body: { period_days: periodDays },
+  });
+  if (fnError) { console.error('runAIFinanceReview:', fnError); return null; }
+  return fnData as AIFinanceReview;
+}

@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X,
+  Monitor, Sun, Moon, X, Bot,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -19,6 +19,8 @@ import CommissionLedger from './CommissionLedger';
 import InsurerAdmin from './InsurerAdmin';
 import VehiclePricelistAdmin from './VehiclePricelistAdmin';
 import WebsiteEditorAdmin from './WebsiteEditorAdmin';
+import AIAdminView from './AIAdminView';
+import AIFinanceView from './AIFinanceView';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -42,6 +44,8 @@ const MENU_ITEMS = [
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
+  { id: 'ai_admin',         label: 'AI Admin Agent',      icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'ai_finance',       label: 'AI Finance Agent',    icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'security',         label: 'Keamanan',            icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN] },
   { id: 'settings',         label: 'Pengaturan',          icon: Settings,        roles: [UserRole.MASTER_ADMIN] },
 ];
@@ -255,6 +259,8 @@ const AdminPortal = ({
       case 'commission_ledger':return <CommissionLedger />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
+      case 'ai_admin':         return <AIAdminView />;
+      case 'ai_finance':       return <AIFinanceView />;
       case 'security':         return <SecurityView />;
       case 'settings':         return <SettingsView products={products} setProducts={setProducts} />;
       default:                 return null;

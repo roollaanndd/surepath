@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText, CheckCircle, XCircle, Clock, Eye, Upload,
-  Car, Bike, ChevronDown, Search, Download, RefreshCw, Link
+  Car, Bike, ChevronDown, Search, Download, RefreshCw, Link, Bell,
 } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
-  createReviewToken,
-  type SpPolicyOrder,
+  createReviewToken, getAdminNotifications, markAdminNotificationRead,
+  type SpPolicyOrder, type SpAdminNotification,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
@@ -382,15 +382,20 @@ const PolicyOrdersAdmin: React.FC = () => {
   const [filter, setFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
+  const [adminNotifs, setAdminNotifs] = useState<SpAdminNotification[]>([]);
+  const [showNotifs, setShowNotifs] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    const data = await getAllOrders();
+    const [data, notifs] = await Promise.all([getAllOrders(), getAdminNotifications()]);
     setOrders(data);
+    setAdminNotifs(notifs);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
+
+  const unreadCount = adminNotifs.filter(n => !n.read).length;
 
   const handleStatusChange = async (id: string, status: SpPolicyOrder['status'], extras?: any) => {
     await updateOrderStatus(id, status, extras);
@@ -421,6 +426,71 @@ const PolicyOrdersAdmin: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+
+      {/* Admin notification inbox */}
+      {adminNotifs.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowNotifs(!showNotifs)}
+            className="flex items-center gap-2 mb-3"
+          >
+            <div className="relative">
+              <Bell size={14} className="text-slate-400" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-[7px] font-black text-white flex items-center justify-center">{unreadCount}</span>
+              )}
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Notifikasi Admin ({unreadCount} baru)
+            </span>
+            <ChevronDown size={12} className={`text-slate-500 transition-transform ${showNotifs ? 'rotate-180' : ''}`} />
+          </button>
+          {showNotifs && (
+            <div className="space-y-2 mb-4">
+              {adminNotifs.slice(0, 10).map(notif => (
+                <div
+                  key={notif.id}
+                  className={`p-4 rounded-2xl border transition-all ${notif.read ? 'bg-white/[0.01] border-white/5' : 'bg-violet-500/5 border-violet-500/20'}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-white">{notif.title}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{notif.body}</p>
+                      {notif.review_url && (
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(notif.review_url!).catch(() => {})}
+                            className="text-[9px] font-black uppercase tracking-widest bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 px-2.5 py-1 rounded-full"
+                          >
+                            Salin Link
+                          </button>
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Tinjauan polis:\n${notif.review_url}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-2.5 py-1 rounded-full"
+                          >
+                            WhatsApp
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    {!notif.read && (
+                      <button
+                        onClick={() => { markAdminNotificationRead(notif.id); setAdminNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n)); }}
+                        className="text-[9px] text-slate-500 hover:text-white flex-shrink-0"
+                      >
+                        Tandai dibaca
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {FILTERS.slice(1).map(f => {

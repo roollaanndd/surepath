@@ -425,9 +425,71 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
 );
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── Animated Mesh Background ─────────────────────────────────────────────────
+interface Orb { ax: number; ay: number; fx: number; fy: number; px: number; py: number; r: number; h: number; s: number; l: number; a: number; }
+
+const AnimatedBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const orbs: Orb[] = [
+      { ax: 0.55, ay: 0.30, fx: 0.00031, fy: 0.00023, px: 0,    py: 0.5,  r: 380, h: 265, s: 80, l: 55, a: 0 },
+      { ax: 0.35, ay: 0.65, fx: 0.00019, fy: 0.00041, px: 1.5,  py: 2.1,  r: 320, h: 210, s: 70, l: 50, a: 0 },
+      { ax: 0.75, ay: 0.55, fx: 0.00027, fy: 0.00017, px: 3.2,  py: 0.8,  r: 280, h: 165, s: 75, l: 50, a: 0 },
+      { ax: 0.20, ay: 0.25, fx: 0.00043, fy: 0.00033, px: 0.7,  py: 3.5,  r: 240, h: 30,  s: 80, l: 60, a: 0 },
+      { ax: 0.85, ay: 0.80, fx: 0.00015, fy: 0.00025, px: 2.8,  py: 1.2,  r: 300, h: 185, s: 65, l: 55, a: 0 },
+      { ax: 0.50, ay: 0.50, fx: 0.00037, fy: 0.00029, px: 4.0,  py: 4.0,  r: 200, h: 140, s: 60, l: 55, a: 0 },
+    ];
+
+    let w = 0, h = 0, raf = 0;
+    const resize = () => {
+      w = canvas.width  = canvas.offsetWidth;
+      h = canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const opacity = darkMode ? 0.13 : 0.055;
+    let t = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      t += 1;
+      for (const o of orbs) {
+        const cx = (o.ax + 0.18 * Math.sin(o.fx * t + o.px)) * w;
+        const cy = (o.ay + 0.16 * Math.cos(o.fy * t + o.py)) * h;
+        const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, o.r);
+        grd.addColorStop(0,   `hsla(${o.h},${o.s}%,${o.l}%,${opacity})`);
+        grd.addColorStop(0.5, `hsla(${o.h},${o.s}%,${o.l}%,${opacity * 0.4})`);
+        grd.addColorStop(1,   `hsla(${o.h},${o.s}%,${o.l}%,0)`);
+        ctx.beginPath();
+        ctx.arc(cx, cy, o.r, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [darkMode]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+    />
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, setDarkMode }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cmsConfig, setCmsConfig] = useState<Record<string, import('../../db').WebsiteSection>>({});
 
   const t = useCallback((id: string, en: string) => tx(id, en, lang), [lang]);
 
@@ -435,6 +497,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
     const onScroll = () => setIsScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    import('../../db').then(({ db }) => {
+      db.websiteConfig.toArray().then(configs => {
+        const map: Record<string, import('../../db').WebsiteSection> = {};
+        configs.forEach(c => { map[c.sectionKey] = c; });
+        setCmsConfig(map);
+      }).catch(() => {});
+    });
   }, []);
 
   const toggleLang = () => setLang(lang === Language.EN ? Language.ID : Language.EN);
@@ -684,9 +756,10 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       `}</style>
 
       <div
-        className={`${textPrimary} min-h-screen overflow-x-hidden font-sans`}
+        className={`${textPrimary} min-h-screen overflow-x-hidden font-sans relative`}
         style={{ background: pageBg }}
       >
+        <AnimatedBackground darkMode={darkMode} />
         {/* ══════════════════════════════════════════════════════════════════
             NAV
         ══════════════════════════════════════════════════════════════════ */}
@@ -878,10 +951,10 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   className={`text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.02] ${textPrimary}`}
                   style={{ letterSpacing: '-0.04em' }}
                 >
-                  {t('Proteksi Terbaik,', 'Best Protection,')}
+                  {cmsConfig.hero?.headline ?? t('Proteksi Terbaik,', 'Best Protection,')}
                   <br />
                   <span className="sp-grad-text">
-                    {t('Klaim Semudah Foto.', 'Claim as Easy as a Photo.')}
+                    {cmsConfig.hero?.subtitle ?? t('Klaim Semudah Foto.', 'Claim as Easy as a Photo.')}
                   </span>
                 </h1>
 
@@ -899,7 +972,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     onClick={onSignIn}
                     className="sp-btn-primary flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-white font-black text-base"
                   >
-                    {t('Mulai Gratis', 'Start Free')}
+                    {cmsConfig.hero?.ctaText ?? t('Mulai Gratis', 'Start Free')}
                     <ArrowRight size={16} />
                   </button>
                   <button
@@ -993,7 +1066,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         {/* ══════════════════════════════════════════════════════════════════
             PRODUCTS
         ══════════════════════════════════════════════════════════════════ */}
-        <section id="products" className="py-24 max-w-7xl mx-auto px-6">
+        <section id="products" className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.products?.isVisible === false ? 'none' : undefined }}>
           <Reveal className="text-center mb-14">
             <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
               {t('Produk Kami', 'Our Products')}
@@ -1179,7 +1252,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         {/* ══════════════════════════════════════════════════════════════════
             CLAIM IN 60 SECONDS
         ══════════════════════════════════════════════════════════════════ */}
-        <section id="claims" className="py-24 max-w-7xl mx-auto px-6">
+        <section id="claims" className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.claims?.isVisible === false ? 'none' : undefined }}>
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: story */}
             <div>
@@ -1265,6 +1338,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         <section
           className="py-20 relative overflow-hidden"
           style={{
+            display: cmsConfig.stats?.isVisible === false ? 'none' : undefined,
             background: isDark
               ? 'rgba(255,255,255,0.02)'
               : 'rgba(0,0,0,0.02)',
@@ -1308,7 +1382,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         {/* ══════════════════════════════════════════════════════════════════
             TESTIMONIALS
         ══════════════════════════════════════════════════════════════════ */}
-        <section className="py-24 max-w-7xl mx-auto px-6">
+        <section className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.testimonials?.isVisible === false ? 'none' : undefined }}>
           <Reveal className="text-center mb-14">
             <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
               {t('Testimoni', 'Testimonials')}

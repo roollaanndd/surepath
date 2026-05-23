@@ -7,7 +7,7 @@ import {
   ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
   TrendingUp, BarChart3,
   Bell, CheckCircle, Coins, DollarSign, Package, Building2, Car,
-  ArrowLeft
+  ArrowLeft, Monitor
 } from 'lucide-react';
 import {
   BizAdminView,
@@ -27,6 +27,7 @@ import FinancialAdmin from './FinancialAdmin';
 import CommissionLedger from './CommissionLedger';
 import InsurerAdmin from './InsurerAdmin';
 import VehiclePricelistAdmin from './VehiclePricelistAdmin';
+import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -88,6 +89,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole, currentUser }:
     { id: 'product_config', label: 'Konfigurasi Produk', icon: Package, roles: [UserRole.MASTER_ADMIN] },
     { id: 'insurers', label: 'Perusahaan Asuransi', icon: Building2, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
     { id: 'vehicle_pricelist', label: 'Database Kendaraan', icon: Car, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+    { id: 'website_editor', label: 'Website Editor', icon: Monitor, roles: [UserRole.MASTER_ADMIN] },
     { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
     { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
   ];
@@ -204,6 +206,7 @@ const AdminPortal = ({ onLogout, products, setProducts, userRole, currentUser }:
       case 'vehicle_pricelist': return <VehiclePricelistAdmin />;
       case 'commission_ledger': return <CommissionLedger />;
       case 'product_config': return <ProductConfigAdmin />;
+      case 'website_editor': return <WebsiteEditorAdmin />;
       case 'security': return <SecurityView />;
       case 'settings': return <SettingsView products={products} setProducts={setProducts} />;
       default: return null;

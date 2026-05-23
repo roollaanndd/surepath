@@ -94,6 +94,19 @@ export interface CustomProduct {
   bg?: string;
 }
 
+export interface WebsiteSection {
+  id?: any;
+  sectionKey: string; // 'hero' | 'marquee' | 'products' | 'claims' | 'stats' | 'testimonials' | 'footer'
+  headline?: string;
+  subtitle?: string;
+  ctaText?: string;
+  ctaSecondaryText?: string;
+  bgType: 'animated-mesh' | 'gradient' | 'solid' | 'image' | 'none';
+  bgValue?: string;
+  isVisible: boolean;
+  updatedAt: string;
+}
+
 export class SurePathDB extends Dexie {
   users!: Table<User, any>;
   policies!: Table<Policy, any>;
@@ -102,19 +115,23 @@ export class SurePathDB extends Dexie {
   auditLogs!: Table<AuditLog, any>;
   providers!: Table<DBProvider, string>;
   customProducts!: Table<CustomProduct, any>;
+  websiteConfig!: Table<WebsiteSection, any>;
 
   constructor() {
     super('SurePathDB');
-    // Added comment above fix
-    // Fix: The version method is inherited from the Dexie base class; defining the schema for the database version.
-    this.version(6).stores({
+    const baseStores = {
       users: '++id, &email, nodeId, role, verified',
       policies: '++id, userId, type, status, policyNumber, createdAt',
       claims: '++id, userId, policyId, status, createdAt',
       transactions: '++id, userId, type, date, referenceId',
       auditLogs: '++id, timestamp, actor, domain, action',
       providers: 'id, name, isActive',
-      customProducts: '++id, name, type, isActive'
+      customProducts: '++id, name, type, isActive',
+    };
+    this.version(6).stores(baseStores);
+    this.version(7).stores({
+      ...baseStores,
+      websiteConfig: '++id, &sectionKey, isVisible, updatedAt',
     });
   }
 }

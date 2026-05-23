@@ -1,10 +1,11 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Car, X, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
 import { InsuranceType, Language } from '../types';
 import { db, Policy } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
+import { getVehicleMarketValue } from '../services/supabaseService';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -40,11 +41,23 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [generatedPolicy, setGeneratedPolicy] = useState<Policy | null>(null);
 
   const [vehicle, setVehicle] = useState({
-    brand: '', model: '', year: 2025, isOther: false, 
-    price: 0, basePrice: 0, manualPrice: false, plate: '', 
+    brand: '', model: '', year: 2025, isOther: false,
+    price: 0, basePrice: 0, manualPrice: false, plate: '',
     vin: '', engine: '', color: '',
     region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW'
   });
+
+  // Auto-populate price from admin vehicle DB when brand/model/year change
+  useEffect(() => {
+    if (!vehicle.brand || !vehicle.model || vehicle.manualPrice) return;
+    let cancelled = false;
+    getVehicleMarketValue(vehicle.brand, vehicle.model, vehicle.year).then(val => {
+      if (!cancelled && val && val > 0) {
+        setVehicle(prev => prev.manualPrice ? prev : { ...prev, price: val, basePrice: val });
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [vehicle.brand, vehicle.model, vehicle.year, vehicle.manualPrice]);
 
   const [coverage, setCoverage] = useState({
     type: InsuranceType.COMPREHENSIVE as InsuranceType,

@@ -1143,3 +1143,25 @@ export async function upsertVehicleOverride(payload: Omit<SpVehicleOverride, 'id
   if (error) { console.error('upsertVehicleOverride:', error); return false; }
   return true;
 }
+
+export async function getVehicleMarketValue(brand: string, model: string, year: number): Promise<number | null> {
+  const { data, error } = await supabase
+    .from('sp_vehicle_overrides')
+    .select('market_value_rp, list_price_m, ref_year, discount_rate, is_active')
+    .ilike('brand', brand)
+    .ilike('model', model)
+    .eq('is_active', true)
+    .order('ref_year', { ascending: false })
+    .limit(5);
+  if (error || !data || data.length === 0) return null;
+  const closest = (data as SpVehicleOverride[]).reduce((best, row) => {
+    return Math.abs(row.ref_year - year) < Math.abs(best.ref_year - year) ? row : best;
+  }, data[0] as SpVehicleOverride);
+  if (closest.market_value_rp && closest.market_value_rp > 0) return closest.market_value_rp;
+  if (closest.list_price_m && closest.list_price_m > 0) {
+    const yearDiff = Math.max(0, new Date().getFullYear() - year);
+    const dep = closest.discount_rate > 0 ? closest.discount_rate : 0.15;
+    return Math.round(closest.list_price_m * 1_000_000 * Math.pow(1 - dep, yearDiff));
+  }
+  return null;
+}

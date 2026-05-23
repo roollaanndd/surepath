@@ -40,10 +40,10 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   ];
 
   useEffect(() => {
-    const timer    = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 13);
-    const msgTimer = setInterval(() => setMessageIdx(i => Math.min(i + 1, messages.length - 1)), 270);
-    const fadeTimer = setTimeout(() => setFadeOut(true), 1200);
-    const finishTimer = setTimeout(onFinish, 1500);
+    const timer    = setInterval(() => setProgress(p => Math.min(p + 1.5, 100)), 15);
+    const msgTimer = setInterval(() => setMessageIdx(i => Math.min(i + 1, messages.length - 1)), 400);
+    const fadeTimer = setTimeout(() => setFadeOut(true), 2000);
+    const finishTimer = setTimeout(onFinish, 2500);
     return () => { clearInterval(timer); clearInterval(msgTimer); clearTimeout(fadeTimer); clearTimeout(finishTimer); };
   }, [onFinish]);
 
@@ -96,10 +96,36 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
         </div>
       </div>
 
+      {/* Scanner line */}
+      <div className="scanner-line" />
+
       {/* Bottom tag */}
       <p className="absolute bottom-10 text-[0.45rem] font-bold text-gray-800 uppercase tracking-[0.5em]">
         Powered by Supabase · Xendit · Gemini AI
       </p>
+    </div>
+  );
+};
+
+const AppEntryScreen = ({ name, onDone }: { name: string; onDone: () => void }) => {
+  const [fade, setFade] = useState(false);
+  useEffect(() => {
+    const t1 = setTimeout(() => setFade(true), 900);
+    const t2 = setTimeout(onDone, 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onDone]);
+  return (
+    <div className={`fixed inset-0 z-[4999] bg-[#030712] flex flex-col items-center justify-center gap-8 transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      <div className="absolute w-64 h-64 rounded-full bg-violet-600/20 blur-[80px] animate-pulse" />
+      <div className="relative z-10 text-center space-y-4">
+        <div className="w-20 h-20 mx-auto bg-emerald-500/15 border border-emerald-500/30 rounded-[1.8rem] flex items-center justify-center shadow-2xl shadow-emerald-500/20 mb-6">
+          <SurePathLogo className="w-12 h-12" />
+        </div>
+        <p className="text-[0.55rem] font-black text-emerald-500 uppercase tracking-[0.5em]">Selamat Datang</p>
+        <h2 className="text-3xl font-black tracking-tight text-white">{name}</h2>
+        <p className="text-[0.6rem] text-gray-600 uppercase tracking-widest">Akun Terverifikasi · OJK Licensed</p>
+      </div>
     </div>
   );
 };
@@ -191,6 +217,7 @@ const App = () => {
   const [products, setProducts] = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang] = useState<Language>(Language.ID);
   const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
+  const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     // Load custom products from DB and append to products list
@@ -252,10 +279,13 @@ const App = () => {
       const spUser = await getAgentByEmail(user.email).catch(() => null);
       if (spUser) enrichedUser = { ...user, supabaseId: spUser.id, agent_code: spUser.agent_code };
     }
-    setCurrentUser(enrichedUser);
-    localStorage.setItem('SUREPATH_SESSION', JSON.stringify(enrichedUser));
-    setAppMode(true);
-    setPage('home');
+    setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
+    setTimeout(() => {
+      setCurrentUser(enrichedUser);
+      localStorage.setItem('SUREPATH_SESSION', JSON.stringify(enrichedUser));
+      setAppMode(true);
+      setPage('home');
+    }, 1400);
   };
 
   const handleLogout = async () => {
@@ -281,6 +311,7 @@ const App = () => {
   }, [lang]);
 
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
+  if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} />;
 
   // Payment gateway redirects (Xendit success/failure)
   const { pathname } = window.location;

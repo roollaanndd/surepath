@@ -1,25 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Users, Zap,
-  Wallet, Settings, LogOut, Search,
-  Activity, Menu,
-  ShieldAlert, ClipboardCheck, HardDrive, ArrowUpRight,
-  TrendingUp, BarChart3,
-  Bell, CheckCircle, Coins, DollarSign, Package, Building2, Car,
-  ArrowLeft, Monitor
+  LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
+  Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
+  TrendingUp, BarChart3, Bell, CheckCircle,
+  Coins, DollarSign, Package, Building2, Car, ArrowLeft,
+  Monitor, Sun, Moon, X,
 } from 'lucide-react';
 import {
-  BizAdminView,
-  ApprovalsView,
-  SettingsView,
-  InventoryView,
-  SecurityView,
-  LedgerView,
-  ReportsView,
-  AgentManagementView,
-  ClaimsAdminView,
-  UserManagementView,
+  BizAdminView, ApprovalsView, SettingsView, InventoryView,
+  SecurityView, LedgerView, ReportsView, AgentManagementView,
+  ClaimsAdminView, UserManagementView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
@@ -31,279 +22,329 @@ import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
-
 import { SurePathLogo } from '../Navbar';
 
-const Card = ({ children, className }: { children?: React.ReactNode; className?: string }) => (
-  <div className={`bg-white/[0.03] border border-white/5 rounded-[2.5rem] ${className ?? ''}`}>{children}</div>
-);
+// ─── Menu definition ─────────────────────────────────────────────────────────
+const MENU_ITEMS = [
+  { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
+  { id: 'reports',          label: 'Laporan',             icon: BarChart3,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
+  { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'users',            label: 'Pengguna',            icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'user_mgmt',        label: 'Kelola Akun',         icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+  { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
+  { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
+  { id: 'security',         label: 'Keamanan',            icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN] },
+  { id: 'settings',         label: 'Pengaturan',          icon: Settings,        roles: [UserRole.MASTER_ADMIN] },
+];
 
-const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
-  <div className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl">
-    <div className="flex justify-between items-start mb-6">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${color}`}>
-        <Icon size={24} />
-      </div>
-      {trend && (
-        <div className={`flex items-center gap-1 text-[0.65rem] font-black ${trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
-          {trend} <ArrowUpRight size={14} className={trend.startsWith('-') ? 'rotate-90' : ''} />
-        </div>
-      )}
-    </div>
-    <p className="text-3xl font-black tracking-tighter leading-none mb-2">{value}</p>
-    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{label}</p>
-  </div>
-);
+const formatRole = (role: string) =>
+  role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-const AdminPortal = ({ onLogout, products, setProducts, userRole, currentUser }: { onLogout: () => void, products: any[], setProducts: any, userRole: UserRole, currentUser?: any }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
+// ─── Theme helpers ────────────────────────────────────────────────────────────
+const th = (dark: boolean, darkCls: string, lightCls: string) => dark ? darkCls : lightCls;
 
-  const fetchStats = async () => {
-      const as_ = await getAdminStats();
-      setAdminStats(as_);
-  };
+// ─── Main component ───────────────────────────────────────────────────────────
+const AdminPortal = ({
+  onLogout, products, setProducts, userRole, currentUser,
+}: {
+  onLogout: () => void;
+  products: any[];
+  setProducts: any;
+  userRole: UserRole;
+  currentUser?: any;
+}) => {
+  const [activeTab, setActiveTab]     = useState('dashboard');
+  const [isMobile, setIsMobile]       = useState(window.innerWidth < 1024);
+  const [mobileMenuOpen, setMobileOpen] = useState(false);
+  const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
+  const [darkMode, setDarkMode]       = useState(true);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
-    fetchStats();
+    getAdminStats().then(setAdminStats).catch(() => {});
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Command Center', icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
-    { id: 'reports', label: 'Performa', icon: BarChart3, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
-    { id: 'inventory', label: 'Data Master', icon: HardDrive, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'transactions', label: 'Ledger Vault', icon: Wallet, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-    { id: 'approvals', label: 'Antrean Polis', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
-    { id: 'users', label: 'User Matrix', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'user_mgmt', label: 'Kelola User', icon: Users, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'policy_orders', label: 'Policy Orders', icon: Activity, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-    { id: 'agents', label: 'Agent Management', icon: Bell, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'claims_admin', label: 'Claims Queue', icon: ClipboardCheck, roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
-    { id: 'financial', label: 'Keuangan', icon: DollarSign, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-    { id: 'commission_ledger', label: 'Ledger Komisi', icon: Coins, roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-    { id: 'product_config', label: 'Konfigurasi Produk', icon: Package, roles: [UserRole.MASTER_ADMIN] },
-    { id: 'insurers', label: 'Perusahaan Asuransi', icon: Building2, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'vehicle_pricelist', label: 'Database Kendaraan', icon: Car, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-    { id: 'website_editor', label: 'Website Editor', icon: Monitor, roles: [UserRole.MASTER_ADMIN] },
-    { id: 'security', label: 'Smart Security', icon: ShieldAlert, roles: [UserRole.MASTER_ADMIN] },
-    { id: 'settings', label: 'Konfigurasi', icon: Settings, roles: [UserRole.MASTER_ADMIN] },
-  ];
+  const filteredMenu = MENU_ITEMS.filter(m => m.roles.includes(userRole));
 
-  const filteredMenu = menuItems.filter(item => item.roles.includes(userRole));
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return (
-            <div className="animate-fade-in space-y-10">
-            <div className="flex justify-between items-end">
-               <div>
-                  <div className="flex items-center gap-3 mb-2">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                     <p className="text-[0.6rem] font-black text-emerald-500 uppercase tracking-[0.4em]">Global HQ Connection: SECURE</p>
-                  </div>
-                  <h2 className="text-4xl font-black uppercase tracking-tighter leading-none text-white">SurePath <span className="text-gray-500">Command Center</span></h2>
-               </div>
-            </div>
-            
-            {/* Real-data KPI row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-               <StatCard
-                 label="Total Orders"
-                 value={adminStats?.totalOrders ?? '—'}
-                 trend={adminStats?.ordersByStatus?.SUBMITTED ? `+${adminStats.ordersByStatus.SUBMITTED} pending` : undefined}
-                 icon={Activity}
-                 color="bg-primary-500/10 text-primary-500"
-               />
-               <StatCard
-                 label="Premi Diterbitkan"
-                 value={adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—'}
-                 icon={TrendingUp}
-                 color="bg-emerald-500/10 text-emerald-500"
-               />
-               <StatCard
-                 label="Premi Dibayar"
-                 value={adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—'}
-                 icon={CheckCircle}
-                 color="bg-blue-500/10 text-blue-500"
-               />
-               <StatCard
-                 label="Agen Aktif"
-                 value={adminStats?.activeAgents ?? '—'}
-                 icon={Zap}
-                 color="bg-amber-500/10 text-amber-500"
-               />
-            </div>
-
-            {/* Order funnel + top agents */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-               {/* Order funnel */}
-               <Card className="p-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-5">Order Funnel</p>
-                  {adminStats && (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
-                    const count = adminStats.ordersByStatus[st] ?? 0;
-                    const pct = adminStats.totalOrders > 0 ? (count / adminStats.totalOrders) * 100 : 0;
-                    const colors: Record<string, string> = {
-                      SUBMITTED: 'bg-amber-500', UNDER_REVIEW: 'bg-blue-500',
-                      APPROVED: 'bg-emerald-500', ISSUED: 'bg-primary-500', REJECTED: 'bg-rose-500',
-                    };
-                    return (
-                      <div key={st} className="mb-3">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-400 font-bold capitalize">{st.replace('_', ' ')}</span>
-                          <span className="font-black text-white">{count}</span>
-                        </div>
-                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                          <div className={`h-full ${colors[st]} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {!adminStats && <p className="text-slate-500 text-xs">Loading…</p>}
-               </Card>
-
-               {/* Top agents */}
-               <Card className="p-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-5">Top Agents by Premium</p>
-                  {adminStats?.topAgents.length === 0 && <p className="text-slate-500 text-xs">Belum ada data.</p>}
-                  {adminStats?.topAgents.map((a, i) => (
-                    <div key={a.agent_id} className="flex items-center gap-3 mb-3">
-                       <span className="text-[10px] font-black text-gray-500 w-4">{i + 1}</span>
-                       <div className="flex-1 min-w-0">
-                         <p className="text-xs font-bold truncate">{a.name}</p>
-                         <p className="text-[9px] text-gray-500">{a.orders} order</p>
-                       </div>
-                       <span className="text-[10px] font-black text-primary-500">{formatIDR(a.premium)}</span>
-                    </div>
-                  ))}
-                  {!adminStats && <p className="text-slate-500 text-xs">Loading…</p>}
-                  {adminStats && adminStats.pendingCommissions > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/5 flex justify-between text-xs">
-                      <span className="text-gray-400">Komisi pending</span>
-                      <span className="font-black text-amber-400">{formatIDR(adminStats.pendingCommissions)}</span>
-                    </div>
-                  )}
-               </Card>
-            </div>
-          </div>
-        );
-      case 'reports': return <ReportsView />;
-      case 'inventory': return <InventoryView />;
-      case 'transactions': return <LedgerView />;
-      case 'approvals': return <ApprovalsView />;
-      case 'users': return <BizAdminView section="users" />;
-      case 'user_mgmt': return <UserManagementView />;
-      case 'policy_orders': return <PolicyOrdersAdmin />;
-      case 'agents': return <AgentManagementView />;
-      case 'claims_admin': return <ClaimsAdminView />;
-      case 'financial': return <FinancialAdmin />;
-      case 'insurers': return <InsurerAdmin />;
-      case 'vehicle_pricelist': return <VehiclePricelistAdmin />;
-      case 'commission_ledger': return <CommissionLedger />;
-      case 'product_config': return <ProductConfigAdmin />;
-      case 'website_editor': return <WebsiteEditorAdmin />;
-      case 'security': return <SecurityView />;
-      case 'settings': return <SettingsView products={products} setProducts={setProducts} />;
-      default: return null;
-    }
-  };
-
-  const formatRoleLabel = (role: string) =>
-    role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-  const Sidebar = () => (
-    <div className="flex flex-col h-full">
-      {/* Back to Website */}
+  // ── Sidebar ────────────────────────────────────────────────────────────────
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full min-h-0">
+      {/* Back to website */}
       <button
         onClick={onLogout}
-        className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-300 transition-colors text-[0.55rem] font-bold uppercase tracking-widest"
+        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${th(darkMode, 'text-gray-600 hover:text-gray-300', 'text-slate-400 hover:text-slate-700')}`}
       >
-        <ArrowLeft size={12} /> Kembali ke Website
+        <ArrowLeft size={13} /> Kembali ke Website
       </button>
 
-      <div className="mb-12 flex items-center gap-4">
-          <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-             <SurePathLogo className="w-8 h-8 text-white" />
-          </div>
-          <div>
-             <h1 className="font-black text-2xl tracking-tighter uppercase leading-none">Sure<span className="text-emerald-500">Path</span></h1>
-             <span className="text-[0.45rem] font-bold text-gray-500 uppercase tracking-[0.4em]">Administration HQ</span>
-          </div>
+      {/* Logo */}
+      <div className={`mb-6 flex items-center gap-3 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-slate-200')}`}>
+        <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
+          <SurePathLogo className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+            Sure<span className="text-emerald-500">Path</span>
+          </h1>
+          <p className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>Admin Panel</p>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {filteredMenu.map((item) => (
+      {/* Nav — scrollable */}
+      <nav className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pr-1">
+        {filteredMenu.map(item => (
           <button
             key={item.id}
-            onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all group ${activeTab === item.id ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+            onClick={() => { setActiveTab(item.id); setMobileOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
+              activeTab === item.id
+                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                : th(darkMode,
+                    'text-gray-500 hover:text-white hover:bg-white/5',
+                    'text-slate-500 hover:text-slate-900 hover:bg-slate-100')
+            }`}
           >
-            <item.icon size={20} />
-            <span className="text-[0.7rem] font-black uppercase tracking-widest">{item.label}</span>
+            <item.icon size={17} className="flex-shrink-0" />
+            <span className="text-[0.68rem] font-bold tracking-wide">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="mt-auto p-5 bg-white/5 rounded-[2rem] border border-white/10 space-y-4">
-         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs">{userRole[0]}</div>
-            <div className="text-left overflow-hidden">
-               <p className="text-xs font-black uppercase truncate">{formatRoleLabel(userRole)}</p>
-               <p className="text-[0.5rem] font-bold text-gray-400 truncate">{currentUser?.email ?? 'Admin User'}</p>
-            </div>
-         </div>
-         <button onClick={onLogout} className="w-full py-3 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2">
-            <LogOut size={14} /> Exit System
-         </button>
+      {/* User footer — always visible */}
+      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${th(darkMode, 'bg-white/5 border-white/10', 'bg-slate-100 border-slate-200')}`}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs text-white flex-shrink-0">
+            {(currentUser?.name ?? userRole)[0].toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className={`text-xs font-black truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{formatRole(userRole)}</p>
+            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{currentUser?.email ?? 'Admin'}</p>
+          </div>
+        </div>
+        <button
+          onClick={onLogout}
+          className="w-full py-2.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2"
+        >
+          <LogOut size={13} /> Keluar
+        </button>
       </div>
     </div>
   );
 
+  // ── Sidebar widths ─────────────────────────────────────────────────────────
+  const sidebarBg = th(darkMode, 'bg-black/40 border-white/5', 'bg-white border-slate-200');
+
+  // ── Dashboard content ──────────────────────────────────────────────────────
+  const DashboardView = () => (
+    <div className="space-y-8">
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500`}>Sistem aktif</p>
+        </div>
+        <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+          Dashboard
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
+          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle,color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
+          { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+        ].map(card => (
+          <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
+              <card.icon size={20} />
+            </div>
+            <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-slate-900')}`}>{card.value}</p>
+            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Order funnel */}
+        <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Status Pesanan</p>
+          {adminStats
+            ? (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
+                const count = adminStats.ordersByStatus[st] ?? 0;
+                const pct = adminStats.totalOrders > 0 ? (count / adminStats.totalOrders) * 100 : 0;
+                const clr: Record<string, string> = {
+                  SUBMITTED: 'bg-amber-500', UNDER_REVIEW: 'bg-blue-500',
+                  APPROVED: 'bg-emerald-500', ISSUED: 'bg-orange-500', REJECTED: 'bg-rose-500',
+                };
+                const labels: Record<string, string> = {
+                  SUBMITTED: 'Diajukan', UNDER_REVIEW: 'Ditinjau',
+                  APPROVED: 'Disetujui', ISSUED: 'Diterbitkan', REJECTED: 'Ditolak',
+                };
+                return (
+                  <div key={st} className="mb-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={`font-bold ${th(darkMode, 'text-gray-400', 'text-slate-500')}`}>{labels[st]}</span>
+                      <span className={`font-black ${th(darkMode, 'text-white', 'text-slate-900')}`}>{count}</span>
+                    </div>
+                    <div className={`h-1.5 rounded-full overflow-hidden ${th(darkMode, 'bg-white/5', 'bg-slate-100')}`}>
+                      <div className={`h-full ${clr[st]} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })
+            : <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+          }
+        </div>
+
+        {/* Top agents */}
+        <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Agen Teratas</p>
+          {adminStats
+            ? adminStats.topAgents.length === 0
+              ? <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Belum ada data.</p>
+              : adminStats.topAgents.map((a, i) => (
+                  <div key={a.agent_id} className="flex items-center gap-3 mb-3">
+                    <span className={`text-[10px] font-black w-4 ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-bold truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{a.name}</p>
+                      <p className={`text-[9px] ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{a.orders} pesanan</p>
+                    </div>
+                    <span className="text-[10px] font-black text-orange-500">{formatIDR(a.premium)}</span>
+                  </div>
+                ))
+            : <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+          }
+          {adminStats && adminStats.pendingCommissions > 0 && (
+            <div className={`mt-4 pt-4 border-t flex justify-between text-xs ${th(darkMode, 'border-white/5', 'border-slate-100')}`}>
+              <span className={th(darkMode, 'text-gray-400', 'text-slate-500')}>Komisi tertunda</span>
+              <span className="font-black text-amber-500">{formatIDR(adminStats.pendingCommissions)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Content router ─────────────────────────────────────────────────────────
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':        return <DashboardView />;
+      case 'reports':          return <ReportsView />;
+      case 'inventory':        return <InventoryView />;
+      case 'transactions':     return <LedgerView />;
+      case 'approvals':        return <ApprovalsView />;
+      case 'users':            return <BizAdminView section="users" />;
+      case 'user_mgmt':        return <UserManagementView />;
+      case 'policy_orders':    return <PolicyOrdersAdmin />;
+      case 'agents':           return <AgentManagementView />;
+      case 'claims_admin':     return <ClaimsAdminView />;
+      case 'financial':        return <FinancialAdmin />;
+      case 'insurers':         return <InsurerAdmin />;
+      case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
+      case 'commission_ledger':return <CommissionLedger />;
+      case 'product_config':   return <ProductConfigAdmin />;
+      case 'website_editor':   return <WebsiteEditorAdmin />;
+      case 'security':         return <SecurityView />;
+      case 'settings':         return <SettingsView products={products} setProducts={setProducts} />;
+      default:                 return null;
+    }
+  };
+
+  // ── Layout vars ────────────────────────────────────────────────────────────
+  const rootBg   = th(darkMode, 'bg-[#050505] text-white',           'bg-slate-50 text-slate-900');
+  const headerBg = th(darkMode, 'bg-black/20 border-white/5',        'bg-white border-slate-200');
+  const inputBg  = th(darkMode, 'bg-white/5 border-white/10 text-white placeholder-gray-600', 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400');
+
   return (
-    <div className="flex h-screen bg-[#050505] text-white overflow-hidden font-sans">
+    <div className={`flex h-screen overflow-hidden font-sans ${rootBg}`}>
+
+      {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
-        <aside className="w-72 border-r border-white/5 bg-black/40 backdrop-blur-3xl flex flex-col p-8 flex-shrink-0 relative z-20">
-           <Sidebar />
+        <aside className={`w-64 border-r flex flex-col p-6 flex-shrink-0 z-20 backdrop-blur-3xl ${sidebarBg}`}>
+          <SidebarContent />
         </aside>
       )}
 
+      {/* ── Mobile sidebar overlay ─────────────────────────────────────────── */}
       {isMobile && mobileMenuOpen && (
-        <div className="fixed inset-0 z-[1000] animate-fade-in">
-           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)}></div>
-           <aside className="absolute top-0 left-0 bottom-0 w-72 bg-[#0a0a0a] border-r border-white/10 p-8 flex flex-col animate-slide-right">
-              <Sidebar />
-           </aside>
+        <div className="fixed inset-0 z-[1000]">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a0a0a]', 'bg-white')}`}>
+            <SidebarContent />
+          </aside>
         </div>
       )}
 
-      <main className="flex-1 flex flex-col min-w-0 relative">
-        <header className="h-24 border-b border-white/5 flex items-center justify-between px-8 lg:px-12 bg-black/20 backdrop-blur-md z-10">
-          <div className="flex items-center gap-6">
-            {isMobile && <button onClick={() => setMobileMenuOpen(true)} className="p-3 bg-white/5 rounded-xl text-gray-400"><Menu size={20} /></button>}
+      {/* ── Main ───────────────────────────────────────────────────────────── */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className={`h-16 border-b flex items-center justify-between px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`}>
+          <div className="flex items-center gap-4">
+            {isMobile && (
+              <button onClick={() => setMobileOpen(true)} className={`p-2 rounded-xl ${th(darkMode, 'bg-white/5 text-gray-400', 'bg-slate-100 text-slate-500')}`}>
+                <Menu size={20} />
+              </button>
+            )}
             <div className="relative">
-               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"/>
-               <input className="bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs font-bold outline-none w-64 lg:w-96" placeholder="Search matrix data..." />
+              <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`} />
+              <input
+                className={`rounded-xl py-2 pl-9 pr-4 text-xs font-medium outline-none w-52 lg:w-80 border ${inputBg}`}
+                placeholder="Cari data..."
+              />
             </div>
           </div>
-          <div className="flex items-center gap-4">
-             {currentUser?.email && (
-               <span className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">
-                 <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-[0.5rem]">{(currentUser.name ?? currentUser.email)[0].toUpperCase()}</span>
-                 {currentUser.email}
-               </span>
-             )}
-             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 animate-pulse"><Activity size={20} /></div>
-             <button className="p-3 bg-white/5 rounded-xl relative text-gray-400"><Bell size={20} /><span className="absolute top-3 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#050505]"></span></button>
+
+          <div className="flex items-center gap-2">
+            {currentUser?.email && (
+              <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.55rem] font-bold uppercase tracking-widest border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}>
+                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-[0.5rem]`}>
+                  {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
+                </span>
+                {currentUser.email}
+              </span>
+            )}
+            {/* Day / Night toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-xl border transition-all ${th(darkMode, 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10', 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200')}`}
+              title={darkMode ? 'Mode Terang' : 'Mode Gelap'}
+            >
+              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            {/* Notifications */}
+            <button className={`relative p-2 rounded-xl border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}>
+              <Bell size={17} />
+              <span className={`absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border ${th(darkMode, 'border-[#050505]', 'border-white')}`} />
+            </button>
+            {/* Mobile close */}
+            {isMobile && (
+              <button
+                onClick={onLogout}
+                className="p-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                title="Keluar"
+              >
+                <X size={17} />
+              </button>
+            )}
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 lg:p-12 no-scrollbar">
-          <div className="max-w-7xl mx-auto">{renderContent()}</div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
         </div>
       </main>
     </div>

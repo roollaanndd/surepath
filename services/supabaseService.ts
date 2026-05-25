@@ -752,6 +752,28 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
   return data.publicUrl;
 }
 
+export async function uploadLogoImage(file: File): Promise<string | null> {
+  const ext  = file.name.split('.').pop() ?? 'png';
+  const path = `logo/logo.${ext}`;
+  const { error } = await supabase.storage
+    .from('website-assets')
+    .upload(path, file, { upsert: true });
+  if (error) { console.error('uploadLogoImage:', error); return null; }
+  const { data } = supabase.storage.from('website-assets').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function uploadSectionImage(file: File, sectionKey: string): Promise<string | null> {
+  const ext  = file.name.split('.').pop() ?? 'jpg';
+  const path = `sections/${sectionKey}.${ext}`;
+  const { error } = await supabase.storage
+    .from('website-assets')
+    .upload(path, file, { upsert: true });
+  if (error) { console.error('uploadSectionImage:', error); return null; }
+  const { data } = supabase.storage.from('website-assets').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 // ─── Product Commission & Coin Configs ───────────────────────────────────────
 
 export interface SpProductConfig {

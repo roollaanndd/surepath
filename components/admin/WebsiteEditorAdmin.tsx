@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Monitor, Layout, Type, Image, Eye, EyeOff, Save,
-  RotateCcw, CheckCircle, ChevronRight, Layers, Palette,
+  RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2,
 } from 'lucide-react';
 import { db, WebsiteSection } from '../../db';
+import { uploadSectionImage } from '../../services/supabaseService';
 
 type SectionKey = 'hero' | 'marquee' | 'products' | 'claims' | 'stats' | 'testimonials' | 'footer';
 
@@ -21,7 +22,7 @@ const BG_TYPES: { value: WebsiteSection['bgType']; label: string; desc: string }
   { value: 'animated-mesh', label: 'Animated Mesh', desc: 'Canvas blob animation (default)' },
   { value: 'gradient',      label: 'Gradient CSS',  desc: 'Custom gradient string' },
   { value: 'solid',         label: 'Solid Color',   desc: 'Warna latar polos' },
-  { value: 'image',         label: 'Image URL',     desc: 'Gambar dari URL' },
+  { value: 'image',         label: 'Image',         desc: 'Upload file atau masukkan URL gambar' },
   { value: 'none',          label: 'None',          desc: 'Transparan / tanpa bg' },
 ];
 
@@ -40,6 +41,8 @@ const WebsiteEditorAdmin: React.FC = () => {
   const [form, setForm] = useState<WebsiteSection>(defaultSection('hero'));
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'background'>('content');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadSection = useCallback(async (key: SectionKey) => {
     const existing = await db.websiteConfig.where('sectionKey').equals(key).first();
@@ -73,6 +76,16 @@ const WebsiteEditorAdmin: React.FC = () => {
   };
 
   const set = (field: Partial<WebsiteSection>) => setForm(prev => ({ ...prev, ...field }));
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const url = await uploadSectionImage(file, activeKey);
+    setUploading(false);
+    if (url) set({ bgValue: url });
+    e.target.value = '';
+  };
 
   const savedAt = form.updatedAt ? new Date(form.updatedAt).toLocaleString('id-ID') : null;
 
@@ -233,31 +246,69 @@ const WebsiteEditorAdmin: React.FC = () => {
                   <label className={labelCls}>
                     {form.bgType === 'gradient' && 'CSS Gradient (e.g. linear-gradient(135deg, #667eea 0%, #764ba2 100%))'}
                     {form.bgType === 'solid'    && 'Hex Color (e.g. #0f0f1a)'}
-                    {form.bgType === 'image'    && 'Image URL'}
+                    {form.bgType === 'image'    && 'Gambar Background'}
                   </label>
-                  <input
-                    className={inputCls}
-                    placeholder={
-                      form.bgType === 'gradient' ? 'linear-gradient(...)' :
-                      form.bgType === 'solid'    ? '#0f0f1a' :
-                      'https://...'
-                    }
-                    value={form.bgValue ?? ''}
-                    onChange={e => set({ bgValue: e.target.value })}
-                  />
-                  {form.bgType === 'image' && form.bgValue && (
-                    <div
-                      className="mt-3 h-24 rounded-2xl border border-white/10 bg-center bg-cover"
-                      style={{ backgroundImage: `url(${form.bgValue})` }}
-                    />
-                  )}
-                  {form.bgType !== 'image' && form.bgValue && (
-                    <div
-                      className="mt-3 h-12 rounded-2xl border border-white/10"
-                      style={{
-                        background: form.bgType === 'gradient' ? form.bgValue : form.bgValue,
-                      }}
-                    />
+
+                  {form.bgType === 'image' ? (
+                    <div className="space-y-3">
+                      {/* Upload button */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                      >
+                        {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        {uploading ? 'Mengupload...' : 'Upload Gambar dari Perangkat'}
+                      </button>
+
+                      {/* URL fallback */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-white/5" />
+                        <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">atau URL</span>
+                        <div className="flex-1 h-px bg-white/5" />
+                      </div>
+                      <input
+                        className={inputCls}
+                        placeholder="https://..."
+                        value={form.bgValue ?? ''}
+                        onChange={e => set({ bgValue: e.target.value })}
+                      />
+
+                      {/* Preview */}
+                      {form.bgValue && (
+                        <div
+                          className="mt-1 h-32 rounded-2xl border border-white/10 bg-center bg-cover relative overflow-hidden"
+                          style={{ backgroundImage: `url(${form.bgValue})` }}
+                        >
+                          <div className="absolute inset-0 bg-black/20 flex items-end p-2">
+                            <span className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Preview</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        className={inputCls}
+                        placeholder={form.bgType === 'gradient' ? 'linear-gradient(...)' : '#0f0f1a'}
+                        value={form.bgValue ?? ''}
+                        onChange={e => set({ bgValue: e.target.value })}
+                      />
+                      {form.bgValue && (
+                        <div
+                          className="mt-3 h-12 rounded-2xl border border-white/10"
+                          style={{ background: form.bgValue }}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}

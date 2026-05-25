@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -22,7 +22,7 @@ import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import AIAdminView from './AIAdminView';
 import AIFinanceView from './AIFinanceView';
 import { UserRole } from '../../types';
-import { getAdminStats, type AdminStats } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
 
@@ -71,6 +71,9 @@ const AdminPortal = ({
   const [mobileMenuOpen, setMobileOpen] = useState(false);
   const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
   const [darkMode, setDarkMode]       = useState(true);
+  const [logoUrl, setLogoUrl]         = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -80,6 +83,16 @@ const AdminPortal = ({
   }, []);
 
   const filteredMenu = MENU_ITEMS.filter(m => m.roles.includes(userRole));
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    const url = await uploadLogoImage(file);
+    setLogoUploading(false);
+    if (url) setLogoUrl(url);
+    e.target.value = '';
+  };
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
   const SidebarContent = () => (
@@ -93,15 +106,44 @@ const AdminPortal = ({
       </button>
 
       {/* Logo */}
-      <div className={`mb-6 flex items-center gap-3 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-slate-200')}`}>
-        <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
-          <SurePathLogo className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
-            Sure<span className="text-emerald-500">Path</span>
-          </h1>
-          <p className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>Admin Panel</p>
+      <div className={`mb-6 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-slate-200')}`}>
+        <div className="flex items-center gap-3">
+          <div className="relative group flex-shrink-0">
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoUpload}
+            />
+            <div
+              className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden cursor-pointer"
+              onClick={() => logoInputRef.current?.click()}
+              title="Klik untuk ganti logo"
+            >
+              {logoUploading ? (
+                <Loader2 size={16} className="text-white animate-spin" />
+              ) : logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <SurePathLogo className="w-6 h-6 text-white" />
+              )}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-600 rounded-full flex items-center justify-center pointer-events-none">
+              <Upload size={8} className="text-white" />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+              Sure<span className="text-emerald-500">Path</span>
+            </h1>
+            <button
+              onClick={() => logoInputRef.current?.click()}
+              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${th(darkMode, 'text-gray-600 hover:text-emerald-400', 'text-slate-400 hover:text-emerald-600')}`}
+            >
+              {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
+            </button>
+          </div>
         </div>
       </div>
 

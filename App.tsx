@@ -1,16 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
-import AuthGate from './components/AuthGate';
-import AdminPortal from './components/admin/AdminPortal';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail } from './services/supabaseService';
-import PlatformLanding from './src/pages/PlatformLanding';
-import AgentPortal from './components/agent/AgentPortal';
-import CustomerPortal from './components/customer/CustomerPortal';
-import PaymentRedirect from './components/PaymentRedirect';
-import InsuranceReviewPage from './components/InsuranceReviewPage';
+
+// Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
+const AuthGate          = lazy(() => import('./components/AuthGate'));
+const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
+const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
+const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
+const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
+const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
+const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
+
+const PortalLoader = () => (
+  <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060818' }}>
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+        style={{ borderColor: 'rgba(249,115,22,0.3)', borderTopColor: '#f97316' }} />
+      <p className="text-[0.55rem] font-black uppercase tracking-[0.4em]" style={{ color: '#4b5563' }}>
+        Memuat…
+      </p>
+    </div>
+  </div>
+);
 
 const SplashCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -291,14 +305,15 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
+const SESSION_KEY = 'SUREPATH_SESSION';
+
 const App = () => {
-  const [isLoaded, setIsLoaded]   = useState(false);
-  const [, setIsMobile]           = useState(window.innerWidth < 1024);
+  const [isLoaded, setIsLoaded]       = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [darkMode, setDarkMode]   = useState(() =>
+  const [darkMode, setDarkMode]       = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
   );
-  const [appMode, setAppMode]     = useState(() =>
+  const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || false
       : false
@@ -328,7 +343,9 @@ const App = () => {
             return [...prev.filter(p => coreIds.includes(p.id)), ...formatted];
           });
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn('Failed to load custom products:', err);
+      }
     };
     loadCustomProducts();
   }, []);
@@ -342,17 +359,20 @@ const App = () => {
 
   useEffect(() => {
     seedDatabase().catch(console.error);
-    const saved = localStorage.getItem('SUREPATH_SESSION');
+    const saved = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
     if (saved) {
       try {
         const user = JSON.parse(saved);
         setCurrentUser(user);
         setAppMode(true);
-      } catch (_) { localStorage.removeItem('SUREPATH_SESSION'); }
+      } catch {
+        localStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
+      }
     }
   }, []);
 
-  const handleAuthSuccess = async (user: any) => {
+  const handleAuthSuccess = useCallback(async (user: any) => {
     let enrichedUser = user;
     if (user.role === UserRole.AGENT && !user.supabaseId) {
       const spUser = await getAgentByEmail(user.email).catch(() => null);
@@ -361,43 +381,54 @@ const App = () => {
     setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
     setTimeout(() => {
       setCurrentUser(enrichedUser);
-      localStorage.setItem('SUREPATH_SESSION', JSON.stringify(enrichedUser));
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
       setAppMode(true);
     }, 1400);
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut().catch(() => {});
     setCurrentUser(null);
-    localStorage.removeItem('SUREPATH_SESSION');
+    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
     setAppMode(false);
-  };
-
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 1024);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
   }, []);
 
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} />;
 
   const { pathname } = window.location;
-  if (pathname === '/payment/success') return <PaymentRedirect status="success" />;
-  if (pathname === '/payment/failed')  return <PaymentRedirect status="failed" />;
+
+  if (pathname === '/payment/success' || pathname === '/payment/failed') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <PaymentRedirect status={pathname === '/payment/success' ? 'success' : 'failed'} />
+      </Suspense>
+    );
+  }
 
   const reviewMatch = pathname.match(/^\/review\/([0-9a-f-]{36})$/i);
-  if (reviewMatch) return <InsuranceReviewPage token={reviewMatch[1]} />;
-
-  if (currentUser && [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(currentUser.role)) {
+  if (reviewMatch) {
     return (
-      <AdminPortal
-        onLogout={handleLogout}
-        products={products}
-        setProducts={setProducts}
-        userRole={currentUser.role}
-        currentUser={currentUser}
-      />
+      <Suspense fallback={<PortalLoader />}>
+        <InsuranceReviewPage token={reviewMatch[1]} />
+      </Suspense>
+    );
+  }
+
+  const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN];
+
+  if (currentUser && ADMIN_ROLES.includes(currentUser.role)) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AdminPortal
+          onLogout={handleLogout}
+          products={products}
+          setProducts={setProducts}
+          userRole={currentUser.role}
+          currentUser={currentUser}
+        />
+      </Suspense>
     );
   }
 
@@ -405,35 +436,47 @@ const App = () => {
     const agentWithSupabaseId = currentUser.supabaseId
       ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
       : { ...currentUser, agent_code: currentUser.nodeId };
-    return <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />;
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
+      </Suspense>
+    );
   }
 
   if (currentUser) {
     return (
-      <CustomerPortal
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        lang={lang}
-        products={products}
-      />
+      <Suspense fallback={<PortalLoader />}>
+        <CustomerPortal
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          lang={lang}
+          products={products}
+        />
+      </Suspense>
     );
   }
 
   if (!appMode) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <PlatformLanding
-          onSignIn={() => setAppMode(true)}
-          lang={lang}
-          setLang={setLang}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-        />
+        <Suspense fallback={<PortalLoader />}>
+          <PlatformLanding
+            onSignIn={() => setAppMode(true)}
+            lang={lang}
+            setLang={setLang}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+        </Suspense>
       </div>
     );
   }
 
-  return <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />;
+  return (
+    <Suspense fallback={<PortalLoader />}>
+      <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />
+    </Suspense>
+  );
 };
 
 export default App;

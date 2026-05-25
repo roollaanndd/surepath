@@ -51,10 +51,10 @@ const AnimatedBackground: React.FC = () => {
     window.addEventListener('resize', resize);
 
     const blobs = [
-      { size: 520, color: '16,185,129',  phase: 0,   speedX: 0.7, speedY: 0.5  },  // emerald
-      { size: 420, color: '249,115,22',  phase: 2.1, speedX: 0.5, speedY: 0.8  },  // orange
-      { size: 360, color: '99,102,241',  phase: 4.2, speedX: 0.9, speedY: 0.6  },  // indigo
-      { size: 280, color: '6,182,212',   phase: 1.0, speedX: 0.6, speedY: 0.9  },  // cyan
+      { size: 520, color: '16,185,129',  phase: 0,   speedX: 0.0007, speedY: 0.0005 },
+      { size: 420, color: '249,115,22',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
+      { size: 360, color: '99,102,241',  phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
+      { size: 280, color: '6,182,212',   phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
     ];
 
     let frame = 0;
@@ -63,8 +63,7 @@ const AnimatedBackground: React.FC = () => {
     const draw = () => {
       frame++;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const t = frame * 0.0015;
+      const t = frame;
 
       blobs.forEach((blob) => {
         const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(t * blob.speedX + blob.phase)));
@@ -74,7 +73,6 @@ const AnimatedBackground: React.FC = () => {
         grd.addColorStop(0, `rgba(${blob.color},0.18)`);
         grd.addColorStop(0.5, `rgba(${blob.color},0.06)`);
         grd.addColorStop(1, `rgba(${blob.color},0)`);
-
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       });
@@ -104,68 +102,77 @@ const AuthGate: React.FC<AuthGateProps> = ({
   initialMode = 'LOGIN',
 }) => {
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'CHECK_EMAIL'>(initialMode as any);
-  const [showPass, setShowPass]     = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [resending, setResending]   = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [lang]                      = useState<Language>(initialLang);
-  const [regRole, setRegRole]       = useState<UserRole>(UserRole.CUSTOMER);
-  const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [resending, setResending] = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [lang]                    = useState<Language>(initialLang);
+  const [regRole, setRegRole]     = useState<UserRole>(UserRole.CUSTOMER);
+  const [formData, setFormData]   = useState({ name: '', email: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
+
+  // Prevents double-resolution when both direct call and onAuthStateChange fire
+  const resolvedRef = useRef(false);
 
   useEffect(() => { setMode(initialMode as any); }, [initialMode]);
 
-  // Handle email confirmation redirect — detect existing session on mount
+  // ── Build user object from Supabase user ──────────────────────────────────
+  const buildUserObj = async (user: any) => {
+    const profile =
+      (await getAgentProfile(user.id).catch(() => null)) ??
+      (await getAgentByEmail(user.email!).catch(() => null));
+
+    return profile
+      ? {
+          id:         profile.id,
+          name:       profile.name,
+          email:      profile.email,
+          role:       profile.role as UserRole,
+          supabaseId: profile.id,
+          nodeId:     profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
+          trustScore: profile.trust_score ?? 85,
+        }
+      : {
+          id:         user.id,
+          name:       user.user_metadata?.name ?? user.email!.split('@')[0],
+          email:      user.email!,
+          role:       UserRole.CUSTOMER,
+          supabaseId: user.id,
+          nodeId:     `SP-${user.id.slice(0, 8).toUpperCase()}`,
+          trustScore: 85,
+        };
+  };
+
+  // ── Resolve and login — deduplicated via ref ──────────────────────────────
+  const resolveAndLogin = async (user: any) => {
+    if (resolvedRef.current) return;
+    resolvedRef.current = true; // claim immediately — JS is single-threaded
+    try {
+      const userObj = await buildUserObj(user);
+      onAuthSuccess(userObj);
+    } catch {
+      resolvedRef.current = false;
+      setLoading(false);
+      setError(lang === Language.EN ? 'Login failed. Please try again.' : 'Login gagal. Coba lagi.');
+    }
+  };
+
+  // ── Handle email confirmation redirect + auth state changes ───────────────
   useEffect(() => {
-    let mounted = true;
-
-    const resolveSession = async (user: any) => {
-      const profile =
-        (await getAgentProfile(user.id).catch(() => null)) ??
-        (await getAgentByEmail(user.email!).catch(() => null));
-
-      const userObj = profile
-        ? {
-            id:         profile.id,
-            name:       profile.name,
-            email:      profile.email,
-            role:       profile.role as UserRole,
-            supabaseId: profile.id,
-            nodeId:     profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
-            trustScore: profile.trust_score ?? 85,
-          }
-        : {
-            id:         user.id,
-            name:       user.user_metadata?.name ?? user.email!.split('@')[0],
-            email:      user.email!,
-            role:       UserRole.CUSTOMER,
-            supabaseId: user.id,
-            nodeId:     `SP-${user.id.slice(0, 8).toUpperCase()}`,
-            trustScore: 85,
-          };
-
-      if (mounted) onAuthSuccess(userObj);
-    };
-
-    // Check for session from email confirmation redirect
+    // If user arrives from email confirmation link, they already have a session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted && session?.user) {
-        resolveSession(session.user);
-      }
+      if (session?.user) resolveAndLogin(session.user);
     });
 
-    // Also listen for auth state changes (email link clicks while page is open)
+    // Listen for SIGNED_IN (email link click while page is open, or 3rd-party)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user && mounted) {
-        resolveSession(session.user);
+      if (event === 'SIGNED_IN' && session?.user) {
+        resolveAndLogin(session.user);
       }
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    return () => subscription.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
@@ -181,6 +188,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     e.preventDefault();
     setLoading(true);
     setError(null);
+    resolvedRef.current = false; // reset for new attempt
 
     const { data, error: authErr } = await supabase.auth.signInWithPassword({
       email:    formData.email,
@@ -188,11 +196,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
     });
 
     if (authErr || !data.user) {
-      setError(authErr?.message ?? 'Login gagal. Coba lagi.');
+      setError(authErr?.message ?? t('Login failed. Please try again.', 'Login gagal. Coba lagi.'));
       setLoading(false);
       return;
     }
-    // onAuthStateChange listener above will handle calling onAuthSuccess
+
+    // Resolve directly — onAuthStateChange may also fire but resolvedRef prevents double-call
+    await resolveAndLogin(data.user);
   };
 
   // ── Supabase register ────────────────────────────────────────────────────────
@@ -204,6 +214,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     }
     setLoading(true);
     setError(null);
+    resolvedRef.current = false;
 
     const { data, error: authErr } = await supabase.auth.signUp({
       email:    formData.email,
@@ -212,29 +223,31 @@ const AuthGate: React.FC<AuthGateProps> = ({
     });
 
     if (authErr || !data.user) {
-      setError(authErr?.message ?? 'Registrasi gagal. Coba lagi.');
+      setError(authErr?.message ?? t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.'));
       setLoading(false);
       return;
     }
 
     // Upsert profile
     await supabase.from('sp_users').upsert({
-      id:         data.user.id,
-      name:       formData.name,
-      email:      formData.email,
-      phone:      '',
-      role:       UserRole.CUSTOMER,
-      agent_code: `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
+      id:          data.user.id,
+      name:        formData.name,
+      email:       formData.email,
+      phone:       '',
+      role:        UserRole.CUSTOMER,
+      agent_code:  `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
       trust_score: 85,
     });
 
-    // If email confirmation required
     if (!data.session) {
+      // Email confirmation required
       setMode('CHECK_EMAIL');
       setLoading(false);
       return;
     }
-    // If no email confirmation needed, onAuthStateChange handles the rest
+
+    // Immediate session (email confirmation disabled) — resolve directly
+    await resolveAndLogin(data.user);
   };
 
   // ── Resend confirmation email ─────────────────────────────────────────────
@@ -258,7 +271,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
   return (
     <div className="min-h-screen bg-[#060818] text-white flex flex-col items-center justify-center p-5 relative overflow-hidden">
 
-      {/* Animated canvas background */}
       <AnimatedBackground />
 
       {/* Subtle grid overlay */}
@@ -266,23 +278,24 @@ const AuthGate: React.FC<AuthGateProps> = ({
         className="absolute inset-0 pointer-events-none opacity-[0.018]"
         style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)',
-          backgroundSize: '60px 60px'
+          backgroundSize: '60px 60px',
         }}
       />
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-7">
 
-        {/* Logo — premium sizing */}
+        {/* Logo */}
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/25 rounded-[3rem] blur-3xl scale-150 animate-pulse" />
-            <div className="relative w-28 h-28 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/40 rounded-[2.5rem] flex items-center justify-center backdrop-blur-sm shadow-2xl shadow-emerald-500/20">
+            <div className="absolute inset-0 bg-emerald-500/20 rounded-[3rem] blur-3xl scale-150 animate-pulse" />
+            <div className="relative w-28 h-28 bg-gradient-to-br from-orange-500/15 to-emerald-500/10 border border-orange-500/30 rounded-[2.5rem] flex items-center justify-center backdrop-blur-sm shadow-2xl shadow-orange-500/15">
+              <div className="absolute inset-2 rounded-[2rem] border border-orange-500/10" />
               <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
             </div>
           </div>
           <div className="text-center">
             <h1 className="text-4xl font-black tracking-[-0.05em] uppercase leading-none">
-              Sure<span className="text-emerald-400">Path</span>
+              Sure<span className="text-[#f97316]">Path</span>
             </h1>
             <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-[0.45em] mt-2">
               {t('Smart Insurance Platform', 'Platform Asuransi Pintar')}
@@ -329,13 +342,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <div className="flex bg-white/[0.05] p-1 rounded-2xl border border-white/5">
               <button
                 onClick={() => { setMode('LOGIN'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 {t('Sign In', 'Masuk')}
               </button>
               <button
                 onClick={() => { setMode('REGISTER'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:text-gray-300'}`}
               >
                 {t('Register', 'Daftar')}
               </button>
@@ -345,19 +358,16 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
               {mode === 'REGISTER' && (
                 <>
-                  {/* Name */}
                   <div className="relative">
                     <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
                       required
                       placeholder={t('Full Name', 'Nama Lengkap')}
-                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
-
-                  {/* Role selector */}
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -384,7 +394,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   required
                   type="email"
                   placeholder="email@contoh.com"
-                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -398,14 +408,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   type={showPass ? 'text' : 'password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-emerald-500/50 transition-all"
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-400 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-orange-400 transition-colors"
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -416,7 +426,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </p>
               )}
 
-              {/* Error */}
               {error && (
                 <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-bold flex items-center gap-2">
                   <AlertCircle size={14} className="flex-shrink-0" />
@@ -424,11 +433,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </div>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)', boxShadow: '0 8px 32px rgba(249,115,22,0.3)' }}
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -447,7 +456,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* Demo — customer only (admin & agent demo disabled) */}
+        {/* Demo — Nasabah only */}
         {mode === 'LOGIN' && (
           <div className="w-full space-y-3">
             <div className="flex items-center gap-3">
@@ -468,9 +477,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* Footer */}
         <p className="text-[0.5rem] font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
-          <Shield size={10} className="text-emerald-800" />
+          <Shield size={10} className="text-orange-800" />
           Secured by SurePath Smart Security v4.2
         </p>
       </div>

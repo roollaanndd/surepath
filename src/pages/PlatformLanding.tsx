@@ -22,6 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { Language } from '../../types';
+import { SurePathLogo } from '../../components/Navbar';
 
 interface Props {
   onSignIn: () => void;
@@ -86,8 +87,8 @@ const CarSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
   <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="carGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#7c3aed" />
-        <stop offset="1" stopColor="#3b82f6" />
+        <stop stopColor="#f97316" />
+        <stop offset="1" stopColor="#fb923c" />
       </linearGradient>
     </defs>
     {/* Car body */}
@@ -97,9 +98,9 @@ const CarSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
     {/* Windows */}
     <path d="M27 40 L30 30 L50 30 L53 40Z" fill="white" opacity="0.25"/>
     {/* Wheels */}
-    <circle cx="22" cy="60" r="8" fill="#1e1b4b" stroke="url(#carGrad)" strokeWidth="2.5"/>
+    <circle cx="22" cy="60" r="8" fill="#0a0a0a" stroke="url(#carGrad)" strokeWidth="2.5"/>
     <circle cx="22" cy="60" r="4" fill="url(#carGrad)" opacity="0.6"/>
-    <circle cx="58" cy="60" r="8" fill="#1e1b4b" stroke="url(#carGrad)" strokeWidth="2.5"/>
+    <circle cx="58" cy="60" r="8" fill="#0a0a0a" stroke="url(#carGrad)" strokeWidth="2.5"/>
     <circle cx="58" cy="60" r="4" fill="url(#carGrad)" opacity="0.6"/>
     {/* Shield overlay top-right */}
     <path d="M62 10 L74 15 L74 25 Q74 33 62 37 Q50 33 50 25 L50 15 Z" fill="#10b981" opacity="0.85"/>
@@ -172,7 +173,7 @@ const GadgetSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
   <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <defs>
       <linearGradient id="gadgetGrad" x1="0" y1="80" x2="80" y2="0" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#8b5cf6" />
+        <stop stopColor="#f97316" />
         <stop offset="1" stopColor="#06b6d4" />
       </linearGradient>
     </defs>
@@ -191,32 +192,38 @@ const GadgetSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
 
 // ─── Policy Card (Hero Visual) ────────────────────────────────────────────────
 const PolicyCard: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const _ = darkMode; // suppress unused warning - darkMode informs context
-  void _;
   return (
     <div className="relative w-full max-w-sm mx-auto">
       {/* Glow blob behind card */}
       <div
         className="absolute inset-0 rounded-[2.5rem] blur-3xl opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, #7c3aed 0%, #3b82f6 50%, transparent 80%)' }}
+        style={{ background: 'radial-gradient(ellipse, #f97316 0%, #10b981 50%, transparent 80%)' }}
       />
 
       {/* Main policy card */}
       <div
-        className="relative rounded-[2rem] p-6 overflow-hidden"
+        className={`relative rounded-[2rem] p-6 overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-white'}`}
         style={{
-          background: 'linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(59,130,246,0.85) 60%, rgba(16,185,129,0.4) 100%)',
-          backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          boxShadow: '0 32px 80px rgba(124,58,237,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+          border: darkMode
+            ? '1px solid rgba(255,255,255,0.1)'
+            : '1px solid rgba(15,23,42,0.08)',
+          boxShadow: darkMode
+            ? '0 32px 80px rgba(249,115,22,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
+            : '0 32px 80px rgba(249,115,22,0.15), 0 4px 24px rgba(0,0,0,0.08)',
           transform: 'perspective(800px) rotateY(-6deg) rotateX(2deg)',
         }}
       >
+        {/* Orange top accent stripe */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, #f97316 30%, #10b981 70%, transparent)' }}
+        />
+
         {/* Dot pattern */}
         <div
-          className="absolute inset-0 opacity-[0.08] pointer-events-none"
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
+            backgroundImage: `radial-gradient(circle, ${darkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)'} 1px, transparent 1px)`,
             backgroundSize: '20px 20px',
           }}
         />
@@ -225,82 +232,96 @@ const PolicyCard: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
         <div className="relative flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}
+              >
                 <CarSVG className="w-4 h-4" />
               </div>
-              <span className="text-white/70 text-xs font-semibold uppercase tracking-widest">Car Protection</span>
+              <span
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: '#f97316' }}
+              >
+                Car Protection
+              </span>
             </div>
-            <p className="text-white font-black text-lg leading-tight">Premium Plan</p>
+            <p className={`font-black text-lg leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Premium Plan</p>
           </div>
-          {/* Active badge */}
+          {/* Active badge - emerald */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-400/20 border border-emerald-400/30">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-300 text-xs font-bold">ACTIVE</span>
+            <span className="text-emerald-400 text-xs font-bold">ACTIVE</span>
           </div>
         </div>
 
         {/* Policy number */}
         <div className="relative mb-5">
-          <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Policy Number</p>
-          <p className="text-white font-mono font-bold text-sm tracking-wider">SP-2025-0042-8831</p>
+          <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Policy Number</p>
+          <p className={`font-mono font-bold text-sm tracking-wider ${darkMode ? 'text-white' : 'text-slate-800'}`}>SP-2025-0042-8831</p>
         </div>
 
-        {/* Coverage + expiry */}
+        {/* Coverage + expiry grid */}
         <div className="relative grid grid-cols-2 gap-4 mb-6">
           <div>
-            <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Coverage</p>
-            <p className="text-white font-black text-base">Rp 350 Jt</p>
+            <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Coverage</p>
+            <p className={`font-black text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>Rp 350 Jt</p>
           </div>
           <div>
-            <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Valid Until</p>
-            <p className="text-white font-black text-base">Dec 2026</p>
+            <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Valid Until</p>
+            <p className={`font-black text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>Dec 2026</p>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="relative flex items-center justify-between pt-4 border-t border-white/10">
+        {/* Bottom bar: orange shield + SurePath + emerald Verified */}
+        <div
+          className="relative flex items-center justify-between pt-4"
+          style={{ borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}` }}
+        >
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
-              <Shield className="text-white" size={13} />
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}
+            >
+              <Shield className="text-[#f97316]" size={13} />
             </div>
-            <span className="text-white/60 text-xs font-medium">SurePath Insurance</span>
+            <span className={`text-xs font-medium ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>SurePath Insurance</span>
           </div>
-          <div className="flex gap-1">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="w-6 h-6 rounded-full border-2 border-white/30 bg-gradient-to-br from-violet-400 to-blue-400 -ml-1" />
-            ))}
+          {/* Emerald Verified badge */}
+          <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <CheckCircle size={10} className="text-emerald-400" />
+            <span className="text-emerald-400 text-[10px] font-bold">Verified</span>
           </div>
         </div>
       </div>
 
-      {/* Floating badge: users */}
+      {/* Floating badge: 24k+ users in orange gradient */}
       <div
         className="absolute -top-4 -left-6 flex items-center gap-2 px-3 py-2 rounded-2xl text-white text-xs font-bold"
         style={{
-          background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
-          boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
+          background: 'linear-gradient(135deg, #f97316, #fb923c)',
+          boxShadow: '0 8px 32px rgba(249,115,22,0.4)',
         }}
       >
         <Users size={12} />
         24k+ Pengguna
       </div>
 
-      {/* Floating badge: OJK */}
+      {/* Floating badge: OJK Licensed in emerald */}
       <div
         className="absolute -bottom-3 -right-4 flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-bold"
         style={{
-          background: 'rgba(255,255,255,0.06)',
+          background: 'rgba(16,185,129,0.12)',
           backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255,255,255,0.12)',
+          border: '1px solid rgba(16,185,129,0.25)',
           color: '#34d399',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}
       >
         <Award size={12} />
         OJK Licensed
       </div>
 
-      {/* Floating particles */}
+      {/* Floating particles in orange/emerald */}
       {[
         { top: '10%', left: '-8%', size: 8, delay: '0s', dur: '3.2s' },
         { top: '60%', left: '-12%', size: 5, delay: '0.8s', dur: '4.1s' },
@@ -319,7 +340,7 @@ const PolicyCard: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
             left: 'left' in p ? p.left : undefined,
             right: 'right' in p ? p.right : undefined,
             background: i % 2 === 0
-              ? 'radial-gradient(circle, #a78bfa, #7c3aed)'
+              ? 'radial-gradient(circle, #fb923c, #f97316)'
               : 'radial-gradient(circle, #34d399, #10b981)',
             animation: `spParticle${(i % 3) + 1} ${p.dur} ease-in-out infinite`,
             animationDelay: p.delay,
@@ -336,14 +357,14 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
     {/* Glow */}
     <div
       className="absolute w-64 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
-      style={{ background: 'radial-gradient(ellipse, #7c3aed, #10b981)' }}
+      style={{ background: 'radial-gradient(ellipse, #f97316, #10b981)' }}
     />
 
     {/* Phone frame */}
     <div
       className="relative w-52 rounded-[3rem] overflow-hidden"
       style={{
-        background: 'rgba(15,10,40,0.95)',
+        background: 'rgba(10,10,10,0.95)',
         border: '3px solid rgba(255,255,255,0.12)',
         boxShadow: '0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
       }}
@@ -358,8 +379,8 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
         {/* App header */}
         <div className="flex items-center justify-between mb-1">
           <p className="text-white font-black text-sm">{tx('Klaim Baru', 'New Claim', lang)}</p>
-          <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center">
-            <X size={10} className="text-violet-400" />
+          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.2)' }}>
+            <X size={10} className="text-[#f97316]" />
           </div>
         </div>
 
@@ -367,13 +388,13 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
         <div
           className="rounded-2xl p-4 flex flex-col items-center gap-2"
           style={{
-            background: 'rgba(124,58,237,0.12)',
-            border: '1.5px dashed rgba(124,58,237,0.4)',
+            background: 'rgba(249,115,22,0.08)',
+            border: '1.5px dashed rgba(249,115,22,0.35)',
           }}
         >
           {/* Camera icon custom SVG */}
-          <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="rgb(167,139,250)" strokeWidth="1.8">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.15)' }}>
+            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#fb923c" strokeWidth="1.8">
               <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
               <circle cx="12" cy="13" r="4"/>
             </svg>
@@ -410,7 +431,7 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
         {/* Bottom pill */}
         <div
           className="rounded-xl py-2.5 text-center text-white text-xs font-bold"
-          style={{ background: 'linear-gradient(90deg, #7c3aed, #3b82f6)' }}
+          style={{ background: 'linear-gradient(90deg, #f97316, #fb923c)' }}
         >
           {tx('Kirim Klaim', 'Submit Claim', lang)}
         </div>
@@ -424,9 +445,8 @@ const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
   </div>
 );
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 // ─── Animated Mesh Background ─────────────────────────────────────────────────
-interface Orb { ax: number; ay: number; fx: number; fy: number; px: number; py: number; r: number; h: number; s: number; l: number; a: number; }
+interface Orb { ax: number; ay: number; fx: number; fy: number; px: number; py: number; r: number; h: number; s: number; l: number; }
 
 const AnimatedBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -437,31 +457,31 @@ const AnimatedBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
     if (!ctx) return;
 
     const orbs: Orb[] = [
-      { ax: 0.55, ay: 0.30, fx: 0.00031, fy: 0.00023, px: 0,    py: 0.5,  r: 380, h: 265, s: 80, l: 55, a: 0 },
-      { ax: 0.35, ay: 0.65, fx: 0.00019, fy: 0.00041, px: 1.5,  py: 2.1,  r: 320, h: 210, s: 70, l: 50, a: 0 },
-      { ax: 0.75, ay: 0.55, fx: 0.00027, fy: 0.00017, px: 3.2,  py: 0.8,  r: 280, h: 165, s: 75, l: 50, a: 0 },
-      { ax: 0.20, ay: 0.25, fx: 0.00043, fy: 0.00033, px: 0.7,  py: 3.5,  r: 240, h: 30,  s: 80, l: 60, a: 0 },
-      { ax: 0.85, ay: 0.80, fx: 0.00015, fy: 0.00025, px: 2.8,  py: 1.2,  r: 300, h: 185, s: 65, l: 55, a: 0 },
-      { ax: 0.50, ay: 0.50, fx: 0.00037, fy: 0.00029, px: 4.0,  py: 4.0,  r: 200, h: 140, s: 60, l: 55, a: 0 },
+      { ax: 0.55, ay: 0.30, fx: 0.00031, fy: 0.00023, px: 0,    py: 0.5,  r: 380, h: 25,  s: 80, l: 55 },
+      { ax: 0.35, ay: 0.65, fx: 0.00019, fy: 0.00041, px: 1.5,  py: 2.1,  r: 320, h: 160, s: 70, l: 50 },
+      { ax: 0.75, ay: 0.55, fx: 0.00027, fy: 0.00017, px: 3.2,  py: 0.8,  r: 280, h: 195, s: 75, l: 50 },
+      { ax: 0.20, ay: 0.25, fx: 0.00043, fy: 0.00033, px: 0.7,  py: 3.5,  r: 240, h: 30,  s: 80, l: 60 },
+      { ax: 0.85, ay: 0.80, fx: 0.00015, fy: 0.00025, px: 2.8,  py: 1.2,  r: 300, h: 150, s: 65, l: 55 },
+      { ax: 0.50, ay: 0.50, fx: 0.00037, fy: 0.00029, px: 4.0,  py: 4.0,  r: 200, h: 20,  s: 60, l: 55 },
     ];
 
-    let w = 0, h = 0, raf = 0;
+    let w = 0, canvasH = 0, raf = 0;
     const resize = () => {
       w = canvas.width  = canvas.offsetWidth;
-      h = canvas.height = canvas.offsetHeight;
+      canvasH = canvas.height = canvas.offsetHeight;
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const opacity = darkMode ? 0.13 : 0.055;
+    const opacity = darkMode ? 0.18 : 0.08;
     let t = 0;
     const draw = () => {
-      ctx.clearRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, canvasH);
       t += 1;
       for (const o of orbs) {
         const cx = (o.ax + 0.18 * Math.sin(o.fx * t + o.px)) * w;
-        const cy = (o.ay + 0.16 * Math.cos(o.fy * t + o.py)) * h;
+        const cy = (o.ay + 0.16 * Math.cos(o.fy * t + o.py)) * canvasH;
         const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, o.r);
         grd.addColorStop(0,   `hsla(${o.h},${o.s}%,${o.l}%,${opacity})`);
         grd.addColorStop(0.5, `hsla(${o.h},${o.s}%,${o.l}%,${opacity * 0.4})`);
@@ -524,9 +544,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       pills: ['All Risk', 'TLO', t('Banjir', 'Flood')],
       price: t('Rp 1,2 Jt/tahun', 'Rp 1.2M/year'),
       badge: t('Terlaris', 'Best Seller'),
-      grad: 'from-violet-600/20 to-indigo-600/20',
-      border: 'border-violet-500/20',
-      iconGrad: 'from-violet-500 to-indigo-600',
+      grad: 'from-orange-500/20 to-amber-500/20',
+      border: 'border-orange-500/20',
     },
     {
       svg: TravelSVG,
@@ -538,7 +557,6 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       badge: '',
       grad: 'from-emerald-600/20 to-teal-600/20',
       border: 'border-emerald-500/20',
-      iconGrad: 'from-emerald-500 to-teal-600',
     },
     {
       svg: HealthSVG,
@@ -550,7 +568,6 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       badge: '',
       grad: 'from-pink-600/20 to-rose-600/20',
       border: 'border-pink-500/20',
-      iconGrad: 'from-pink-500 to-rose-600',
     },
     {
       svg: PASvg,
@@ -562,7 +579,6 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       badge: '',
       grad: 'from-orange-500/20 to-amber-500/20',
       border: 'border-orange-500/20',
-      iconGrad: 'from-orange-500 to-amber-500',
     },
     {
       svg: GadgetSVG,
@@ -572,9 +588,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       pills: ['Crack Screen', t('Kehilangan', 'Loss'), 'Liquid'],
       price: t('Rp 45rb/bln', 'Rp 45K/mo'),
       badge: '',
-      grad: 'from-cyan-600/20 to-violet-600/20',
+      grad: 'from-cyan-600/20 to-orange-500/20',
       border: 'border-cyan-500/20',
-      iconGrad: 'from-cyan-500 to-violet-600',
     },
   ];
 
@@ -583,22 +598,22 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       num: '01',
       title: t('Pilih Produk', 'Choose Product'),
       desc: t('Pilih dari 5 kategori asuransi dan sesuaikan kebutuhanmu dalam hitungan detik.', 'Choose from 5 insurance categories and customize your needs in seconds.'),
-      color: 'text-violet-400',
-      glowColor: 'rgba(124,58,237,0.3)',
+      color: 'text-orange-400',
+      glowColor: 'rgba(249,115,22,0.3)',
     },
     {
       num: '02',
       title: t('Isi Data', 'Fill Your Details'),
       desc: t('Isi form singkat — AI kami akan bantu pra-isi dari data yang sudah ada.', 'Fill a short form — our AI pre-fills from your existing data.'),
-      color: 'text-blue-400',
-      glowColor: 'rgba(59,130,246,0.3)',
+      color: 'text-emerald-400',
+      glowColor: 'rgba(16,185,129,0.3)',
     },
     {
       num: '03',
       title: t('Bayar & Aktif', 'Pay & Activate'),
       desc: t('Bayar via transfer, kartu, atau QRIS. Polis aktif & dikirim dalam 60 detik.', 'Pay via transfer, card, or QRIS. Policy activated & delivered in 60 seconds.'),
-      color: 'text-emerald-400',
-      glowColor: 'rgba(16,185,129,0.3)',
+      color: 'text-sky-400',
+      glowColor: 'rgba(14,165,233,0.3)',
     },
   ];
 
@@ -623,7 +638,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       quote: t('"Proses klaim cuma 10 menit! Foto, upload, selesai. Nggak perlu ribet ke kantor sama sekali."', '"Claim took just 10 minutes! Photo, upload, done. No need to go to the office at all."'),
       rating: 5,
       init: 'A',
-      color: 'from-violet-600 to-indigo-600',
+      color: 'from-orange-500 to-amber-500',
     },
     {
       name: 'Sari Dewi',
@@ -639,7 +654,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       quote: t('"SurePath jauh lebih murah dari asuransi konvensional dengan manfaat yang bahkan lebih baik."', '"SurePath is much cheaper than conventional insurance with even better benefits."'),
       rating: 5,
       init: 'B',
-      color: 'from-blue-500 to-cyan-600',
+      color: 'from-sky-500 to-cyan-600',
     },
   ];
 
@@ -668,7 +683,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
   const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
   const surfaceBg = isDark ? 'bg-white/[0.04]' : 'bg-white';
   const borderColor = isDark ? 'border-white/[0.08]' : 'border-slate-200';
-  const pageBg = isDark ? '#030712' : '#f8fafc';
+  const pageBg = isDark ? '#0a0a0a' : '#fafaf9';
+  const eyebrowColor = isDark ? 'text-emerald-400' : 'text-emerald-600';
+
+  // CMS hero logoUrl (WebsiteSection doesn't have this field officially, read via index access)
+  const heroSection = cmsConfig.hero as (import('../../db').WebsiteSection & { logoUrl?: string }) | undefined;
 
   return (
     <>
@@ -703,19 +722,12 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           100% { transform: scale(1.5); opacity:0; }
         }
         .sp-grad-text {
-          background: linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #67e8f9 100%);
+          background: linear-gradient(135deg, #10b981 0%, #34d399 40%, #f97316 100%);
           background-size: 200% 200%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           animation: spGradShift 5s ease-in-out infinite;
-        }
-        .sp-grad-orange {
-          background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fbbf24 100%);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
         }
         .sp-marquee { animation: spMarquee 30s linear infinite; }
         .sp-card-float {
@@ -750,43 +762,69 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           pointer-events: none;
           border-radius: inherit;
         }
+        .sp-no-screenshot {
+          -webkit-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+        }
+        @media print {
+          .sp-no-screenshot, .sp-no-screenshot * {
+            display: none !important;
+            visibility: hidden !important;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .sp-card-float, .sp-marquee, .sp-grad-text { animation: none !important; }
         }
       `}</style>
 
       <div
-        className={`${textPrimary} min-h-screen overflow-x-hidden font-sans relative`}
+        className={`sp-no-screenshot ${textPrimary} min-h-screen overflow-x-hidden font-sans relative`}
         style={{ background: pageBg }}
       >
+        {/* Invisible watermark overlay */}
+        <div
+          className="fixed inset-0 pointer-events-none z-[9998] select-none"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              -45deg,
+              transparent,
+              transparent 80px,
+              rgba(249,115,22,0.012) 80px,
+              rgba(249,115,22,0.012) 82px
+            )`,
+          }}
+          aria-hidden="true"
+        />
+
         <AnimatedBackground darkMode={darkMode} />
+
         {/* ══════════════════════════════════════════════════════════════════
             NAV
         ══════════════════════════════════════════════════════════════════ */}
         <nav
           className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
-            isScrolled
-              ? 'py-2'
-              : 'py-4'
+            isScrolled ? 'py-2' : 'py-4'
           }`}
         >
           <div className={`mx-4 md:mx-auto md:max-w-6xl transition-all duration-500 ${
             isScrolled
-              ? `rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#030712]/80' : 'bg-white/80'} shadow-2xl shadow-black/20 px-5`
+              ? `rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#0a0a0a]/80' : 'bg-white/80'} shadow-2xl shadow-black/20 px-5`
               : 'px-6'
           }`}>
             <div className="h-14 flex items-center justify-between">
               {/* Logo */}
               <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}
-                >
-                  <Shield size={16} className="text-white" />
-                </div>
-                <span className="font-black text-xl tracking-tight">
-                  <span className={textPrimary}>Sure</span>
-                  <span className="sp-grad-text">Path</span>
+                {heroSection?.logoUrl ? (
+                  <img src={heroSection.logoUrl} alt="SurePath" className="h-8 w-auto object-contain" />
+                ) : (
+                  <div className="w-8 h-8 rounded-xl bg-[#f97316] flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <SurePathLogo className="w-5 h-5" />
+                  </div>
+                )}
+                <span className="font-black text-xl tracking-tight uppercase">
+                  Sure<span className="text-[#f97316]">Path</span>
                 </span>
               </div>
 
@@ -801,10 +839,10 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   <a
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-medium ${textMuted} hover:text-violet-400 transition-colors relative group`}
+                    className={`text-sm font-medium ${textMuted} hover:text-[#f97316] transition-colors relative group`}
                   >
                     {link.label}
-                    <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-violet-400 group-hover:w-full transition-all duration-300" />
+                    <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#f97316] group-hover:w-full transition-all duration-300" />
                   </a>
                 ))}
               </div>
@@ -814,7 +852,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                 {/* Lang toggle */}
                 <button
                   onClick={toggleLang}
-                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${borderColor} ${textMuted} hover:border-violet-500/50 hover:text-violet-400 transition-all`}
+                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${borderColor} ${textMuted} hover:border-orange-500/50 hover:text-[#f97316] transition-all`}
                 >
                   <Globe size={12} />
                   {lang}
@@ -823,7 +861,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                 {/* Dark mode */}
                 <button
                   onClick={toggleDark}
-                  className={`p-2 rounded-xl border ${borderColor} ${textMuted} hover:border-violet-500/50 hover:text-violet-400 transition-all`}
+                  className={`p-2 rounded-xl border ${borderColor} ${textMuted} hover:border-orange-500/50 hover:text-[#f97316] transition-all`}
                   aria-label="Toggle dark mode"
                 >
                   {isDark ? <Sun size={15} /> : <Moon size={15} />}
@@ -832,7 +870,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                 {/* Masuk */}
                 <button
                   onClick={onSignIn}
-                  className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-semibold border ${borderColor} ${textMuted} hover:text-violet-400 hover:border-violet-500/40 transition-all`}
+                  className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-semibold border ${borderColor} ${textMuted} hover:text-[#f97316] hover:border-orange-500/40 transition-all`}
                 >
                   {t('Masuk', 'Sign In')}
                 </button>
@@ -860,7 +898,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           {/* Mobile slide-down menu */}
           {mobileMenuOpen && (
             <div
-              className={`lg:hidden mx-4 mt-2 rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#030712]/95' : 'bg-white/95'} p-4 shadow-2xl`}
+              className={`lg:hidden mx-4 mt-2 rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#0a0a0a]/95' : 'bg-white/95'} p-4 shadow-2xl`}
             >
               {[
                 { href: '#products', label: t('Produk', 'Products') },
@@ -872,7 +910,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between py-3 border-b ${borderColor} last:border-0 ${textMuted} hover:text-violet-400 transition-colors`}
+                  className={`flex items-center justify-between py-3 border-b ${borderColor} last:border-0 ${textMuted} hover:text-[#f97316] transition-colors`}
                 >
                   {link.label}
                   <ChevronRight size={14} />
@@ -882,7 +920,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                 <button onClick={toggleLang} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border ${borderColor} ${textMuted} flex items-center justify-center gap-1.5`}>
                   <Globe size={14} />{lang}
                 </button>
-                <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-violet-600 to-blue-600 text-white">
+                <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#f97316] text-white">
                   {t('Masuk', 'Sign In')}
                 </button>
               </div>
@@ -900,15 +938,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             style={{
               background: isDark
                 ? `
-                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(124,58,237,0.18) 0%, transparent 60%),
-                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(59,130,246,0.12) 0%, transparent 60%),
-                  radial-gradient(ellipse 50% 40% at 80% 80%, rgba(16,185,129,0.08) 0%, transparent 60%),
-                  #030712
+                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(249,115,22,0.18) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(16,185,129,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 80% 80%, rgba(14,165,233,0.08) 0%, transparent 60%),
+                  #0a0a0a
                 `
                 : `
-                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(167,139,250,0.12) 0%, transparent 60%),
-                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(147,197,253,0.1) 0%, transparent 60%),
-                  #f8fafc
+                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(249,115,22,0.1) 0%, transparent 60%),
+                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(16,185,129,0.08) 0%, transparent 60%),
+                  #fafaf9
                 `,
             }}
           />
@@ -927,20 +965,20 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* ── Left ── */}
               <div className="flex flex-col gap-7">
-                {/* Eyebrow pill */}
+                {/* Eyebrow pill: emerald */}
                 <div className="flex items-center gap-2.5 w-fit">
                   <div
                     className="flex items-center gap-2 px-4 py-2 rounded-full"
                     style={{
-                      background: isDark ? 'rgba(124,58,237,0.12)' : 'rgba(124,58,237,0.08)',
-                      border: '1px solid rgba(124,58,237,0.25)',
+                      background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
+                      border: '1px solid rgba(16,185,129,0.25)',
                     }}
                   >
                     <div className="relative">
-                      <span className="w-2 h-2 rounded-full bg-violet-400 inline-block" />
-                      <span className="absolute inset-0 rounded-full bg-violet-400 animate-ping opacity-50" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
                     </div>
-                    <span className="text-violet-400 text-xs font-bold uppercase tracking-widest">
+                    <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">
                       {t('OJK Terdaftar & Diawasi', 'OJK Registered & Supervised')}
                     </span>
                   </div>
@@ -977,7 +1015,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   </button>
                   <button
                     onClick={onSignIn}
-                    className={`flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-bold text-base border ${borderColor} ${textMuted} hover:text-violet-400 hover:border-violet-500/40 transition-all`}
+                    className={`flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-bold text-base border border-emerald-500/40 text-emerald-500 hover:border-emerald-400 hover:text-emerald-400 transition-all`}
                   >
                     {t('Lihat Demo', 'Watch Demo')}
                     <ChevronDown size={16} />
@@ -986,7 +1024,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
 
                 {/* Social proof row */}
                 <div className={`flex items-center gap-4 pt-2 border-t ${borderColor}`}>
-                  {/* Avatars */}
+                  {/* Avatars in orange/emerald/teal palette */}
                   <div className="flex -space-x-2">
                     {['A', 'S', 'B', 'R', 'D'].map((init, i) => (
                       <div
@@ -994,7 +1032,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                         className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-white text-xs font-black"
                         style={{
                           borderColor: pageBg,
-                          background: ['#7c3aed', '#10b981', '#3b82f6', '#f97316', '#ec4899'][i],
+                          background: ['#f97316', '#10b981', '#0ea5e9', '#f59e0b', '#34d399'][i],
                         }}
                       >
                         {init}
@@ -1055,7 +1093,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               <span key={i} className={`inline-flex items-center gap-3 px-6 text-sm font-semibold ${textMuted}`}>
                 <span
                   className="w-1 h-1 rounded-full inline-block"
-                  style={{ background: i % 4 === 0 ? '#7c3aed' : i % 4 === 1 ? '#10b981' : i % 4 === 2 ? '#f97316' : '#3b82f6' }}
+                  style={{ background: i % 4 === 0 ? '#f97316' : i % 4 === 1 ? '#10b981' : i % 4 === 2 ? '#f97316' : '#10b981' }}
                 />
                 {item}
               </span>
@@ -1068,7 +1106,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         ══════════════════════════════════════════════════════════════════ */}
         <section id="products" className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.products?.isVisible === false ? 'none' : undefined }}>
           <Reveal className="text-center mb-14">
-            <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
+            <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
               {t('Produk Kami', 'Our Products')}
             </p>
             <h2
@@ -1088,18 +1126,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             {products.map((prod, i) => (
               <Reveal key={i} delay={i * 60}>
                 <div
-                  className={`sp-product-card relative rounded-3xl p-5 sm:p-6 border ${borderColor} cursor-pointer overflow-hidden ${surfaceBg}`}
+                  className={`sp-product-card relative rounded-3xl p-5 sm:p-6 border ${borderColor} hover:border-orange-500/30 cursor-pointer overflow-hidden ${surfaceBg}`}
                   onClick={onSignIn}
                   style={{
-                    background: isDark
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(255,255,255,0.9)',
+                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
                   }}
                 >
-                  {/* Subtle top gradient accent */}
+                  {/* Orange top gradient accent */}
                   <div
                     className="absolute top-0 left-0 right-0 h-px"
-                    style={{ background: `linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent)` }}
+                    style={{ background: `linear-gradient(90deg, transparent, rgba(249,115,22,0.4), transparent)` }}
                   />
 
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5">
@@ -1122,16 +1158,20 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                       </div>
                       <p className={`text-xs font-semibold ${textMuted} mb-2 uppercase tracking-wider`}>{prod.subtitle}</p>
                       <p className={`text-sm ${textMuted} leading-relaxed mb-3 max-w-xl`}>{prod.desc}</p>
-                      {/* Feature pills */}
+                      {/* Feature pills: orange/emerald tinted */}
                       <div className="flex flex-wrap gap-1.5">
-                        {prod.pills.map((pill) => (
+                        {prod.pills.map((pill, pillIdx) => (
                           <span
                             key={pill}
                             className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                            style={{
-                              background: isDark ? 'rgba(124,58,237,0.1)' : 'rgba(124,58,237,0.06)',
-                              color: '#a78bfa',
-                              border: '1px solid rgba(124,58,237,0.2)',
+                            style={pillIdx % 2 === 0 ? {
+                              background: isDark ? 'rgba(249,115,22,0.1)' : 'rgba(249,115,22,0.07)',
+                              color: '#f97316',
+                              border: '1px solid rgba(249,115,22,0.2)',
+                            } : {
+                              background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.07)',
+                              color: '#10b981',
+                              border: '1px solid rgba(16,185,129,0.2)',
                             }}
                           >
                             {pill}
@@ -1148,8 +1188,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); onSignIn(); }}
-                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-sm font-black text-white whitespace-nowrap"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)', boxShadow: '0 6px 20px rgba(124,58,237,0.3)' }}
+                        className="sp-btn-primary flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-sm font-black text-white whitespace-nowrap"
                       >
                         {t('Beli', 'Buy')} <ArrowRight size={13} />
                       </button>
@@ -1173,7 +1212,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         >
           <div className="max-w-7xl mx-auto px-6">
             <Reveal className="text-center mb-16">
-              <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
+              <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
                 {t('Cara Kerja', 'How It Works')}
               </p>
               <h2
@@ -1187,13 +1226,13 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             </Reveal>
 
             <div className="relative grid lg:grid-cols-3 gap-8 lg:gap-6">
-              {/* Connector dashed line (desktop) */}
+              {/* Connector line: orange → emerald gradient */}
               <div
                 className="hidden lg:block absolute top-[60px] left-[calc(16.666%+2rem)] right-[calc(16.666%+2rem)] pointer-events-none"
                 style={{
                   height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4) 20%, rgba(59,130,246,0.4) 50%, rgba(16,185,129,0.4) 80%, transparent)',
-                  borderTop: '1px dashed rgba(124,58,237,0.3)',
+                  background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.4) 20%, rgba(16,185,129,0.4) 50%, rgba(14,165,233,0.4) 80%, transparent)',
+                  borderTop: '1px dashed rgba(249,115,22,0.3)',
                 }}
               />
 
@@ -1210,7 +1249,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                         : `0 4px 24px rgba(0,0,0,0.06)`,
                     }}
                   >
-                    {/* Step number — the visual focus */}
+                    {/* Step number */}
                     <div className="mb-6 relative">
                       <p
                         className={`text-7xl font-black leading-none ${step.color}`}
@@ -1236,10 +1275,10 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     </h3>
                     <p className={`text-sm ${textMuted} leading-relaxed`}>{step.desc}</p>
 
-                    {/* Arrow indicator */}
+                    {/* Arrow indicator (mobile) */}
                     {i < howItWorks.length - 1 && (
-                      <div className="lg:hidden absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: pageBg, border: `1px solid rgba(124,58,237,0.3)` }}>
-                        <ChevronDown size={14} className="text-violet-400" />
+                      <div className="lg:hidden absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: pageBg, border: `1px solid rgba(249,115,22,0.3)` }}>
+                        <ChevronDown size={14} className="text-[#f97316]" />
                       </div>
                     )}
                   </div>
@@ -1257,7 +1296,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             {/* Left: story */}
             <div>
               <Reveal>
-                <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
+                <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
                   {t('Cara Klaim', 'How to Claim')}
                 </p>
                 <h2
@@ -1287,16 +1326,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                           className="absolute left-[18px] top-11 bottom-0 w-px"
                           style={{
                             background: isDark
-                              ? 'linear-gradient(to bottom, rgba(124,58,237,0.4), rgba(124,58,237,0.05))'
-                              : 'linear-gradient(to bottom, rgba(124,58,237,0.2), rgba(124,58,237,0.02))',
+                              ? 'linear-gradient(to bottom, rgba(249,115,22,0.4), rgba(249,115,22,0.05))'
+                              : 'linear-gradient(to bottom, rgba(249,115,22,0.2), rgba(249,115,22,0.02))',
                           }}
                         />
                       )}
 
-                      {/* Numbered circle */}
+                      {/* Numbered circle - orange */}
                       <div
                         className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-base font-black text-white relative z-10"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}
+                        style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}
                       >
                         {i + 1}
                       </div>
@@ -1339,16 +1378,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           className="py-20 relative overflow-hidden"
           style={{
             display: cmsConfig.stats?.isVisible === false ? 'none' : undefined,
-            background: isDark
-              ? 'rgba(255,255,255,0.02)'
-              : 'rgba(0,0,0,0.02)',
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
             borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
             borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
           }}
         >
           {/* Subtle glow blobs */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-0 left-1/4 w-96 h-32 blur-3xl opacity-10 rounded-full" style={{ background: 'radial-gradient(ellipse, #7c3aed, transparent)' }} />
+            <div className="absolute top-0 left-1/4 w-96 h-32 blur-3xl opacity-10 rounded-full" style={{ background: 'radial-gradient(ellipse, #f97316, transparent)' }} />
             <div className="absolute bottom-0 right-1/4 w-96 h-32 blur-3xl opacity-10 rounded-full" style={{ background: 'radial-gradient(ellipse, #10b981, transparent)' }} />
           </div>
 
@@ -1362,7 +1399,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                       style={{
                         fontSize: 'clamp(2rem, 5vw, 3.5rem)',
                         letterSpacing: '-0.04em',
-                        background: 'linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #67e8f9 100%)',
+                        background: 'linear-gradient(135deg, #10b981 0%, #34d399 40%, #f97316 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -1384,7 +1421,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         ══════════════════════════════════════════════════════════════════ */}
         <section className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.testimonials?.isVisible === false ? 'none' : undefined }}>
           <Reveal className="text-center mb-14">
-            <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.2em] mb-3">
+            <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
               {t('Testimoni', 'Testimonials')}
             </p>
             <h2
@@ -1397,17 +1434,13 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             </h2>
           </Reveal>
 
-          <div
-            className="grid lg:grid-cols-3 gap-5"
-          >
+          <div className="grid lg:grid-cols-3 gap-5">
             {testimonials.map((tm, i) => (
               <Reveal key={i} delay={i * 100}>
                 <div
                   className={`rounded-3xl p-7 border ${borderColor} h-full flex flex-col relative overflow-hidden`}
                   style={{
-                    background: isDark
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(255,255,255,0.9)',
+                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
                     boxShadow: isDark ? '0 4px 32px rgba(0,0,0,0.3)' : '0 4px 24px rgba(0,0,0,0.06)',
                   }}
                 >
@@ -1431,7 +1464,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   <div className="flex items-center gap-3 mt-6 pt-5 border-t border-white/5">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${tm.color.includes('violet') ? '#7c3aed,#4f46e5' : tm.color.includes('emerald') ? '#10b981,#0d9488' : '#3b82f6,#0ea5e9'})` }}
+                      style={{ background: `linear-gradient(135deg, ${tm.color.includes('orange') ? '#f97316,#fb923c' : tm.color.includes('emerald') ? '#10b981,#0d9488' : '#0ea5e9,#06b6d4'})` }}
                     >
                       {tm.init}
                     </div>
@@ -1475,7 +1508,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                 ].map((ins) => (
                   <span
                     key={ins}
-                    className={`px-4 py-2 rounded-2xl border ${borderColor} text-sm font-semibold ${textMuted} transition-all hover:border-violet-500/30 hover:text-violet-400`}
+                    className={`px-4 py-2 rounded-2xl border ${borderColor} text-sm font-semibold ${textMuted} transition-all hover:border-orange-500/30 hover:text-[#f97316]`}
                     style={{
                       background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.8)',
                     }}
@@ -1496,15 +1529,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             <div
               className="relative max-w-6xl mx-auto rounded-[2.5rem] overflow-hidden p-12 sm:p-16 text-center sp-noise"
               style={{
-                background: 'linear-gradient(135deg, #1e0a47 0%, #2d1b69 30%, #1a1a5c 60%, #0f3460 100%)',
-                boxShadow: '0 32px 80px rgba(124,58,237,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+                background: 'linear-gradient(135deg, #051a0a 0%, #0d2318 30%, #0a1a10 60%, #061210 100%)',
+                boxShadow: '0 32px 80px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.06)',
               }}
             >
-              {/* Radial glow */}
+              {/* Radial glow - emerald tinted */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(124,58,237,0.3), transparent)',
+                  background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(16,185,129,0.2), transparent)',
                 }}
               />
 
@@ -1512,27 +1545,27 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full pointer-events-none"
                 style={{
-                  border: '1px dashed rgba(167,139,250,0.15)',
+                  border: '1px dashed rgba(52,211,153,0.15)',
                   animation: 'spCardFloat 8s ease-in-out infinite',
                 }}
               />
               <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
                 style={{
-                  border: '1px dashed rgba(99,102,241,0.1)',
+                  border: '1px dashed rgba(16,185,129,0.1)',
                   animation: 'spCardFloat 12s ease-in-out infinite reverse',
                 }}
               />
               <div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] rounded-full pointer-events-none"
-                style={{ border: '1px dashed rgba(59,130,246,0.07)' }}
+                style={{ border: '1px dashed rgba(249,115,22,0.07)' }}
               />
 
               {/* Content */}
               <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)' }}>
-                  <Zap size={12} className="text-violet-300" />
-                  <span className="text-violet-300 text-xs font-bold uppercase tracking-widest">{t('Mulai Sekarang', 'Start Now')}</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                  <Zap size={12} className="text-emerald-300" />
+                  <span className="text-emerald-300 text-xs font-bold uppercase tracking-widest">{t('Mulai Sekarang', 'Start Now')}</span>
                 </div>
 
                 <h2
@@ -1564,18 +1597,18 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white/70 text-base hover:text-white transition-colors"
                     style={{ border: '1px solid rgba(255,255,255,0.15)' }}
                   >
-                    <Shield size={16} className="text-violet-300" />
+                    <Shield size={16} className="text-emerald-300" />
                     {t('Lihat Semua Produk', 'View All Products')}
                   </button>
                 </div>
 
-                {/* Trust badges */}
+                {/* Trust badges: OJK emerald, ISO sky, Users orange, Policy amber */}
                 <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
                   {[
                     { icon: Award, label: 'OJK Licensed', color: '#34d399' },
-                    { icon: Lock, label: 'ISO 27001', color: '#60a5fa' },
+                    { icon: Lock, label: 'ISO 27001', color: '#38bdf8' },
                     { icon: Users, label: '24k+ Users', color: '#f97316' },
-                    { icon: Zap, label: '60s Policy', color: '#a78bfa' },
+                    { icon: Zap, label: '60s Policy', color: '#fbbf24' },
                   ].map((badge) => (
                     <div
                       key={badge.label}
@@ -1609,15 +1642,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             {/* Brand col */}
             <div className="col-span-2 flex flex-col gap-5">
               <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #3b82f6)' }}
-                >
-                  <Shield size={16} className="text-white" />
-                </div>
-                <span className="font-black text-xl">
-                  <span className={textPrimary}>Sure</span>
-                  <span className="sp-grad-text">Path</span>
+                {heroSection?.logoUrl ? (
+                  <img src={heroSection.logoUrl} alt="SurePath" className="h-8 w-auto object-contain" />
+                ) : (
+                  <div className="w-8 h-8 rounded-xl bg-[#f97316] flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <SurePathLogo className="w-5 h-5" />
+                  </div>
+                )}
+                <span className="font-black text-xl tracking-tight uppercase">
+                  Sure<span className="text-[#f97316]">Path</span>
                 </span>
               </div>
 
@@ -1653,7 +1686,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   { icon: MapPin, label: 'Jakarta, Indonesia' },
                 ].map((c) => (
                   <div key={c.label} className={`flex items-center gap-2 text-xs ${textMuted}`}>
-                    <c.icon size={12} className="text-violet-400 flex-shrink-0" />
+                    <c.icon size={12} className="text-[#f97316] flex-shrink-0" />
                     {c.label}
                   </div>
                 ))}
@@ -1669,7 +1702,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     <li key={link}>
                       <button
                         onClick={onSignIn}
-                        className={`text-sm ${textMuted} hover:text-violet-400 transition-colors text-left`}
+                        className={`text-sm ${textMuted} hover:text-[#f97316] transition-colors text-left`}
                       >
                         {link}
                       </button>

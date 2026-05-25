@@ -416,6 +416,21 @@ const App = () => {
     );
   }
 
+  // ── /admin route — show login directly, no landing page ──────────────────
+  if (pathname === '/admin' && !currentUser) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AuthGate
+          onAuthSuccess={(user) => {
+            handleAuthSuccess(user);
+            window.history.replaceState({}, '', '/');
+          }}
+          initialLang={lang}
+        />
+      </Suspense>
+    );
+  }
+
   const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN];
 
   if (currentUser && ADMIN_ROLES.includes(currentUser.role)) {

@@ -20,6 +20,7 @@ import {
   Mail,
   MapPin,
   ChevronDown,
+  ShieldCheck,
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../../components/Navbar';
@@ -867,6 +868,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   {isDark ? <Sun size={15} /> : <Moon size={15} />}
                 </button>
 
+                {/* Admin portal link */}
+                <a
+                  href="/admin"
+                  title="Admin Dashboard"
+                  className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border ${borderColor} ${textMuted} hover:border-emerald-500/50 hover:text-emerald-500 transition-all`}
+                >
+                  <ShieldCheck size={13} />
+                  Admin
+                </a>
+
                 {/* Masuk */}
                 <button
                   onClick={onSignIn}
@@ -924,6 +935,12 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                   {t('Masuk', 'Sign In')}
                 </button>
               </div>
+              <a
+                href="/admin"
+                className="flex items-center justify-center gap-2 mt-2 py-2.5 rounded-xl text-xs font-bold border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/10 transition-all"
+              >
+                <ShieldCheck size={13} /> Admin Dashboard
+              </a>
             </div>
           )}
         </nav>

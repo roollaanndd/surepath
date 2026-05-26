@@ -181,22 +181,49 @@ const WebsiteEditorAdmin: React.FC = () => {
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-7 space-y-6">
           {activeTab === 'content' && activeKey === 'splash' && (
             <>
-              <div className="flex items-center gap-3 mb-2 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
                 <Sparkles size={14} className="text-emerald-400 flex-shrink-0" />
                 <p className="text-[10px] text-emerald-300/80 leading-relaxed">
-                  Konfigurasi tampilan layar loading yang muncul saat aplikasi pertama kali dibuka.
+                  Layar loading pertama saat app dibuka. Perubahan berlaku setelah halaman di-refresh.
                 </p>
               </div>
+
+              {/* Logo upload */}
               <div>
-                <label className={labelCls}>URL atau Upload Logo Splash Screen</label>
+                <label className={labelCls}>Logo Splash Screen</label>
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={logoUploading}
+                  className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 mb-3"
+                >
+                  {logoUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {logoUploading ? 'Mengupload...' : 'Upload Logo dari Perangkat'}
+                </button>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex-1 h-px bg-white/5" />
+                  <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">atau URL</span>
+                  <div className="flex-1 h-px bg-white/5" />
+                </div>
                 <input
                   className={inputCls}
                   placeholder="/logo.png"
                   value={form.ctaText ?? ''}
                   onChange={e => set({ ctaText: e.target.value })}
                 />
-                <p className="text-[10px] text-gray-600 mt-1.5">Kosongkan untuk menggunakan logo default (/logo.png)</p>
+                <div className="mt-3 h-24 rounded-2xl border border-white/10 bg-black/30 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={form.ctaText || '/logo.png'}
+                    alt="preview"
+                    className="h-16 w-auto object-contain"
+                    style={{ filter: 'drop-shadow(0 0 12px rgba(34,197,94,0.4))' }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
+                  />
+                </div>
               </div>
+
+              {/* Tagline */}
               <div>
                 <label className={labelCls}>Tagline</label>
                 <input
@@ -206,23 +233,38 @@ const WebsiteEditorAdmin: React.FC = () => {
                   onChange={e => set({ headline: e.target.value })}
                 />
               </div>
+
+              {/* Accent color + swatches */}
               <div>
-                <label className={labelCls}>Warna Aksen (hex)</label>
-                <div className="flex gap-3 items-center">
+                <label className={labelCls}>Warna Aksen</label>
+                <div className="flex gap-3 items-center mb-3">
                   <input
                     className={inputCls}
                     placeholder="#22c55e"
                     value={form.bgValue ?? ''}
                     onChange={e => set({ bgValue: e.target.value })}
                   />
-                  {form.bgValue && (
-                    <div
-                      className="w-10 h-10 flex-shrink-0 rounded-xl border border-white/10"
-                      style={{ background: form.bgValue }}
-                    />
-                  )}
+                  <div className="w-10 h-10 flex-shrink-0 rounded-xl border border-white/10 transition-all"
+                    style={{ background: form.bgValue || '#22c55e' }} />
                 </div>
-                <p className="text-[10px] text-gray-600 mt-1.5">Warna aksen untuk teks dan elemen UI splash screen</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { hex: '#22c55e', name: 'Hijau' },
+                    { hex: '#10b981', name: 'Emerald' },
+                    { hex: '#3b82f6', name: 'Biru' },
+                    { hex: '#f97316', name: 'Orange' },
+                    { hex: '#a855f7', name: 'Ungu' },
+                    { hex: '#ef4444', name: 'Merah' },
+                  ].map(c => (
+                    <button key={c.hex} onClick={() => set({ bgValue: c.hex })} title={c.name}
+                      className="w-8 h-8 rounded-xl border-2 transition-all hover:scale-110"
+                      style={{
+                        background: c.hex,
+                        borderColor: form.bgValue === c.hex ? 'white' : 'transparent',
+                        boxShadow: form.bgValue === c.hex ? `0 0 12px ${c.hex}80` : 'none',
+                      }} />
+                  ))}
+                </div>
               </div>
             </>
           )}

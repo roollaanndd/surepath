@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Monitor, Layout, Type, Image, Eye, EyeOff, Save,
-  RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2,
+  RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2, Sparkles,
 } from 'lucide-react';
 import { db, WebsiteSection } from '../../db';
 import { uploadSectionImage } from '../../services/supabaseService';
 
-type SectionKey = 'hero' | 'marquee' | 'products' | 'claims' | 'stats' | 'testimonials' | 'footer';
+type SectionKey = 'hero' | 'marquee' | 'products' | 'claims' | 'stats' | 'testimonials' | 'footer' | 'splash';
 
 const SECTIONS: { key: SectionKey; label: string; desc: string }[] = [
+  { key: 'splash',       label: 'Splash Screen', desc: 'Loading / welcome screen awal' },
   { key: 'hero',         label: 'Hero',          desc: 'Headline utama & CTA pertama' },
-  { key: 'marquee',      label: 'Ticker',         desc: 'Strip teks berjalan' },
-  { key: 'products',     label: 'Produk',         desc: 'Grid kartu produk asuransi' },
-  { key: 'claims',       label: 'Klaim',          desc: 'Seksi cara lapor klaim' },
-  { key: 'stats',        label: 'Statistik',      desc: 'Bar angka kepercayaan' },
-  { key: 'testimonials', label: 'Testimoni',      desc: 'Ulasan dari pelanggan' },
-  { key: 'footer',       label: 'Footer',         desc: 'Bagian bawah halaman' },
+  { key: 'marquee',      label: 'Ticker',        desc: 'Strip teks berjalan' },
+  { key: 'products',     label: 'Produk',        desc: 'Grid kartu produk asuransi' },
+  { key: 'claims',       label: 'Klaim',         desc: 'Seksi cara lapor klaim' },
+  { key: 'stats',        label: 'Statistik',     desc: 'Bar angka kepercayaan' },
+  { key: 'testimonials', label: 'Testimoni',     desc: 'Ulasan dari pelanggan' },
+  { key: 'footer',       label: 'Footer',        desc: 'Bagian bawah halaman' },
 ];
 
 const BG_TYPES: { value: WebsiteSection['bgType']; label: string; desc: string }[] = [
@@ -41,8 +42,10 @@ const WebsiteEditorAdmin: React.FC = () => {
   const [form, setForm] = useState<WebsiteSection>(defaultSection('hero'));
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'background'>('content');
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading]       = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const fileInputRef    = useRef<HTMLInputElement>(null);
+  const logoInputRef    = useRef<HTMLInputElement>(null);
 
   const loadSection = useCallback(async (key: SectionKey) => {
     const existing = await db.websiteConfig.where('sectionKey').equals(key).first();
@@ -84,6 +87,16 @@ const WebsiteEditorAdmin: React.FC = () => {
     const url = await uploadSectionImage(file, activeKey);
     setUploading(false);
     if (url) set({ bgValue: url });
+    e.target.value = '';
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    const url = await uploadSectionImage(file, 'splash-logo');
+    setLogoUploading(false);
+    if (url) set({ ctaText: url });
     e.target.value = '';
   };
 
@@ -166,7 +179,55 @@ const WebsiteEditorAdmin: React.FC = () => {
         </div>
 
         <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-7 space-y-6">
-          {activeTab === 'content' && (
+          {activeTab === 'content' && activeKey === 'splash' && (
+            <>
+              <div className="flex items-center gap-3 mb-2 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+                <Sparkles size={14} className="text-emerald-400 flex-shrink-0" />
+                <p className="text-[10px] text-emerald-300/80 leading-relaxed">
+                  Konfigurasi tampilan layar loading yang muncul saat aplikasi pertama kali dibuka.
+                </p>
+              </div>
+              <div>
+                <label className={labelCls}>URL atau Upload Logo Splash Screen</label>
+                <input
+                  className={inputCls}
+                  placeholder="/logo.png"
+                  value={form.ctaText ?? ''}
+                  onChange={e => set({ ctaText: e.target.value })}
+                />
+                <p className="text-[10px] text-gray-600 mt-1.5">Kosongkan untuk menggunakan logo default (/logo.png)</p>
+              </div>
+              <div>
+                <label className={labelCls}>Tagline</label>
+                <input
+                  className={inputCls}
+                  placeholder="Your Path to Protection."
+                  value={form.headline ?? ''}
+                  onChange={e => set({ headline: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Warna Aksen (hex)</label>
+                <div className="flex gap-3 items-center">
+                  <input
+                    className={inputCls}
+                    placeholder="#22c55e"
+                    value={form.bgValue ?? ''}
+                    onChange={e => set({ bgValue: e.target.value })}
+                  />
+                  {form.bgValue && (
+                    <div
+                      className="w-10 h-10 flex-shrink-0 rounded-xl border border-white/10"
+                      style={{ background: form.bgValue }}
+                    />
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-600 mt-1.5">Warna aksen untuk teks dan elemen UI splash screen</p>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'content' && activeKey !== 'splash' && (
             <>
               <div>
                 <label className={labelCls}>Headline</label>
@@ -210,7 +271,17 @@ const WebsiteEditorAdmin: React.FC = () => {
             </>
           )}
 
-          {activeTab === 'background' && (
+          {activeTab === 'background' && activeKey === 'splash' && (
+            <div className="flex items-start gap-3 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
+              <Palette size={14} className="text-gray-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Background splash screen menggunakan animated canvas dengan partikel hijau yang sudah dioptimalkan.
+                Gunakan tab <strong className="text-gray-300">Konten</strong> untuk mengubah warna aksen.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'background' && activeKey !== 'splash' && (
             <>
               <div>
                 <label className={labelCls}>Tipe Background</label>

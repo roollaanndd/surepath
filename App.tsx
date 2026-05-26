@@ -26,53 +26,6 @@ const PortalLoader = () => (
   </div>
 );
 
-const SplashCanvas = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    let w = 0, h = 0;
-
-    const blobs = [
-      { x: 0.8, y: 0.2, r: 320, hue: '#f97316', vx: 0.15, vy: 0.10, phase: 0 },
-      { x: 0.2, y: 0.7, r: 280, hue: '#10b981', vx: -0.12, vy: 0.08, phase: 1.5 },
-      { x: 0.5, y: 0.5, r: 200, hue: '#0ea5e9', vx: 0.08, vy: -0.12, phase: 3 },
-    ];
-
-    const resize = () => {
-      w = canvas.width  = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    let t = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      blobs.forEach(b => {
-        const cx = (b.x + Math.sin(t * 0.4 + b.phase) * 0.15) * w;
-        const cy = (b.y + Math.cos(t * 0.35 + b.phase) * 0.12) * h;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r);
-        grad.addColorStop(0, b.hue + '22');
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      t += 0.012;
-      rafRef.current = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(rafRef.current); };
-  }, []);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
-};
-
 const SPLASH_MESSAGES = [
   'Menyiapkan Sistem…',
   'Memuat Data Proteksi…',
@@ -82,98 +35,147 @@ const SPLASH_MESSAGES = [
 ];
 
 const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
-  const [phase, setPhase] = useState(0);
+  const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
-  const [msgIdx, setMsgIdx] = useState(0);
-
+  const [msgIdx, setMsgIdx]     = useState(0);
+  const [splashCfg, setSplashCfg] = useState<{logoUrl:string; tagline:string; accent:string}>({
+    logoUrl: '/logo.png', tagline: 'Your Path to Protection.', accent: '#22c55e',
+  });
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
   const onFinishRef = useRef(onFinish);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
+  // Load splash config from Dexie
   useEffect(() => {
-    const t0 = setTimeout(() => setPhase(1), 80);
-    const t1 = setTimeout(() => setPhase(2), 480);
-    const t2 = setTimeout(() => setPhase(3), 800);
-
-    const progInt  = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 18);
-    const msgInt   = setInterval(() => setMsgIdx(i => Math.min(i + 1, SPLASH_MESSAGES.length - 1)), 380);
-    const t3 = setTimeout(() => setPhase(4), 2000);
-    const t4 = setTimeout(() => onFinishRef.current(), 2500);
-
-    return () => {
-      [t0,t1,t2,t3,t4].forEach(clearTimeout);
-      clearInterval(progInt);
-      clearInterval(msgInt);
-    };
+    import('./db').then(({ db }) => {
+      db.websiteConfig.where('sectionKey').equals('splash').first().then(cfg => {
+        if (cfg) setSplashCfg({
+          logoUrl:  cfg.ctaText  || '/logo.png',
+          tagline:  cfg.headline || 'Your Path to Protection.',
+          accent:   cfg.bgValue  || '#22c55e',
+        });
+      }).catch(() => {});
+    });
   }, []);
 
-  const logoVisible  = phase >= 1;
-  const textVisible  = phase >= 2;
-  const barVisible   = phase >= 3;
-  const fadingOut    = phase >= 4;
+  // Animated green particles on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const particles: {x:number;y:number;r:number;vx:number;vy:number;alpha:number;phase:number}[] = [];
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    for (let i = 0; i < 18; i++) {
+      particles.push({
+        x: Math.random(), y: Math.random(),
+        r: 60 + Math.random() * 140,
+        vx: (Math.random() - 0.5) * 0.0003,
+        vy: (Math.random() - 0.5) * 0.0002,
+        alpha: 0.04 + Math.random() * 0.08,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+    let t = 0, raf = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -0.1) p.x = 1.1;
+        if (p.x > 1.1)  p.x = -0.1;
+        if (p.y < -0.1) p.y = 1.1;
+        if (p.y > 1.1)  p.y = -0.1;
+        const cx = p.x * canvas.width;
+        const cy = p.y * canvas.height;
+        const pulse = 0.7 + 0.3 * Math.sin(t * 0.02 + p.phase);
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, p.r * pulse);
+        g.addColorStop(0, `rgba(34,197,94,${p.alpha})`);
+        g.addColorStop(0.5, `rgba(22,163,74,${p.alpha * 0.4})`);
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, p.r * pulse, 0, Math.PI * 2); ctx.fill();
+      });
+      t++; raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+  }, []);
+
+  useEffect(() => {
+    const t0 = setTimeout(() => setPhase(1), 100);
+    const t1 = setTimeout(() => setPhase(2), 600);
+    const t2 = setTimeout(() => setPhase(3), 900);
+    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.4, 100)), 18);
+    const msgInt  = setInterval(() => setMsgIdx(i => Math.min(i + 1, SPLASH_MESSAGES.length - 1)), 420);
+    const t3 = setTimeout(() => setPhase(4), 2300);
+    const t4 = setTimeout(() => onFinishRef.current(), 2800);
+    return () => { [t0,t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); clearInterval(msgInt); };
+  }, []);
+
+  const logoIn  = phase >= 1;
+  const textIn  = phase >= 2;
+  const barIn   = phase >= 3;
+  const fadeOut = phase >= 4;
 
   return (
     <div
-      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#060818' }}
+      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-600 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ background: '#040C06' }}
     >
-      <SplashCanvas />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
-      {/* dot-grid overlay */}
-      <div className="absolute inset-0 opacity-[0.035]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
+      {/* subtle grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(74,222,128,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <div className="relative z-10 flex flex-col items-center gap-10">
+      <div className="relative z-10 flex flex-col items-center gap-8 px-8">
+
         {/* Logo */}
-        <div
-          className={`flex flex-col items-center gap-5 transition-all duration-700 ease-out ${logoVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-90'}`}
-        >
+        <div className={`transition-all duration-800 ease-out ${logoIn ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-75 translate-y-6'}`}>
           <div className="relative">
-            <div className="absolute inset-0 rounded-[2.5rem] blur-2xl opacity-40"
-              style={{ background: 'radial-gradient(circle, #f97316 0%, #10b981 100%)' }} />
-            <div
-              className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl backdrop-blur-sm border"
-              style={{ background: 'rgba(249,115,22,0.08)', borderColor: 'rgba(249,115,22,0.35)' }}
-            >
-              <SurePathLogo className="w-16 h-16" />
-            </div>
+            <div className={`absolute inset-[-20px] rounded-full blur-3xl transition-opacity duration-1000 ${logoIn ? 'opacity-60' : 'opacity-0'}`}
+              style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.35) 0%, transparent 70%)' }} />
+            <img
+              src={splashCfg.logoUrl}
+              alt="SurePath"
+              className="relative h-28 w-auto object-contain drop-shadow-2xl"
+              style={{ filter: 'drop-shadow(0 0 24px rgba(34,197,94,0.5))' }}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
+            />
           </div>
         </div>
 
-        {/* Wordmark */}
-        <div
-          className={`text-center transition-all duration-600 ease-out ${textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: textVisible ? '0ms' : '0ms' }}
-        >
-          <h1 className="text-[3.2rem] font-black tracking-[-0.06em] text-white uppercase leading-none">
-            SURE<span style={{ color: '#f97316' }}>PATH</span>
+        {/* Wordmark + tagline */}
+        <div className={`text-center transition-all duration-600 delay-100 ease-out ${textIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <h1 className="text-[2.8rem] font-black tracking-[-0.05em] text-white uppercase leading-none">
+            Sure<span style={{ color: splashCfg.accent }}>Path</span>
           </h1>
-          <p className="text-[0.55rem] font-bold uppercase tracking-[0.55em] mt-3" style={{ color: '#374151' }}>
-            Asuransi Pintar · OJK Licensed
+          <p className="text-[0.65rem] font-semibold mt-2 tracking-[0.3em] uppercase"
+            style={{ color: 'rgba(134,239,172,0.7)' }}>
+            {splashCfg.tagline}
           </p>
         </div>
 
-        {/* Progress section */}
-        <div
-          className={`flex flex-col items-center gap-3 w-64 transition-all duration-500 ${barVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
-        >
+        {/* Progress */}
+        <div className={`flex flex-col items-center gap-3 w-56 transition-all duration-500 delay-200 ${barIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: '#10b981' }} />
-            <span className="text-[0.6rem] font-black uppercase tracking-[0.35em] transition-all duration-300" style={{ color: '#4b5563' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: splashCfg.accent }} />
+            <span className="text-[0.55rem] font-bold uppercase tracking-[0.3em] transition-all duration-300"
+              style={{ color: 'rgba(134,239,172,0.5)' }}>
               {SPLASH_MESSAGES[msgIdx]}
             </span>
           </div>
           <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-            <div
-              className="h-full rounded-full transition-all duration-200"
+            <div className="h-full rounded-full transition-all duration-200"
               style={{
                 width: `${progress}%`,
-                background: 'linear-gradient(90deg, #10b981, #f97316)',
-                boxShadow: '0 0 14px rgba(249,115,22,0.55)',
-              }}
-            />
+                background: `linear-gradient(90deg, ${splashCfg.accent}, #4ade80)`,
+                boxShadow: `0 0 12px ${splashCfg.accent}80`,
+              }} />
           </div>
-          <p className="text-[0.42rem] font-bold uppercase tracking-[0.5em]" style={{ color: '#1f2937' }}>
-            Powered by Supabase · Xendit · Gemini AI
+          <p className="text-[0.42rem] font-bold uppercase tracking-[0.45em]" style={{ color: 'rgba(255,255,255,0.12)' }}>
+            OJK Licensed · Powered by Supabase & Gemini AI
           </p>
         </div>
       </div>
@@ -471,6 +473,26 @@ const App = () => {
     );
   }
 
+  const SECTION_PATHS = ['products', 'how-it-works', 'claims', 'about', 'partners'];
+  const sectionSlug = SECTION_PATHS.find(s => pathname === `/${s}`);
+
+  if (sectionSlug && !currentUser) {
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        <Suspense fallback={<PortalLoader />}>
+          <PlatformLanding
+            onSignIn={() => setAppMode(true)}
+            lang={lang}
+            setLang={setLang}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            initialSection={sectionSlug}
+          />
+        </Suspense>
+      </div>
+    );
+  }
+
   if (!appMode) {
     return (
       <div className={darkMode ? 'dark' : ''}>
@@ -481,6 +503,7 @@ const App = () => {
             setLang={setLang}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
+            initialSection={undefined}
           />
         </Suspense>
       </div>

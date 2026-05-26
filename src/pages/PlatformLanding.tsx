@@ -31,6 +31,7 @@ interface Props {
   setLang: (lang: Language) => void;
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
+  initialSection?: string;
 }
 
 // ─── Bilingual helper ────────────────────────────────────────────────────────
@@ -507,7 +508,7 @@ const AnimatedBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, setDarkMode }) => {
+const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, setDarkMode, initialSection }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cmsConfig, setCmsConfig] = useState<Record<string, import('../../db').WebsiteSection>>({});
@@ -528,6 +529,58 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         setCmsConfig(map);
       }).catch(() => {});
     });
+  }, []);
+
+  // Scroll to initial section on mount
+  useEffect(() => {
+    if (!initialSection) return;
+    const t = setTimeout(() => {
+      document.getElementById(initialSection)?.scrollIntoView({ behavior: 'smooth' });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [initialSection]);
+
+  // Update URL as sections scroll into view
+  useEffect(() => {
+    const SECTION_MAP: Record<string, string> = {
+      'products':     '/products',
+      'how-it-works': '/how-it-works',
+      'claims':       '/claims',
+      'partners':     '/partners',
+      'about':        '/about',
+    };
+    const ids = Object.keys(SECTION_MAP);
+    const elements = ids.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (!elements.length) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const id = e.target.id;
+            const path = SECTION_MAP[id];
+            if (path && window.location.pathname !== path) {
+              window.history.replaceState({}, '', path);
+            }
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    // Also observe hero (scroll back to /) when near top
+    const heroObs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '/');
+        }
+      },
+      { threshold: 0.5 }
+    );
+    const heroEl = document.querySelector('section[data-hero]') as HTMLElement | null;
+    if (heroEl) heroObs.observe(heroEl);
+    elements.forEach(el => obs.observe(el));
+    return () => { obs.disconnect(); heroObs.disconnect(); };
   }, []);
 
   const toggleLang = () => setLang(lang === Language.EN ? Language.ID : Language.EN);
@@ -832,14 +885,19 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               {/* Desktop nav links */}
               <div className="hidden lg:flex items-center gap-7">
                 {[
-                  { href: '#products', label: t('Produk', 'Products') },
-                  { href: '#how-it-works', label: t('Cara Kerja', 'How It Works') },
-                  { href: '#claims', label: t('Klaim', 'Claims') },
-                  { href: '#about', label: t('Tentang', 'About') },
+                  { id: 'products',     path: '/products',     label: t('Produk', 'Products') },
+                  { id: 'how-it-works', path: '/how-it-works', label: t('Cara Kerja', 'How It Works') },
+                  { id: 'claims',       path: '/claims',       label: t('Klaim', 'Claims') },
+                  { id: 'about',        path: '/about',        label: t('Tentang', 'About') },
                 ].map((link) => (
                   <a
-                    key={link.href}
-                    href={link.href}
+                    key={link.id}
+                    href={link.path}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.history.pushState({}, '', link.path);
+                      document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
+                    }}
                     className={`text-sm font-medium ${textMuted} hover:text-[#f97316] transition-colors relative group`}
                   >
                     {link.label}
@@ -912,15 +970,20 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               className={`lg:hidden mx-4 mt-2 rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#0a0a0a]/95' : 'bg-white/95'} p-4 shadow-2xl`}
             >
               {[
-                { href: '#products', label: t('Produk', 'Products') },
-                { href: '#how-it-works', label: t('Cara Kerja', 'How It Works') },
-                { href: '#claims', label: t('Klaim', 'Claims') },
-                { href: '#about', label: t('Tentang', 'About') },
+                { id: 'products',     path: '/products',     label: t('Produk', 'Products') },
+                { id: 'how-it-works', path: '/how-it-works', label: t('Cara Kerja', 'How It Works') },
+                { id: 'claims',       path: '/claims',       label: t('Klaim', 'Claims') },
+                { id: 'about',        path: '/about',        label: t('Tentang', 'About') },
               ].map((link) => (
                 <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  key={link.id}
+                  href={link.path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    window.history.pushState({}, '', link.path);
+                    document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                   className={`flex items-center justify-between py-3 border-b ${borderColor} last:border-0 ${textMuted} hover:text-[#f97316] transition-colors`}
                 >
                   {link.label}
@@ -948,7 +1011,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
         {/* ══════════════════════════════════════════════════════════════════
             HERO
         ══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
+        <section data-hero className="relative min-h-screen flex items-center overflow-hidden pt-20">
           {/* Mesh gradient background */}
           <div
             className="absolute inset-0 pointer-events-none"

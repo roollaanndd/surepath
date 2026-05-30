@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MyInsurePath OS</string>
-    <string name="title_activity_main">MyInsurePath OS</string>
+    <string name="app_name">SurePath</string>
+    <string name="title_activity_main">SurePath</string>
     <string name="package_name">com.myinsurepath.os</string>
     <string name="custom_url_scheme">com.myinsurepath.os</string>
 </resources>

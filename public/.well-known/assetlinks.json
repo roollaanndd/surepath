@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.myinsurepath.os",
+    "sha256_cert_fingerprints": [
+      "45:A9:17:61:AE:8F:02:C0:09:CB:C9:15:3C:59:27:55:85:34:12:99:C3:C5:25:24:B5:9C:FC:3D:16:3E:5A:02"
+    ]
+  }
+}]

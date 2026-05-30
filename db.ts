@@ -163,9 +163,10 @@ export const seedDatabase = async () => {
   isSeeding = true;
   try {
     const isMigrated = localStorage.getItem('SP_DB_MIGRATED_v2');
-    const userCount = await db.users.count();
-    
-    if (!isMigrated || userCount < 3000) {
+    // Guard: never wipe if master admin already exists (protects against localStorage clear)
+    const adminExists = await db.users.where('email').equals('master@surepath.ai').first();
+
+    if (!isMigrated && !adminExists) {
       await db.users.clear();
 
       const adminCreds = await hashPassword(import.meta.env.VITE_ADMIN_KEY || crypto.randomUUID());
@@ -250,7 +251,8 @@ export const seedDatabase = async () => {
     }
 
     const txCount = await db.transactions.count();
-    const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_v2');
+    // Only seed transactions on first-ever run, not when count is 0 (could be real empty state)
+    const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_v2') && !adminExists;
 
     if (needsMigration || txCount === 0) {
        await db.transactions.clear(); 

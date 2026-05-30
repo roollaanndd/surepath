@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ArrowRight, ChevronRight, Menu, X, Globe, Sun, Moon,
-  Smartphone, Shield, BarChart2, Users, Zap, Eye,
+  Smartphone, Shield, BarChart2, Users, Zap,
   Star, Download, Gift, MessageSquare, ShieldCheck,
   Sparkles, CheckCircle, Search, Award, Play,
+  Car, Plane, Heart, Leaf, HeartHandshake,
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../../components/Navbar';
@@ -21,6 +22,8 @@ const tx = (id: string, en: string, lang: Language) => lang === Language.EN ? en
 
 // ─── Keyframe injection ───────────────────────────────────────────────────────
 const KEYFRAMES = `
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
 @keyframes aurora-drift {
   0%,100% { transform: translate(0,0) scale(1); }
   33%      { transform: translate(3%,-2%) scale(1.05); }
@@ -29,18 +32,6 @@ const KEYFRAMES = `
 @keyframes fade-up {
   from { opacity:0; transform:translateY(28px); }
   to   { opacity:1; transform:translateY(0); }
-}
-@keyframes slide-in-left {
-  from { opacity:0; transform:translateX(-32px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-@keyframes slide-in-right {
-  from { opacity:0; transform:translateX(32px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-@keyframes gradient-x {
-  0%,100% { background-position: 0% 50%; }
-  50%     { background-position: 100% 50%; }
 }
 @keyframes ticker-scroll {
   from { transform: translateX(0); }
@@ -52,15 +43,11 @@ const KEYFRAMES = `
 }
 @keyframes float {
   0%,100% { transform: translateY(0px); }
-  50%     { transform: translateY(-10px); }
+  50%     { transform: translateY(-8px); }
 }
 @keyframes glow-pulse {
   0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
   50%     { box-shadow: 0 0 40px rgba(34,197,94,0.45), 0 0 80px rgba(34,197,94,0.15); }
-}
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
 }
 @keyframes banner-in {
   from { opacity:0; transform:scale(0.96) translateY(8px); }
@@ -70,11 +57,21 @@ const KEYFRAMES = `
 .animate-aurora-2  { animation: aurora-drift 24s ease-in-out infinite reverse; }
 .animate-aurora-3  { animation: aurora-drift 30s ease-in-out infinite 6s; }
 .animate-ticker    { animation: ticker-scroll 28s linear infinite; }
-.animate-float     { animation: float 4s ease-in-out infinite; }
-.animate-float-2   { animation: float 5s ease-in-out infinite 1.5s; }
+.animate-float     { animation: float 4s ease-out infinite; }
+.animate-float-2   { animation: float 5s ease-out infinite 1.5s; }
 .animate-glow      { animation: glow-pulse 3s ease-in-out infinite; }
-.animate-gradient  { background-size:300% 300%; animation:gradient-x 8s ease infinite; }
 .animate-banner    { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(34,197,94,0.7);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora, .animate-aurora-2, .animate-aurora-3,
+  .animate-ticker, .animate-float, .animate-float-2,
+  .animate-glow, .animate-banner { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
 `;
 
 // ─── Aurora full-page background ─────────────────────────────────────────────
@@ -286,11 +283,11 @@ const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  { icon: '🚗', name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
-  { icon: '✈️', name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
-  { icon: '🛡️', name: 'Kecelakaan Diri', sub: 'Personal Accident', color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
-  { icon: '📱', name: 'Proteksi Barang', sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
-  { icon: '❤️', name: 'Kesehatan', sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+  { Icon: Car,          name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
+  { Icon: Plane,        name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
+  { Icon: Shield,       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
+  { Icon: Smartphone,   name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
+  { Icon: Heart,        name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -384,7 +381,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
   const textMuted  = 'rgba(255,255,255,0.5)';
 
   return (
-    <div className="min-h-screen text-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen text-white" style={{ fontFamily: "'IBM Plex Sans', 'Inter', system-ui, sans-serif" }}>
       <AuroraBackground />
 
       {/* ════════════════════════════════ NAVBAR ════════════════════════════ */}
@@ -438,12 +435,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               <ShieldCheck size={13} /> Admin
             </a>
             <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all"
+              aria-label="Switch language"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all min-h-[44px] sm:min-h-0"
               style={{ borderColor: cardBorder, color: textMuted }}>
               <Globe size={12} /> {lang}
             </button>
             <button onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl border transition-all hover:border-emerald-500/30"
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="p-2.5 rounded-xl border transition-all hover:border-emerald-500/30 min-h-[44px] min-w-[44px] flex items-center justify-center"
               style={{ borderColor: cardBorder, color: textMuted }}>
               {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             </button>
@@ -731,12 +730,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
-                <div className="group relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1"
+                <button className="group relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1 w-full text-left min-h-[200px]"
                   style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-                  onClick={onSignIn}>
+                  onClick={onSignIn}
+                  aria-label={`Learn more about ${p.name}`}>
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}10, transparent 70%)` }} />
-                  <div className="text-4xl mb-5 animate-float-2" style={{ animationDelay: `${i * 0.4}s` }}>{p.icon}</div>
+                    style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 animate-float-2 relative"
+                    style={{ background: `${p.color}14`, border: `1px solid ${p.color}25`, animationDelay: `${i * 0.4}s` }}>
+                    <p.Icon size={22} style={{ color: p.color }} />
+                  </div>
                   <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
                   <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
                   <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{p.desc}</p>
@@ -744,11 +747,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
                     style={{ color: p.color }}>
                     {t('Pelajari', 'Learn more')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <div className="absolute top-4 right-4 w-8 h-8 rounded-xl opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                    style={{ background: `${p.color}15` }}>
-                    <ChevronRight size={14} style={{ color: p.color }} />
-                  </div>
-                </div>
+                </button>
               </Reveal>
             ))}
           </div>
@@ -840,21 +839,21 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {[
               {
-                icon: '🤝',
+                Icon: HeartHandshake,
                 title: t('Berpusat pada Manusia', 'Human-Centered'),
                 desc: t('Di tengah tren otomasi, kami percaya keputusan penting dalam hidup perlu pendampingan manusia yang nyata. Bukan robot, bukan skrip — agen yang benar-benar peduli.', 'Amid automation trends, we believe important life decisions need real human accompaniment. Not robots, not scripts — agents who truly care.'),
                 items: [t('Agen bersertifikat & berpengalaman', 'Certified & experienced agents'), t('Konsultasi tanpa target penjualan', 'Consultation without sales pressure'), t('Pendampingan jangka panjang', 'Long-term accompaniment')],
                 accent: '#22c55e',
               },
               {
-                icon: '📊',
+                Icon: BarChart2,
                 title: t('Transparan & Jujur', 'Transparent & Honest'),
                 desc: t('Kami percaya edukasi lebih bernilai dari promosi. Setiap produk yang kami rekomendasikan dijelaskan dengan jelas termasuk batasannya.', 'We believe education is more valuable than promotion. Every product we recommend is clearly explained including its limitations.'),
                 items: [t('Penjelasan klausa penting', 'Important clause explanations'), t('Tidak ada biaya tersembunyi', 'No hidden fees'), t('Laporan berkala yang jelas', 'Clear periodic reports')],
                 accent: '#3b82f6',
               },
               {
-                icon: '🌱',
+                Icon: Leaf,
                 title: t('Mitra Jangka Panjang', 'Long-Term Partner'),
                 desc: t('Hubungan kami tidak berakhir saat polis diterbitkan. Kami tumbuh bersama nasabah dan memastikan perlindungan selalu relevan dengan perjalanan hidupmu.', 'Our relationship does not end when the policy is issued. We grow with clients and ensure protection always stays relevant to your life journey.'),
                 items: [t('Review polis berkala', 'Periodic policy review'), t('Notifikasi sebelum jatuh tempo', 'Pre-expiry notifications'), t('Adaptasi sesuai perubahan hidup', 'Adapts to life changes')],
@@ -862,11 +861,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               },
             ].map((p, i) => (
               <Reveal key={p.title} delay={i * 100}>
-                <div className="group relative overflow-hidden rounded-3xl p-8 h-full transition-all duration-500 hover:scale-[1.02]"
+                <div className="group relative overflow-hidden rounded-3xl p-8 h-full transition-all duration-500 hover:scale-[1.02] cursor-default"
                   style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(circle at 50% 0%, ${p.accent}08, transparent 70%)` }} />
-                  <div className="text-5xl mb-6 animate-float" style={{ animationDelay: `${i * 0.8}s` }}>{p.icon}</div>
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 animate-float relative"
+                    style={{ background: `${p.accent}12`, border: `1px solid ${p.accent}25`, animationDelay: `${i * 0.8}s` }}>
+                    <p.Icon size={26} style={{ color: p.accent }} />
+                  </div>
                   <h3 className="text-xl font-black text-white mb-4">{p.title}</h3>
                   <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted }}>{p.desc}</p>
                   <ul className="space-y-2.5">
@@ -1090,11 +1092,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               </p>
               {/* Social */}
               <div className="flex gap-3 mt-1">
-                {['ig', 'in', 'tw'].map(s => (
-                  <div key={s} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110"
+                {[
+                  { key: 'ig', label: 'Instagram' },
+                  { key: 'in', label: 'LinkedIn' },
+                  { key: 'tw', label: 'Twitter / X' },
+                ].map(s => (
+                  <button key={s.key} aria-label={s.label}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:border-emerald-500/30"
                     style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
-                    <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: textMuted }}>{s}</span>
-                  </div>
+                    <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: textMuted }}>{s.key}</span>
+                  </button>
                 ))}
               </div>
             </div>

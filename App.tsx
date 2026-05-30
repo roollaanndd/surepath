@@ -4,6 +4,7 @@ import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail } from './services/supabaseService';
+import { SpiralAnimation } from './components/ui/spiral-animation';
 
 // Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
 const AuthGate          = lazy(() => import('./components/AuthGate'));
@@ -336,8 +337,29 @@ const INITIAL_PRODUCTS = [
 
 const SESSION_KEY = 'SUREPATH_SESSION';
 
+const SpiralScreen = ({ onEnter }: { onEnter: () => void }) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), 2000); return () => clearTimeout(t); }, []);
+  return (
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-black">
+      <div className="absolute inset-0">
+        <SpiralAnimation />
+      </div>
+      <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-[1500ms] ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <button
+          onClick={onEnter}
+          className="text-white text-2xl tracking-[0.2em] uppercase font-extralight transition-all duration-700 hover:tracking-[0.3em] animate-pulse"
+        >
+          Mulai
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [isLoaded, setIsLoaded]       = useState(false);
+  const [spiralDone, setSpiralDone]   = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
@@ -441,6 +463,7 @@ const App = () => {
   }, []);
 
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} lang={lang} setLang={handleSetLang} />;
+  if (!spiralDone) return <SpiralScreen onEnter={() => setSpiralDone(true)} />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
 
   const pathname = currentPath;

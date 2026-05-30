@@ -124,6 +124,76 @@ const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }> = ({ 
   </div>
 );
 
+// ─── App Install Modal ────────────────────────────────────────────────────────
+const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; hasPwaPrompt: boolean }> = ({ onClose, onPwa, hasPwaPrompt }) => {
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isAndroid = /android/i.test(navigator.userAgent);
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+      onClick={onClose}>
+      <div className="w-full max-w-sm rounded-3xl p-7 space-y-5"
+        style={{ background: 'rgba(10,20,12,0.98)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 -8px 60px rgba(34,197,94,0.15)' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-black text-white">Install SurePath</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">✕</button>
+        </div>
+        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Akses SurePath langsung dari layar utama HP Anda — lebih cepat, tanpa buka browser.
+        </p>
+
+        {hasPwaPrompt ? (
+          <button onClick={onPwa}
+            className="w-full py-3.5 rounded-2xl text-sm font-black text-black transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
+            style={{ background: 'hsl(119,99%,46%)' }}>
+            <Download size={16} /> Pasang ke Layar Utama
+          </button>
+        ) : isIos ? (
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-white">Cara install di iPhone / iPad:</p>
+            {[
+              '1. Buka halaman ini di Safari',
+              '2. Ketuk ikon Share (kotak dengan panah atas)',
+              '3. Pilih "Add to Home Screen"',
+              '4. Ketuk "Add" — selesai!',
+            ].map(s => (
+              <div key={s} className="text-xs py-2 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)' }}>{s}</div>
+            ))}
+          </div>
+        ) : isAndroid ? (
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-white">Cara install di Android:</p>
+            {[
+              '1. Ketuk menu ⋮ di pojok kanan atas Chrome',
+              '2. Pilih "Add to Home screen" atau "Install app"',
+              '3. Konfirmasi — selesai!',
+            ].map(s => (
+              <div key={s} className="text-xs py-2 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)' }}>{s}</div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs font-bold text-white">Cara install di Desktop:</p>
+            {[
+              '1. Klik ikon install (⊕) di address bar browser',
+              '2. Atau buka menu browser → "Install SurePath"',
+              '3. Klik Install — selesai!',
+            ].map(s => (
+              <div key={s} className="text-xs py-2 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)' }}>{s}</div>
+            ))}
+          </div>
+        )}
+
+        <p className="text-[0.55rem] text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          SurePath PWA · Tidak memerlukan App Store · Gratis
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ─── Promo Banner ─────────────────────────────────────────────────────────────
 const BANNERS = [
   {
@@ -161,7 +231,7 @@ const BANNERS = [
   },
 ];
 
-const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
+const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => void }> = ({ onSignIn, onInstall }) => {
   const [active, setActive] = useState(0);
   useEffect(() => {
     const iv = setInterval(() => setActive(a => (a + 1) % BANNERS.length), 5000);
@@ -209,7 +279,8 @@ const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
 
       {/* Two small static banners */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="relative overflow-hidden rounded-2xl p-4"
+        <button onClick={onInstall}
+          className="relative overflow-hidden rounded-2xl p-4 text-left cursor-pointer transition-all hover:scale-[1.03] active:scale-95 w-full"
           style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.04))', border: '1px solid rgba(34,197,94,0.15)' }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
             style={{ background: 'rgba(34,197,94,0.12)' }}>
@@ -217,7 +288,7 @@ const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
           </div>
           <p className="text-xs font-black text-white leading-tight">Download<br />Mobile App</p>
           <p className="text-[10px] text-gray-500 mt-1">iOS & Android</p>
-        </div>
+        </button>
         <div className="relative overflow-hidden rounded-2xl p-4"
           style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(139,92,246,0.04))', border: '1px solid rgba(168,85,247,0.15)' }}>
           <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
@@ -248,6 +319,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
   const [pwaVisible, setPwaVisible] = useState(false);
   const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [installModalOpen, setInstallModalOpen] = useState(false);
   const [cmsConfig, setCmsConfig] = useState<Record<string, any>>({});
 
   const t = useCallback((id: string, en: string) => tx(id, en, lang), [lang]);
@@ -283,6 +355,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
     pwaPrompt.prompt();
     await pwaPrompt.userChoice;
     setPwaVisible(false); setPwaPrompt(null);
+  };
+
+  const handleInstallClick = () => {
+    if (pwaPrompt) { installPwa(); return; }
+    setInstallModalOpen(true);
   };
 
   // Scroll to initial section
@@ -816,7 +893,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         </Reveal>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Reveal delay={0}>
-            <PromoBanners onSignIn={onSignIn} />
+            <PromoBanners onSignIn={onSignIn} onInstall={handleInstallClick} />
           </Reveal>
           {/* Third highlight banner */}
           <Reveal delay={100}>
@@ -1087,6 +1164,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       {/* ══════════════════════════ PWA POPUP ════════════════════════════════ */}
       {pwaVisible && !pwaInstalled && (
         <PWAPopup onDismiss={() => setPwaVisible(false)} onInstall={installPwa} />
+      )}
+
+      {/* ════════════════════════ INSTALL MODAL ══════════════════════════════ */}
+      {installModalOpen && (
+        <InstallModal
+          onClose={() => setInstallModalOpen(false)}
+          onPwa={() => { installPwa(); setInstallModalOpen(false); }}
+          hasPwaPrompt={!!pwaPrompt}
+        />
       )}
     </div>
   );

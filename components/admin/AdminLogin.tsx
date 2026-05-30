@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { SurePathLogo } from '../Navbar';
 import { db } from '../../db';
 import { verifyPassword, createSessionToken } from '../../services/authService';
 import { UserRole } from '../../types';
@@ -11,6 +12,7 @@ interface AdminLoginProps {
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,115 +48,115 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const lpGreen = 'hsl(119, 99%, 46%)';
+  const sora = "'Sora', sans-serif";
+
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col justify-center items-center relative overflow-hidden">
-      {/* Background ambient orbs */}
-      <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] left-[-15%] w-[500px] h-[500px] bg-emerald-500/4 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
+      style={{ background: 'hsl(0, 0%, 8%)', fontFamily: sora }}>
 
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
+      {/* Ambient glows */}
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] opacity-10 pointer-events-none"
+        style={{ background: lpGreen }} />
+      <div className="absolute bottom-[-20%] left-[-15%] w-[420px] h-[420px] rounded-full blur-[120px] opacity-[0.07] pointer-events-none"
+        style={{ background: '#22c55e' }} />
 
-      {/* Top status bar */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="text-[0.5rem] font-black text-emerald-500 uppercase tracking-[0.4em]">
-          Secure Connection · TLS 1.3 Active
+      {/* Dot grid */}
+      <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      {/* Status bar */}
+      <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: lpGreen }} />
+        <span style={{ fontSize: '0.48rem', fontWeight: 600, color: lpGreen, letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+          Secure Connection Active
         </span>
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-6">
-        {/* Logo section */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.8rem] flex items-center justify-center shadow-2xl shadow-emerald-500/10 mb-6">
-            <ShieldCheck size={36} className="text-emerald-500" />
+      <div className="relative z-10 w-full max-w-sm px-6">
+
+        {/* Logo + wordmark */}
+        <div className="flex flex-col items-center mb-9">
+          <div className="relative mb-6">
+            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-18" style={{ background: lpGreen }} />
+            <div className="relative w-28 h-28 rounded-[3rem] flex items-center justify-center border"
+              style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.20)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
+              <SurePathLogo className="w-18 h-18" />
+            </div>
           </div>
-          <h1 className="text-4xl font-black tracking-[-0.05em] text-white uppercase leading-none mb-2">
-            Admin<span className="text-emerald-500">Portal</span>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff', lineHeight: 1, marginBottom: '0.4rem' }}>
+            Admin<span style={{ color: lpGreen }}>Portal</span>
           </h1>
-          <p className="text-[0.55rem] font-bold text-gray-600 uppercase tracking-[0.4em]">
-            SurePath · Command Center Access
+          <p style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.35em', textTransform: 'uppercase' }}>
+            SurePath · Dashboard Access
           </p>
         </div>
 
-        {/* Frosted glass card */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-[2.5rem] p-8 backdrop-blur-xl shadow-[0_40px_80px_rgba(0,0,0,0.6)]">
-          <form className="space-y-5" onSubmit={handleLogin}>
-            {error && (
-              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-3">
-                <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={16} />
-                <p className="text-xs text-rose-400 font-bold">{error}</p>
-              </div>
-            )}
+        {/* Form card */}
+        <div className="rounded-[2.5rem] p-7 space-y-5"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
 
-            <div className="space-y-2">
-              <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-[0.25em]">
-                Email Admin
+          {error && (
+            <div className="p-3.5 rounded-2xl flex items-start gap-3"
+              style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={15} />
+              <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171' }}>{error}</p>
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleLogin}>
+            {/* Email */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-gray-600" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/60 focus:bg-white/[0.06] transition-all font-mono"
-                  placeholder="admin@surepath.id"
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={15} />
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="master@surepath.ai"
+                  className="block w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-white placeholder-gray-700 outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'monospace' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(6,224,0,0.45)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-[0.25em]">
-                Kata Sandi
+            {/* Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-gray-600" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white placeholder-gray-700 focus:outline-none focus:border-emerald-500/60 focus:bg-white/[0.06] transition-all font-mono"
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={15} />
+                <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="block w-full pl-11 pr-12 py-3.5 rounded-2xl text-sm text-white placeholder-gray-700 outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'monospace' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(6,224,0,0.45)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
                 />
+                <button type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors">
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center items-center gap-3 py-4 px-6 rounded-2xl text-sm font-black text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/10 mt-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Memverifikasi...
-                </>
-              ) : (
-                <>
-                  Masuk ke Dashboard
-                  <ArrowRight size={16} />
-                </>
-              )}
+            <button type="submit" disabled={loading}
+              className="w-full flex justify-center items-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-40 active:scale-95"
+              style={{ background: lpGreen, color: 'hsl(0, 0%, 4%)', boxShadow: '0 8px 30px rgba(6,224,0,0.22)' }}>
+              {loading
+                ? <><div className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black/80 animate-spin" /> Verifying...</>
+                : <>Enter Dashboard <ArrowRight size={15} /></>
+              }
             </button>
           </form>
+
         </div>
 
-        {/* Bottom tag */}
-        <p className="text-center text-[0.45rem] font-bold text-gray-800 uppercase tracking-[0.5em] mt-8">
-          SurePath Administration HQ · Authorized Access Only
+        <p className="text-center mt-7" style={{ fontSize: '0.45rem', fontWeight: 500, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+          SurePath Admin · Authorized Access Only
         </p>
       </div>
     </div>

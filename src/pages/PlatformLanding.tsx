@@ -1,27 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import {
-  Sun,
-  Moon,
-  ArrowRight,
-  Shield,
-  Star,
-  ChevronRight,
-  Users,
-  Clock,
-  Award,
-  TrendingUp,
-  CheckCircle,
-  Zap,
-  Globe,
-  Lock,
-  Menu,
-  X,
-  Phone,
-  Mail,
-  MapPin,
-  ChevronDown,
-  ShieldCheck,
+  ArrowRight, ChevronRight, Menu, X, Globe, Sun, Moon,
+  Smartphone, Shield, BarChart2, Users, Zap,
+  Star, Download, Gift, MessageSquare, ShieldCheck,
+  Sparkles, CheckCircle, Search, Award, Play,
+  Car, Plane, Heart, Leaf, HeartHandshake,
 } from 'lucide-react';
+
+const SplineScene = lazy(() => import('@splinetool/react-spline'));
 import { Language } from '../../types';
 import { SurePathLogo } from '../../components/Navbar';
 
@@ -34,1757 +20,1018 @@ interface Props {
   initialSection?: string;
 }
 
-// ─── Bilingual helper ────────────────────────────────────────────────────────
-const tx = (id: string, en: string, lang: Language) => (lang === Language.EN ? en : id);
+const tx = (id: string, en: string, lang: Language) => lang === Language.EN ? en : id;
 
-// ─── Reveal hook ─────────────────────────────────────────────────────────────
-const useReveal = <T extends HTMLElement>(threshold = 0.1) => {
-  const ref = useRef<T | null>(null);
+// ─── Keyframe injection ───────────────────────────────────────────────────────
+const SECTION_CSS = `
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(1,235,2,0.2); }
+  50%     { box-shadow: 0 0 40px rgba(1,235,2,0.45), 0 0 80px rgba(1,235,2,0.15); }
+}
+@keyframes banner-in {
+  from { opacity:0; transform:scale(0.96) translateY(8px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.animate-ticker    { animation: ticker-scroll 28s linear infinite; }
+.animate-float     { animation: float 4s ease-out infinite; }
+.animate-float-2   { animation: float 5s ease-out infinite 1.5s; }
+.animate-glow      { animation: glow-pulse 3s ease-in-out infinite; }
+.animate-banner    { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(1,235,2,0.7);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-ticker, .animate-float, .animate-float-2,
+  .animate-glow, .animate-banner { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+`;
+
+// ─── Dark section background (for sections below hero) ───────────────────────
+const SectionBackground: React.FC = () => (
+  <>
+    <style>{SECTION_CSS}</style>
+    <div className="fixed inset-0 -z-10" style={{ background: 'hsl(0 0% 8%)' }} />
+  </>
+);
+
+// ─── Reveal hook ──────────────────────────────────────────────────────────────
+const useReveal = (threshold = 0.12) => {
+  const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            setVisible(true);
-            obs.unobserve(e.target);
-          }
-        });
-      },
-      { threshold, rootMargin: '0px 0px -40px 0px' }
-    );
-    obs.observe(node);
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold });
+    obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
-  return { ref, visible } as const;
+  return { ref, visible };
 };
 
-// ─── Reveal wrapper ───────────────────────────────────────────────────────────
-const Reveal: React.FC<{
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  from?: 'bottom' | 'left' | 'right';
-}> = ({ children, className = '', delay = 0, from = 'bottom' }) => {
-  const { ref, visible } = useReveal<HTMLDivElement>();
-  const hidden =
-    from === 'left' ? '-translate-x-8 opacity-0' :
-    from === 'right' ? 'translate-x-8 opacity-0' :
-    'translate-y-8 opacity-0';
+const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number; from?: 'bottom'|'left'|'right' }> = ({
+  children, className = '', delay = 0, from = 'bottom',
+}) => {
+  const { ref, visible } = useReveal();
+  const hidden = from === 'left' ? 'opacity-0 -translate-x-8' : from === 'right' ? 'opacity-0 translate-x-8' : 'opacity-0 translate-y-8';
   return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transform-gpu transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-x-0 translate-y-0' : hidden} ${className}`}
-    >
+    <div ref={ref} style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-x-0 translate-y-0' : hidden} ${className}`}>
       {children}
     </div>
   );
 };
 
-// ─── Custom SVG: Car Insurance ────────────────────────────────────────────────
-const CarSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="carGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#f97316" />
-        <stop offset="1" stopColor="#fb923c" />
-      </linearGradient>
-    </defs>
-    {/* Car body */}
-    <rect x="8" y="42" width="64" height="18" rx="4" fill="url(#carGrad)" opacity="0.9"/>
-    {/* Car top */}
-    <path d="M20 42 L26 26 L54 26 L60 42Z" fill="url(#carGrad)" opacity="0.7"/>
-    {/* Windows */}
-    <path d="M27 40 L30 30 L50 30 L53 40Z" fill="white" opacity="0.25"/>
-    {/* Wheels */}
-    <circle cx="22" cy="60" r="8" fill="#0a0a0a" stroke="url(#carGrad)" strokeWidth="2.5"/>
-    <circle cx="22" cy="60" r="4" fill="url(#carGrad)" opacity="0.6"/>
-    <circle cx="58" cy="60" r="8" fill="#0a0a0a" stroke="url(#carGrad)" strokeWidth="2.5"/>
-    <circle cx="58" cy="60" r="4" fill="url(#carGrad)" opacity="0.6"/>
-    {/* Shield overlay top-right */}
-    <path d="M62 10 L74 15 L74 25 Q74 33 62 37 Q50 33 50 25 L50 15 Z" fill="#10b981" opacity="0.85"/>
-    <path d="M58 23 L61 26 L67 19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-// ─── Custom SVG: Travel Insurance ────────────────────────────────────────────
-const TravelSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="travelGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#10b981" />
-        <stop offset="1" stopColor="#0ea5e9" />
-      </linearGradient>
-    </defs>
-    {/* Globe arc */}
-    <circle cx="40" cy="44" r="28" stroke="url(#travelGrad)" strokeWidth="2" opacity="0.4"/>
-    <path d="M12 44 Q40 28 68 44" stroke="url(#travelGrad)" strokeWidth="2" opacity="0.6"/>
-    <path d="M16 36 Q40 50 64 36" stroke="url(#travelGrad)" strokeWidth="1.5" opacity="0.35"/>
-    {/* Longitude lines */}
-    <path d="M40 16 Q52 30 52 44 Q52 58 40 72" stroke="url(#travelGrad)" strokeWidth="1.5" opacity="0.4"/>
-    <path d="M40 16 Q28 30 28 44 Q28 58 40 72" stroke="url(#travelGrad)" strokeWidth="1.5" opacity="0.4"/>
-    {/* Plane */}
-    <g transform="translate(28, 14) rotate(-35, 12, 12)">
-      <path d="M12 2 L18 10 L30 10 L30 14 L18 14 L12 22 L8 22 L10 14 L4 14 L2 17 L0 17 L1 10 L0 3 L2 3 L4 6 L10 6 Z" fill="url(#travelGrad)" opacity="0.95"/>
-    </g>
-  </svg>
-);
-
-// ─── Custom SVG: Health Insurance ─────────────────────────────────────────────
-const HealthSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="healthGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#ec4899" />
-        <stop offset="1" stopColor="#f43f5e" />
-      </linearGradient>
-    </defs>
-    {/* Heart */}
-    <path d="M40 64 C40 64 10 46 10 26 C10 16 18 10 26 10 C31 10 36 13 40 17 C44 13 49 10 54 10 C62 10 70 16 70 26 C70 46 40 64 40 64Z" fill="url(#healthGrad)" opacity="0.85"/>
-    {/* EKG line across heart */}
-    <path d="M14 34 L22 34 L26 22 L30 46 L34 30 L38 38 L42 38 L46 34 L50 34 L54 26 L58 42 L62 34 L66 34" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
-  </svg>
-);
-
-// ─── Custom SVG: PA Insurance ────────────────────────────────────────────────
-const PASvg: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="paGrad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#f97316" />
-        <stop offset="1" stopColor="#eab308" />
-      </linearGradient>
-    </defs>
-    {/* Protective ring */}
-    <circle cx="40" cy="40" r="32" stroke="url(#paGrad)" strokeWidth="2.5" strokeDasharray="6 3" opacity="0.5"/>
-    <circle cx="40" cy="40" r="24" stroke="url(#paGrad)" strokeWidth="2" opacity="0.3"/>
-    {/* Human figure */}
-    <circle cx="40" cy="22" r="7" fill="url(#paGrad)" opacity="0.9"/>
-    <path d="M26 56 Q26 38 40 38 Q54 38 54 56" fill="url(#paGrad)" opacity="0.9"/>
-    {/* Arms */}
-    <path d="M28 44 L20 38" stroke="url(#paGrad)" strokeWidth="4" strokeLinecap="round" opacity="0.8"/>
-    <path d="M52 44 L60 38" stroke="url(#paGrad)" strokeWidth="4" strokeLinecap="round" opacity="0.8"/>
-  </svg>
-);
-
-// ─── Custom SVG: Gadget Insurance ────────────────────────────────────────────
-const GadgetSVG: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="gadgetGrad" x1="0" y1="80" x2="80" y2="0" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#f97316" />
-        <stop offset="1" stopColor="#06b6d4" />
-      </linearGradient>
-    </defs>
-    {/* Phone frame */}
-    <rect x="22" y="6" width="36" height="64" rx="8" fill="url(#gadgetGrad)" opacity="0.15" stroke="url(#gadgetGrad)" strokeWidth="2.5"/>
-    {/* Screen */}
-    <rect x="27" y="16" width="26" height="40" rx="4" fill="url(#gadgetGrad)" opacity="0.2"/>
-    {/* Home button */}
-    <circle cx="40" cy="63" r="3" stroke="url(#gadgetGrad)" strokeWidth="1.5" opacity="0.7"/>
-    {/* Lock symbol */}
-    <rect x="33" y="30" width="14" height="12" rx="3" fill="url(#gadgetGrad)" opacity="0.8"/>
-    <path d="M36 30 Q36 24 40 24 Q44 24 44 30" stroke="url(#gadgetGrad)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-    <circle cx="40" cy="35" r="2" fill="white" opacity="0.9"/>
-  </svg>
-);
-
-// ─── Policy Card (Hero Visual) ────────────────────────────────────────────────
-const PolicyCard: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  return (
-    <div className="relative w-full max-w-sm mx-auto">
-      {/* Glow blob behind card */}
-      <div
-        className="absolute inset-0 rounded-[2.5rem] blur-3xl opacity-40 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, #f97316 0%, #10b981 50%, transparent 80%)' }}
-      />
-
-      {/* Main policy card */}
-      <div
-        className={`relative rounded-[2rem] p-6 overflow-hidden ${darkMode ? 'bg-slate-900' : 'bg-white'}`}
-        style={{
-          border: darkMode
-            ? '1px solid rgba(255,255,255,0.1)'
-            : '1px solid rgba(15,23,42,0.08)',
-          boxShadow: darkMode
-            ? '0 32px 80px rgba(249,115,22,0.25), inset 0 1px 0 rgba(255,255,255,0.08)'
-            : '0 32px 80px rgba(249,115,22,0.15), 0 4px 24px rgba(0,0,0,0.08)',
-          transform: 'perspective(800px) rotateY(-6deg) rotateX(2deg)',
-        }}
-      >
-        {/* Orange top accent stripe */}
-        <div
-          className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, #f97316 30%, #10b981 70%, transparent)' }}
-        />
-
-        {/* Dot pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle, ${darkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)'} 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
-
-        {/* Card header */}
-        <div className="relative flex items-start justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}
-              >
-                <CarSVG className="w-4 h-4" />
-              </div>
-              <span
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: '#f97316' }}
-              >
-                Car Protection
-              </span>
-            </div>
-            <p className={`font-black text-lg leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>Premium Plan</p>
-          </div>
-          {/* Active badge - emerald */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-400/20 border border-emerald-400/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-xs font-bold">ACTIVE</span>
-          </div>
+// ─── PWA Install Popup ────────────────────────────────────────────────────────
+const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }> = ({ onDismiss, onInstall }) => (
+  <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 animate-banner">
+    <div className="max-w-md mx-auto rounded-3xl border border-white/10 backdrop-blur-xl overflow-hidden"
+      style={{ background: 'rgba(5,20,10,0.95)', boxShadow: '0 -8px 60px rgba(34,197,94,0.2)' }}>
+      <div className="absolute inset-0 opacity-[0.04]"
+        style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, rgba(34,197,94,1) 0%, transparent 60%)' }} />
+      <div className="relative p-5 flex items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 animate-glow"
+          style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+          <img src="/surepath-logo.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
         </div>
-
-        {/* Policy number */}
-        <div className="relative mb-5">
-          <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Policy Number</p>
-          <p className={`font-mono font-bold text-sm tracking-wider ${darkMode ? 'text-white' : 'text-slate-800'}`}>SP-2025-0042-8831</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-black text-sm">Install SurePath</p>
+          <p className="text-gray-400 text-xs mt-0.5 leading-relaxed">Akses lebih cepat langsung dari layar utama</p>
         </div>
-
-        {/* Coverage + expiry grid */}
-        <div className="relative grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Coverage</p>
-            <p className={`font-black text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>Rp 350 Jt</p>
-          </div>
-          <div>
-            <p className={`text-[10px] uppercase tracking-widest mb-1 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Valid Until</p>
-            <p className={`font-black text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>Dec 2026</p>
-          </div>
+        <div className="flex flex-col gap-2">
+          <button onClick={onInstall}
+            className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide text-white transition-all"
+            style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+            Install
+          </button>
+          <button onClick={onDismiss} className="px-4 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors">
+            Nanti
+          </button>
         </div>
-
-        {/* Bottom bar: orange shield + SurePath + emerald Verified */}
-        <div
-          className="relative flex items-center justify-between pt-4"
-          style={{ borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}` }}
-        >
-          <div className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}
-            >
-              <Shield className="text-[#f97316]" size={13} />
-            </div>
-            <span className={`text-xs font-medium ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>SurePath Insurance</span>
-          </div>
-          {/* Emerald Verified badge */}
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
-            <CheckCircle size={10} className="text-emerald-400" />
-            <span className="text-emerald-400 text-[10px] font-bold">Verified</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating badge: 24k+ users in orange gradient */}
-      <div
-        className="absolute -top-4 -left-6 flex items-center gap-2 px-3 py-2 rounded-2xl text-white text-xs font-bold"
-        style={{
-          background: 'linear-gradient(135deg, #f97316, #fb923c)',
-          boxShadow: '0 8px 32px rgba(249,115,22,0.4)',
-        }}
-      >
-        <Users size={12} />
-        24k+ Pengguna
-      </div>
-
-      {/* Floating badge: OJK Licensed in emerald */}
-      <div
-        className="absolute -bottom-3 -right-4 flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-bold"
-        style={{
-          background: 'rgba(16,185,129,0.12)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(16,185,129,0.25)',
-          color: '#34d399',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-        }}
-      >
-        <Award size={12} />
-        OJK Licensed
-      </div>
-
-      {/* Floating particles in orange/emerald */}
-      {[
-        { top: '10%', left: '-8%', size: 8, delay: '0s', dur: '3.2s' },
-        { top: '60%', left: '-12%', size: 5, delay: '0.8s', dur: '4.1s' },
-        { top: '80%', right: '-6%', size: 6, delay: '1.4s', dur: '3.7s' },
-        { top: '20%', right: '-10%', size: 4, delay: '0.4s', dur: '5s' },
-        { top: '45%', right: '-15%', size: 7, delay: '2s', dur: '3.5s' },
-        { top: '5%', right: '10%', size: 4, delay: '1s', dur: '4.5s' },
-      ].map((p, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: p.size,
-            height: p.size,
-            top: p.top,
-            left: 'left' in p ? p.left : undefined,
-            right: 'right' in p ? p.right : undefined,
-            background: i % 2 === 0
-              ? 'radial-gradient(circle, #fb923c, #f97316)'
-              : 'radial-gradient(circle, #34d399, #10b981)',
-            animation: `spParticle${(i % 3) + 1} ${p.dur} ease-in-out infinite`,
-            animationDelay: p.delay,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// ─── Phone Mockup (Claims) ────────────────────────────────────────────────────
-const PhoneMockup: React.FC<{ lang: Language }> = ({ lang }) => (
-  <div className="relative flex justify-center items-center">
-    {/* Glow */}
-    <div
-      className="absolute w-64 h-80 rounded-full blur-3xl opacity-25 pointer-events-none"
-      style={{ background: 'radial-gradient(ellipse, #f97316, #10b981)' }}
-    />
-
-    {/* Phone frame */}
-    <div
-      className="relative w-52 rounded-[3rem] overflow-hidden"
-      style={{
-        background: 'rgba(10,10,10,0.95)',
-        border: '3px solid rgba(255,255,255,0.12)',
-        boxShadow: '0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)',
-      }}
-    >
-      {/* Notch */}
-      <div className="flex justify-center pt-3 pb-2">
-        <div className="w-24 h-5 rounded-full bg-black/80" />
-      </div>
-
-      {/* Screen content */}
-      <div className="px-4 pb-6 pt-1 flex flex-col gap-3">
-        {/* App header */}
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-white font-black text-sm">{tx('Klaim Baru', 'New Claim', lang)}</p>
-          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.2)' }}>
-            <X size={10} className="text-[#f97316]" />
-          </div>
-        </div>
-
-        {/* Photo upload area */}
-        <div
-          className="rounded-2xl p-4 flex flex-col items-center gap-2"
-          style={{
-            background: 'rgba(249,115,22,0.08)',
-            border: '1.5px dashed rgba(249,115,22,0.35)',
-          }}
-        >
-          {/* Camera icon custom SVG */}
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.15)' }}>
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="#fb923c" strokeWidth="1.8">
-              <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </div>
-          <p className="text-white/70 text-[10px] font-semibold text-center">{tx('Foto Kerusakan', 'Photo Damage', lang)}</p>
-          <p className="text-white/30 text-[9px] text-center">tap to capture</p>
-        </div>
-
-        {/* Form fields */}
-        <div className="space-y-2">
-          {[
-            { label: tx('Nomor Polis', 'Policy No', lang), val: 'SP-2025-0042' },
-            { label: tx('Jenis Insiden', 'Incident Type', lang), val: tx('Kecelakaan', 'Accident', lang) },
-          ].map((f) => (
-            <div key={f.label} className="rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-white/40 text-[8px] uppercase tracking-wider">{f.label}</p>
-              <p className="text-white/80 text-xs font-semibold">{f.val}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Status: submitted */}
-        <div
-          className="rounded-xl p-2.5 flex items-center gap-2"
-          style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}
-        >
-          <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />
-          <div>
-            <p className="text-emerald-300 text-[10px] font-bold">Submitted ✓</p>
-            <p className="text-emerald-400/60 text-[8px]">{tx('Dalam proses', 'Processing...', lang)}</p>
-          </div>
-        </div>
-
-        {/* Bottom pill */}
-        <div
-          className="rounded-xl py-2.5 text-center text-white text-xs font-bold"
-          style={{ background: 'linear-gradient(90deg, #f97316, #fb923c)' }}
-        >
-          {tx('Kirim Klaim', 'Submit Claim', lang)}
-        </div>
-      </div>
-
-      {/* Home bar */}
-      <div className="flex justify-center pb-3">
-        <div className="w-24 h-1 rounded-full bg-white/20" />
       </div>
     </div>
   </div>
 );
 
-// ─── Animated Mesh Background ─────────────────────────────────────────────────
-interface Orb { ax: number; ay: number; fx: number; fy: number; px: number; py: number; r: number; h: number; s: number; l: number; }
+// ─── Promo Banner ─────────────────────────────────────────────────────────────
+const BANNERS = [
+  {
+    badge: 'Gratis',
+    title: ['Konsultasi', 'dengan Agen Kami'],
+    sub: 'Dapatkan saran perlindungan yang tepat, tanpa tekanan dan tanpa biaya.',
+    cta: 'Mulai Chat',
+    icon: MessageSquare,
+    grad: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)',
+    accent: '#22c55e',
+    badgeBg: 'rgba(34,197,94,0.15)',
+    badgeColor: '#4ade80',
+  },
+  {
+    badge: 'Referral Program',
+    title: ['Ajak Teman,', 'Raih Keuntungan'],
+    sub: 'Setiap referral yang bergabung memberikan keuntungan nyata untuk Anda berdua.',
+    cta: 'Lihat Syarat',
+    icon: Gift,
+    grad: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+    accent: '#818cf8',
+    badgeBg: 'rgba(129,140,248,0.15)',
+    badgeColor: '#a5b4fc',
+  },
+  {
+    badge: 'Produk Unggulan',
+    title: ['Proteksi Gadget', '& Elektronik'],
+    sub: 'Satu produk untuk semua perangkat berhargamu. Mudah, terjangkau, komprehensif.',
+    cta: 'Cek Harga',
+    icon: Smartphone,
+    grad: 'linear-gradient(135deg, #0c0a1e 0%, #1a0533 100%)',
+    accent: '#c084fc',
+    badgeBg: 'rgba(192,132,252,0.15)',
+    badgeColor: '#e879f9',
+  },
+];
 
-const AnimatedBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
+  const [active, setActive] = useState(0);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const orbs: Orb[] = [
-      { ax: 0.55, ay: 0.30, fx: 0.00031, fy: 0.00023, px: 0,    py: 0.5,  r: 380, h: 25,  s: 80, l: 55 },
-      { ax: 0.35, ay: 0.65, fx: 0.00019, fy: 0.00041, px: 1.5,  py: 2.1,  r: 320, h: 160, s: 70, l: 50 },
-      { ax: 0.75, ay: 0.55, fx: 0.00027, fy: 0.00017, px: 3.2,  py: 0.8,  r: 280, h: 195, s: 75, l: 50 },
-      { ax: 0.20, ay: 0.25, fx: 0.00043, fy: 0.00033, px: 0.7,  py: 3.5,  r: 240, h: 30,  s: 80, l: 60 },
-      { ax: 0.85, ay: 0.80, fx: 0.00015, fy: 0.00025, px: 2.8,  py: 1.2,  r: 300, h: 150, s: 65, l: 55 },
-      { ax: 0.50, ay: 0.50, fx: 0.00037, fy: 0.00029, px: 4.0,  py: 4.0,  r: 200, h: 20,  s: 60, l: 55 },
-    ];
-
-    let w = 0, canvasH = 0, raf = 0;
-    const resize = () => {
-      w = canvas.width  = canvas.offsetWidth;
-      canvasH = canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
-
-    const opacity = darkMode ? 0.18 : 0.08;
-    let t = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, w, canvasH);
-      t += 1;
-      for (const o of orbs) {
-        const cx = (o.ax + 0.18 * Math.sin(o.fx * t + o.px)) * w;
-        const cy = (o.ay + 0.16 * Math.cos(o.fy * t + o.py)) * canvasH;
-        const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, o.r);
-        grd.addColorStop(0,   `hsla(${o.h},${o.s}%,${o.l}%,${opacity})`);
-        grd.addColorStop(0.5, `hsla(${o.h},${o.s}%,${o.l}%,${opacity * 0.4})`);
-        grd.addColorStop(1,   `hsla(${o.h},${o.s}%,${o.l}%,0)`);
-        ctx.beginPath();
-        ctx.arc(cx, cy, o.r, 0, Math.PI * 2);
-        ctx.fillStyle = grd;
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [darkMode]);
-
+    const iv = setInterval(() => setActive(a => (a + 1) % BANNERS.length), 5000);
+    return () => clearInterval(iv);
+  }, []);
+  const b = BANNERS[active];
+  const Icon = b.icon;
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
-    />
+    <div className="space-y-4">
+      {/* Main rotating banner */}
+      <div key={active} className="animate-banner relative overflow-hidden rounded-3xl p-7"
+        style={{ background: b.grad, border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
+          style={{ background: `radial-gradient(circle, ${b.accent}, transparent)`, filter: 'blur(30px)', transform: 'translate(30%,-30%)' }} />
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <span className="inline-block text-[0.55rem] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-4"
+              style={{ background: b.badgeBg, color: b.badgeColor, border: `1px solid ${b.accent}30` }}>
+              {b.badge}
+            </span>
+            <h3 className="text-2xl font-black text-white leading-tight mb-2">
+              {b.title[0]}<br /><span style={{ color: b.accent }}>{b.title[1]}</span>
+            </h3>
+            <p className="text-sm text-gray-400 mb-5 max-w-xs leading-relaxed">{b.sub}</p>
+            <button onClick={onSignIn}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90"
+              style={{ background: b.accent }}>
+              {b.cta} <ArrowRight size={14} />
+            </button>
+          </div>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${b.accent}18`, border: `1px solid ${b.accent}30` }}>
+            <Icon size={28} style={{ color: b.accent }} />
+          </div>
+        </div>
+        {/* Dots */}
+        <div className="flex gap-1.5 mt-5">
+          {BANNERS.map((_, i) => (
+            <button key={i} onClick={() => setActive(i)}
+              className="h-1 rounded-full transition-all"
+              style={{ width: i === active ? '24px' : '6px', background: i === active ? b.accent : 'rgba(255,255,255,0.2)' }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Two small static banners */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="relative overflow-hidden rounded-2xl p-4"
+          style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.04))', border: '1px solid rgba(34,197,94,0.15)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
+            style={{ background: 'rgba(34,197,94,0.12)' }}>
+            <Download size={16} style={{ color: '#22c55e' }} />
+          </div>
+          <p className="text-xs font-black text-white leading-tight">Download<br />Mobile App</p>
+          <p className="text-[10px] text-gray-500 mt-1">iOS & Android</p>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl p-4"
+          style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(139,92,246,0.04))', border: '1px solid rgba(168,85,247,0.15)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2"
+            style={{ background: 'rgba(168,85,247,0.12)' }}>
+            <Award size={16} style={{ color: '#a855f7' }} />
+          </div>
+          <p className="text-xs font-black text-white leading-tight">Trusted<br />Partner</p>
+          <p className="text-[10px] text-gray-500 mt-1">18+ Insurer</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
+// ─── Product Card ─────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  { Icon: Car,          name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
+  { Icon: Plane,        name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
+  { Icon: Shield,       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
+  { Icon: Smartphone,   name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
+  { Icon: Heart,        name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+];
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, setDarkMode, initialSection }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cmsConfig, setCmsConfig] = useState<Record<string, import('../../db').WebsiteSection>>({});
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pwaPrompt, setPwaPrompt] = useState<any>(null);
+  const [pwaVisible, setPwaVisible] = useState(false);
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [cmsConfig, setCmsConfig] = useState<Record<string, any>>({});
 
   const t = useCallback((id: string, en: string) => tx(id, en, lang), [lang]);
 
+  // Scroll listener
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 60);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const fn = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
+  // CMS config
   useEffect(() => {
     import('../../db').then(({ db }) => {
-      db.websiteConfig.toArray().then(configs => {
-        const map: Record<string, import('../../db').WebsiteSection> = {};
-        configs.forEach(c => { map[c.sectionKey] = c; });
-        setCmsConfig(map);
+      db.websiteConfig.toArray().then(cfgs => {
+        const m: Record<string, any> = {};
+        cfgs.forEach(c => { m[c.sectionKey] = c; });
+        setCmsConfig(m);
       }).catch(() => {});
     });
   }, []);
 
-  // Scroll to initial section on mount
+  // PWA install
+  useEffect(() => {
+    const handler = (e: Event) => { e.preventDefault(); setPwaPrompt(e); setTimeout(() => setPwaVisible(true), 4000); };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setPwaInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const installPwa = async () => {
+    if (!pwaPrompt) return;
+    pwaPrompt.prompt();
+    await pwaPrompt.userChoice;
+    setPwaVisible(false); setPwaPrompt(null);
+  };
+
+  // Scroll to initial section
   useEffect(() => {
     if (!initialSection) return;
-    const t = setTimeout(() => {
-      document.getElementById(initialSection)?.scrollIntoView({ behavior: 'smooth' });
-    }, 350);
+    const t = setTimeout(() => document.getElementById(initialSection)?.scrollIntoView({ behavior: 'smooth' }), 400);
     return () => clearTimeout(t);
   }, [initialSection]);
 
-  // Update URL as sections scroll into view
+  // URL tracking as user scrolls
   useEffect(() => {
-    const SECTION_MAP: Record<string, string> = {
-      'products':     '/products',
-      'how-it-works': '/how-it-works',
-      'claims':       '/claims',
-      'partners':     '/partners',
-      'about':        '/about',
-    };
-    const ids = Object.keys(SECTION_MAP);
-    const elements = ids.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-    if (!elements.length) return;
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            const id = e.target.id;
-            const path = SECTION_MAP[id];
-            if (path && window.location.pathname !== path) {
-              window.history.replaceState({}, '', path);
-            }
-          }
-        });
-      },
-      { threshold: 0.35 }
-    );
-
-    // Also observe hero (scroll back to /) when near top
-    const heroObs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && window.location.pathname !== '/') {
-          window.history.replaceState({}, '', '/');
+    const MAP: Record<string, string> = { products: '/products', 'how-it-works': '/how-it-works', claims: '/claims', partners: '/partners', about: '/about' };
+    const els = Object.keys(MAP).map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    const heroEl = document.querySelector('[data-hero]') as HTMLElement | null;
+    if (!els.length && !heroEl) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const path = MAP[e.target.id];
+          if (path && window.location.pathname !== path) window.history.replaceState({}, '', path);
         }
-      },
-      { threshold: 0.5 }
-    );
-    const heroEl = document.querySelector('section[data-hero]') as HTMLElement | null;
+      });
+    }, { threshold: 0.35 });
+    const heroObs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && window.location.pathname !== '/') window.history.replaceState({}, '', '/');
+    }, { threshold: 0.5 });
+    els.forEach(el => obs.observe(el));
     if (heroEl) heroObs.observe(heroEl);
-    elements.forEach(el => obs.observe(el));
     return () => { obs.disconnect(); heroObs.disconnect(); };
   }, []);
 
-  const toggleLang = () => setLang(lang === Language.EN ? Language.ID : Language.EN);
-  const toggleDark = () => setDarkMode(!darkMode);
-
-  const isDark = darkMode;
-
-  // ── Data ────────────────────────────────────────────────────────────────────
-  const products = [
-    {
-      svg: CarSVG,
-      name: t('Asuransi Kendaraan', 'Car Insurance'),
-      subtitle: t('Komprehensif & TLO', 'Comprehensive & TLO'),
-      desc: t('Perlindungan total kendaraan dari benturan, bencana alam, hingga kehilangan.', 'Total vehicle protection from collision, natural disasters, to theft.'),
-      pills: ['All Risk', 'TLO', t('Banjir', 'Flood')],
-      price: t('Rp 1,2 Jt/tahun', 'Rp 1.2M/year'),
-      badge: t('Terlaris', 'Best Seller'),
-      grad: 'from-orange-500/20 to-amber-500/20',
-      border: 'border-orange-500/20',
-    },
-    {
-      svg: TravelSVG,
-      name: t('Asuransi Perjalanan', 'Travel Insurance'),
-      subtitle: t('Domestik & Internasional', 'Domestic & International'),
-      desc: t('Perjalanan aman ke seluruh penjuru dunia dengan perlindungan medis & bagasi.', 'Safe worldwide travel with medical & baggage protection.'),
-      pills: ['Medical', 'Bagasi', 'Delay'],
-      price: t('Rp 89rb/trip', 'Rp 89K/trip'),
-      badge: '',
-      grad: 'from-emerald-600/20 to-teal-600/20',
-      border: 'border-emerald-500/20',
-    },
-    {
-      svg: HealthSVG,
-      name: t('Asuransi Kesehatan', 'Health Insurance'),
-      subtitle: t('Rawat Inap & Jalan', 'Inpatient & Outpatient'),
-      desc: t('Jaringan 2.000+ RS di seluruh Indonesia. Cashless, tanpa antri panjang.', '2,000+ hospitals across Indonesia. Cashless, no long queues.'),
-      pills: ['Cashless', 'Rawat Jalan', 'ICU'],
-      price: t('Rp 250rb/bln', 'Rp 250K/mo'),
-      badge: '',
-      grad: 'from-pink-600/20 to-rose-600/20',
-      border: 'border-pink-500/20',
-    },
-    {
-      svg: PASvg,
-      name: t('Jiwa & Kecelakaan Diri', 'Life & PA Insurance'),
-      subtitle: t('Santunan Jiwa & PA', 'Life & Personal Accident'),
-      desc: t('Santunan jiwa dan kecelakaan diri dengan proses klaim tercepat di industri.', 'Life and personal accident benefits with the fastest claim processing in the industry.'),
-      pills: ['PA', t('Jiwa', 'Life'), t('Cacat', 'Disability')],
-      price: t('Rp 120rb/bln', 'Rp 120K/mo'),
-      badge: '',
-      grad: 'from-orange-500/20 to-amber-500/20',
-      border: 'border-orange-500/20',
-    },
-    {
-      svg: GadgetSVG,
-      name: t('Asuransi Gadget', 'Gadget Insurance'),
-      subtitle: t('Smartphone & Laptop', 'Smartphone & Laptop'),
-      desc: t('Lindungi perangkat elektronik dari kerusakan fisik, kehilangan, dan kerusakan cairan.', 'Protect electronics from physical damage, loss, and liquid damage.'),
-      pills: ['Crack Screen', t('Kehilangan', 'Loss'), 'Liquid'],
-      price: t('Rp 45rb/bln', 'Rp 45K/mo'),
-      badge: '',
-      grad: 'from-cyan-600/20 to-orange-500/20',
-      border: 'border-cyan-500/20',
-    },
+  const navLinks = [
+    { id: 'products',     path: '/products',     label: t('Produk', 'Products') },
+    { id: 'how-it-works', path: '/how-it-works', label: t('Cara Kerja', 'How It Works') },
+    { id: 'about',        path: '/about',        label: t('Tentang', 'About') },
   ];
 
-  const howItWorks = [
-    {
-      num: '01',
-      title: t('Pilih Produk', 'Choose Product'),
-      desc: t('Pilih dari 5 kategori asuransi dan sesuaikan kebutuhanmu dalam hitungan detik.', 'Choose from 5 insurance categories and customize your needs in seconds.'),
-      color: 'text-orange-400',
-      glowColor: 'rgba(249,115,22,0.3)',
-    },
-    {
-      num: '02',
-      title: t('Isi Data', 'Fill Your Details'),
-      desc: t('Isi form singkat — AI kami akan bantu pra-isi dari data yang sudah ada.', 'Fill a short form — our AI pre-fills from your existing data.'),
-      color: 'text-emerald-400',
-      glowColor: 'rgba(16,185,129,0.3)',
-    },
-    {
-      num: '03',
-      title: t('Bayar & Aktif', 'Pay & Activate'),
-      desc: t('Bayar via transfer, kartu, atau QRIS. Polis aktif & dikirim dalam 60 detik.', 'Pay via transfer, card, or QRIS. Policy activated & delivered in 60 seconds.'),
-      color: 'text-sky-400',
-      glowColor: 'rgba(14,165,233,0.3)',
-    },
-  ];
-
-  const claimSteps = [
-    { emoji: '📷', label: t('Foto', 'Photo'), desc: t('Ambil foto insiden', 'Take incident photo') },
-    { emoji: '📋', label: t('Isi Form', 'Fill Form'), desc: t('Form singkat 3 field', '3-field short form') },
-    { emoji: '🚀', label: t('Kirim', 'Submit'), desc: t('Kirim langsung', 'Submit instantly') },
-    { emoji: '✅', label: t('Diproses', 'Processing'), desc: t('Notifikasi real-time', 'Real-time notification') },
-  ];
-
-  const stats = [
-    { val: '24.000+', label: t('Pengguna Aktif', 'Active Users'), sub: t('& terus bertambah', '& growing'), icon: Users },
-    { val: '99.2%', label: t('Tingkat Persetujuan', 'Approval Rate'), sub: t('klaim disetujui', 'claims approved'), icon: CheckCircle },
-    { val: '< 5 Mnt', label: t('Proses Klaim', 'Claim Process'), sub: t('rata-rata', 'average'), icon: Clock },
-    { val: 'Rp 12M+', label: t('Total Dibayar', 'Total Paid'), sub: t('kepada nasabah', 'to customers'), icon: TrendingUp },
-  ];
-
-  const testimonials = [
-    {
-      name: 'Andi Prasetyo',
-      meta: t('Jakarta · Asuransi Mobil', 'Jakarta · Car Insurance'),
-      quote: t('"Proses klaim cuma 10 menit! Foto, upload, selesai. Nggak perlu ribet ke kantor sama sekali."', '"Claim took just 10 minutes! Photo, upload, done. No need to go to the office at all."'),
-      rating: 5,
-      init: 'A',
-      color: 'from-orange-500 to-amber-500',
-    },
-    {
-      name: 'Sari Dewi',
-      meta: t('Surabaya · Perjalanan', 'Surabaya · Travel'),
-      quote: t('"Bagasi hilang di Singapura, klaim langsung cair di hari yang sama. Benar-benar luar biasa!"', '"Luggage lost in Singapore, claim disbursed the same day. Truly incredible!"'),
-      rating: 5,
-      init: 'S',
-      color: 'from-emerald-500 to-teal-600',
-    },
-    {
-      name: 'Budi Santoso',
-      meta: t('Bandung · Jiwa & PA', 'Bandung · Life & PA'),
-      quote: t('"SurePath jauh lebih murah dari asuransi konvensional dengan manfaat yang bahkan lebih baik."', '"SurePath is much cheaper than conventional insurance with even better benefits."'),
-      rating: 5,
-      init: 'B',
-      color: 'from-sky-500 to-cyan-600',
-    },
-  ];
-
-  const footerLinks = {
-    [t('Produk', 'Products')]: [
-      t('Asuransi Kendaraan', 'Car Insurance'),
-      t('Asuransi Perjalanan', 'Travel Insurance'),
-      t('Asuransi Kesehatan', 'Health Insurance'),
-      t('Jiwa & PA', 'Life & PA'),
-      t('Asuransi Gadget', 'Gadget Insurance'),
-    ],
-    [t('Perusahaan', 'Company')]: [
-      t('Tentang Kami', 'About Us'),
-      t('Karir', 'Careers'),
-      t('Blog', 'Blog'),
-      t('Mitra', 'Partners'),
-    ],
-    [t('Legal', 'Legal')]: [
-      t('Syarat & Ketentuan', 'Terms & Conditions'),
-      t('Kebijakan Privasi', 'Privacy Policy'),
-      t('Perizinan OJK', 'OJK License'),
-    ],
+  const navScroll = (id: string, path: string) => {
+    setMenuOpen(false);
+    window.history.pushState({}, '', path);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
-  const surfaceBg = isDark ? 'bg-white/[0.04]' : 'bg-white';
-  const borderColor = isDark ? 'border-white/[0.08]' : 'border-slate-200';
-  const pageBg = isDark ? '#0a0a0a' : '#fafaf9';
-  const eyebrowColor = isDark ? 'text-emerald-400' : 'text-emerald-600';
+  // ── Styling vars ────────────────────────────────────────────────────────────
+  const cardBg     = 'rgba(255,255,255,0.025)';
+  const cardBorder = 'rgba(255,255,255,0.07)';
+  const textMuted  = 'rgba(255,255,255,0.5)';
 
-  // CMS hero logoUrl (WebsiteSection doesn't have this field officially, read via index access)
-  const heroSection = cmsConfig.hero as (import('../../db').WebsiteSection & { logoUrl?: string }) | undefined;
+  // ── lp green ─────────────────────────────────────────────────────────────
+  const lpGreen = 'hsl(119 99% 46%)';
 
   return (
-    <>
-      {/* ── Keyframe styles ───────────────────────────────────────────────── */}
-      <style>{`
-        @keyframes spMarquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes spGradShift {
-          0%,100% { background-position: 0% 50%; }
-          50% { background-position: 200% 50%; }
-        }
-        @keyframes spParticle1 {
-          0%,100% { transform: translateY(0px) scale(1); opacity:0.7; }
-          50% { transform: translateY(-16px) scale(1.2); opacity:1; }
-        }
-        @keyframes spParticle2 {
-          0%,100% { transform: translateY(0px) scale(1) translateX(0); opacity:0.5; }
-          50% { transform: translateY(-10px) scale(0.9) translateX(6px); opacity:0.9; }
-        }
-        @keyframes spParticle3 {
-          0%,100% { transform: translateY(0px) rotate(0deg); opacity:0.6; }
-          50% { transform: translateY(-20px) rotate(180deg); opacity:1; }
-        }
-        @keyframes spCardFloat {
-          0%,100% { transform: perspective(800px) rotateY(-6deg) rotateX(2deg) translateY(0px); }
-          50% { transform: perspective(800px) rotateY(-6deg) rotateX(2deg) translateY(-12px); }
-        }
-        @keyframes spPulseRing {
-          0% { transform: scale(1); opacity:0.6; }
-          100% { transform: scale(1.5); opacity:0; }
-        }
-        .sp-grad-text {
-          background: linear-gradient(135deg, #10b981 0%, #34d399 40%, #f97316 100%);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: spGradShift 5s ease-in-out infinite;
-        }
-        .sp-marquee { animation: spMarquee 30s linear infinite; }
-        .sp-card-float {
-          animation: spCardFloat 5s ease-in-out infinite;
-        }
-        .sp-product-card {
-          transition: transform 0.4s cubic-bezier(0.23,1,0.32,1), box-shadow 0.4s, border-color 0.3s;
-        }
-        .sp-product-card:hover {
-          transform: translateY(-4px) scale(1.005);
-        }
-        .sp-btn-primary {
-          background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24);
-          background-size: 200% 200%;
-          transition: all 0.3s ease;
-          box-shadow: 0 8px 32px rgba(249,115,22,0.35);
-        }
-        .sp-btn-primary:hover {
-          background-position: right center;
-          box-shadow: 0 12px 40px rgba(249,115,22,0.5);
-          transform: scale(1.03) translateY(-1px);
-        }
-        .sp-glass {
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-        }
-        .sp-noise::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-          pointer-events: none;
-          border-radius: inherit;
-        }
-        .sp-no-screenshot {
-          -webkit-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none;
-        }
-        @media print {
-          .sp-no-screenshot, .sp-no-screenshot * {
-            display: none !important;
-            visibility: hidden !important;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .sp-card-float, .sp-marquee, .sp-grad-text { animation: none !important; }
-        }
-      `}</style>
+    <div className="min-h-screen text-white font-sora" style={{ background: 'hsl(0 0% 8%)' }}>
+      <SectionBackground />
 
-      <div
-        className={`sp-no-screenshot ${textPrimary} min-h-screen overflow-x-hidden font-sans relative`}
-        style={{ background: pageBg }}
-      >
-        {/* Invisible watermark overlay */}
-        <div
-          className="fixed inset-0 pointer-events-none z-[9998] select-none"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              -45deg,
-              transparent,
-              transparent 80px,
-              rgba(249,115,22,0.012) 80px,
-              rgba(249,115,22,0.012) 82px
-            )`,
-          }}
-          aria-hidden="true"
-        />
+      {/* ════════════════════════════════ NAVBAR ════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5">
+        {/* Logo */}
+        <a href="/" className="flex items-center gap-2.5 group">
+          <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <span className="text-xl font-semibold tracking-tight text-white">
+            Sure<span style={{ color: lpGreen }}>Path</span>
+          </span>
+        </a>
 
-        <AnimatedBackground darkMode={darkMode} />
+        {/* Center nav links */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map(l => (
+            <a key={l.id} href={l.path}
+              onClick={e => { e.preventDefault(); navScroll(l.id, l.path); }}
+              className="text-sm uppercase tracking-widest transition-colors hover:text-white"
+              style={{ color: 'hsl(0 0% 60%)' }}>
+              {l.label}
+            </a>
+          ))}
+          <a href="/admin"
+            className="text-sm uppercase tracking-widest transition-colors hover:text-white"
+            style={{ color: 'hsl(0 0% 60%)' }}>
+            Admin
+          </a>
+        </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            NAV
-        ══════════════════════════════════════════════════════════════════ */}
-        <nav
-          className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
-            isScrolled ? 'py-2' : 'py-4'
-          }`}
-        >
-          <div className={`mx-4 md:mx-auto md:max-w-6xl transition-all duration-500 ${
-            isScrolled
-              ? `rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#0a0a0a]/80' : 'bg-white/80'} shadow-2xl shadow-black/20 px-5`
-              : 'px-6'
-          }`}>
-            <div className="h-14 flex items-center justify-between">
-              {/* Logo */}
-              <div className="flex items-center gap-2.5">
-                {heroSection?.logoUrl ? (
-                  <img src={heroSection.logoUrl} alt="SurePath" className="h-8 w-auto object-contain" />
-                ) : (
-                  <div className="w-8 h-8 rounded-xl bg-[#f97316] flex items-center justify-center shadow-lg shadow-orange-500/30">
-                    <SurePathLogo className="w-5 h-5" />
-                  </div>
-                )}
-                <span className="font-black text-xl tracking-tight uppercase">
-                  Sure<span className="text-[#f97316]">Path</span>
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
+            aria-label="Switch language"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all hover:opacity-80"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            <Globe size={12} /> {lang}
+          </button>
+          <button onClick={onSignIn}
+            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-white transition-all active:scale-[0.97] hover:opacity-80"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            {t('Masuk', 'Get Started')}
+          </button>
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+            className="md:hidden p-2.5 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            {menuOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 mx-4 mt-2 rounded-2xl border p-4"
+            style={{ background: 'hsl(0 0% 10%)', borderColor: 'hsl(0 0% 20%)', backdropFilter: 'blur(24px)' }}>
+            {navLinks.map(l => (
+              <button key={l.id} onClick={() => navScroll(l.id, l.path)}
+                className="flex items-center justify-between w-full py-3 border-b text-sm font-medium uppercase tracking-widest"
+                style={{ borderColor: 'hsl(0 0% 20%)', color: 'hsl(0 0% 60%)' }}>
+                <span>{l.label}</span><ChevronRight size={14} />
+              </button>
+            ))}
+            <div className="flex gap-2 mt-4">
+              <a href="/admin" className="flex-1 py-2.5 rounded-xl text-xs font-black text-center border"
+                style={{ borderColor: `${lpGreen}40`, color: lpGreen }}>Admin</a>
+              <button onClick={onSignIn}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black"
+                style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
+                {t('Masuk', 'Get Started')}
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* ═══════════════════════════════ HERO (Spline 3D) ═══════════════════ */}
+      <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
+        style={{ background: 'hsl(0 0% 8%)' }}>
+
+        {/* Spline 3D background */}
+        <div className="absolute inset-0">
+          <Suspense fallback={<div className="absolute inset-0" style={{ background: 'hsl(0 0% 8%)' }} />}>
+            <SplineScene
+              scene="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode"
+              className="w-full h-full"
+            />
+          </Suspense>
+        </div>
+
+        {/* Dark overlay so text is always readable */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.35)', zIndex: 1 }} />
+
+        {/* Content — anchored bottom-left */}
+        <div className="relative w-full max-w-[90%] sm:max-w-md lg:max-w-2xl px-6 md:px-10 pb-12 md:pb-16 pt-32 pointer-events-none"
+          style={{ zIndex: 2 }}>
+
+          {/* Headline */}
+          <h1 className="font-bold uppercase leading-[1.05] tracking-[-0.05em] mb-3 md:mb-5 opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(3rem,8vw,6rem)', animationDelay: '0.2s', color: 'hsl(0 0% 96%)' }}>
+            Sure<span style={{ color: lpGreen }}>Path</span>
+          </h1>
+
+          {/* Subheading */}
+          <p className="font-light mb-3 md:mb-6 opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(1.125rem,2.5vw,1.875rem)', animationDelay: '0.4s', color: 'rgba(245,245,245,0.8)' }}>
+            {t('Kami Hadir untuk Melindungi.', 'We\'re here to protect.')}
+          </p>
+
+          {/* Description */}
+          <p className="font-light mb-6 md:mb-10 max-w-lg opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'hsl(0 0% 60%)', lineHeight: '1.7' }}>
+            {t(
+              'Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda — bukan sekadar angka di atas kertas. Satu platform, semua perlindungan.',
+              'A transparent, human-centered digital insurance platform built around your real needs — not just numbers on paper. One platform, all your protection.',
+            )}
+          </p>
+
+          {/* CTA buttons */}
+          <div className="flex flex-wrap gap-3 font-bold opacity-0 animate-fade-up"
+            style={{ animationDelay: '0.7s' }}>
+            <button onClick={onSignIn}
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+              style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
+              {t('Mulai Konsultasi', 'Book a Consultation')}
+            </button>
+            <button onClick={() => { navScroll('products', '/products'); }}
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-90 text-black"
+              style={{ background: 'white' }}>
+              {t('Lihat Produk', 'Our Products')}
+            </button>
+          </div>
+
+          {/* Trust line */}
+          <p className="mt-5 md:mt-7 text-xs font-light opacity-0 animate-fade-up"
+            style={{ animationDelay: '0.85s', color: 'hsl(0 0% 50%)' }}>
+            {t(
+              'Platform asuransi terpercaya · Jakarta, Indonesia · 12.400+ nasabah aktif',
+              'Trusted insurance platform · Jakarta, Indonesia · 12,400+ active clients',
+            )}
+          </p>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 right-8 z-10 flex flex-col items-center gap-2 animate-float pointer-events-none">
+          <div className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5"
+            style={{ borderColor: `${lpGreen}50` }}>
+            <div className="w-1 h-2 rounded-full" style={{ background: lpGreen, opacity: 0.7 }} />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════ PARTNERS TICKER ════════════════════════ */}
+      <div className="relative py-8 overflow-hidden border-y"
+        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'rgba(4,12,6,0.6)', backdropFilter: 'blur(8px)' }}>
+        <div className="flex animate-ticker whitespace-nowrap">
+          {[...Array(2)].map((_, repeat) => (
+            <div key={repeat} className="flex items-center gap-12 px-6">
+              {['Allianz', 'ACA', 'Asuransi Adira', 'Jasindo', 'Tugu Insurance', 'Asuransi BCA', 'Sompo', 'Zurich', 'Astra Insurance', 'AXA Mandiri', 'Asuransi Sinar Mas', 'Lippo Insurance', 'Asuransi Reliance', 'MSIG', 'Asuransi Ramayana', 'Tokio Marine', 'Asuransi CAR', 'Asuransi Wahana Tata'].map(name => (
+                <span key={name} className="text-sm font-bold flex-shrink-0"
+                  style={{ color: 'rgba(134,239,172,0.35)' }}>
+                  {name}
                 </span>
-              </div>
-
-              {/* Desktop nav links */}
-              <div className="hidden lg:flex items-center gap-7">
-                {[
-                  { id: 'products',     path: '/products',     label: t('Produk', 'Products') },
-                  { id: 'how-it-works', path: '/how-it-works', label: t('Cara Kerja', 'How It Works') },
-                  { id: 'claims',       path: '/claims',       label: t('Klaim', 'Claims') },
-                  { id: 'about',        path: '/about',        label: t('Tentang', 'About') },
-                ].map((link) => (
-                  <a
-                    key={link.id}
-                    href={link.path}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.history.pushState({}, '', link.path);
-                      document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className={`text-sm font-medium ${textMuted} hover:text-[#f97316] transition-colors relative group`}
-                  >
-                    {link.label}
-                    <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#f97316] group-hover:w-full transition-all duration-300" />
-                  </a>
-                ))}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                {/* Lang toggle */}
-                <button
-                  onClick={toggleLang}
-                  className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${borderColor} ${textMuted} hover:border-orange-500/50 hover:text-[#f97316] transition-all`}
-                >
-                  <Globe size={12} />
-                  {lang}
-                </button>
-
-                {/* Dark mode */}
-                <button
-                  onClick={toggleDark}
-                  className={`p-2 rounded-xl border ${borderColor} ${textMuted} hover:border-orange-500/50 hover:text-[#f97316] transition-all`}
-                  aria-label="Toggle dark mode"
-                >
-                  {isDark ? <Sun size={15} /> : <Moon size={15} />}
-                </button>
-
-                {/* Admin portal link */}
-                <a
-                  href="/admin"
-                  title="Admin Dashboard"
-                  className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border ${borderColor} ${textMuted} hover:border-emerald-500/50 hover:text-emerald-500 transition-all`}
-                >
-                  <ShieldCheck size={13} />
-                  Admin
-                </a>
-
-                {/* Masuk */}
-                <button
-                  onClick={onSignIn}
-                  className={`hidden sm:block px-4 py-2 rounded-xl text-sm font-semibold border ${borderColor} ${textMuted} hover:text-[#f97316] hover:border-orange-500/40 transition-all`}
-                >
-                  {t('Masuk', 'Sign In')}
-                </button>
-
-                {/* Daftar CTA */}
-                <button
-                  onClick={onSignIn}
-                  className="sp-btn-primary px-4 py-2 rounded-xl text-sm font-black text-white"
-                >
-                  {t('Daftar Gratis', 'Get Started')}
-                </button>
-
-                {/* Mobile hamburger */}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className={`lg:hidden p-2 rounded-xl border ${borderColor} ${textMuted}`}
-                  aria-label="Menu"
-                >
-                  {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile slide-down menu */}
-          {mobileMenuOpen && (
-            <div
-              className={`lg:hidden mx-4 mt-2 rounded-2xl sp-glass border ${borderColor} ${isDark ? 'bg-[#0a0a0a]/95' : 'bg-white/95'} p-4 shadow-2xl`}
-            >
-              {[
-                { id: 'products',     path: '/products',     label: t('Produk', 'Products') },
-                { id: 'how-it-works', path: '/how-it-works', label: t('Cara Kerja', 'How It Works') },
-                { id: 'claims',       path: '/claims',       label: t('Klaim', 'Claims') },
-                { id: 'about',        path: '/about',        label: t('Tentang', 'About') },
-              ].map((link) => (
-                <a
-                  key={link.id}
-                  href={link.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileMenuOpen(false);
-                    window.history.pushState({}, '', link.path);
-                    document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className={`flex items-center justify-between py-3 border-b ${borderColor} last:border-0 ${textMuted} hover:text-[#f97316] transition-colors`}
-                >
-                  {link.label}
-                  <ChevronRight size={14} />
-                </a>
               ))}
-              <div className="flex gap-2 mt-4">
-                <button onClick={toggleLang} className={`flex-1 py-2.5 rounded-xl text-sm font-bold border ${borderColor} ${textMuted} flex items-center justify-center gap-1.5`}>
-                  <Globe size={14} />{lang}
-                </button>
-                <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#f97316] text-white">
-                  {t('Masuk', 'Sign In')}
-                </button>
-              </div>
-              <a
-                href="/admin"
-                className="flex items-center justify-center gap-2 mt-2 py-2.5 rounded-xl text-xs font-bold border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/10 transition-all"
-              >
-                <ShieldCheck size={13} /> Admin Dashboard
-              </a>
             </div>
-          )}
-        </nav>
+          ))}
+        </div>
+        <div className="absolute inset-y-0 left-0 w-20" style={{ background: 'linear-gradient(to right, rgba(4,12,6,0.6), transparent)' }} />
+        <div className="absolute inset-y-0 right-0 w-20" style={{ background: 'linear-gradient(to left, rgba(4,12,6,0.6), transparent)' }} />
+      </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            HERO
-        ══════════════════════════════════════════════════════════════════ */}
-        <section data-hero className="relative min-h-screen flex items-center overflow-hidden pt-20">
-          {/* Mesh gradient background */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: isDark
-                ? `
-                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(249,115,22,0.18) 0%, transparent 60%),
-                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(16,185,129,0.12) 0%, transparent 60%),
-                  radial-gradient(ellipse 50% 40% at 80% 80%, rgba(14,165,233,0.08) 0%, transparent 60%),
-                  #0a0a0a
-                `
-                : `
-                  radial-gradient(ellipse 80% 60% at 70% 30%, rgba(249,115,22,0.1) 0%, transparent 60%),
-                  radial-gradient(ellipse 60% 50% at 20% 70%, rgba(16,185,129,0.08) 0%, transparent 60%),
-                  #fafaf9
-                `,
-            }}
-          />
-
-          {/* Grid pattern overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.025]"
-            style={{
-              backgroundImage: `linear-gradient(${isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.5)'} 1px, transparent 1px),
-                                linear-gradient(90deg, ${isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.5)'} 1px, transparent 1px)`,
-              backgroundSize: '64px 64px',
-            }}
-          />
-
-          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full py-20 lg:py-24">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* ── Left ── */}
-              <div className="flex flex-col gap-7">
-                {/* Eyebrow pill: emerald */}
-                <div className="flex items-center gap-2.5 w-fit">
-                  <div
-                    className="flex items-center gap-2 px-4 py-2 rounded-full"
-                    style={{
-                      background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
-                      border: '1px solid rgba(16,185,129,0.25)',
-                    }}
-                  >
-                    <div className="relative">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-50" />
-                    </div>
-                    <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">
-                      {t('OJK Terdaftar & Diawasi', 'OJK Registered & Supervised')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* H1 */}
-                <h1
-                  className={`text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.02] ${textPrimary}`}
-                  style={{ letterSpacing: '-0.04em' }}
-                >
-                  {cmsConfig.hero?.headline ?? t('Proteksi Terbaik,', 'Best Protection,')}
-                  <br />
-                  <span className="sp-grad-text">
-                    {cmsConfig.hero?.subtitle ?? t('Klaim Semudah Foto.', 'Claim as Easy as a Photo.')}
-                  </span>
-                </h1>
-
-                {/* Sub */}
-                <p className={`text-lg lg:text-xl ${textMuted} leading-relaxed max-w-lg`}>
-                  {t(
-                    'Beli asuransi dalam 60 detik. Klaim cukup lewat kamera HP. 24.000+ pengguna sudah merasakan manfaatnya.',
-                    'Buy insurance in 60 seconds. Claim just with your phone camera. 24,000+ users already enjoy the benefits.'
-                  )}
-                </p>
-
-                {/* CTAs */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={onSignIn}
-                    className="sp-btn-primary flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-white font-black text-base"
-                  >
-                    {cmsConfig.hero?.ctaText ?? t('Mulai Gratis', 'Start Free')}
-                    <ArrowRight size={16} />
-                  </button>
-                  <button
-                    onClick={onSignIn}
-                    className={`flex items-center justify-center gap-2 px-7 py-4 rounded-2xl font-bold text-base border border-emerald-500/40 text-emerald-500 hover:border-emerald-400 hover:text-emerald-400 transition-all`}
-                  >
-                    {t('Lihat Demo', 'Watch Demo')}
-                    <ChevronDown size={16} />
-                  </button>
-                </div>
-
-                {/* Social proof row */}
-                <div className={`flex items-center gap-4 pt-2 border-t ${borderColor}`}>
-                  {/* Avatars in orange/emerald/teal palette */}
-                  <div className="flex -space-x-2">
-                    {['A', 'S', 'B', 'R', 'D'].map((init, i) => (
-                      <div
-                        key={i}
-                        className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-white text-xs font-black"
-                        style={{
-                          borderColor: pageBg,
-                          background: ['#f97316', '#10b981', '#0ea5e9', '#f59e0b', '#34d399'][i],
-                        }}
-                      >
-                        {init}
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} size={11} className="text-amber-400 fill-amber-400" />
-                      ))}
-                    </div>
-                    <p className={`text-xs ${textMuted} mt-0.5`}>
-                      <span className={`font-bold ${textPrimary}`}>4.9/5</span>
-                      {t(' dari 8.400+ ulasan', ' from 8,400+ reviews')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Right: Policy Card ── */}
-              <div className="hidden lg:flex justify-center items-center">
-                <div className="sp-card-float">
-                  <PolicyCard darkMode={isDark} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            MARQUEE TICKER
-        ══════════════════════════════════════════════════════════════════ */}
-        <div
-          className="relative py-4 overflow-hidden"
-          style={{
-            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          {/* Fade edges */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-            style={{ background: `linear-gradient(to right, ${pageBg}, transparent)` }}
-          />
-          <div
-            className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-            style={{ background: `linear-gradient(to left, ${pageBg}, transparent)` }}
-          />
-          <div className="flex sp-marquee whitespace-nowrap">
-            {[
-              'OJK Licensed', 'Pembayaran Instan', 'Teknologi AI', 'Klaim Mudah',
-              '24/7 Support', '50+ Produk', 'Trusted by 24k+', 'ISO 27001',
-              'OJK Licensed', 'Pembayaran Instan', 'Teknologi AI', 'Klaim Mudah',
-              '24/7 Support', '50+ Produk', 'Trusted by 24k+', 'ISO 27001',
-            ].map((item, i) => (
-              <span key={i} className={`inline-flex items-center gap-3 px-6 text-sm font-semibold ${textMuted}`}>
-                <span
-                  className="w-1 h-1 rounded-full inline-block"
-                  style={{ background: i % 4 === 0 ? '#f97316' : i % 4 === 1 ? '#10b981' : i % 4 === 2 ? '#f97316' : '#10b981' }}
-                />
-                {item}
+      {/* ════════════════════════════ BENTO GRID ═════════════════════════════ */}
+      <section className="py-28 max-w-7xl mx-auto px-5">
+        <Reveal>
+          <div className="text-center mb-16">
+            <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+              {t('Kenapa SurePath?', 'Why SurePath?')}
+            </span>
+            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)' }}>
+              {t('Asuransi yang Benar-Benar', 'Insurance That Truly')}{' '}
+              <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {t('Bekerja Untukmu', 'Works for You')}
               </span>
+            </h2>
+            <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: textMuted }}>
+              {t('Kami membangun platform ini bukan untuk menjual sebanyak mungkin, tapi untuk memastikan kamu mendapat perlindungan yang paling tepat.', 'We built this platform not to sell as much as possible, but to ensure you get the most appropriate protection.')}
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Wide card */}
+          <Reveal className="md:col-span-2" delay={0}>
+            <div className="group relative overflow-hidden rounded-3xl p-8 h-full min-h-[220px] cursor-default transition-all duration-500 hover:scale-[1.01]"
+              style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.07), rgba(16,185,129,0.03))', border: `1px solid rgba(34,197,94,0.12)` }}>
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.08), transparent)', transform: 'translate(40%,-40%)' }} />
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                <Sparkles size={22} style={{ color: '#22c55e' }} />
+              </div>
+              <h3 className="text-xl font-black text-white mb-3">{t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis')}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                {t('Sebelum merekomendasikan satu pun produk, kami memahami konteks kehidupanmu secara menyeluruh. Agen dan teknologi kami bekerja bersama untuk menemukan solusi yang benar-benar sesuai — bukan yang paling menguntungkan secara komisi.', 'Before recommending any product, we fully understand your life context. Our agents and technology work together to find truly suitable solutions — not the most commission-profitable ones.')}
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                <Users size={20} style={{ color: '#3b82f6' }} />
+              </div>
+              <h3 className="text-lg font-black text-white mb-2">{t('Agen Berlisensi', 'Licensed Agents')}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                {t('Seluruh agen kami telah lulus sertifikasi asuransi resmi dan terus diperbarui pengetahuannya.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                <Search size={20} style={{ color: '#a855f7' }} />
+              </div>
+              <h3 className="text-lg font-black text-white mb-2">{t('Transparansi 100%', '100% Transparent')}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                {t('Tidak ada biaya tersembunyi. Semua ketentuan polis dijelaskan dengan bahasa yang jelas.', 'No hidden fees. All policy terms explained in clear language.')}
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={160}>
+            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <BarChart2 size={20} style={{ color: '#f59e0b' }} />
+              </div>
+              <h3 className="text-lg font-black text-white mb-2">{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                {t('40+ produk dari 18 insurer terpercaya, satu platform untuk semua kebutuhan perlindunganmu.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
+              </p>
+            </div>
+          </Reveal>
+
+          {/* Wide card 2 */}
+          <Reveal className="md:col-span-2" delay={200}>
+            <div className="group relative overflow-hidden rounded-3xl p-8 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.01]"
+              style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.03))', border: '1px solid rgba(16,185,129,0.1)' }}>
+              <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.08), transparent)', transform: 'translate(-40%,40%)' }} />
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <Zap size={20} style={{ color: '#10b981' }} />
+              </div>
+              <h3 className="text-xl font-black text-white mb-3">{t('Digital-First, Human Touch', 'Digital-First, Human Touch')}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                {t('Teknologi modern memudahkan akses, tapi di baliknya ada manusia nyata yang peduli. Agen kami hadir untuk menjawab pertanyaan terdalam yang tidak bisa dijawab algoritma.', 'Modern technology makes access easy, but behind it are real humans who care. Our agents are here to answer the deep questions algorithms cannot.')}
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════ PRODUCTS ════════════════════════════════ */}
+      <section id="products" className="py-28 px-5" style={{ background: 'rgba(4,12,6,0.7)' }}>
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="flex items-end justify-between mb-14 flex-wrap gap-6">
+              <div>
+                <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+                  style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+                  {t('Produk Kami', 'Our Products')}
+                </span>
+                <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                  style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                  {t('Perlindungan untuk Setiap', 'Protection for Every')}{' '}
+                  <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {t('Aspek Hidupmu', 'Aspect of Life')}
+                  </span>
+                </h2>
+              </div>
+              <button onClick={() => navScroll('products', '/products')}
+                className="flex items-center gap-2 text-sm font-bold transition-colors"
+                style={{ color: '#22c55e' }}>
+                {t('Lihat Semua', 'View All')} <ChevronRight size={16} />
+              </button>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {PRODUCTS.map((p, i) => (
+              <Reveal key={p.name} delay={i * 60}>
+                <button className="group relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1 w-full text-left min-h-[200px]"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+                  onClick={onSignIn}
+                  aria-label={`Learn more about ${p.name}`}>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 animate-float-2 relative"
+                    style={{ background: `${p.color}14`, border: `1px solid ${p.color}25`, animationDelay: `${i * 0.4}s` }}>
+                    <p.Icon size={22} style={{ color: p.color }} />
+                  </div>
+                  <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
+                  <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{p.desc}</p>
+                  <div className="flex items-center gap-1.5 mt-4 text-xs font-bold transition-all"
+                    style={{ color: p.color }}>
+                    {t('Pelajari', 'Learn more')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+              </Reveal>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            PRODUCTS
-        ══════════════════════════════════════════════════════════════════ */}
-        <section id="products" className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.products?.isVisible === false ? 'none' : undefined }}>
-          <Reveal className="text-center mb-14">
-            <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
-              {t('Produk Kami', 'Our Products')}
-            </p>
-            <h2
-              className={`text-4xl lg:text-5xl font-black ${textPrimary} leading-tight`}
-              style={{ letterSpacing: '-0.03em' }}
-            >
-              {t('Semua Kebutuhan', 'All Your')}
-              <br />
-              <span className="sp-grad-text">{t('Proteksimu', 'Protection Needs')}</span>
+      {/* ══════════════════════ HOW IT WORKS ═════════════════════════════════ */}
+      <section id="how-it-works" className="py-28 max-w-7xl mx-auto px-5">
+        <Reveal>
+          <div className="text-center mb-20">
+            <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+              {t('Cara Kerja', 'How It Works')}
+            </span>
+            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+              style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+              {t('Tiga Langkah Menuju', 'Three Steps to')}{' '}
+              <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {t('Ketenangan Pikiran', 'Peace of Mind')}
+              </span>
             </h2>
-            <p className={`${textMuted} mt-4 text-base max-w-xl mx-auto leading-relaxed`}>
-              {t('Dari kendaraan hingga kesehatan — AI kami menemukan produk terbaik untukmu.', 'From vehicles to health — our AI finds the best product for you.')}
-            </p>
-          </Reveal>
+          </div>
+        </Reveal>
 
-          <div className="flex flex-col gap-4">
-            {products.map((prod, i) => (
-              <Reveal key={i} delay={i * 60}>
-                <div
-                  className={`sp-product-card relative rounded-3xl p-5 sm:p-6 border ${borderColor} hover:border-orange-500/30 cursor-pointer overflow-hidden ${surfaceBg}`}
-                  onClick={onSignIn}
-                  style={{
-                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
-                  }}
-                >
-                  {/* Orange top gradient accent */}
-                  <div
-                    className="absolute top-0 left-0 right-0 h-px"
-                    style={{ background: `linear-gradient(90deg, transparent, rgba(249,115,22,0.4), transparent)` }}
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          {/* Connector line */}
+          <div className="hidden md:block absolute top-14 left-[20%] right-[20%] h-px"
+            style={{ background: 'linear-gradient(to right, transparent, rgba(34,197,94,0.3), rgba(34,197,94,0.3), transparent)' }} />
 
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                    {/* Icon */}
-                    <div
-                      className={`w-20 h-20 rounded-3xl flex-shrink-0 flex items-center justify-center bg-gradient-to-br ${prod.grad} border ${prod.border}`}
-                    >
-                      <prod.svg className="w-12 h-12" />
-                    </div>
-
-                    {/* Center content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-black text-lg ${textPrimary}`}>{prod.name}</h3>
-                        {prod.badge && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-black text-white bg-gradient-to-r from-orange-500 to-amber-500">
-                            {prod.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className={`text-xs font-semibold ${textMuted} mb-2 uppercase tracking-wider`}>{prod.subtitle}</p>
-                      <p className={`text-sm ${textMuted} leading-relaxed mb-3 max-w-xl`}>{prod.desc}</p>
-                      {/* Feature pills: orange/emerald tinted */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {prod.pills.map((pill, pillIdx) => (
-                          <span
-                            key={pill}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                            style={pillIdx % 2 === 0 ? {
-                              background: isDark ? 'rgba(249,115,22,0.1)' : 'rgba(249,115,22,0.07)',
-                              color: '#f97316',
-                              border: '1px solid rgba(249,115,22,0.2)',
-                            } : {
-                              background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.07)',
-                              color: '#10b981',
-                              border: '1px solid rgba(16,185,129,0.2)',
-                            }}
-                          >
-                            {pill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Right: price + CTA */}
-                    <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 flex-shrink-0">
-                      <div className="text-right">
-                        <p className={`text-[11px] ${textMuted} mb-0.5`}>{t('Mulai dari', 'Starting from')}</p>
-                        <p className={`font-black text-xl ${textPrimary}`}>{prod.price}</p>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onSignIn(); }}
-                        className="sp-btn-primary flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-sm font-black text-white whitespace-nowrap"
-                      >
-                        {t('Beli', 'Buy')} <ArrowRight size={13} />
-                      </button>
+          {[
+            {
+              n: '01', icon: MessageSquare, color: '#22c55e',
+              title: t('Ceritakan Kebutuhanmu', 'Share Your Needs'),
+              desc: t('Konsultasikan kebutuhan proteksi Anda dengan agen berpengalaman kami atau melalui platform digital yang mudah digunakan.', 'Consult your protection needs with our experienced agents or through our easy-to-use digital platform.'),
+            },
+            {
+              n: '02', icon: Search, color: '#3b82f6',
+              title: t('Temukan yang Tepat', 'Find the Right Fit'),
+              desc: t('Kami membandingkan puluhan opsi dari berbagai insurer dan mempresentasikan pilihan yang paling sesuai profil risikomu.', 'We compare dozens of options from various insurers and present the choices most suited to your risk profile.'),
+            },
+            {
+              n: '03', icon: Shield, color: '#a855f7',
+              title: t('Terlindungi dengan Tenang', 'Protected with Ease'),
+              desc: t('Polis aktif dan sepenuhnya dikelola secara digital. Kami tetap hadir mendampingi sepanjang perjalanan perlindunganmu.', 'Policy active and fully managed digitally. We remain present throughout your protection journey.'),
+            },
+          ].map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <Reveal key={step.n} delay={i * 120}>
+                <div className="relative flex flex-col items-center text-center group">
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-xl"
+                      style={{ background: step.color, transform: 'scale(1.5)' }} />
+                    <div className="relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500 group-hover:scale-105"
+                      style={{ background: `${step.color}0d`, border: `1px solid ${step.color}25` }}>
+                      <Icon size={36} style={{ color: step.color }} />
+                      <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-[0.6rem] font-black"
+                        style={{ background: step.color, color: 'white' }}>{step.n}</span>
                     </div>
                   </div>
+                  <h3 className="text-lg font-black text-white mb-3">{step.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{step.desc}</p>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ════════════════════════════ PILLARS ════════════════════════════════ */}
+      <section className="py-28 overflow-hidden" style={{ background: 'rgba(4,12,6,0.6)' }}>
+        <div className="max-w-7xl mx-auto px-5">
+          <Reveal>
+            <div className="text-center mb-20">
+              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+                {t('Nilai Kami', 'Our Values')}
+              </span>
+              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                {t('Cara Berbeda', 'A Different Way')}{' '}
+                <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {t('Cara Kami Bekerja', 'We Work')}
+                </span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[
+              {
+                Icon: HeartHandshake,
+                title: t('Berpusat pada Manusia', 'Human-Centered'),
+                desc: t('Di tengah tren otomasi, kami percaya keputusan penting dalam hidup perlu pendampingan manusia yang nyata. Bukan robot, bukan skrip — agen yang benar-benar peduli.', 'Amid automation trends, we believe important life decisions need real human accompaniment. Not robots, not scripts — agents who truly care.'),
+                items: [t('Agen bersertifikat & berpengalaman', 'Certified & experienced agents'), t('Konsultasi tanpa target penjualan', 'Consultation without sales pressure'), t('Pendampingan jangka panjang', 'Long-term accompaniment')],
+                accent: '#22c55e',
+              },
+              {
+                Icon: BarChart2,
+                title: t('Transparan & Jujur', 'Transparent & Honest'),
+                desc: t('Kami percaya edukasi lebih bernilai dari promosi. Setiap produk yang kami rekomendasikan dijelaskan dengan jelas termasuk batasannya.', 'We believe education is more valuable than promotion. Every product we recommend is clearly explained including its limitations.'),
+                items: [t('Penjelasan klausa penting', 'Important clause explanations'), t('Tidak ada biaya tersembunyi', 'No hidden fees'), t('Laporan berkala yang jelas', 'Clear periodic reports')],
+                accent: '#3b82f6',
+              },
+              {
+                Icon: Leaf,
+                title: t('Mitra Jangka Panjang', 'Long-Term Partner'),
+                desc: t('Hubungan kami tidak berakhir saat polis diterbitkan. Kami tumbuh bersama nasabah dan memastikan perlindungan selalu relevan dengan perjalanan hidupmu.', 'Our relationship does not end when the policy is issued. We grow with clients and ensure protection always stays relevant to your life journey.'),
+                items: [t('Review polis berkala', 'Periodic policy review'), t('Notifikasi sebelum jatuh tempo', 'Pre-expiry notifications'), t('Adaptasi sesuai perubahan hidup', 'Adapts to life changes')],
+                accent: '#a855f7',
+              },
+            ].map((p, i) => (
+              <Reveal key={p.title} delay={i * 100}>
+                <div className="group relative overflow-hidden rounded-3xl p-8 h-full transition-all duration-500 hover:scale-[1.02] cursor-default"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: `radial-gradient(circle at 50% 0%, ${p.accent}08, transparent 70%)` }} />
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 animate-float relative"
+                    style={{ background: `${p.accent}12`, border: `1px solid ${p.accent}25`, animationDelay: `${i * 0.8}s` }}>
+                    <p.Icon size={26} style={{ color: p.accent }} />
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-4">{p.title}</h3>
+                  <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted }}>{p.desc}</p>
+                  <ul className="space-y-2.5">
+                    {p.items.map(item => (
+                      <li key={item} className="flex items-center gap-2.5 text-sm">
+                        <CheckCircle size={14} style={{ color: p.accent, flexShrink: 0 }} />
+                        <span style={{ color: 'rgba(255,255,255,0.65)' }}>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </Reveal>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            HOW IT WORKS
-        ══════════════════════════════════════════════════════════════════ */}
-        <section
-          id="how-it-works"
-          className="py-24 relative overflow-hidden"
-          style={{
-            background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.015)',
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6">
-            <Reveal className="text-center mb-16">
-              <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
-                {t('Cara Kerja', 'How It Works')}
-              </p>
-              <h2
-                className={`text-4xl lg:text-5xl font-black ${textPrimary}`}
-                style={{ letterSpacing: '-0.03em' }}
-              >
-                {t('3 Langkah,', '3 Steps,')}
-                {' '}
-                <span className="sp-grad-text">{t('60 Detik Aktif', '60 Seconds Active')}</span>
-              </h2>
-            </Reveal>
-
-            <div className="relative grid lg:grid-cols-3 gap-8 lg:gap-6">
-              {/* Connector line: orange → emerald gradient */}
-              <div
-                className="hidden lg:block absolute top-[60px] left-[calc(16.666%+2rem)] right-[calc(16.666%+2rem)] pointer-events-none"
-                style={{
-                  height: '1px',
-                  background: 'linear-gradient(90deg, transparent, rgba(249,115,22,0.4) 20%, rgba(16,185,129,0.4) 50%, rgba(14,165,233,0.4) 80%, transparent)',
-                  borderTop: '1px dashed rgba(249,115,22,0.3)',
-                }}
-              />
-
-              {howItWorks.map((step, i) => (
-                <Reveal key={i} delay={i * 120}>
-                  <div
-                    className={`relative rounded-3xl p-8 border ${borderColor}`}
-                    style={{
-                      background: isDark
-                        ? 'rgba(255,255,255,0.03)'
-                        : 'rgba(255,255,255,0.8)',
-                      boxShadow: isDark
-                        ? `0 0 60px ${step.glowColor}`
-                        : `0 4px 24px rgba(0,0,0,0.06)`,
-                    }}
-                  >
-                    {/* Step number */}
-                    <div className="mb-6 relative">
-                      <p
-                        className={`text-7xl font-black leading-none ${step.color}`}
-                        style={{
-                          letterSpacing: '-0.04em',
-                          textShadow: `0 0 60px ${step.glowColor}`,
-                        }}
-                      >
-                        {step.num}
-                      </p>
-                      {/* Pulse ring behind number */}
-                      <div
-                        className="absolute top-3 left-2 w-10 h-10 rounded-full"
-                        style={{
-                          background: step.glowColor,
-                          animation: 'spPulseRing 2s ease-out infinite',
-                          animationDelay: `${i * 0.4}s`,
-                        }}
-                      />
-                    </div>
-                    <h3 className={`font-black text-xl ${textPrimary} mb-2`} style={{ letterSpacing: '-0.02em' }}>
-                      {step.title}
-                    </h3>
-                    <p className={`text-sm ${textMuted} leading-relaxed`}>{step.desc}</p>
-
-                    {/* Arrow indicator (mobile) */}
-                    {i < howItWorks.length - 1 && (
-                      <div className="lg:hidden absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: pageBg, border: `1px solid rgba(249,115,22,0.3)` }}>
-                        <ChevronDown size={14} className="text-[#f97316]" />
-                      </div>
-                    )}
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+      {/* ═════════════════════════ PROMO BANNERS ═════════════════════════════ */}
+      <section className="py-28 max-w-7xl mx-auto px-5">
+        <Reveal>
+          <div className="text-center mb-14">
+            <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+              {t('Penawaran & Promosi', 'Offers & Promotions')}
+            </span>
+            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+              style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+              {t('Program Eksklusif', 'Exclusive Programs')}{' '}
+              <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {t('untuk Nasabah Kami', 'for Our Clients')}
+              </span>
+            </h2>
           </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            CLAIM IN 60 SECONDS
-        ══════════════════════════════════════════════════════════════════ */}
-        <section id="claims" className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.claims?.isVisible === false ? 'none' : undefined }}>
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left: story */}
-            <div>
-              <Reveal>
-                <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
-                  {t('Cara Klaim', 'How to Claim')}
-                </p>
-                <h2
-                  className={`text-4xl lg:text-5xl font-black ${textPrimary} leading-tight mb-4`}
-                  style={{ letterSpacing: '-0.03em' }}
-                >
-                  {t('Klaim Selesai Dalam', 'Claim Done In')}
-                  <br />
-                  <span className="sp-grad-text">{t('Hitungan Menit', 'Minutes')}</span>
-                </h2>
-                <p className={`text-base ${textMuted} leading-relaxed mb-10 max-w-lg`}>
-                  {t(
-                    'Lupakan proses klaim berbelit yang memakan waktu berhari-hari. SurePath merevolusi pengalaman klaim asuransi.',
-                    'Forget the convoluted claim process that takes days. SurePath revolutionizes the insurance claim experience.'
-                  )}
-                </p>
-              </Reveal>
-
-              {/* 4 steps */}
-              <div className="relative flex flex-col gap-0">
-                {claimSteps.map((step, i) => (
-                  <Reveal key={i} delay={i * 100}>
-                    <div className="flex items-start gap-5 relative pb-8 last:pb-0">
-                      {/* Vertical connector */}
-                      {i < claimSteps.length - 1 && (
-                        <div
-                          className="absolute left-[18px] top-11 bottom-0 w-px"
-                          style={{
-                            background: isDark
-                              ? 'linear-gradient(to bottom, rgba(249,115,22,0.4), rgba(249,115,22,0.05))'
-                              : 'linear-gradient(to bottom, rgba(249,115,22,0.2), rgba(249,115,22,0.02))',
-                          }}
-                        />
-                      )}
-
-                      {/* Numbered circle - orange */}
-                      <div
-                        className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-base font-black text-white relative z-10"
-                        style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}
-                      >
-                        {i + 1}
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xl">{step.emoji}</span>
-                          <p className={`font-black text-base ${textPrimary}`}>{step.label}</p>
-                        </div>
-                        <p className={`text-sm ${textMuted}`}>{step.desc}</p>
-                      </div>
-                    </div>
-                  </Reveal>
+        </Reveal>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Reveal delay={0}>
+            <PromoBanners onSignIn={onSignIn} />
+          </Reveal>
+          {/* Third highlight banner */}
+          <Reveal delay={100}>
+            <div className="relative overflow-hidden rounded-3xl p-8 h-full"
+              style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.05) 100%)', border: '1px solid rgba(34,197,94,0.15)', minHeight: '300px' }}>
+              <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-20"
+                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.4), transparent)', filter: 'blur(40px)', transform: 'translate(30%,-30%)' }} />
+              <span className="inline-block text-[0.55rem] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-6"
+                style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80' }}>
+                {t('Mulai Sekarang', 'Start Now')}
+              </span>
+              <h3 className="text-3xl font-black text-white leading-tight mb-4">
+                {t('Pertama Kali', 'First Time')}<br />
+                <span style={{ color: '#22c55e' }}>{t('Bersama SurePath?', 'with SurePath?')}</span>
+              </h3>
+              <p className="text-sm leading-relaxed mb-8 max-w-xs" style={{ color: textMuted }}>
+                {t('Mulai dengan konsultasi gratis 30 menit bersama agen berpengalaman kami. Tanpa komitmen, tanpa tekanan.', 'Start with a free 30-minute consultation with our experienced agent. No commitment, no pressure.')}
+              </p>
+              <div className="space-y-3">
+                {[t('Analisis kebutuhan perlindunganmu', 'Analyze your protection needs'), t('Perbandingan produk yang relevan', 'Relevant product comparison'), t('Estimasi biaya yang transparan', 'Transparent cost estimate')].map(item => (
+                  <div key={item} className="flex items-center gap-2.5 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#22c55e' }} />
+                    <span style={{ color: 'rgba(255,255,255,0.65)' }}>{item}</span>
+                  </div>
                 ))}
               </div>
-
-              {/* CTA under steps */}
-              <Reveal delay={500}>
-                <button
-                  onClick={onSignIn}
-                  className="mt-8 sp-btn-primary flex items-center gap-2 px-7 py-4 rounded-2xl text-white font-black text-base"
-                >
-                  {t('Coba Sekarang', 'Try Now')}
-                  <ArrowRight size={16} />
-                </button>
-              </Reveal>
+              <button onClick={onSignIn}
+                className="mt-8 flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-black text-white transition-all hover:scale-[1.03]"
+                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 8px 30px rgba(34,197,94,0.25)' }}>
+                {t('Jadwalkan Konsultasi', 'Schedule Consultation')} <ArrowRight size={14} />
+              </button>
             </div>
+          </Reveal>
+        </div>
+      </section>
 
-            {/* Right: phone mockup */}
-            <Reveal delay={200} from="right">
-              <PhoneMockup lang={lang} />
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            STATS BAR
-        ══════════════════════════════════════════════════════════════════ */}
-        <section
-          className="py-20 relative overflow-hidden"
-          style={{
-            display: cmsConfig.stats?.isVisible === false ? 'none' : undefined,
-            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          {/* Subtle glow blobs */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-0 left-1/4 w-96 h-32 blur-3xl opacity-10 rounded-full" style={{ background: 'radial-gradient(ellipse, #f97316, transparent)' }} />
-            <div className="absolute bottom-0 right-1/4 w-96 h-32 blur-3xl opacity-10 rounded-full" style={{ background: 'radial-gradient(ellipse, #10b981, transparent)' }} />
-          </div>
-
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
-              {stats.map((s, i) => (
-                <Reveal key={i} delay={i * 100}>
-                  <div className="text-center flex flex-col items-center gap-2">
-                    <p
-                      className="font-black leading-none"
-                      style={{
-                        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                        letterSpacing: '-0.04em',
-                        background: 'linear-gradient(135deg, #10b981 0%, #34d399 40%, #f97316 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      {s.val}
-                    </p>
-                    <p className={`font-bold text-sm ${textPrimary}`}>{s.label}</p>
-                    <p className={`text-xs ${textMuted}`}>{s.sub}</p>
-                  </div>
-                </Reveal>
-              ))}
+      {/* ════════════════════════ TESTIMONIALS ═══════════════════════════════ */}
+      <section className="py-28 px-5" style={{ background: 'rgba(4,12,6,0.7)' }}>
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-16">
+              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+                {t('Cerita Nasabah', 'Client Stories')}
+              </span>
+              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                {t('Dipercaya, Karena', 'Trusted, Because')}{' '}
+                <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {t('Mereka Merasakannya', 'They Felt It')}
+                </span>
+              </h2>
             </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            TESTIMONIALS
-        ══════════════════════════════════════════════════════════════════ */}
-        <section className="py-24 max-w-7xl mx-auto px-6" style={{ display: cmsConfig.testimonials?.isVisible === false ? 'none' : undefined }}>
-          <Reveal className="text-center mb-14">
-            <p className={`text-xs font-bold ${eyebrowColor} uppercase tracking-[0.2em] mb-3`}>
-              {t('Testimoni', 'Testimonials')}
-            </p>
-            <h2
-              className={`text-4xl lg:text-5xl font-black ${textPrimary}`}
-              style={{ letterSpacing: '-0.03em' }}
-            >
-              {t('Cerita Nyata dari', 'Real Stories from')}
-              <br />
-              <span className="sp-grad-text">{t('Pengguna Kami', 'Our Users')}</span>
-            </h2>
           </Reveal>
 
-          <div className="grid lg:grid-cols-3 gap-5">
-            {testimonials.map((tm, i) => (
-              <Reveal key={i} delay={i * 100}>
-                <div
-                  className={`rounded-3xl p-7 border ${borderColor} h-full flex flex-col relative overflow-hidden`}
-                  style={{
-                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.9)',
-                    boxShadow: isDark ? '0 4px 32px rgba(0,0,0,0.3)' : '0 4px 24px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  {/* Top accent */}
-                  <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${tm.color}`} />
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                name: 'Rafi A.',
+                role: t('Pengusaha Muda', 'Young Entrepreneur'),
+                city: 'Jakarta',
+                quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah atau yang paling banyak diiklankan. Agen mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs, not just the cheapest or most advertised. Their agent took time to genuinely listen.'),
+                rating: 5,
+                initial: 'R',
+                color: '#22c55e',
+              },
+              {
+                name: 'Dewi S.',
+                role: t('Profesional HR', 'HR Professional'),
+                city: 'Surabaya',
+                quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Agen SurePath menjelaskan setiap klausa penting dengan sabar dan jelas — tanpa jargon yang membingungkan.', 'For the first time I truly understood my insurance policy. SurePath\'s agent patiently explained each important clause clearly — without confusing jargon.'),
+                rating: 5,
+                initial: 'D',
+                color: '#3b82f6',
+              },
+              {
+                name: 'Hendra K.',
+                role: t('Arsitek', 'Architect'),
+                city: 'Bandung',
+                quote: t('Proses seluruhnya digital namun saya tetap merasa ditangani secara personal. Ada manusia di balik teknologinya, dan itu yang membuat saya nyaman mempercayakan perlindungan keluarga kepada SurePath.', 'The entire process is digital yet I still felt handled personally. There are humans behind the technology, and that\'s what makes me comfortable entrusting my family\'s protection to SurePath.'),
+                rating: 5,
+                initial: 'H',
+                color: '#a855f7',
+              },
+            ].map((t_, i) => (
+              <Reveal key={t_.name} delay={i * 100}>
+                <div className="relative overflow-hidden rounded-3xl p-7 h-full flex flex-col"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
                   {/* Stars */}
-                  <div className="flex gap-0.5 mb-5">
-                    {Array.from({ length: tm.rating }).map((_, j) => (
-                      <Star key={j} size={13} className="text-amber-400 fill-amber-400" />
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(t_.rating)].map((_, j) => (
+                      <Star key={j} size={14} fill="#f59e0b" style={{ color: '#f59e0b' }} />
                     ))}
                   </div>
-
-                  {/* Quote mark */}
-                  <div className={`text-5xl font-black leading-none mb-2 ${textMuted} opacity-20`}>"</div>
-
-                  {/* Quote */}
-                  <p className={`text-sm ${textMuted} leading-relaxed flex-1`}>{tm.quote}</p>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-3 mt-6 pt-5 border-t border-white/5">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${tm.color.includes('orange') ? '#f97316,#fb923c' : tm.color.includes('emerald') ? '#10b981,#0d9488' : '#0ea5e9,#06b6d4'})` }}
-                    >
-                      {tm.init}
+                  <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                    "{t_.quote}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
+                      style={{ background: `${t_.color}18`, border: `1px solid ${t_.color}30`, color: t_.color }}>
+                      {t_.initial}
                     </div>
                     <div>
-                      <p className={`text-sm font-bold ${textPrimary}`}>{tm.name}</p>
-                      <p className={`text-xs ${textMuted}`}>{tm.meta}</p>
-                    </div>
-                    <div className="ml-auto">
-                      <CheckCircle size={16} className="text-emerald-400" />
+                      <p className="text-sm font-black text-white">{t_.name}</p>
+                      <p className="text-[0.65rem]" style={{ color: textMuted }}>{t_.role} · {t_.city}</p>
                     </div>
                   </div>
                 </div>
               </Reveal>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            TRUST PARTNERS
-        ══════════════════════════════════════════════════════════════════ */}
-        <section
-          id="partners"
-          className="py-16"
-          style={{
-            background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.015)',
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6">
-            <Reveal className="text-center mb-8">
-              <p className={`text-sm font-semibold ${textMuted} uppercase tracking-[0.15em]`}>
-                {t('15+ Mitra Insurer OJK Terdaftar', '15+ OJK-Registered Insurer Partners')}
+      {/* ══════════════════════════ CTA FINAL ════════════════════════════════ */}
+      <section className="py-28 max-w-7xl mx-auto px-5">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-[2.5rem] p-12 md:p-20 text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.06) 50%, rgba(5,150,105,0.08) 100%)',
+              border: '1px solid rgba(34,197,94,0.15)',
+            }}>
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] -translate-y-1/2 rounded-full opacity-20"
+                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.5), transparent)', filter: 'blur(60px)' }} />
+            </div>
+            <div className="relative z-10">
+              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-8"
+                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#86efac' }}>
+                {t('Mulai Hari Ini', 'Start Today')}
+              </span>
+              <h2 className="font-black leading-tight tracking-[-0.03em] text-white mb-6"
+                style={{ fontSize: 'clamp(2.2rem,5vw,4rem)' }}>
+                {t('Siap Memulai', 'Ready to Begin')}<br />
+                <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  {t('Perjalanan Proteksimu?', 'Your Protection Journey?')}
+                </span>
+              </h2>
+              <p className="text-base max-w-xl mx-auto mb-10" style={{ color: textMuted }}>
+                {t('Bergabung dengan lebih dari 12.000 nasabah yang sudah mempercayakan ketenangan hidup mereka kepada SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
               </p>
-            </Reveal>
-            <Reveal>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {[
-                  'Sinarmas', 'Astra Insurance', 'Allianz', 'Adira Insurance',
-                  'Zurich', 'ACA', 'Tugu Insurance', 'Sompo', 'MSIG',
-                  'Prudential', 'Manulife', 'AXA Mandiri', '+3 Lainnya',
-                ].map((ins) => (
-                  <span
-                    key={ins}
-                    className={`px-4 py-2 rounded-2xl border ${borderColor} text-sm font-semibold ${textMuted} transition-all hover:border-orange-500/30 hover:text-[#f97316]`}
-                    style={{
-                      background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.8)',
-                    }}
-                  >
-                    {ins}
-                  </span>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            CTA SECTION
-        ══════════════════════════════════════════════════════════════════ */}
-        <section id="about" className="py-24 px-6">
-          <Reveal>
-            <div
-              className="relative max-w-6xl mx-auto rounded-[2.5rem] overflow-hidden p-12 sm:p-16 text-center sp-noise"
-              style={{
-                background: 'linear-gradient(135deg, #051a0a 0%, #0d2318 30%, #0a1a10 60%, #061210 100%)',
-                boxShadow: '0 32px 80px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.06)',
-              }}
-            >
-              {/* Radial glow - emerald tinted */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(16,185,129,0.2), transparent)',
-                }}
-              />
-
-              {/* Decorative rings */}
-              <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full pointer-events-none"
-                style={{
-                  border: '1px dashed rgba(52,211,153,0.15)',
-                  animation: 'spCardFloat 8s ease-in-out infinite',
-                }}
-              />
-              <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
-                style={{
-                  border: '1px dashed rgba(16,185,129,0.1)',
-                  animation: 'spCardFloat 12s ease-in-out infinite reverse',
-                }}
-              />
-              <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] rounded-full pointer-events-none"
-                style={{ border: '1px dashed rgba(249,115,22,0.07)' }}
-              />
-
-              {/* Content */}
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
-                  <Zap size={12} className="text-emerald-300" />
-                  <span className="text-emerald-300 text-xs font-bold uppercase tracking-widest">{t('Mulai Sekarang', 'Start Now')}</span>
-                </div>
-
-                <h2
-                  className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4"
-                  style={{ letterSpacing: '-0.04em' }}
-                >
-                  {t('Siap Lindungi Diri', 'Ready to Protect')}
-                  <br />
-                  <span className="sp-grad-text">{t('& Keluarga?', 'Yourself & Family?')}</span>
-                </h2>
-
-                <p className="text-white/60 text-base mb-10 max-w-md mx-auto leading-relaxed">
-                  {t(
-                    'Daftar gratis, tanpa kartu kredit, tanpa komitmen. Dapatkan penawaran terbaik dari 15+ insurer terpercaya.',
-                    'Sign up free, no credit card, no commitment. Get the best offers from 15+ trusted insurers.'
-                  )}
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button
-                    onClick={onSignIn}
-                    className="sp-btn-primary flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-white font-black text-base"
-                  >
-                    {t('Mulai Gratis Sekarang', 'Get Started Free')}
-                    <ArrowRight size={16} />
-                  </button>
-                  <button
-                    onClick={onSignIn}
-                    className="flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold text-white/70 text-base hover:text-white transition-colors"
-                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-                  >
-                    <Shield size={16} className="text-emerald-300" />
-                    {t('Lihat Semua Produk', 'View All Products')}
-                  </button>
-                </div>
-
-                {/* Trust badges: OJK emerald, ISO sky, Users orange, Policy amber */}
-                <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
-                  {[
-                    { icon: Award, label: 'OJK Licensed', color: '#34d399' },
-                    { icon: Lock, label: 'ISO 27001', color: '#38bdf8' },
-                    { icon: Users, label: '24k+ Users', color: '#f97316' },
-                    { icon: Zap, label: '60s Policy', color: '#fbbf24' },
-                  ].map((badge) => (
-                    <div
-                      key={badge.label}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-                      style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: badge.color,
-                      }}
-                    >
-                      <badge.icon size={11} />
-                      {badge.label}
-                    </div>
-                  ))}
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onClick={onSignIn}
+                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-2xl text-base font-black text-white transition-all hover:scale-[1.03] hover:shadow-2xl"
+                  style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 8px 40px rgba(34,197,94,0.3)' }}>
+                  {t('Mulai Sekarang', 'Start Now')}
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button onClick={() => navScroll('products', '/products')}
+                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-2xl text-base font-black transition-all"
+                  style={{ background: cardBg, border: `1px solid rgba(34,197,94,0.2)`, color: '#4ade80' }}>
+                  {t('Lihat Semua Produk', 'View All Products')}
+                </button>
               </div>
             </div>
-          </Reveal>
-        </section>
+          </div>
+        </Reveal>
+      </section>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            FOOTER
-        ══════════════════════════════════════════════════════════════════ */}
-        <footer
-          style={{
-            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-            background: isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)',
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 lg:grid-cols-5 gap-8">
-            {/* Brand col */}
+      {/* ═══════════════════════════ FOOTER ══════════════════════════════════ */}
+      <footer id="about" style={{ borderTop: '1px solid rgba(34,197,94,0.07)', background: 'rgba(4,12,6,0.95)' }}>
+        <div className="max-w-7xl mx-auto px-5 py-16">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
+            {/* Brand */}
             <div className="col-span-2 flex flex-col gap-5">
-              <div className="flex items-center gap-2.5">
-                {heroSection?.logoUrl ? (
-                  <img src={heroSection.logoUrl} alt="SurePath" className="h-8 w-auto object-contain" />
-                ) : (
-                  <div className="w-8 h-8 rounded-xl bg-[#f97316] flex items-center justify-center shadow-lg shadow-orange-500/30">
-                    <SurePathLogo className="w-5 h-5" />
-                  </div>
-                )}
-                <span className="font-black text-xl tracking-tight uppercase">
-                  Sure<span className="text-[#f97316]">Path</span>
+              <div className="flex items-center gap-3">
+                <img src="/surepath-logo.png" alt="SurePath" className="h-9 w-auto object-contain"
+                  onError={(e) => {
+                    const t = e.target as HTMLImageElement; t.style.display = 'none';
+                    const n = t.nextElementSibling as HTMLElement | null; if (n) n.style.display = 'flex';
+                  }} />
+                <div className="hidden w-9 h-9 rounded-xl items-center justify-center" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                  <SurePathLogo className="w-5 h-5" />
+                </div>
+                <span className="font-black text-xl tracking-tight text-white">
+                  Sure<span style={{ color: '#22c55e' }}>Path</span>
                 </span>
               </div>
-
-              <p className={`text-sm ${textMuted} leading-relaxed max-w-xs`}>
-                {t(
-                  'Platform asuransi digital terpercaya. Beli, klaim, dan pantau polis asuransimu dalam satu genggaman.',
-                  'Trusted digital insurance platform. Buy, claim, and track your policy in one hand.'
-                )}
+              <p className="text-sm leading-relaxed max-w-xs" style={{ color: textMuted }}>
+                {t('Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
               </p>
-
-              {/* OJK badges */}
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs font-bold italic" style={{ color: 'rgba(134,239,172,0.5)' }}>
+                "Your Path to Protection."
+              </p>
+              {/* Social */}
+              <div className="flex gap-3 mt-1">
                 {[
-                  { label: 'OJK', color: 'text-emerald-400', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.2)' },
-                  { label: 'ISO 27001', color: 'text-blue-400', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.2)' },
-                  { label: '4.9 ★', color: 'text-amber-400', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
-                ].map((b) => (
-                  <span
-                    key={b.label}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-bold ${b.color}`}
-                    style={{ background: b.bg, border: `1px solid ${b.border}` }}
-                  >
-                    {b.label}
-                  </span>
-                ))}
-              </div>
-
-              {/* Contact */}
-              <div className="flex flex-col gap-2">
-                {[
-                  { icon: Phone, label: '+62 21 5000 1234' },
-                  { icon: Mail, label: 'hello@surepath.id' },
-                  { icon: MapPin, label: 'Jakarta, Indonesia' },
-                ].map((c) => (
-                  <div key={c.label} className={`flex items-center gap-2 text-xs ${textMuted}`}>
-                    <c.icon size={12} className="text-[#f97316] flex-shrink-0" />
-                    {c.label}
-                  </div>
+                  { key: 'ig', label: 'Instagram' },
+                  { key: 'in', label: 'LinkedIn' },
+                  { key: 'tw', label: 'Twitter / X' },
+                ].map(s => (
+                  <button key={s.key} aria-label={s.label}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:border-emerald-500/30"
+                    style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                    <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: textMuted }}>{s.key}</span>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Footer link columns */}
-            {Object.entries(footerLinks).map(([heading, links]) => (
-              <div key={heading}>
-                <p className={`text-xs font-black ${textPrimary} uppercase tracking-[0.15em] mb-5`}>{heading}</p>
-                <ul className="flex flex-col gap-2.5">
-                  {links.map((link) => (
-                    <li key={link}>
-                      <button
-                        onClick={onSignIn}
-                        className={`text-sm ${textMuted} hover:text-[#f97316] transition-colors text-left`}
-                      >
-                        {link}
+            {/* Links */}
+            {[
+              {
+                title: t('Produk', 'Products'),
+                links: [t('Asuransi Kendaraan', 'Car Insurance'), t('Asuransi Perjalanan', 'Travel Insurance'), t('Kecelakaan Diri', 'Personal Accident'), t('Proteksi Barang', 'Property Protection'), t('Kesehatan', 'Health')],
+              },
+              {
+                title: t('Perusahaan', 'Company'),
+                links: [t('Tentang Kami', 'About Us'), t('Karir', 'Careers'), t('Blog', 'Blog'), t('Program Agen', 'Agent Program'), t('Kemitraan', 'Partnership')],
+              },
+              {
+                title: t('Legal', 'Legal'),
+                links: [t('Kebijakan Privasi', 'Privacy Policy'), t('Syarat & Ketentuan', 'Terms & Conditions'), t('Keamanan Data', 'Data Security')],
+              },
+            ].map(col => (
+              <div key={col.title}>
+                <p className="text-[0.6rem] font-black uppercase tracking-[0.25em] mb-5" style={{ color: '#22c55e' }}>{col.title}</p>
+                <ul className="space-y-3">
+                  {col.links.map(l => (
+                    <li key={l}>
+                      <button onClick={onSignIn}
+                        className="text-sm transition-colors hover:text-white"
+                        style={{ color: textMuted }}>{l}
                       </button>
                     </li>
                   ))}
@@ -1793,30 +1040,26 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             ))}
           </div>
 
-          {/* Bottom bar */}
-          <div
-            className={`px-6 py-5 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3`}
-            style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}
-          >
-            <p className={`text-xs ${textMuted}`}>
-              © 2026 SurePath Technologies, Inc.
-              {' '}
-              {t('Hak cipta dilindungi undang-undang.', 'All rights reserved.')}
+          <div className="mt-14 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+              © 2025 SurePath. {t('Seluruh hak dilindungi.', 'All rights reserved.')}
             </p>
-            <div className="flex items-center gap-4">
-              <p className={`text-xs ${textMuted}`}>
-                {t('Diawasi oleh', 'Supervised by')}
-                {' '}
-                <span className="text-emerald-400 font-semibold">OJK</span>
-              </p>
-              <div className={`w-px h-4 ${isDark ? 'bg-white/10' : 'bg-black/10'}`} />
-              <p className={`text-xs ${textMuted}`}>🇮🇩 Indonesia</p>
+            <div className="flex items-center gap-6">
+              {[t('Privasi', 'Privacy'), t('Ketentuan', 'Terms'), t('Cookie', 'Cookie')].map(l => (
+                <button key={l} className="text-[0.65rem] transition-colors hover:text-white"
+                  style={{ color: 'rgba(255,255,255,0.2)' }}>{l}</button>
+              ))}
             </div>
           </div>
-        </footer>
+        </div>
+      </footer>
 
-      </div>
-    </>
+      {/* ══════════════════════════ PWA POPUP ════════════════════════════════ */}
+      {pwaVisible && !pwaInstalled && (
+        <PWAPopup onDismiss={() => setPwaVisible(false)} onInstall={installPwa} />
+      )}
+    </div>
   );
 };
 

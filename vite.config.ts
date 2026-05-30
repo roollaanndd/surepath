@@ -52,6 +52,7 @@ export default defineConfig(({ mode }) => {
               'supabase': ['@supabase/supabase-js'],
               'pdf': ['jspdf', 'html2canvas'],
               'lucide': ['lucide-react'],
+              'spline': ['@splinetool/react-spline', '@splinetool/runtime'],
             },
           },
         },

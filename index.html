@@ -27,15 +27,29 @@
     <meta property="twitter:description" content="SurePath memberikan pengalaman asuransi digital terbaik. Beli asuransi, lapor klaim via HP, dan jadilah mitra agen dengan mudah." />
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
-            fontFamily: { 
+            fontFamily: {
               sans: ['Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace']
+              mono: ['JetBrains Mono', 'monospace'],
+              sora: ['Sora', 'sans-serif'],
+            },
+            colors: {
+              'hero-bg': 'hsl(0 0% 8%)',
+              'nav-button': 'hsl(0 0% 18%)',
+              'lp-bg': 'hsl(0 0% 10%)',
+              'lp-fg': 'hsl(0 0% 96%)',
+              'lp-primary': 'hsl(119 99% 46%)',
+              'lp-primary-fg': 'hsl(0 0% 4%)',
+              'lp-muted': 'hsl(0 0% 16%)',
+              'lp-muted-fg': 'hsl(0 0% 60%)',
+              'lp-border': 'hsl(0 0% 20%)',
             },
             colors: {
               primary: { 
@@ -60,6 +74,8 @@
               }
             },
             animation: {
+              'fade-up': 'fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'fade-in': 'fade-in 0.5s ease-out forwards',
               'mesh': 'mesh 20s ease infinite',
               'float': 'float 5s ease-in-out infinite',
               'pop-in': 'popIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -70,6 +86,14 @@
               'draw-check': 'drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards',
             },
             keyframes: {
+              'fade-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)', filter: 'blur(4px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)', filter: 'blur(0)' },
+              },
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
               mesh: {
                 '0%, 100%': { 'background-position': '0% 50%' },
                 '50%': { 'background-position': '100% 50%' },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import {
   ArrowRight, ChevronRight, Menu, X, Globe, Sun, Moon,
   Smartphone, Shield, BarChart2, Users, Zap,
@@ -6,6 +6,8 @@ import {
   Sparkles, CheckCircle, Search, Award, Play,
   Car, Plane, Heart, Leaf, HeartHandshake,
 } from 'lucide-react';
+
+const SplineScene = lazy(() => import('@splinetool/react-spline'));
 import { Language } from '../../types';
 import { SurePathLogo } from '../../components/Navbar';
 
@@ -21,98 +23,45 @@ interface Props {
 const tx = (id: string, en: string, lang: Language) => lang === Language.EN ? en : id;
 
 // ─── Keyframe injection ───────────────────────────────────────────────────────
-const KEYFRAMES = `
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-
-@keyframes aurora-drift {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33%      { transform: translate(3%,-2%) scale(1.05); }
-  66%      { transform: translate(-2%,3%) scale(0.97); }
-}
-@keyframes fade-up {
-  from { opacity:0; transform:translateY(28px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+const SECTION_CSS = `
 @keyframes ticker-scroll {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
-}
-@keyframes counter-pulse {
-  0%,100% { opacity:1; }
-  50%     { opacity:0.7; }
 }
 @keyframes float {
   0%,100% { transform: translateY(0px); }
   50%     { transform: translateY(-8px); }
 }
 @keyframes glow-pulse {
-  0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
-  50%     { box-shadow: 0 0 40px rgba(34,197,94,0.45), 0 0 80px rgba(34,197,94,0.15); }
+  0%,100% { box-shadow: 0 0 20px rgba(1,235,2,0.2); }
+  50%     { box-shadow: 0 0 40px rgba(1,235,2,0.45), 0 0 80px rgba(1,235,2,0.15); }
 }
 @keyframes banner-in {
   from { opacity:0; transform:scale(0.96) translateY(8px); }
   to   { opacity:1; transform:scale(1) translateY(0); }
 }
-.animate-aurora    { animation: aurora-drift 18s ease-in-out infinite; }
-.animate-aurora-2  { animation: aurora-drift 24s ease-in-out infinite reverse; }
-.animate-aurora-3  { animation: aurora-drift 30s ease-in-out infinite 6s; }
 .animate-ticker    { animation: ticker-scroll 28s linear infinite; }
 .animate-float     { animation: float 4s ease-out infinite; }
 .animate-float-2   { animation: float 5s ease-out infinite 1.5s; }
 .animate-glow      { animation: glow-pulse 3s ease-in-out infinite; }
 .animate-banner    { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 button:focus-visible, a:focus-visible {
-  outline: 2px solid rgba(34,197,94,0.7);
+  outline: 2px solid rgba(1,235,2,0.7);
   outline-offset: 3px;
   border-radius: 8px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .animate-aurora, .animate-aurora-2, .animate-aurora-3,
   .animate-ticker, .animate-float, .animate-float-2,
   .animate-glow, .animate-banner { animation: none; }
   * { transition-duration: 0.01ms !important; }
 }
 `;
 
-// ─── Aurora full-page background ─────────────────────────────────────────────
-const AuroraBackground: React.FC = () => (
+// ─── Dark section background (for sections below hero) ───────────────────────
+const SectionBackground: React.FC = () => (
   <>
-    <style>{KEYFRAMES}</style>
-    <div className="fixed inset-0 -z-10 overflow-hidden" style={{ background: '#040C06' }}>
-      {/* Layer 1 — large primary orb */}
-      <div className="animate-aurora absolute rounded-full opacity-[0.22]"
-        style={{
-          width: '110vw', height: '80vh',
-          top: '-20vh', left: '-10vw',
-          background: 'radial-gradient(ellipse, rgba(34,197,94,0.5) 0%, rgba(22,163,74,0.2) 40%, transparent 70%)',
-          filter: 'blur(80px)',
-        }} />
-      {/* Layer 2 — teal drift */}
-      <div className="animate-aurora-2 absolute rounded-full opacity-[0.14]"
-        style={{
-          width: '80vw', height: '70vh',
-          bottom: '-10vh', right: '-15vw',
-          background: 'radial-gradient(ellipse, rgba(16,185,129,0.6) 0%, rgba(5,150,105,0.25) 45%, transparent 70%)',
-          filter: 'blur(100px)',
-        }} />
-      {/* Layer 3 — lime accent */}
-      <div className="animate-aurora-3 absolute rounded-full opacity-[0.09]"
-        style={{
-          width: '60vw', height: '60vh',
-          top: '30vh', left: '20vw',
-          background: 'radial-gradient(ellipse, rgba(74,222,128,0.5) 0%, transparent 65%)',
-          filter: 'blur(60px)',
-        }} />
-      {/* Subtle grid */}
-      <div className="absolute inset-0 opacity-[0.022]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(134,239,172,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(134,239,172,0.8) 1px,transparent 1px)',
-          backgroundSize: '60px 60px',
-        }} />
-      {/* Vignette */}
-      <div className="absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 100%, rgba(4,12,6,0.7) 0%, transparent 70%)' }} />
-    </div>
+    <style>{SECTION_CSS}</style>
+    <div className="fixed inset-0 -z-10" style={{ background: 'hsl(0 0% 8%)' }} />
   </>
 );
 
@@ -380,204 +329,158 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
   const cardBorder = 'rgba(255,255,255,0.07)';
   const textMuted  = 'rgba(255,255,255,0.5)';
 
+  // ── lp green ─────────────────────────────────────────────────────────────
+  const lpGreen = 'hsl(119 99% 46%)';
+
   return (
-    <div className="min-h-screen text-white" style={{ fontFamily: "'IBM Plex Sans', 'Inter', system-ui, sans-serif" }}>
-      <AuroraBackground />
+    <div className="min-h-screen text-white font-sora" style={{ background: 'hsl(0 0% 8%)' }}>
+      <SectionBackground />
 
       {/* ════════════════════════════════ NAVBAR ════════════════════════════ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-        style={{
-          background: scrolled ? 'rgba(4,12,6,0.85)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(24px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(34,197,94,0.08)' : '1px solid transparent',
-        }}>
-        <div className="max-w-7xl mx-auto px-5 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity blur-md"
-                style={{ background: 'rgba(34,197,94,0.4)' }} />
-              <img src="/surepath-logo.png" alt="SurePath" className="relative h-8 w-auto object-contain"
-                onError={(e) => {
-                  const t = e.target as HTMLImageElement;
-                  t.style.display = 'none';
-                  const next = t.nextElementSibling as HTMLElement | null;
-                  if (next) next.style.display = 'flex';
-                }} />
-              <div className="hidden w-8 h-8 rounded-xl items-center justify-center" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
-                <SurePathLogo className="w-5 h-5" />
-              </div>
-            </div>
-            <span className="font-black text-lg tracking-tight">
-              Sure<span style={{ color: '#22c55e' }}>Path</span>
-            </span>
-          </a>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5">
+        {/* Logo */}
+        <a href="/" className="flex items-center gap-2.5 group">
+          <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <span className="text-xl font-semibold tracking-tight text-white">
+            Sure<span style={{ color: lpGreen }}>Path</span>
+          </span>
+        </a>
 
-          {/* Desktop links */}
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map(l => (
-              <a key={l.id} href={l.path}
-                onClick={e => { e.preventDefault(); navScroll(l.id, l.path); }}
-                className="text-sm font-medium transition-colors relative group"
-                style={{ color: textMuted }}>
-                <span className="group-hover:text-white transition-colors">{l.label}</span>
-                <span className="absolute -bottom-0.5 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
-                  style={{ background: '#22c55e' }} />
-              </a>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <a href="/admin" title="Admin"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all hover:border-emerald-500/40 hover:text-emerald-400"
-              style={{ borderColor: cardBorder, color: textMuted }}>
-              <ShieldCheck size={13} /> Admin
+        {/* Center nav links */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map(l => (
+            <a key={l.id} href={l.path}
+              onClick={e => { e.preventDefault(); navScroll(l.id, l.path); }}
+              className="text-sm uppercase tracking-widest transition-colors hover:text-white"
+              style={{ color: 'hsl(0 0% 60%)' }}>
+              {l.label}
             </a>
-            <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
-              aria-label="Switch language"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all min-h-[44px] sm:min-h-0"
-              style={{ borderColor: cardBorder, color: textMuted }}>
-              <Globe size={12} /> {lang}
-            </button>
-            <button onClick={() => setDarkMode(!darkMode)}
-              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="p-2.5 rounded-xl border transition-all hover:border-emerald-500/30 min-h-[44px] min-w-[44px] flex items-center justify-center"
-              style={{ borderColor: cardBorder, color: textMuted }}>
-              {darkMode ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-            <button onClick={onSignIn}
-              className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-black text-white transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.25)' }}>
-              {t('Masuk', 'Sign In')} <ArrowRight size={14} />
-            </button>
-            <button onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 rounded-xl border" style={{ borderColor: cardBorder, color: textMuted }}>
-              {menuOpen ? <X size={16} /> : <Menu size={16} />}
-            </button>
-          </div>
+          ))}
+          <a href="/admin"
+            className="text-sm uppercase tracking-widest transition-colors hover:text-white"
+            style={{ color: 'hsl(0 0% 60%)' }}>
+            Admin
+          </a>
+        </div>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
+            aria-label="Switch language"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all hover:opacity-80"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            <Globe size={12} /> {lang}
+          </button>
+          <button onClick={onSignIn}
+            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-white transition-all active:scale-[0.97] hover:opacity-80"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            {t('Masuk', 'Get Started')}
+          </button>
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+            className="md:hidden p-2.5 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            {menuOpen ? <X size={16} /> : <Menu size={16} />}
+          </button>
         </div>
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="lg:hidden mx-4 mb-4 rounded-2xl border p-4"
-            style={{ background: 'rgba(4,12,6,0.97)', borderColor: cardBorder, backdropFilter: 'blur(24px)' }}>
+          <div className="md:hidden absolute top-full left-0 right-0 mx-4 mt-2 rounded-2xl border p-4"
+            style={{ background: 'hsl(0 0% 10%)', borderColor: 'hsl(0 0% 20%)', backdropFilter: 'blur(24px)' }}>
             {navLinks.map(l => (
               <button key={l.id} onClick={() => navScroll(l.id, l.path)}
-                className="flex items-center justify-between w-full py-3 border-b text-sm font-medium"
-                style={{ borderColor: cardBorder, color: textMuted }}>
+                className="flex items-center justify-between w-full py-3 border-b text-sm font-medium uppercase tracking-widest"
+                style={{ borderColor: 'hsl(0 0% 20%)', color: 'hsl(0 0% 60%)' }}>
                 <span>{l.label}</span><ChevronRight size={14} />
               </button>
             ))}
             <div className="flex gap-2 mt-4">
               <a href="/admin" className="flex-1 py-2.5 rounded-xl text-xs font-black text-center border"
-                style={{ borderColor: 'rgba(34,197,94,0.3)', color: '#22c55e' }}>Admin</a>
+                style={{ borderColor: `${lpGreen}40`, color: lpGreen }}>Admin</a>
               <button onClick={onSignIn}
-                className="flex-1 py-2.5 rounded-xl text-xs font-black text-white"
-                style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
-                {t('Masuk', 'Sign In')}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black"
+                style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
+                {t('Masuk', 'Get Started')}
               </button>
             </div>
-            <a href="/admin" className="flex items-center justify-center gap-2 mt-2 py-2.5 rounded-xl text-xs font-bold"
-              style={{ border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}>
-              <ShieldCheck size={13} /> Admin Dashboard
-            </a>
           </div>
         )}
       </nav>
 
-      {/* ═══════════════════════════════ HERO ═══════════════════════════════ */}
-      <section data-hero className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        {/* Section gradient overlay */}
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 40%, rgba(34,197,94,0.05) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 right-0 h-40"
-          style={{ background: 'linear-gradient(to bottom, transparent, rgba(4,12,6,0.95))' }} />
+      {/* ═══════════════════════════════ HERO (Spline 3D) ═══════════════════ */}
+      <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
+        style={{ background: 'hsl(0 0% 8%)' }}>
 
-        {/* Floating badge top */}
-        <div className="absolute top-28 left-1/2 -translate-x-1/2">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[0.6rem] font-black uppercase tracking-[0.25em]"
-            style={{
-              background: 'rgba(34,197,94,0.08)',
-              border: '1px solid rgba(34,197,94,0.2)',
-              color: '#86efac',
-              backdropFilter: 'blur(12px)',
-            }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#22c55e' }} />
-            {t('Platform Asuransi Digital', 'Digital Insurance Platform')}
-          </div>
+        {/* Spline 3D background */}
+        <div className="absolute inset-0">
+          <Suspense fallback={<div className="absolute inset-0" style={{ background: 'hsl(0 0% 8%)' }} />}>
+            <SplineScene
+              scene="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode"
+              className="w-full h-full"
+            />
+          </Suspense>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-5 py-24 flex flex-col items-center text-center">
+        {/* Dark overlay so text is always readable */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.35)', zIndex: 1 }} />
 
-          {/* Main headline */}
-          <div className="max-w-4xl">
-            <h1 className="font-black leading-[0.92] tracking-[-0.04em] mb-6"
-              style={{ fontSize: 'clamp(3rem, 8vw, 7rem)', animation: 'fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both 0.1s' }}>
-              {t('Lindungi Yang', 'Protect What')}{' '}
-              <span className="relative inline-block">
-                <span style={{
-                  background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                }}>
-                  {t('Paling Berharga', 'Matters Most')}
-                </span>
-                <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 100 8" preserveAspectRatio="none" height="8">
-                  <path d="M0,6 Q25,0 50,5 Q75,8 100,3" stroke="#22c55e" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5" />
-                </svg>
-              </span>
-              <br />
-              {t('dalam Hidup', 'in Life')}
-            </h1>
+        {/* Content — anchored bottom-left */}
+        <div className="relative w-full max-w-[90%] sm:max-w-md lg:max-w-2xl px-6 md:px-10 pb-12 md:pb-16 pt-32 pointer-events-none"
+          style={{ zIndex: 2 }}>
 
-            <p className="text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
-              style={{ color: 'rgba(255,255,255,0.55)', animation: 'fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both 0.25s' }}>
-              {t(
-                'SurePath menghadirkan platform asuransi yang transparan, mudah dipahami, dan dirancang sesuai dengan kebutuhan nyata kehidupanmu — bukan sekadar angka di atas kertas.',
-                'SurePath delivers an insurance platform that\'s transparent, easy to understand, and designed around your real life needs — not just numbers on paper.',
-              )}
-            </p>
+          {/* Headline */}
+          <h1 className="font-bold uppercase leading-[1.05] tracking-[-0.05em] mb-3 md:mb-5 opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(3rem,8vw,6rem)', animationDelay: '0.2s', color: 'hsl(0 0% 96%)' }}>
+            Sure<span style={{ color: lpGreen }}>Path</span>
+          </h1>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center"
-              style={{ animation: 'fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both 0.4s' }}>
-              <button onClick={onSignIn}
-                className="group flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-base font-black text-white transition-all hover:scale-[1.03]"
-                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 8px 40px rgba(34,197,94,0.35)' }}>
-                {t('Mulai Konsultasi', 'Start Consultation')}
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button onClick={() => navScroll('products', '/products')}
-                className="group flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-base font-black transition-all hover:border-emerald-500/40"
-                style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(12px)' }}>
-                <Play size={16} className="group-hover:scale-110 transition-transform" style={{ color: '#22c55e' }} />
-                {t('Jelajahi Produk', 'Explore Products')}
-              </button>
-            </div>
+          {/* Subheading */}
+          <p className="font-light mb-3 md:mb-6 opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(1.125rem,2.5vw,1.875rem)', animationDelay: '0.4s', color: 'rgba(245,245,245,0.8)' }}>
+            {t('Kami Hadir untuk Melindungi.', 'We\'re here to protect.')}
+          </p>
+
+          {/* Description */}
+          <p className="font-light mb-6 md:mb-10 max-w-lg opacity-0 animate-fade-up"
+            style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'hsl(0 0% 60%)', lineHeight: '1.7' }}>
+            {t(
+              'Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda — bukan sekadar angka di atas kertas. Satu platform, semua perlindungan.',
+              'A transparent, human-centered digital insurance platform built around your real needs — not just numbers on paper. One platform, all your protection.',
+            )}
+          </p>
+
+          {/* CTA buttons */}
+          <div className="flex flex-wrap gap-3 font-bold opacity-0 animate-fade-up"
+            style={{ animationDelay: '0.7s' }}>
+            <button onClick={onSignIn}
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+              style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
+              {t('Mulai Konsultasi', 'Book a Consultation')}
+            </button>
+            <button onClick={() => { navScroll('products', '/products'); }}
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-90 text-black"
+              style={{ background: 'white' }}>
+              {t('Lihat Produk', 'Our Products')}
+            </button>
           </div>
 
-          {/* Floating stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-20 max-w-2xl w-full"
-            style={{ animation: 'fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both 0.55s' }}>
-            {[
-              { n: '12,400+', l: t('Nasabah Aktif', 'Active Clients') },
-              { n: '40+',     l: t('Produk Pilihan', 'Products') },
-              { n: '18',      l: t('Partner Insurer', 'Insurer Partners') },
-              { n: '5+',      l: t('Tahun Pengalaman', 'Years Experience') },
-            ].map(s => (
-              <div key={s.l} className="text-center rounded-2xl py-4 px-3"
-                style={{ background: cardBg, border: `1px solid ${cardBorder}`, backdropFilter: 'blur(12px)' }}>
-                <div className="text-2xl font-black" style={{ color: '#4ade80' }}>{s.n}</div>
-                <div className="text-[0.65rem] font-medium mt-1" style={{ color: textMuted }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
+          {/* Trust line */}
+          <p className="mt-5 md:mt-7 text-xs font-light opacity-0 animate-fade-up"
+            style={{ animationDelay: '0.85s', color: 'hsl(0 0% 50%)' }}>
+            {t(
+              'Platform asuransi terpercaya · Jakarta, Indonesia · 12.400+ nasabah aktif',
+              'Trusted insurance platform · Jakarta, Indonesia · 12,400+ active clients',
+            )}
+          </p>
         </div>
 
-        {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-float">
-          <div className="w-5 h-8 rounded-full border flex items-start justify-center pt-1.5"
-            style={{ borderColor: 'rgba(34,197,94,0.3)' }}>
-            <div className="w-1 h-2 rounded-full" style={{ background: '#22c55e', animation: 'counter-pulse 1.5s ease-in-out infinite' }} />
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 right-8 z-10 flex flex-col items-center gap-2 animate-float pointer-events-none">
+          <div className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5"
+            style={{ borderColor: `${lpGreen}50` }}>
+            <div className="w-1 h-2 rounded-full" style={{ background: lpGreen, opacity: 0.7 }} />
           </div>
         </div>
       </section>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { SurePathLogo } from '../Navbar';
 import { db } from '../../db';
-import { verifyPassword, createSessionToken } from '../../services/authService';
+import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
 
 interface AdminLoginProps {
@@ -21,11 +21,20 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError(null);
 
+    const rl = checkRateLimit(email);
+    if (!rl.allowed) {
+      const mins = Math.ceil(((rl.lockedUntilMs ?? Date.now()) - Date.now()) / 60000);
+      setError(`Terlalu banyak percobaan. Coba lagi dalam ${mins} menit.`);
+      setLoading(false);
+      return;
+    }
+
     try {
       const user = await db.users.where('email').equals(email).first();
 
       if (user && user.passwordHash && user.salt) {
         if (![UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(user.role)) {
+          recordFailedAttempt(email);
           setError("Akses ditolak. Akun ini tidak memiliki izin admin.");
           setLoading(false);
           return;
@@ -33,12 +42,18 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
         const isValid = await verifyPassword(password, user.passwordHash, user.salt);
         if (isValid) {
+          clearRateLimit(email);
           const token = createSessionToken(user);
           onLoginSuccess({ ...user, token });
         } else {
-          setError("Email atau kata sandi salah.");
+          recordFailedAttempt(email);
+          const remaining = checkRateLimit(email).remainingAttempts;
+          setError(remaining > 0
+            ? `Email atau kata sandi salah. Sisa percobaan: ${remaining}`
+            : 'Akun dikunci sementara. Coba lagi dalam 15 menit.');
         }
       } else {
+        recordFailedAttempt(email);
         setError("Email atau kata sandi salah.");
       }
     } catch (err) {

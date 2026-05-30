@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block admin paths from indexing
+Disallow: /admin
+Disallow: /admin/
+
+# Block auth flow pages (they redirect anyway)
+Disallow: /?auth=*
+Disallow: /?mode=app
+
+Sitemap: https://myinsurepath.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

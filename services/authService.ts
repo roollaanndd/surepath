@@ -1,11 +1,53 @@
+// SurePath Auth + Security Service
+// PBKDF2-HMAC-SHA256 hashing, rate limiting, input sanitization
 
-/**
- * SurePath Neural Security Service
- * Implements Web Crypto API for client-side encryption and robust hashing.
- */
-
-// Constant for hashing iterations (OWASP recommendation for PBKDF2-HMAC-SHA256)
 const ITERATIONS = 210000;
+
+// --- Rate Limiting (login brute-force protection) ---
+const RATE_LIMIT_KEY = 'sp_rl_';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+interface RateLimitRecord { attempts: number; firstAttemptAt: number; lockedUntil?: number; }
+
+export const checkRateLimit = (email: string): { allowed: boolean; remainingAttempts: number; lockedUntilMs?: number } => {
+  const key = RATE_LIMIT_KEY + btoa(email.toLowerCase()).slice(0, 16);
+  const raw = sessionStorage.getItem(key);
+  const record: RateLimitRecord = raw ? JSON.parse(raw) : { attempts: 0, firstAttemptAt: Date.now() };
+
+  if (record.lockedUntil && Date.now() < record.lockedUntil) {
+    return { allowed: false, remainingAttempts: 0, lockedUntilMs: record.lockedUntil };
+  }
+  // Reset window after 15 min without lockout
+  if (Date.now() - record.firstAttemptAt > LOCKOUT_MS) {
+    sessionStorage.removeItem(key);
+    return { allowed: true, remainingAttempts: MAX_ATTEMPTS };
+  }
+  return { allowed: record.attempts < MAX_ATTEMPTS, remainingAttempts: Math.max(0, MAX_ATTEMPTS - record.attempts) };
+};
+
+export const recordFailedAttempt = (email: string): void => {
+  const key = RATE_LIMIT_KEY + btoa(email.toLowerCase()).slice(0, 16);
+  const raw = sessionStorage.getItem(key);
+  const record: RateLimitRecord = raw ? JSON.parse(raw) : { attempts: 0, firstAttemptAt: Date.now() };
+  record.attempts += 1;
+  if (record.attempts >= MAX_ATTEMPTS) record.lockedUntil = Date.now() + LOCKOUT_MS;
+  sessionStorage.setItem(key, JSON.stringify(record));
+};
+
+export const clearRateLimit = (email: string): void => {
+  const key = RATE_LIMIT_KEY + btoa(email.toLowerCase()).slice(0, 16);
+  sessionStorage.removeItem(key);
+};
+
+// --- Input Sanitization ---
+export const sanitize = {
+  text: (s: string) => s.replace(/[<>"'&]/g, c => ({ '<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;','&':'&amp;' }[c] ?? c)),
+  stripTags: (s: string) => s.replace(/<[^>]*>/g, ''),
+  truncate: (s: string, max: number) => s.slice(0, max),
+  email: (s: string) => s.trim().toLowerCase().slice(0, 254),
+  alphaNum: (s: string) => s.replace(/[^a-zA-Z0-9\s\-_.]/g, ''),
+};
 
 export const hashPassword = async (password: string): Promise<{ hash: string; salt: string }> => {
   const encoder = new TextEncoder();

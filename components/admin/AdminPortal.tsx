@@ -23,6 +23,7 @@ import AIAdminView from './AIAdminView';
 import AIFinanceView from './AIFinanceView';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
+import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
 
@@ -73,12 +74,23 @@ const AdminPortal = ({
   const [darkMode, setDarkMode]       = useState(true);
   const [logoUrl, setLogoUrl]         = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
     getAdminStats().then(setAdminStats).catch(() => {});
+
+    // Auto daily backup — runs silently on admin portal open if >23h since last
+    if (shouldAutoBackup()) {
+      setBackupStatus('running');
+      performBackup(undefined, 'AUTO')
+        .then(r => setBackupStatus(r.success ? 'ok' : 'fail'))
+        .catch(() => setBackupStatus('fail'))
+        .finally(() => setTimeout(() => setBackupStatus('idle'), 8000));
+    }
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -370,6 +382,18 @@ const AdminPortal = ({
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
+            {/* Auto-backup status indicator */}
+            {backupStatus !== 'idle' && (
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.55rem] font-black uppercase tracking-widest border ${
+                backupStatus === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                backupStatus === 'ok'      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                             'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              }`}>
+                {backupStatus === 'running' && <Loader2 size={10} className="animate-spin" />}
+                {backupStatus === 'ok'      && <CheckCircle size={10} />}
+                {backupStatus === 'running' ? 'Backup berjalan...' : backupStatus === 'ok' ? 'Backup selesai' : 'Backup gagal'}
+              </div>
+            )}
             {/* Notifications */}
             <button className={`relative p-2 rounded-xl border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}>
               <Bell size={17} />

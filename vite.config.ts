@@ -14,30 +14,58 @@ export default defineConfig(({ mode }) => {
         react(),
         VitePWA({
           registerType: 'autoUpdate',
-          includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+          includeAssets: ['apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512.png'],
           workbox: {
-            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
+            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           },
           manifest: {
-            name: 'SurePath',
+            name: 'SurePath – Asuransi Digital',
             short_name: 'SurePath',
-            description: 'AI-Powered Insurance Platform',
-            theme_color: '#f97316',
-            background_color: '#0A0A0A',
+            description: 'Platform asuransi digital terpercaya Indonesia. Beli asuransi mobil, jiwa, perjalanan & properti. Klaim cepat via HP.',
+            theme_color: '#16a34a',
+            background_color: '#05080d',
             display: 'standalone',
+            orientation: 'portrait',
+            start_url: '/',
+            scope: '/',
+            lang: 'id',
+            categories: ['finance', 'business'],
             icons: [
               {
                 src: 'pwa-192x192.png',
                 sizes: '192x192',
-                type: 'image/png'
+                type: 'image/png',
+                purpose: 'any',
               },
               {
                 src: 'pwa-512x512.png',
                 sizes: '512x512',
-                type: 'image/png'
-              }
-            ]
-          }
+                type: 'image/png',
+                purpose: 'any',
+              },
+              {
+                src: 'pwa-maskable-512.png',
+                sizes: '512x512',
+                type: 'image/png',
+                purpose: 'maskable',
+              },
+              {
+                src: 'apple-touch-icon.png',
+                sizes: '180x180',
+                type: 'image/png',
+                purpose: 'any',
+              },
+            ],
+            screenshots: [
+              {
+                src: 'logo.png',
+                sizes: '3508x2481',
+                type: 'image/png',
+                form_factor: 'wide',
+                label: 'SurePath Dashboard',
+              },
+            ],
+          },
         })
       ],
       define: {

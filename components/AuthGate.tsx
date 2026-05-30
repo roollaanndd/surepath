@@ -51,10 +51,10 @@ const AnimatedBackground: React.FC = () => {
     window.addEventListener('resize', resize);
 
     const blobs = [
-      { size: 520, color: '16,185,129',  phase: 0,   speedX: 0.0007, speedY: 0.0005 },
-      { size: 420, color: '249,115,22',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
-      { size: 360, color: '99,102,241',  phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
-      { size: 280, color: '6,182,212',   phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
+      { size: 520, color: '6,224,0',    phase: 0,   speedX: 0.0007, speedY: 0.0005 },
+      { size: 420, color: '34,197,94',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
+      { size: 360, color: '74,222,128', phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
+      { size: 280, color: '16,185,129', phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
     ];
 
     let frame = 0;
@@ -269,7 +269,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#060818] text-white flex flex-col items-center justify-center p-5 relative overflow-hidden">
+    <div className="min-h-screen text-white flex flex-col items-center justify-center p-5 relative overflow-hidden" style={{ background: 'hsl(0, 0%, 8%)', fontFamily: "'Sora', sans-serif" }}>
 
       <AnimatedBackground />
 
@@ -287,18 +287,17 @@ const AuthGate: React.FC<AuthGateProps> = ({
         {/* Logo */}
         <div className="flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/20 rounded-[3rem] blur-3xl scale-150 animate-pulse" />
-            <div className="relative w-28 h-28 bg-gradient-to-br from-orange-500/15 to-emerald-500/10 border border-orange-500/30 rounded-[2.5rem] flex items-center justify-center backdrop-blur-sm shadow-2xl shadow-orange-500/15">
-              <div className="absolute inset-2 rounded-[2rem] border border-orange-500/10" />
+            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-20" style={{ background: 'hsl(119, 99%, 46%)' }} />
+            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border" style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
               <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-4xl font-black tracking-[-0.05em] uppercase leading-none">
-              Sure<span className="text-[#f97316]">Path</span>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
+              Sure<span style={{ color: 'hsl(119, 99%, 46%)' }}>Path</span>
             </h1>
-            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-[0.45em] mt-2">
-              {t('Smart Insurance Platform', 'Platform Asuransi Pintar')}
+            <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
+              {t('Your protection, made simple.', 'Perlindungan kamu, dibuat mudah.')}
             </p>
           </div>
         </div>
@@ -342,13 +341,15 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <div className="flex bg-white/[0.05] p-1 rounded-2xl border border-white/5">
               <button
                 onClick={() => { setMode('LOGIN'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                style={mode === 'LOGIN' ? { background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 4px 20px rgba(6,224,0,0.25)' } : {}}
               >
                 {t('Sign In', 'Masuk')}
               </button>
               <button
                 onClick={() => { setMode('REGISTER'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'bg-[#f97316] text-white shadow-lg shadow-orange-500/30' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                style={mode === 'REGISTER' ? { background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 4px 20px rgba(6,224,0,0.25)' } : {}}
               >
                 {t('Register', 'Daftar')}
               </button>
@@ -363,7 +364,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <input
                       required
                       placeholder={t('Full Name', 'Nama Lengkap')}
-                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
+                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -394,7 +395,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   required
                   type="email"
                   placeholder="email@contoh.com"
-                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
+                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -408,14 +409,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   type={showPass ? 'text' : 'password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-orange-500/50 transition-all"
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-orange-400 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors"
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -436,8 +437,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)', boxShadow: '0 8px 32px rgba(249,115,22,0.3)' }}
+                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                style={{ background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 8px 32px rgba(6,224,0,0.25)' }}
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -477,9 +478,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        <p className="text-[0.5rem] font-bold text-gray-700 uppercase tracking-widest flex items-center gap-2">
-          <Shield size={10} className="text-orange-800" />
-          Secured by SurePath Smart Security v4.2
+        <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Shield size={10} style={{ color: 'rgba(6,224,0,0.4)' }} />
+          SurePath · Secure Connection
         </p>
       </div>
     </div>

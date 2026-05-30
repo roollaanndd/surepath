@@ -59,10 +59,7 @@ button:focus-visible, a:focus-visible {
 
 // ─── Dark section background (for sections below hero) ───────────────────────
 const SectionBackground: React.FC = () => (
-  <>
-    <style>{SECTION_CSS}</style>
-    <div className="fixed inset-0 -z-10" style={{ background: 'hsl(0 0% 8%)' }} />
-  </>
+  <style>{SECTION_CSS}</style>
 );
 
 // ─── Reveal hook ──────────────────────────────────────────────────────────────
@@ -337,7 +334,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       <SectionBackground />
 
       {/* ════════════════════════════════ NAVBAR ════════════════════════════ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5">
+      <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5 transition-all duration-300 ${scrolled ? 'backdrop-blur-md' : ''}`}
+        style={{ background: scrolled ? 'rgba(10,10,10,0.85)' : 'transparent', borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 group">
           <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
@@ -357,11 +355,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               {l.label}
             </a>
           ))}
-          <a href="/admin"
+          <button onClick={onSignIn}
             className="text-sm uppercase tracking-widest transition-colors hover:text-white"
             style={{ color: 'hsl(0 0% 60%)' }}>
             Admin
-          </a>
+          </button>
         </div>
 
         {/* Right actions */}
@@ -397,14 +395,19 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               </button>
             ))}
             <div className="flex gap-2 mt-4">
-              <a href="/admin" className="flex-1 py-2.5 rounded-xl text-xs font-black text-center border"
-                style={{ borderColor: `${lpGreen}40`, color: lpGreen }}>Admin</a>
+              <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black"
+                style={{ background: 'rgba(6,224,0,0.08)', border: `1px solid rgba(6,224,0,0.2)`, color: lpGreen }}>Admin</button>
               <button onClick={onSignIn}
                 className="flex-1 py-2.5 rounded-xl text-xs font-black"
                 style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
                 {t('Masuk', 'Get Started')}
               </button>
             </div>
+            <button onClick={() => { setLang(lang === Language.EN ? Language.ID : Language.EN); localStorage.setItem('SUREPATH_LANG', lang === Language.EN ? 'ID' : 'EN'); }}
+              className="flex items-center justify-center gap-2 w-full mt-2 py-2.5 rounded-xl text-xs font-bold border transition-all"
+              style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+              <Globe size={12} /> {lang === Language.EN ? 'Switch to Bahasa' : 'Switch to English'}
+            </button>
           </div>
         )}
       </nav>
@@ -487,7 +490,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
 
       {/* ════════════════════════════ PARTNERS TICKER ════════════════════════ */}
       <div className="relative py-8 overflow-hidden border-y"
-        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'rgba(4,12,6,0.6)', backdropFilter: 'blur(8px)' }}>
+        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'hsl(0 0% 6%)' }}>
         <div className="flex animate-ticker whitespace-nowrap">
           {[...Array(2)].map((_, repeat) => (
             <div key={repeat} className="flex items-center gap-12 px-6">
@@ -500,8 +503,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             </div>
           ))}
         </div>
-        <div className="absolute inset-y-0 left-0 w-20" style={{ background: 'linear-gradient(to right, rgba(4,12,6,0.6), transparent)' }} />
-        <div className="absolute inset-y-0 right-0 w-20" style={{ background: 'linear-gradient(to left, rgba(4,12,6,0.6), transparent)' }} />
+        <div className="absolute inset-y-0 left-0 w-20" style={{ background: 'linear-gradient(to right, hsl(0 0% 6%), transparent)' }} />
+        <div className="absolute inset-y-0 right-0 w-20" style={{ background: 'linear-gradient(to left, hsl(0 0% 6%), transparent)' }} />
       </div>
 
       {/* ════════════════════════════ BENTO GRID ═════════════════════════════ */}
@@ -605,7 +608,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
       </section>
 
       {/* ═══════════════════════════ PRODUCTS ════════════════════════════════ */}
-      <section id="products" className="py-28 px-5" style={{ background: 'rgba(4,12,6,0.7)' }}>
+      <section id="products" className="py-28 px-5" style={{ background: 'hsl(0 0% 6%)' }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="flex items-end justify-between mb-14 flex-wrap gap-6">

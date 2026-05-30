@@ -14,13 +14,38 @@ const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
 
-const PortalLoader = () => (
+const detectLang = (): Language => {
+  const s = localStorage.getItem('SUREPATH_LANG');
+  if (s === 'EN' || s === 'ID') return s as Language;
+  return navigator.language?.toLowerCase().startsWith('id') ? Language.ID : Language.EN;
+};
+
+const COPY = {
+  EN: {
+    steps: ['Getting things ready…', 'Loading your space…', 'Finding the best options…', 'Almost done…', 'Ready!'],
+    tagline: 'Your protection, made simple.',
+    chips: ['📸 Claim with photos', '⚡ Buy in minutes', '💬 Free to ask'],
+    welcome: 'Welcome back',
+    verified: "You're all set",
+    loading: 'Loading…',
+  },
+  ID: {
+    steps: ['Menyiapkan semuanya…', 'Memuat ruang kamu…', 'Mencari pilihan terbaik…', 'Hampir selesai…', 'Siap!'],
+    tagline: 'Perlindungan kamu, dibuat mudah.',
+    chips: ['📸 Klaim lewat foto', '⚡ Beli dalam menit', '💬 Bebas tanya'],
+    welcome: 'Selamat datang',
+    verified: 'Siap digunakan',
+    loading: 'Memuat…',
+  },
+} as const;
+
+const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
   <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
     <div className="flex flex-col items-center gap-4">
       <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
         style={{ borderColor: 'rgba(6, 224, 0, 0.15)', borderTopColor: 'hsl(119, 99%, 46%)' }} />
-      <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.55rem', fontWeight: 500, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
-        Memuat…
+      <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.65rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)' }}>
+        {COPY[lang].loading}
       </p>
     </div>
   </div>
@@ -73,202 +98,169 @@ const SplashCanvas = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
 };
 
-const SPLASH_MESSAGES = [
-  'Menyiapkan Sistem…',
-  'Memuat Data Proteksi…',
-  'Mengecek Penawaran Terbaik…',
-  'Koneksi Aman…',
-  'Selesai!',
-];
-
-const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
-  const [phase, setPhase] = useState(0);
+const WelcomeScreen = ({ onFinish, lang, setLang }: { onFinish: () => void; lang: Language; setLang: (l: Language) => void }) => {
+  const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
-  const [msgIdx, setMsgIdx] = useState(0);
-
+  const [msgIdx, setMsgIdx]     = useState(0);
   const onFinishRef = useRef(onFinish);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
   useEffect(() => {
     const t0 = setTimeout(() => setPhase(1), 80);
-    const t1 = setTimeout(() => setPhase(2), 480);
-    const t2 = setTimeout(() => setPhase(3), 800);
+    const t1 = setTimeout(() => setPhase(2), 500);
+    const t2 = setTimeout(() => setPhase(3), 820);
+    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.8, 100)), 18);
+    const msgInt  = setInterval(() => setMsgIdx(i => Math.min(i + 1, COPY[lang].steps.length - 1)), 400);
+    const t3 = setTimeout(() => setPhase(4), 2200);
+    const t4 = setTimeout(() => onFinishRef.current(), 2750);
+    return () => { [t0,t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); clearInterval(msgInt); };
+  }, [lang]);
 
-    const progInt  = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 18);
-    const msgInt   = setInterval(() => setMsgIdx(i => Math.min(i + 1, SPLASH_MESSAGES.length - 1)), 380);
-    const t3 = setTimeout(() => setPhase(4), 2000);
-    const t4 = setTimeout(() => onFinishRef.current(), 2500);
-
-    return () => {
-      [t0,t1,t2,t3,t4].forEach(clearTimeout);
-      clearInterval(progInt);
-      clearInterval(msgInt);
-    };
-  }, []);
-
-  const logoVisible  = phase >= 1;
-  const textVisible  = phase >= 2;
-  const barVisible   = phase >= 3;
-  const fadingOut    = phase >= 4;
-
+  const G = COPY[lang];
   const lpGreen = 'hsl(119, 99%, 46%)';
+  const sora = "'Sora', sans-serif";
 
   return (
     <div
-      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       style={{ background: 'hsl(0, 0%, 8%)' }}
     >
       <SplashCanvas />
-
-      {/* subtle dot grid */}
       <div className="absolute inset-0 opacity-[0.025]"
         style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <div className="relative z-10 flex flex-col items-center gap-9">
-        {/* Logo — large & prominent */}
-        <div
-          className={`flex flex-col items-center transition-all duration-700 ease-out ${logoVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}
-        >
-          <div className="relative">
-            {/* outer ambient glow */}
-            <div className="absolute -inset-8 rounded-[3.5rem] blur-3xl opacity-20"
-              style={{ background: lpGreen }} />
-            {/* logo tile */}
-            <div
-              className="relative w-48 h-48 rounded-[3.5rem] flex items-center justify-center border"
-              style={{
-                background: 'rgba(6, 224, 0, 0.05)',
-                borderColor: 'rgba(6, 224, 0, 0.18)',
-                boxShadow: '0 0 80px rgba(6, 224, 0, 0.10), inset 0 1px 0 rgba(255,255,255,0.04)',
-              }}
-            >
-              <SurePathLogo className="w-32 h-32" />
-            </div>
+      <div className="relative z-10 flex flex-col items-center gap-8">
+
+        {/* Logo with pulsing rings */}
+        <div className={`relative flex items-center justify-center ${phase >= 1 ? 'sp-logo-in' : 'opacity-0'}`}>
+          {/* rings — sit behind the tile */}
+          {phase >= 1 && [0, 1, 2].map(i => (
+            <div key={i} className="sp-ring absolute w-48 h-48 rounded-[3.5rem] border"
+              style={{ borderColor: 'rgba(6,224,0,0.28)', animationDelay: `${i * 1}s` }} />
+          ))}
+          {/* ambient glow */}
+          <div className="absolute -inset-10 rounded-[4rem] blur-3xl opacity-15" style={{ background: lpGreen }} />
+          {/* tile */}
+          <div className="relative w-48 h-48 rounded-[3.5rem] flex items-center justify-center border"
+            style={{
+              background: 'rgba(6,224,0,0.05)',
+              borderColor: 'rgba(6,224,0,0.20)',
+              boxShadow: '0 0 80px rgba(6,224,0,0.10), inset 0 1px 0 rgba(255,255,255,0.04)',
+            }}>
+            <SurePathLogo className="w-32 h-32" />
           </div>
         </div>
 
-        {/* Wordmark */}
-        <div
-          className={`text-center transition-all duration-600 ease-out ${textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-        >
-          <h1 style={{
-            fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(2.8rem, 9vw, 4rem)',
-            fontWeight: 700,
-            letterSpacing: '-0.04em',
-            color: '#ffffff',
-            lineHeight: 1,
-          }}>
+        {/* Wordmark + tagline */}
+        <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'sp-word-in' : 'opacity-0'}`}>
+          <h1 style={{ fontFamily: sora, fontSize: 'clamp(2.8rem,9vw,4rem)', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1 }}>
             Sure<span style={{ color: lpGreen }}>Path</span>
           </h1>
-          <p style={{
-            fontFamily: "'Sora', sans-serif",
-            fontSize: '0.58rem',
-            fontWeight: 500,
-            letterSpacing: '0.45em',
-            color: 'rgba(255,255,255,0.30)',
-            textTransform: 'uppercase',
-            marginTop: '0.85rem',
-          }}>
-            Asuransi Pintar · OJK Licensed
+          <p style={{ fontFamily: sora, fontSize: '0.95rem', fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: '0.6rem', letterSpacing: '-0.01em' }}>
+            {G.tagline}
           </p>
         </div>
 
-        {/* Progress */}
-        <div
-          className={`flex flex-col items-center gap-3 w-52 transition-all duration-500 ${barVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
-        >
+        {/* Progress + chips */}
+        <div className={`flex flex-col items-center gap-4 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+          {/* step message */}
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: lpGreen }} />
-            <span style={{
-              fontFamily: "'Sora', sans-serif",
-              fontSize: '0.56rem',
-              fontWeight: 500,
-              letterSpacing: '0.32em',
-              color: 'rgba(255,255,255,0.35)',
-              textTransform: 'uppercase',
-            }}>
-              {SPLASH_MESSAGES[msgIdx]}
+            <span style={{ fontFamily: sora, fontSize: '0.65rem', fontWeight: 500, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.02em' }}>
+              {G.steps[msgIdx]}
             </span>
           </div>
+          {/* bar */}
           <div className="w-full h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <div
-              className="h-full rounded-full transition-all duration-200"
-              style={{
-                width: `${progress}%`,
-                background: lpGreen,
-                boxShadow: `0 0 10px ${lpGreen}99`,
-              }}
-            />
+            <div className="h-full rounded-full transition-all duration-200"
+              style={{ width: `${progress}%`, background: lpGreen, boxShadow: `0 0 10px ${lpGreen}88` }} />
+          </div>
+          {/* value chips */}
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            {G.chips.map(chip => (
+              <span key={chip} style={{
+                fontFamily: sora, fontSize: '0.62rem', fontWeight: 500,
+                color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: '99px',
+                padding: '0.2rem 0.6rem',
+              }}>
+                {chip}
+              </span>
+            ))}
           </div>
         </div>
+
+        {/* Language toggle */}
+        <div className={`flex items-center gap-1 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
+          {(['ID', 'EN'] as const).map(l => (
+            <button key={l}
+              onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
+              style={{
+                fontFamily: sora, fontSize: '0.65rem', fontWeight: lang === l ? 600 : 400,
+                color: lang === l ? lpGreen : 'rgba(255,255,255,0.28)',
+                padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer',
+                background: lang === l ? 'rgba(6,224,0,0.10)' : 'transparent',
+                border: `1px solid ${lang === l ? 'rgba(6,224,0,0.22)' : 'transparent'}`,
+                transition: 'all 0.2s',
+              }}>
+              {l}
+            </button>
+          ))}
+        </div>
+
       </div>
     </div>
   );
 };
 
-const AppEntryScreen = ({ name, onDone }: { name: string; onDone: () => void }) => {
+const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => void; lang: Language }) => {
   const [visible, setVisible] = useState(false);
   const [fade, setFade]       = useState(false);
-
   const onDoneRef = useRef(onDone);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
     const t0 = setTimeout(() => setVisible(true), 60);
-    const t1 = setTimeout(() => setFade(true), 950);
-    const t2 = setTimeout(() => onDoneRef.current(), 1450);
+    const t1 = setTimeout(() => setFade(true), 1000);
+    const t2 = setTimeout(() => onDoneRef.current(), 1500);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  const G = COPY[lang];
   const lpGreen = 'hsl(119, 99%, 46%)';
+  const sora = "'Sora', sans-serif";
 
   return (
     <div
       className={`fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       style={{ background: 'hsl(0, 0%, 8%)' }}
     >
-      {/* ambient glows */}
-      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[130px] opacity-10"
-        style={{ background: lpGreen }} />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full blur-[110px] opacity-08"
-        style={{ background: '#22c55e' }} />
+      <div className="absolute top-[-20%] right-[-10%] w-[480px] h-[480px] rounded-full blur-[130px] opacity-10" style={{ background: lpGreen }} />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[380px] h-[380px] rounded-full blur-[110px] opacity-[0.07]" style={{ background: '#22c55e' }} />
       <div className="absolute inset-0 opacity-[0.025]"
         style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      {/* card */}
-      <div
-        className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}
-      >
-        {/* logo */}
-        <div className="relative mx-auto w-32 h-32 mb-8">
-          <div className="absolute -inset-4 rounded-[2.5rem] blur-2xl opacity-20"
-            style={{ background: lpGreen }} />
-          <div
-            className="relative w-32 h-32 rounded-[2.5rem] flex items-center justify-center border"
-            style={{
-              background: 'rgba(6, 224, 0, 0.05)',
-              borderColor: 'rgba(6, 224, 0, 0.18)',
-              boxShadow: '0 0 60px rgba(6, 224, 0, 0.08)',
-            }}
-          >
-            <SurePathLogo className="w-20 h-20" />
+      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}>
+        <div className="relative mx-auto w-36 h-36 mb-8">
+          <div className="absolute -inset-6 rounded-[3rem] blur-2xl opacity-18" style={{ background: lpGreen }} />
+          <div className="relative w-36 h-36 rounded-[3rem] flex items-center justify-center border"
+            style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.18)', boxShadow: '0 0 60px rgba(6,224,0,0.08)' }}>
+            <SurePathLogo className="w-24 h-24" />
           </div>
         </div>
 
-        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.55em', color: lpGreen, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-          Selamat Datang
+        <p style={{ fontFamily: sora, fontSize: '0.75rem', fontWeight: 500, color: lpGreen, marginBottom: '0.4rem' }}>
+          {G.welcome},
         </p>
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.8rem, 6vw, 2.4rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#ffffff', lineHeight: 1, marginBottom: '0.5rem' }}>
-          {name}
+        <h2 style={{ fontFamily: sora, fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1, marginBottom: '1rem' }}>
+          {name} 👋
         </h2>
 
-        {/* verified badge */}
-        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border mt-4"
-          style={{ borderColor: 'rgba(6, 224, 0, 0.20)', background: 'rgba(6, 224, 0, 0.06)' }}>
-          <div className="w-1 h-1 rounded-full" style={{ background: lpGreen }} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.48rem', fontWeight: 500, letterSpacing: '0.45em', color: lpGreen, textTransform: 'uppercase' }}>
-            Akun Terverifikasi · OJK Licensed
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
+          style={{ borderColor: 'rgba(6,224,0,0.20)', background: 'rgba(6,224,0,0.06)' }}>
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: lpGreen }} />
+          <span style={{ fontFamily: sora, fontSize: '0.7rem', fontWeight: 500, color: lpGreen }}>
+            {G.verified}
           </span>
         </div>
       </div>
@@ -353,7 +345,7 @@ const App = () => {
       : false
   );
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
-  const [lang, setLang]           = useState<Language>(Language.ID);
+  const [lang, setLang]           = useState<Language>(detectLang);
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
@@ -406,6 +398,11 @@ const App = () => {
     }
   }, []);
 
+  const handleSetLang = useCallback((l: Language) => {
+    setLang(l);
+    localStorage.setItem('SUREPATH_LANG', l);
+  }, []);
+
   const handleAuthSuccess = useCallback(async (user: any) => {
     let enrichedUser = user;
     if (user.role === UserRole.AGENT && !user.supabaseId) {
@@ -428,8 +425,8 @@ const App = () => {
     setAppMode(false);
   }, []);
 
-  if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
-  if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} />;
+  if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} lang={lang} setLang={handleSetLang} />;
+  if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
 
   const { pathname } = window.location;
 

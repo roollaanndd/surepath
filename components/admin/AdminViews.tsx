@@ -10,7 +10,7 @@ import {
 
   Car, Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
-  UserPlus, ChevronDown, Pencil
+  UserPlus, ChevronDown, Pencil, Shield
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
 import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
@@ -20,6 +20,8 @@ import {
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
+import type { BackupRecord } from '../../services/backupService';
+import { listBackups, performBackup, downloadBackup, getLastBackupTime } from '../../services/backupService';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
 
@@ -669,47 +671,109 @@ export const InventoryView = () => (
   </div>
 );
 
+// ── Backup View ──────────────────────────────────────────────────────────────
+
+const BackupView: React.FC = () => {
+  const [backups, setBackups] = useState<BackupRecord[]>([]);
+  const [running, setRunning] = useState(false);
+  const lastTs = getLastBackupTime();
+  const now = Date.now();
+  const ageH = lastTs ? (now - lastTs) / 3_600_000 : Infinity;
+  const pillColor = ageH < 24 ? 'bg-emerald-500/15 text-emerald-400' : ageH < 48 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400';
+  const pillLabel = lastTs ? (ageH < 24 ? 'Up to date' : ageH < 48 ? 'Stale' : 'Outdated') : 'Never';
+
+  const load = () => listBackups().then(setBackups);
+  useEffect(() => { load(); }, []);
+
+  const handleRunBackup = async () => {
+    setRunning(true);
+    try { await performBackup(); await load(); } finally { setRunning(false); }
+  };
+
+  const handleDownload = (id: string) => downloadBackup(id);
+
+  return (
+    <div className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <Shield size={20} />
+          </div>
+          <div>
+            <p className="font-black uppercase text-sm text-white">Backup Data</p>
+            <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Auto-backup status</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={`px-3 py-1 rounded-full text-[0.6rem] font-black uppercase tracking-widest ${pillColor}`}>
+            {pillLabel}
+          </span>
+          <button
+            onClick={handleRunBackup}
+            disabled={running}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={running ? 'animate-spin' : ''} />
+            {running ? 'Running…' : 'Run Backup Now'}
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      {backups.length === 0 ? (
+        <p className="text-center text-[0.65rem] text-gray-600 font-bold py-6 uppercase tracking-widest">No backups found.</p>
+      ) : (
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="w-full text-left whitespace-nowrap min-w-[580px]">
+            <thead>
+              <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+                <th className="py-3 pr-4">Date / Time</th>
+                <th className="py-3 pr-4">Type</th>
+                <th className="py-3 pr-4">Tables</th>
+                <th className="py-3 pr-4">Size (KB)</th>
+                <th className="py-3 pr-4">Checksum</th>
+                <th className="py-3 text-right">Export</th>
+              </tr>
+            </thead>
+            <tbody>
+              {backups.map(b => (
+                <tr key={b.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors text-xs">
+                  <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.createdAt).toLocaleString('id-ID')}</td>
+                  <td className="py-3 pr-4">
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-primary-500/10 text-primary-400'}`}>
+                      {b.type}
+                    </span>
+                  </td>
+                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{b.tablesCount}</td>
+                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{(b.sizeBytes / 1024).toFixed(1)}</td>
+                  <td className="py-3 pr-4 text-gray-500 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
+                  <td className="py-3 text-right">
+                    <button
+                      onClick={() => handleDownload(b.id)}
+                      className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-emerald-400 hover:bg-white/10 transition-colors"
+                      title="Download backup"
+                    >
+                      <FileDown size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const SettingsView = ({ products, setProducts }: { products: any[], setProducts: any }) => {
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
-  const [backupStatus, setBackupStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
   useEffect(() => {
     db.customProducts.toArray().then(setCustomProducts);
   }, []);
-
-  const handleExportBackup = async () => {
-    setBackupStatus('loading');
-    try {
-      const [users, policies, claims, transactions, auditLogs, providers, customProds] = await Promise.all([
-        db.users.toArray(),
-        db.policies.toArray(),
-        db.claims.toArray(),
-        db.transactions.toArray(),
-        db.auditLogs.toArray(),
-        db.providers.toArray(),
-        db.customProducts.toArray(),
-      ]);
-      // Strip password hashes from export for safety
-      const safeUsers = users.map(({ passwordHash: _ph, salt: _s, ...rest }) => rest);
-      const backup = {
-        exportedAt: new Date().toISOString(),
-        version: 'SP_BACKUP_v1',
-        tables: { users: safeUsers, policies, claims, transactions, auditLogs, providers, customProducts: customProds },
-      };
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `surepath_backup_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setBackupStatus('done');
-      setTimeout(() => setBackupStatus('idle'), 3000);
-    } catch {
-      setBackupStatus('idle');
-    }
-  };
 
   const handleAddCustomProduct = async () => {
     if (!newProduct.name) return;
@@ -768,23 +832,7 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
             </label>
           </Card>
 
-          <Card className="flex items-center justify-between py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-400"><FileDown size={24}/></div>
-              <div>
-                <p className="font-black uppercase text-sm">Backup Data</p>
-                <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Export semua data DB ke file JSON terenkripsi</p>
-              </div>
-            </div>
-            <button
-              onClick={handleExportBackup}
-              disabled={backupStatus === 'loading'}
-              className="px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-              style={{ background: backupStatus === 'done' ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }}
-            >
-              {backupStatus === 'loading' ? 'Mengekspor...' : backupStatus === 'done' ? '✓ Tersimpan' : 'Download Backup'}
-            </button>
-          </Card>
+          <BackupView />
        </div>
 
        <div className="grid gap-4 mt-8">

@@ -1,9 +1,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, ShieldAlert, ChevronLeft, HeartPulse } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from 'openai';
+import { CHAT_MODEL } from '../services/geminiService';
 import { PageTransition } from './car-wizard/WizardUI';
 import { Language } from '../types';
+
+const chatClient = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: import.meta.env.VITE_OPENROUTER_KEY ?? '',
+  defaultHeaders: { 'HTTP-Referer': 'https://myinsurepath.com', 'X-Title': 'SurePath' },
+  dangerouslyAllowBrowser: true,
+});
 
 /* Fix: Added lang prop to HealthChat component */
 const HealthChat = ({ onBack, lang }: { onBack: () => void, lang?: Language }) => {
@@ -29,25 +37,29 @@ const HealthChat = ({ onBack, lang }: { onBack: () => void, lang?: Language }) =
     setLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: [...messages, { role: 'user', text: userMsg }].map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
-        })),
-        config: {
-          systemInstruction: `Anda adalah SurePath Health Bot, asisten medis AI yang ramah, hangat, dan sangat membantu. 
-          Tugas Anda adalah:
-          1. Memberikan informasi kesehatan dasar secara umum.
-          2. Membantu nasabah memahami istilah asuransi kesehatan mereka.
-          3. Selalu berikan peringatan bahwa saran AI ini bukan diagnosa medis resmi dan mereka harus berkonsultasi ke dokter.
-          Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan mudah dimengerti orang awam.`,
-          temperature: 0.7,
-        }
+      const history = [...messages, { role: 'user', text: userMsg }].map(m => ({
+        role: (m.role === 'model' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: m.text,
+      }));
+
+      const response = await chatClient.chat.completions.create({
+        model: CHAT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: `Anda adalah SurePath Health Bot, asisten medis AI yang ramah, hangat, dan sangat membantu.
+Tugas Anda:
+1. Memberikan informasi kesehatan dasar secara umum.
+2. Membantu nasabah memahami istilah asuransi kesehatan mereka.
+3. Selalu ingatkan bahwa saran AI bukan diagnosa medis resmi dan mereka harus konsultasi ke dokter.
+Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan mudah dimengerti orang awam.`,
+          },
+          ...history,
+        ],
+        temperature: 0.7,
       });
 
-      const aiText = response.text;
+      const aiText = response.choices[0]?.message?.content;
       setMessages(prev => [...prev, { role: 'model', text: aiText || (lang === Language.EN ? 'Sorry, my system is experiencing issues. Can you repeat that?' : 'Maaf, sistem saya sedang mengalami kendala. Bisa ulangi?') }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'model', text: lang === Language.EN ? 'Connection to AI system lost. Please try again later.' : 'Koneksi ke sistem AI terputus. Silakan coba beberapa saat lagi.' }]);

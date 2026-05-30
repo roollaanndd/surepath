@@ -492,11 +492,17 @@ const App = () => {
 
   const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN];
 
-  // /admin route — show dedicated admin login when not authenticated
+  // Dedicated /admin login page
   if ((pathname === '/admin' || pathname.startsWith('/admin/')) && !currentUser) {
     return (
       <Suspense fallback={<PortalLoader lang={lang} />}>
-        <AdminLogin onLoginSuccess={handleAuthSuccess} />
+        <AdminLogin
+          onLoginSuccess={user => {
+            handleAuthSuccess(user);
+            navigate('/admin');
+          }}
+          onBack={() => navigate('/')}
+        />
       </Suspense>
     );
   }

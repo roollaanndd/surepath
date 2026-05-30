@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { SurePathLogo } from '../Navbar';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { db } from '../../db';
 import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
 
 interface AdminLoginProps {
   onLoginSuccess: (user: any) => void;
+  onBack?: () => void;
 }
 
-const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
+const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,12 +30,12 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     }
 
     try {
-      const user = await db.users.where('email').equals(email).first();
+      const user = await db.users.where('email').equals(email.trim().toLowerCase()).first();
 
       if (user && user.passwordHash && user.salt) {
         if (![UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(user.role)) {
           recordFailedAttempt(email);
-          setError("Akses ditolak. Akun ini tidak memiliki izin admin.");
+          setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
           setLoading(false);
           return;
         }
@@ -49,125 +49,156 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
           recordFailedAttempt(email);
           const remaining = checkRateLimit(email).remainingAttempts;
           setError(remaining > 0
-            ? `Email atau kata sandi salah. Sisa percobaan: ${remaining}`
+            ? `Kredensial salah. Sisa percobaan: ${remaining}`
             : 'Akun dikunci sementara. Coba lagi dalam 15 menit.');
         }
       } else {
         recordFailedAttempt(email);
-        setError("Email atau kata sandi salah.");
+        setError('Kredensial salah atau akun tidak ditemukan.');
       }
-    } catch (err) {
-      setError("Terjadi kesalahan sistem. Silakan coba lagi.");
+    } catch {
+      setError('Terjadi kesalahan sistem. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
   };
 
-  const lpGreen = 'hsl(119, 99%, 46%)';
-  const sora = "'Sora', sans-serif";
-
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, hsl(0,0%,9%) 0%, hsl(0,0%,6%) 100%)', fontFamily: sora }}>
-
-      {/* Subtle grid */}
+    <div
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ background: '#05080d', fontFamily: "'Inter', 'Sora', sans-serif" }}
+    >
+      {/* Very subtle grid */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
-        backgroundSize: '64px 64px'
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)',
+        backgroundSize: '80px 80px',
       }} />
 
-      {/* Top accent line */}
-      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 10%, rgba(6,224,0,0.25) 50%, transparent 90%)' }} />
+      {/* Faint radial glow at centre — not bright */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(22,163,74,0.06) 0%, transparent 70%)',
+      }} />
 
-      {/* Status indicator */}
+      {/* Top hairline */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{
+        background: 'linear-gradient(90deg, transparent 15%, rgba(22,163,74,0.18) 50%, transparent 85%)',
+      }} />
+
+      {/* Back link */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="absolute top-6 left-6 text-[0.6rem] font-semibold uppercase tracking-widest text-gray-600 hover:text-gray-400 transition-colors"
+        >
+          ← Kembali
+        </button>
+      )}
+
+      {/* Connection status */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: lpGreen }} />
-        <span style={{ fontSize: '0.48rem', fontWeight: 600, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
-          Secure Connection Active
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#16a34a', boxShadow: '0 0 4px rgba(22,163,74,0.5)' }} />
+        <span className="text-gray-600 font-semibold" style={{ fontSize: '0.46rem', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+          Encrypted Session
         </span>
       </div>
 
-      <div className="relative z-10 w-full max-w-sm px-6">
+      <div className="relative z-10 w-full max-w-xs px-5">
 
-        {/* Logo + wordmark */}
-        <div className="flex flex-col items-center mb-9">
-          <div className="mb-6 w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <SurePathLogo className="w-12 h-12" />
+        {/* Icon + title */}
+        <div className="flex flex-col items-center mb-10">
+          <div
+            className="mb-5 w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.15)' }}
+          >
+            <ShieldCheck size={26} style={{ color: '#16a34a' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1, marginBottom: '0.4rem' }}>
-            Admin<span style={{ color: lpGreen }}>Portal</span>
+
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.03em', color: '#e5e7eb', lineHeight: 1, marginBottom: '0.35rem' }}>
+            Admin Portal
           </h1>
-          <p style={{ fontSize: '0.55rem', fontWeight: 500, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
-            SurePath · Dashboard Access
+          <p style={{ fontSize: '0.52rem', fontWeight: 500, color: '#374151', letterSpacing: '0.28em', textTransform: 'uppercase' }}>
+            SurePath · Authorized Access Only
           </p>
         </div>
 
-        {/* Form card */}
-        <div className="rounded-3xl p-7 space-y-5"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-
+        {/* Card */}
+        <div
+          className="rounded-2xl p-6 space-y-5"
+          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
           {error && (
-            <div className="p-3.5 rounded-2xl flex items-start gap-3"
-              style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.2)' }}>
-              <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={15} />
-              <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171' }}>{error}</p>
+            <div
+              className="p-3 rounded-xl flex items-start gap-2.5"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.16)' }}
+            >
+              <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={14} />
+              <p style={{ fontSize: '0.72rem', fontWeight: 500, color: '#fca5a5' }}>{error}</p>
             </div>
           )}
 
           <form className="space-y-4" onSubmit={handleLogin}>
             {/* Email */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.52rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={15} />
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="master@surepath.ai"
-                  className="block w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-white placeholder-gray-700 outline-none transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'monospace' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(6,224,0,0.45)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2" size={14} style={{ color: '#374151' }} />
+                <input
+                  type="email" required autoComplete="username"
+                  value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="admin@surepath.ai"
+                  className="block w-full pl-10 pr-4 py-3 rounded-xl text-sm text-gray-200 placeholder-gray-700 outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(22,163,74,0.4)')}
+                  onBlur={e  => (e.target.style.borderColor = 'rgba(255,255,255,0.07)')}
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.55rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.52rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={15} />
-                <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="block w-full pl-11 pr-12 py-3.5 rounded-2xl text-sm text-white placeholder-gray-700 outline-none transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'monospace' }}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(6,224,0,0.45)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.10)')}
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2" size={14} style={{ color: '#374151' }} />
+                <input
+                  type={showPass ? 'text' : 'password'} required autoComplete="current-password"
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="block w-full pl-10 pr-11 py-3 rounded-xl text-sm text-gray-200 placeholder-gray-700 outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(22,163,74,0.4)')}
+                  onBlur={e  => (e.target.style.borderColor = 'rgba(255,255,255,0.07)')}
                 />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors">
-                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                <button
+                  type="button" onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: '#374151' }}
+                  onMouseEnter={e => ((e.target as HTMLElement).style.color = '#16a34a')}
+                  onMouseLeave={e => ((e.target as HTMLElement).style.color = '#374151')}
+                >
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
             </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full flex justify-center items-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-40 active:scale-95"
-              style={{ background: lpGreen, color: 'hsl(0, 0%, 4%)' }}>
+            <button
+              type="submit" disabled={loading}
+              className="w-full flex justify-center items-center gap-2.5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40"
+              style={{ background: '#16a34a', color: '#f0fdf4' }}
+            >
               {loading
-                ? <><div className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black/80 animate-spin" /> Verifying...</>
-                : <>Enter Dashboard <ArrowRight size={15} /></>
+                ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-green-200/20 border-t-green-100/80 animate-spin" /> Memverifikasi...</>
+                : <>Masuk ke Dashboard <ArrowRight size={14} /></>
               }
             </button>
           </form>
-
         </div>
 
-        <p className="text-center mt-7" style={{ fontSize: '0.45rem', fontWeight: 500, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
-          SurePath Admin · Authorized Access Only
+        <p className="text-center mt-6" style={{ fontSize: '0.43rem', fontWeight: 500, color: '#1f2937', letterSpacing: '0.35em', textTransform: 'uppercase' }}>
+          SurePath Admin · {new Date().getFullYear()}
         </p>
       </div>
     </div>

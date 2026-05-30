@@ -196,7 +196,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
     });
 
     if (authErr || !data.user) {
-      setError(authErr?.message ?? t('Login failed. Please try again.', 'Login gagal. Coba lagi.'));
+      const msg = authErr?.message ?? '';
+      const friendlyError = msg.includes('Email not confirmed')
+        ? t('Please confirm your email first. Check your inbox.', 'Konfirmasi email kamu dulu. Cek kotak masuk.')
+        : msg.includes('Invalid login credentials')
+        ? t('Email or password is incorrect.', 'Email atau password salah.')
+        : msg || t('Login failed. Please try again.', 'Login gagal. Coba lagi.');
+      setError(friendlyError);
       setLoading(false);
       return;
     }
@@ -223,13 +229,19 @@ const AuthGate: React.FC<AuthGateProps> = ({
     });
 
     if (authErr || !data.user) {
-      setError(authErr?.message ?? t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.'));
+      const msg = authErr?.message ?? '';
+      const friendlyError = msg.includes('already registered') || msg.includes('already been registered')
+        ? t('This email is already registered. Try signing in.', 'Email ini sudah terdaftar. Coba masuk.')
+        : msg.includes('Password should be')
+        ? t('Password must be at least 6 characters.', 'Password minimal 6 karakter.')
+        : msg || t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.');
+      setError(friendlyError);
       setLoading(false);
       return;
     }
 
-    // Upsert profile
-    await supabase.from('sp_users').upsert({
+    // Upsert profile — errors here are non-fatal (user can still log in via auth)
+    const { error: upsertErr } = await supabase.from('sp_users').upsert({
       id:          data.user.id,
       name:        formData.name,
       email:       formData.email,
@@ -238,6 +250,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
       agent_code:  `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
       trust_score: 85,
     });
+    if (upsertErr) console.warn('sp_users upsert failed:', upsertErr.message);
 
     if (!data.session) {
       // Email confirmation required

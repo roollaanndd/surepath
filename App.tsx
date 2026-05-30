@@ -15,11 +15,11 @@ const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
 
 const PortalLoader = () => (
-  <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#060818' }}>
+  <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
     <div className="flex flex-col items-center gap-4">
       <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
-        style={{ borderColor: 'rgba(249,115,22,0.3)', borderTopColor: '#f97316' }} />
-      <p className="text-[0.55rem] font-black uppercase tracking-[0.4em]" style={{ color: '#4b5563' }}>
+        style={{ borderColor: 'rgba(6, 224, 0, 0.15)', borderTopColor: 'hsl(119, 99%, 46%)' }} />
+      <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.55rem', fontWeight: 500, letterSpacing: '0.4em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
         Memuat…
       </p>
     </div>
@@ -37,9 +37,9 @@ const SplashCanvas = () => {
     let w = 0, h = 0;
 
     const blobs = [
-      { x: 0.8, y: 0.2, r: 320, hue: '#f97316', vx: 0.15, vy: 0.10, phase: 0 },
-      { x: 0.2, y: 0.7, r: 280, hue: '#10b981', vx: -0.12, vy: 0.08, phase: 1.5 },
-      { x: 0.5, y: 0.5, r: 200, hue: '#0ea5e9', vx: 0.08, vy: -0.12, phase: 3 },
+      { x: 0.75, y: 0.22, r: 400, color: '#06e000', phase: 0 },
+      { x: 0.22, y: 0.72, r: 320, color: '#22c55e', phase: 2.1 },
+      { x: 0.55, y: 0.48, r: 240, color: '#4ade80', phase: 4.2 },
     ];
 
     const resize = () => {
@@ -53,17 +53,17 @@ const SplashCanvas = () => {
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
       blobs.forEach(b => {
-        const cx = (b.x + Math.sin(t * 0.4 + b.phase) * 0.15) * w;
-        const cy = (b.y + Math.cos(t * 0.35 + b.phase) * 0.12) * h;
+        const cx = (b.x + Math.sin(t * 0.33 + b.phase) * 0.12) * w;
+        const cy = (b.y + Math.cos(t * 0.28 + b.phase) * 0.09) * h;
         const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r);
-        grad.addColorStop(0, b.hue + '22');
+        grad.addColorStop(0, b.color + '16');
         grad.addColorStop(1, 'transparent');
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
         ctx.fill();
       });
-      t += 0.012;
+      t += 0.009;
       rafRef.current = requestAnimationFrame(draw);
     };
     draw();
@@ -111,30 +111,38 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
   const barVisible   = phase >= 3;
   const fadingOut    = phase >= 4;
 
+  const lpGreen = 'hsl(119, 99%, 46%)';
+
   return (
     <div
-      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#060818' }}
+      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ background: 'hsl(0, 0%, 8%)' }}
     >
       <SplashCanvas />
 
-      {/* dot-grid overlay */}
-      <div className="absolute inset-0 opacity-[0.035]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
+      {/* subtle dot grid */}
+      <div className="absolute inset-0 opacity-[0.025]"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-      <div className="relative z-10 flex flex-col items-center gap-10">
-        {/* Logo */}
+      <div className="relative z-10 flex flex-col items-center gap-9">
+        {/* Logo — large & prominent */}
         <div
-          className={`flex flex-col items-center gap-5 transition-all duration-700 ease-out ${logoVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-90'}`}
+          className={`flex flex-col items-center transition-all duration-700 ease-out ${logoVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}
         >
           <div className="relative">
-            <div className="absolute inset-0 rounded-[2.5rem] blur-2xl opacity-40"
-              style={{ background: 'radial-gradient(circle, #f97316 0%, #10b981 100%)' }} />
+            {/* outer ambient glow */}
+            <div className="absolute -inset-8 rounded-[3.5rem] blur-3xl opacity-20"
+              style={{ background: lpGreen }} />
+            {/* logo tile */}
             <div
-              className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl backdrop-blur-sm border"
-              style={{ background: 'rgba(249,115,22,0.08)', borderColor: 'rgba(249,115,22,0.35)' }}
+              className="relative w-48 h-48 rounded-[3.5rem] flex items-center justify-center border"
+              style={{
+                background: 'rgba(6, 224, 0, 0.05)',
+                borderColor: 'rgba(6, 224, 0, 0.18)',
+                boxShadow: '0 0 80px rgba(6, 224, 0, 0.10), inset 0 1px 0 rgba(255,255,255,0.04)',
+              }}
             >
-              <SurePathLogo className="w-16 h-16" />
+              <SurePathLogo className="w-32 h-32" />
             </div>
           </div>
         </div>
@@ -142,39 +150,57 @@ const WelcomeScreen = ({ onFinish }: { onFinish: () => void }) => {
         {/* Wordmark */}
         <div
           className={`text-center transition-all duration-600 ease-out ${textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ transitionDelay: textVisible ? '0ms' : '0ms' }}
         >
-          <h1 className="text-[3.2rem] font-black tracking-[-0.06em] text-white uppercase leading-none">
-            SURE<span style={{ color: '#f97316' }}>PATH</span>
+          <h1 style={{
+            fontFamily: "'Sora', sans-serif",
+            fontSize: 'clamp(2.8rem, 9vw, 4rem)',
+            fontWeight: 700,
+            letterSpacing: '-0.04em',
+            color: '#ffffff',
+            lineHeight: 1,
+          }}>
+            Sure<span style={{ color: lpGreen }}>Path</span>
           </h1>
-          <p className="text-[0.55rem] font-bold uppercase tracking-[0.55em] mt-3" style={{ color: '#374151' }}>
+          <p style={{
+            fontFamily: "'Sora', sans-serif",
+            fontSize: '0.58rem',
+            fontWeight: 500,
+            letterSpacing: '0.45em',
+            color: 'rgba(255,255,255,0.30)',
+            textTransform: 'uppercase',
+            marginTop: '0.85rem',
+          }}>
             Asuransi Pintar · OJK Licensed
           </p>
         </div>
 
-        {/* Progress section */}
+        {/* Progress */}
         <div
-          className={`flex flex-col items-center gap-3 w-64 transition-all duration-500 ${barVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
+          className={`flex flex-col items-center gap-3 w-52 transition-all duration-500 ${barVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
         >
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: '#10b981' }} />
-            <span className="text-[0.6rem] font-black uppercase tracking-[0.35em] transition-all duration-300" style={{ color: '#4b5563' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: lpGreen }} />
+            <span style={{
+              fontFamily: "'Sora', sans-serif",
+              fontSize: '0.56rem',
+              fontWeight: 500,
+              letterSpacing: '0.32em',
+              color: 'rgba(255,255,255,0.35)',
+              textTransform: 'uppercase',
+            }}>
               {SPLASH_MESSAGES[msgIdx]}
             </span>
           </div>
-          <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div className="w-full h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
             <div
               className="h-full rounded-full transition-all duration-200"
               style={{
                 width: `${progress}%`,
-                background: 'linear-gradient(90deg, #10b981, #f97316)',
-                boxShadow: '0 0 14px rgba(249,115,22,0.55)',
+                background: lpGreen,
+                boxShadow: `0 0 10px ${lpGreen}99`,
               }}
             />
           </div>
-          <p className="text-[0.42rem] font-bold uppercase tracking-[0.5em]" style={{ color: '#1f2937' }}>
-            Powered by Supabase · Xendit · Gemini AI
-          </p>
         </div>
       </div>
     </div>
@@ -195,45 +221,53 @@ const AppEntryScreen = ({ name, onDone }: { name: string; onDone: () => void }) 
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  const lpGreen = 'hsl(119, 99%, 46%)';
+
   return (
     <div
       className={`fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#060818' }}
+      style={{ background: 'hsl(0, 0%, 8%)' }}
     >
-      {/* bg blobs */}
-      <div className="absolute top-[-15%] right-[-10%] w-96 h-96 rounded-full blur-[110px] opacity-20 animate-pulse"
-        style={{ background: '#f97316' }} />
-      <div className="absolute bottom-[-15%] left-[-10%] w-80 h-80 rounded-full blur-[90px] opacity-15 animate-pulse"
-        style={{ background: '#10b981', animationDelay: '0.8s' }} />
-      <div className="absolute inset-0 opacity-[0.03]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      {/* ambient glows */}
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[130px] opacity-10"
+        style={{ background: lpGreen }} />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full blur-[110px] opacity-08"
+        style={{ background: '#22c55e' }} />
+      <div className="absolute inset-0 opacity-[0.025]"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       {/* card */}
       <div
         className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}
       >
-        {/* ring glow */}
-        <div className="relative mx-auto w-24 h-24 mb-6">
-          <div className="absolute inset-0 rounded-[2rem] blur-xl opacity-50"
-            style={{ background: 'radial-gradient(circle, #f97316 0%, #10b981 100%)' }} />
+        {/* logo */}
+        <div className="relative mx-auto w-32 h-32 mb-8">
+          <div className="absolute -inset-4 rounded-[2.5rem] blur-2xl opacity-20"
+            style={{ background: lpGreen }} />
           <div
-            className="relative w-24 h-24 rounded-[2rem] flex items-center justify-center shadow-2xl border"
-            style={{ background: 'rgba(249,115,22,0.10)', borderColor: 'rgba(249,115,22,0.35)' }}
+            className="relative w-32 h-32 rounded-[2.5rem] flex items-center justify-center border"
+            style={{
+              background: 'rgba(6, 224, 0, 0.05)',
+              borderColor: 'rgba(6, 224, 0, 0.18)',
+              boxShadow: '0 0 60px rgba(6, 224, 0, 0.08)',
+            }}
           >
-            <SurePathLogo className="w-14 h-14" />
+            <SurePathLogo className="w-20 h-20" />
           </div>
         </div>
 
-        <p className="text-[0.5rem] font-black uppercase tracking-[0.55em] mb-2" style={{ color: '#10b981' }}>
+        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.55em', color: lpGreen, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
           Selamat Datang
         </p>
-        <h2 className="text-[2.2rem] font-black tracking-tight text-white leading-none mb-2">{name}</h2>
+        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(1.8rem, 6vw, 2.4rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#ffffff', lineHeight: 1, marginBottom: '0.5rem' }}>
+          {name}
+        </h2>
 
         {/* verified badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border mt-3"
-          style={{ borderColor: 'rgba(16,185,129,0.25)', background: 'rgba(16,185,129,0.08)' }}>
-          <div className="w-1 h-1 rounded-full" style={{ background: '#10b981' }} />
-          <span className="text-[0.48rem] font-black uppercase tracking-[0.5em]" style={{ color: '#10b981' }}>
+        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border mt-4"
+          style={{ borderColor: 'rgba(6, 224, 0, 0.20)', background: 'rgba(6, 224, 0, 0.06)' }}>
+          <div className="w-1 h-1 rounded-full" style={{ background: lpGreen }} />
+          <span style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.48rem', fontWeight: 500, letterSpacing: '0.45em', color: lpGreen, textTransform: 'uppercase' }}>
             Akun Terverifikasi · OJK Licensed
           </span>
         </div>

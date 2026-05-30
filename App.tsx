@@ -8,6 +8,7 @@ import { supabase, getAgentByEmail } from './services/supabaseService';
 // Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
 const AuthGate          = lazy(() => import('./components/AuthGate'));
 const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
+const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
 const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
 const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
@@ -448,6 +449,15 @@ const App = () => {
   }
 
   const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN];
+
+  // /admin route — show dedicated admin login when not authenticated
+  if ((pathname === '/admin' || pathname.startsWith('/admin/')) && !currentUser) {
+    return (
+      <Suspense fallback={<PortalLoader lang={lang} />}>
+        <AdminLogin onLoginSuccess={handleAuthSuccess} />
+      </Suspense>
+    );
+  }
 
   if (currentUser && ADMIN_ROLES.includes(currentUser.role)) {
     return (

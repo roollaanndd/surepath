@@ -13,6 +13,7 @@ import { SurePathLogo } from '../../components/Navbar';
 
 interface Props {
   onSignIn: () => void;
+  navigate: (path: string) => void;
   lang: Language;
   setLang: (lang: Language) => void;
   darkMode: boolean;
@@ -58,8 +59,12 @@ button:focus-visible, a:focus-visible {
 `;
 
 // ─── Dark section background (for sections below hero) ───────────────────────
+const BODY_BG_CSS = `body { background: hsl(0 0% 8%) !important; }`;
 const SectionBackground: React.FC = () => (
-  <style>{SECTION_CSS}</style>
+  <>
+    <style>{SECTION_CSS}</style>
+    <style>{BODY_BG_CSS}</style>
+  </>
 );
 
 // ─── Reveal hook ──────────────────────────────────────────────────────────────
@@ -229,15 +234,15 @@ const PromoBanners: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  { Icon: Car,          name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
-  { Icon: Plane,        name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
-  { Icon: Shield,       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
-  { Icon: Smartphone,   name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
-  { Icon: Heart,        name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+  { Icon: Car,        slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
+  { Icon: Plane,      slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
+  { Icon: Shield,     slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
+  { Icon: Smartphone, slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
+  { Icon: Heart,      slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, setDarkMode, initialSection }) => {
+const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, darkMode, setDarkMode, initialSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
@@ -638,7 +643,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               <Reveal key={p.name} delay={i * 60}>
                 <button className="group relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1 w-full text-left min-h-[200px]"
                   style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-                  onClick={onSignIn}
+                  onClick={() => navigate(`/product/${p.slug}`)}
                   aria-label={`Learn more about ${p.name}`}>
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
@@ -818,7 +823,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             <div className="relative overflow-hidden rounded-3xl p-8 h-full"
               style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.05) 100%)', border: '1px solid rgba(34,197,94,0.15)', minHeight: '300px' }}>
               <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-20"
-                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.4), transparent)', filter: 'blur(40px)', transform: 'translate(30%,-30%)' }} />
+                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.3), transparent)', transform: 'translate(30%,-30%)' }} />
               <span className="inline-block text-[0.55rem] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-6"
                 style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80' }}>
                 {t('Mulai Sekarang', 'Start Now')}
@@ -936,7 +941,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             }}>
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] -translate-y-1/2 rounded-full opacity-20"
-                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.5), transparent)', filter: 'blur(60px)' }} />
+                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.35), transparent)' }} />
             </div>
             <div className="relative z-10">
               <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-8"
@@ -999,15 +1004,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               {/* Social */}
               <div className="flex gap-3 mt-1">
                 {[
-                  { key: 'ig', label: 'Instagram' },
-                  { key: 'in', label: 'LinkedIn' },
-                  { key: 'tw', label: 'Twitter / X' },
+                  { key: 'ig', label: 'Instagram',  href: 'https://instagram.com/surepath.id' },
+                  { key: 'in', label: 'LinkedIn',    href: 'https://linkedin.com/company/surepath-id' },
+                  { key: 'tw', label: 'Twitter / X', href: 'https://x.com/surepath_id' },
                 ].map(s => (
-                  <button key={s.key} aria-label={s.label}
+                  <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
                     className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:border-emerald-500/30"
                     style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
                     <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: textMuted }}>{s.key}</span>
-                  </button>
+                  </a>
                 ))}
               </div>
             </div>
@@ -1016,25 +1021,41 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             {[
               {
                 title: t('Produk', 'Products'),
-                links: [t('Asuransi Kendaraan', 'Car Insurance'), t('Asuransi Perjalanan', 'Travel Insurance'), t('Kecelakaan Diri', 'Personal Accident'), t('Proteksi Barang', 'Property Protection'), t('Kesehatan', 'Health')],
+                links: [
+                  { label: t('Asuransi Kendaraan', 'Car Insurance'),    path: '/product/car' },
+                  { label: t('Asuransi Perjalanan', 'Travel Insurance'), path: '/product/travel' },
+                  { label: t('Kecelakaan Diri', 'Personal Accident'),    path: '/product/pa' },
+                  { label: t('Proteksi Barang', 'Property Protection'),  path: '/product/property' },
+                  { label: t('Kesehatan', 'Health'),                     path: '/product/health' },
+                ],
               },
               {
                 title: t('Perusahaan', 'Company'),
-                links: [t('Tentang Kami', 'About Us'), t('Karir', 'Careers'), t('Blog', 'Blog'), t('Program Agen', 'Agent Program'), t('Kemitraan', 'Partnership')],
+                links: [
+                  { label: t('Tentang Kami', 'About Us'),      path: '/about' },
+                  { label: t('Karir', 'Careers'),              path: '/careers' },
+                  { label: t('Blog', 'Blog'),                  path: '/blog' },
+                  { label: t('Program Agen', 'Agent Program'), path: '/agents' },
+                  { label: t('Kemitraan', 'Partnership'),      path: '/partnership' },
+                ],
               },
               {
                 title: t('Legal', 'Legal'),
-                links: [t('Kebijakan Privasi', 'Privacy Policy'), t('Syarat & Ketentuan', 'Terms & Conditions'), t('Keamanan Data', 'Data Security')],
+                links: [
+                  { label: t('Kebijakan Privasi', 'Privacy Policy'),       path: '/privacy' },
+                  { label: t('Syarat & Ketentuan', 'Terms & Conditions'),  path: '/terms' },
+                  { label: t('Keamanan Data', 'Data Security'),            path: '/security' },
+                ],
               },
             ].map(col => (
               <div key={col.title}>
                 <p className="text-[0.6rem] font-black uppercase tracking-[0.25em] mb-5" style={{ color: '#22c55e' }}>{col.title}</p>
                 <ul className="space-y-3">
                   {col.links.map(l => (
-                    <li key={l}>
-                      <button onClick={onSignIn}
+                    <li key={l.path}>
+                      <button onClick={() => navigate(l.path)}
                         className="text-sm transition-colors hover:text-white"
-                        style={{ color: textMuted }}>{l}
+                        style={{ color: textMuted }}>{l.label}
                       </button>
                     </li>
                   ))}
@@ -1049,9 +1070,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
               © 2025 SurePath. {t('Seluruh hak dilindungi.', 'All rights reserved.')}
             </p>
             <div className="flex items-center gap-6">
-              {[t('Privasi', 'Privacy'), t('Ketentuan', 'Terms'), t('Cookie', 'Cookie')].map(l => (
-                <button key={l} className="text-[0.65rem] transition-colors hover:text-white"
-                  style={{ color: 'rgba(255,255,255,0.2)' }}>{l}</button>
+              {[
+                { label: t('Privasi', 'Privacy'), path: '/privacy' },
+                { label: t('Ketentuan', 'Terms'), path: '/terms' },
+                { label: t('Cookie', 'Cookie'),   path: '/cookie' },
+              ].map(l => (
+                <button key={l.path} onClick={() => navigate(l.path)}
+                  className="text-[0.65rem] transition-colors hover:text-white"
+                  style={{ color: 'rgba(255,255,255,0.2)' }}>{l.label}</button>
               ))}
             </div>
           </div>

@@ -26,28 +26,38 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
   photoValidation, setPhotoValidation, vehicle
 }) => {
 
+  const [stnkError, setStnkError] = React.useState<string | null>(null);
+
   const handleStnkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setStnkError(null);
     setLoading(true);
     setLoadingType('STNK');
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
-      setSurvey((prev: any) => ({ ...prev, stnk: base64 }));
-      const response = await extractStnkData(base64);
-      setLoading(false);
-      setLoadingType(null);
-      if (response.success && response.data) {
-        setStnkResult({
-          ownerName: response.data.owner || 'TIDAK TERDETEKSI',
-          plate: response.data.plate || 'TIDAK TERDETEKSI',
-          vin: response.data.vin || 'TIDAK TERDETEKSI',
-          engine: response.data.engine || 'TIDAK TERDETEKSI',
-          color: response.data.color || 'TIDAK TERDETEKSI',
-          year: response.data.year || vehicle.year.toString(),
-          status: response.data.status
-        });
+      const mimeType = base64.split(';')[0].split(':')[1] || 'image/jpeg';
+      try {
+        const response = await extractStnkData(base64, mimeType);
+        if (response.success && response.data) {
+          setSurvey((prev: any) => ({ ...prev, stnk: base64 }));
+          setStnkResult({
+            ownerName: response.data.owner || 'TIDAK TERDETEKSI',
+            plate: response.data.plate || 'TIDAK TERDETEKSI',
+            vin: response.data.vin || 'TIDAK TERDETEKSI',
+            engine: response.data.engine || 'TIDAK TERDETEKSI',
+            color: response.data.color || 'TIDAK TERDETEKSI',
+            year: response.data.year || vehicle.year.toString(),
+            status: response.data.status
+          });
+        } else {
+          setStnkError('Gagal membaca STNK. Pastikan foto jelas dan tidak terpotong, lalu coba lagi.');
+        }
+      } finally {
+        setLoading(false);
+        setLoadingType(null);
+        e.target.value = '';
       }
     };
     reader.readAsDataURL(file);
@@ -175,6 +185,12 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                   <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner"><FileText size={20}/></div>
                   <div><h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em]">Foto STNK</h4><p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Biar data mobil terisi otomatis</p></div>
               </div>
+              {stnkError && (
+                <div className="px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-2">
+                  <AlertTriangle size={14} className="text-rose-500 shrink-0" />
+                  <p className="text-[0.6rem] font-bold text-rose-500">{stnkError}</p>
+                </div>
+              )}
               <label className="group relative aspect-[3/1] rounded-[2rem] border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-500/50 transition-all bg-gray-50 dark:bg-white/[0.02]">
                   {loading && loadingType === 'STNK' ? <ScannerOverlay label="Membaca STNK..." /> : (
                   <>

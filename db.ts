@@ -162,13 +162,13 @@ export const seedDatabase = async () => {
   if (isSeeding) return;
   isSeeding = true;
   try {
-    const isMigrated = localStorage.getItem('SP_DB_MIGRATED_2023');
+    const isMigrated = localStorage.getItem('SP_DB_MIGRATED_v2');
     const userCount = await db.users.count();
     
     if (!isMigrated || userCount < 3000) {
       await db.users.clear();
 
-      const adminCreds = await hashPassword('admin');
+      const adminCreds = await hashPassword(import.meta.env.VITE_ADMIN_KEY || crypto.randomUUID());
       const userCreds = await hashPassword('user');
 
       const FIRST_NAMES = ["Budi", "Siti", "Anton", "Dewi", "Agus", "Ayu", "Eko", "Putri", "Wawan", "Sari", "Rudi", "Rina", "Dwi", "Sri", "Hadi", "Yuni", "Joko", "Tari", "Iwan", "Lestari", "Andi", "Maya", "Deni", "Nita", "Hendra", "Sisca", "Fajar", "Dian"];
@@ -250,7 +250,7 @@ export const seedDatabase = async () => {
     }
 
     const txCount = await db.transactions.count();
-    const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_2023');
+    const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_v2');
 
     if (needsMigration || txCount === 0) {
        await db.transactions.clear(); 
@@ -362,7 +362,7 @@ export const seedDatabase = async () => {
           await db.transactions.bulkAdd(bulkTransactions.slice(i, i + chunkSize)).catch(e => console.warn('Tx seed failed', e));
        }
 
-       localStorage.setItem('SP_DB_MIGRATED_2023', 'true');
+       localStorage.setItem('SP_DB_MIGRATED_v2', 'true');
     }
 
     const providerCount = await db.providers.count();

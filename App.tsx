@@ -13,6 +13,8 @@ const CustomerPortal    = lazy(() => import('./components/customer/CustomerPorta
 const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
+const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
+const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 
 const PortalLoader = () => (
   <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
@@ -355,6 +357,7 @@ const App = () => {
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang]           = useState<Language>(Language.ID);
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
 
   useEffect(() => {
     const loadCustomProducts = async () => {
@@ -406,6 +409,17 @@ const App = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fn = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', fn);
+    return () => window.removeEventListener('popstate', fn);
+  }, []);
+
+  const navigate = useCallback((path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  }, []);
+
   const handleAuthSuccess = useCallback(async (user: any) => {
     let enrichedUser = user;
     if (user.role === UserRole.AGENT && !user.supabaseId) {
@@ -431,7 +445,7 @@ const App = () => {
   if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} />;
 
-  const { pathname } = window.location;
+  const pathname = currentPath;
 
   if (pathname === '/payment/success' || pathname === '/payment/failed') {
     return (
@@ -446,6 +460,34 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <InsuranceReviewPage token={reviewMatch[1]} />
+      </Suspense>
+    );
+  }
+
+  // Info pages — accessible without authentication
+  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health)$/);
+  if (productMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <ProductInfoPage
+          productId={productMatch[1]}
+          onBack={() => navigate('/')}
+          onSignIn={() => { navigate('/'); setAppMode(true); }}
+        />
+      </Suspense>
+    );
+  }
+
+  const STATIC_PAGES = ['about', 'careers', 'blog', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
+  const staticPageId = STATIC_PAGES.find(p => pathname === `/${p}`);
+  if (staticPageId) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <StaticInfoPage
+          pageId={staticPageId}
+          onBack={() => navigate('/')}
+          onSignIn={() => { navigate('/'); setAppMode(true); }}
+        />
       </Suspense>
     );
   }
@@ -496,6 +538,7 @@ const App = () => {
         <Suspense fallback={<PortalLoader />}>
           <PlatformLanding
             onSignIn={() => setAppMode(true)}
+            navigate={navigate}
             lang={lang}
             setLang={setLang}
             darkMode={darkMode}

@@ -58,10 +58,11 @@ button:focus-visible, a:focus-visible {
 `;
 
 // ─── Dark section background (for sections below hero) ───────────────────────
+const BODY_BG_CSS = `body { background: hsl(0 0% 8%) !important; }`;
 const SectionBackground: React.FC = () => (
   <>
     <style>{SECTION_CSS}</style>
-    <div className="fixed inset-0 -z-10" style={{ background: 'hsl(0 0% 8%)' }} />
+    <style>{BODY_BG_CSS}</style>
   </>
 );
 
@@ -487,7 +488,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
 
       {/* ════════════════════════════ PARTNERS TICKER ════════════════════════ */}
       <div className="relative py-8 overflow-hidden border-y"
-        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'rgba(4,12,6,0.6)', backdropFilter: 'blur(8px)' }}>
+        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'hsl(0 0% 6%)' }}>
         <div className="flex animate-ticker whitespace-nowrap">
           {[...Array(2)].map((_, repeat) => (
             <div key={repeat} className="flex items-center gap-12 px-6">
@@ -815,7 +816,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             <div className="relative overflow-hidden rounded-3xl p-8 h-full"
               style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(16,185,129,0.05) 100%)', border: '1px solid rgba(34,197,94,0.15)', minHeight: '300px' }}>
               <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-20"
-                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.4), transparent)', filter: 'blur(40px)', transform: 'translate(30%,-30%)' }} />
+                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.3), transparent)', transform: 'translate(30%,-30%)' }} />
               <span className="inline-block text-[0.55rem] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-6"
                 style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80' }}>
                 {t('Mulai Sekarang', 'Start Now')}
@@ -933,7 +934,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, lang, setLang, darkMode, s
             }}>
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] -translate-y-1/2 rounded-full opacity-20"
-                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.5), transparent)', filter: 'blur(60px)' }} />
+                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.35), transparent)' }} />
             </div>
             <div className="relative z-10">
               <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-8"

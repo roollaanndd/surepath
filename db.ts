@@ -250,6 +250,18 @@ export const seedDatabase = async () => {
       await db.users.bulkAdd(newUsers).catch(e => console.warn('Seeding users failed:', e));
     }
 
+    // Always re-sync admin password to current VITE_ADMIN_KEY so the key can change
+    // without locking out administrators
+    const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || 'SurePath@Admin2025!';
+    const freshCreds = await hashPassword(ADMIN_KEY);
+    const ADMIN_EMAILS = ['master@surepath.ai', 'finance@surepath.ai'];
+    for (const email of ADMIN_EMAILS) {
+      const adminUser = await db.users.where('email').equals(email).first();
+      if (adminUser) {
+        await db.users.update(adminUser.id, { passwordHash: freshCreds.hash, salt: freshCreds.salt });
+      }
+    }
+
     const txCount = await db.transactions.count();
     // Only seed transactions on first-ever run, not when count is 0 (could be real empty state)
     const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_v2') && !adminExists;

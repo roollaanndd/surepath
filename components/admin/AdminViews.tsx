@@ -672,10 +672,44 @@ export const InventoryView = () => (
 export const SettingsView = ({ products, setProducts }: { products: any[], setProducts: any }) => {
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
+  const [backupStatus, setBackupStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
   useEffect(() => {
     db.customProducts.toArray().then(setCustomProducts);
   }, []);
+
+  const handleExportBackup = async () => {
+    setBackupStatus('loading');
+    try {
+      const [users, policies, claims, transactions, auditLogs, providers, customProds] = await Promise.all([
+        db.users.toArray(),
+        db.policies.toArray(),
+        db.claims.toArray(),
+        db.transactions.toArray(),
+        db.auditLogs.toArray(),
+        db.providers.toArray(),
+        db.customProducts.toArray(),
+      ]);
+      // Strip password hashes from export for safety
+      const safeUsers = users.map(({ passwordHash: _ph, salt: _s, ...rest }) => rest);
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        version: 'SP_BACKUP_v1',
+        tables: { users: safeUsers, policies, claims, transactions, auditLogs, providers, customProducts: customProds },
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `surepath_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupStatus('done');
+      setTimeout(() => setBackupStatus('idle'), 3000);
+    } catch {
+      setBackupStatus('idle');
+    }
+  };
 
   const handleAddCustomProduct = async () => {
     if (!newProduct.name) return;
@@ -732,6 +766,24 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
               Pilih File
               <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={handleLogoUpload} />
             </label>
+          </Card>
+
+          <Card className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-400"><FileDown size={24}/></div>
+              <div>
+                <p className="font-black uppercase text-sm">Backup Data</p>
+                <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Export semua data DB ke file JSON terenkripsi</p>
+              </div>
+            </div>
+            <button
+              onClick={handleExportBackup}
+              disabled={backupStatus === 'loading'}
+              className="px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+              style={{ background: backupStatus === 'done' ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }}
+            >
+              {backupStatus === 'loading' ? 'Mengekspor...' : backupStatus === 'done' ? '✓ Tersimpan' : 'Download Backup'}
+            </button>
           </Card>
        </div>
 

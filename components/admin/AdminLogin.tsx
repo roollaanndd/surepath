@@ -53,22 +53,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
-      style={{ background: 'hsl(0, 0%, 8%)', fontFamily: sora }}>
+      style={{ background: 'linear-gradient(160deg, hsl(0,0%,9%) 0%, hsl(0,0%,6%) 100%)', fontFamily: sora }}>
 
-      {/* Ambient glows */}
-      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] opacity-10 pointer-events-none"
-        style={{ background: lpGreen }} />
-      <div className="absolute bottom-[-20%] left-[-15%] w-[420px] h-[420px] rounded-full blur-[120px] opacity-[0.07] pointer-events-none"
-        style={{ background: '#22c55e' }} />
+      {/* Subtle grid */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
+        backgroundSize: '64px 64px'
+      }} />
 
-      {/* Dot grid */}
-      <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      {/* Top accent line */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 10%, rgba(6,224,0,0.25) 50%, transparent 90%)' }} />
 
-      {/* Status bar */}
-      <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      {/* Status indicator */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: lpGreen }} />
-        <span style={{ fontSize: '0.48rem', fontWeight: 600, color: lpGreen, letterSpacing: '0.4em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '0.48rem', fontWeight: 600, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.4em', textTransform: 'uppercase' }}>
           Secure Connection Active
         </span>
       </div>
@@ -77,24 +76,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
         {/* Logo + wordmark */}
         <div className="flex flex-col items-center mb-9">
-          <div className="relative mb-6">
-            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-18" style={{ background: lpGreen }} />
-            <div className="relative w-28 h-28 rounded-[3rem] flex items-center justify-center border"
-              style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.20)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
-              <SurePathLogo className="w-18 h-18" />
-            </div>
+          <div className="mb-6 w-20 h-20 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <SurePathLogo className="w-12 h-12" />
           </div>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff', lineHeight: 1, marginBottom: '0.4rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1, marginBottom: '0.4rem' }}>
             Admin<span style={{ color: lpGreen }}>Portal</span>
           </h1>
-          <p style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.35em', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '0.55rem', fontWeight: 500, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
             SurePath · Dashboard Access
           </p>
         </div>
 
         {/* Form card */}
-        <div className="rounded-[2.5rem] p-7 space-y-5"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="rounded-3xl p-7 space-y-5"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
 
           {error && (
             <div className="p-3.5 rounded-2xl flex items-start gap-3"
@@ -145,7 +141,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
             <button type="submit" disabled={loading}
               className="w-full flex justify-center items-center gap-3 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-40 active:scale-95"
-              style={{ background: lpGreen, color: 'hsl(0, 0%, 4%)', boxShadow: '0 8px 30px rgba(6,224,0,0.22)' }}>
+              style={{ background: lpGreen, color: 'hsl(0, 0%, 4%)' }}>
               {loading
                 ? <><div className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black/80 animate-spin" /> Verifying...</>
                 : <>Enter Dashboard <ArrowRight size={15} /></>

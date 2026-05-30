@@ -421,8 +421,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
         style={{ background: 'hsl(0 0% 8%)' }}>
 
-        {/* Spline 3D background */}
-        <div className="absolute inset-0">
+        {/* Spline 3D background — pointer-events-none so scroll passes through */}
+        <div className="absolute inset-0 pointer-events-none">
           <Suspense fallback={<div className="absolute inset-0" style={{ background: 'hsl(0 0% 8%)' }} />}>
             <SplineScene
               scene="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode"

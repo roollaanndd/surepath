@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Globe, Car, Zap, Sparkles, Plane, Activity, Shield, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
+import { ArrowRight, Globe, Car, Zap, Sparkles, Plane, Activity, TrendingUp } from 'lucide-react';
 import { Language } from '../types';
 
 const SLIDES = (lang: Language) => [
@@ -91,43 +91,6 @@ const QuickActions = ({ onAction, lang }: { onAction: (id: string) => void; lang
   );
 };
 
-const PolicyStatusCard = ({ lang }: { lang: Language }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
-  return (
-    <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 shadow-2xl mt-4">
-      {/* Animated gradient shimmer */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.03] to-transparent -translate-x-full animate-[shimmer_3s_infinite] pointer-events-none" />
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-            <Shield size={14} className="text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-[0.55rem] font-black text-gray-500 uppercase tracking-widest">{t('Active Policy', 'Polis Aktif')}</p>
-            <p className="text-xs font-black text-white">SP-2024-TRV-001</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-          <CheckCircle2 size={10} className="text-emerald-400" />
-          <span className="text-[0.5rem] font-black text-emerald-400 uppercase tracking-widest">{t('Active', 'Aktif')}</span>
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: t('Coverage', 'Perlindungan'), value: 'Rp 500 JT', icon: Shield, color: 'text-emerald-400' },
-          { label: t('Expires', 'Berlaku'), value: '31 Des 2025', icon: Clock, color: 'text-amber-400' },
-          { label: t('Trust Score', 'Skor Kepercayaan'), value: '98/100', icon: TrendingUp, color: 'text-blue-400' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="text-center space-y-1">
-            <Icon size={14} className={`mx-auto ${color}`} />
-            <p className="text-[0.6rem] font-black text-white">{value}</p>
-            <p className="text-[0.45rem] font-bold text-gray-600 uppercase tracking-wider">{label}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const PortalHero = ({ onAction, lang = Language.ID }: { onAction: (id: string) => void, lang?: Language }) => {
   const [current, setCurrent] = useState(0);
@@ -193,9 +156,6 @@ const PortalHero = ({ onAction, lang = Language.ID }: { onAction: (id: string) =
           ))}
         </div>
       </div>
-
-      {/* Policy Status Card with glassmorphism */}
-      <PolicyStatusCard lang={lang} />
 
       {/* Quick Action Buttons */}
       <QuickActions onAction={onAction} lang={lang} />

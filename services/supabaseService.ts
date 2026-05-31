@@ -1360,3 +1360,22 @@ export async function runAIFinanceReview(periodDays = 30): Promise<AIFinanceRevi
   if (fnError) { console.error('runAIFinanceReview:', fnError); return null; }
   return fnData as AIFinanceReview;
 }
+
+export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
+  order_number?: string;
+  client_name?: string;
+  product_name?: string;
+}>> {
+  const { data, error } = await supabase
+    .from('sp_payments')
+    .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getAdminPayments:', error); return []; }
+  return (data ?? []).map((p: any) => ({
+    ...p,
+    order_number: p.sp_policy_orders?.order_number,
+    client_name: p.sp_policy_orders?.client_name,
+    product_name: p.sp_policy_orders?.product_name,
+  }));
+}

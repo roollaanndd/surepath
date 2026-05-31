@@ -28,9 +28,13 @@ serve(async (req) => {
       if (!APP_URL) APP_URL = au.data ?? 'https://myinsurepath.com';
     }
 
-    // Verify Xendit callback token
+    // Verify Xendit callback token — fail-closed: reject if token not configured
     const callbackToken = req.headers.get('x-callback-token') ?? '';
-    if (XENDIT_WEBHOOK_TOKEN && callbackToken !== XENDIT_WEBHOOK_TOKEN) {
+    if (!XENDIT_WEBHOOK_TOKEN) {
+      console.error('XENDIT_WEBHOOK_TOKEN not set — rejecting webhook');
+      return new Response('Server misconfiguration', { status: 500, headers: CORS });
+    }
+    if (callbackToken !== XENDIT_WEBHOOK_TOKEN) {
       console.warn('Invalid webhook token');
       return new Response('Unauthorized', { status: 401, headers: CORS });
     }

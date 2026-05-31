@@ -3,7 +3,7 @@ import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentByEmail } from './services/supabaseService';
+import { supabase, getAgentProfile, getAgentByEmail } from './services/supabaseService';
 import { SpiralAnimation } from './components/ui/spiral-animation';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 
@@ -423,8 +423,38 @@ const App = () => {
         localStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_KEY);
       }
+    } else {
+      // Restore session after OAuth redirect or magic link (no localStorage entry yet)
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session?.user) return;
+        const u = session.user;
+        const profile =
+          (await getAgentProfile(u.id).catch(() => null)) ??
+          (await getAgentByEmail(u.email!).catch(() => null));
+        const userObj = profile
+          ? {
+              id:         profile.id,
+              name:       profile.name,
+              email:      profile.email,
+              role:       profile.role as UserRole,
+              supabaseId: profile.id,
+              nodeId:     profile.agent_code ?? `SP-${u.id.slice(0, 8).toUpperCase()}`,
+              trustScore: profile.trust_score ?? 85,
+            }
+          : {
+              id:         u.id,
+              name:       u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email!.split('@')[0],
+              email:      u.email!,
+              role:       UserRole.CUSTOMER,
+              supabaseId: u.id,
+              nodeId:     `SP-${u.id.slice(0, 8).toUpperCase()}`,
+              trustScore: 85,
+            };
+        setSpiralDone(true); // skip the spiral screen for returning sessions
+        handleAuthSuccess(userObj);
+      });
     }
-  }, []);
+  }, [handleAuthSuccess]);
 
   const handleSetLang = useCallback((l: Language) => {
     setLang(l);

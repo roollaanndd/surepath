@@ -138,7 +138,8 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   onOrderCreated,
 }) => {
   // ── Step ──
-  const [step, setStep] = useState(1);
+  // Skip vehicle-type selection when type was already chosen in QuoteBuilder
+  const [step, setStep] = useState(initialVehicleType ? 2 : 1);
 
   // ── Step 1: Vehicle Type ──
   const [vehicleType, setVehicleType] = useState<VehicleType>(initialVehicleType ?? 'CAR');
@@ -284,7 +285,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     setSelectedInsurerProduct(null);
     setLoadingProducts(true);
     const vehicleAge = currentYear - vehicleDetails.year;
-    getAvailableInsurerProducts('CAR', coverageType, vehicleAge)
+    getAvailableInsurerProducts(vehicleType, coverageType, vehicleAge)
       .then(setAvailableProducts)
       .finally(() => setLoadingProducts(false));
   }, [province, sumInsured, coverageType, vehicleDetails.year]);
@@ -355,7 +356,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           addon_premium: breakdown.addonPremium,
           admin_fee: breakdown.adminFee,
           stamp_duty: breakdown.stampDuty,
-          total_premium: breakdown.total,
+          total_premium: breakdown.total + 5000,
           ojk_rate: breakdown.rate,
           discount_rate: discountRate,
           discount_amount: discountAmount,
@@ -1277,14 +1278,20 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 {formatIDR(breakdown.stampDuty)}
               </span>
             </div>
+            <div className="flex justify-between py-3 text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Biaya Aplikasi SurePath</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {formatIDR(5000)}
+              </span>
+            </div>
           </div>
 
-          {/* Total (before discount) */}
+          {/* Total payable */}
           <div className="mt-4 rounded-2xl bg-slate-50 dark:bg-white/5 px-5 py-4 flex justify-between items-center">
             <span className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">
-              Total Premi OJK
+              Total Premi
             </span>
-            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total)}</span>
+            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total + 5000)}</span>
           </div>
 
           {/* Dates */}
@@ -1398,7 +1405,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
       client_email: clientEmail,
       client_phone: clientPhone || undefined,
       product_name: productName,
-      total_premium: breakdown.total,
+      total_premium: breakdown.total + 5000,
     });
     setPayLoading(false);
     if (!result?.invoice_url) {
@@ -1510,14 +1517,17 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  const stepContent: Record<number, React.ReactNode> = {
-    1: renderStep1(),
-    2: renderStep2(),
-    3: renderStep3(),
-    4: renderStep4(),
-    5: renderStep5(),
-    6: renderStep6(),
-    7: renderStep7(),
+  const renderCurrentStep = () => {
+    switch (step) {
+      case 1: return renderStep1();
+      case 2: return renderStep2();
+      case 3: return renderStep3();
+      case 4: return renderStep4();
+      case 5: return renderStep5();
+      case 6: return renderStep6();
+      case 7: return renderStep7();
+      default: return null;
+    }
   };
 
   const stepLabels = [
@@ -1579,7 +1589,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
       {/* Step Body */}
       <div className="flex-1 overflow-y-auto px-4 py-6 max-w-2xl w-full mx-auto">
-        {stepContent[step]}
+        {renderCurrentStep()}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, LogOut, ShieldCheck, Bell, ClipboardList } from 'lucide-react';
+import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, ShieldCheck, Bell, ClipboardList, UserCircle } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentCommissions,
@@ -17,6 +17,7 @@ import AgentCommission from './AgentCommission';
 import AgentLeaderboard from './AgentLeaderboard';
 import AgentClaims from './AgentClaims';
 import { AgentNotifications } from './AgentNotifications';
+import AgentProfile from './AgentProfile';
 
 interface Props {
   agent: any;
@@ -31,6 +32,7 @@ const TABS = [
   { id: 'claims',      labelEn: 'Claims',  labelId: 'Klaim',    Icon: ClipboardList },
   { id: 'commission',  labelEn: 'Wallet',  labelId: 'Komisi',   Icon: Wallet },
   { id: 'leaderboard', labelEn: 'Rank',    labelId: 'Peringkat',Icon: Trophy },
+  { id: 'profile',     labelEn: 'Profile', labelId: 'Profil',   Icon: UserCircle },
 ];
 
 const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
@@ -120,6 +122,15 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             lang={lang}
           />
         );
+      case 'profile':
+        return (
+          <AgentProfile
+            agent={agent}
+            agentId={agent?.id ?? ''}
+            lang={lang}
+            onLogout={onLogout}
+          />
+        );
       default:
         return null;
     }
@@ -173,10 +184,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             </button>
 
             <button
-              onClick={onLogout}
-              className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1"
+              onClick={() => setActiveTab('profile')}
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center ml-1"
             >
-              <LogOut size={13} className="text-rose-500" />
+              <UserCircle size={14} className="text-slate-600 dark:text-slate-300" />
             </button>
           </div>
         </div>

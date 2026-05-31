@@ -18,6 +18,10 @@ export interface SpUser {
   monthly_target?: number;
   trust_score?: number;
   created_at?: string;
+  ktp?: string;
+  address?: string;
+  verified?: boolean;
+  commission_rate?: number;
 }
 
 export interface SpClient {
@@ -98,6 +102,18 @@ export async function getAgentProfile(agentId: string): Promise<SpUser | null> {
     .single();
   if (error) return null;
   return data as SpUser;
+}
+
+export async function updateAgentProfile(
+  agentId: string,
+  updates: { name?: string; phone?: string; address?: string },
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_users')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', agentId);
+  if (error) { console.error('updateAgentProfile:', error); return false; }
+  return true;
 }
 
 export async function getAgentByEmail(email: string): Promise<SpUser | null> {

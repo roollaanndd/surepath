@@ -1711,3 +1711,117 @@ export async function getRenewalsByAgent(agentId: string): Promise<SpRenewal[]> 
   if (error) { console.error('getRenewalsByAgent:', error); return []; }
   return (data ?? []) as SpRenewal[];
 }
+
+// ─── Downline / Referral Network ──────────────────────────────────────────────
+
+export async function getAgentDownlines(agentId: string): Promise<SpUser[]> {
+  const { data, error } = await supabase
+    .from('sp_users')
+    .select('*')
+    .eq('upline_id', agentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAgentDownlines:', error); return []; }
+  return (data ?? []) as SpUser[];
+}
+
+export async function getAgentReferralCode(agentId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('sp_users')
+    .select('referral_code')
+    .eq('id', agentId)
+    .single();
+  if (error) { console.error('getAgentReferralCode:', error); return null; }
+  return (data as any)?.referral_code ?? null;
+}
+
+export async function applyReferralCode(newAgentId: string, referralCode: string): Promise<boolean> {
+  const { data: uplineData, error: lookupErr } = await supabase
+    .from('sp_users')
+    .select('id')
+    .eq('referral_code', referralCode)
+    .maybeSingle();
+  if (lookupErr || !uplineData) { console.error('applyReferralCode lookup:', lookupErr); return false; }
+  const { error } = await supabase
+    .from('sp_users')
+    .update({ upline_id: uplineData.id, updated_at: new Date().toISOString() })
+    .eq('id', newAgentId);
+  if (error) { console.error('applyReferralCode update:', error); return false; }
+  return true;
+}
+
+export async function getOverrideTransactions(agentId: string): Promise<WalletTransaction[]> {
+  const { data, error } = await supabase
+    .from('sp_wallet_transactions')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('reference_type', 'OVERRIDE')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getOverrideTransactions:', error); return []; }
+  return (data ?? []) as WalletTransaction[];
+}
+
+// ─── Endorsements ─────────────────────────────────────────────────────────────
+
+export interface SpEndorsement {
+  id: string;
+  order_id: string;
+  agent_id: string;
+  type: 'ADDRESS' | 'PLATE' | 'SUM_INSURED' | 'ADDON' | 'DRIVER' | 'OTHER';
+  description: string;
+  old_value?: string;
+  new_value?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewer_id?: string;
+  reviewer_notes?: string;
+  reviewed_at?: string;
+  fee: number;
+  created_at?: string;
+}
+
+export async function createEndorsement(
+  data: Omit<SpEndorsement, 'id' | 'status' | 'created_at'>,
+): Promise<SpEndorsement | null> {
+  const { data: result, error } = await supabase
+    .from('sp_endorsements')
+    .insert({ ...data, status: 'PENDING' })
+    .select()
+    .single();
+  if (error) { console.error('createEndorsement:', error); return null; }
+  return result as SpEndorsement;
+}
+
+export async function getAgentEndorsements(agentId: string): Promise<SpEndorsement[]> {
+  const { data, error } = await supabase
+    .from('sp_endorsements')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAgentEndorsements:', error); return []; }
+  return (data ?? []) as SpEndorsement[];
+}
+
+export async function getAdminEndorsements(): Promise<SpEndorsement[]> {
+  const { data, error } = await supabase
+    .from('sp_endorsements')
+    .select('*, sp_policy_orders!order_id(order_number, client_name), sp_users!agent_id(name, agent_code)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAdminEndorsements:', error); return []; }
+  return (data ?? []) as SpEndorsement[];
+}
+
+export async function reviewEndorsement(
+  id: string,
+  status: 'APPROVED' | 'REJECTED',
+  notes?: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_endorsements')
+    .update({
+      status,
+      reviewer_notes: notes ?? null,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) { console.error('reviewEndorsement:', error); return false; }
+  return true;
+}

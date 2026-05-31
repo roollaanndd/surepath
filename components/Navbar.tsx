@@ -94,7 +94,7 @@ const Navbar: React.FC<NavbarProps> = ({
           <div className="flex flex-col">
             <span className="font-semibold text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
               Sure
-              <span className="text-emerald-500 italic font-light">Path</span>
+              <span className="text-emerald-500 font-semibold">Path</span>
             </span>
             <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold tracking-widest uppercase mt-1">
               Your Path to Protection
@@ -127,12 +127,14 @@ const Navbar: React.FC<NavbarProps> = ({
             onClick={() =>
               setLang(lang === Language.EN ? Language.ID : Language.EN)
             }
+            aria-label="Switch language"
             className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-bold text-slate-500 hover:text-emerald-500 transition-all border border-slate-200 dark:border-white/10 shadow-sm"
           >
             {lang}
           </button>
           <button
             onClick={() => setDarkMode(!darkMode)}
+            aria-label="Toggle dark mode"
             className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 hover:text-emerald-500 transition-all border border-slate-200 dark:border-white/10 shadow-sm"
           >
             {darkMode ? (
@@ -153,6 +155,8 @@ const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle mobile menu"
+          aria-expanded={isOpen}
           className="lg:hidden p-2 text-slate-500"
         >
           {isOpen ? (

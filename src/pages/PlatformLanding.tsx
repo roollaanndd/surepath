@@ -452,7 +452,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
   // ── Styling vars ────────────────────────────────────────────────────────────
   const cardBg     = 'rgba(255,255,255,0.025)';
   const cardBorder = 'rgba(255,255,255,0.07)';
-  const textMuted  = 'rgba(255,255,255,0.5)';
+  const textMuted  = 'rgba(255,255,255,0.65)';
 
   // ── lp green ─────────────────────────────────────────────────────────────
   const lpGreen = 'hsl(119 99% 46%)';
@@ -581,12 +581,12 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <div className="flex flex-wrap gap-3 font-bold opacity-0 animate-fade-up"
             style={{ animationDelay: '0.7s' }}>
             <button onClick={onSignIn}
-              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-xl cursor-pointer transition-[filter,transform] active:scale-[0.97] hover:brightness-110"
               style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
               {t('Mulai Konsultasi', 'Book a Consultation')}
             </button>
             <button onClick={() => { navScroll('products', '/products'); }}
-              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-90 text-black"
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-xl cursor-pointer transition-[filter,transform] active:scale-[0.97] hover:brightness-90 text-black"
               style={{ background: 'white' }}>
               {t('Lihat Produk', 'Our Products')}
             </button>
@@ -743,7 +743,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
                   style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
                   {t('Perlindungan untuk Setiap', 'Protection for Every')}{' '}
-                  <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  <span style={{ color: lpGreen }}>
                     {t('Aspek Hidupmu', 'Aspect of Life')}
                   </span>
                 </h2>
@@ -794,7 +794,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
               style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
               {t('Tiga Langkah Menuju', 'Three Steps to')}{' '}
-              <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ color: lpGreen }}>
                 {t('Ketenangan Pikiran', 'Peace of Mind')}
               </span>
             </h2>
@@ -858,7 +858,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
                 style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
                 {t('Cara Berbeda', 'A Different Way')}{' '}
-                <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <span style={{ color: lpGreen }}>
                   {t('Cara Kami Bekerja', 'We Work')}
                 </span>
               </h2>
@@ -926,7 +926,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
               style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
               {t('Program Eksklusif', 'Exclusive Programs')}{' '}
-              <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ color: lpGreen }}>
                 {t('untuk Nasabah Kami', 'for Our Clients')}
               </span>
             </h2>
@@ -983,7 +983,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
                 style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
                 {t('Dipercaya, Karena', 'Trusted, Because')}{' '}
-                <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <span style={{ color: lpGreen }}>
                   {t('Mereka Merasakannya', 'They Felt It')}
                 </span>
               </h2>

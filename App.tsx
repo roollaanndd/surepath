@@ -4,7 +4,6 @@ import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentProfile, getAgentByEmail } from './services/supabaseService';
-import { SpiralAnimation } from './components/ui/spiral-animation';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 
 // Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
@@ -56,54 +55,28 @@ const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
   </div>
 );
 
-const SplashCanvas = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+// ─── CSS keyframes (injected once, used by splash + welcome-back screens) ─────
+const SP_CSS = `
+@keyframes sp-ring-fwd { to { transform: rotate(360deg); } }
+@keyframes sp-ring-rev { to { transform: rotate(-360deg); } }
+@keyframes sp-orbit-0  { from { transform: rotate(0deg)   translateX(74px) rotate(0deg);    } to { transform: rotate(360deg)  translateX(74px)  rotate(-360deg);  } }
+@keyframes sp-orbit-1  { from { transform: rotate(130deg) translateX(94px) rotate(-130deg); } to { transform: rotate(490deg)  translateX(94px)  rotate(-490deg);  } }
+@keyframes sp-orbit-2  { from { transform: rotate(250deg) translateX(114px) rotate(-250deg);} to { transform: rotate(610deg)  translateX(114px) rotate(-610deg); } }
+@keyframes sp-glow     { 0%,100% { box-shadow: 0 0 28px rgba(6,224,0,0.10), 0 0 56px rgba(6,224,0,0.05); } 50% { box-shadow: 0 0 52px rgba(6,224,0,0.24), 0 0 100px rgba(6,224,0,0.10); } }
+@keyframes sp-float-a  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-14px) translateX(5px); } }
+@keyframes sp-float-b  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-9px) translateX(-8px); } }
+@keyframes sp-dot-ping { 0%,100% { opacity:.3; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
+@keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(6,224,0,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(6,224,0,.9)); } }
+`;
+function ensureSPKeyframes() {
+  if (!document.getElementById('sp-kf')) {
+    const s = document.createElement('style'); s.id = 'sp-kf'; s.textContent = SP_CSS;
+    document.head.appendChild(s);
+  }
+}
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    let w = 0, h = 0;
-
-    const blobs = [
-      { x: 0.75, y: 0.22, r: 400, color: '#06e000', phase: 0 },
-      { x: 0.22, y: 0.72, r: 320, color: '#22c55e', phase: 2.1 },
-      { x: 0.55, y: 0.48, r: 240, color: '#4ade80', phase: 4.2 },
-    ];
-
-    const resize = () => {
-      w = canvas.width  = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    let t = 0;
-    const draw = () => {
-      ctx.clearRect(0, 0, w, h);
-      blobs.forEach(b => {
-        const cx = (b.x + Math.sin(t * 0.33 + b.phase) * 0.12) * w;
-        const cy = (b.y + Math.cos(t * 0.28 + b.phase) * 0.09) * h;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r);
-        grad.addColorStop(0, b.color + '16');
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      t += 0.009;
-      rafRef.current = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(rafRef.current); };
-  }, []);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
-};
-
-const WelcomeScreen = ({ onFinish, lang, setLang }: { onFinish: () => void; lang: Language; setLang: (l: Language) => void }) => {
+// ─── Splash screen (auto-advances, no interaction needed) ──────────────────────
+const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l: Language) => void }> = ({ onFinish, lang, setLang }) => {
   const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx]     = useState(0);
@@ -111,84 +84,92 @@ const WelcomeScreen = ({ onFinish, lang, setLang }: { onFinish: () => void; lang
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
   useEffect(() => {
-    const t0 = setTimeout(() => setPhase(1), 80);
-    const t1 = setTimeout(() => setPhase(2), 500);
-    const t2 = setTimeout(() => setPhase(3), 820);
-    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.8, 100)), 18);
-    const msgInt  = setInterval(() => setMsgIdx(i => Math.min(i + 1, COPY[lang].steps.length - 1)), 400);
-    const t3 = setTimeout(() => setPhase(4), 2200);
-    const t4 = setTimeout(() => onFinishRef.current(), 2750);
+    ensureSPKeyframes();
+    const t0 = setTimeout(() => setPhase(1), 100);
+    const t1 = setTimeout(() => setPhase(2), 520);
+    const t2 = setTimeout(() => setPhase(3), 880);
+    const t3 = setTimeout(() => setPhase(4), 2600);
+    const t4 = setTimeout(() => onFinishRef.current(), 3100);
+    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.5, 100)), 18);
+    const msgInt  = setInterval(() => setMsgIdx(i => Math.min(i + 1, COPY[lang].steps.length - 1)), 450);
     return () => { [t0,t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); clearInterval(msgInt); };
   }, [lang]);
 
-  const G = COPY[lang];
-  const lpGreen = 'hsl(119, 99%, 46%)';
-  const sora = "'Sora', sans-serif";
+  const G   = COPY[lang];
+  const GRN = '#06e000';
+
+  const PARTICLES: [number, number, string, number][] = [
+    [10,15,'a',3],[80,8,'b',4],[22,85,'a',3.5],[88,70,'b',2.5],[58,48,'a',4],[6,55,'b',3],[93,28,'a',2.8],[38,94,'b',3.5],
+  ];
 
   return (
     <div
-      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-700 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: 'hsl(0, 0%, 8%)' }}
+      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ background: '#060a09', fontFamily: "'Sora', sans-serif" }}
     >
-      <SplashCanvas />
-      <div className="absolute inset-0 opacity-[0.025]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      {/* Ambient radial glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div style={{ width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,224,0,0.07) 0%, transparent 65%)' }} />
+      </div>
+      {/* Subtle grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.022]"
+        style={{ backgroundImage: 'linear-gradient(rgba(6,224,0,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(6,224,0,.5) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+      {/* Floating particles */}
+      {PARTICLES.map(([x, y, t, d], i) => (
+        <div key={i} className="absolute rounded-full pointer-events-none"
+          style={{ left: `${x}%`, top: `${y}%`, width: 3, height: 3, background: `rgba(6,224,0,${0.14 + i * 0.04})`, animation: `sp-float-${t} ${d}s ease-in-out ${i * 0.32}s infinite` }} />
+      ))}
 
-      <div className="relative z-10 flex flex-col items-center gap-8">
+      <div className="relative z-10 flex flex-col items-center gap-7">
 
-        {/* Logo with pulsing rings */}
-        <div className={`relative flex items-center justify-center ${phase >= 1 ? 'sp-logo-in' : 'opacity-0'}`}>
-          {/* rings — sit behind the tile */}
-          {phase >= 1 && [0, 1, 2].map(i => (
-            <div key={i} className="sp-ring absolute w-48 h-48 rounded-[3.5rem] border"
-              style={{ borderColor: 'rgba(6,224,0,0.28)', animationDelay: `${i * 1}s` }} />
+        {/* Logo with orbital rings */}
+        <div className={`relative flex items-center justify-center transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+          {/* Outer dashed ring */}
+          <svg width="228" height="228" viewBox="0 0 228 228" className="absolute pointer-events-none"
+            style={{ animation: 'sp-ring-fwd 20s linear infinite', opacity: 0.22 }}>
+            <circle cx="114" cy="114" r="110" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="6 9" />
+          </svg>
+          {/* Inner dashed ring */}
+          <svg width="172" height="172" viewBox="0 0 172 172" className="absolute pointer-events-none"
+            style={{ animation: 'sp-ring-rev 13s linear infinite', opacity: 0.16 }}>
+            <circle cx="86" cy="86" r="82" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="3 13" />
+          </svg>
+          {/* Orbiting dots */}
+          {([0, 1, 2] as const).map(i => (
+            <div key={i} className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              style={{ animation: `sp-orbit-${i} ${5 + i * 1.8}s linear infinite` }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: GRN, boxShadow: `0 0 10px ${GRN}, 0 0 22px rgba(6,224,0,.5)` }} />
+            </div>
           ))}
-          {/* ambient glow */}
-          <div className="absolute -inset-10 rounded-[4rem] blur-3xl opacity-15" style={{ background: lpGreen }} />
-          {/* tile */}
-          <div className="relative w-48 h-48 rounded-[3.5rem] flex items-center justify-center border"
-            style={{
-              background: 'rgba(6,224,0,0.05)',
-              borderColor: 'rgba(6,224,0,0.20)',
-              boxShadow: '0 0 80px rgba(6,224,0,0.10), inset 0 1px 0 rgba(255,255,255,0.04)',
-            }}>
-            <SurePathLogo className="w-32 h-32" />
+          {/* Logo tile */}
+          <div className="relative flex items-center justify-center rounded-[2rem] border"
+            style={{ width: 118, height: 118, background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.20)', animation: 'sp-glow 3.2s ease-in-out infinite' }}>
+            <SurePathLogo className="w-20 h-20" />
           </div>
         </div>
 
-        {/* Wordmark + tagline */}
-        <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'sp-word-in' : 'opacity-0'}`}>
-          <h1 style={{ fontFamily: sora, fontSize: 'clamp(2.8rem,9vw,4rem)', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1 }}>
-            Sure<span style={{ color: lpGreen }}>Path</span>
+        {/* Brand */}
+        <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+          <h1 style={{ fontSize: 'clamp(2.6rem,8vw,3.2rem)', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1 }}>
+            Sure<span style={{ color: GRN }}>Path</span>
           </h1>
-          <p style={{ fontFamily: sora, fontSize: '0.95rem', fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginTop: '0.6rem', letterSpacing: '-0.01em' }}>
+          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.55rem' }}>
             {G.tagline}
           </p>
         </div>
 
-        {/* Progress + chips */}
-        <div className={`flex flex-col items-center gap-4 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
-          {/* step message */}
+        {/* Progress */}
+        <div className={`flex flex-col items-center gap-3 w-56 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: lpGreen }} />
-            <span style={{ fontFamily: sora, fontSize: '0.65rem', fontWeight: 500, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.02em' }}>
-              {G.steps[msgIdx]}
-            </span>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
+            <span style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
           </div>
-          {/* bar */}
-          <div className="w-full h-[2px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <div className="h-full rounded-full transition-all duration-200"
-              style={{ width: `${progress}%`, background: lpGreen, boxShadow: `0 0 10px ${lpGreen}88` }} />
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: 'rgba(255,255,255,0.07)' }}>
+            <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: GRN, boxShadow: `0 0 8px ${GRN}99` }} />
           </div>
-          {/* value chips */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
-              <span key={chip} style={{
-                fontFamily: sora, fontSize: '0.62rem', fontWeight: 500,
-                color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: '99px',
-                padding: '0.2rem 0.6rem',
-              }}>
+              <span key={chip} style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '99px', padding: '0.18rem 0.55rem' }}>
                 {chip}
               </span>
             ))}
@@ -198,16 +179,8 @@ const WelcomeScreen = ({ onFinish, lang, setLang }: { onFinish: () => void; lang
         {/* Language toggle */}
         <div className={`flex items-center gap-1 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
           {(['ID', 'EN'] as const).map(l => (
-            <button key={l}
-              onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
-              style={{
-                fontFamily: sora, fontSize: '0.65rem', fontWeight: lang === l ? 600 : 400,
-                color: lang === l ? lpGreen : 'rgba(255,255,255,0.28)',
-                padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer',
-                background: lang === l ? 'rgba(6,224,0,0.10)' : 'transparent',
-                border: `1px solid ${lang === l ? 'rgba(6,224,0,0.22)' : 'transparent'}`,
-                transition: 'all 0.2s',
-              }}>
+            <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
+              style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.62rem', fontWeight: lang === l ? 600 : 400, color: lang === l ? GRN : 'rgba(255,255,255,0.25)', padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer', background: lang === l ? 'rgba(6,224,0,0.08)' : 'transparent', border: `1px solid ${lang === l ? 'rgba(6,224,0,0.20)' : 'transparent'}`, transition: 'all 0.2s' }}>
               {l}
             </button>
           ))}
@@ -218,6 +191,7 @@ const WelcomeScreen = ({ onFinish, lang, setLang }: { onFinish: () => void; lang
   );
 };
 
+// ─── Welcome-back screen (shown after login, auto-advances) ───────────────────
 const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => void; lang: Language }) => {
   const [visible, setVisible] = useState(false);
   const [fade, setFade]       = useState(false);
@@ -225,48 +199,52 @@ const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => vo
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
+    ensureSPKeyframes();
     const t0 = setTimeout(() => setVisible(true), 60);
-    const t1 = setTimeout(() => setFade(true), 1000);
-    const t2 = setTimeout(() => onDoneRef.current(), 1500);
+    const t1 = setTimeout(() => setFade(true), 1800);
+    const t2 = setTimeout(() => onDoneRef.current(), 2300);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
-  const G = COPY[lang];
-  const lpGreen = 'hsl(119, 99%, 46%)';
-  const sora = "'Sora', sans-serif";
+  const G   = COPY[lang];
+  const GRN = '#06e000';
 
   return (
     <div
       className={`fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: 'hsl(0, 0%, 8%)' }}
+      style={{ background: '#060a09', fontFamily: "'Sora', sans-serif" }}
     >
-      <div className="absolute top-[-20%] right-[-10%] w-[480px] h-[480px] rounded-full blur-[130px] opacity-10" style={{ background: lpGreen }} />
-      <div className="absolute bottom-[-20%] left-[-10%] w-[380px] h-[380px] rounded-full blur-[110px] opacity-[0.07]" style={{ background: '#22c55e' }} />
-      <div className="absolute inset-0 opacity-[0.025]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      {/* Radial glow */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div style={{ width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,224,0,0.10) 0%, transparent 68%)', opacity: visible ? 1 : 0, transition: 'opacity 1s' }} />
+      </div>
 
-      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}>
-        <div className="relative mx-auto w-36 h-36 mb-8">
-          <div className="absolute -inset-6 rounded-[3rem] blur-2xl opacity-18" style={{ background: lpGreen }} />
-          <div className="relative w-36 h-36 rounded-[3rem] flex items-center justify-center border"
-            style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.18)', boxShadow: '0 0 60px rgba(6,224,0,0.08)' }}>
-            <SurePathLogo className="w-24 h-24" />
+      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
+        {/* Animated shield */}
+        <div className="relative mx-auto mb-7" style={{ width: 120, height: 120 }}>
+          <div className="absolute inset-0 rounded-[2.5rem] blur-2xl" style={{ background: GRN, opacity: 0.14 }} />
+          <div className="relative w-full h-full rounded-[2.5rem] flex items-center justify-center border"
+            style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.18)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
+            <svg width="54" height="54" viewBox="0 0 54 54" fill="none" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
+              <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
+                fill="rgba(6,224,0,0.12)" stroke={GRN} strokeWidth="1.5" />
+              <path d="M19 27L23.5 31.5L35 20"
+                stroke={GRN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
+            </svg>
           </div>
         </div>
 
-        <p style={{ fontFamily: sora, fontSize: '0.75rem', fontWeight: 500, color: lpGreen, marginBottom: '0.4rem' }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 500, color: GRN, marginBottom: '0.4rem', letterSpacing: '0.02em' }}>
           {G.welcome},
         </p>
-        <h2 style={{ fontFamily: sora, fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1, marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1, marginBottom: '1.2rem' }}>
           {name} 👋
         </h2>
-
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
-          style={{ borderColor: 'rgba(6,224,0,0.20)', background: 'rgba(6,224,0,0.06)' }}>
-          <div className="w-1.5 h-1.5 rounded-full" style={{ background: lpGreen }} />
-          <span style={{ fontFamily: sora, fontSize: '0.7rem', fontWeight: 500, color: lpGreen }}>
-            {G.verified}
-          </span>
+          style={{ borderColor: 'rgba(6,224,0,0.22)', background: 'rgba(6,224,0,0.07)' }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 500, color: GRN }}>{G.verified}</span>
         </div>
       </div>
     </div>
@@ -338,29 +316,9 @@ const INITIAL_PRODUCTS = [
 
 const SESSION_KEY = 'SUREPATH_SESSION';
 
-const SpiralScreen = ({ onEnter }: { onEnter: () => void }) => {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 2000); return () => clearTimeout(t); }, []);
-  return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden bg-black">
-      <div className="absolute inset-0">
-        <SpiralAnimation />
-      </div>
-      <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-[1500ms] ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <button
-          onClick={onEnter}
-          className="text-white text-2xl tracking-[0.2em] uppercase font-extralight transition-all duration-700 hover:tracking-[0.3em] animate-pulse"
-        >
-          Mulai
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const App = () => {
   const [isLoaded, setIsLoaded]       = useState(false);
-  const [spiralDone, setSpiralDone]   = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
@@ -450,7 +408,6 @@ const App = () => {
               nodeId:     `SP-${u.id.slice(0, 8).toUpperCase()}`,
               trustScore: 85,
             };
-        setSpiralDone(true); // skip the spiral screen for returning sessions
         handleAuthSuccess(userObj);
       });
     }
@@ -494,8 +451,7 @@ const App = () => {
     setAppMode(false);
   }, []);
 
-  if (!isLoaded) return <WelcomeScreen onFinish={() => setIsLoaded(true)} lang={lang} setLang={handleSetLang} />;
-  if (!spiralDone) return <SpiralScreen onEnter={() => setSpiralDone(true)} />;
+  if (!isLoaded) return <SplashScreen onFinish={() => setIsLoaded(true)} lang={lang} setLang={handleSetLang} />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
 
   const pathname = currentPath;

@@ -368,6 +368,20 @@ const App = () => {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  const handleAuthSuccess = useCallback(async (user: any) => {
+    let enrichedUser = user;
+    if (user.role === UserRole.AGENT && !user.supabaseId) {
+      const spUser = await getAgentByEmail(user.email).catch(() => null);
+      if (spUser) enrichedUser = { ...user, supabaseId: spUser.id, agent_code: spUser.agent_code };
+    }
+    setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
+    setTimeout(() => {
+      setCurrentUser(enrichedUser);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
+      setAppMode(true);
+    }, 1400);
+  }, []);
+
   useEffect(() => {
     injectVercelAnalytics({ mode: 'auto' });
     seedDatabase().catch(console.error);
@@ -427,20 +441,6 @@ const App = () => {
   const navigate = useCallback((path: string) => {
     window.history.pushState({}, '', path);
     setCurrentPath(path);
-  }, []);
-
-  const handleAuthSuccess = useCallback(async (user: any) => {
-    let enrichedUser = user;
-    if (user.role === UserRole.AGENT && !user.supabaseId) {
-      const spUser = await getAgentByEmail(user.email).catch(() => null);
-      if (spUser) enrichedUser = { ...user, supabaseId: spUser.id, agent_code: spUser.agent_code };
-    }
-    setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
-    setTimeout(() => {
-      setCurrentUser(enrichedUser);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
-      setAppMode(true);
-    }, 1400);
   }, []);
 
   const handleLogout = useCallback(async () => {

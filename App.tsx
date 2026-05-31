@@ -5,6 +5,7 @@ import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail } from './services/supabaseService';
 import { SpiralAnimation } from './components/ui/spiral-animation';
+import { inject as injectVercelAnalytics } from '@vercel/analytics';
 
 // Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
 const AuthGate          = lazy(() => import('./components/AuthGate'));
@@ -410,6 +411,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    injectVercelAnalytics({ mode: 'auto' });
     seedDatabase().catch(console.error);
     const saved = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
     if (saved) {

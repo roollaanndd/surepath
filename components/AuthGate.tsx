@@ -101,20 +101,25 @@ const AuthGate: React.FC<AuthGateProps> = ({
   initialLang = Language.ID,
   initialMode = 'LOGIN',
 }) => {
-  const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'CHECK_EMAIL'>(initialMode as any);
-  const [showPass, setShowPass]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [resending, setResending] = useState(false);
-  const [error, setError]         = useState<string | null>(null);
-  const [lang]                    = useState<Language>(initialLang);
-  const [regRole, setRegRole]     = useState<UserRole>(UserRole.CUSTOMER);
-  const [formData, setFormData]   = useState({ name: '', email: '', password: '' });
+  type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'PHONE_OTP' | 'PHONE_OTP_VERIFY' | 'RESET_PASSWORD';
+  const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
+  const [showPass, setShowPass]     = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [resending, setResending]   = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+  const [lang]                      = useState<Language>(initialLang);
+  const [regRole, setRegRole]       = useState<UserRole>(UserRole.CUSTOMER);
+  const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
+  const [phone, setPhone]           = useState('');
+  const [otpCode, setOtpCode]       = useState('');
+  const [newPassword, setNewPass]   = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
 
   // Prevents double-resolution when both direct call and onAuthStateChange fire
   const resolvedRef = useRef(false);
 
-  useEffect(() => { setMode(initialMode as any); }, [initialMode]);
+  useEffect(() => { setMode(initialMode as AuthMode); }, [initialMode]);
 
   // ── Build user object from Supabase user ──────────────────────────────────
   const buildUserObj = async (user: any) => {
@@ -168,6 +173,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         resolveAndLogin(session.user);
+      }
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('RESET_PASSWORD');
       }
     });
 
@@ -271,6 +279,59 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setTimeout(() => setResending(false), 5000);
   };
 
+  // ── Google OAuth ─────────────────────────────────────────────────────────
+  const handleGoogleSignIn = async () => {
+    setLoading(true); setError(null);
+    const { error: e } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (e) { setError(e.message); setLoading(false); }
+  };
+
+  // ── Forgot password ───────────────────────────────────────────────────────
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoading(true); setError(null);
+    const { error: e2 } = await supabase.auth.resetPasswordForEmail(formData.email, {
+      redirectTo: `${window.location.origin}?reset=1`,
+    });
+    if (e2) { setError(e2.message); setLoading(false); return; }
+    setMode('FORGOT_SENT'); setLoading(false);
+  };
+
+  // ── WhatsApp OTP — send ──────────────────────────────────────────────────
+  const handleSendOtp = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setLoading(true); setError(null);
+    const { data, error: e } = await supabase.functions.invoke('send-otp', {
+      body: { phone, purpose: 'LOGIN' },
+    });
+    if (e || !data?.ok) { setError(data?.error ?? e?.message ?? 'Gagal mengirim OTP'); setLoading(false); return; }
+    setMode('PHONE_OTP_VERIFY'); setLoading(false);
+  };
+
+  // ── WhatsApp OTP — verify ────────────────────────────────────────────────
+  const handleVerifyOtp = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setLoading(true); setError(null);
+    const { data, error: e } = await supabase.functions.invoke('verify-otp', {
+      body: { phone, code: otpCode, purpose: 'LOGIN', email: formData.email || undefined },
+    });
+    if (e || !data?.ok) { setError(data?.error ?? e?.message ?? 'OTP tidak valid'); setLoading(false); return; }
+    if (data.action_link) { window.location.href = data.action_link; return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) await resolveAndLogin(session.user);
+    setLoading(false);
+  };
+
+  // ── Reset password (after email link) ────────────────────────────────────
+  const handleResetPassword = async (ev: React.FormEvent) => {
+    ev.preventDefault(); setLoading(true); setError(null);
+    const { error: e } = await supabase.auth.updateUser({ password: newPassword });
+    if (e) { setError(e.message); setLoading(false); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) await resolveAndLogin(session.user);
+    setLoading(false);
+  };
+
   if (showAgentOnboarding) {
     return (
       <AgentOnboarding
@@ -346,8 +407,102 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
+        {/* Forgot password — enter email */}
+        {mode === 'FORGOT_PASSWORD' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
+            <h3 className="text-lg font-black uppercase text-center">{t('Reset Password', 'Reset Password')}</h3>
+            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
+            <form onSubmit={handleForgotPassword} className="space-y-3">
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input required type="email" placeholder="email@contoh.com" value={formData.email}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
+              </div>
+              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send Reset Link', 'Kirim Link Reset')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
+          </div>
+        )}
+
+        {/* Forgot password — sent */}
+        {mode === 'FORGOT_SENT' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm text-center space-y-5">
+            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.5rem] flex items-center justify-center mx-auto"><CheckCircle2 size={32} className="text-emerald-400" /></div>
+            <div>
+              <h3 className="text-xl font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-gray-400 text-sm mt-2 leading-relaxed">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-emerald-400 font-bold">{formData.email}</span>.</p>
+            </div>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back to Login', 'Kembali ke Login')}</button>
+          </div>
+        )}
+
+        {/* WhatsApp OTP — enter phone */}
+        {mode === 'PHONE_OTP' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
+            <h3 className="text-lg font-black uppercase text-center">{t('Login via WhatsApp', 'Masuk via WhatsApp')}</h3>
+            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('We will send a 6-digit OTP to your WhatsApp.', 'Kami kirim OTP 6 digit ke WhatsApp kamu.')}</p>
+            <form onSubmit={handleSendOtp} className="space-y-3">
+              <div className="relative">
+                <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input required type="tel" placeholder="08xxxxxxxxxx" value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
+              </div>
+              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send OTP', 'Kirim OTP')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
+          </div>
+        )}
+
+        {/* WhatsApp OTP — verify */}
+        {mode === 'PHONE_OTP_VERIFY' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
+            <h3 className="text-lg font-black uppercase text-center">{t('Enter OTP', 'Masukkan OTP')}</h3>
+            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('OTP sent to WhatsApp ', 'OTP dikirim ke WhatsApp ')}<span className="text-emerald-400 font-bold">{phone}</span>.</p>
+            <form onSubmit={handleVerifyOtp} className="space-y-3">
+              <input required type="text" inputMode="numeric" maxLength={6} placeholder="______" value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full text-center py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.4em] placeholder:text-gray-700 focus:border-green-500/40 transition-all" />
+              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading || otpCode.length < 6} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify', 'Verifikasi')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+            <button onClick={() => { setMode('PHONE_OTP'); setError(null); setOtpCode(''); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Resend OTP', 'Kirim Ulang OTP')}</button>
+          </div>
+        )}
+
+        {/* Reset password (from email link) */}
+        {mode === 'RESET_PASSWORD' && (
+          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
+            <h3 className="text-lg font-black uppercase text-center">{t('New Password', 'Password Baru')}</h3>
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              <div className="relative">
+                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input required type={showNewPass ? 'text' : 'password'} placeholder={t('New password (min 6 chars)', 'Password baru (min 6 karakter)')} minLength={6} value={newPassword}
+                  onChange={e => setNewPass(e.target.value)}
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
+                <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors">
+                  {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Save Password', 'Simpan Password')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+          </div>
+        )}
+
         {/* Main form */}
-        {mode !== 'CHECK_EMAIL' && (
+        {(mode === 'LOGIN' || mode === 'REGISTER') && (
           <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.5rem] p-7 backdrop-blur-sm space-y-6">
 
             {/* Tab switcher */}
@@ -440,6 +595,15 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </p>
               )}
 
+              {mode === 'LOGIN' && (
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => { setMode('FORGOT_PASSWORD'); setError(null); }}
+                    className="text-[0.6rem] font-bold text-gray-500 hover:text-green-400 transition-colors uppercase tracking-widest">
+                    {t('Forgot password?', 'Lupa password?')}
+                  </button>
+                </div>
+              )}
+
               {error && (
                 <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-bold flex items-center gap-2">
                   <AlertCircle size={14} className="flex-shrink-0" />
@@ -467,6 +631,31 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 )}
               </button>
             </form>
+
+            {mode === 'LOGIN' && (
+              <div className="space-y-3 mt-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-[0.5rem] font-black text-gray-600 uppercase tracking-widest">{t('Or continue with', 'Atau lanjutkan dengan')}</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+                <button onClick={handleGoogleSignIn} disabled={loading}
+                  className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-2.5 hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50">
+                  <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('Google', 'Google')}</span>
+                </button>
+                <button onClick={() => { setMode('PHONE_OTP'); setError(null); }} disabled={loading}
+                  className="w-full py-3.5 bg-white/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-400 hover:bg-emerald-500/10 transition-all active:scale-95 disabled:opacity-50">
+                  <Smartphone size={16} />
+                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('WhatsApp OTP', 'OTP WhatsApp')}</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

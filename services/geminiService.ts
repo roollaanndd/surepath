@@ -6,15 +6,14 @@ const SURVEY_MODEL  = 'openai/gpt-4o-mini';              // multi-image underwri
 const TEXT_MODEL    = 'anthropic/claude-3.5-haiku-20241022'; // product explainer
 export const CHAT_MODEL = 'anthropic/claude-3.5-haiku-20241022'; // health chatbot
 
-// ─── Shared OpenRouter client ─────────────────────────────────────────────────
+// ─── Proxy through Supabase edge function — keeps OpenRouter key server-side ──
+const AI_PROXY_URL  = 'https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/ai-proxy';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5amdldGVlbG5zd3BoeXprandpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzEzNzUsImV4cCI6MjA5NDc0NzM3NX0.igFT0ExEh-RDn_eMvBi0HzAhCWD1G7jYVRFNOL4TFSU';
+
 const getClient = () => new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: import.meta.env.VITE_OPENROUTER_KEY ?? '',
-  defaultHeaders: {
-    'HTTP-Referer': 'https://myinsurepath.com',
-    'X-Title': 'SurePath',
-  },
-  dangerouslyAllowBrowser: true,
+  baseURL: AI_PROXY_URL,
+  apiKey:  SUPABASE_ANON,
+  defaultHeaders: { apikey: SUPABASE_ANON },
 });
 
 // Strip markdown code-fences that some models add around JSON

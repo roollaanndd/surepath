@@ -7,6 +7,24 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+// ── SSRF guard: api_endpoint must be HTTPS and not a private/loopback address ──
+function isAllowedEndpoint(url: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== 'https:') return false;
+    if (/^localhost$/i.test(hostname))                          return false;
+    if (/^127\./.test(hostname))                               return false;
+    if (/^10\./.test(hostname))                                return false;
+    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname))       return false;
+    if (/^192\.168\./.test(hostname))                          return false;
+    if (/^169\.254\./.test(hostname))                          return false;
+    if (/^(::1|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:)/.test(hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ── Adapters ──────────────────────────────────────────────────────────────────
 
 async function manualAdapter(
@@ -131,6 +149,10 @@ serve(async (req) => {
         .maybeSingle();
 
       if (configRow?.api_endpoint && configRow?.api_key) {
+        if (!isAllowedEndpoint(configRow.api_endpoint)) {
+          console.error('Blocked disallowed api_endpoint:', configRow.api_endpoint);
+          return json({ success: false, error: 'Invalid insurer API endpoint' }, 400);
+        }
         apiConfig = {
           api_endpoint: configRow.api_endpoint,
           api_key:      configRow.api_key,

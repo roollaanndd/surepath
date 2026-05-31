@@ -6,11 +6,13 @@ import { CHAT_MODEL } from '../services/geminiService';
 import { PageTransition } from './car-wizard/WizardUI';
 import { Language } from '../types';
 
+const AI_PROXY_URL  = 'https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/ai-proxy';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5amdldGVlbG5zd3BoeXprandpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzEzNzUsImV4cCI6MjA5NDc0NzM3NX0.igFT0ExEh-RDn_eMvBi0HzAhCWD1G7jYVRFNOL4TFSU';
+
 const chatClient = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: import.meta.env.VITE_OPENROUTER_KEY ?? '',
-  defaultHeaders: { 'HTTP-Referer': 'https://myinsurepath.com', 'X-Title': 'SurePath' },
-  dangerouslyAllowBrowser: true,
+  baseURL: AI_PROXY_URL,
+  apiKey:  SUPABASE_ANON,
+  defaultHeaders: { apikey: SUPABASE_ANON },
 });
 
 /* Fix: Added lang prop to HealthChat component */

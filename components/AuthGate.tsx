@@ -4,6 +4,7 @@ import {
   AlertCircle, Smartphone, Briefcase,
   ArrowRight, Shield, CheckCircle2, RefreshCw
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
 import { supabase, getAgentProfile, getAgentByEmail } from '../services/supabaseService';
@@ -285,9 +286,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // ── Google OAuth ─────────────────────────────────────────────────────────
   const handleGoogleSignIn = async () => {
     setLoading(true); setError(null);
+    const redirectTo = Capacitor.isNativePlatform()
+      ? 'com.myinsurepath.os://auth-callback'
+      : window.location.origin;
     const { error: e } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo },
     });
     if (e) { setError(e.message); setLoading(false); }
   };

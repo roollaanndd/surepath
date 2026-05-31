@@ -101,7 +101,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
   initialLang = Language.ID,
   initialMode = 'LOGIN',
 }) => {
-  type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'PHONE_OTP' | 'PHONE_OTP_VERIFY' | 'RESET_PASSWORD';
+  type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'EMAIL_OTP_VERIFY' | 'RESET_PASSWORD';
   const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
   const [showPass, setShowPass]     = useState(false);
   const [loading, setLoading]       = useState(false);
@@ -111,7 +111,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const [regRole, setRegRole]       = useState<UserRole>(UserRole.CUSTOMER);
   const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
-  const [phone, setPhone]           = useState('');
   const [otpCode, setOtpCode]       = useState('');
   const [newPassword, setNewPass]   = useState('');
   const [showNewPass, setShowNewPass] = useState(false);
@@ -299,27 +298,32 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setMode('FORGOT_SENT'); setLoading(false);
   };
 
-  // ── WhatsApp OTP — send ──────────────────────────────────────────────────
-  const handleSendOtp = async (ev: React.FormEvent) => {
-    ev.preventDefault(); setLoading(true); setError(null);
-    const { data, error: e } = await supabase.functions.invoke('send-otp', {
-      body: { phone, purpose: 'LOGIN' },
+  // ── Email OTP — send (passwordless via Supabase built-in) ───────────────
+  const handleSendEmailOtp = async () => {
+    if (!formData.email) { setError(t('Enter your email first.', 'Masukkan email dulu.')); return; }
+    setLoading(true); setError(null);
+    await supabase.auth.signInWithOtp({
+      email: formData.email,
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
     });
-    if (e || !data?.ok) { setError(data?.error ?? e?.message ?? 'Gagal mengirim OTP'); setLoading(false); return; }
-    setMode('PHONE_OTP_VERIFY'); setLoading(false);
+    // Always move to verify screen — avoids email enumeration
+    setMode('EMAIL_OTP_VERIFY'); setLoading(false);
   };
 
-  // ── WhatsApp OTP — verify ────────────────────────────────────────────────
-  const handleVerifyOtp = async (ev: React.FormEvent) => {
+  // ── Email OTP — verify ───────────────────────────────────────────────────
+  const handleVerifyEmailOtp = async (ev: React.FormEvent) => {
     ev.preventDefault(); setLoading(true); setError(null);
-    const { data, error: e } = await supabase.functions.invoke('verify-otp', {
-      body: { phone, code: otpCode, purpose: 'LOGIN', email: formData.email || undefined },
+    resolvedRef.current = false;
+    const { data, error: e } = await supabase.auth.verifyOtp({
+      email: formData.email,
+      token: otpCode,
+      type: 'email',
     });
-    if (e || !data?.ok) { setError(data?.error ?? e?.message ?? 'OTP tidak valid'); setLoading(false); return; }
-    if (data.action_link) { window.location.href = data.action_link; return; }
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) await resolveAndLogin(session.user);
-    setLoading(false);
+    if (e || !data.session?.user) {
+      setError(e?.message ?? t('Invalid code. Try again.', 'Kode salah. Coba lagi.'));
+      setLoading(false); return;
+    }
+    await resolveAndLogin(data.session.user);
   };
 
   // ── Reset password (after email link) ────────────────────────────────────
@@ -440,42 +444,35 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* WhatsApp OTP — enter phone */}
-        {mode === 'PHONE_OTP' && (
+        {/* Email OTP — verify */}
+        {mode === 'EMAIL_OTP_VERIFY' && (
           <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
-            <h3 className="text-lg font-black uppercase text-center">{t('Login via WhatsApp', 'Masuk via WhatsApp')}</h3>
-            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('We will send a 6-digit OTP to your WhatsApp.', 'Kami kirim OTP 6 digit ke WhatsApp kamu.')}</p>
-            <form onSubmit={handleSendOtp} className="space-y-3">
-              <div className="relative">
-                <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input required type="tel" placeholder="08xxxxxxxxxx" value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
-              </div>
-              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
-                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send OTP', 'Kirim OTP')}<ArrowRight size={14} /></>}
-              </button>
-            </form>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
-          </div>
-        )}
-
-        {/* WhatsApp OTP — verify */}
-        {mode === 'PHONE_OTP_VERIFY' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
-            <h3 className="text-lg font-black uppercase text-center">{t('Enter OTP', 'Masukkan OTP')}</h3>
-            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('OTP sent to WhatsApp ', 'OTP dikirim ke WhatsApp ')}<span className="text-emerald-400 font-bold">{phone}</span>.</p>
-            <form onSubmit={handleVerifyOtp} className="space-y-3">
-              <input required type="text" inputMode="numeric" maxLength={6} placeholder="______" value={otpCode}
+            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.2rem] flex items-center justify-center mx-auto">
+              <Mail size={26} className="text-emerald-400" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                {t('Enter the 6-digit code sent to ', 'Masukkan kode 6 digit yang dikirim ke ')}
+                <span className="text-emerald-400 font-bold">{formData.email}</span>.<br/>
+                {t('Or click the link in the email.', 'Atau klik link di email.')}
+              </p>
+            </div>
+            <form onSubmit={handleVerifyEmailOtp} className="space-y-3">
+              <input required type="text" inputMode="numeric" maxLength={6} placeholder="· · · · · ·" value={otpCode}
                 onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full text-center py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.4em] placeholder:text-gray-700 focus:border-green-500/40 transition-all" />
-              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+                className="w-full text-center py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] placeholder:text-gray-700 focus:border-green-500/40 transition-all" />
+              {error && <p className="text-rose-400 text-xs font-bold text-center">{error}</p>}
               <button type="submit" disabled={loading || otpCode.length < 6} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
-                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify', 'Verifikasi')}<ArrowRight size={14} /></>}
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Sign In', 'Verifikasi & Masuk')}<ArrowRight size={14} /></>}
               </button>
             </form>
-            <button onClick={() => { setMode('PHONE_OTP'); setError(null); setOtpCode(''); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Resend OTP', 'Kirim Ulang OTP')}</button>
+            <button onClick={() => { handleSendEmailOtp(); setOtpCode(''); }} disabled={loading}
+              className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+              {t('Resend Code', 'Kirim Ulang Kode')}
+            </button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full py-2 text-gray-600 hover:text-gray-400 font-black text-[0.55rem] uppercase tracking-widest transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
@@ -649,10 +646,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   </svg>
                   <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('Google', 'Google')}</span>
                 </button>
-                <button onClick={() => { setMode('PHONE_OTP'); setError(null); }} disabled={loading}
+                <button onClick={handleSendEmailOtp} disabled={loading}
                   className="w-full py-3.5 bg-white/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-400 hover:bg-emerald-500/10 transition-all active:scale-95 disabled:opacity-50">
-                  <Smartphone size={16} />
-                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('WhatsApp OTP', 'OTP WhatsApp')}</span>
+                  <Mail size={16} />
+                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
               </div>
             )}

@@ -10,6 +10,7 @@ import {
   getPaymentsByOrderIds,
   type SpPolicyOrder, type SpAdminNotification, type SpPayment,
 } from '../../services/supabaseService';
+import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
@@ -42,6 +43,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   const [saving, setSaving] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [insurerMsg, setInsurerMsg] = useState<{ text: string; isError: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleSendReviewLink = async () => {
@@ -153,8 +155,19 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       metadata: { link: 'wallet' },
     });
 
+    // Submit to insurer via abstraction layer
+    const submission = await submitPolicyToInsurer(order.id);
+    if (submission.success && submission.method === 'API') {
+      setInsurerMsg({ text: 'Polis berhasil dikirim ke sistem penanggung.', isError: false });
+    } else if (submission.success && submission.method === 'MANUAL') {
+      setInsurerMsg({ text: 'Dokumen perlu dikirim manual ke penanggung. Notifikasi admin telah dibuat.', isError: false });
+    } else {
+      setInsurerMsg({ text: submission.message ?? 'Gagal mengirim ke penanggung.', isError: true });
+    }
+
     setUploading(false);
-    onClose();
+    // Keep modal open briefly to show the insurer submission message
+    setTimeout(() => onClose(), 3000);
   };
 
   return (
@@ -336,6 +349,17 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               <Download size={14} />
               Download Polis ({order.policy_number ?? '—'})
             </a>
+          )}
+
+          {/* Insurer submission result */}
+          {insurerMsg && (
+            <div className={`p-4 rounded-2xl border text-sm font-bold ${
+              insurerMsg.isError
+                ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            }`}>
+              {insurerMsg.text}
+            </div>
           )}
 
           {/* Action buttons */}

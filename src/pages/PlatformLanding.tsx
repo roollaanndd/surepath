@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ArrowRight, ChevronRight, Menu, X, Globe, Sun, Moon,
   Smartphone, Shield, BarChart2, Users, Zap,
@@ -7,7 +7,6 @@ import {
   Car, Plane, Heart, Leaf, HeartHandshake,
 } from 'lucide-react';
 
-const SplineScene = lazy(() => import('@splinetool/react-spline'));
 import { Language } from '../../types';
 import { SurePathLogo } from '../../components/Navbar';
 
@@ -41,11 +40,16 @@ const SECTION_CSS = `
   from { opacity:0; transform:scale(0.96) translateY(8px); }
   to   { opacity:1; transform:scale(1) translateY(0); }
 }
-.animate-ticker    { animation: ticker-scroll 28s linear infinite; }
-.animate-float     { animation: float 4s ease-out infinite; }
-.animate-float-2   { animation: float 5s ease-out infinite 1.5s; }
+@keyframes fade-up {
+  from { opacity:0; transform:translateY(28px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.animate-ticker    { animation: ticker-scroll 28s linear infinite; will-change: transform; }
+.animate-float     { animation: float 4s ease-out infinite; will-change: transform; }
+.animate-float-2   { animation: float 5s ease-out infinite 1.5s; will-change: transform; }
 .animate-glow      { animation: glow-pulse 3s ease-in-out infinite; }
 .animate-banner    { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-fade-up   { animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both; }
 button:focus-visible, a:focus-visible {
   outline: 2px solid rgba(1,235,2,0.7);
   outline-offset: 3px;
@@ -53,7 +57,8 @@ button:focus-visible, a:focus-visible {
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker, .animate-float, .animate-float-2,
-  .animate-glow, .animate-banner { animation: none; }
+  .animate-glow, .animate-banner, .animate-fade-up { animation: none; }
+  .animate-fade-up { opacity: 1 !important; transform: none !important; }
   * { transition-duration: 0.01ms !important; }
 }
 `;
@@ -87,10 +92,51 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
   const hidden = from === 'left' ? 'opacity-0 -translate-x-8' : from === 'right' ? 'opacity-0 translate-x-8' : 'opacity-0 translate-y-8';
   return (
     <div ref={ref} style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-x-0 translate-y-0' : hidden} ${className}`}>
+      className={`transition-[opacity,transform] duration-700 ease-out ${visible ? 'opacity-100 translate-x-0 translate-y-0' : hidden} ${className}`}>
       {children}
     </div>
   );
+};
+
+// ─── Lightweight canvas hero background (replaces Spline 2MB WebGL) ──────────
+const HeroCanvas: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    const blobs = [
+      { x: 0.72, y: 0.28, r: 0.38, color: '1,235,2',   phase: 0,   sx: 0.00045, sy: 0.00032 },
+      { x: 0.55, y: 0.60, r: 0.28, color: '34,197,94', phase: 2.1, sx: 0.00032, sy: 0.00055 },
+      { x: 0.85, y: 0.70, r: 0.22, color: '74,222,128',phase: 4.2, sx: 0.00060, sy: 0.00038 },
+    ];
+    let t = 0;
+    let raf: number;
+    const draw = () => {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      blobs.forEach(b => {
+        const cx = (b.x + Math.sin(t * b.sx + b.phase) * 0.12) * w;
+        const cy = (b.y + Math.cos(t * b.sy + b.phase) * 0.10) * h;
+        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r * Math.max(w, h));
+        gr.addColorStop(0,   `rgba(${b.color},0.18)`);
+        gr.addColorStop(0.5, `rgba(${b.color},0.07)`);
+        gr.addColorStop(1,   `rgba(${b.color},0)`);
+        ctx.fillStyle = gr;
+        ctx.fillRect(0, 0, w, h);
+      });
+      t++;
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
+  return <canvas ref={ref} className="absolute inset-0 w-full h-full" style={{ opacity: 0.85 }} />;
 };
 
 // ─── PWA Install Popup ────────────────────────────────────────────────────────
@@ -494,22 +540,17 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         )}
       </nav>
 
-      {/* ═══════════════════════════════ HERO (Spline 3D) ═══════════════════ */}
+      {/* ═══════════════════════════════════ HERO ═══════════════════════════ */}
       <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
         style={{ background: 'hsl(0 0% 8%)' }}>
 
-        {/* Spline 3D background — pointer-events-none so scroll passes through */}
+        {/* Canvas blob background — GPU composited, zero extra bundle */}
         <div className="absolute inset-0 pointer-events-none">
-          <Suspense fallback={<div className="absolute inset-0" style={{ background: 'hsl(0 0% 8%)' }} />}>
-            <SplineScene
-              scene="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode"
-              className="w-full h-full"
-            />
-          </Suspense>
+          <HeroCanvas />
         </div>
 
         {/* Dark overlay so text is always readable */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.35)', zIndex: 1 }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.30)', zIndex: 1 }} />
 
         {/* Content — anchored bottom-left */}
         <div className="relative w-full max-w-[90%] sm:max-w-md lg:max-w-2xl px-6 md:px-10 pb-12 md:pb-16 pt-32 pointer-events-none"

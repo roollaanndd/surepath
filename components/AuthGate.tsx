@@ -122,9 +122,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   // ── Build user object from Supabase user ──────────────────────────────────
   const buildUserObj = async (user: any) => {
+    const [byId, byEmail] = await Promise.allSettled([
+      getAgentProfile(user.id),
+      getAgentByEmail(user.email!),
+    ]);
     const profile =
-      (await getAgentProfile(user.id).catch(() => null)) ??
-      (await getAgentByEmail(user.email!).catch(() => null));
+      (byId.status === 'fulfilled' ? byId.value : null) ??
+      (byEmail.status === 'fulfilled' ? byEmail.value : null);
 
     return profile
       ? {
@@ -559,6 +563,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 <input
                   required
                   type="email"
+                  autoComplete="email"
                   placeholder="email@contoh.com"
                   className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
                   value={formData.email}
@@ -572,6 +577,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 <input
                   required
                   type={showPass ? 'text' : 'password'}
+                  autoComplete={mode === 'LOGIN' ? 'current-password' : 'new-password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
                   className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"

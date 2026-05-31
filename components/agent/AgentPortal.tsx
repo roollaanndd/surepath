@@ -136,6 +136,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agent={agent}
           />
         );
+      case 'network':
+        return (
+          <AgentNetwork
+            agentId={agent?.id ?? ''}
+            lang={lang}
+            agent={agent}
+          />
+        );
+      case 'endorsements':
+        return <AgentEndorsements agentId={agent?.id ?? ''} lang={lang} />;
       case 'profile':
         return (
           <AgentProfile

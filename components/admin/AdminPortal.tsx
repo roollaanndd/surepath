@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -23,6 +23,7 @@ import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import AIAdminView from './AIAdminView';
 import AIFinanceView from './AIFinanceView';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import EndorsementsAdminView from './EndorsementsAdminView';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
@@ -46,6 +47,7 @@ const MENU_ITEMS = [
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'withdrawals',      label: 'Penarikan Agen',      icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
+  { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },

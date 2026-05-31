@@ -67,7 +67,7 @@ const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUs
     if (response.success) {
       setAiScore(response.score || 95);
     } else {
-      setAiScore(92); // Fallback mock for demo
+      setAiScore(0); // No score — user must retry
     }
   };
 

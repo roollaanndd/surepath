@@ -98,28 +98,8 @@ const MobilePortal = ({ currentUser, setPage, lang }: { currentUser: any, setPag
             <h3 className="text-xl font-black uppercase tracking-tighter text-slate-800">{t("Activity", "Laporan")} <span className="text-emerald-500">{t("Feed", "Terkini")}</span></h3>
             <button onClick={() => setPage('profile')} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">{t("All Ledger", "Semua")} <ArrowUpRight size={10}/></button>
           </div>
-          <div className="space-y-3">
-             {[
-               { type: t('Policy Active', 'Polis Aktif'), date: t('Just now', 'Baru saja'), status: 'SECURE', amount: 4500000, icon: ShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-               { type: t('System Audit', 'Audit Sistem'), date: '2 Jan 2025', status: 'CLEAN', amount: 0, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-50' }
-             ].map((act, i) => (
-               <div key={i} className="p-6 bg-white rounded-[2.2rem] shadow-sm border border-slate-50 flex items-center justify-between group active:bg-slate-50 transition-all">
-                  <div className="flex items-center gap-4">
-                     <div className={`w-12 h-12 ${act.bg} rounded-2xl flex items-center justify-center ${act.color} shadow-inner group-hover:rotate-6 transition-transform`}><act.icon size={22} strokeWidth={2.5}/></div>
-                     <div>
-                        <p className="text-xs font-black uppercase text-slate-800 leading-none mb-1.5">{act.type}</p>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{act.date}</p>
-                     </div>
-                  </div>
-                  <div className="text-right">
-                     {act.amount > 0 && <p className="text-xs font-black text-slate-900 mb-1">{formatIDR(act.amount)}</p>}
-                     <div className="flex items-center justify-end gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${act.status === 'SECURE' || act.status === 'CLEAN' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`}></div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{act.status}</p>
-                     </div>
-                  </div>
-               </div>
-             ))}
+          <div className="p-6 bg-white rounded-[2.2rem] shadow-sm border border-slate-50 text-center text-slate-400 text-sm font-bold">
+             {t('No recent activity.', 'Belum ada aktivitas terkini.')}
           </div>
        </div>
 

@@ -433,10 +433,15 @@ const App = () => {
         sessionStorage.removeItem(SESSION_KEY);
       }
     } else {
-      // Restore session after OAuth redirect or magic link (no localStorage entry yet)
-      supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (!session?.user) return;
-        const u = session.user;
+      // Restore session after OAuth redirect or magic link.
+      // getSession() handles implicit flow (token in hash).
+      // onAuthStateChange handles PKCE flow where the code exchange is async
+      // and may complete AFTER getSession() is first called.
+      let resolved = false;
+
+      const buildAndLogin = async (u: any) => {
+        if (resolved) return;
+        resolved = true;
         const profile =
           (await getAgentProfile(u.id).catch(() => null)) ??
           (await getAgentByEmail(u.email!).catch(() => null));
@@ -460,7 +465,21 @@ const App = () => {
               trustScore: 85,
             };
         handleAuthSuccess(userObj);
+      };
+
+      // Immediate path — works when session is already in memory
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) buildAndLogin(session.user);
       });
+
+      // Async fallback — catches PKCE code exchange that completes after getSession
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+          buildAndLogin(session.user);
+        }
+      });
+
+      return () => subscription.unsubscribe();
     }
   }, [handleAuthSuccess]);
 

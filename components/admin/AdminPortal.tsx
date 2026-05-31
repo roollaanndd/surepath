@@ -5,12 +5,13 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
   SecurityView, LedgerView, ReportsView, AgentManagementView,
   ClaimsAdminView, UserManagementView, PaymentsAdminView,
+  WithdrawalsAdminView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
@@ -42,6 +43,7 @@ const MENU_ITEMS = [
   { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  { id: 'withdrawals',      label: 'Penarikan Agen',      icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -313,6 +315,7 @@ const AdminPortal = ({
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;
       case 'payments':         return <PaymentsAdminView />;
+      case 'withdrawals':      return <WithdrawalsAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;

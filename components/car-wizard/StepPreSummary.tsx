@@ -198,6 +198,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
 
       addCostRow("Biaya Administrasi & Polis", premiumBreakdown?.adminFee || 0);
       addCostRow("Biaya Materai", premiumBreakdown?.stampDuty || 0);
+      addCostRow("Biaya Aplikasi", premiumBreakdown?.applicationFee || 5000);
 
       if (premiumBreakdown?.discountAmount > 0) {
         addCostRow(`Diskon Spesial (${premiumBreakdown.discountPercent}%)`, premiumBreakdown.discountAmount, true);

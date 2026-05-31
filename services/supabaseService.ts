@@ -1401,3 +1401,225 @@ export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
     product_name: p.sp_policy_orders?.product_name,
   }));
 }
+
+// ─── Agent Wallet ─────────────────────────────────────────────────────────────
+
+export interface AgentWallet {
+  id: string;
+  agent_id: string;
+  balance: number;
+  total_earned: number;
+  total_withdrawn: number;
+  updated_at: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  agent_id: string;
+  type: 'COMMISSION_CREDIT' | 'COIN_CREDIT' | 'WITHDRAWAL_DEBIT' | 'WITHDRAWAL_REVERSAL';
+  amount: number;
+  balance_after: number;
+  reference_id: string | null;
+  reference_type: string | null;
+  description: string | null;
+  created_at: string;
+}
+
+export interface Withdrawal {
+  id: string;
+  agent_id: string;
+  amount: number;
+  xendit_fee: number;
+  net_amount: number;
+  bank_code: string;
+  account_number: string;
+  account_holder_name: string;
+  status: 'PENDING_L1' | 'PENDING_L2' | 'PENDING_L3' | 'APPROVED' | 'PROCESSING' | 'DISBURSED' | 'FAILED' | 'REJECTED' | 'CANCELLED';
+  xendit_disbursement_id: string | null;
+  l1_approved_by: string | null;
+  l1_approved_at: string | null;
+  l2_approved_by: string | null;
+  l2_approved_at: string | null;
+  l3_approved_by: string | null;
+  l3_approved_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  disbursed_at: string | null;
+  scheduled_disburse_at: string | null;
+  failure_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getMyWallet(): Promise<AgentWallet | null> {
+  const { data, error } = await supabase
+    .from('sp_agent_wallets')
+    .select('*')
+    .single();
+  if (error) return null;
+  return data as AgentWallet;
+}
+
+export async function getMyWalletTransactions(limit = 50): Promise<WalletTransaction[]> {
+  const { data, error } = await supabase
+    .from('sp_wallet_transactions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getMyWalletTransactions:', error); return []; }
+  return (data ?? []) as WalletTransaction[];
+}
+
+export async function getMyWithdrawals(limit = 20): Promise<Withdrawal[]> {
+  const { data, error } = await supabase
+    .from('sp_withdrawals')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getMyWithdrawals:', error); return []; }
+  return (data ?? []) as Withdrawal[];
+}
+
+export async function requestWithdrawal(params: {
+  amount: number;
+  bank_code: string;
+  account_number: string;
+  account_holder_name: string;
+}): Promise<{ success: boolean; withdrawal_id?: string; error?: string }> {
+  const XENDIT_FEE = 5000;
+  const net_amount = params.amount - XENDIT_FEE;
+  if (net_amount <= 0) return { success: false, error: 'Jumlah terlalu kecil setelah biaya transfer' };
+
+  // Determine required approval level
+  let initial_status: string;
+  if (params.amount >= 25_000_000) initial_status = 'PENDING_L3';
+  else if (params.amount >= 10_000_000) initial_status = 'PENDING_L2';
+  else initial_status = 'PENDING_L1';
+
+  // Schedule 24hr delay for >25M
+  const scheduled_disburse_at = params.amount >= 25_000_000
+    ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    : null;
+
+  const { data: wd, error: wdErr } = await supabase
+    .from('sp_withdrawals')
+    .insert({
+      ...params,
+      xendit_fee: XENDIT_FEE,
+      net_amount,
+      status: initial_status,
+      scheduled_disburse_at,
+    })
+    .select('id')
+    .single();
+
+  if (wdErr || !wd) return { success: false, error: wdErr?.message ?? 'Gagal membuat penarikan' };
+
+  // Atomically deduct wallet via RPC (SECURITY DEFINER)
+  const { error: deductErr } = await supabase.rpc('request_withdrawal_deduct', {
+    p_withdrawal_id: wd.id,
+    p_agent_id:      (await supabase.auth.getUser()).data.user?.id,
+    p_amount:        params.amount,
+  });
+
+  if (deductErr) {
+    // Rollback withdrawal insert
+    await supabase.from('sp_withdrawals').update({ status: 'CANCELLED' }).eq('id', wd.id);
+    return { success: false, error: deductErr.message };
+  }
+
+  return { success: true, withdrawal_id: wd.id };
+}
+
+export async function getAdminWithdrawals(limit = 200): Promise<Array<Withdrawal & {
+  agent_name?: string;
+  agent_email?: string;
+  agent_phone?: string;
+}>> {
+  const { data, error } = await supabase
+    .from('sp_withdrawals')
+    .select('*, sp_users!agent_id(name, email, phone)')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getAdminWithdrawals:', error); return []; }
+  return (data ?? []).map((w: any) => ({
+    ...w,
+    agent_name:  w.sp_users?.name,
+    agent_email: w.sp_users?.email,
+    agent_phone: w.sp_users?.phone,
+  }));
+}
+
+export async function approveWithdrawal(
+  withdrawal_id: string,
+  level: 1 | 2 | 3,
+  approver_id: string
+): Promise<{ success: boolean; error?: string }> {
+  const ts = new Date().toISOString();
+  const updates: Record<string, unknown> = { updated_at: ts };
+
+  if (level === 1) {
+    updates.l1_approved_by = approver_id;
+    updates.l1_approved_at = ts;
+    // Check if needs L2
+    const { data: wd } = await supabase.from('sp_withdrawals').select('amount').eq('id', withdrawal_id).single();
+    updates.status = (wd?.amount ?? 0) >= 10_000_000 ? 'PENDING_L2' : 'APPROVED';
+  } else if (level === 2) {
+    updates.l2_approved_by = approver_id;
+    updates.l2_approved_at = ts;
+    const { data: wd } = await supabase.from('sp_withdrawals').select('amount').eq('id', withdrawal_id).single();
+    updates.status = (wd?.amount ?? 0) >= 25_000_000 ? 'PENDING_L3' : 'APPROVED';
+  } else {
+    updates.l3_approved_by = approver_id;
+    updates.l3_approved_at = ts;
+    updates.status = 'APPROVED';
+  }
+
+  const { error } = await supabase.from('sp_withdrawals').update(updates).eq('id', withdrawal_id);
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function rejectWithdrawal(
+  withdrawal_id: string,
+  rejector_id: string,
+  reason: string
+): Promise<{ success: boolean; error?: string }> {
+  // Fetch withdrawal details first
+  const { data: wd, error: fetchErr } = await supabase
+    .from('sp_withdrawals')
+    .select('agent_id, amount')
+    .eq('id', withdrawal_id)
+    .single();
+
+  if (fetchErr || !wd) return { success: false, error: 'Withdrawal not found' };
+
+  const { error: updErr } = await supabase.from('sp_withdrawals').update({
+    status:           'REJECTED',
+    rejected_by:      rejector_id,
+    rejected_at:      new Date().toISOString(),
+    rejection_reason: reason,
+    updated_at:       new Date().toISOString(),
+  }).eq('id', withdrawal_id);
+
+  if (updErr) return { success: false, error: updErr.message };
+
+  // Reverse wallet deduction
+  await supabase.rpc('reverse_withdrawal', {
+    p_withdrawal_id: withdrawal_id,
+    p_agent_id:      wd.agent_id,
+    p_amount:        wd.amount,
+    p_reason:        'Penarikan ditolak: ' + reason,
+  });
+
+  return { success: true };
+}
+
+export async function triggerDisbursement(withdrawal_id: string): Promise<{ success: boolean; error?: string }> {
+  const { data, error } = await supabase.functions.invoke('xendit-disburse', {
+    body: { withdrawal_id },
+  });
+  if (error) return { success: false, error: error.message };
+  return { success: true, ...data };
+}

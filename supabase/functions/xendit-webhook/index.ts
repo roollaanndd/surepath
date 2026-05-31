@@ -128,6 +128,25 @@ serve(async (req) => {
             read:     false,
           });
         }
+
+        // Credit agent wallet with commission earned on this order
+        if (order.agent_id) {
+          const { data: orderDetails } = await supabase
+            .from('sp_policy_orders')
+            .select('commission_amount, coin_reward, order_number')
+            .eq('id', payment.order_id)
+            .single();
+
+          if (orderDetails?.commission_amount && orderDetails.commission_amount > 0) {
+            await supabase.rpc('credit_agent_wallet', {
+              p_agent_id:       order.agent_id,
+              p_amount:         orderDetails.commission_amount,
+              p_reference_id:   payment.order_id,
+              p_reference_type: 'ORDER',
+              p_description:    `Komisi order ${orderDetails.order_number ?? ''} telah dikreditkan`,
+            });
+          }
+        }
       }
     }
 

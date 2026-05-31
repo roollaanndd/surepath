@@ -169,7 +169,8 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
         adminFee: selectedProvider?.adminFee || 0,
         stampDuty: STAMP_DUTY,
         netPremium,
-        totalPayable: netPremium + (selectedProvider?.adminFee || 0) + STAMP_DUTY
+        applicationFee: 5000,
+        totalPayable: netPremium + (selectedProvider?.adminFee || 0) + STAMP_DUTY + 5000
     };
   }, [vehicle, coverage, selectedProvider]);
 

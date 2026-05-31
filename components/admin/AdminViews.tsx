@@ -10,7 +10,8 @@ import {
 
   Car, Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
-  UserPlus, ChevronDown, Pencil, Shield
+  UserPlus, ChevronDown, Pencil, Shield,
+  X, Clock, AlertCircle, Send, Banknote
 } from 'lucide-react';
 import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
 import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
@@ -18,6 +19,8 @@ import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   supabase,
   type SpUser, type SpClaim,
+  getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
+  type Withdrawal,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
@@ -1650,4 +1653,254 @@ export const PaymentsAdminView = () => {
             </div>
         </div>
     );
+};
+
+export const WithdrawalsAdminView: React.FC = () => {
+  const [withdrawals, setWithdrawals] = useState<Array<Withdrawal & { agent_name?: string; agent_email?: string }>>([]);
+  const [filter, setFilter] = useState<string>('ALL');
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ id: string; agentName: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const adminUser = JSON.parse(localStorage.getItem('sp_admin_user') || '{}');
+
+  const load = async () => {
+    setLoading(true);
+    const data = await getAdminWithdrawals(200);
+    setWithdrawals(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = filter === 'ALL' ? withdrawals
+    : withdrawals.filter(w => w.status === filter || (filter === 'PENDING' && w.status.startsWith('PENDING')));
+
+  const IDR = (n: number) => 'Rp ' + Math.abs(n).toLocaleString('id-ID');
+
+  const approvalLevelForUser = (role: string): 1 | 2 | 3 | null => {
+    if (role === 'MASTER_ADMIN' || role === 'FINANCE_DIRECTOR') return 3;
+    if (role === 'FINANCE_MANAGER') return 2;
+    if (role === 'FINANCE' || role === 'ADMIN') return 1;
+    return null;
+  };
+
+  const canApprove = (wd: Withdrawal & { agent_name?: string }) => {
+    const level = approvalLevelForUser(adminUser.role);
+    if (!level) return false;
+    if (wd.status === 'PENDING_L1' && level >= 1) return true;
+    if (wd.status === 'PENDING_L2' && level >= 2) return true;
+    if (wd.status === 'PENDING_L3' && level >= 3) return true;
+    return false;
+  };
+
+  const handleApprove = async (wd: Withdrawal & { agent_name?: string }) => {
+    const level = approvalLevelForUser(adminUser.role);
+    if (!level) return;
+    setActionLoading(wd.id);
+    const res = await approveWithdrawal(wd.id, level, adminUser.id);
+    if (res.success) {
+      const nextStatus = level === 1 && wd.amount < 10_000_000 ? 'APPROVED'
+        : level === 2 && wd.amount < 25_000_000 ? 'APPROVED'
+        : level === 3 ? 'APPROVED' : null;
+
+      if (nextStatus === 'APPROVED' && !wd.scheduled_disburse_at) {
+        await triggerDisbursement(wd.id);
+      }
+      await load();
+    }
+    setActionLoading(null);
+  };
+
+  const handleReject = async () => {
+    if (!rejectModal || !rejectReason.trim()) return;
+    setActionLoading(rejectModal.id);
+    await rejectWithdrawal(rejectModal.id, adminUser.id, rejectReason.trim());
+    setRejectModal(null);
+    setRejectReason('');
+    setActionLoading(null);
+    await load();
+  };
+
+  const handleDisburse = async (id: string) => {
+    setActionLoading(id);
+    await triggerDisbursement(id);
+    await load();
+    setActionLoading(null);
+  };
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, { cls: string; label: string }> = {
+      PENDING_L1:  { cls: 'bg-amber-500/10 text-amber-500 border-amber-500/20',  label: 'Menunggu L1' },
+      PENDING_L2:  { cls: 'bg-orange-500/10 text-orange-500 border-orange-500/20', label: 'Menunggu L2' },
+      PENDING_L3:  { cls: 'bg-red-500/10 text-red-400 border-red-500/20',        label: 'Menunggu L3' },
+      APPROVED:    { cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20',      label: 'Disetujui' },
+      PROCESSING:  { cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', label: 'Diproses' },
+      DISBURSED:   { cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: 'Cair' },
+      FAILED:      { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Gagal' },
+      REJECTED:    { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Ditolak' },
+      CANCELLED:   { cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20',      label: 'Dibatalkan' },
+    };
+    return map[status] ?? { cls: 'bg-gray-500/10 text-gray-400', label: status };
+  };
+
+  const totalPending = withdrawals.filter(w => w.status.startsWith('PENDING')).reduce((s, w) => s + w.amount, 0);
+  const totalDisbursed = withdrawals.filter(w => w.status === 'DISBURSED').reduce((s, w) => s + w.net_amount, 0);
+  const countPending = withdrawals.filter(w => w.status.startsWith('PENDING')).length;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-black uppercase tracking-tight">Penarikan Dana Agen</h2>
+        <button onClick={load} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all active:scale-95">
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        </button>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Antrian Pending', value: countPending.toString(), sub: IDR(totalPending), color: 'text-amber-400' },
+          { label: 'Total Dicairkan', value: IDR(totalDisbursed), sub: `${withdrawals.filter(w => w.status === 'DISBURSED').length} transaksi`, color: 'text-emerald-400' },
+          { label: 'Total Permintaan', value: withdrawals.length.toString(), sub: 'Semua waktu', color: 'text-blue-400' },
+        ].map(k => (
+          <div key={k.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-1">
+            <p className="text-[0.5rem] font-black uppercase tracking-widest text-gray-500">{k.label}</p>
+            <p className={`text-lg font-black ${k.color}`}>{k.value}</p>
+            <p className="text-[0.5rem] text-gray-600">{k.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-2 flex-wrap">
+        {['ALL','PENDING','APPROVED','DISBURSED','REJECTED'].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          >
+            {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak'}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="space-y-3">
+        {loading && <div className="text-center py-8 text-gray-500 text-sm">Memuat...</div>}
+        {!loading && filtered.length === 0 && <div className="text-center py-8 text-gray-500 text-sm">Tidak ada data</div>}
+        {filtered.map(wd => {
+          const { cls, label } = statusBadge(wd.status);
+          const busy = actionLoading === wd.id;
+          return (
+            <div key={wd.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-black text-white">{wd.agent_name ?? 'Unknown Agent'}</p>
+                  <p className="text-[0.5rem] text-gray-500">{wd.agent_email}</p>
+                  <p className="text-[0.5rem] text-gray-500 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
+                </div>
+                <span className={`text-[0.45rem] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border whitespace-nowrap ${cls}`}>{label}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3 bg-white/5 rounded-xl p-3">
+                <div>
+                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diminta</p>
+                  <p className="text-xs font-black text-white">{IDR(wd.amount)}</p>
+                </div>
+                <div>
+                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Biaya Xendit</p>
+                  <p className="text-xs font-black text-amber-400">-{IDR(wd.xendit_fee)}</p>
+                </div>
+                <div>
+                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diterima Agen</p>
+                  <p className="text-xs font-black text-emerald-400">{IDR(wd.net_amount)}</p>
+                </div>
+              </div>
+              {wd.scheduled_disburse_at && wd.status !== 'DISBURSED' && (
+                <p className="text-[0.5rem] text-amber-400 bg-amber-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <Clock size={10} />
+                  Pencairan dijadwalkan: {new Date(wd.scheduled_disburse_at).toLocaleString('id-ID')} (24 jam delay karena &gt; Rp 25 juta)
+                </p>
+              )}
+              {wd.amount >= 25_000_000 && (
+                <p className="text-[0.5rem] text-red-400 bg-red-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <AlertCircle size={10} />
+                  Di atas Rp 25 juta — memerlukan 3 level persetujuan
+                </p>
+              )}
+              {wd.rejection_reason && (
+                <p className="text-[0.5rem] text-red-400">Alasan ditolak: {wd.rejection_reason}</p>
+              )}
+              <div className="text-[0.45rem] text-gray-600">
+                {wd.l1_approved_at && <span>L1: {new Date(wd.l1_approved_at).toLocaleDateString('id-ID')} · </span>}
+                {wd.l2_approved_at && <span>L2: {new Date(wd.l2_approved_at).toLocaleDateString('id-ID')} · </span>}
+                {wd.l3_approved_at && <span>L3: {new Date(wd.l3_approved_at).toLocaleDateString('id-ID')} · </span>}
+                Dibuat: {new Date(wd.created_at).toLocaleDateString('id-ID')}
+              </div>
+              {/* Action buttons */}
+              <div className="flex gap-2 flex-wrap">
+                {canApprove(wd) && (
+                  <button
+                    onClick={() => handleApprove(wd)}
+                    disabled={busy}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-40"
+                  >
+                    {busy ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
+                    Setujui
+                  </button>
+                )}
+                {(wd.status === 'APPROVED' || (wd.status === 'APPROVED' && wd.scheduled_disburse_at && new Date(wd.scheduled_disburse_at) <= new Date())) && (
+                  <button
+                    onClick={() => handleDisburse(wd.id)}
+                    disabled={busy}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all active:scale-95 disabled:opacity-40"
+                  >
+                    {busy ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />}
+                    Cairkan via Xendit
+                  </button>
+                )}
+                {(wd.status.startsWith('PENDING') || wd.status === 'APPROVED') && (
+                  <button
+                    onClick={() => setRejectModal({ id: wd.id, agentName: wd.agent_name ?? 'Agen' })}
+                    disabled={busy}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-95 disabled:opacity-40"
+                  >
+                    <X size={12} />
+                    Tolak
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Reject modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-black uppercase tracking-tight">Tolak Penarikan</h3>
+            <p className="text-sm text-gray-400">Penarikan dari {rejectModal.agentName} akan dibatalkan dan saldo dikembalikan.</p>
+            <textarea
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-red-500 resize-none"
+              rows={3}
+              placeholder="Alasan penolakan..."
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+            />
+            <div className="flex gap-3">
+              <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 font-black text-xs uppercase tracking-widest">Batal</button>
+              <button
+                onClick={handleReject}
+                disabled={!rejectReason.trim() || actionLoading === rejectModal.id}
+                className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 font-black text-xs uppercase tracking-widest disabled:opacity-40"
+              >
+                Tolak &amp; Kembalikan Dana
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };

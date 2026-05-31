@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, ShieldCheck, Bell, ClipboardList, UserCircle, RefreshCw } from 'lucide-react';
+import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, ShieldCheck, Bell, ClipboardList, UserCircle, RefreshCw, Network, FileEdit } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentCommissions,
@@ -19,6 +19,8 @@ import AgentClaims from './AgentClaims';
 import { AgentNotifications } from './AgentNotifications';
 import AgentProfile from './AgentProfile';
 import RenewalManager from './RenewalManager';
+import AgentNetwork from './AgentNetwork';
+import AgentEndorsements from './AgentEndorsements';
 
 interface Props {
   agent: any;
@@ -33,8 +35,10 @@ const TABS = [
   { id: 'claims',      labelEn: 'Claims',  labelId: 'Klaim',    Icon: ClipboardList },
   { id: 'commission',  labelEn: 'Wallet',  labelId: 'Komisi',   Icon: Wallet },
   { id: 'leaderboard', labelEn: 'Rank',    labelId: 'Peringkat',Icon: Trophy },
-  { id: 'renewals',    labelEn: 'Renewals',labelId: 'Renewal',  Icon: RefreshCw },
-  { id: 'profile',     labelEn: 'Profile', labelId: 'Profil',   Icon: UserCircle },
+  { id: 'renewals',     labelEn: 'Renewals',  labelId: 'Renewal',  Icon: RefreshCw },
+  { id: 'network',      labelEn: 'Network',   labelId: 'Jaringan', Icon: Network },
+  { id: 'endorsements', labelEn: 'Endorse',   labelId: 'Endors',   Icon: FileEdit },
+  { id: 'profile',      labelEn: 'Profile',   labelId: 'Profil',   Icon: UserCircle },
 ];
 
 const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {

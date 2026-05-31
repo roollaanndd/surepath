@@ -22,6 +22,7 @@ import VehiclePricelistAdmin from './VehiclePricelistAdmin';
 import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import AIAdminView from './AIAdminView';
 import AIFinanceView from './AIFinanceView';
+import AnalyticsDashboard from './AnalyticsDashboard';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
@@ -32,6 +33,7 @@ import { SurePathLogo } from '../Navbar';
 const MENU_ITEMS = [
   { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'reports',          label: 'Laporan',             icon: BarChart3,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
+  { id: 'analytics',        label: 'Analytics',           icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
   { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
@@ -302,6 +304,7 @@ const AdminPortal = ({
     switch (activeTab) {
       case 'dashboard':        return <DashboardView />;
       case 'reports':          return <ReportsView />;
+      case 'analytics':        return <AnalyticsDashboard />;
       case 'inventory':        return <InventoryView />;
       case 'transactions':     return <LedgerView />;
       case 'approvals':        return <ApprovalsView />;

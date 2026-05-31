@@ -141,6 +141,27 @@ serve(async (req) => {
           });
         }
 
+        // Send WhatsApp to agent
+        if (order.agent_id) {
+          const { data: agentUser } = await supabase
+            .from('sp_users')
+            .select('phone')
+            .eq('id', order.agent_id)
+            .single();
+
+          if (agentUser?.phone) {
+            const waMsg = `✅ *Pembayaran Diterima*\n\nOrder ${order.order_number ?? ''} untuk ${order.client_name ?? 'klien'} telah dibayar.\nProses review sedang berjalan.\n\nSurePath Insurance`;
+            await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({ phone: agentUser.phone, message: waMsg, event_type: 'PAYMENT_CONFIRMED' }),
+            }).catch(() => {});
+          }
+        }
+
         // Credit agent wallet with commission earned on this order
         if (order.agent_id) {
           const { data: orderDetails } = await supabase

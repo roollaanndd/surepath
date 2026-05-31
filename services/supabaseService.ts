@@ -1639,3 +1639,75 @@ export async function triggerDisbursement(withdrawal_id: string): Promise<{ succ
   if (error) return { success: false, error: error.message };
   return { success: true, ...data };
 }
+
+// ─── Renewal Engine ───────────────────────────────────────────────────────────
+
+export interface SpRenewal {
+  id: string;
+  original_order_id: string;
+  agent_id: string;
+  client_name: string;
+  client_phone?: string;
+  product_name: string;
+  expiry_date: string;
+  reminder_sent_at?: string;
+  renewal_order_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getExpiringOrders(agentId: string, days: number): Promise<SpPolicyOrder[]> {
+  const today = new Date();
+  const future = new Date(today);
+  future.setDate(today.getDate() + days);
+
+  const todayStr  = today.toISOString().split('T')[0];
+  const futureStr = future.toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .eq('agent_id', agentId)
+    .eq('status', 'ISSUED')
+    .gte('end_date', todayStr)
+    .lte('end_date', futureStr)
+    .order('end_date', { ascending: true });
+
+  if (error) { console.error('getExpiringOrders:', error); return []; }
+  return (data ?? []) as SpPolicyOrder[];
+}
+
+export async function upsertRenewal(data: {
+  original_order_id: string;
+  agent_id: string;
+  client_name: string;
+  client_phone?: string;
+  product_name: string;
+  expiry_date: string;
+}): Promise<void> {
+  const { error } = await supabase
+    .from('sp_renewals')
+    .upsert(
+      { ...data, updated_at: new Date().toISOString() },
+      { onConflict: 'original_order_id' },
+    );
+  if (error) console.error('upsertRenewal:', error);
+}
+
+export async function markRenewalReminderSent(originalOrderId: string): Promise<void> {
+  const { error } = await supabase
+    .from('sp_renewals')
+    .update({ reminder_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('original_order_id', originalOrderId);
+  if (error) console.error('markRenewalReminderSent:', error);
+}
+
+export async function getRenewalsByAgent(agentId: string): Promise<SpRenewal[]> {
+  const { data, error } = await supabase
+    .from('sp_renewals')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('expiry_date', { ascending: true });
+  if (error) { console.error('getRenewalsByAgent:', error); return []; }
+  return (data ?? []) as SpRenewal[];
+}

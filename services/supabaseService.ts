@@ -1825,3 +1825,225 @@ export async function reviewEndorsement(
   if (error) { console.error('reviewEndorsement:', error); return false; }
   return true;
 }
+
+// ─── B2B Submissions & Quotes ─────────────────────────────────────────────────
+
+export interface SpB2BSubmission {
+  id: string;
+  client_id: string;
+  product_type: 'FLEET_MV' | 'BONDING' | 'GROUP_HEALTH';
+  company_name: string;
+  pic_name?: string;
+  pic_phone?: string;
+  pic_email?: string;
+  submission_data: Record<string, any>;
+  status: 'SUBMITTED' | 'REVIEWING' | 'QUOTED' | 'ACCEPTED' | 'REJECTED';
+  admin_notes?: string;
+  insurer_feedback?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpB2BQuote {
+  id: string;
+  submission_id: string;
+  client_id: string;
+  insurer_name?: string;
+  premium_amount: number;
+  coverage_details: Record<string, any>;
+  valid_until?: string;
+  terms?: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getB2BSubmissions(clientId: string): Promise<SpB2BSubmission[]> {
+  const { data, error } = await supabase
+    .from('sp_b2b_submissions')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getB2BSubmissions:', error); return []; }
+  return (data ?? []) as SpB2BSubmission[];
+}
+
+export async function getAllB2BSubmissions(): Promise<SpB2BSubmission[]> {
+  const { data, error } = await supabase
+    .from('sp_b2b_submissions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllB2BSubmissions:', error); return []; }
+  return (data ?? []) as SpB2BSubmission[];
+}
+
+export async function updateB2BSubmissionStatus(
+  id: string,
+  status: string,
+  notes?: string,
+): Promise<boolean> {
+  const payload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (notes !== undefined) payload.admin_notes = notes;
+  const { error } = await supabase.from('sp_b2b_submissions').update(payload).eq('id', id);
+  if (error) { console.error('updateB2BSubmissionStatus:', error); return false; }
+  return true;
+}
+
+export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
+  const { data, error } = await supabase
+    .from('sp_b2b_quotes')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getB2BQuotes:', error); return []; }
+  return (data ?? []) as SpB2BQuote[];
+}
+
+export async function createB2BQuote(
+  data: Omit<SpB2BQuote, 'id' | 'created_at' | 'updated_at'>,
+): Promise<boolean> {
+  const { error } = await supabase.from('sp_b2b_quotes').insert(data);
+  if (error) { console.error('createB2BQuote:', error); return false; }
+  return true;
+}
+
+// ─── Life Insurance Applications ──────────────────────────────────────────────
+
+export interface SpLifeApplication {
+  id: string;
+  order_number: string;
+  agent_id: string;
+  client_name: string;
+  client_dob: string;
+  client_gender: 'M' | 'F';
+  client_phone: string;
+  client_email: string;
+  smoker: boolean;
+  product_code: 'TERM_LIFE' | 'WHOLE_LIFE' | 'UNIT_LINK' | 'ENDOWMENT';
+  sum_assured: number;
+  payment_frequency: 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUAL';
+  policy_term_years: number;
+  riders: string[];
+  health_declaration: Record<string, boolean>;
+  beneficiary_name: string;
+  beneficiary_relation: string;
+  beneficiary_percentage: number;
+  indicative_premium: number;
+  status: string;
+  policy_number?: string;
+  insurer_notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createLifeApplication(
+  data: Omit<SpLifeApplication, 'id' | 'order_number' | 'created_at' | 'updated_at'>,
+): Promise<SpLifeApplication | null> {
+  const { data: result, error } = await supabase
+    .from('sp_life_applications')
+    .insert({ ...data, order_number: `LIFE-${Date.now().toString(36).toUpperCase()}`, status: data.status ?? 'SUBMITTED' })
+    .select()
+    .single();
+  if (error) { console.error('createLifeApplication:', error); return null; }
+  return result as SpLifeApplication;
+}
+
+export async function getAgentLifeApplications(agentId: string): Promise<SpLifeApplication[]> {
+  const { data, error } = await supabase
+    .from('sp_life_applications')
+    .select('*')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAgentLifeApplications:', error); return []; }
+  return (data ?? []) as SpLifeApplication[];
+}
+
+export async function getAllLifeApplications(): Promise<SpLifeApplication[]> {
+  const { data, error } = await supabase
+    .from('sp_life_applications')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllLifeApplications:', error); return []; }
+  return (data ?? []) as SpLifeApplication[];
+}
+
+export async function updateLifeApplicationStatus(
+  id: string,
+  status: string,
+  notes?: string,
+  policyNumber?: string,
+): Promise<boolean> {
+  const payload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (notes !== undefined) payload.insurer_notes = notes;
+  if (policyNumber !== undefined) payload.policy_number = policyNumber;
+  const { error } = await supabase.from('sp_life_applications').update(payload).eq('id', id);
+  if (error) { console.error('updateLifeApplicationStatus:', error); return false; }
+  return true;
+}
+
+export async function createB2BSubmission(
+  data: Omit<SpB2BSubmission, 'id' | 'created_at' | 'updated_at'>
+): Promise<SpB2BSubmission | null> {
+  const { data: row, error } = await supabase
+    .from('sp_b2b_submissions')
+    .insert({ ...data, updated_at: new Date().toISOString() })
+    .select()
+    .single();
+  if (error) { console.error('createB2BSubmission:', error); return null; }
+  return row;
+}
+
+export async function updateB2BQuoteStatus(
+  quoteId: string,
+  status: 'ACCEPTED' | 'REJECTED'
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_b2b_quotes')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', quoteId);
+  if (error) { console.error('updateB2BQuoteStatus:', error); return false; }
+  return true;
+}
+
+export async function uploadB2BDocument(
+  submissionId: string,
+  clientId: string,
+  file: File,
+  docType: string
+): Promise<string | null> {
+  const ext  = file.name.split('.').pop() ?? 'bin';
+  const path = `${clientId}/${submissionId}/${docType}-${Date.now()}.${ext}`;
+
+  const { error: upErr } = await supabase.storage
+    .from('b2b-documents')
+    .upload(path, file, { upsert: true });
+  if (upErr) { console.error('uploadB2BDocument storage:', upErr); return null; }
+
+  const { error: dbErr } = await supabase.from('sp_b2b_documents').insert({
+    submission_id: submissionId,
+    doc_type:      docType,
+    file_name:     file.name,
+    file_path:     path,
+    file_size:     file.size,
+    mime_type:     file.type,
+  });
+  if (dbErr) console.warn('sp_b2b_documents insert:', dbErr);
+
+  return path;
+}
+
+export async function getB2BProfile(clientId: string): Promise<SpUser | null> {
+  return getAgentProfile(clientId);
+}
+
+export async function updateB2BProfile(
+  clientId: string,
+  data: Partial<SpUser>
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_users')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', clientId);
+  if (error) { console.error('updateB2BProfile:', error); return false; }
+  return true;
+}

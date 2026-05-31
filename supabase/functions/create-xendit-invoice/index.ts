@@ -13,15 +13,17 @@ serve(async (req) => {
   try {
     const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')        ?? '';
     const SUPABASE_SERVICE_KEY= Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const APP_URL             = Deno.env.get('APP_URL') ?? 'https://surepath.app';
 
-    // Try env var first, fall back to Vault
-    let XENDIT_SECRET_KEY = Deno.env.get('XENDIT_SECRET_KEY') ?? '';
-    if (!XENDIT_SECRET_KEY && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-      const vaultClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-      const { data } = await vaultClient.rpc('get_app_secret', { secret_name: 'XENDIT_SECRET_KEY' });
-      XENDIT_SECRET_KEY = data ?? '';
-    }
+    // Read config secrets from Vault
+    const vaultClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const [xsk, appUrlRes] = await Promise.all([
+      vaultClient.rpc('get_app_secret', { secret_name: 'XENDIT_SECRET_KEY' }),
+      vaultClient.rpc('get_app_secret', { secret_name: 'APP_URL' }),
+    ]);
+    const APP_URL = Deno.env.get('APP_URL') || appUrlRes.data || 'https://myinsurepath.com';
+
+    // Resolve XENDIT_SECRET_KEY (env var takes priority, then Vault result from above)
+    const XENDIT_SECRET_KEY = Deno.env.get('XENDIT_SECRET_KEY') || xsk.data || '';
 
     if (!XENDIT_SECRET_KEY) {
       return new Response(JSON.stringify({ error: 'XENDIT_SECRET_KEY not configured' }), {

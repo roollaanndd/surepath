@@ -11,10 +11,22 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
-    const XENDIT_WEBHOOK_TOKEN = Deno.env.get('XENDIT_WEBHOOK_TOKEN') ?? '';
     const SUPABASE_URL          = Deno.env.get('SUPABASE_URL')          ?? '';
     const SUPABASE_SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const APP_URL               = Deno.env.get('APP_URL') ?? 'https://surepath.app';
+
+    const supabaseConfig = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // Read secrets from Vault (fall back to env vars for local dev)
+    let XENDIT_WEBHOOK_TOKEN = Deno.env.get('XENDIT_WEBHOOK_TOKEN') ?? '';
+    let APP_URL = Deno.env.get('APP_URL') ?? '';
+    if (!XENDIT_WEBHOOK_TOKEN || !APP_URL) {
+      const [wt, au] = await Promise.all([
+        supabaseConfig.rpc('get_app_secret', { secret_name: 'XENDIT_WEBHOOK_TOKEN' }),
+        supabaseConfig.rpc('get_app_secret', { secret_name: 'APP_URL' }),
+      ]);
+      if (!XENDIT_WEBHOOK_TOKEN) XENDIT_WEBHOOK_TOKEN = wt.data ?? '';
+      if (!APP_URL) APP_URL = au.data ?? 'https://myinsurepath.com';
+    }
 
     // Verify Xendit callback token
     const callbackToken = req.headers.get('x-callback-token') ?? '';
@@ -32,7 +44,7 @@ serve(async (req) => {
       return new Response('Missing external_id', { status: 400, headers: CORS });
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const supabase = supabaseConfig;
 
     // Update sp_payments
     const { data: payment, error: payErr } = await supabase

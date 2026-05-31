@@ -80,8 +80,44 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx]     = useState(0);
-  const onFinishRef = useRef(onFinish);
+  const onFinishRef  = useRef(onFinish);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
+
+  // Animated blobs — identical to the login page AnimatedBackground
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    const blobs = [
+      { size: 520, color: '6,224,0',    phase: 0,   speedX: 0.0007, speedY: 0.0005 },
+      { size: 420, color: '34,197,94',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
+      { size: 360, color: '74,222,128', phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
+      { size: 280, color: '16,185,129', phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
+    ];
+    let frame = 0, animId = 0;
+    const draw = () => {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      blobs.forEach(blob => {
+        const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(frame * blob.speedX + blob.phase)));
+        const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(frame * blob.speedY + blob.phase * 1.4)));
+        const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
+        grd.addColorStop(0,   `rgba(${blob.color},0.18)`);
+        grd.addColorStop(0.5, `rgba(${blob.color},0.06)`);
+        grd.addColorStop(1,   `rgba(${blob.color},0)`);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      });
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
+  }, []);
 
   useEffect(() => {
     ensureSPKeyframes();
@@ -96,29 +132,19 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   }, [lang]);
 
   const G   = COPY[lang];
-  const GRN = '#06e000';
-
-  const PARTICLES: [number, number, string, number][] = [
-    [10,15,'a',3],[80,8,'b',4],[22,85,'a',3.5],[88,70,'b',2.5],[58,48,'a',4],[6,55,'b',3],[93,28,'a',2.8],[38,94,'b',3.5],
-  ];
+  const GRN = 'hsl(119, 99%, 46%)';
 
   return (
     <div
       className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#060a09', fontFamily: "'Sora', sans-serif" }}
+      style={{ background: 'hsl(0, 0%, 8%)', fontFamily: "'Sora', sans-serif" }}
     >
-      {/* Ambient radial glow */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div style={{ width: 560, height: 560, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,224,0,0.07) 0%, transparent 65%)' }} />
-      </div>
-      {/* Subtle grid */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.022]"
-        style={{ backgroundImage: 'linear-gradient(rgba(6,224,0,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(6,224,0,.5) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
-      {/* Floating particles */}
-      {PARTICLES.map(([x, y, t, d], i) => (
-        <div key={i} className="absolute rounded-full pointer-events-none"
-          style={{ left: `${x}%`, top: `${y}%`, width: 3, height: 3, background: `rgba(6,224,0,${0.14 + i * 0.04})`, animation: `sp-float-${t} ${d}s ease-in-out ${i * 0.32}s infinite` }} />
-      ))}
+      {/* Animated canvas blobs — same as login page */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+
+      {/* White grid overlay — same as login page */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.018]"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
 
       <div className="relative z-10 flex flex-col items-center gap-7">
 
@@ -141,19 +167,22 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
               <div style={{ width: 7, height: 7, borderRadius: '50%', background: GRN, boxShadow: `0 0 10px ${GRN}, 0 0 22px rgba(6,224,0,.5)` }} />
             </div>
           ))}
-          {/* Logo tile */}
-          <div className="relative flex items-center justify-center rounded-[2rem] border"
-            style={{ width: 118, height: 118, background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.20)', animation: 'sp-glow 3.2s ease-in-out infinite' }}>
-            <SurePathLogo className="w-20 h-20" />
+          {/* Logo tile — matching login page style */}
+          <div className="relative">
+            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-20" style={{ background: GRN }} />
+            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border"
+              style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)', animation: 'sp-glow 3.2s ease-in-out infinite' }}>
+              <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
+            </div>
           </div>
         </div>
 
-        {/* Brand */}
+        {/* Brand — matching login page typography */}
         <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-          <h1 style={{ fontSize: 'clamp(2.6rem,8vw,3.2rem)', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1 }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff', lineHeight: 1 }}>
             Sure<span style={{ color: GRN }}>Path</span>
           </h1>
-          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.55rem' }}>
+          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
             {G.tagline}
           </p>
         </div>
@@ -165,7 +194,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
             <span style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
           </div>
           <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: 'rgba(255,255,255,0.07)' }}>
-            <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: GRN, boxShadow: `0 0 8px ${GRN}99` }} />
+            <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: GRN, boxShadow: '0 0 8px rgba(6,224,0,0.6)' }} />
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
@@ -186,6 +215,14 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
           ))}
         </div>
 
+      </div>
+
+      {/* Footer — matching login page */}
+      <div className="absolute bottom-8" style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(6,224,0,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        SurePath · Secure Connection
       </div>
     </div>
   );

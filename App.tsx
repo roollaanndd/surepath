@@ -355,7 +355,7 @@ const SESSION_KEY = 'SUREPATH_SESSION';
 
 
 const App = () => {
-  const [isLoaded, setIsLoaded]       = useState(false);
+  const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
@@ -507,7 +507,7 @@ const App = () => {
     setAppMode(false);
   }, []);
 
-  if (!isLoaded) return <SplashScreen onFinish={() => setIsLoaded(true)} lang={lang} setLang={handleSetLang} />;
+  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
 
   const pathname = currentPath;

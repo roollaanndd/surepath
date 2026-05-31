@@ -16,6 +16,7 @@ import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } fr
 import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
+  supabase,
   type SpUser, type SpClaim,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -392,13 +393,30 @@ export const LedgerView = () => {
 };
 
 export const ReportsView = ({ compact }: { compact?: boolean }) => {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [orderData, setOrderData] = useState<Array<{total_premium: number; created_at: string}>>([]);
+    const [commissionData, setCommissionData] = useState<Array<{commission_amount: number; created_at: string}>>([]);
+    const [claimsData, setClaimsData] = useState<Array<{amount_approved: number; created_at: string}>>([]);
+    const [loading, setLoading] = useState(false);
     const [viewType, setViewType] = useState<'daily'|'monthly'|'yearly'>('monthly');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
-        db.transactions.toArray().then(setTransactions);
-    }, []);
+        const load = async () => {
+            setLoading(true);
+            const fromDate = new Date(selectedYear, 0, 1).toISOString();
+            const toDate = new Date(selectedYear + 1, 0, 1).toISOString();
+            const [ordersRes, commissionsRes, claimsRes] = await Promise.all([
+                supabase.from('sp_policy_orders').select('total_premium, created_at').eq('status', 'ISSUED').gte('created_at', fromDate).lt('created_at', toDate),
+                supabase.from('sp_commissions').select('commission_amount, created_at').gte('created_at', fromDate).lt('created_at', toDate),
+                supabase.from('sp_claims').select('amount_approved, created_at').in('status', ['APPROVED', 'PAID']).gte('created_at', fromDate).lt('created_at', toDate),
+            ]);
+            setOrderData((ordersRes.data ?? []) as any[]);
+            setCommissionData((commissionsRes.data ?? []) as any[]);
+            setClaimsData((claimsRes.data ?? []) as any[]);
+            setLoading(false);
+        };
+        load();
+    }, [selectedYear]);
 
     const convert = (val: number) => {
         if(val === 0) return '-';
@@ -408,37 +426,29 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
     const getAggregatedData = () => {
         const result: any[] = [];
         const today = new Date();
-        
+
         if (viewType === 'monthly') {
             for(let i=0; i<12; i++) {
-                const txs = transactions.filter(t => {
-                   const d = new Date(t.date);
-                   return d.getFullYear() === selectedYear && d.getMonth() === i;
-                });
-                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
-                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
-                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
-                result.push({ period: `${MONTHS[i]} ${selectedYear}`, gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+                const gwp = orderData.filter(o => { const d = new Date(o.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
+                const commissions = commissionData.filter(c => { const d = new Date(c.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
+                const claims = claimsData.filter(c => { const d = new Date(c.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
+                result.push({ period: `${MONTHS[i]} ${selectedYear}`, gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
             }
         } else if (viewType === 'yearly') {
-            const currentYear = new Date().getFullYear();
-            const years = [currentYear - 1, currentYear];
-            years.forEach(y => {
-                const txs = transactions.filter(t => new Date(t.date).getFullYear() === y);
-                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
-                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
-                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
-                result.push({ period: `Tahun ${y}`, gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+            [selectedYear - 1, selectedYear].forEach(y => {
+                const gwp = orderData.filter(o => new Date(o.created_at).getFullYear() === y).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
+                const commissions = commissionData.filter(c => new Date(c.created_at).getFullYear() === y).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
+                const claims = claimsData.filter(c => new Date(c.created_at).getFullYear() === y).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
+                result.push({ period: `Tahun ${y}`, gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
             });
         } else if (viewType === 'daily') {
             for(let i=6; i>=0; i--) {
                 const d = new Date(today);
                 d.setDate(today.getDate() - i);
-                const txs = transactions.filter(t => new Date(t.date).toDateString() === d.toDateString());
-                const gwp = txs.filter(t => t.type === 'PAYMENT').reduce((acc, t) => acc + t.amount, 0);
-                const commissions = txs.filter(t => t.type === 'COMMISSION').reduce((acc, t) => acc + t.amount, 0);
-                const claims = txs.filter(t => t.type === 'CLAIM_PAYOUT').reduce((acc, t) => acc + t.amount, 0);
-                result.push({ period: d.toLocaleDateString('id-ID', { day:'numeric', month:'short' }), gwp, commissions, promo: gwp * 0.1, others: gwp * 0.05, claims });
+                const gwp = orderData.filter(o => new Date(o.created_at).toDateString() === d.toDateString()).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
+                const commissions = commissionData.filter(c => new Date(c.created_at).toDateString() === d.toDateString()).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
+                const claims = claimsData.filter(c => new Date(c.created_at).toDateString() === d.toDateString()).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
+                result.push({ period: d.toLocaleDateString('id-ID', { day:'numeric', month:'short' }), gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
             }
         }
         return result;
@@ -506,6 +516,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                     </div>
                     
                     <div className="w-full overflow-x-auto">
+                       {loading && <div className="flex justify-center py-8"><div className="w-7 h-7 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" /></div>}
                        <table className="w-full text-left min-w-[700px]">
                           <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-gray-500 font-black">
                              <tr>
@@ -1488,4 +1499,155 @@ export const UserManagementView = () => {
       )}
     </div>
   );
+};
+
+export const PaymentsAdminView = () => {
+    const [payments, setPayments] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'ALL'|'PAID'|'PENDING'|'EXPIRED'>('ALL');
+
+    const loadPayments = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('sp_payments')
+            .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
+            .order('created_at', { ascending: false })
+            .limit(200);
+        if (!error && data) {
+            setPayments(data.map((p: any) => ({
+                ...p,
+                order_number: p.sp_policy_orders?.order_number,
+                client_name: p.sp_policy_orders?.client_name,
+                product_name: p.sp_policy_orders?.product_name,
+            })));
+        }
+        setLoading(false);
+    }, []);
+
+    useEffect(() => { loadPayments(); }, [loadPayments]);
+
+    const filtered = filter === 'ALL' ? payments : payments.filter(p => p.status === filter);
+    const totalPaid    = payments.filter(p => p.status === 'PAID').reduce((s, p) => s + (p.paid_amount ?? p.amount ?? 0), 0);
+    const totalPending = payments.filter(p => p.status === 'PENDING').reduce((s, p) => s + (p.amount ?? 0), 0);
+    const countExpired = payments.filter(p => p.status === 'EXPIRED').length;
+
+    const statusColor = (s: string) => ({
+        PAID:    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        PENDING: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        EXPIRED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    }[s] ?? 'bg-slate-500/10 text-slate-400 border-slate-500/20');
+
+    const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '-';
+
+    return (
+        <div className="space-y-8 animate-fade-in text-white">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-primary-500">Xendit</span></h2>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Semua transaksi invoice dari gateway Xendit</p>
+                </div>
+                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+                    <RefreshCw size={13} /> Refresh
+                </button>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 space-y-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Total Terbayar</p>
+                    <p className="text-2xl font-black">{formatIDR(totalPaid)}</p>
+                    <p className="text-[9px] text-slate-500">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 space-y-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">Invoice Pending</p>
+                    <p className="text-2xl font-black">{formatIDR(totalPending)}</p>
+                    <p className="text-[9px] text-slate-500">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
+                </div>
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-[2rem] p-6 space-y-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Kadaluarsa</p>
+                    <p className="text-2xl font-black">{countExpired}</p>
+                    <p className="text-[9px] text-slate-500">invoice expired</p>
+                </div>
+            </div>
+
+            {/* Filter pills */}
+            <div className="flex gap-2 flex-wrap">
+                {(['ALL', 'PAID', 'PENDING', 'EXPIRED'] as const).map(f => (
+                    <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
+                            filter === f ? 'bg-primary-500 text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-white border border-white/10'
+                        }`}
+                    >
+                        {f === 'ALL' ? `Semua (${payments.length})` : `${f} (${payments.filter(p => p.status === f).length})`}
+                    </button>
+                ))}
+            </div>
+
+            {/* Table */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden">
+                {loading ? (
+                    <div className="flex justify-center py-16">
+                        <div className="w-8 h-8 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs min-w-[900px]">
+                            <thead>
+                                <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5">
+                                    <th className="px-6 py-4 text-left">Tanggal</th>
+                                    <th className="px-4 py-4 text-left">Order #</th>
+                                    <th className="px-4 py-4 text-left">Klien</th>
+                                    <th className="px-4 py-4 text-left">Produk</th>
+                                    <th className="px-4 py-4 text-right">Jumlah</th>
+                                    <th className="px-4 py-4 text-center">Status</th>
+                                    <th className="px-4 py-4 text-left">Metode</th>
+                                    <th className="px-4 py-4 text-left">Bayar Tgl</th>
+                                    <th className="px-6 py-4 text-left">Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="text-center py-12 text-slate-600 font-bold text-sm">
+                                            Tidak ada data pembayaran.
+                                        </td>
+                                    </tr>
+                                ) : filtered.map(p => (
+                                    <tr key={p.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                                        <td className="px-6 py-3 text-slate-500 whitespace-nowrap text-[10px]">{fmtDate(p.created_at)}</td>
+                                        <td className="px-4 py-3 font-mono text-primary-400 whitespace-nowrap text-[10px]">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
+                                        <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{p.client_name ?? '—'}</td>
+                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{p.product_name ?? '—'}</td>
+                                        <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
+                                                {p.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[10px]">{p.payment_method ?? p.payment_channel ?? '—'}</td>
+                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[10px]">{fmtDate(p.paid_at)}</td>
+                                        <td className="px-6 py-3">
+                                            {p.invoice_url && p.status === 'PENDING' ? (
+                                                <a
+                                                    href={p.invoice_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[9px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1"
+                                                >
+                                                    <Globe size={10} /> Buka
+                                                </a>
+                                            ) : <span className="text-slate-700">—</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };

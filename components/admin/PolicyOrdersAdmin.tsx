@@ -7,7 +7,8 @@ import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
   createReviewToken, getAdminNotifications, markAdminNotificationRead,
-  type SpPolicyOrder, type SpAdminNotification,
+  getPaymentsByOrderIds,
+  type SpPolicyOrder, type SpAdminNotification, type SpPayment,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
@@ -32,9 +33,10 @@ interface DetailProps {
   order: SpPolicyOrder;
   onClose: () => void;
   onStatusChange: (id: string, status: SpPolicyOrder['status'], extras?: any) => void;
+  payment?: SpPayment | null;
 }
 
-const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChange }) => {
+const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChange, payment }) => {
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -274,6 +276,32 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
             </div>
           </div>
 
+          {/* Payment status */}
+          {payment && (
+            <div className={`p-4 rounded-2xl ${
+              payment.status === 'PAID' ? 'bg-emerald-500/10 border border-emerald-500/20' :
+              payment.status === 'PENDING' ? 'bg-amber-500/10 border border-amber-500/20' :
+              'bg-slate-500/10 border border-slate-500/20'
+            }`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Status Pembayaran</p>
+              {payment.status === 'PAID' ? (
+                <div className="space-y-1">
+                  <p className="text-sm font-black text-emerald-400">✓ Premi Telah Dibayar</p>
+                  <p className="text-[10px] text-slate-400">{formatIDR(payment.paid_amount ?? payment.amount)} · {payment.payment_method ?? payment.payment_channel ?? '—'} · {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : ''}</p>
+                </div>
+              ) : payment.status === 'PENDING' && payment.invoice_url ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-amber-400 font-semibold">Invoice aktif — menunggu pembayaran</p>
+                  <a href={payment.invoice_url} target="_blank" rel="noopener noreferrer" className="text-[9px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1">
+                    <Link size={10} /> Buka Invoice Xendit
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 font-semibold">Invoice {payment.status}</p>
+              )}
+            </div>
+          )}
+
           {/* Reviewer notes */}
           {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
             <div>
@@ -384,12 +412,19 @@ const PolicyOrdersAdmin: React.FC = () => {
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
   const [adminNotifs, setAdminNotifs] = useState<SpAdminNotification[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [payments, setPayments] = useState<Record<string, SpPayment>>({});
 
   const load = async () => {
     setLoading(true);
     const [data, notifs] = await Promise.all([getAllOrders(), getAdminNotifications()]);
     setOrders(data);
     setAdminNotifs(notifs);
+    if (data.length > 0) {
+      const pmts = await getPaymentsByOrderIds(data.map(o => o.id));
+      const map: Record<string, SpPayment> = {};
+      pmts.forEach(p => { if (!map[p.order_id]) map[p.order_id] = p; });
+      setPayments(map);
+    }
     setLoading(false);
   };
 
@@ -581,6 +616,12 @@ const PolicyOrdersAdmin: React.FC = () => {
                           AI Score: {order.ai_score}
                         </span>
                       )}
+                      {(() => {
+                        const pmt = payments[order.id];
+                        if (pmt?.status === 'PAID') return <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">✓ Lunas</span>;
+                        if (pmt?.status === 'PENDING') return <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">Invoice Aktif</span>;
+                        return null;
+                      })()}
                       <span className="text-[9px] text-slate-500">
                         {order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID') : ''}
                       </span>
@@ -600,6 +641,7 @@ const PolicyOrdersAdmin: React.FC = () => {
           order={selected}
           onClose={() => setSelected(null)}
           onStatusChange={handleStatusChange}
+          payment={payments[selected.id] ?? null}
         />
       )}
     </div>

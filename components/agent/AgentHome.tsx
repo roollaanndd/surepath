@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   TrendingUp, Users, Shield, Wallet, ChevronRight,
-  UserPlus, FileText, ShoppingCart, Lightbulb, Star
+  UserPlus, FileText, ShoppingCart, Lightbulb, Star, ClipboardList
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -52,28 +52,44 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   };
 
   return (
-    <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
+    <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32">
 
-      {/* Greeting + Trust Score */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">
-              {greeting()}
-            </p>
-            <h1 className="font-black tracking-tighter text-2xl mt-0.5 leading-tight">
-              {agent?.name ?? 'Agent'} 👋
-            </h1>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="px-2.5 py-1 rounded-full bg-primary-500/10 text-primary-500 text-[10px] font-black uppercase tracking-widest">
-                {agent?.agent_code ?? 'SP-AGT-001'}
-              </span>
+      {/* Greeting Hero Banner */}
+      <div className="rounded-[2.5rem] overflow-hidden relative shadow-2xl">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-primary-700" />
+        {/* Subtle grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+        <div className="relative z-10 p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-white/60 text-[0.6rem] font-bold uppercase tracking-[0.2em] mb-2">
+                AGENT PORTAL
+              </p>
+              <p className="text-white/70 text-sm font-bold mb-0.5">
+                {greeting()},
+              </p>
+              <h1 className="text-white font-black tracking-tighter text-2xl leading-tight">
+                {(agent?.name ?? 'Agent').toUpperCase()} 👋
+              </h1>
+              <div className="mt-3">
+                <span className="px-3 py-1.5 rounded-full bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/30">
+                  {agent?.agent_code ?? 'SP-AGT-001'}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-center bg-slate-50 dark:bg-white/5 rounded-2xl px-3 py-2">
-            <Star size={16} className="text-amber-400 mb-0.5" fill="currentColor" />
-            <span className="font-black text-lg leading-none">{agent?.trust_score ?? 85}</span>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Trust</span>
+            {/* Trust Score badge */}
+            <div className="flex flex-col items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
+              <Star size={16} className="text-amber-400 mb-0.5" fill="currentColor" />
+              <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
+              <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
+            </div>
           </div>
         </div>
       </div>
@@ -81,64 +97,64 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Stat Cards 2×2 */}
       <div className="grid grid-cols-2 gap-3">
         {/* GWP This Month */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
+        <div className="bg-gradient-to-br from-primary-500/10 to-primary-500/5 dark:from-primary-500/15 dark:to-primary-500/5 rounded-[1.5rem] shadow-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-primary-500/10 rounded-xl flex items-center justify-center">
+            <div className="w-7 h-7 bg-primary-500/20 rounded-xl flex items-center justify-center">
               <TrendingUp size={14} className="text-primary-500" />
             </div>
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               {t('GWP / Month', 'GWP Bulan Ini')}
             </span>
           </div>
-          <div className="font-black text-base tracking-tight leading-tight">
+          <div className="font-black text-base tracking-tight leading-tight text-slate-900 dark:text-white">
             {formatIDR(stats.totalCommissionMonth * 8)}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('estimated', 'estimasi')}</div>
         </div>
 
         {/* Total Clients */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/15 dark:to-blue-500/5 rounded-[1.5rem] shadow-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-blue-500/10 rounded-xl flex items-center justify-center">
+            <div className="w-7 h-7 bg-blue-500/20 rounded-xl flex items-center justify-center">
               <Users size={14} className="text-blue-500" />
             </div>
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               {t('Clients', 'Klien')}
             </span>
           </div>
-          <div className="font-black text-2xl tracking-tighter leading-tight">
+          <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
             {stats.clientsCount}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('total', 'total')}</div>
         </div>
 
         {/* Active Policies */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/15 dark:to-emerald-500/5 rounded-[1.5rem] shadow-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-emerald-500/10 rounded-xl flex items-center justify-center">
+            <div className="w-7 h-7 bg-emerald-500/20 rounded-xl flex items-center justify-center">
               <Shield size={14} className="text-emerald-500" />
             </div>
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               {t('Policies', 'Polis')}
             </span>
           </div>
-          <div className="font-black text-2xl tracking-tighter leading-tight">
+          <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
             {stats.policiesCount}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('active', 'aktif')}</div>
         </div>
 
         {/* Earned This Month */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
+        <div className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 dark:from-violet-500/15 dark:to-violet-500/5 rounded-[1.5rem] shadow-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-violet-500/10 rounded-xl flex items-center justify-center">
+            <div className="w-7 h-7 bg-violet-500/20 rounded-xl flex items-center justify-center">
               <Wallet size={14} className="text-violet-500" />
             </div>
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               {t('Earned', 'Komisi')}
             </span>
           </div>
-          <div className="font-black text-sm tracking-tight leading-tight">
+          <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
             {formatIDR(stats.totalCommissionMonth)}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('this month', 'bulan ini')}</div>
@@ -187,43 +203,51 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Renewal Alerts */}
       <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
-      {/* Quick Action Buttons */}
-      <div className="grid grid-cols-3 gap-3">
-        <button
-          onClick={() => onNavigate('clients')}
-          className="flex flex-col items-center gap-2 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 hover:border-primary-500/30 active:scale-95 transition-all"
-        >
-          <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center">
-            <UserPlus size={18} className="text-primary-500" />
+      {/* Quick Action Buttons — 4-col grid matching customer portal style */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          {
+            tab: 'clients',
+            label: t('Add Client', 'Tambah Klien'),
+            icon: UserPlus,
+            color: 'text-primary-500',
+            bg: 'bg-primary-500/10',
+          },
+          {
+            tab: 'quotes',
+            label: t('New Quote', 'Buat Kuotasi'),
+            icon: FileText,
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/10',
+          },
+          {
+            tab: 'quotes',
+            label: t('Buy', 'Beli'),
+            icon: ShoppingCart,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/10',
+          },
+          {
+            tab: 'orders',
+            label: t('Orders', 'Pesanan'),
+            icon: ClipboardList,
+            color: 'text-violet-500',
+            bg: 'bg-violet-500/10',
+          },
+        ].map((action) => (
+          <div
+            key={`${action.tab}-${action.label}`}
+            onClick={() => onNavigate(action.tab)}
+            className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-all"
+          >
+            <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300`}>
+              <action.icon size={24} strokeWidth={2.5} />
+            </div>
+            <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight">
+              {action.label}
+            </span>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight">
-            {t('Add Client', 'Tambah Klien')}
-          </span>
-        </button>
-
-        <button
-          onClick={() => onNavigate('quotes')}
-          className="flex flex-col items-center gap-2 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 hover:border-blue-500/30 active:scale-95 transition-all"
-        >
-          <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-            <FileText size={18} className="text-blue-500" />
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight">
-            {t('New Quote', 'Buat Kuotasi')}
-          </span>
-        </button>
-
-        <button
-          onClick={() => onNavigate('quotes')}
-          className="flex flex-col items-center gap-2 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 hover:border-emerald-500/30 active:scale-95 transition-all"
-        >
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
-            <ShoppingCart size={18} className="text-emerald-500" />
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight">
-            {t('Buy for Client', 'Beli untuk Klien')}
-          </span>
-        </button>
+        ))}
       </div>
 
       {/* Recent Commissions */}
@@ -290,8 +314,6 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
       </div>
 
-      {/* Bottom spacer */}
-      <div className="h-4" />
     </div>
   );
 };

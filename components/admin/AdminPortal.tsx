@@ -5,12 +5,12 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
   SecurityView, LedgerView, ReportsView, AgentManagementView,
-  ClaimsAdminView, UserManagementView,
+  ClaimsAdminView, UserManagementView, PaymentsAdminView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
@@ -41,6 +41,7 @@ const MENU_ITEMS = [
   { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -311,6 +312,7 @@ const AdminPortal = ({
       case 'insurers':         return <InsurerAdmin />;
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;
+      case 'payments':         return <PaymentsAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;

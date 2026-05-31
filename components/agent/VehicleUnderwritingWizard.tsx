@@ -1012,6 +1012,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <div className="flex flex-col gap-3">
               {availableProducts.map(p => {
                 const selected = selectedInsurerProduct?.id === p.id;
+                const breakdown = sumInsured > 0 ? calcPremium(vehicleType, coverageType, sumInsured, zone, addons) : null;
+                const estCoins = breakdown ? Math.floor(breakdown.total * (p.coin_rate ?? 0.05) / 1000) : null;
+                const estComm = breakdown ? Math.round(breakdown.total * p.base_commission_rate) : null;
                 return (
                   <button
                     key={p.id}
@@ -1023,11 +1026,25 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                         : 'border-slate-200 dark:border-white/10 hover:border-primary-300'
                     }`}
                   >
-                    <p className={`font-black text-sm ${selected ? 'text-primary-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                    <p className={`font-black text-sm mb-2 ${selected ? 'text-primary-500' : 'text-slate-700 dark:text-slate-200'}`}>
                       {p.insurer_name ?? p.insurer_code}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Komisi {(p.base_commission_rate * 100).toFixed(1)}% · Maks diskon {(p.max_discount_rate * 100).toFixed(1)}%
+                    {estComm !== null && estCoins !== null ? (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                          Komisi: {formatIDR(estComm)} ({(p.base_commission_rate * 100).toFixed(1)}%)
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                          🪙 {estCoins.toLocaleString()} koin ≈ {formatIDR(estCoins * 1000)}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mb-1">
+                        Komisi {(p.base_commission_rate * 100).toFixed(1)}%
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-400">
+                      Maks diskon {(p.max_discount_rate * 100).toFixed(1)}%
                       {p.max_vehicle_age_years ? ` · Maks usia ${p.max_vehicle_age_years} thn` : ''}
                     </p>
                   </button>

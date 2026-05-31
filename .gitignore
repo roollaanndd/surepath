@@ -25,7 +25,7 @@ dist-ssr
 *.sw?
 .claude/
 
-# Android signing keystore (never commit)
+# Android keystores and credentials — never commit
 *.jks
+*.jks.b64
 *.keystore
-surepath-release.jks.b64

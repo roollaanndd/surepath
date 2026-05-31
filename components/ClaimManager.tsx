@@ -5,6 +5,7 @@ import { db, Claim } from '../db';
 import { SmartProcessingView } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
+import { submitClaim } from '../services/supabaseService';
 
 const formatIDR = (num: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -24,7 +25,7 @@ interface ReportForm {
   thirdPartyInvolved: boolean;
 }
 
-const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Language }) => {
+const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onComplete: () => void, lang: Language, currentUser?: any }) => {
   const [claimType, setClaimType] = useState<'AUTO' | 'HEALTH' | null>(null);
   const [step, setStep] = useState<'select' | 'upload' | 'analyzing' | 'result' | 'reporting' | 'success'>('select');
   const [claimResult, setClaimResult] = useState<ClaimAnalysisData | null>(null);
@@ -48,12 +49,15 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
 
 
   useEffect(() => {
-    const savedSession = localStorage.getItem('SUREPATH_SESSION');
-    if (savedSession) setCurrentUser(JSON.parse(savedSession));
-
+    if (currentUserProp) {
+      setCurrentUser(currentUserProp);
+    } else {
+      const savedSession = localStorage.getItem('SUREPATH_SESSION');
+      if (savedSession) setCurrentUser(JSON.parse(savedSession));
+    }
     const draft = localStorage.getItem(DRAFT_KEY);
     if (draft) setHasDraft(true);
-  }, []);
+  }, [currentUserProp]);
 
   useEffect(() => {
     if (step !== 'success' && step !== 'select') {
@@ -152,8 +156,22 @@ const ClaimManager = ({ onComplete, lang }: { onComplete: () => void, lang: Lang
         };
 
         await db.claims.add(newClaim);
-        localStorage.removeItem(DRAFT_KEY); 
-        
+        localStorage.removeItem(DRAFT_KEY);
+
+        // Sync to Supabase for admin visibility
+        submitClaim({
+          user_id: currentUser?.id,
+          client_name: currentUser?.name ?? reportForm.contactInfo,
+          policy_number: reportForm.policyNumber,
+          product_type: claimType === 'AUTO' ? 'CAR' : 'HEALTH',
+          date: reportForm.date,
+          location: reportForm.location,
+          chronology: reportForm.chronology,
+          status: 'SUBMITTED',
+          amount_estimated: amount,
+          photos: [photoBase64],
+        }).catch(() => {});
+
         setTimeout(() => {
             setIsSubmitting(false);
             setStep('success');

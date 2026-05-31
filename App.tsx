@@ -366,6 +366,12 @@ const App = () => {
       ? window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || false
       : false
   );
+  // True while we're waiting for a Supabase PKCE/implicit OAuth callback to resolve.
+  // Prevents the landing page flashing before the session is established.
+  const [oauthLoading, setOauthLoading] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.search.includes('code=') || window.location.hash.includes('access_token=');
+  });
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang]           = useState<Language>(detectLang);
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
@@ -429,6 +435,7 @@ const App = () => {
         const user = JSON.parse(saved);
         setCurrentUser(user);
         setAppMode(true);
+        setOauthLoading(false);
       } catch {
         localStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_KEY);
@@ -443,9 +450,14 @@ const App = () => {
       const buildAndLogin = async (u: any) => {
         if (resolved) return;
         resolved = true;
+        const [byId, byEmail] = await Promise.allSettled([
+          getAgentProfile(u.id),
+          getAgentByEmail(u.email!),
+        ]);
         const profile =
-          (await getAgentProfile(u.id).catch(() => null)) ??
-          (await getAgentByEmail(u.email!).catch(() => null));
+          (byId.status === 'fulfilled' ? byId.value : null) ??
+          (byEmail.status === 'fulfilled' ? byEmail.value : null);
+        setOauthLoading(false);
         const userObj = profile
           ? {
               id:         profile.id,
@@ -509,6 +521,7 @@ const App = () => {
   }, []);
 
   if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} />;
+  if (oauthLoading && !currentUser) return <PortalLoader />;
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
 
   const pathname = currentPath;
@@ -558,7 +571,7 @@ const App = () => {
     );
   }
 
-  const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN];
+  const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
   // Dedicated /admin login page
   if ((pathname === '/admin' || pathname.startsWith('/admin/')) && !currentUser) {

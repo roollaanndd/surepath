@@ -64,23 +64,9 @@ const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.
 const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
+  // All hooks must come before any conditional return (Rules of Hooks)
   const [quoteTab, setQuoteTab] = useState<QuoteTab>('new');
   const [vehicleWizardType, setVehicleWizardType] = useState<'CAR' | 'MOTORCYCLE' | null>(null);
-
-  // Route OJK products to full underwriting wizard
-  if (vehicleWizardType) {
-    return (
-      <VehicleUnderwritingWizard
-        agentId={agentId}
-        agent={agent}
-        clients={clients}
-        lang={lang}
-        initialVehicleType={vehicleWizardType}
-        onBack={() => setVehicleWizardType(null)}
-        onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
-      />
-    );
-  }
 
   const [step, setStep] = useState<Step>('client');
   const [clientMode, setClientMode] = useState<'select' | 'onetime'>('select');
@@ -97,6 +83,21 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [converting, setConverting] = useState(false);
   const [savedQuote, setSavedQuote] = useState<SpQuote | null>(null);
   const [createdPolicy, setCreatedPolicy] = useState<SpPolicy | null>(null);
+
+  // Route OJK products to full underwriting wizard
+  if (vehicleWizardType) {
+    return (
+      <VehicleUnderwritingWizard
+        agentId={agentId}
+        agent={agent}
+        clients={clients}
+        lang={lang}
+        initialVehicleType={vehicleWizardType}
+        onBack={() => setVehicleWizardType(null)}
+        onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
+      />
+    );
+  }
 
   const clientName = clientMode === 'select'
     ? (clients.find(c => c.id === selectedClientId)?.name ?? '')

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Home, ShoppingBag, Zap, History, UserCircle,
   Sun, Moon, LogOut, ShieldCheck, Bell,
-  Car, Plane, Lightbulb, Bot
+  Car, Plane, Lightbulb, Bot, FileText, AlertCircle
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
 import PortalHero from '../PortalHero';
 import ClaimManager from '../ClaimManager';
 import UserProfile from '../UserProfile';
-import AgentsWallet from '../AgentsWallet';
+import { formatIDR } from '../car-wizard/WizardUI';
 import CarInsuranceWizard from '../CarInsuranceWizard';
 import TravelInsuranceWizard from '../TravelInsuranceWizard';
 import PAInsuranceWizard from '../PAInsuranceWizard';
@@ -43,6 +43,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [activePage, setActivePage] = useState('home');
   const [darkMode, setDarkMode] = useState(false);
   const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
+  const [customerPolicies, setCustomerPolicies] = useState<Policy[]>([]);
+  const [customerClaims, setCustomerClaims] = useState<import('../../db').Claim[]>([]);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -53,8 +55,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
     if (currentUser?.id) {
       db.policies.where('userId').equals(currentUser.id).toArray()
         .then(res => {
-          if (res.length > 0) setLatestPolicy(res.sort((a, b) => b.id! - a.id!)[0]);
+          const sorted = res.sort((a, b) => b.id! - a.id!);
+          if (sorted.length > 0) setLatestPolicy(sorted[0]);
+          setCustomerPolicies(sorted);
         })
+        .catch(() => {});
+      db.claims.where('userId').equals(currentUser.id).toArray()
+        .then(res => setCustomerClaims(res.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())))
         .catch(() => {});
     }
   }, [currentUser?.id]);
@@ -236,14 +243,68 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'claim':
         return (
           <PageTransition>
-            <ClaimManager onComplete={() => navigate('home')} lang={lang} />
+            <ClaimManager onComplete={() => navigate('home')} lang={lang} currentUser={currentUser} />
           </PageTransition>
         );
 
       case 'history':
         return (
           <PageTransition>
-            <AgentsWallet lang={lang} />
+            <div className="space-y-6 pb-32">
+              <h2 className="text-3xl font-black uppercase tracking-tighter">{t('My History', 'Riwayat Saya')}</h2>
+
+              {/* Policies */}
+              <div className="space-y-3">
+                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={12} />{t('Active Policies', 'Polis Aktif')}</p>
+                {customerPolicies.length === 0 ? (
+                  <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 text-center text-slate-400 text-sm font-bold">
+                    {t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}
+                  </div>
+                ) : customerPolicies.map((p, i) => (
+                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-2xl bg-primary-500/10 flex items-center justify-center">
+                        {p.type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{p.policyNumber}</p>
+                        <p className="text-xs text-slate-400 font-medium">{p.type} · {t('Expires', 'Berakhir')} {new Date(p.endDate).toLocaleDateString('id-ID')}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-emerald-500">{formatIDR(p.premium)}</p>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Claims */}
+              <div className="space-y-3">
+                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><AlertCircle size={12} />{t('My Claims', 'Klaim Saya')}</p>
+                {customerClaims.length === 0 ? (
+                  <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 text-center text-slate-400 text-sm font-bold">
+                    {t('No claims submitted.', 'Belum ada klaim.')}
+                  </div>
+                ) : customerClaims.map((c, i) => (
+                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-2xl bg-rose-500/10 flex items-center justify-center">
+                        <AlertCircle size={20} className="text-rose-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{c.policyNumber || t('Claim', 'Klaim')}</p>
+                        <p className="text-xs text-slate-400 font-medium">{new Date(c.createdAt).toLocaleDateString('id-ID')} · {c.location}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-rose-500">{formatIDR(c.amountEstimated)}</p>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : c.status === 'SUBMITTED' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{c.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </PageTransition>
         );
 

@@ -321,6 +321,7 @@ const AdminPortal = ({
       case 'commission_ledger':return <CommissionLedger />;
       case 'payments':         return <PaymentsAdminView />;
       case 'withdrawals':      return <WithdrawalsAdminView />;
+      case 'endorsements':     return <EndorsementsAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;

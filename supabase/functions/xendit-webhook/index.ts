@@ -178,6 +178,25 @@ serve(async (req) => {
               p_reference_type: 'ORDER',
               p_description:    `Komisi order ${orderDetails.order_number ?? ''} telah dikreditkan`,
             });
+
+            // Credit override commission to upline (3% of commission)
+            const { data: agentData } = await supabase
+              .from('sp_users')
+              .select('upline_id')
+              .eq('id', order.agent_id)
+              .single();
+
+            if (agentData?.upline_id) {
+              const overrideAmount = Math.round(orderDetails.commission_amount * 0.03);
+              if (overrideAmount > 0) {
+                await supabase.rpc('credit_override_commission', {
+                  p_upline_id:   agentData.upline_id,
+                  p_amount:      overrideAmount,
+                  p_reference_id: payment.order_id,
+                  p_description: `Override komisi dari agen downline - order ${orderDetails.order_number ?? ''}`,
+                });
+              }
+            }
           }
         }
       }

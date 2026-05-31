@@ -336,50 +336,5 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 
-    <!-- Source protection -->
-    <script>
-      (function() {
-        // Disable right-click context menu
-        document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, true);
-
-        // Disable common devtools keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-          var k = e.key || e.keyCode;
-          // F12
-          if (k === 'F12' || k === 123) { e.preventDefault(); e.stopPropagation(); return false; }
-          // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
-          if (e.ctrlKey && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) { e.preventDefault(); return false; }
-          // Ctrl+U (view source)
-          if (e.ctrlKey && (k === 'U' || k === 'u')) { e.preventDefault(); return false; }
-          // Ctrl+S (save page)
-          if (e.ctrlKey && (k === 'S' || k === 's')) { e.preventDefault(); return false; }
-        }, true);
-
-        // Disable text selection on non-input elements (optional hardening)
-        document.addEventListener('selectstart', function(e) {
-          if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-          // allow selection inside the app UI
-        });
-
-        // DevTools open detection — blur page content when open
-        var devOpen = false;
-        var threshold = 160;
-        var checkDevTools = function() {
-          var widthDiff = window.outerWidth - window.innerWidth > threshold;
-          var heightDiff = window.outerHeight - window.innerHeight > threshold;
-          if ((widthDiff || heightDiff) && !devOpen) {
-            devOpen = true;
-            document.body.style.filter = 'blur(8px)';
-            document.body.style.pointerEvents = 'none';
-          } else if (!widthDiff && !heightDiff && devOpen) {
-            devOpen = false;
-            document.body.style.filter = '';
-            document.body.style.pointerEvents = '';
-          }
-        };
-        setInterval(checkDevTools, 1000);
-        window.addEventListener('resize', checkDevTools);
-      })();
-    </script>
   </body>
 </html>

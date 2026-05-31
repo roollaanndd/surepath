@@ -1284,6 +1284,37 @@ export async function submitInsurerReview(
   ]);
   if (tokenRes.error) { console.error('submitInsurerReview (token):', tokenRes.error); return false; }
   if (orderRes.error) { console.error('submitInsurerReview (order):', orderRes.error); return false; }
+
+  // Fetch order details to notify agent and admin
+  const { data: order } = await supabase
+    .from('sp_policy_orders')
+    .select('agent_id, order_number, client_name')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  const label = action === 'APPROVED' ? 'Disetujui' : 'Ditolak';
+  const orderRef = order?.order_number ?? orderId;
+  const clientName = order?.client_name ?? 'Nasabah';
+
+  if (order?.agent_id) {
+    await supabase.from('sp_notifications').insert({
+      agent_id: order.agent_id,
+      type: `POLICY_${action}`,
+      title: `Polis ${label}: ${orderRef}`,
+      body: `Pengajuan polis ${clientName} (${orderRef}) telah ${label.toLowerCase()} oleh penanggung.${notes ? ` Catatan: ${notes}` : ''}`,
+      order_id: orderId,
+      read: false,
+    });
+  }
+
+  await supabase.from('sp_admin_notifications').insert({
+    type: `POLICY_${action}`,
+    title: `Polis ${label}: ${orderRef}`,
+    body: `Penanggung telah ${label.toLowerCase()} pengajuan polis ${clientName} (${orderRef}).${notes ? ` Catatan: ${notes}` : ''}`,
+    order_id: orderId,
+    read: false,
+  });
+
   return true;
 }
 

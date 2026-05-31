@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Car, X, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, Sparkles } from 'lucide-react';
+import { Car, X, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, Sparkles, ExternalLink } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
 import { InsuranceType, Language } from '../types';
-import { db, Policy } from '../db';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
-import { getVehicleMarketValue } from '../services/supabaseService';
+import { getVehicleMarketValue, createPolicyOrder } from '../services/supabaseService';
+import { createXenditInvoice } from '../services/paymentService';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -38,7 +38,8 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [sortBy, setSortBy] = useState<'RATING' | 'PRICE'>('RATING');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isPayLater, setIsPayLater] = useState(false);
-  const [generatedPolicy, setGeneratedPolicy] = useState<Policy | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState({
     brand: '', model: '', year: 2025, isOther: false,
@@ -139,7 +140,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     const netPremium = grossPremium - discountAmount;
 
     return {
-        baseRate, basicPremium, expansions, tplPremium, paDriverPremium, paPassengerPremium, grossPremium, discountPercent, discountAmount,
+        baseRate, basicPremium, expansions, expansionTotal, tplPremium, paDriverPremium, paPassengerPremium, grossPremium, discountPercent, discountAmount,
         adminFee: selectedProvider?.adminFee || 0,
         stampDuty: STAMP_DUTY,
         netPremium,
@@ -165,80 +166,100 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   };
 
   const handlePaymentResult = async (method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
-    if (!currentUser || !premiumBreakdown || !selectedProvider) return;
+    if (!premiumBreakdown || !selectedProvider) return;
+    setLoading(true);
     try {
-      const isManualPending = survey.verdict === 'MANUAL_REQUIRED' || survey.manualRequestStatus === 'REQUESTED';
-      const status: any = resultStatus === 'PENDING_PAYMENT' ? 'PENDING' : (isManualPending ? 'PENDING' : 'ACTIVE');
-      setIsPayLater(resultStatus === 'PENDING_PAYMENT');
+      const payLaterMode = resultStatus === 'PENDING_PAYMENT';
+      setIsPayLater(payLaterMode);
 
-      const newPolicy: Policy = {
-        userId: currentUser.id,
-        type: 'CAR',
-        status: status,
-        startDate: new Date().toISOString(),
-        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-        premium: premiumBreakdown.totalPayable,
-        providerId: selectedProvider.id,
-        policyNumber: `POL-AUTO-${Date.now().toString().slice(-8)}`,
-        createdAt: new Date().toISOString(),
-        coverageDetails: { 
-            vehicle: { ...vehicle, ...stnkResult }, 
-            coverage, 
-            survey, 
-            kycData,
-            financials: { ...premiumBreakdown, paymentMethod: method, finalStatus: resultStatus } 
-        }
-      };
+      const commissionAmount = Math.round((premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100);
+      const coinReward = Math.round((premiumBreakdown.grossPremium * (selectedProvider.extraCoinsPercent || 0)) / 100);
 
-      const policyId = await db.policies.add(newPolicy);
-      setGeneratedPolicy({ ...newPolicy, id: policyId });
-
-      // 1. Catat Transaksi Pembayaran Premi
-      await db.transactions.add({
-        userId: currentUser.id,
-        type: 'PAYMENT',
-        amount: premiumBreakdown.totalPayable,
-        status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
-        description: `Pembayaran Premi ${newPolicy.policyNumber} (${selectedProvider.name})`,
-        date: new Date().toISOString(),
-        referenceId: policyId.toString()
+      const order = await createPolicyOrder({
+        agent_id: currentUser?.id ?? '',
+        client_id: currentUser?.id,
+        client_name: kycData.name,
+        client_phone: kycData.phone,
+        client_ktp: kycData.ktp,
+        product_code: 'CAR_INSURANCE',
+        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProvider.name}`,
+        vehicle_type: 'CAR',
+        vehicle_details: {
+          make: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          color: vehicle.color,
+          plate: vehicle.plate,
+          chassis: vehicle.vin,
+          engine: vehicle.engine,
+          usage: vehicle.usage,
+          province: vehicle.regionName,
+        },
+        coverage_type: coverage.type,
+        zone: parseInt(vehicle.region),
+        vehicle_category: 1,
+        addons: {
+          flood: coverage.flood, earthquake: coverage.earthquake,
+          srcc: coverage.srcc, terrorism: coverage.terrorism,
+          authorized: coverage.authorized, tpl: coverage.tpl,
+          paDriver: coverage.paDriver, paPassenger: coverage.paPassenger,
+        },
+        sum_insured: vehicle.price,
+        base_premium: Math.round(premiumBreakdown.basicPremium),
+        addon_premium: Math.round(premiumBreakdown.expansionTotal),
+        admin_fee: premiumBreakdown.adminFee,
+        stamp_duty: premiumBreakdown.stampDuty,
+        total_premium: Math.round(premiumBreakdown.totalPayable),
+        ojk_rate: premiumBreakdown.baseRate,
+        discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
+        discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
+        net_premium: Math.round(premiumBreakdown.netPremium),
+        commission_rate: BASE_COMMISSION_PERCENT / 100,
+        commission_amount: commissionAmount,
+        coin_reward: coinReward,
+        ai_score: survey.score,
+        ai_verdict: survey.verdict || undefined,
+        ai_findings: survey.detailedIssues,
+        insurer_name: selectedProvider.name,
+        status: 'SUBMITTED',
+        start_date: new Date().toISOString(),
+        end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
       });
 
-      // 2. Hitung Komisi (25% dari Gross Premium)
-      const commissionAmount = (premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100;
-      await db.transactions.add({
-        userId: currentUser.id,
-        type: 'COMMISSION',
-        amount: commissionAmount,
-        status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
-        description: `Komisi Penjualan ${newPolicy.policyNumber}`,
-        date: new Date().toISOString(),
-        referenceId: policyId.toString()
-      });
+      if (!order) throw new Error('Gagal membuat order di server');
 
-      // 3. Hitung Poin
-      const pointsPercent = selectedProvider.extraCoinsPercent || 0;
-      const pointsEarned = (premiumBreakdown.grossPremium * pointsPercent) / 100;
-      if (pointsEarned > 0) {
-        await db.transactions.add({
-          userId: currentUser.id,
-          type: 'POINTS',
-          amount: pointsEarned,
-          status: resultStatus === 'SUCCESS' ? 'SUCCESS' : 'PENDING',
-          description: `Reward Poin ${selectedProvider.name} untuk ${newPolicy.policyNumber}`,
-          date: new Date().toISOString(),
-          referenceId: policyId.toString()
+      setOrderNumber(order.order_number ?? order.id);
+
+      // Create Xendit invoice for immediate payment
+      let link: string | null = null;
+      if (!payLaterMode) {
+        const invoice = await createXenditInvoice({
+          order_id: order.id,
+          order_number: order.order_number ?? order.id,
+          client_name: kycData.name,
+          client_email: kycData.email || undefined,
+          client_phone: kycData.phone || undefined,
+          product_name: order.product_name,
+          total_premium: order.total_premium,
         });
+        if (invoice?.invoice_url) {
+          link = invoice.invoice_url;
+          window.open(link, '_blank', 'noopener,noreferrer');
+        }
       }
 
+      setInvoiceUrl(link);
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
     } catch (e) {
-      alert("Gagal menyimpan data polis.");
+      console.error('handlePaymentResult:', e);
+      alert('Gagal memproses pesanan. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (isSuccess && generatedPolicy) {
+  if (isSuccess) {
      return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
            {isPayLater ? (
@@ -250,27 +271,27 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                  <ShieldCheck size={56} strokeWidth={2.5}/>
               </div>
            )}
-           
+
            <div className="space-y-4 mb-12">
               <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-                 Polis <span className={isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPayLater ? "Tersimpan" : "Aktif"}</span>
+                 Pesanan <span className={isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPayLater ? "Tersimpan" : "Diterima"}</span>
               </h2>
               <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
-                 {isPayLater 
-                   ? "Data pendaftaran telah kami simpan. Segera lakukan pembayaran di menu akun untuk mengaktifkan perlindungan Anda."
-                   : "Sistem Teraktivasi. Perlindungan asuransi Anda telah terdaftar dan aktif secara real-time di sistem kami."}
+                 {isPayLater
+                   ? "Pesanan tersimpan. Selesaikan pembayaran di menu Pesanan Saya untuk mengaktifkan perlindungan."
+                   : "Pesanan berhasil dikirim ke penanggung. Tim kami akan memproses polis Anda setelah pembayaran dikonfirmasi."}
               </p>
            </div>
 
            <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-[3rem] p-8 space-y-6 shadow-xl mb-10">
               <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-                 <span>ID Polis</span>
-                 <span className="text-primary-500 font-mono">{generatedPolicy.policyNumber}</span>
+                 <span>No. Pesanan</span>
+                 <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
               </div>
               <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
                  <span>Status</span>
-                 <span className={`px-3 py-1 rounded-lg border text-[0.55rem] font-black uppercase tracking-widest ${isPayLater ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-                    {isPayLater ? 'Menunggu Pembayaran' : 'Aktif'}
+                 <span className={`px-3 py-1 rounded-lg border text-[0.55rem] font-black uppercase tracking-widest ${isPayLater ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
+                    {isPayLater ? 'Menunggu Pembayaran' : 'Diproses'}
                  </span>
               </div>
               <div className="pt-6 border-t border-black/5 flex justify-between items-center">
@@ -286,7 +307,17 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
            </div>
 
            <div className="w-full max-w-sm space-y-4">
-              <button 
+              {invoiceUrl && (
+                 <a
+                   href={invoiceUrl}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                 >
+                   Buka Halaman Pembayaran <ExternalLink size={18}/>
+                 </a>
+              )}
+              <button
                 onClick={onComplete}
                 className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
               >

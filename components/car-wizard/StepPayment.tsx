@@ -9,7 +9,7 @@ import { formatIDR } from './WizardUI';
 
 interface StepPaymentProps {
   premiumBreakdown: any;
-  onPaymentSuccess: (method: string, status: 'SUCCESS' | 'PENDING_PAYMENT') => void;
+  onPaymentSuccess: (method: string, status: 'SUCCESS' | 'PENDING_PAYMENT') => Promise<void>;
   loading: boolean;
 }
 
@@ -18,20 +18,24 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
   const [selectedSubMethod, setSelectedSubMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (isProcessing) return;
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      await onPaymentSuccess(selectedSubMethod || 'SurePath Gateway', 'SUCCESS');
+    } finally {
       setIsProcessing(false);
-      onPaymentSuccess(selectedSubMethod || 'SurePath Gateway', 'SUCCESS');
-    }, 1200);
+    }
   };
 
-  const handlePayLater = () => {
+  const handlePayLater = async () => {
+    if (isProcessing) return;
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      await onPaymentSuccess('PAY_LATER', 'PENDING_PAYMENT');
+    } finally {
       setIsProcessing(false);
-      onPaymentSuccess('PAY_LATER', 'PENDING_PAYMENT');
-    }, 1500);
+    }
   };
 
   const vaBanks = [

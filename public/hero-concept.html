@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SurePath Hero — Concept Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100vh;
+    background: #fff;
+    font-family: 'Sora', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+  }
+  #label {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: rgba(0,0,0,0.2);
+    pointer-events: none; white-space: nowrap;
+  }
+  #phase-label {
+    position: fixed; top: 20px; right: 20px;
+    font-size: 10px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: rgba(0,0,0,0.18);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="label">SurePath · Hero Animation Concept</div>
+<div id="phase-label" id="phase-label">—</div>
+<script>
+'use strict';
+
+// ─── Canvas Setup ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const phaseEl = document.getElementById('phase-label');
+
+let W, H, CX, CY;
+function resize() {
+  W  = canvas.width  = window.innerWidth;
+  H  = canvas.height = window.innerHeight;
+  CX = W / 2;
+  CY = H / 2;
+  buildLeaves();
+}
+window.addEventListener('resize', resize);
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+const lerp    = (a, b, t) => a + (b - a) * t;
+const clamp   = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const map01   = (v, lo, hi) => clamp((v - lo) / (hi - lo), 0, 1);
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeIn  = t => t * t * t;
+const easeIO  = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+
+// ─── Road Geometry ────────────────────────────────────────────────────────────
+//  Vanishing point sits at 38% from top
+const vpY = () => H * 0.38;
+const vpX = () => CX;
+
+// Road half-widths: narrow at horizon, wide at bottom
+const roadTopHalf = () => W * 0.030;
+const roadBotHalf = () => W * 0.300;
+
+function roadEdges(depth) {
+  // depth: 0=horizon, 1=bottom
+  const lx = vpX() - lerp(roadTopHalf(), roadBotHalf(), depth);
+  const rx = vpX() + lerp(roadTopHalf(), roadBotHalf(), depth);
+  const y  = lerp(vpY(), H, depth);
+  return { lx, rx, y, cx: CX };
+}
+
+// ─── Road Dashes ─────────────────────────────────────────────────────────────
+let dashPhase = 0; // accumulates with time
+
+function drawRoad(alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Ground plane (outside road)
+  ctx.fillStyle = '#E2EBE0';
+  ctx.fillRect(0, vpY(), W, H - vpY());
+
+  // Road trapezoid
+  const tl = { x: vpX() - roadTopHalf(), y: vpY() };
+  const tr = { x: vpX() + roadTopHalf(), y: vpY() };
+  const br = { x: vpX() + roadBotHalf(), y: H };
+  const bl = { x: vpX() - roadBotHalf(), y: H };
+
+  const roadGrd = ctx.createLinearGradient(0, vpY(), 0, H);
+  roadGrd.addColorStop(0, '#BFBFBF');
+  roadGrd.addColorStop(0.5, '#C8C8C8');
+  roadGrd.addColorStop(1, '#B0B0B0');
+
+  ctx.beginPath();
+  ctx.moveTo(tl.x, tl.y);
+  ctx.lineTo(tr.x, tr.y);
+  ctx.lineTo(br.x, br.y);
+  ctx.lineTo(bl.x, bl.y);
+  ctx.closePath();
+  ctx.fillStyle = roadGrd;
+  ctx.fill();
+
+  // Road shoulder stripes
+  const shoulderW = 0.015;
+  const leftShoulder  = roadEdges(1);
+  const rightShoulder = roadEdges(1);
+  ctx.fillStyle = '#E8E8E8';
+  ctx.fillRect(bl.x, H - 6, 8, 6);
+  ctx.fillRect(br.x - 8, H - 6, 8, 6);
+
+  // Center dashes — scroll toward viewer
+  ctx.beginPath();
+  const DASH_SPACING = 0.08; // depth units between dashes
+  const DASH_LEN = 0.032;
+  for (let base = 0; base < 1.2; base += DASH_SPACING) {
+    const d = (base + dashPhase) % 1.0;
+    if (d < 0.04 || d > 0.99) continue;
+
+    const e = roadEdges(d);
+    // Perspective scale for dash size
+    const s = d * d;
+    const dw = lerp(1, 10, s);
+    const dh = lerp(2, 30, s);
+
+    ctx.rect(e.cx - dw / 2, e.y - dh / 2, dw, dh);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// ─── Trees ────────────────────────────────────────────────────────────────────
+const TREE_SLOTS = [
+  // { side, depth }
+  { side: -1, depth: 0.10 }, { side:  1, depth: 0.10 },
+  { side: -1, depth: 0.22 }, { side:  1, depth: 0.22 },
+  { side: -1, depth: 0.36 }, { side:  1, depth: 0.36 },
+  { side: -1, depth: 0.50 }, { side:  1, depth: 0.50 },
+  { side: -1, depth: 0.65 }, { side:  1, depth: 0.65 },
+  { side: -1, depth: 0.80 }, { side:  1, depth: 0.80 },
+];
+
+function treePos(slot) {
+  const e = roadEdges(slot.depth);
+  const gap = lerp(20, 100, slot.depth);
+  const x = slot.side < 0 ? e.lx - gap : e.rx + gap;
+  return { x, y: e.y, scale: lerp(0.15, 1.0, slot.depth) };
+}
+
+function drawTree(x, y, scale, alpha = 1, shake = 0) {
+  const r  = 38 * scale;
+  const tw = 7  * scale;
+  const th = 22 * scale;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x + shake, y);
+
+  // Shadow
+  ctx.save();
+  ctx.scale(1, 0.25);
+  ctx.beginPath();
+  ctx.arc(0, r * 0.5, r * 0.65, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.07)';
+  ctx.fill();
+  ctx.restore();
+
+  // Trunk
+  ctx.fillStyle = '#7A5C2E';
+  ctx.fillRect(-tw / 2, -th * 0.3, tw, th);
+
+  // Canopy layers (3 circles for depth)
+  const canopyColors = ['#1E8A2C', '#2AA83A', '#36C44A'];
+  for (let i = 0; i < 3; i++) {
+    const ox = (i - 1) * r * 0.28;
+    const oy = -r * 0.85 - i * r * 0.08;
+    ctx.beginPath();
+    ctx.arc(ox, oy, r * (0.72 + i * 0.08), 0, Math.PI * 2);
+    ctx.fillStyle = canopyColors[i];
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ─── Leaf Particles ───────────────────────────────────────────────────────────
+const N_LEAVES = 40;
+let leaves = [];
+
+// Sample points along the SurePath shield outline
+// SVG viewBox: 54×54
+// Shield: M27 4 L43 11.5 V26 C43 36.2 36 44.6 27 48 C18 44.6 11 36.2 11 26 V11.5 Z
+function sampleShieldPoints(n) {
+  // Polygon approximation of the shield path (sufficient for particle targets)
+  const raw = [
+    [27,  4],
+    [35,  7], [43, 11.5],
+    [43, 18], [43, 26],
+    [43, 32], [39, 38], [35, 43], [27, 48],
+    [19, 43], [15, 38], [11, 32],
+    [11, 26], [11, 18], [11, 11.5],
+    [19,  7], [27,  4],
+  ];
+
+  // Compute arc length for uniform sampling
+  const segs = [];
+  for (let i = 0; i < raw.length - 1; i++) {
+    const dx = raw[i+1][0] - raw[i][0];
+    const dy = raw[i+1][1] - raw[i][1];
+    segs.push(Math.hypot(dx, dy));
+  }
+  const total = segs.reduce((a, b) => a + b, 0);
+
+  const pts = [];
+  for (let k = 0; k < n; k++) {
+    let target = (k / n) * total;
+    let acc = 0;
+    for (let i = 0; i < segs.length; i++) {
+      if (acc + segs[i] >= target) {
+        const t = (target - acc) / segs[i];
+        pts.push([
+          lerp(raw[i][0], raw[i+1][0], t),
+          lerp(raw[i][1], raw[i+1][1], t),
+        ]);
+        break;
+      }
+      acc += segs[i];
+    }
+  }
+  return pts;
+}
+
+function shieldToScreen(svgX, svgY) {
+  const S = Math.min(W, H) * 0.28 / 54;
+  return {
+    x: CX + (svgX - 27) * S,
+    y: CY + (svgY - 26) * S - H * 0.02,
+  };
+}
+
+function buildLeaves() {
+  const shieldPts = sampleShieldPoints(N_LEAVES);
+  const hues = [110, 120, 130, 100, 140];
+
+  leaves = shieldPts.map((sp, i) => {
+    // Random home on a tree canopy
+    const slot = TREE_SLOTS[i % TREE_SLOTS.length];
+    const tp   = treePos(slot);
+    const homeX = tp.x + (Math.random() - 0.5) * 55 * tp.scale;
+    const homeY = tp.y - 30 * tp.scale + (Math.random() - 0.5) * 35 * tp.scale;
+
+    const target = shieldToScreen(sp[0], sp[1]);
+
+    return {
+      // Home (on tree)
+      hx: homeX, hy: homeY,
+      // Current pos
+      x: homeX, y: homeY,
+      // Shield target
+      tx: target.x, ty: target.y,
+      // Appearance
+      size: lerp(3, 7, Math.random()),
+      rot: Math.random() * Math.PI * 2,
+      hue: hues[Math.floor(Math.random() * hues.length)],
+      sat: 45 + Math.random() * 25,
+      lit: 28 + Math.random() * 18,
+      // Motion noise
+      noiseX: (Math.random() - 0.5) * 2.5,
+      noiseY: (Math.random() - 0.5) * 1.5,
+      phase:  Math.random() * Math.PI * 2,
+      // Mid-air waypoint (random scatter before converge)
+      mx: CX + (Math.random() - 0.5) * W * 0.55,
+      my: CY + (Math.random() - 0.5) * H * 0.45,
+    };
+  });
+}
+
+function drawLeaf(x, y, size, rot, hue, sat, lit, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+
+  ctx.beginPath();
+  ctx.moveTo(0, -size);
+  ctx.bezierCurveTo( size * 0.75, -size * 0.5,  size * 0.75, size * 0.4, 0,  size * 0.35);
+  ctx.bezierCurveTo(-size * 0.75,  size * 0.4, -size * 0.75, -size * 0.5, 0, -size);
+
+  ctx.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+  ctx.fill();
+
+  // Midrib vein
+  ctx.beginPath();
+  ctx.moveTo(0, -size);
+  ctx.lineTo(0,  size * 0.35);
+  ctx.strokeStyle = `hsla(${hue},${sat}%,${lit + 18}%,0.5)`;
+  ctx.lineWidth = size * 0.10;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ─── Shield Drawing ───────────────────────────────────────────────────────────
+function drawShieldFull(alpha, checkProgress) {
+  if (alpha <= 0) return;
+  const S  = Math.min(W, H) * 0.28 / 54;
+  const ox = CX - 27 * S;
+  const oy = CY - 26 * S - H * 0.02;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Glow
+  const glowR = 60 * S;
+  const grd = ctx.createRadialGradient(CX, CY, 0, CX, CY, glowR);
+  grd.addColorStop(0, 'rgba(6,224,0,0.18)');
+  grd.addColorStop(1, 'rgba(6,224,0,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(CX, CY, glowR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shield fill
+  ctx.beginPath();
+  shieldPath(ctx, ox, oy, S);
+  const fillGrd = ctx.createRadialGradient(CX, CY - 5 * S, 0, CX, CY, 35 * S);
+  fillGrd.addColorStop(0, 'rgba(6,224,0,0.16)');
+  fillGrd.addColorStop(1, 'rgba(6,224,0,0.04)');
+  ctx.fillStyle = fillGrd;
+  ctx.fill();
+
+  // Shield stroke
+  ctx.beginPath();
+  shieldPath(ctx, ox, oy, S);
+  ctx.strokeStyle = '#06e000';
+  ctx.lineWidth = 2 * S;
+  ctx.lineJoin = 'round';
+  ctx.lineCap  = 'round';
+  ctx.stroke();
+
+  // Checkmark (draws progressively)
+  if (checkProgress > 0) {
+    const p1 = clamp(checkProgress * 2,       0, 1);
+    const p2 = clamp(checkProgress * 2 - 1,   0, 1);
+    const A = [19, 27], B = [23.5, 31.5], C = [35, 20];
+
+    ctx.beginPath();
+    ctx.moveTo(ox + A[0]*S, oy + A[1]*S);
+
+    const ex1 = lerp(A[0], B[0], p1), ey1 = lerp(A[1], B[1], p1);
+    ctx.lineTo(ox + ex1*S, oy + ey1*S);
+
+    if (p2 > 0) {
+      ctx.lineTo(ox + lerp(B[0],C[0],p2)*S, oy + lerp(B[1],C[1],p2)*S);
+    }
+
+    ctx.strokeStyle = '#06e000';
+    ctx.lineWidth = 2.8 * S;
+    ctx.lineCap  = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function shieldPath(ctx, ox, oy, S) {
+  ctx.moveTo(ox + 27*S, oy +  4*S);
+  ctx.lineTo(ox + 43*S, oy + 11.5*S);
+  ctx.lineTo(ox + 43*S, oy + 26*S);
+  ctx.bezierCurveTo(
+    ox+43*S, oy+36.2*S,
+    ox+36*S, oy+44.6*S,
+    ox+27*S, oy+48*S
+  );
+  ctx.bezierCurveTo(
+    ox+18*S, oy+44.6*S,
+    ox+11*S, oy+36.2*S,
+    ox+11*S, oy+26*S
+  );
+  ctx.lineTo(ox + 11*S, oy + 11.5*S);
+  ctx.closePath();
+}
+
+// ─── Brand Text ───────────────────────────────────────────────────────────────
+function drawBrand(alpha) {
+  if (alpha <= 0) return;
+  const S    = Math.min(W, H) * 0.28 / 54;
+  const base = CY + 26 * S + H * 0.02 + 52;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+
+  const fs = Math.max(22, Math.min(52, W * 0.055));
+  ctx.font = `700 ${fs}px 'Sora', system-ui, sans-serif`;
+
+  const sureW = ctx.measureText('Sure').width;
+  const pathW = ctx.measureText('Path').width;
+  const half  = (sureW + pathW) / 2;
+
+  ctx.fillStyle = '#111';
+  ctx.fillText('Sure', CX - half + sureW / 2, base);
+  ctx.fillStyle = '#06e000';
+  ctx.fillText('Path', CX + half - pathW / 2, base);
+
+  const ts = Math.max(9, Math.min(13, W * 0.013));
+  ctx.font = `400 ${ts}px 'Sora', system-ui, sans-serif`;
+  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  ctx.fillText('YOUR PROTECTION · MADE SIMPLE', CX, base + fs * 1.15);
+
+  ctx.restore();
+}
+
+// ─── Sky / Background ─────────────────────────────────────────────────────────
+function drawBackground() {
+  // Pure white — matches user requirement (hero background putih)
+  ctx.fillStyle = '#FAFAFA';
+  ctx.fillRect(0, 0, W, H);
+
+  // Very subtle horizon sky
+  const sky = ctx.createLinearGradient(0, 0, 0, vpY());
+  sky.addColorStop(0, '#F4FAF4');
+  sky.addColorStop(1, '#FAFAFA');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, vpY() + 20);
+}
+
+// ─── Horizon line (subtle) ────────────────────────────────────────────────────
+function drawHorizon() {
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  ctx.strokeStyle = '#88BB88';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, vpY());
+  ctx.lineTo(W, vpY());
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ─── CTA overlay (shown during shield hold phase) ────────────────────────────
+function drawCTA(alpha) {
+  if (alpha <= 0) return;
+  const S = Math.min(W, H) * 0.28 / 54;
+  const btY = CY + 26*S + H*0.02 + 110;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  const bw = 180, bh = 40, br = 20;
+  const bx = CX - bw / 2;
+  const by = btY;
+
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, br);
+  ctx.fillStyle = '#06e000';
+  ctx.fill();
+
+  ctx.font = `700 13px 'Sora', system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('Mulai Konsultasi →', CX, by + bh / 2);
+
+  ctx.restore();
+}
+
+// ─── Animation Loop ───────────────────────────────────────────────────────────
+const LOOP_DUR  = 8.5;   // seconds per loop
+const T_SCATTER = 3.4;   // leaves start flying
+const T_MIDAIR  = 4.8;   // leaves fully in midair
+const T_SNAP    = 5.6;   // leaves snap to shield outline
+const T_SHIELD  = 6.4;   // shield draws in, checkmark appears
+const T_HOLD    = 7.2;   // full hold (brand name visible)
+const T_FADEOUT = 8.0;   // fade to white before restart
+
+let t0 = null;
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (!t0) { t0 = now; }
+
+  const elapsed = (now - t0) / 1000;
+  const sec     = elapsed % LOOP_DUR;
+  const cycleT0 = t0 + Math.floor(elapsed / LOOP_DUR) * LOOP_DUR * 1000;
+
+  // Update dash scroll
+  const roadAlpha = sec < T_FADEOUT ? 1 : 1 - map01(sec, T_FADEOUT, LOOP_DUR);
+  const roadMotion = 0.38; // depth units per second
+  dashPhase = (elapsed * roadMotion) % 1.0;
+
+  // Phase label (dev aid)
+  let phaseName = 'Road';
+  if (sec >= T_FADEOUT) phaseName = 'Fade Out';
+  else if (sec >= T_HOLD)    phaseName = 'Hold';
+  else if (sec >= T_SHIELD)  phaseName = 'Shield Draw';
+  else if (sec >= T_SNAP)    phaseName = 'Converge';
+  else if (sec >= T_MIDAIR)  phaseName = 'Midair';
+  else if (sec >= T_SCATTER) phaseName = 'Scatter';
+  if (phaseEl) phaseEl.textContent = phaseName;
+
+  // ── Render ────────────────────────────────────────────────────────────
+  drawBackground();
+  drawHorizon();
+
+  // Road fades out as shield comes in
+  const roadFade = sec < T_SNAP
+    ? 1
+    : sec < T_SHIELD ? 1 - map01(sec, T_SNAP, T_SHIELD) : 0;
+
+  drawRoad(roadFade * roadAlpha);
+
+  // Trees — fade as leaves scatter
+  const treeFade = sec < T_SCATTER
+    ? 1
+    : sec < T_MIDAIR ? 1 - map01(sec, T_SCATTER, T_MIDAIR) : 0;
+
+  // Draw trees back-to-front (painter's algorithm)
+  [...TREE_SLOTS]
+    .sort((a, b) => a.depth - b.depth)
+    .forEach(slot => {
+      const p = treePos(slot);
+      // Subtle sway in road phase
+      const shake = sec < T_SCATTER
+        ? Math.sin(elapsed * 1.1 + slot.depth * 3.7) * 1.5 * slot.depth
+        : 0;
+      drawTree(p.x, p.y, p.scale, treeFade * roadAlpha, shake);
+    });
+
+  // ── Leaf particles ────────────────────────────────────────────────────
+  leaves.forEach((lf, i) => {
+    let lx = lf.hx, ly = lf.hy;
+    let la = 0, ls = lf.size, lr = lf.rot;
+    const noise = Math.sin(elapsed * 1.8 + lf.phase) * 4;
+
+    if (sec >= T_SCATTER && sec < T_MIDAIR) {
+      // Flying off tree toward midair position
+      const p  = map01(sec, T_SCATTER, T_MIDAIR);
+      const pe = easeIO(p);
+      lx = lerp(lf.hx, lf.mx, pe) + noise;
+      ly = lerp(lf.hy, lf.my, pe) + Math.sin(elapsed * 2.2 + lf.phase) * 8 * (1 - pe);
+      la = p;
+      lr = lf.rot + elapsed * 3.5 * (1 - pe * 0.7);
+    } else if (sec >= T_MIDAIR && sec < T_SNAP) {
+      // Floating in midair
+      const p = map01(sec, T_MIDAIR, T_SNAP);
+      lx = lf.mx + Math.sin(elapsed * 1.4 + lf.phase) * 18 * (1 - p);
+      ly = lf.my + Math.cos(elapsed * 1.1 + lf.phase) * 12 * (1 - p);
+      la = 1;
+      lr = lf.rot + elapsed * 1.5;
+    } else if (sec >= T_SNAP && sec < T_SHIELD) {
+      // Snapping to shield outline
+      const p  = map01(sec, T_SNAP, T_SHIELD);
+      const pe = easeOut(p);
+      lx = lerp(lf.mx, lf.tx, pe);
+      ly = lerp(lf.my, lf.ty, pe);
+      la = 1;
+      ls = lerp(lf.size, 2.8, pe);
+      lr = lf.rot + elapsed * lerp(1.5, 0, pe);
+    } else if (sec >= T_SHIELD && sec < T_HOLD) {
+      // Fade as shield takes over
+      const p = map01(sec, T_SHIELD, T_HOLD);
+      lx = lf.tx; ly = lf.ty;
+      la = 1 - p;
+      ls = 2.8;
+      lr = lf.rot;
+    }
+
+    if (la > 0.01) {
+      drawLeaf(lx, ly, ls, lr, lf.hue, lf.sat, lf.lit, la * roadAlpha);
+    }
+  });
+
+  // ── Shield ────────────────────────────────────────────────────────────
+  if (sec >= T_SHIELD) {
+    let shA, ckP;
+
+    const pulseAmp = 0.12 * Math.sin(elapsed * 3.8);
+
+    if (sec < T_HOLD) {
+      shA = map01(sec, T_SHIELD, T_HOLD);
+      ckP = map01(sec, lerp(T_SHIELD, T_HOLD, 0.3), T_HOLD);
+    } else if (sec < T_FADEOUT) {
+      shA = 1 + pulseAmp;
+      ckP = 1;
+    } else {
+      const fo = map01(sec, T_FADEOUT, LOOP_DUR);
+      shA = 1 - fo;
+      ckP = 1;
+    }
+
+    drawShieldFull(shA, ckP);
+  }
+
+  // ── Brand text ────────────────────────────────────────────────────────
+  if (sec >= T_HOLD) {
+    const textA = sec < T_FADEOUT
+      ? map01(sec, T_HOLD, lerp(T_HOLD, T_FADEOUT, 0.5))
+      : 1 - map01(sec, T_FADEOUT, LOOP_DUR);
+    drawBrand(textA);
+    drawCTA(textA * 0.85);
+  }
+
+  // ── Fade-to-white overlay (restart transition) ────────────────────────
+  if (sec >= T_FADEOUT) {
+    const fo = easeIO(map01(sec, T_FADEOUT, LOOP_DUR));
+    ctx.fillStyle = `rgba(250,250,250,${fo})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+resize();
+requestAnimationFrame(frame);
+
+// Polyfill ctx.roundRect if not available
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.lineTo(x + w - r, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + r);
+    this.lineTo(x + w, y + h - r);
+    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    this.lineTo(x + r, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - r);
+    this.lineTo(x, y + r);
+    this.quadraticCurveTo(x, y, x + r, y);
+    this.closePath();
+  };
+}
+</script>
+</body>
+</html>

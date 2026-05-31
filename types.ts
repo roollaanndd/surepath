@@ -12,7 +12,8 @@ export enum UserRole {
   FINANCE_DIRECTOR = 'FINANCE_DIRECTOR',
   INSURANCE_ADMIN = 'INSURANCE_ADMIN',
   AGENT = 'AGENT',
-  CUSTOMER = 'CUSTOMER'
+  CUSTOMER = 'CUSTOMER',
+  B2B_CLIENT = 'B2B_CLIENT'
 }
 
 export enum InsuranceType {

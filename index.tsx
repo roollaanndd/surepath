@@ -6,7 +6,11 @@ import './styles.css';
 
 // Auto-reload when a lazy-loaded chunk fails (happens when SW serves stale assets after deploy)
 window.addEventListener('vite:preloadError', () => {
-  window.location.reload();
+  const last = Number(sessionStorage.getItem('sp_reload_ts') ?? 0);
+  if (Date.now() - last > 10_000) {
+    sessionStorage.setItem('sp_reload_ts', String(Date.now()));
+    window.location.reload();
+  }
 });
 
 const rootElement = document.getElementById('root');

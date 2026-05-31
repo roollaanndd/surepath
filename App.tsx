@@ -17,6 +17,7 @@ const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
+const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
 
 const detectLang = (): Language => {
   const s = localStorage.getItem('SUREPATH_LANG');
@@ -595,6 +596,14 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
+      </Suspense>
+    );
+  }
+
+  if (currentUser && currentUser.role === UserRole.B2B_CLIENT) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <B2BPortal client={currentUser} onLogout={handleLogout} lang={lang} />
       </Suspense>
     );
   }

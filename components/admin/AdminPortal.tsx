@@ -24,6 +24,7 @@ import AIAdminView from './AIAdminView';
 import AIFinanceView from './AIFinanceView';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import EndorsementsAdminView from './EndorsementsAdminView';
+import B2BAdminView from './B2BAdminView';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
@@ -48,6 +49,7 @@ const MENU_ITEMS = [
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'withdrawals',      label: 'Penarikan Agen',      icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -322,6 +324,7 @@ const AdminPortal = ({
       case 'payments':         return <PaymentsAdminView />;
       case 'withdrawals':      return <WithdrawalsAdminView />;
       case 'endorsements':     return <EndorsementsAdminView />;
+      case 'b2b':              return <B2BAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;

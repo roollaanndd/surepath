@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone, Bike,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList
+  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -12,6 +12,7 @@ import {
 import { generatePolicyCertPDF } from '../../services/pdfService';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
+import LifeInsuranceWizard from './LifeInsuranceWizard';
 
 interface Props {
   agentId: string;
@@ -67,6 +68,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   // All hooks must come before any conditional return (Rules of Hooks)
   const [quoteTab, setQuoteTab] = useState<QuoteTab>('new');
   const [vehicleWizardType, setVehicleWizardType] = useState<'CAR' | 'MOTORCYCLE' | null>(null);
+  const [activeProduct, setActiveProduct] = useState<string | null>(null);
 
   const [step, setStep] = useState<Step>('client');
   const [clientMode, setClientMode] = useState<'select' | 'onetime'>('select');
@@ -95,6 +97,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         initialVehicleType={vehicleWizardType}
         onBack={() => setVehicleWizardType(null)}
         onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
+      />
+    );
+  }
+
+  // Route life insurance to life wizard
+  if (activeProduct === 'life') {
+    return (
+      <LifeInsuranceWizard
+        agentId={agentId}
+        agent={agent}
+        lang={lang}
+        onBack={() => setActiveProduct(null)}
       />
     );
   }
@@ -407,7 +421,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               return (
                 <button
                   key={p.type}
-                  onClick={() => setProduct(p.type)}
+                  onClick={() => { setProduct(p.type); setActiveProduct(null); }}
                   className={`p-5 rounded-[1.5rem] border text-left transition-all active:scale-95 ${
                     active
                       ? 'border-primary-500 bg-primary-500/5 shadow-lg'
@@ -430,12 +444,35 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 </button>
               );
             })}
+            {/* Life Insurance card */}
+            <button
+              onClick={() => { setProduct(null); setActiveProduct('life'); }}
+              className={`p-5 rounded-[1.5rem] border text-left transition-all active:scale-95 ${
+                activeProduct === 'life'
+                  ? 'border-emerald-500 bg-emerald-500/5 shadow-lg'
+                  : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
+              }`}
+            >
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3">
+                <Heart size={22} className="text-emerald-500" />
+              </div>
+              <p className="font-black text-sm leading-tight">
+                {lang === Language.EN ? 'Life Insurance' : 'Asuransi Jiwa'}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                {lang === Language.EN ? 'Term, Whole Life & Unit Link' : 'Jiwa, Seumur Hidup & Unit Link'}
+              </p>
+              {activeProduct === 'life' && <CheckCircle2 size={14} className="text-emerald-500 mt-2" />}
+            </button>
           </div>
           <button
-            disabled={!product}
+            disabled={!product && activeProduct !== 'life'}
             onClick={() => {
-              // OJK products launch underwriting wizard
-              if (product === 'CAR' || product === 'MOTORCYCLE') {
+              if (activeProduct === 'life') {
+                // handled by conditional render above — just trigger re-render
+                setActiveProduct('life');
+              } else if (product === 'CAR' || product === 'MOTORCYCLE') {
+                // OJK products launch underwriting wizard
                 setVehicleWizardType(product);
               } else {
                 setStep('inputs');
@@ -445,6 +482,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           >
             {product === 'CAR' || product === 'MOTORCYCLE'
               ? t('Start Underwriting', 'Mulai Underwriting')
+              : activeProduct === 'life'
+              ? t('Start Life Application', 'Mulai Aplikasi Jiwa')
               : t('Next', 'Lanjut')}
             <ChevronRight size={16} />
           </button>

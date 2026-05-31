@@ -31,13 +31,13 @@ function parseKTP(text: string): Record<string, string> {
 
     if (/^Nama\b/i.test(line)) {
       const val = line.replace(/^Nama\s*:?\s*/i, '').trim();
-      fields.name = val || lines[i + 1] ?? '';
+      fields.name = (val || lines[i + 1]) ?? '';
     }
 
     if (/^Tanggal\s*Lahir\b/i.test(line) || /^Tgl\.?\s*Lahir/i.test(line)) {
       const val = line.replace(/^Tanggal\s*Lahir\s*:?\s*/i, '')
                       .replace(/^Tgl\.?\s*Lahir\s*:?\s*/i, '').trim();
-      fields.dob = val || lines[i + 1] ?? '';
+      fields.dob = (val || lines[i + 1]) ?? '';
     }
 
     if (/^Alamat\b/i.test(line)) {
@@ -69,16 +69,16 @@ function parseSTNK(text: string): Record<string, string> {
     const line = lines[i];
 
     if (/^(Merk|Merek|Make)\b/i.test(line)) {
-      fields.make = line.replace(/^(Merk|Merek|Make)\s*:?\s*/i, '').trim() || lines[i + 1] ?? '';
+      fields.make = (line.replace(/^(Merk|Merek|Make)\s*:?\s*/i, '').trim() || lines[i + 1]) ?? '';
     }
     if (/^(Model|Tipe|Type)\b/i.test(line)) {
-      fields.model = line.replace(/^(Model|Tipe|Type)\s*:?\s*/i, '').trim() || lines[i + 1] ?? '';
+      fields.model = (line.replace(/^(Model|Tipe|Type)\s*:?\s*/i, '').trim() || lines[i + 1]) ?? '';
     }
     if (/^No\.?\s*Rangka\b/i.test(line) || /^Nomor\s*Rangka/i.test(line)) {
-      fields.chassis_no = line.replace(/^(No\.?\s*Rangka|Nomor\s*Rangka)\s*:?\s*/i, '').trim() || lines[i + 1] ?? '';
+      fields.chassis_no = (line.replace(/^(No\.?\s*Rangka|Nomor\s*Rangka)\s*:?\s*/i, '').trim() || lines[i + 1]) ?? '';
     }
     if (/^No\.?\s*Mesin\b/i.test(line) || /^Nomor\s*Mesin/i.test(line)) {
-      fields.engine_no = line.replace(/^(No\.?\s*Mesin|Nomor\s*Mesin)\s*:?\s*/i, '').trim() || lines[i + 1] ?? '';
+      fields.engine_no = (line.replace(/^(No\.?\s*Mesin|Nomor\s*Mesin)\s*:?\s*/i, '').trim() || lines[i + 1]) ?? '';
     }
   }
 

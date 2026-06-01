@@ -2486,3 +2486,87 @@ export function getMarketValueForYear(brand: string, model: string, year: number
   const ageFactor = Math.max(0.35, 1 - (m.refYear - year) * 0.07);
   return Math.round(m.marketValueRp * ageFactor);
 }
+
+// ─── Motorcycle Database ───────────────────────────────────────────────────────
+export interface MotoModel {
+  model: string;
+  listPriceM: number;
+  marketValueRp: number;
+  refYear: number;
+  yearPrices?: Partial<Record<string, number>>;
+}
+
+export const MOTORCYCLE_DATABASE: Record<string, { displayName: string; models: MotoModel[] }> = {
+  "Honda": { displayName: "Honda", models: [
+    { model: "BEAT 110 CBS ISS", listPriceM: 18.5, marketValueRp: 16650000, refYear: 2025, yearPrices: { "2025": 18.5, "2024": 17.5, "2023": 16.8, "2022": 15.9, "2021": 15.2 } },
+    { model: "BEAT STREET CBS", listPriceM: 17.0, marketValueRp: 15300000, refYear: 2025, yearPrices: { "2025": 17.0, "2024": 16.0, "2023": 15.2, "2022": 14.5 } },
+    { model: "SCOOPY CBS ISS", listPriceM: 24.5, marketValueRp: 22050000, refYear: 2025, yearPrices: { "2025": 24.5, "2024": 23.2, "2023": 21.8, "2022": 20.5, "2021": 19.0 } },
+    { model: "VARIO 125 CBS ISS", listPriceM: 24.8, marketValueRp: 22320000, refYear: 2025, yearPrices: { "2025": 24.8, "2024": 23.5, "2023": 22.1, "2022": 20.8, "2021": 19.5, "2020": 18.2 } },
+    { model: "VARIO 160 CBS", listPriceM: 29.0, marketValueRp: 26100000, refYear: 2025, yearPrices: { "2025": 29.0, "2024": 27.5, "2023": 26.0, "2022": 24.6 } },
+    { model: "PCX 160", listPriceM: 33.5, marketValueRp: 30150000, refYear: 2025, yearPrices: { "2025": 33.5, "2024": 31.8, "2023": 30.2, "2022": 28.5, "2021": 27.0 } },
+    { model: "ADV 160 CBS", listPriceM: 38.0, marketValueRp: 34200000, refYear: 2025, yearPrices: { "2025": 38.0, "2024": 36.2, "2023": 34.5, "2022": 32.8 } },
+    { model: "FORZA 350", listPriceM: 65.0, marketValueRp: 58500000, refYear: 2025, yearPrices: { "2025": 65.0, "2024": 61.9, "2023": 58.9 } },
+    { model: "GENIO CBS ISS", listPriceM: 20.0, marketValueRp: 18000000, refYear: 2025, yearPrices: { "2025": 20.0, "2024": 18.9, "2023": 17.9 } },
+    { model: "REVO X", listPriceM: 16.5, marketValueRp: 14850000, refYear: 2025, yearPrices: { "2025": 16.5, "2024": 15.7, "2023": 14.9 } },
+    { model: "CB150R STREETFIRE", listPriceM: 31.0, marketValueRp: 27900000, refYear: 2025, yearPrices: { "2025": 31.0, "2024": 29.4, "2023": 28.0, "2022": 26.5 } },
+    { model: "CBR150R", listPriceM: 42.5, marketValueRp: 38250000, refYear: 2025, yearPrices: { "2025": 42.5, "2024": 40.5, "2023": 38.5, "2022": 36.6 } },
+    { model: "CRF150L", listPriceM: 37.5, marketValueRp: 33750000, refYear: 2025, yearPrices: { "2025": 37.5, "2024": 35.7, "2023": 33.9 } },
+    { model: "SPACY 110", listPriceM: 19.0, marketValueRp: 17100000, refYear: 2025, yearPrices: { "2025": 19.0, "2024": 18.1, "2023": 17.2 } },
+  ]},
+  "Yamaha": { displayName: "Yamaha", models: [
+    { model: "MIO M3 125", listPriceM: 19.5, marketValueRp: 17550000, refYear: 2025, yearPrices: { "2025": 19.5, "2024": 18.5, "2023": 17.5, "2022": 16.6, "2021": 15.8 } },
+    { model: "MIO S 125", listPriceM: 19.0, marketValueRp: 17100000, refYear: 2025, yearPrices: { "2025": 19.0, "2024": 18.1, "2023": 17.2, "2022": 16.3 } },
+    { model: "FREEGO 125 S", listPriceM: 22.5, marketValueRp: 20250000, refYear: 2025, yearPrices: { "2025": 22.5, "2024": 21.4, "2023": 20.3 } },
+    { model: "LEXI 125 LKS", listPriceM: 24.8, marketValueRp: 22320000, refYear: 2025, yearPrices: { "2025": 24.8, "2024": 23.6, "2023": 22.4 } },
+    { model: "FAZZIO 125 HYBRID", listPriceM: 25.0, marketValueRp: 22500000, refYear: 2025, yearPrices: { "2025": 25.0, "2024": 23.8, "2023": 22.6 } },
+    { model: "FILANO HYBRID", listPriceM: 26.0, marketValueRp: 23400000, refYear: 2025, yearPrices: { "2025": 26.0, "2024": 24.7 } },
+    { model: "AEROX 155 CONNECTED", listPriceM: 31.5, marketValueRp: 28350000, refYear: 2025, yearPrices: { "2025": 31.5, "2024": 30.0, "2023": 28.5, "2022": 26.8, "2021": 25.0 } },
+    { model: "NMAX 155", listPriceM: 32.5, marketValueRp: 29250000, refYear: 2025, yearPrices: { "2025": 32.5, "2024": 30.9, "2023": 29.3, "2022": 27.8, "2021": 26.2, "2020": 24.7 } },
+    { model: "XMAX 250", listPriceM: 58.0, marketValueRp: 52200000, refYear: 2025, yearPrices: { "2025": 58.0, "2024": 55.2, "2023": 52.4 } },
+    { model: "MT-15 V2", listPriceM: 44.0, marketValueRp: 39600000, refYear: 2025, yearPrices: { "2025": 44.0, "2024": 41.9, "2023": 39.8 } },
+    { model: "R15 CONNECTED", listPriceM: 49.0, marketValueRp: 44100000, refYear: 2025, yearPrices: { "2025": 49.0, "2024": 46.7, "2023": 44.4 } },
+    { model: "WR 155R", listPriceM: 39.5, marketValueRp: 35550000, refYear: 2025, yearPrices: { "2025": 39.5, "2024": 37.6, "2023": 35.7 } },
+    { model: "VEGA FORCE DB", listPriceM: 17.0, marketValueRp: 15300000, refYear: 2025, yearPrices: { "2025": 17.0, "2024": 16.2, "2023": 15.4 } },
+  ]},
+  "Kawasaki": { displayName: "Kawasaki", models: [
+    { model: "KLX 150BF SE", listPriceM: 37.5, marketValueRp: 33750000, refYear: 2025, yearPrices: { "2025": 37.5, "2024": 35.7, "2023": 33.9 } },
+    { model: "W175 SE", listPriceM: 35.0, marketValueRp: 31500000, refYear: 2025, yearPrices: { "2025": 35.0, "2024": 33.3, "2023": 31.6 } },
+    { model: "Z250SL", listPriceM: 52.0, marketValueRp: 46800000, refYear: 2025, yearPrices: { "2025": 52.0, "2024": 49.5 } },
+    { model: "NINJA 250SL", listPriceM: 55.0, marketValueRp: 49500000, refYear: 2025, yearPrices: { "2025": 55.0, "2024": 52.4, "2023": 49.8 } },
+    { model: "NINJA ZX-25R SE", listPriceM: 100.0, marketValueRp: 90000000, refYear: 2025, yearPrices: { "2025": 100.0, "2024": 95.3 } },
+    { model: "VERSYS-X 250 TOURER", listPriceM: 72.0, marketValueRp: 64800000, refYear: 2025, yearPrices: { "2025": 72.0, "2024": 68.6 } },
+  ]},
+  "Suzuki": { displayName: "Suzuki", models: [
+    { model: "ADDRESS 110", listPriceM: 20.5, marketValueRp: 18450000, refYear: 2025, yearPrices: { "2025": 20.5, "2024": 19.5, "2023": 18.5 } },
+    { model: "NEX II CROSSOVER", listPriceM: 19.0, marketValueRp: 17100000, refYear: 2025, yearPrices: { "2025": 19.0, "2024": 18.1, "2023": 17.2 } },
+    { model: "BURGMAN STREET 125EX", listPriceM: 23.5, marketValueRp: 21150000, refYear: 2025, yearPrices: { "2025": 23.5, "2024": 22.4 } },
+  ]},
+  "TVS": { displayName: "TVS", models: [
+    { model: "NTORQ 125 RACE EDITION", listPriceM: 26.5, marketValueRp: 23850000, refYear: 2025, yearPrices: { "2025": 26.5 } },
+    { model: "RAIDER R 150", listPriceM: 35.0, marketValueRp: 31500000, refYear: 2025, yearPrices: { "2025": 35.0 } },
+  ]},
+};
+
+export const MOTO_BRANDS = Object.keys(MOTORCYCLE_DATABASE).sort();
+
+export function getModelsForMotoBrand(brand: string): string[] {
+  return (MOTORCYCLE_DATABASE[brand]?.models ?? []).map(m => m.model);
+}
+
+export function getMarketValueForMoto(brand: string, model: string): number | null {
+  const entry = MOTORCYCLE_DATABASE[brand];
+  if (!entry) return null;
+  const m = entry.models.find(m => m.model === model);
+  return m ? m.marketValueRp : null;
+}
+
+export function getMarketValueForMotoYear(brand: string, model: string, year: number): number | null {
+  const entry = MOTORCYCLE_DATABASE[brand];
+  if (!entry) return null;
+  const m = entry.models.find(m => m.model === model);
+  if (!m) return null;
+  const yr = String(year);
+  if (m.yearPrices?.[yr]) return Math.round(m.yearPrices[yr]! * 1_000_000);
+  const ageFactor = Math.max(0.4, 1 - (m.refYear - year) * 0.08);
+  return Math.round(m.marketValueRp * ageFactor);
+}

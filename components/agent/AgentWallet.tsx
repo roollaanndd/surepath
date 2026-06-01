@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Wallet, ArrowDownLeft, ArrowUpRight, Clock, CheckCircle2,
-  XCircle, AlertCircle, RefreshCw, Building2, ChevronRight, Info
+  XCircle, AlertCircle, RefreshCw, Building2, ChevronRight, Info,
 } from 'lucide-react';
 import {
   getMyWallet, getMyWalletTransactions, getMyWithdrawals,
@@ -47,7 +47,49 @@ interface SavedAccount {
   bank_code: string;
   account_number: string;
   account_holder_name: string;
+  label?: string;
 }
+
+// ─── T&C Modal ────────────────────────────────────────────────────────────────
+const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () => void; onCancel: () => void }> = ({ amount, fee, onAccept, onCancel }) => {
+  const [agreed, setAgreed] = useState(false);
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center p-4">
+      <div className="bg-[#111] border border-white/10 rounded-[2rem] w-full max-w-md p-6 space-y-5">
+        <h3 className="text-base font-black text-white">Syarat Penarikan Dana</h3>
+        <div className="space-y-2.5 text-[11px] text-slate-400 leading-relaxed">
+          <div className="flex gap-2"><span className="text-primary-400 font-black">①</span> Biaya transfer: <span className="text-white font-bold">{IDR(fee)}</span> per transaksi</div>
+          <div className="flex gap-2"><span className="text-primary-400 font-black">②</span> Minimum penarikan: <span className="text-white font-bold">Rp 10.000</span></div>
+          <div className="flex gap-2"><span className="text-primary-400 font-black">③</span> Proses pencairan: <span className="text-white font-bold">1–3 hari kerja</span> setelah semua persetujuan</div>
+          <div className="flex gap-2"><span className="text-amber-400 font-black">④</span> Penarikan <span className="text-white font-bold">&gt; Rp 10 juta</span> memerlukan persetujuan L1 + L2</div>
+          <div className="flex gap-2"><span className="text-red-400 font-black">⑤</span> Penarikan <span className="text-white font-bold">&gt; Rp 25 juta</span> memerlukan persetujuan L1 + L2 + L3 (24 jam)</div>
+          <div className="flex gap-2"><span className="text-primary-400 font-black">⑥</span> Dana hanya ditransfer ke rekening yang telah terdaftar atas nama agen</div>
+          <div className="flex gap-2"><span className="text-primary-400 font-black">⑦</span> SurePath tidak bertanggung jawab atas kesalahan data rekening yang diinput agen</div>
+        </div>
+        <div className="bg-white/5 rounded-2xl px-4 py-3 flex justify-between items-center">
+          <span className="text-xs font-bold text-slate-300">Jumlah yang diterima</span>
+          <span className="text-sm font-black text-white">{IDR(Math.max(0, amount - fee))}</span>
+        </div>
+        <label className="flex items-start gap-3 cursor-pointer" onClick={() => setAgreed(v => !v)}>
+          <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${agreed ? 'bg-primary-500 border-primary-500' : 'border-white/20'}`}>
+            {agreed && <CheckCircle2 size={12} className="text-white" />}
+          </div>
+          <span className="text-[11px] text-slate-300 leading-relaxed">Saya membaca dan menyetujui seluruh syarat dan ketentuan penarikan dana SurePath.</span>
+        </label>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-3.5 rounded-2xl border border-white/10 text-gray-400 font-black text-xs uppercase tracking-widest">Batal</button>
+          <button
+            onClick={onAccept}
+            disabled={!agreed}
+            className="flex-1 py-3.5 bg-primary-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all"
+          >
+            Lanjut
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface WithdrawFormProps {
   balance: number;
@@ -55,20 +97,27 @@ interface WithdrawFormProps {
   coinBalance: number;
   onSuccess: () => void;
   onCancel: () => void;
-  savedAccount?: SavedAccount | null;
-  onSaveAccount?: (account: SavedAccount) => void;
+  savedAccounts: SavedAccount[];
+  onSaveAccount: (account: SavedAccount) => void;
+  onDeleteAccount: (idx: number) => void;
   profileName?: string;
 }
 
-const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, agentId, coinBalance, onSuccess, onCancel, savedAccount, onSaveAccount, profileName }) => {
+const WithdrawForm: React.FC<WithdrawFormProps> = ({
+  balance, agentId, coinBalance, onSuccess, onCancel,
+  savedAccounts, onSaveAccount, onDeleteAccount, profileName,
+}) => {
   const [amount, setAmount] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [accNum, setAccNum] = useState('');
   const [accName, setAccName] = useState('');
+  const [accLabel, setAccLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
   const [includeCoin, setIncludeCoin] = useState(false);
   const [coinRedeem, setCoinRedeem] = useState(0);
+  const [showTnC, setShowTnC] = useState(false);
+  const [addingNew, setAddingNew] = useState(savedAccounts.length === 0);
 
   const amt = parseInt(amount.replace(/\D/g, '')) || 0;
   const fee = 5000;
@@ -76,14 +125,15 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, agentId, coinBalan
   const needsL2 = amt >= 10_000_000;
   const needsL3 = amt >= 25_000_000;
 
-  const submit = async () => {
-    setErr('');
-    if (amt < 10000) return setErr('Minimum penarikan Rp 10.000');
-    if (amt > balance) return setErr('Saldo tidak mencukupi');
-    if (!bankCode) return setErr('Pilih bank');
-    if (!accNum.trim()) return setErr('Masukkan nomor rekening');
-    if (!accName.trim()) return setErr('Masukkan nama pemegang rekening');
+  const fillAccount = (acc: SavedAccount) => {
+    setBankCode(acc.bank_code);
+    setAccNum(acc.account_number);
+    setAccName(acc.account_holder_name);
+    setAddingNew(false);
+  };
 
+  const doSubmit = async () => {
+    setErr('');
     setLoading(true);
     let coinRpValue = 0;
     if (includeCoin && coinRedeem > 0) {
@@ -95,8 +145,9 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, agentId, coinBalan
     const res = await requestWithdrawal({ amount: totalAmount, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
     setLoading(false);
     if (res.success) {
-      if (onSaveAccount) {
-        onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
+      const existing = savedAccounts.find(a => a.account_number === accNum.trim() && a.bank_code === bankCode);
+      if (!existing) {
+        onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
       }
       onSuccess();
     } else {
@@ -104,165 +155,163 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, agentId, coinBalan
     }
   };
 
+  const handleSubmitClick = () => {
+    setErr('');
+    if (amt < 10000) return setErr('Minimum penarikan Rp 10.000');
+    if (amt > balance) return setErr('Saldo tidak mencukupi');
+    if (!bankCode) return setErr('Pilih bank');
+    if (!accNum.trim()) return setErr('Masukkan nomor rekening');
+    if (!accName.trim()) return setErr('Masukkan nama pemegang rekening');
+    setShowTnC(true);
+  };
+
   return (
-    <div className="space-y-4">
-      {savedAccount && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
-          <div>
-            <p className="text-xs font-black text-emerald-400">{savedAccount.bank_code} · {savedAccount.account_number}</p>
-            <p className="text-[10px] text-slate-400">{savedAccount.account_holder_name}</p>
+    <>
+      {showTnC && (
+        <WithdrawalTnCModal
+          amount={amt + (includeCoin ? coinRedeem * 1000 : 0)}
+          fee={fee}
+          onAccept={() => { setShowTnC(false); doSubmit(); }}
+          onCancel={() => setShowTnC(false)}
+        />
+      )}
+      <div className="space-y-4">
+        {/* Registered bank accounts */}
+        {savedAccounts.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Terdaftar</p>
+            {savedAccounts.map((acc, idx) => (
+              <div key={idx} className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${bankCode === acc.bank_code && accNum === acc.account_number ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+                <button className="flex-1 text-left" onClick={() => fillAccount(acc)}>
+                  <p className="text-xs font-black text-white">{acc.bank_code} · {acc.account_number}</p>
+                  <p className="text-[10px] text-slate-400">{acc.account_holder_name}{acc.label ? ` · ${acc.label}` : ''}</p>
+                </button>
+                <button onClick={() => onDeleteAccount(idx)} className="p-1.5 rounded-lg bg-white/5 text-gray-500 hover:text-red-400 transition-colors">
+                  <XCircle size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => { setBankCode(''); setAccNum(''); setAccName(''); setAccLabel(''); setAddingNew(true); }}
+              className="w-full py-3 rounded-2xl border border-dashed border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-white/20 transition-colors"
+            >
+              + Tambah Rekening Baru
+            </button>
           </div>
+        )}
+
+        {/* New account form */}
+        {addingNew && (
+          <div className="space-y-3 p-4 rounded-2xl border border-white/10 bg-white/5">
+            <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Baru</p>
+            <select className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-primary-500" value={bankCode} onChange={e => setBankCode(e.target.value)}>
+              <option value="">Pilih Bank</option>
+              {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
+            </select>
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-mono outline-none focus:border-primary-500" placeholder="Nomor Rekening" value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))} />
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-primary-500" placeholder="Nama Pemegang (sesuai buku tabungan)" value={accName} onChange={e => setAccName(e.target.value)} />
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-primary-500 text-gray-300" placeholder='Label (opsional, cth: "Rekening Utama")' value={accLabel} onChange={e => setAccLabel(e.target.value)} />
+            {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
+              <p className="text-[10px] text-amber-400 flex items-center gap-1"><AlertCircle size={10} />Nama tidak cocok dengan nama terdaftar: {profileName}</p>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Jumlah Penarikan</label>
+          <input
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-lg font-black outline-none focus:border-primary-500 font-mono"
+            placeholder="0"
+            value={amount ? parseInt(amount.replace(/\D/g, '') || '0').toLocaleString('id-ID') : ''}
+            onChange={e => setAmount(e.target.value.replace(/\D/g, ''))}
+          />
+          <p className="text-[0.5rem] text-gray-500 ml-1">Saldo: {IDR(balance)} · Biaya: {IDR(fee)} · Diterima: {amt > fee ? IDR(net) : IDR(0)}</p>
+        </div>
+
+        {coinBalance > 0 && (
+          <div className="rounded-2xl border border-white/10 p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div onClick={() => setIncludeCoin(v => !v)} className={`w-10 h-5 rounded-full transition-colors relative ${includeCoin ? 'bg-amber-500' : 'bg-white/10'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${includeCoin ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-white">Cairkan Koin Sekaligus</p>
+                <p className="text-[10px] text-slate-500">Saldo: {coinBalance.toLocaleString('id-ID')} poin = {IDR(coinBalance * 1000)}</p>
+              </div>
+            </label>
+            {includeCoin && (
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Jumlah Koin (maks {coinBalance.toLocaleString('id-ID')})</label>
+                <input type="number" min={1} max={coinBalance} value={coinRedeem} onChange={e => setCoinRedeem(Math.min(coinBalance, Math.max(0, Number(e.target.value))))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-amber-500/50" />
+                <p className="text-[10px] text-amber-400 font-bold mt-1">= {IDR(coinRedeem * 1000)} ditambahkan</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {needsL3 && (
+          <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+            <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-black text-red-400">3 Level Persetujuan Diperlukan</p>
+              <p className="text-[0.55rem] text-red-300/70 mt-0.5">Penarikan di atas Rp 25 juta memerlukan L1 + L2 + L3. Pencairan 24 jam setelah semua persetujuan.</p>
+            </div>
+          </div>
+        )}
+        {needsL2 && !needsL3 && (
+          <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+            <Info size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-300">Penarikan di atas Rp 10 juta memerlukan persetujuan L1 + L2.</p>
+          </div>
+        )}
+
+        {includeCoin && coinRedeem > 0 && (
+          <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex justify-between">
+            <span className="text-xs font-black text-amber-300">Total Penarikan</span>
+            <span className="text-xs font-black text-amber-300">{IDR(amt + coinRedeem * 1000)}</span>
+          </div>
+        )}
+
+        {err && <p className="text-xs text-red-400 font-bold px-1">{err}</p>}
+
+        <div className="flex gap-3 pt-2">
+          <button onClick={onCancel} className="flex-1 py-4 rounded-2xl border-2 border-white/10 text-gray-400 font-black text-xs uppercase tracking-widest active:scale-95 transition-all">Batal</button>
           <button
-            onClick={() => { setBankCode(savedAccount.bank_code); setAccNum(savedAccount.account_number); setAccName(savedAccount.account_holder_name); }}
-            className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+            onClick={handleSubmitClick}
+            disabled={loading || amt < 10000 || !bankCode || !accNum || !accName}
+            className="flex-2 flex-grow py-4 bg-primary-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            Pakai
+            {loading ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+            {loading ? 'Memproses...' : 'Tarik Dana'}
           </button>
         </div>
-      )}
-
-      <div className="space-y-1.5">
-        <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Jumlah Penarikan</label>
-        <input
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-lg font-black outline-none focus:border-primary-500 font-mono"
-          placeholder="0"
-          value={amount ? parseInt(amount.replace(/\D/g, '') || '0').toLocaleString('id-ID') : ''}
-          onChange={e => setAmount(e.target.value.replace(/\D/g, ''))}
-        />
-        <p className="text-[0.5rem] text-gray-500 ml-1">Saldo: {IDR(balance)} · Biaya transfer: {IDR(fee)} · Diterima: {amt > fee ? IDR(net) : IDR(0)}</p>
       </div>
-
-      {coinBalance > 0 && (
-        <div className="rounded-2xl border border-white/10 p-4 space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              onClick={() => setIncludeCoin(v => !v)}
-              className={`w-10 h-5 rounded-full transition-colors relative ${includeCoin ? 'bg-amber-500' : 'bg-white/10'}`}
-            >
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${includeCoin ? 'translate-x-5' : 'translate-x-0.5'}`} />
-            </div>
-            <div>
-              <p className="text-xs font-black text-white">Cairkan Koin Sekaligus</p>
-              <p className="text-[10px] text-slate-500">
-                Saldo: {coinBalance.toLocaleString('id-ID')} poin = {IDR(coinBalance * 1000)}
-              </p>
-            </div>
-          </label>
-          {includeCoin && (
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                Jumlah Koin Dicairkan (maks {coinBalance.toLocaleString('id-ID')})
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={coinBalance}
-                value={coinRedeem}
-                onChange={e => setCoinRedeem(Math.min(coinBalance, Math.max(0, Number(e.target.value))))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-amber-500/50"
-              />
-              <p className="text-[10px] text-amber-400 font-bold mt-1">
-                = {IDR(coinRedeem * 1000)} akan ditambahkan ke penarikan
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {needsL3 && (
-        <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
-          <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-xs font-black text-red-400">Membutuhkan 3 Level Persetujuan</p>
-            <p className="text-[0.55rem] text-red-300/70 mt-0.5">Penarikan di atas Rp 25 juta memerlukan persetujuan L1 + L2 + L3. Pencairan dijadwalkan 24 jam setelah semua persetujuan.</p>
-          </div>
-        </div>
-      )}
-      {needsL2 && !needsL3 && (
-        <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-          <Info size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-amber-300">Penarikan di atas Rp 10 juta memerlukan persetujuan L1 + L2 (Finance Manager).</p>
-        </div>
-      )}
-
-      <div className="space-y-1.5">
-        <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Bank Tujuan</label>
-        <select
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm font-bold outline-none focus:border-primary-500"
-          value={bankCode} onChange={e => setBankCode(e.target.value)}
-        >
-          <option value="">Pilih Bank</option>
-          {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Nomor Rekening</label>
-        <input
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm font-mono outline-none focus:border-primary-500"
-          placeholder="1234567890"
-          value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Nama Pemegang Rekening</label>
-        <input
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm font-bold outline-none focus:border-primary-500"
-          placeholder="Sesuai buku tabungan"
-          value={accName} onChange={e => setAccName(e.target.value)}
-        />
-        {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
-          <p className="text-[10px] text-amber-400 flex items-center gap-1">
-            <AlertCircle size={10} />
-            Pastikan nama rekening sama dengan nama terdaftar: {profileName}
-          </p>
-        )}
-      </div>
-
-      {includeCoin && coinRedeem > 0 && (
-        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex justify-between">
-          <span className="text-xs font-black text-amber-300">Total Penarikan</span>
-          <span className="text-xs font-black text-amber-300">{IDR(amt + coinRedeem * 1000)}</span>
-        </div>
-      )}
-
-      {err && <p className="text-xs text-red-400 font-bold px-1">{err}</p>}
-
-      <div className="flex gap-3 pt-2">
-        <button onClick={onCancel} className="flex-1 py-4 rounded-2xl border-2 border-white/10 text-gray-400 font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
-          Batal
-        </button>
-        <button
-          onClick={submit}
-          disabled={loading || amt < 10000 || !bankCode || !accNum || !accName}
-          className="flex-2 flex-grow py-4 bg-primary-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-        >
-          {loading ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
-          {loading ? 'Memproses...' : 'Tarik Dana'}
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 
-const SAVED_BANK_KEY = 'SUREPATH_SAVED_BANK';
+const SAVED_BANKS_KEY = 'SUREPATH_SAVED_BANKS';
 
 const AgentWalletView: React.FC = () => {
   const [wallet, setWallet] = useState<AgentWallet | null>(null);
   const [txns, setTxns] = useState<WalletTransaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [tab, setTab] = useState<'ledger' | 'withdrawals'>('ledger');
+  const [tab, setTab] = useState<'ledger' | 'withdrawals' | 'accounts'>('ledger');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [coinBalance, setCoinBalance] = useState(0);
   const [agentId, setAgentId] = useState('');
-  const [savedAccount, setSavedAccount] = useState<SavedAccount | null>(() => {
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>(() => {
     try {
-      const raw = localStorage.getItem(SAVED_BANK_KEY);
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem(SAVED_BANKS_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      // migrate old single-account format
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed?.bank_code) return [parsed];
+      return [];
     } catch {
-      return null;
+      return [];
     }
   });
 
@@ -275,8 +324,15 @@ const AgentWalletView: React.FC = () => {
   })();
 
   const handleSaveAccount = (account: SavedAccount) => {
-    localStorage.setItem(SAVED_BANK_KEY, JSON.stringify(account));
-    setSavedAccount(account);
+    const updated = [...savedAccounts, account];
+    localStorage.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
+    setSavedAccounts(updated);
+  };
+
+  const handleDeleteAccount = (idx: number) => {
+    const updated = savedAccounts.filter((_, i) => i !== idx);
+    localStorage.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
+    setSavedAccounts(updated);
   };
 
   const load = async () => {
@@ -322,8 +378,9 @@ const AgentWalletView: React.FC = () => {
           coinBalance={coinBalance}
           onSuccess={() => { setShowWithdrawForm(false); load(); }}
           onCancel={() => setShowWithdrawForm(false)}
-          savedAccount={savedAccount}
+          savedAccounts={savedAccounts}
           onSaveAccount={handleSaveAccount}
+          onDeleteAccount={handleDeleteAccount}
           profileName={profileName}
         />
       </div>
@@ -376,6 +433,27 @@ const AgentWalletView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Registered accounts summary */}
+      {savedAccounts.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Terdaftar</p>
+          {savedAccounts.map((acc, idx) => (
+            <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
+              <div className="w-9 h-9 rounded-xl bg-primary-500/10 flex items-center justify-center">
+                <Building2 size={14} className="text-primary-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-black text-white">{acc.bank_code} · {acc.account_number}</p>
+                <p className="text-[10px] text-slate-400">{acc.account_holder_name}{acc.label ? ` · ${acc.label}` : ''}</p>
+              </div>
+              <button onClick={() => handleDeleteAccount(idx)} className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 transition-colors">
+                <XCircle size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl">

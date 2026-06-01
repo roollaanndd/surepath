@@ -14,6 +14,7 @@ import {
 import AgentHome from './AgentHome';
 import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
+import AgentBuyMarketplace from './AgentBuyMarketplace';
 import AgentCommission from './AgentCommission';
 import AgentLeaderboard from './AgentLeaderboard';
 import AgentClaims from './AgentClaims';
@@ -37,6 +38,42 @@ const TABS = [
   { id: 'commission', labelId: 'Dompet',   Icon: Wallet },
   { id: 'profile',    labelId: 'Profil',   Icon: UserCircle },
 ];
+
+// Polis tab: order tracking + quote builder toggle
+const PolicyAndQuotes: React.FC<{
+  agentId: string; agent: any; clients: SpClient[]; lang: Language; onNavigate: (tab: string) => void;
+}> = ({ agentId, agent, clients, lang }) => {
+  const [showQuoteBuilder, setShowQuoteBuilder] = React.useState(false);
+  if (showQuoteBuilder) {
+    return (
+      <AgentQuoteBuilder
+        agentId={agentId}
+        clients={clients}
+        lang={lang}
+        onBack={() => setShowQuoteBuilder(false)}
+        agent={agent}
+        quoteOnly
+      />
+    );
+  }
+  return (
+    <div className="space-y-4 pb-8">
+      <div className="px-4 pt-4 flex items-center justify-between">
+        <div>
+          <h2 className="font-black text-xl tracking-tight">Polis & Penawaran</h2>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order aktif & riwayat</p>
+        </div>
+        <button
+          onClick={() => setShowQuoteBuilder(true)}
+          className="px-4 py-2.5 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all"
+        >
+          📄 Buat Penawaran
+        </button>
+      </div>
+      <AgentOrderStatus agentId={agentId} lang={lang} />
+    </div>
+  );
+};
 
 const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -118,17 +155,25 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           />
         );
       case 'policy':
-        return <AgentOrderStatus agentId={agent?.id ?? ''} lang={lang} />;
+        return (
+          <PolicyAndQuotes
+            agentId={agent?.id ?? ''}
+            agent={agent}
+            clients={clients}
+            lang={lang}
+            onNavigate={handleTabChange}
+          />
+        );
       case 'clients':
         return <AgentCRM agentId={agent?.id ?? ''} lang={lang} />;
       case 'quotes':
         return (
-          <AgentQuoteBuilder
+          <AgentBuyMarketplace
             agentId={agent?.id ?? ''}
+            agent={agent}
             clients={clients}
             lang={lang}
             onBack={() => handleTabChange('home')}
-            agent={agent}
           />
         );
       case 'claims':

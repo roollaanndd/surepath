@@ -14,7 +14,10 @@ import { calcPremium as calcOjkPremium, getZone, getVehicleCategory } from '../.
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
-import { CAR_DATABASE } from '../../constants';
+import {
+  VEHICLE_BRANDS, getModelsForBrand, getMarketValue,
+  MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto,
+} from '../../services/vehicleDatabase';
 
 interface Props {
   agentId: string;
@@ -22,6 +25,7 @@ interface Props {
   lang: Language;
   onBack: () => void;
   agent?: any;
+  quoteOnly?: boolean;
 }
 
 type ProductType = 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
@@ -64,9 +68,8 @@ const calcPremium = (product: ProductType, inputs: any): number => {
 };
 
 const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
-const CAR_BRANDS = Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort();
 
-const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
+const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent, quoteOnly = false }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   // All hooks must come before any conditional return (Rules of Hooks)
@@ -518,22 +521,40 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           </div>
           {/* Mode chooser for CAR/MOTORCYCLE */}
           {(product === 'CAR' || product === 'MOTORCYCLE') && (
-            <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-slate-500">Pilih Mode</p>
+            <div className="space-y-3 pt-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Pilih Tindakan</p>
               <button
                 onClick={() => { setQuoteMode('penawaran'); setStep('inputs'); }}
-                className="w-full p-5 rounded-2xl border-2 border-blue-500/30 bg-blue-500/5 text-left hover:bg-blue-500/10 transition-all"
+                className="w-full rounded-[1.5rem] overflow-hidden text-left active:scale-95 transition-all shadow-lg"
               >
-                <p className="font-black text-white text-sm">📄 Buat Penawaran</p>
-                <p className="text-[10px] text-slate-400 mt-1">Input data kendaraan, hitung premi, cetak PDF penawaran. Tidak perlu upload dokumen.</p>
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">📄</div>
+                    <div>
+                      <p className="font-black text-white text-sm">Buat Penawaran</p>
+                      <p className="text-[10px] text-blue-100/80 mt-0.5">Hitung premi, cetak PDF. Tanpa dokumen.</p>
+                    </div>
+                    <ChevronRight size={16} className="ml-auto text-white/60" />
+                  </div>
+                </div>
               </button>
-              <button
-                onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
-                className="w-full p-5 rounded-2xl border-2 border-primary-500/30 bg-primary-500/5 text-left hover:bg-primary-500/10 transition-all"
-              >
-                <p className="font-black text-white text-sm">🛒 Beli Langsung</p>
-                <p className="text-[10px] text-slate-400 mt-1">Mulai proses pembelian polis lengkap dengan survei kendaraan, STNK, dan pembayaran.</p>
-              </button>
+              {!quoteOnly && (
+                <button
+                  onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
+                  className="w-full rounded-[1.5rem] overflow-hidden text-left active:scale-95 transition-all shadow-lg"
+                >
+                  <div className="bg-gradient-to-r from-primary-500 to-orange-600 p-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">🛒</div>
+                      <div>
+                        <p className="font-black text-white text-sm">Beli Langsung</p>
+                        <p className="text-[10px] text-orange-100/80 mt-0.5">Proses polis lengkap + survei + pembayaran.</p>
+                      </div>
+                      <ChevronRight size={16} className="ml-auto text-white/60" />
+                    </div>
+                  </div>
+                </button>
+              )}
             </div>
           )}
 
@@ -561,7 +582,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* ─── STEP 3: PRODUCT INPUTS ─── */}
       {step === 'inputs' && (
         <div className="space-y-4">
-          {/* CAR / MOTORCYCLE — dropdowns from CAR_DATABASE */}
+          {/* CAR / MOTORCYCLE — dropdowns from vehicle database */}
           {(product === 'CAR' || product === 'MOTORCYCLE') && (
             <>
               <div>
@@ -572,7 +593,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   className={inputClass}
                 >
                   <option value="">— Pilih Merek —</option>
-                  {CAR_BRANDS.map(b => (
+                  {(product === 'CAR' ? VEHICLE_BRANDS : MOTO_BRANDS).map(b => (
                     <option key={b} value={b}>{b}</option>
                   ))}
                 </select>
@@ -584,28 +605,25 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   <select
                     value={carInputs.model}
                     onChange={e => {
-                      const entry = CAR_DATABASE.find(c => c.brand === carInputs.brand && c.modelName === e.target.value);
-                      const yr = carInputs.year;
-                      const latestPrice =
-                        entry?.yearPrices?.[yr] ??
-                        entry?.yearPrices?.[yr - 1] ??
-                        entry?.yearPrices?.[yr - 2] ??
-                        0;
-                      setCarInputs(v => ({ ...v, model: e.target.value, price: latestPrice * 1_000_000 }));
+                      const model = e.target.value;
+                      const mv = product === 'CAR'
+                        ? getMarketValue(carInputs.brand, model)
+                        : getMarketValueForMoto(carInputs.brand, model);
+                      setCarInputs(v => ({ ...v, model, price: mv ?? v.price }));
                     }}
                     className={inputClass}
                   >
                     <option value="">— Pilih Model —</option>
-                    {CAR_DATABASE.filter(c => c.brand === carInputs.brand).map(c => (
-                      <option key={c.modelName} value={c.modelName}>{c.modelName}</option>
+                    {(product === 'CAR' ? getModelsForBrand(carInputs.brand) : getModelsForMotoBrand(carInputs.brand)).map(m => (
+                      <option key={m} value={m}>{m}</option>
                     ))}
                   </select>
                 </div>
               )}
 
-              {carInputs.brand && carInputs.model && (
+              {carInputs.brand && carInputs.model && carInputs.price > 0 && (
                 <p className="text-xs text-emerald-400 font-bold">
-                  Estimasi Harga: {formatIDR(carInputs.price)} (tahun {carInputs.year})
+                  Nilai Pasar: {formatIDR(carInputs.price)}
                 </p>
               )}
 

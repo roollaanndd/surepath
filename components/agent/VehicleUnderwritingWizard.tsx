@@ -7,11 +7,12 @@ import { Language } from '../../types';
 import { analyzeVehicleSurvey, SurveyAnalysisResult } from '../../services/geminiService';
 import {
   calcPremium, getZone, getVehicleCategory, PROVINCES,
-  MOTO_MAKES, VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
+  VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
   type VehicleType, type CoverageType, type Zone, type PremiumBreakdown, type AddOns,
 } from '../../services/ojkRates';
 import {
   CAR_BRANDS, getModelsForBrand, getMarketValue,
+  MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto,
 } from '../../services/vehicleDatabase';
 import {
   createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
@@ -592,18 +593,22 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   const renderStep3 = () => {
     const isCar = vehicleType === 'CAR';
-    const brandList = isCar ? CAR_BRANDS : MOTO_MAKES;
-    const modelOptions = isCar ? getModelsForBrand(vehicleDetails.make) : [];
-    const autoValue = isCar ? getMarketValue(vehicleDetails.make, vehicleDetails.model) : null;
+    const brandList = isCar ? CAR_BRANDS : MOTO_BRANDS;
+    const modelOptions = isCar
+      ? getModelsForBrand(vehicleDetails.make)
+      : getModelsForMotoBrand(vehicleDetails.make);
+    const autoValue = isCar
+      ? getMarketValue(vehicleDetails.make, vehicleDetails.model)
+      : getMarketValueForMoto(vehicleDetails.make, vehicleDetails.model);
 
     const handleModelChange = (model: string) => {
       handleVehicleDetailChange('model', model);
-      if (isCar) {
-        const mv = getMarketValue(vehicleDetails.make, model);
-        if (mv && mv > 0) {
-          setSumInsured(mv);
-          setSumInsuredDisplay(mv.toLocaleString('id-ID'));
-        }
+      const mv = isCar
+        ? getMarketValue(vehicleDetails.make, model)
+        : getMarketValueForMoto(vehicleDetails.make, model);
+      if (mv && mv > 0) {
+        setSumInsured(mv);
+        setSumInsuredDisplay(mv.toLocaleString('id-ID'));
       }
     };
 
@@ -633,45 +638,33 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 ))}
               </select>
             </div>
-            {/* Model — searchable datalist for cars */}
+            {/* Model — searchable datalist for both cars and motorcycles */}
             <div>
               <Label>Model *</Label>
-              {isCar ? (
-                <>
-                  <input
-                    type="text"
-                    list="vehicle-model-list"
-                    value={vehicleDetails.model}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleModelChange(e.target.value)
-                    }
-                    className={inputCls}
-                    placeholder={vehicleDetails.make ? 'Ketik untuk cari model...' : 'Pilih merek dulu'}
-                    disabled={!vehicleDetails.make}
-                  />
-                  <datalist id="vehicle-model-list">
-                    {modelOptions.map((m) => (
-                      <option key={m.model} value={m.model} />
-                    ))}
-                  </datalist>
-                  {autoValue && autoValue > 0 && (
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
-                    </p>
-                  )}
-                </>
-              ) : (
+              <>
                 <input
                   type="text"
+                  list="vehicle-model-list"
                   value={vehicleDetails.model}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleVehicleDetailChange('model', e.target.value)
+                    handleModelChange(e.target.value)
                   }
                   className={inputCls}
-                  placeholder="Contoh: Beat, Vario, dll"
+                  placeholder={vehicleDetails.make ? 'Ketik untuk cari model...' : 'Pilih merek dulu'}
+                  disabled={!vehicleDetails.make}
                 />
-              )}
+                <datalist id="vehicle-model-list">
+                  {modelOptions.map((m) => (
+                    <option key={m} value={m} />
+                  ))}
+                </datalist>
+                {autoValue && autoValue > 0 && (
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
+                  </p>
+                )}
+              </>
             </div>
             {/* Year */}
             <div>

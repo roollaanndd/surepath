@@ -18,7 +18,7 @@ import CustomInsuranceWizard from '../CustomInsuranceWizard';
 import HealthChat from '../HealthChat';
 import ContactPage from '../ContactPage';
 import { PageTransition } from '../car-wizard/WizardUI';
-import { db, Policy } from '../../db';
+import { getCustomerOrders, getCustomerClaims, type SpPolicyOrder, type SpClaim } from '../../services/supabaseService';
 import { Badge } from '../shared/UI';
 
 interface Props {
@@ -42,9 +42,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   const [activePage, setActivePage] = useState('home');
   const [darkMode, setDarkMode] = useState(false);
-  const [latestPolicy, setLatestPolicy] = useState<Policy | null>(null);
-  const [customerPolicies, setCustomerPolicies] = useState<Policy[]>([]);
-  const [customerClaims, setCustomerClaims] = useState<import('../../db').Claim[]>([]);
+  const [latestPolicy, setLatestPolicy] = useState<SpPolicyOrder | null>(null);
+  const [customerPolicies, setCustomerPolicies] = useState<SpPolicyOrder[]>([]);
+  const [customerClaims, setCustomerClaims] = useState<SpClaim[]>([]);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -53,16 +53,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   useEffect(() => {
     if (currentUser?.id) {
-      db.policies.where('userId').equals(currentUser.id).toArray()
-        .then(res => {
-          const sorted = res.sort((a, b) => b.id! - a.id!);
-          if (sorted.length > 0) setLatestPolicy(sorted[0]);
-          setCustomerPolicies(sorted);
-        })
-        .catch(() => {});
-      db.claims.where('userId').equals(currentUser.id).toArray()
-        .then(res => setCustomerClaims(res.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())))
-        .catch(() => {});
+      getCustomerOrders(currentUser.id).then(orders => {
+        setCustomerPolicies(orders);
+        if (orders.length > 0) setLatestPolicy(orders[0]);
+      }).catch(() => {});
+      getCustomerClaims(currentUser.id).then(claims => {
+        setCustomerClaims(claims);
+      }).catch(() => {});
     }
   }, [currentUser?.id]);
 
@@ -153,7 +150,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                           {t('YOUR INSURANCE', 'ASURANSI KAMU')}
                         </p>
                         <h4 className="text-xl font-black uppercase tracking-tighter mt-0.5">
-                          {latestPolicy.coverageDetails?.vehicle?.brand} {latestPolicy.coverageDetails?.vehicle?.model}
+                          {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
                         </h4>
                       </div>
                       <div className="p-2.5 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
@@ -166,7 +163,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                           {t('EXPIRES ON', 'AKHIR POLIS')}
                         </p>
                         <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                          {new Date(latestPolicy.endDate).toLocaleDateString(
+                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
                             lang === Language.EN ? 'en-US' : 'id-ID',
                             { month: 'long', year: 'numeric' }
                           )}
@@ -264,16 +261,16 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-primary-500/10 flex items-center justify-center">
-                        {p.type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
+                        {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{p.policyNumber}</p>
-                        <p className="text-xs text-slate-400 font-medium">{p.type} · {t('Expires', 'Berakhir')} {new Date(p.endDate).toLocaleDateString('id-ID')}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
+                        <p className="text-xs text-slate-400 font-medium">{p.product_code} · {t('Expires', 'Berakhir')} {new Date(p.end_date ?? '').toLocaleDateString('id-ID')}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-emerald-500">{formatIDR(p.premium)}</p>
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
+                      <p className="text-sm font-black text-emerald-500">{formatIDR(p.total_premium)}</p>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'SUBMITTED' ? 'bg-blue-500/10 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
                     </div>
                   </div>
                 ))}
@@ -293,12 +290,12 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         <AlertCircle size={20} className="text-rose-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{c.policyNumber || t('Claim', 'Klaim')}</p>
-                        <p className="text-xs text-slate-400 font-medium">{new Date(c.createdAt).toLocaleDateString('id-ID')} · {c.location}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
+                        <p className="text-xs text-slate-400 font-medium">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-rose-500">{formatIDR(c.amountEstimated)}</p>
+                      <p className="text-sm font-black text-rose-500">{formatIDR(c.amount_estimated ?? 0)}</p>
                       <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : c.status === 'SUBMITTED' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{c.status}</span>
                     </div>
                   </div>
@@ -333,6 +330,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         return <PAInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
       case 'buy-mpar':
         return <MPARInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
+      case 'buy-health-ind':
+        return <HealthChat onBack={() => navigate('home')} lang={lang} />;
 
       default:
         if (activePage.startsWith('buy-custom_')) {

@@ -1,22 +1,23 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Package, Laptop, Smartphone, Home as House, ChevronRight, 
-  ChevronLeft, Check, ShieldCheck, Wallet, 
-  Camera, Zap, 
+import {
+  Package, Laptop, Smartphone, Home as House, ChevronRight,
+  ChevronLeft, Check, ShieldCheck, Wallet,
+  Camera, Zap,
   Trash2, Microscope,
-  ImagePlus
+  ImagePlus, ExternalLink, ArrowRight, Loader2
 } from 'lucide-react';
 import { MPAR_PRICING } from '../constants';
 import { MPARState, Language } from '../types';
 import { analyzeVehicleSurvey } from '../services/geminiService';
+import { createPolicyOrder } from '../services/supabaseService';
+import { createXenditInvoice } from '../services/paymentService';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const STEPS = ['Select Category', 'Item Registry', 'Select Term', 'Proses Scanning', 'Review & Pay'];
 
-/* Fix: Added lang to props */
-const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [mpar, setMpar] = useState<MPARState>({
@@ -31,6 +32,10 @@ const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUs
 
   const [photos, setPhotos] = useState<{front?: string, back?: string, label?: string}>({});
   const [aiScore, setAiScore] = useState<number | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const currentPremium = useMemo(() => {
     const { category, subCategory, itemPrice, periodMonths } = mpar;
@@ -54,6 +59,66 @@ const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUs
     
     return 0;
   }, [mpar]);
+
+  const handleActivate = async () => {
+    if (isProcessing || currentPremium === 0) return;
+    setIsProcessing(true);
+    try {
+      const order = await createPolicyOrder({
+        agent_id: currentUser?.id ?? '',
+        client_id: currentUser?.id,
+        client_name: currentUser?.name ?? 'Nasabah',
+        client_phone: currentUser?.phone,
+        client_ktp: currentUser?.ktp,
+        product_code: 'MPAR_INSURANCE',
+        product_name: `MPAR All-Risk ${mpar.category} - ${mpar.itemName}`,
+        vehicle_type: undefined,
+        vehicle_details: null,
+        coverage_type: 'MPAR',
+        zone: 1,
+        vehicle_category: 0,
+        addons: { category: mpar.category, subCategory: mpar.subCategory, itemName: mpar.itemName, serialNumber: mpar.serialNumber, periodMonths: mpar.periodMonths, aiScore },
+        sum_insured: mpar.itemPrice,
+        base_premium: Math.round(currentPremium),
+        addon_premium: 0,
+        admin_fee: 0,
+        stamp_duty: 10000,
+        total_premium: Math.round(currentPremium),
+        ojk_rate: 0,
+        discount_rate: 0,
+        discount_amount: 0,
+        net_premium: Math.round(currentPremium),
+        commission_rate: 0,
+        commission_amount: 0,
+        coin_reward: 0,
+        insurer_name: 'SurePath MPAR',
+        status: 'SUBMITTED',
+        start_date: new Date().toISOString(),
+        end_date: new Date(new Date().setMonth(new Date().getMonth() + mpar.periodMonths)).toISOString(),
+      });
+      if (!order) throw new Error('Gagal membuat order');
+      setOrderNumber(order.order_number ?? order.id);
+      const invoice = await createXenditInvoice({
+        order_id: order.id,
+        order_number: order.order_number ?? order.id,
+        client_name: currentUser?.name ?? 'Nasabah',
+        client_email: currentUser?.email,
+        client_phone: currentUser?.phone,
+        product_name: order.product_name,
+        total_premium: order.total_premium,
+      });
+      if (invoice?.invoice_url) {
+        setInvoiceUrl(invoice.invoice_url);
+        window.open(invoice.invoice_url, '_blank', 'noopener,noreferrer');
+      }
+      setIsSuccess(true);
+    } catch (e) {
+      console.error('handleActivate MPAR:', e);
+      alert('Gagal memproses pesanan. Silakan coba lagi.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => setStep(s => Math.max(s - 1, 0));
@@ -306,15 +371,63 @@ const MPARInsuranceWizard = ({ onComplete }: { onComplete: () => void, currentUs
           </div>
        </div>
 
-       <button 
-         onClick={onComplete}
-         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95"
+       <button
+         onClick={handleActivate}
+         disabled={isProcessing}
+         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
        >
-         <Wallet size={24} className="text-amber-500"/>
-         ACTIVATE ASSET SHIELD
+         {isProcessing ? (
+           <><Loader2 size={24} className="animate-spin text-amber-500"/><span>Memproses...</span></>
+         ) : (
+           <><Wallet size={24} className="text-amber-500"/><span>ACTIVATE ASSET SHIELD</span></>
+         )}
        </button>
     </div>
   );
+
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
+        <div className="w-24 h-24 bg-amber-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8">
+          <ShieldCheck size={56} strokeWidth={2.5}/>
+        </div>
+        <div className="space-y-4 mb-12">
+          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
+            Pesanan <span className="text-amber-500">Diterima</span>
+          </h2>
+          <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+            Proteksi barang berhasil didaftarkan. Polis aktif setelah pembayaran dikonfirmasi.
+          </p>
+        </div>
+        <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>No. Pesanan</span>
+            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+          </div>
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>Item</span>
+            <span className="font-black uppercase">{mpar.itemName}</span>
+          </div>
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>Status</span>
+            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[0.55rem] font-black uppercase tracking-widest">Diproses</span>
+          </div>
+        </div>
+        <div className="w-full max-w-sm space-y-4">
+          {invoiceUrl && (
+            <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
+              className="w-full py-5 bg-amber-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+              Buka Halaman Pembayaran <ExternalLink size={18}/>
+            </a>
+          )}
+          <button onClick={onComplete}
+            className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+            Kembali ke Beranda <ArrowRight size={18}/>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">

@@ -714,6 +714,26 @@ export async function getAgentOrders(agentId: string): Promise<SpPolicyOrder[]> 
   return (data ?? []) as SpPolicyOrder[];
 }
 
+export async function getCustomerOrders(clientId: string): Promise<SpPolicyOrder[]> {
+  const { data, error } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getCustomerOrders:', error); return []; }
+  return (data ?? []) as SpPolicyOrder[];
+}
+
+export async function getCustomerClaims(userId: string): Promise<SpClaim[]> {
+  const { data, error } = await supabase
+    .from('sp_claims')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getCustomerClaims:', error); return []; }
+  return (data ?? []) as SpClaim[];
+}
+
 export async function getAllOrders(): Promise<SpPolicyOrder[]> {
   const { data, error } = await supabase
     .from('sp_policy_orders')

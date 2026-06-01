@@ -1,9 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  ShieldAlert, User, Users, GraduationCap, Briefcase, 
-  ChevronRight, ChevronLeft, Check, Wallet, 
-  ShieldCheck, Heart, Zap, Cpu } from 'lucide-react';
+import {
+  ShieldAlert, User, Users, GraduationCap, Briefcase,
+  ChevronRight, ChevronLeft, Check, Wallet,
+  ShieldCheck, Heart, Zap, Cpu, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
+import { createPolicyOrder } from '../services/supabaseService';
+import { createXenditInvoice } from '../services/paymentService';
 import { PA_PLANS } from '../constants';
 import { PAState, Language } from '../types';
 
@@ -12,7 +14,7 @@ const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'curren
 const STEPS = ['Select Category', 'Select Plan', 'Insured Data', 'Beneficiary', 'Review'];
 
 /* Fix: Added lang to props */
-const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [paData, setPaData] = useState<PAState>({
     category: 'GENERAL',
@@ -29,6 +31,11 @@ const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void
     birthDate: ''
   });
 
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+
   const [period, setPeriod] = useState<'1' | '12'>('12');
 
   const plans = paData.category === 'GENERAL' ? PA_PLANS.GENERAL : PA_PLANS.STUDENT;
@@ -36,6 +43,66 @@ const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => setStep(s => Math.max(s - 1, 0));
+
+  const handleActivate = async () => {
+    if (isProcessing || !selectedPlanData) return;
+    setIsProcessing(true);
+    try {
+      const order = await createPolicyOrder({
+        agent_id: currentUser?.id ?? '',
+        client_id: currentUser?.id,
+        client_name: insuredData.name || currentUser?.name || 'Nasabah',
+        client_phone: currentUser?.phone,
+        client_ktp: insuredData.ktp || currentUser?.ktp,
+        product_code: 'PA_INSURANCE',
+        product_name: `Asuransi Kecelakaan Diri PA-${paData.planCode} (${paData.category})`,
+        vehicle_type: undefined,
+        vehicle_details: null,
+        coverage_type: 'PA',
+        zone: 1,
+        vehicle_category: 0,
+        addons: { category: paData.category, planCode: paData.planCode, beneficiaryName: paData.beneficiaryName, beneficiaryRelation: paData.beneficiaryRelation, period },
+        sum_insured: selectedPlanData.benefit ? parseInt(String(selectedPlanData.benefit).replace(/\D/g, '')) * 1000000 : 0,
+        base_premium: Math.round(selectedPlanData.premium),
+        addon_premium: 0,
+        admin_fee: 0,
+        stamp_duty: 10000,
+        total_premium: Math.round(selectedPlanData.premium),
+        ojk_rate: 0,
+        discount_rate: 0,
+        discount_amount: 0,
+        net_premium: Math.round(selectedPlanData.premium),
+        commission_rate: 0,
+        commission_amount: 0,
+        coin_reward: 0,
+        insurer_name: 'SurePath PA',
+        status: 'SUBMITTED',
+        start_date: new Date().toISOString(),
+        end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+      });
+      if (!order) throw new Error('Gagal membuat order');
+      setOrderNumber(order.order_number ?? order.id);
+      const invoice = await createXenditInvoice({
+        order_id: order.id,
+        order_number: order.order_number ?? order.id,
+        client_name: insuredData.name || currentUser?.name || 'Nasabah',
+        client_email: insuredData.email || currentUser?.email,
+        client_phone: currentUser?.phone,
+        product_name: order.product_name,
+        total_premium: order.total_premium,
+      });
+      if (invoice?.invoice_url) {
+        setInvoiceUrl(invoice.invoice_url);
+        window.open(invoice.invoice_url, '_blank', 'noopener,noreferrer');
+      }
+      setIsSuccess(true);
+    } catch (e) {
+      console.error('handleActivate PA:', e);
+      alert('Gagal memproses pesanan. Silakan coba lagi.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const renderStep0 = () => (
     <div className="space-y-6 animate-fade-in">
@@ -266,15 +333,63 @@ const PAInsuranceWizard = ({ onComplete, currentUser }: { onComplete: () => void
           </div>
        </div>
 
-       <button 
-         onClick={onComplete}
-         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95"
+       <button
+         onClick={handleActivate}
+         disabled={isProcessing}
+         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
        >
-         <Wallet size={24} className="text-primary-500"/>
-         ACTIVATE POLICY
+         {isProcessing ? (
+           <><Loader2 size={24} className="animate-spin text-primary-500"/><span>Memproses...</span></>
+         ) : (
+           <><Wallet size={24} className="text-primary-500"/><span>ACTIVATE POLICY</span></>
+         )}
        </button>
     </div>
   );
+
+  if (isSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
+        <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8">
+          <ShieldCheck size={56} strokeWidth={2.5}/>
+        </div>
+        <div className="space-y-4 mb-12">
+          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
+            Pesanan <span className="text-emerald-500">Diterima</span>
+          </h2>
+          <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+            Pengajuan kecelakaan diri berhasil dikirim. Polis aktif setelah pembayaran dikonfirmasi.
+          </p>
+        </div>
+        <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>No. Pesanan</span>
+            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+          </div>
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>Plan</span>
+            <span className="font-black">PA-{paData.planCode}</span>
+          </div>
+          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
+            <span>Status</span>
+            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[0.55rem] font-black uppercase tracking-widest">Diproses</span>
+          </div>
+        </div>
+        <div className="w-full max-w-sm space-y-4">
+          {invoiceUrl && (
+            <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
+              className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+              Buka Halaman Pembayaran <ExternalLink size={18}/>
+            </a>
+          )}
+          <button onClick={onComplete}
+            className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+            Kembali ke Beranda <ArrowRight size={18}/>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">

@@ -5,7 +5,9 @@ import {
 } from 'lucide-react';
 import {
   getMyWallet, getMyWalletTransactions, getMyWithdrawals,
-  requestWithdrawal, type AgentWallet, type WalletTransaction, type Withdrawal
+  requestWithdrawal, getAgentCoinBalance, redeemCoins,
+  supabase,
+  type AgentWallet, type WalletTransaction, type Withdrawal
 } from '../../services/supabaseService';
 
 const BANKS = [
@@ -49,6 +51,8 @@ interface SavedAccount {
 
 interface WithdrawFormProps {
   balance: number;
+  agentId: string;
+  coinBalance: number;
   onSuccess: () => void;
   onCancel: () => void;
   savedAccount?: SavedAccount | null;
@@ -56,13 +60,15 @@ interface WithdrawFormProps {
   profileName?: string;
 }
 
-const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCancel, savedAccount, onSaveAccount, profileName }) => {
+const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, agentId, coinBalance, onSuccess, onCancel, savedAccount, onSaveAccount, profileName }) => {
   const [amount, setAmount] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [accNum, setAccNum] = useState('');
   const [accName, setAccName] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [includeCoin, setIncludeCoin] = useState(false);
+  const [coinRedeem, setCoinRedeem] = useState(0);
 
   const amt = parseInt(amount.replace(/\D/g, '')) || 0;
   const fee = 5000;
@@ -79,7 +85,14 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
     if (!accName.trim()) return setErr('Masukkan nama pemegang rekening');
 
     setLoading(true);
-    const res = await requestWithdrawal({ amount: amt, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
+    let coinRpValue = 0;
+    if (includeCoin && coinRedeem > 0) {
+      const ok = await redeemCoins(agentId, coinRedeem, 'Pencairan ke rekening bank');
+      if (!ok) { setErr('Gagal mencairkan koin. Coba lagi.'); setLoading(false); return; }
+      coinRpValue = coinRedeem * 1000;
+    }
+    const totalAmount = amt + coinRpValue;
+    const res = await requestWithdrawal({ amount: totalAmount, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
     setLoading(false);
     if (res.success) {
       if (onSaveAccount) {
@@ -118,6 +131,43 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
         />
         <p className="text-[0.5rem] text-gray-500 ml-1">Saldo: {IDR(balance)} · Biaya transfer: {IDR(fee)} · Diterima: {amt > fee ? IDR(net) : IDR(0)}</p>
       </div>
+
+      {coinBalance > 0 && (
+        <div className="rounded-2xl border border-white/10 p-4 space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div
+              onClick={() => setIncludeCoin(v => !v)}
+              className={`w-10 h-5 rounded-full transition-colors relative ${includeCoin ? 'bg-amber-500' : 'bg-white/10'}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${includeCoin ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+            <div>
+              <p className="text-xs font-black text-white">Cairkan Koin Sekaligus</p>
+              <p className="text-[10px] text-slate-500">
+                Saldo: {coinBalance.toLocaleString('id-ID')} poin = {IDR(coinBalance * 1000)}
+              </p>
+            </div>
+          </label>
+          {includeCoin && (
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                Jumlah Koin Dicairkan (maks {coinBalance.toLocaleString('id-ID')})
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={coinBalance}
+                value={coinRedeem}
+                onChange={e => setCoinRedeem(Math.min(coinBalance, Math.max(0, Number(e.target.value))))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-amber-500/50"
+              />
+              <p className="text-[10px] text-amber-400 font-bold mt-1">
+                = {IDR(coinRedeem * 1000)} akan ditambahkan ke penarikan
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {needsL3 && (
         <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
@@ -170,6 +220,13 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
         )}
       </div>
 
+      {includeCoin && coinRedeem > 0 && (
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex justify-between">
+          <span className="text-xs font-black text-amber-300">Total Penarikan</span>
+          <span className="text-xs font-black text-amber-300">{IDR(amt + coinRedeem * 1000)}</span>
+        </div>
+      )}
+
       {err && <p className="text-xs text-red-400 font-bold px-1">{err}</p>}
 
       <div className="flex gap-3 pt-2">
@@ -198,6 +255,8 @@ const AgentWalletView: React.FC = () => {
   const [tab, setTab] = useState<'ledger' | 'withdrawals'>('ledger');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [coinBalance, setCoinBalance] = useState(0);
+  const [agentId, setAgentId] = useState('');
   const [savedAccount, setSavedAccount] = useState<SavedAccount | null>(() => {
     try {
       const raw = localStorage.getItem(SAVED_BANK_KEY);
@@ -222,14 +281,19 @@ const AgentWalletView: React.FC = () => {
 
   const load = async () => {
     setLoading(true);
-    const [w, t, wd] = await Promise.all([
+    const authUser = await supabase.auth.getUser();
+    const uid = authUser.data.user?.id ?? '';
+    setAgentId(uid);
+    const [w, t, wd, cb] = await Promise.all([
       getMyWallet(),
       getMyWalletTransactions(50),
       getMyWithdrawals(20),
+      uid ? getAgentCoinBalance(uid) : Promise.resolve(0),
     ]);
     setWallet(w);
     setTxns(t);
     setWithdrawals(wd);
+    setCoinBalance(cb);
     setLoading(false);
   };
 
@@ -254,6 +318,8 @@ const AgentWalletView: React.FC = () => {
         </div>
         <WithdrawForm
           balance={wallet?.balance ?? 0}
+          agentId={agentId}
+          coinBalance={coinBalance}
           onSuccess={() => { setShowWithdrawForm(false); load(); }}
           onCancel={() => setShowWithdrawForm(false)}
           savedAccount={savedAccount}
@@ -287,6 +353,17 @@ const AgentWalletView: React.FC = () => {
             <div className="bg-white/10 rounded-2xl p-4">
               <p className="text-[0.5rem] font-black text-white/50 uppercase tracking-widest">Total Ditarik</p>
               <p className="text-base font-black text-white mt-1">{IDR(wallet?.total_withdrawn ?? 0)}</p>
+            </div>
+            <div className="bg-white/10 rounded-2xl p-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-1">Saldo Koin</p>
+              <p className="text-base font-black text-amber-400">🪙 {coinBalance.toLocaleString('id-ID')} Poin</p>
+              <p className="text-[10px] text-white/50 font-bold">≈ {IDR(coinBalance * 1000)}</p>
+            </div>
+            <div className="bg-white/10 rounded-2xl p-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-1">Pending Tarik</p>
+              <p className="text-base font-black text-orange-400">
+                {IDR(withdrawals.filter(w => w.status?.startsWith('PENDING')).reduce((s, w) => s + (w.amount ?? 0), 0))}
+              </p>
             </div>
           </div>
           <button

@@ -999,7 +999,10 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
 
   useEffect(() => {
-    db.customProducts.toArray().then(setCustomProducts);
+    db.customProducts.toArray().then(setCustomProducts).catch(e => {
+      console.error('customProducts load error:', e);
+      setCustomProducts([]);
+    });
   }, []);
 
   const handleAddCustomProduct = async () => {

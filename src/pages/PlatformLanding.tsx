@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  ArrowRight, ChevronRight, Menu, X, Globe, Sun, Moon,
+  ArrowRight, ChevronRight, ChevronDown, Menu, X, Globe, Sun, Moon,
   Smartphone, Shield, BarChart2, Users, Zap,
   Star, Download, Gift, MessageSquare, ShieldCheck,
   Sparkles, CheckCircle, Search, Award, Play,
@@ -98,7 +98,21 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
   );
 };
 
-// ─── Premium canvas hero background — SurePath Shield ────────────────────────
+// ─── Video hero background ────────────────────────────────────────────────────
+const HeroVideo: React.FC = () => (
+  <video
+    autoPlay
+    muted
+    loop
+    playsInline
+    className="absolute inset-0 w-full h-full object-cover"
+    style={{ filter: 'blur(7px)', transform: 'scale(1.06)', willChange: 'transform' }}
+  >
+    <source src="/hero.mp4" type="video/mp4" />
+  </video>
+);
+
+// ─── Premium canvas shield overlay (sits on top of video at low opacity) ─────
 const HeroCanvas: React.FC = () => {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -697,15 +711,23 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
       {/* ═══════════════════════════════════ HERO ═══════════════════════════ */}
       <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
-        style={{ background: 'hsl(0 0% 8%)' }}>
+        style={{ background: 'hsl(0 0% 4%)' }}>
 
-        {/* Canvas blob background — GPU composited, zero extra bundle */}
-        <div className="absolute inset-0 pointer-events-none">
-          <HeroCanvas />
+        {/* 1. Blurred looping video background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <HeroVideo />
         </div>
 
-        {/* Dark overlay so text is always readable */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'rgba(0,0,0,0.30)', zIndex: 1 }} />
+        {/* 2. Gradient scrim — bottom-heavy for text legibility */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.72) 80%, rgba(0,0,0,0.88) 100%)',
+          zIndex: 1,
+        }} />
+
+        {/* 3. Shield particle overlay — screen blend makes black transparent */}
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 2, opacity: 0.55, mixBlendMode: 'screen' }}>
+          <HeroCanvas />
+        </div>
 
         {/* Content — anchored bottom-left */}
         <div className="relative w-full max-w-[90%] sm:max-w-md lg:max-w-2xl px-6 md:px-10 pb-12 md:pb-16 pt-32 pointer-events-none"

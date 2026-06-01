@@ -1,10 +1,40 @@
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense, Component } from 'react';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getAgentByEmail } from './services/supabaseService';
+import { supabase, getAgentProfile, getUserByEmail } from './services/supabaseService';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
+
+// ─── Error boundary — catches portal render crashes so a white blank page never shows ─
+class PortalErrorBoundary extends Component<
+  { children: React.ReactNode; onReset: () => void },
+  { error: Error | null }
+> {
+  state = { error: null };
+  static getDerivedStateFromError(e: Error) { return { error: e }; }
+  componentDidCatch(e: Error) { console.error('[SurePath portal error]', e); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: '#060a09', color: '#fff', fontFamily: "'Sora',sans-serif", padding: 32, textAlign: 'center' }}>
+          <div style={{ fontSize: 40 }}>⚠️</div>
+          <h2 style={{ fontWeight: 800, fontSize: '1.1rem', margin: 0 }}>Something went wrong</h2>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            {(this.state.error as Error).message}
+          </p>
+          <button
+            onClick={() => { this.setState({ error: null }); this.props.onReset(); }}
+            style={{ marginTop: 8, padding: '10px 24px', borderRadius: 12, background: 'hsl(119,99%,46%)', color: '#000', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', border: 'none' }}
+          >
+            Back to Login
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Lazy-load heavy portal chunks — each is only downloaded when the user's role needs it
 const AuthGate          = lazy(() => import('./components/AuthGate'));
@@ -467,7 +497,7 @@ const App = () => {
         }
         const [byId, byEmail] = await Promise.allSettled([
           getAgentProfile(u.id),
-          getAgentByEmail(u.email!),
+          getUserByEmail(u.email!),  // finds any role, not just AGENT
         ]);
         const profile =
           (byId.status === 'fulfilled' ? byId.value : null) ??
@@ -622,15 +652,17 @@ const App = () => {
 
   if (currentUser && ADMIN_ROLES.includes(currentUser.role)) {
     return (
-      <Suspense fallback={<PortalLoader />}>
-        <AdminPortal
-          onLogout={handleLogout}
-          products={products}
-          setProducts={setProducts}
-          userRole={currentUser.role}
-          currentUser={currentUser}
-        />
-      </Suspense>
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <AdminPortal
+            onLogout={handleLogout}
+            products={products}
+            setProducts={setProducts}
+            userRole={currentUser.role}
+            currentUser={currentUser}
+          />
+        </Suspense>
+      </PortalErrorBoundary>
     );
   }
 
@@ -639,30 +671,36 @@ const App = () => {
       ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
       : { ...currentUser, agent_code: currentUser.nodeId };
     return (
-      <Suspense fallback={<PortalLoader />}>
-        <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
-      </Suspense>
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
+        </Suspense>
+      </PortalErrorBoundary>
     );
   }
 
   if (currentUser && currentUser.role === UserRole.B2B_CLIENT) {
     return (
-      <Suspense fallback={<PortalLoader />}>
-        <B2BPortal client={currentUser} onLogout={handleLogout} lang={lang} />
-      </Suspense>
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <B2BPortal client={currentUser} onLogout={handleLogout} lang={lang} />
+        </Suspense>
+      </PortalErrorBoundary>
     );
   }
 
   if (currentUser) {
     return (
-      <Suspense fallback={<PortalLoader />}>
-        <CustomerPortal
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          lang={lang}
-          products={products}
-        />
-      </Suspense>
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <CustomerPortal
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            lang={lang}
+            products={products}
+          />
+        </Suspense>
+      </PortalErrorBoundary>
     );
   }
 

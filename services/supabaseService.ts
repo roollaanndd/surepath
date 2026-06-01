@@ -127,6 +127,16 @@ export async function getAgentByEmail(email: string): Promise<SpUser | null> {
   return data as SpUser;
 }
 
+export async function getUserByEmail(email: string): Promise<SpUser | null> {
+  const { data, error } = await supabase
+    .from('sp_users')
+    .select('*')
+    .eq('email', email)
+    .single();
+  if (error) return null;
+  return data as SpUser;
+}
+
 // ─── Clients ──────────────────────────────────────────────────────────────────
 
 export async function getAgentClients(agentId: string): Promise<SpClient[]> {

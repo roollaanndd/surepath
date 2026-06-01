@@ -25,6 +25,8 @@
     <meta name="geo.country" content="Indonesia" />
     <meta name="language" content="Indonesian" />
     <meta http-equiv="content-language" content="id" />
+    <!-- Google Search Console verification: set VITE_GSC_VERIFY in Vercel env vars -->
+    <meta name="google-site-verification" content="%VITE_GSC_VERIFY%" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -214,15 +216,12 @@
 }
 </script>
 
-  <!-- IMPORTANT: Replace G-XXXXXXXXXX with your actual Google Analytics Measurement ID -->
-  <!-- To get your ID: analytics.google.com → Admin → Create Property → Web → copy "G-XXXXXXXXXX" -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA4_ID%"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    if ('G-XXXXXXXXXX' === 'G-XXXXXXXXXX') console.warn('[SurePath] GA4 ID not configured — replace G-XXXXXXXXXX in index.html');
-    gtag('config', 'G-XXXXXXXXXX', {
+    gtag('config', '%VITE_GA4_ID%', {
       page_title: document.title,
       send_page_view: true,
       cookie_flags: 'SameSite=None;Secure',

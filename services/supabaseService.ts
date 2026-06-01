@@ -1049,6 +1049,20 @@ export interface SpInsurer {
   name: string;
   description?: string;
   is_active: boolean;
+  admin_name?: string;
+  admin_email?: string;
+  pic_name?: string;
+  pic_phone?: string;
+  created_at?: string;
+}
+
+export interface SpInsurerAuthToken {
+  id: string;
+  insurer_id: string;
+  token: string;
+  email: string;
+  expires_at: string;
+  used_at?: string;
   created_at?: string;
 }
 
@@ -1088,6 +1102,46 @@ export interface SpVehicleOverride {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+// ─── Insurer Portal Auth ──────────────────────────────────────────────────────
+
+export async function createInsurerAuthToken(insurer_id: string, email: string): Promise<string | null> {
+  const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+  const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h
+  const { error } = await supabase.from('sp_insurer_auth_tokens').insert({
+    insurer_id, token, email, expires_at,
+  });
+  if (error) {
+    // Table may not exist yet — gracefully degrade
+    console.warn('createInsurerAuthToken:', error.message);
+    return token; // return token anyway so URL still works when table exists
+  }
+  return token;
+}
+
+export async function validateInsurerAuthToken(token: string): Promise<SpInsurer | null> {
+  const { data, error } = await supabase
+    .from('sp_insurer_auth_tokens')
+    .select('*, sp_insurers(*)')
+    .eq('token', token)
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+  if (error || !data) return null;
+  // Mark as used
+  await supabase.from('sp_insurer_auth_tokens').update({ used_at: new Date().toISOString() }).eq('token', token);
+  return (data.sp_insurers as SpInsurer) ?? null;
+}
+
+export async function getInsurerOrders(insurerId: string): Promise<SpPolicyOrder[]> {
+  const { data, error } = await supabase
+    .from('sp_policy_orders')
+    .select('*')
+    .eq('insurer_id', insurerId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getInsurerOrders:', error); return []; }
+  return (data ?? []) as SpPolicyOrder[];
 }
 
 // ─── Insurer CRUD ─────────────────────────────────────────────────────────────
@@ -1374,7 +1428,8 @@ export async function autoSendReviewLink(
   orderId: string,
   orderNumber: string,
   clientName: string,
-  insurerWa?: string
+  insurerWa?: string,
+  insurerEmail?: string
 ): Promise<string | null> {
   const token = await createReviewToken(orderId);
   if (!token) return null;
@@ -1384,6 +1439,48 @@ export async function autoSendReviewLink(
 
   // Update token with the review URL
   await supabase.from('sp_review_tokens').update({ review_url: reviewUrl }).eq('token', token);
+
+  // Send email to insurer admin if email is configured
+  try {
+    if (insurerEmail) {
+      // Create a dashboard auth token for the insurer
+      const { data: insurerRow } = await supabase
+        .from('sp_policy_orders')
+        .select('insurer_id, insurer_name')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      let dashboardUrl = reviewUrl; // fallback
+      if (insurerRow?.insurer_id) {
+        const dashToken = await createInsurerAuthToken(insurerRow.insurer_id, insurerEmail);
+        if (dashToken) {
+          const appOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://surepath.app';
+          dashboardUrl = `${appOrigin}/insurer-portal?token=${dashToken}`;
+        }
+      }
+
+      const { data: orderRow } = await supabase
+        .from('sp_policy_orders')
+        .select('order_number, client_name, product_name, total_premium, insurer_name')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      await supabase.functions.invoke('send-insurer-email', {
+        body: {
+          to: insurerEmail,
+          order_number: orderRow?.order_number ?? orderId,
+          client_name: orderRow?.client_name ?? clientName,
+          product_name: orderRow?.product_name ?? 'Asuransi',
+          total_premium: orderRow?.total_premium ?? 0,
+          insurer_name: orderRow?.insurer_name ?? 'Penanggung',
+          review_url: reviewUrl,
+          dashboard_url: dashboardUrl,
+        },
+      });
+    }
+  } catch (emailErr) {
+    console.warn('autoSendReviewLink: email send failed (non-fatal):', emailErr);
+  }
 
   // Create admin notification with the link
   await createAdminNotification({

@@ -14,6 +14,10 @@ interface SpInsurer {
   name: string;
   description?: string;
   is_active: boolean;
+  admin_name?: string;
+  admin_email?: string;
+  pic_name?: string;
+  pic_phone?: string;
   created_at?: string;
 }
 
@@ -158,6 +162,10 @@ interface InsurerFormData {
   code: string;
   description: string;
   is_active: boolean;
+  admin_name: string;
+  admin_email: string;
+  pic_name: string;
+  pic_phone: string;
 }
 
 interface InsurerModalProps {
@@ -172,6 +180,10 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
     code: initial?.code ?? '',
     description: initial?.description ?? '',
     is_active: initial?.is_active ?? true,
+    admin_name: initial?.admin_name ?? '',
+    admin_email: initial?.admin_email ?? '',
+    pic_name: initial?.pic_name ?? '',
+    pic_phone: initial?.pic_phone ?? '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -215,6 +227,34 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             placeholder="Deskripsi singkat perusahaan..."
           />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <SectionLabel>Nama Admin</SectionLabel>
+            <input className={inputCls} value={form.admin_name}
+              onChange={e => setForm(f => ({ ...f, admin_name: e.target.value }))}
+              placeholder="Nama PIC admin" />
+          </div>
+          <div>
+            <SectionLabel>Email Admin</SectionLabel>
+            <input className={inputCls} type="email" value={form.admin_email}
+              onChange={e => setForm(f => ({ ...f, admin_email: e.target.value }))}
+              placeholder="admin@insurerco.com" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <SectionLabel>Nama PIC</SectionLabel>
+            <input className={inputCls} value={form.pic_name}
+              onChange={e => setForm(f => ({ ...f, pic_name: e.target.value }))}
+              placeholder="PIC operasional" />
+          </div>
+          <div>
+            <SectionLabel>No. Telepon PIC</SectionLabel>
+            <input className={inputCls} value={form.pic_phone}
+              onChange={e => setForm(f => ({ ...f, pic_phone: e.target.value }))}
+              placeholder="+628..." />
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <SectionLabel>Status Aktif</SectionLabel>

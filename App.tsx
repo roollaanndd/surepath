@@ -15,6 +15,7 @@ const CustomerPortal    = lazy(() => import('./components/customer/CustomerPorta
 const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
+const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
@@ -530,6 +531,14 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <PaymentRedirect status={pathname === '/payment/success' ? 'success' : 'failed'} />
+      </Suspense>
+    );
+  }
+
+  if (pathname === '/insurer-portal') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <InsurerPortal />
       </Suspense>
     );
   }

@@ -11,7 +11,7 @@ import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
   SecurityView, LedgerView, ReportsView, AgentManagementView,
   ClaimsAdminView, UserManagementView, PaymentsAdminView,
-  WithdrawalsAdminView,
+  WithdrawalsAdminView, RolePermissionsView,
 } from './AdminViews';
 import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
@@ -27,7 +27,7 @@ import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
 import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
-import { getAdminStats, type AdminStats, uploadLogoImage, supabase } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, supabase, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
@@ -139,6 +139,8 @@ const AdminPortal = ({
     totalPembayaranMasuk: number;
     totalKomisiAgen: number;
   } | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUsersResult | null>(null);
+  const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -162,6 +164,13 @@ const AdminPortal = ({
       });
     }).catch(() => {});
 
+    // Online users
+    getOnlineUsers().then(setOnlineUsers).catch(() => {});
+    const onlineInterval = setInterval(() => getOnlineUsers().then(setOnlineUsers).catch(() => {}), 60000);
+
+    // Traffic stats
+    getTrafficStats().then(setTrafficStats).catch(() => {});
+
     // Auto daily backup — runs silently on admin portal open if >23h since last
     if (shouldAutoBackup()) {
       setBackupStatus('running');
@@ -171,10 +180,30 @@ const AdminPortal = ({
         .finally(() => setTimeout(() => setBackupStatus('idle'), 8000));
     }
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearInterval(onlineInterval);
+    };
   }, []);
 
-  const filteredMenu = MENU_ITEMS.filter(m => m.roles.includes(userRole));
+  // ── Role-based menu with localStorage overrides ────────────────────────────
+  const filteredMenu = (() => {
+    if (userRole === UserRole.MASTER_ADMIN) return MENU_ITEMS.filter(m => m.roles.includes(userRole));
+    try {
+      const saved = localStorage.getItem('SP_ROLE_PERMISSIONS');
+      if (saved) {
+        const perms: Record<string, string[]> = JSON.parse(saved);
+        const allowed = perms[userRole] ?? null;
+        if (allowed) {
+          return MENU_ITEMS.filter(m => {
+            if (m.isSeparator) return m.roles.includes(userRole);
+            return allowed.includes(m.id);
+          });
+        }
+      }
+    } catch { /* fall through to default */ }
+    return MENU_ITEMS.filter(m => m.roles.includes(userRole));
+  })();
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -324,10 +353,10 @@ const AdminPortal = ({
         ))}
       </div>
 
-      {/* Transaksi Overview */}
+      {/* Transaksi Overview + Online Users */}
       <div>
         <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>Transaksi Overview</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
             { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
@@ -342,6 +371,24 @@ const AdminPortal = ({
               <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
             </div>
           ))}
+          {/* Online Users Card */}
+          <div className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${th(darkMode, 'bg-green-500/10 text-green-400', 'bg-green-50 text-green-600')}`}>
+                <Users size={20} />
+              </div>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            </div>
+            <p className={`text-2xl font-black tracking-tight mb-0.5 ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+              {onlineUsers ? onlineUsers.total : '—'}
+            </p>
+            <p className={`text-[0.6rem] font-bold uppercase tracking-widest mb-2 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>Pengguna Online</p>
+            {onlineUsers && onlineUsers.total > 0 && (
+              <p className={`text-[0.55rem] font-bold ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>
+                {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

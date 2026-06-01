@@ -516,45 +516,127 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               {activeProduct === 'life' && <CheckCircle2 size={14} className="text-emerald-500 mt-2" />}
             </button>
           </div>
-          <button
-            disabled={!product && activeProduct !== 'life'}
-            onClick={() => {
-              if (activeProduct === 'life') {
-                // handled by conditional render above — just trigger re-render
-                setActiveProduct('life');
-              } else if (product === 'CAR' || product === 'MOTORCYCLE') {
-                // OJK products launch underwriting wizard
-                setVehicleWizardType(product);
-              } else {
-                setStep('inputs');
-              }
-            }}
-            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
-          >
-            {product === 'CAR' || product === 'MOTORCYCLE'
-              ? t('Start Underwriting', 'Mulai Underwriting')
-              : activeProduct === 'life'
-              ? t('Start Life Application', 'Mulai Aplikasi Jiwa')
-              : t('Next', 'Lanjut')}
-            <ChevronRight size={16} />
-          </button>
+          {/* Mode chooser for CAR/MOTORCYCLE */}
+          {(product === 'CAR' || product === 'MOTORCYCLE') && (
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-500">Pilih Mode</p>
+              <button
+                onClick={() => { setQuoteMode('penawaran'); setStep('inputs'); }}
+                className="w-full p-5 rounded-2xl border-2 border-blue-500/30 bg-blue-500/5 text-left hover:bg-blue-500/10 transition-all"
+              >
+                <p className="font-black text-white text-sm">📄 Buat Penawaran</p>
+                <p className="text-[10px] text-slate-400 mt-1">Input data kendaraan, hitung premi, cetak PDF penawaran. Tidak perlu upload dokumen.</p>
+              </button>
+              <button
+                onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
+                className="w-full p-5 rounded-2xl border-2 border-primary-500/30 bg-primary-500/5 text-left hover:bg-primary-500/10 transition-all"
+              >
+                <p className="font-black text-white text-sm">🛒 Beli Langsung</p>
+                <p className="text-[10px] text-slate-400 mt-1">Mulai proses pembelian polis lengkap dengan survei kendaraan, STNK, dan pembayaran.</p>
+              </button>
+            </div>
+          )}
+
+          {/* For non-vehicle or life products */}
+          {product && product !== 'CAR' && product !== 'MOTORCYCLE' && (
+            <button
+              onClick={() => setStep('inputs')}
+              className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"
+            >
+              {t('Next', 'Lanjut')} <ChevronRight size={16} />
+            </button>
+          )}
+
+          {activeProduct === 'life' && (
+            <button
+              onClick={() => setActiveProduct('life')}
+              className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"
+            >
+              {t('Start Life Application', 'Mulai Aplikasi Jiwa')} <ChevronRight size={16} />
+            </button>
+          )}
         </div>
       )}
 
       {/* ─── STEP 3: PRODUCT INPUTS ─── */}
       {step === 'inputs' && (
         <div className="space-y-4">
-          {/* CAR */}
-          {product === 'CAR' && (
+          {/* CAR / MOTORCYCLE — dropdowns from CAR_DATABASE */}
+          {(product === 'CAR' || product === 'MOTORCYCLE') && (
             <>
-              <div><label className={labelClass}>{t('Vehicle Brand', 'Merek Kendaraan')}</label>
-                <input type="text" value={carInputs.brand} onChange={e => setCarInputs(v => ({ ...v, brand: e.target.value }))} className={inputClass} placeholder="Toyota, Honda, BMW…" /></div>
-              <div><label className={labelClass}>{t('Model', 'Model')}</label>
-                <input type="text" value={carInputs.model} onChange={e => setCarInputs(v => ({ ...v, model: e.target.value }))} className={inputClass} placeholder="Avanza, Civic…" /></div>
-              <div><label className={labelClass}>{t('Year', 'Tahun')}</label>
-                <input type="number" value={carInputs.year} onChange={e => setCarInputs(v => ({ ...v, year: parseInt(e.target.value) || 2020 }))} className={inputClass} /></div>
-              <div><label className={labelClass}>{t('Vehicle Price (Rp)', 'Harga Kendaraan (Rp)')}</label>
-                <input type="number" value={carInputs.price || ''} onChange={e => setCarInputs(v => ({ ...v, price: parseInt(e.target.value) || 0 }))} className={inputClass} placeholder="250000000" /></div>
+              <div>
+                <label className={labelClass}>{t('Vehicle Brand', 'Merek Kendaraan')}</label>
+                <select
+                  value={carInputs.brand}
+                  onChange={e => setCarInputs(v => ({ ...v, brand: e.target.value, model: '', price: 0 }))}
+                  className={inputClass}
+                >
+                  <option value="">— Pilih Merek —</option>
+                  {CAR_BRANDS.map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+
+              {carInputs.brand && (
+                <div>
+                  <label className={labelClass}>{t('Model', 'Model')}</label>
+                  <select
+                    value={carInputs.model}
+                    onChange={e => {
+                      const entry = CAR_DATABASE.find(c => c.brand === carInputs.brand && c.modelName === e.target.value);
+                      const yr = carInputs.year;
+                      const latestPrice =
+                        entry?.yearPrices?.[yr] ??
+                        entry?.yearPrices?.[yr - 1] ??
+                        entry?.yearPrices?.[yr - 2] ??
+                        0;
+                      setCarInputs(v => ({ ...v, model: e.target.value, price: latestPrice * 1_000_000 }));
+                    }}
+                    className={inputClass}
+                  >
+                    <option value="">— Pilih Model —</option>
+                    {CAR_DATABASE.filter(c => c.brand === carInputs.brand).map(c => (
+                      <option key={c.modelName} value={c.modelName}>{c.modelName}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {carInputs.brand && carInputs.model && (
+                <p className="text-xs text-emerald-400 font-bold">
+                  Estimasi Harga: {formatIDR(carInputs.price)} (tahun {carInputs.year})
+                </p>
+              )}
+
+              <div>
+                <label className={labelClass}>{t('Year', 'Tahun')}</label>
+                <input
+                  type="number"
+                  value={carInputs.year}
+                  onChange={e => {
+                    const yr = parseInt(e.target.value) || new Date().getFullYear();
+                    const entry = carInputs.model
+                      ? CAR_DATABASE.find(c => c.brand === carInputs.brand && c.modelName === carInputs.model)
+                      : null;
+                    const yearPrice = entry?.yearPrices?.[yr] ?? 0;
+                    setCarInputs(v => ({ ...v, year: yr, price: yearPrice ? yearPrice * 1_000_000 : v.price }));
+                  }}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>{t('Vehicle Price (Rp)', 'Harga Kendaraan (Rp)')}</label>
+                <input
+                  type="number"
+                  value={carInputs.price || ''}
+                  onChange={e => setCarInputs(v => ({ ...v, price: parseInt(e.target.value) || 0 }))}
+                  className={inputClass}
+                  placeholder="250000000"
+                />
+              </div>
+
               <div>
                 <label className={labelClass}>{t('Coverage Type', 'Tipe Perlindungan')}</label>
                 <div className="grid grid-cols-2 gap-2">

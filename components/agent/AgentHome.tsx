@@ -167,6 +167,11 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             {formatIDR(stats.totalCommissionMonth)}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('this month', 'bulan ini')}</div>
+          {coinBalance > 0 && (
+            <div className="text-[10px] text-amber-500 font-bold mt-1">
+              🪙 {coinBalance.toLocaleString('id-ID')} poin tersedia
+            </div>
+          )}
         </div>
       </div>
 

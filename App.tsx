@@ -47,6 +47,7 @@ const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'
 const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
+const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
 
 const detectLang = (): Language => {
@@ -690,7 +691,21 @@ const App = () => {
     );
   }
 
-  const STATIC_PAGES = ['about', 'careers', 'blog', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
+  // Blog routes — /blog and /blog/:slug
+  const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
+  if (pathname === '/blog' || blogSlugMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <BlogPage
+          slug={blogSlugMatch ? blogSlugMatch[1] : undefined}
+          onBack={() => navigate('/')}
+          onSignIn={() => { navigate('/'); setAppMode(true); }}
+        />
+      </Suspense>
+    );
+  }
+
+  const STATIC_PAGES = ['about', 'careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
   const staticPageId = STATIC_PAGES.find(p => pathname === `/${p}`);
   if (staticPageId) {
     return (

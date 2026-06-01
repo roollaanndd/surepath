@@ -741,12 +741,27 @@ const BackupView: React.FC = () => {
   const pillColor = ageH < 24 ? 'bg-emerald-500/15 text-emerald-400' : ageH < 48 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400';
   const pillLabel = lastTs ? (ageH < 24 ? 'Up to date' : ageH < 48 ? 'Stale' : 'Outdated') : 'Never';
 
-  const load = () => listBackups().then(setBackups);
+  const load = async () => {
+    try {
+      const result = await listBackups();
+      setBackups(result);
+    } catch (e) {
+      console.error('BackupView load error:', e);
+      setBackups([]);
+    }
+  };
   useEffect(() => { load(); }, []);
 
   const handleRunBackup = async () => {
     setRunning(true);
-    try { await performBackup(); await load(); } finally { setRunning(false); }
+    try {
+      await performBackup();
+      await load();
+    } catch (e) {
+      console.error('BackupView handleRunBackup error:', e);
+    } finally {
+      setRunning(false);
+    }
   };
 
   const handleDownload = (id: string) => downloadBackup(id);

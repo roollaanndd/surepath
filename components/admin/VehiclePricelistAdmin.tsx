@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus, Pencil, Trash2, RefreshCw, Save, X, Car,
   ToggleLeft, ToggleRight, Search, Database, Upload,
@@ -194,6 +194,7 @@ const VehiclePricelistAdmin: React.FC = () => {
   const [syncMsg, setSyncMsg] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [activeVersion, setActiveVersion] = useState('');
+  const hasSeededRef = useRef(false);
 
   const fetchOverrides = useCallback(async () => {
     setLoading(true);
@@ -205,8 +206,9 @@ const VehiclePricelistAdmin: React.FC = () => {
     const rows = (data ?? []) as SpVehicleOverride[];
     setOverrides(rows);
     setLoading(false);
-    // Auto-seed if empty
-    if (rows.length === 0) {
+    // Auto-seed if empty — only once per mount
+    if (rows.length === 0 && !hasSeededRef.current) {
+      hasSeededRef.current = true;
       await syncFromConstants(rows);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -245,8 +247,14 @@ const VehiclePricelistAdmin: React.FC = () => {
       if (!error) inserted += chunk.length;
     }
     setSyncMsg(`Selesai: ${inserted} ditambahkan, ${skipped} sudah ada.`);
+    // Directly refresh overrides without triggering another loading flash
+    const { data: refreshed } = await supabase
+      .from('sp_vehicle_overrides')
+      .select('*')
+      .order('brand')
+      .order('model');
+    setOverrides((refreshed ?? []) as SpVehicleOverride[]);
     setSyncing(false);
-    await fetchOverrides();
   };
 
   const handleSyncClick = async () => {

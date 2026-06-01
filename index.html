@@ -154,6 +154,43 @@
     }
     </script>
 
+    <!-- Anti-inspect deterrent: blocks right-click and common devtools shortcuts -->
+    <!-- Note: these are deterrents only — a determined developer can always bypass -->
+    <script>
+      (function(){
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+        // Block devtools keyboard shortcuts
+        document.addEventListener('keydown', function(e){
+          var k = e.key;
+          // F12
+          if (k === 'F12') { e.preventDefault(); return false; }
+          // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (Chrome/Edge devtools)
+          if (e.ctrlKey && e.shiftKey && (k==='I'||k==='i'||k==='J'||k==='j'||k==='C'||k==='c')) {
+            e.preventDefault(); return false;
+          }
+          // Ctrl+U (view source)
+          if (e.ctrlKey && (k==='U'||k==='u')) { e.preventDefault(); return false; }
+          // Cmd+Option+I (Mac devtools)
+          if (e.metaKey && e.altKey && (k==='I'||k==='i')) { e.preventDefault(); return false; }
+        });
+
+        // Devtools open detection — redirect to blank if opened
+        var _dt = false;
+        var _threshold = 160;
+        function _checkDt() {
+          var widthDiff = window.outerWidth - window.innerWidth;
+          var heightDiff = window.outerHeight - window.innerHeight;
+          if ((widthDiff > _threshold || heightDiff > _threshold) && !_dt) {
+            _dt = true;
+            document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;font-size:1rem;color:#64748b">Akses tidak diizinkan.</div>';
+          }
+        }
+        setInterval(_checkDt, 1000);
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">

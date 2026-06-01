@@ -7,8 +7,8 @@ const TEXT_MODEL    = 'anthropic/claude-3.5-haiku-20241022'; // product explaine
 export const CHAT_MODEL = 'anthropic/claude-3.5-haiku-20241022'; // health chatbot
 
 // ─── Proxy through Supabase edge function — keeps OpenRouter key server-side ──
-const AI_PROXY_URL  = 'https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/ai-proxy';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5amdldGVlbG5zd3BoeXprandpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzEzNzUsImV4cCI6MjA5NDc0NzM3NX0.igFT0ExEh-RDn_eMvBi0HzAhCWD1G7jYVRFNOL4TFSU';
+const AI_PROXY_URL  = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/ai-proxy`;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 const getClient = () => new OpenAI({
   baseURL: AI_PROXY_URL,

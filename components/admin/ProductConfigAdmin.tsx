@@ -174,6 +174,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
   };
 
   const handleSave = async () => {
+    if (companyMargin < 0.05) return; // enforce profit floor
     setSaving(true);
     const ok = await updateProductConfig(draft.id, {
       base_commission_rate: draft.base_commission_rate,
@@ -191,6 +192,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
   };
 
   const { commission, coins, coinValue } = calcPreview(draft);
+  // Company margin: must stay ≥ 5% of premium after commission + coin cost
+  const companyMargin = 1 - draft.base_commission_rate - draft.coin_rate;
+  const marginOk = companyMargin >= 0.05;
 
   const vehicleBadge =
     draft.vehicle_type === 'CAR'
@@ -298,6 +302,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
           </span>
           <span className="text-amber-400 font-black font-mono text-[9px]">
             floor(premi × {pct(draft.coin_rate)} / 1000)
+          </span>
+        </div>
+        <div className={`flex items-center justify-between pt-1 border-t mt-1 ${marginOk ? 'border-emerald-500/20' : 'border-rose-500/30'}`}>
+          <span className={`font-black text-[9px] ${marginOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {marginOk ? '✓' : '⚠'} Margin perusahaan
+          </span>
+          <span className={`font-black font-mono text-[10px] ${marginOk ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {pct(companyMargin)} {!marginOk && '— min 5% GWP!'}
           </span>
         </div>
       </div>

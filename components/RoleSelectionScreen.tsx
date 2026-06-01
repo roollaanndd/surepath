@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SurePathLogo } from './Navbar';
 import { UserRole } from '../types';
-import { registerAgent, createCustomerProfile, createB2BClientProfile } from '../services/supabaseService';
+import { registerAgent, createCustomerProfile, createB2BClientProfile, applyReferralCode } from '../services/supabaseService';
 
 type Role = 'CUSTOMER' | 'AGENT' | 'B2B_CLIENT';
 
@@ -69,6 +69,12 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [refCode, setRefCode] = useState('');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('SUREPATH_REF') ?? '';
+    setRefCode(stored);
+  }, []);
 
   const handleConfirm = async () => {
     if (!selected) return;
@@ -94,6 +100,11 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
           email: oauthUser.email,
           phone: phone.trim(),
         });
+        // Link to upline if a referral code was stored from the landing URL
+        if (profile && refCode) {
+          await applyReferralCode(profile.id, refCode);
+          localStorage.removeItem('SUREPATH_REF');
+        }
       } else {
         profile = await createB2BClientProfile({
           id: oauthUser.id,
@@ -250,10 +261,20 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
             )}
 
             {selected === 'AGENT' && (
-              <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(6,224,0,0.06)', border: '1px solid rgba(6,224,0,0.15)' }}>
-                <p style={{ color: 'rgba(6,224,0,0.8)', fontSize: '0.68rem', margin: 0, lineHeight: 1.5 }}>
-                  Akun agen perlu diverifikasi admin sebelum bisa digunakan.
-                </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {refCode && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.20)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: '1rem' }}>🔗</span>
+                    <p style={{ color: 'rgba(147,197,253,0.9)', fontSize: '0.68rem', margin: 0 }}>
+                      Referral dari agen <strong>{refCode}</strong> akan otomatis terhubung.
+                    </p>
+                  </div>
+                )}
+                <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(6,224,0,0.06)', border: '1px solid rgba(6,224,0,0.15)' }}>
+                  <p style={{ color: 'rgba(6,224,0,0.8)', fontSize: '0.68rem', margin: 0, lineHeight: 1.5 }}>
+                    Akun agen perlu diverifikasi admin sebelum bisa digunakan.
+                  </p>
+                </div>
               </div>
             )}
           </div>

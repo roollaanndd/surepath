@@ -2297,3 +2297,108 @@ export async function updateB2BProfile(
   if (error) { console.error('updateB2BProfile:', error); return false; }
   return true;
 }
+
+// ─── Tier Config (DB-driven rates) ───────────────────────────────────────────
+
+export interface SpTierConfig {
+  tier: 'STANDARD' | 'STAR' | 'ELITE';
+  coin_bonus_rate: number;
+  l1_override_rate: number;
+  l2_override_rate: number;
+  updated_by?: string | null;
+  updated_at?: string;
+}
+
+export async function getTierConfig(): Promise<SpTierConfig[]> {
+  const { data, error } = await supabase
+    .from('sp_tier_config')
+    .select('*')
+    .order('tier', { ascending: true });
+  if (error) { console.error('getTierConfig:', error); return []; }
+  return (data ?? []) as SpTierConfig[];
+}
+
+export async function updateTierConfig(
+  tier: 'STANDARD' | 'STAR' | 'ELITE',
+  rates: Pick<SpTierConfig, 'coin_bonus_rate' | 'l1_override_rate' | 'l2_override_rate'>,
+  updatedBy: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_tier_config')
+    .update({ ...rates, updated_by: updatedBy, updated_at: new Date().toISOString() })
+    .eq('tier', tier);
+  if (error) { console.error('updateTierConfig:', error); return false; }
+  return true;
+}
+
+// ─── Promo Codes ─────────────────────────────────────────────────────────────
+
+export interface SpPromoCode {
+  id: string;
+  code: string;
+  description?: string;
+  discount_type: 'PERCENT' | 'FLAT';
+  discount_value: number;
+  applicable_products: string[];
+  valid_from: string;
+  valid_to: string;
+  usage_limit: number;
+  used_count: number;
+  is_active: boolean;
+  created_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getPromoCodes(): Promise<SpPromoCode[]> {
+  const { data, error } = await supabase
+    .from('sp_promo_codes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getPromoCodes:', error); return []; }
+  return (data ?? []) as SpPromoCode[];
+}
+
+export async function createPromoCode(
+  payload: Omit<SpPromoCode, 'id' | 'used_count' | 'created_at' | 'updated_at'>,
+): Promise<SpPromoCode | null> {
+  const { data, error } = await supabase
+    .from('sp_promo_codes')
+    .insert({ ...payload, used_count: 0 })
+    .select()
+    .single();
+  if (error) { console.error('createPromoCode:', error); return null; }
+  return data as SpPromoCode;
+}
+
+export async function updatePromoCode(id: string, updates: Partial<SpPromoCode>): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_promo_codes')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { console.error('updatePromoCode:', error); return false; }
+  return true;
+}
+
+export async function validatePromoCode(
+  code: string,
+  productType: string,
+): Promise<{ valid: boolean; promo?: SpPromoCode; message?: string }> {
+  const { data, error } = await supabase
+    .from('sp_promo_codes')
+    .select('*')
+    .eq('code', code.toUpperCase().trim())
+    .eq('is_active', true)
+    .single();
+
+  if (error || !data) return { valid: false, message: 'Kode promo tidak ditemukan.' };
+  const p = data as SpPromoCode;
+  const now = new Date().toISOString();
+  if (now < p.valid_from) return { valid: false, message: 'Kode promo belum aktif.' };
+  if (now > p.valid_to)   return { valid: false, message: 'Kode promo sudah kadaluarsa.' };
+  if (p.used_count >= p.usage_limit) return { valid: false, message: 'Kuota kode promo habis.' };
+  if (!p.applicable_products.includes('ALL') && !p.applicable_products.includes(productType)) {
+    return { valid: false, message: 'Kode promo tidak berlaku untuk produk ini.' };
+  }
+  return { valid: true, promo: p };
+}

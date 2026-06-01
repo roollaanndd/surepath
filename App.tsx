@@ -466,6 +466,13 @@ const App = () => {
     }, 1400);
   }, []);
 
+  // Capture referral code from ?ref= URL param (persists across OAuth redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) localStorage.setItem('SUREPATH_REF', ref);
+  }, []);
+
   useEffect(() => {
     injectVercelAnalytics({ mode: 'auto' });
     seedDatabase().catch(console.error);

@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -25,6 +25,7 @@ import AIFinanceView from './AIFinanceView';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
+import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
@@ -51,6 +52,7 @@ const MENU_ITEMS = [
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
+  { id: 'tier_promo',      label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
@@ -326,6 +328,7 @@ const AdminPortal = ({
       case 'endorsements':     return <EndorsementsAdminView />;
       case 'b2b':              return <B2BAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
+      case 'tier_promo':       return <TierPromoConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;

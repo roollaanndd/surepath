@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /insurer-portal
+Disallow: /review/
+Disallow: /payment/
+
+Sitemap: https://myinsurepath.com/sitemap.xml

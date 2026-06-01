@@ -362,7 +362,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
               <div className="flex items-center gap-2 p-3 bg-primary-500/5 rounded-2xl border border-primary-500/20">
                 <FileText size={14} className="text-primary-500 flex-shrink-0" />
                 <p className="text-xs text-primary-500 font-bold">
-                  {t('Go to Quotes tab to create a new quote or policy for this client.', 'Buka tab Kuotasi untuk membuat kuotasi atau polis baru untuk klien ini.')}
+                  {t('Go to Quotes tab to create a new quote or policy for this client.', 'Buka tab Penawaran untuk membuat penawaran atau polis baru untuk klien ini.')}
                 </p>
               </div>
             </div>

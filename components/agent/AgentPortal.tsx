@@ -41,6 +41,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [activeTab, setActiveTab] = useState('home');
+  const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -87,6 +88,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   useEffect(() => { loadData(); }, [agent?.id]);
 
+  const handleTabChange = (tab: string) => {
+    setTabKey(k => k + 1);
+    setActiveTab(tab);
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'home':
@@ -96,7 +102,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agentId={agent?.id ?? ''}
             stats={stats}
             recentCommissions={commissions.slice(0, 5)}
-            onNavigate={setActiveTab}
+            onNavigate={handleTabChange}
             lang={lang}
           />
         );
@@ -110,7 +116,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agentId={agent?.id ?? ''}
             clients={clients}
             lang={lang}
-            onBack={() => setActiveTab('home')}
+            onBack={() => handleTabChange('home')}
             agent={agent}
           />
         );
@@ -183,6 +189,13 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
                 {agent?.agent_code ?? 'SP-AGT'}
               </div>
+              {(agent?.tier || agent?.agent_tier) && (
+                <div className={`text-[8px] font-black uppercase tracking-widest ${
+                  (agent?.tier || agent?.agent_tier) === 'ELITE' ? 'text-purple-400' : 'text-amber-400'
+                }`}>
+                  {(agent?.tier || agent?.agent_tier) === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+                </div>
+              )}
             </div>
 
             {/* Notification bell */}
@@ -206,7 +219,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             </button>
 
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center ml-1"
             >
               <UserCircle size={14} className="text-slate-600 dark:text-slate-300" />
@@ -236,7 +249,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             return (
               <button
                 key={id}
-                onClick={() => setActiveTab(id)}
+                onClick={() => handleTabChange(id)}
                 className={`flex flex-col items-center gap-0.5 transition-all duration-200 ${
                   isCenter
                     ? '-mt-5'

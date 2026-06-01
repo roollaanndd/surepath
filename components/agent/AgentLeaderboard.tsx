@@ -293,7 +293,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
             <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">
               {t(
                 'Convert quotes to policies to appear on the leaderboard.',
-                'Konversikan kuotasi ke polis untuk muncul di papan peringkat.',
+                'Konversikan penawaran ke polis untuk muncul di papan peringkat.',
               )}
             </p>
           </div>

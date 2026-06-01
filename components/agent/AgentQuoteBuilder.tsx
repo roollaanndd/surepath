@@ -270,7 +270,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         </button>
         <div className="flex gap-3 w-full">
           <button onClick={reset} className="flex-1 py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-black font-black text-xs uppercase tracking-widest">
-            {t('New Quote', 'Kuotasi Baru')}
+            {t('New Quote', 'Penawaran Baru')}
           </button>
           <button onClick={onBack} className="flex-1 py-3.5 rounded-2xl border border-slate-200 dark:border-white/10 font-black text-xs uppercase tracking-widest">
             {t('Back to Home', 'Kembali')}
@@ -290,7 +290,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             quoteTab === 'new' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400'
           }`}
         >
-          <RefreshCw size={12} /> {t('New Quote', 'Kuotasi Baru')}
+          <RefreshCw size={12} /> {t('New Quote', 'Penawaran Baru')}
         </button>
         <button
           onClick={() => setQuoteTab('orders')}
@@ -318,7 +318,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <ChevronLeft size={18} />
         </button>
         <div>
-          <h1 className="font-black tracking-tight text-xl">{t('Quote Builder', 'Buat Kuotasi')}</h1>
+          <h1 className="font-black tracking-tight text-xl">{t('Quote Builder', 'Buat Penawaran')}</h1>
           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
             {t(`Step ${stepIndex + 1} of 4`, `Langkah ${stepIndex + 1} dari 4`)}
           </p>
@@ -412,7 +412,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {step === 'product' && (
         <div className="space-y-4">
           <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-500">
-            {t('Quote for:', 'Kuotasi untuk:')} <span className="text-slate-900 dark:text-white">{clientName}</span>
+            {t('Quote for:', 'Penawaran untuk:')} <span className="text-slate-900 dark:text-white">{clientName}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {PRODUCTS.map(p => {
@@ -617,7 +617,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             onClick={() => setStep('summary')}
             className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {t('See Quote', 'Lihat Kuotasi')} <ChevronRight size={16} />
+            {t('See Quote', 'Lihat Penawaran')} <ChevronRight size={16} />
           </button>
         </div>
       )}
@@ -627,7 +627,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         <div className="space-y-4">
           {/* Summary Card */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-2xl">
-            <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{t('Quote Summary', 'Ringkasan Kuotasi')}</p>
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{t('Quote Summary', 'Ringkasan Penawaran')}</p>
             <h2 className="font-black text-2xl tracking-tight">{clientName}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{product}</p>
             <div className="mt-5 pt-4 border-t border-white/10">
@@ -660,7 +660,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             className="w-full py-4 rounded-2xl border border-slate-200 dark:border-white/10 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
           >
             {saving ? <RefreshCw size={14} className="animate-spin" /> : <FileCheck size={14} />}
-            {savedQuote ? t('Quote Saved!', 'Kuotasi Tersimpan!') : t('Save Quote', 'Simpan Kuotasi')}
+            {savedQuote ? t('Quote Saved!', 'Penawaran Tersimpan!') : t('Save Quote', 'Simpan Penawaran')}
           </button>
 
           <a

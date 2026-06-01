@@ -300,7 +300,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
               <Wallet size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
               <p className="font-black text-slate-400">{t('No commissions found', 'Belum ada komisi')}</p>
               <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">
-                {t('Create a quote and convert it to a policy to earn commissions.', 'Buat kuotasi dan konversikan ke polis untuk mendapatkan komisi.')}
+                {t('Create a quote and convert it to a policy to earn commissions.', 'Buat penawaran dan konversikan ke polis untuk mendapatkan komisi.')}
               </p>
             </div>
           ) : (

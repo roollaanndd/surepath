@@ -209,7 +209,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         {[
           {
             tab: 'quotes',
-            label: t('New Quote', 'Kuotasi'),
+            label: t('New Quote', 'Penawaran'),
             icon: FileText,
             color: 'text-blue-500',
             bg: 'bg-blue-500/10',

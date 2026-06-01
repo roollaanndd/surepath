@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, Wallet,
   FileText, Trophy, Loader2, Network, RefreshCw, FileEdit,
-  AlertCircle,
+  AlertCircle, Camera,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentProfile, updateAgentProfile, getAgentStats,
+  uploadAgentAvatar, uploadAgentKtp,
   type SpUser, type AgentStats,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -18,12 +19,13 @@ interface Props {
   lang: Language;
   onLogout: () => void;
   onNavigate?: (tab: string) => void;
+  stats?: AgentStats | null;
 }
 
 const inputCls =
   'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition';
 
-const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate }) => {
+const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [profile, setProfile] = useState<SpUser | null>(null);
@@ -32,6 +34,10 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [ktpUploading, setKtpUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const ktpInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
 
@@ -43,11 +49,11 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           setProfile(prof);
           setForm({ name: prof.name, phone: prof.phone, address: prof.address ?? '' });
         }
-        setStats(st);
+        setStats(statsProp ?? st);
         setLoading(false);
       },
     );
-  }, [agentId]);
+  }, [agentId, statsProp]);
 
   const handleSave = async () => {
     if (!agentId) return;
@@ -71,6 +77,42 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    const url = await new Promise<string>(res => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const s = Math.min(1, 400 / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * s);
+          c.height = Math.round(img.height * s);
+          c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+          res(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.src = ev.target!.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+    const publicUrl = await uploadAgentAvatar(agentId, url);
+    if (publicUrl) {
+      setProfile(p => p ? { ...p, profile_photo_url: publicUrl } as any : p);
+    }
+    setAvatarUploading(false);
+  };
+
+  const handleKtpChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setKtpUploading(true);
+    const url = await uploadAgentKtp(agentId, file);
+    if (url) setProfile(p => p ? { ...p, ktp_document_url: url } as any : p);
+    setKtpUploading(false);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -91,8 +133,25 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32">
       {/* Avatar + Name */}
       <div className="flex flex-col items-center gap-3 pt-2 pb-4">
-        <div className="w-20 h-20 rounded-full bg-primary-500/20 flex items-center justify-center shadow-xl shadow-orange-500/10">
-          <span className="text-2xl font-black text-primary-500">{initials}</span>
+        <div className="relative w-20 h-20 mx-auto mb-2">
+          <button
+            onClick={() => avatarInputRef.current?.click()}
+            className="w-20 h-20 rounded-full overflow-hidden bg-primary-500/20 flex items-center justify-center relative"
+          >
+            {(profile as any)?.profile_photo_url
+              ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
+              : <span className="text-2xl font-black text-primary-500">{initials}</span>
+            }
+            {avatarUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+              </div>
+            )}
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
+              <Camera size={10} className="text-white" />
+            </div>
+          </button>
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
         </div>
         <div className="text-center">
           <h2 className="font-black text-xl text-slate-800 dark:text-white leading-tight">
@@ -116,14 +175,17 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               </span>
             </div>
           )}
-          {(profile as any)?.tier && (
-            <div className="flex items-center justify-center gap-1 mt-1">
-              <span className="text-sm">{(profile as any).tier === 'ELITE' ? '💎' : '⭐'}</span>
-              <span className={`text-xs font-black ${(profile as any).tier === 'ELITE' ? 'text-purple-500' : 'text-amber-500'}`}>
-                {(profile as any).tier === 'ELITE' ? 'Agen Elite' : 'Agen Bintang'}
-              </span>
-            </div>
-          )}
+          {(() => {
+            const tier = (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+            return tier ? (
+              <div className="flex items-center justify-center gap-1 mt-1">
+                <span className="text-sm">{tier === 'ELITE' ? '💎' : '⭐'}</span>
+                <span className={`text-xs font-black ${tier === 'ELITE' ? 'text-purple-500' : 'text-amber-500'}`}>
+                  {tier === 'ELITE' ? 'Agen Elite' : 'Agen Bintang'}
+                </span>
+              </div>
+            ) : null;
+          })()}
         </div>
       </div>
 

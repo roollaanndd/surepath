@@ -415,23 +415,96 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               </div>
             </div>
           )}
+
+          {/* KTP Document Upload */}
+          <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-white/5">
+            <div>
+              <p className="text-xs font-black text-slate-800 dark:text-white">Foto KTP</p>
+              <p className="text-[10px] text-slate-500 font-bold">
+                {(profile as any)?.ktp_document_url ? '✓ Dokumen terupload' : '⚠ Belum diupload — Wajib'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {(profile as any)?.ktp_document_url && (
+                <a href={(profile as any).ktp_document_url} target="_blank" rel="noreferrer"
+                   className="text-[10px] font-black text-blue-400 underline">Lihat</a>
+              )}
+              <button
+                onClick={() => ktpInputRef.current?.click()}
+                disabled={ktpUploading}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  (profile as any)?.ktp_document_url
+                    ? 'bg-white/5 text-slate-400 border border-white/10'
+                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                }`}
+              >
+                {ktpUploading ? '...' : (profile as any)?.ktp_document_url ? 'Ganti' : 'Upload'}
+              </button>
+              <input ref={ktpInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleKtpChange} />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Commission Rate */}
-      {profile?.commission_rate !== undefined && (
-        <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl px-5 py-4 flex items-center justify-between border border-emerald-100 dark:border-emerald-500/20">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-0.5">
-              {t('Base Commission Rate', 'Tarif Komisi Dasar')}
-            </p>
-            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-              {(profile.commission_rate * 100).toFixed(1)}%
+      {/* Info Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Joined date */}
+        <div className="bg-white/5 rounded-2xl p-4">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Bergabung</p>
+          <p className="text-sm font-black text-slate-800 dark:text-white">
+            {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '—'}
+          </p>
+        </div>
+        {/* Status */}
+        <div className="bg-white/5 rounded-2xl p-4">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</p>
+          <span className={`text-xs font-black px-2 py-0.5 rounded-full ${(profile as any)?.verified ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+            {(profile as any)?.verified ? 'Terverifikasi' : 'Pending'}
+          </span>
+        </div>
+        {/* Referral code */}
+        <div className="bg-white/5 rounded-2xl p-4">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Kode Referral</p>
+          <button
+            onClick={() => { navigator.clipboard.writeText(agent?.agent_code ?? profile?.agent_code ?? ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            className="text-xs font-black text-primary-400 flex items-center gap-1"
+          >
+            {agent?.agent_code ?? profile?.agent_code ?? '—'} {copied ? '✓' : <Copy size={10} />}
+          </button>
+        </div>
+        {/* Downline */}
+        <div className="bg-white/5 rounded-2xl p-4">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Downline</p>
+          <p className="text-sm font-black text-slate-800 dark:text-white">{(profile as any)?.downline_count ?? 0}</p>
+        </div>
+      </div>
+
+      {/* Performance Summary */}
+      <div>
+        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Performa</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Komisi Bulan Ini</p>
+            <p className="text-base font-black text-emerald-400">
+              {stats ? `Rp ${(stats.totalCommissionMonth/1000000).toFixed(1)}jt` : '—'}
             </p>
           </div>
-          <Wallet className="w-8 h-8 text-emerald-400 opacity-60" />
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Total Klien</p>
+            <p className="text-base font-black text-slate-800 dark:text-white">{stats?.clientsCount ?? '—'}</p>
+          </div>
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Polis Aktif</p>
+            <p className="text-base font-black text-slate-800 dark:text-white">{stats?.policiesCount ?? '—'}</p>
+          </div>
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Total Komisi</p>
+            <p className="text-base font-black text-blue-400">
+              {stats ? `Rp ${(stats.totalCommissionAllTime/1000000).toFixed(1)}jt` : '—'}
+            </p>
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Logout */}
       <button

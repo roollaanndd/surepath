@@ -157,6 +157,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agentId={agent?.id ?? ''}
             lang={lang}
             onLogout={onLogout}
+            stats={stats}
           />
         );
       default:
@@ -166,6 +167,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   return (
     <div className={`min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300`}>
+      <style>{`
+        @keyframes spFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* Top Header */}
       <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-between px-5 py-3">
@@ -236,7 +243,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             <p className="text-slate-400 text-sm font-bold">{t('Loading your dashboard…', 'Memuat dashboard…')}</p>
           </div>
         ) : (
-          renderTab()
+          <div key={tabKey} style={{ animation: 'spFadeIn 0.2s ease-out' }}>
+            {renderTab()}
+          </div>
         )}
       </main>
 

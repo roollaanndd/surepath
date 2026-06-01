@@ -2529,6 +2529,32 @@ export interface TrafficStats {
   topPages: Array<{ page: string; count: number }>;
 }
 
+// ─── Agent Avatar & KTP Upload ────────────────────────────────────────────────
+
+export async function uploadAgentAvatar(agentId: string, base64: string): Promise<string | null> {
+  const parts = base64.split(',');
+  const byteStr = atob(parts[1] ?? parts[0]);
+  const arr = new Uint8Array(byteStr.length);
+  for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+  const blob = new Blob([arr], { type: 'image/jpeg' });
+  const path = `${agentId}/avatar.jpg`;
+  const { error } = await supabase.storage.from('agent-profiles').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (error) { console.error('uploadAgentAvatar:', error); return null; }
+  const { data } = supabase.storage.from('agent-profiles').getPublicUrl(path);
+  await supabase.from('sp_users').update({ profile_photo_url: data.publicUrl }).eq('id', agentId);
+  return data.publicUrl;
+}
+
+export async function uploadAgentKtp(agentId: string, file: File): Promise<string | null> {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const path = `${agentId}/ktp.${ext}`;
+  const { error } = await supabase.storage.from('agent-docs').upload(path, file, { upsert: true, contentType: file.type });
+  if (error) { console.error('uploadAgentKtp:', error); return null; }
+  const { data } = supabase.storage.from('agent-docs').getPublicUrl(path);
+  await supabase.from('sp_users').update({ ktp_document_url: data.publicUrl }).eq('id', agentId);
+  return data.publicUrl;
+}
+
 export async function getTrafficStats(): Promise<TrafficStats> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase

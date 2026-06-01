@@ -3,7 +3,7 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#06e000" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/logo.png" />
@@ -24,6 +24,7 @@
     <meta name="geo.region" content="ID" />
     <meta name="geo.country" content="Indonesia" />
     <meta name="language" content="Indonesian" />
+    <meta http-equiv="content-language" content="id" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -52,7 +53,7 @@
 
     <!-- hreflang for multi-language support -->
     <link rel="alternate" hreflang="id" href="https://myinsurepath.com/" />
-    <link rel="alternate" hreflang="en" href="https://myinsurepath.com/?lang=en" />
+    <link rel="alternate" hreflang="en" href="https://myinsurepath.com/en/" />
     <link rel="alternate" hreflang="x-default" href="https://myinsurepath.com/" />
 
     <!-- JSON-LD Structured Data -->
@@ -71,7 +72,7 @@
           },
           "sameAs": [],
           "address": { "@type": "PostalAddress", "addressLocality": "Jakarta", "addressCountry": "ID" },
-          "telephone": "+62-xxx-xxxx",
+          "telephone": "+62-800-1234-5678",
           "email": "info@myinsurepath.com",
           "contactPoint": {
             "@type": "ContactPoint",
@@ -153,180 +154,15 @@
     }
     </script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              mono: ['JetBrains Mono', 'monospace'],
-              sora: ['Sora', 'sans-serif'],
-            },
-            colors: {
-              'hero-bg': 'hsl(0 0% 8%)',
-              'nav-button': 'hsl(0 0% 18%)',
-              'lp-bg': 'hsl(0 0% 10%)',
-              'lp-fg': 'hsl(0 0% 96%)',
-              'lp-primary': 'hsl(119 99% 46%)',
-              'lp-primary-fg': 'hsl(0 0% 4%)',
-              'lp-muted': 'hsl(0 0% 16%)',
-              'lp-muted-fg': 'hsl(0 0% 60%)',
-              'lp-border': 'hsl(0 0% 20%)',
-            },
-            colors: {
-              primary: { 
-                50: '#fff7ed', 
-                100: '#ffedd5', 
-                200: '#fed7aa', 
-                300: '#fdba74', 
-                400: '#fb923c', 
-                500: '#f97316', // Warm Orange
-                600: '#ea580c', 
-                700: '#c2410c',
-              },
-              brand: {
-                50: '#ecfccb',
-                400: '#34d399',
-                500: '#10b981', // Trust Emerald
-                600: '#059669',
-              },
-              slate: {
-                900: '#0f172a',
-                950: '#020617',
-              }
-            },
-            animation: {
-              'fade-up': 'fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'fade-in': 'fade-in 0.5s ease-out forwards',
-              'mesh': 'mesh 20s ease infinite',
-              'float': 'float 5s ease-in-out infinite',
-              'pop-in': 'popIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'shimmer-fast': 'shimmer 1.5s infinite linear',
-              'blob': 'blob 10s infinite alternate ease-in-out',
-              'pulse-soft': 'pulseSoft 4s ease-in-out infinite',
-              'flow': 'flow 30s linear infinite',
-              'draw-check': 'drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards',
-            },
-            keyframes: {
-              'fade-up': {
-                '0%': { opacity: '0', transform: 'translateY(20px)', filter: 'blur(4px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)', filter: 'blur(0)' },
-              },
-              'fade-in': {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              },
-              mesh: {
-                '0%, 100%': { 'background-position': '0% 50%' },
-                '50%': { 'background-position': '100% 50%' },
-              },
-              float: {
-                '0%, 100%': { transform: 'translateY(0px)' },
-                '50%': { transform: 'translateY(-15px)' },
-              },
-              popIn: {
-                '0%': { transform: 'scale(0.95)', opacity: 0 },
-                '100%': { transform: 'scale(1)', opacity: 1 },
-              },
-              shimmer: {
-                '0%': { transform: 'translateX(-100%)' },
-                '100%': { transform: 'translateX(100%)' },
-              },
-              blob: {
-                '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                '100%': { transform: 'translate(0px, 0px) scale(1)' },
-              },
-              pulseSoft: {
-                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-                '50%': { opacity: 0.8, transform: 'scale(1.05)' },
-              },
-              flow: {
-                '0%': { 'stroke-dashoffset': '1000' },
-                '100%': { 'stroke-dashoffset': '0' }
-              },
-              drawCheck: {
-                'to': { 'stroke-dashoffset': '0' }
-              }
-            }
-          }
-        }
-      }
-    </script>
     <style>
       html { scroll-behavior: smooth; }
       body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: #fafaf9; color: #1e293b; }
-      
-      @keyframes blob {
-        0% { transform: translate(0px, 0px) scale(1); }
-        33% { transform: translate(30px, -50px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
-        100% { transform: translate(0px, 0px) scale(1); }
-      }
-      .animate-blob {
-        animation: blob 7s infinite;
-      }
-      .animation-delay-2000 {
-        animation-delay: 2s;
-      }
-      .animation-delay-4000 {
-        animation-delay: 4s;
-      }
-
-      .bg-mesh {
-        background: linear-gradient(-45deg, #fefce8, #f0fdf4, #fff7ed, #fafaf9);
-        background-size: 400% 400%;
-        animation: mesh 15s ease infinite;
-      }
-
-      .hero-abstract-container {
-        position: relative;
-        background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(249, 115, 22, 0.08) 0%, transparent 40%);
-        overflow: hidden;
-      }
-
-      .glass-card {
-        background: rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(12px) saturate(160%);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-      }
-
-      .dark .glass-card {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-
-      .text-glow-primary {
-        text-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
-      }
-
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-      
       .tap-feedback:active { transform: scale(0.96); transition: transform 0.1s; }
-      
-      @media (min-width: 1024px) {
-        .desktop-grid {
-          background-size: 60px 60px;
-          background-image: radial-gradient(circle, #e2e8f0 1.5px, transparent 1.5px);
-        }
-      }
-
-      .animate-path {
-        stroke-dasharray: 1000;
-        animation: flow 20s linear infinite;
-      }
-
-      @media print {
-        .no-print { display: none !important; }
-      }
     </style>
   <script type="importmap">
 {
@@ -362,5 +198,21 @@
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 
+    <noscript>
+      <div style="font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1e293b">
+        <h1>SurePath – Asuransi Digital Indonesia</h1>
+        <p>Platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti secara online dengan mudah dan cepat.</p>
+        <h2>Produk Asuransi</h2>
+        <ul>
+          <li><a href="/product/car">Asuransi Kendaraan Bermotor</a> – Perlindungan komprehensif untuk kendaraan Anda</li>
+          <li><a href="/product/travel">Asuransi Perjalanan</a> – Proteksi perjalanan domestik &amp; internasional</li>
+          <li><a href="/product/pa">Asuransi Kecelakaan Diri</a> – Perlindungan jiwa dan kesehatan</li>
+          <li><a href="/product/health">Asuransi Kesehatan</a> – Perlindungan biaya pengobatan</li>
+          <li><a href="/product/property">Asuransi Properti</a> – Perlindungan rumah dari kebakaran &amp; bencana</li>
+        </ul>
+        <p>Untuk menggunakan SurePath, aktifkan JavaScript di browser Anda.</p>
+        <p>Hubungi kami: <a href="mailto:info@myinsurepath.com">info@myinsurepath.com</a></p>
+      </div>
+    </noscript>
   </body>
 </html>

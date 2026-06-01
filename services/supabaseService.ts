@@ -653,6 +653,56 @@ export async function registerAgent(data: {
   return result as SpUser;
 }
 
+export async function createCustomerProfile(data: {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}): Promise<SpUser | null> {
+  const payload = {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    role: 'CUSTOMER',
+    trust_score: 85,
+    verified: true,
+  };
+  const { data: result, error } = await supabase
+    .from('sp_users')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) return null;
+  return result as SpUser;
+}
+
+export async function createB2BClientProfile(data: {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company_name?: string;
+}): Promise<SpUser | null> {
+  const payload = {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    role: 'B2B_CLIENT',
+    address: data.company_name ?? null,
+    trust_score: 85,
+    verified: false,
+  };
+  const { data: result, error } = await supabase
+    .from('sp_users')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) return null;
+  return result as SpUser;
+}
+
 // ─── Policy Orders ────────────────────────────────────────────────────────────
 
 export interface SpPolicyOrder {

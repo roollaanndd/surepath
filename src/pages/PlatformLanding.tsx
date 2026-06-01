@@ -680,14 +680,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           {/* Subheading */}
           <p className="font-light mb-3 md:mb-6 opacity-0 animate-fade-up"
             style={{ fontSize: 'clamp(1.125rem,2.5vw,1.875rem)', animationDelay: '0.4s', color: 'rgba(245,245,245,0.8)' }}>
-            {t('Kami Hadir untuk Melindungi.', 'We\'re here to protect.')}
+            {t('Kami Ada, Buat Kamu Tenang.', 'We\'re here to protect.')}
           </p>
 
           {/* Description */}
           <p className="font-light mb-6 md:mb-8 max-w-lg opacity-0 animate-fade-up"
             style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'rgba(255,255,255,0.78)', lineHeight: '1.7', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
             {t(
-              'Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda — bukan sekadar angka di atas kertas. Satu platform, semua perlindungan.',
+              'Asuransi yang beneran ngerti kebutuhanmu — transparan, manusiawi, dan nggak ribet. Satu platform, semua perlindungan yang kamu butuhkan.',
               'A transparent, human-centered digital insurance platform built around your real needs — not just numbers on paper. One platform, all your protection.',
             )}
           </p>
@@ -711,7 +711,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 letterSpacing: '0.02em',
                 boxShadow: '0 0 24px rgba(1,235,2,0.35)',
               }}>
-              {t('Mulai Konsultasi', 'Book a Consultation')}
+              {t('Konsultasi Gratis', 'Book a Consultation')}
             </button>
             <button onClick={() => { navScroll('products', '/products'); }}
               className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
@@ -766,7 +766,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               </span>
             </h2>
             <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: textMuted }}>
-              {t('Kami membangun platform ini bukan untuk menjual sebanyak mungkin, tapi untuk memastikan kamu mendapat perlindungan yang paling tepat.', 'We built this platform not to sell as much as possible, but to ensure you get the most appropriate protection.')}
+              {t('Kita bikin platform ini bukan buat jualan sebanyak-banyaknya, tapi buat mastiin kamu dapet perlindungan yang paling pas.', 'We built this platform not to sell as much as possible, but to ensure you get the most appropriate protection.')}
             </p>
           </div>
         </Reveal>
@@ -801,7 +801,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               </div>
               <h3 className="text-xl font-black text-white mb-3">{t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis')}</h3>
               <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                {t('Sebelum merekomendasikan satu pun produk, kami memahami konteks kehidupanmu secara menyeluruh. Agen dan teknologi kami bekerja bersama untuk menemukan solusi yang benar-benar sesuai — bukan yang paling menguntungkan secara komisi.', 'Before recommending any product, we fully understand your life context. Our agents and technology work together to find truly suitable solutions — not the most commission-profitable ones.')}
+                {t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu secara menyeluruh. Agen dan teknologi kami saling melengkapi buat nemuin solusi yang beneran cocok — bukan yang paling menguntungkan komisi.', 'Before recommending any product, we fully understand your life context. Our agents and technology work together to find truly suitable solutions — not the most commission-profitable ones.')}
               </p>
             </div>
           </Reveal>
@@ -821,7 +821,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 </div>
                 <h3 className="text-lg font-black text-white mb-2">{t('Agen Berlisensi', 'Licensed Agents')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                  {t('Seluruh agen kami telah lulus sertifikasi asuransi resmi dan terus diperbarui pengetahuannya.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
+                  {t('Semua agen kami udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
                 </p>
               </div>
             </div>
@@ -842,7 +842,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 </div>
                 <h3 className="text-lg font-black text-white mb-2">{t('Transparansi 100%', '100% Transparent')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                  {t('Tidak ada biaya tersembunyi. Semua ketentuan polis dijelaskan dengan bahasa yang jelas.', 'No hidden fees. All policy terms explained in clear language.')}
+                  {t('Nggak ada biaya tersembunyi. Semua ketentuan polis dijelasin pakai bahasa yang gampang dipahami.', 'No hidden fees. All policy terms explained in clear language.')}
                 </p>
               </div>
             </div>
@@ -863,7 +863,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 </div>
                 <h3 className="text-lg font-black text-white mb-2">{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                  {t('40+ produk dari 18 insurer terpercaya, satu platform untuk semua kebutuhan perlindunganmu.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
+                  {t('40+ produk dari 18 insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
                 </p>
               </div>
             </div>
@@ -889,7 +889,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               </div>
               <h3 className="text-xl font-black text-white mb-3">{t('Digital-First, Human Touch', 'Digital-First, Human Touch')}</h3>
               <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                {t('Teknologi modern memudahkan akses, tapi di baliknya ada manusia nyata yang peduli. Agen kami hadir untuk menjawab pertanyaan terdalam yang tidak bisa dijawab algoritma.', 'Modern technology makes access easy, but behind it are real humans who care. Our agents are here to answer the deep questions algorithms cannot.')}
+                {t('Teknologi kami bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli. Agen kami siap jawab pertanyaan yang nggak bisa dijawab algoritma.', 'Modern technology makes access easy, but behind it are real humans who care. Our agents are here to answer the deep questions algorithms cannot.')}
               </p>
             </div>
           </Reveal>
@@ -901,10 +901,49 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients'), chip: '📊' },
-              { target: 98, suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate'), chip: '⭐' },
-              { target: 18, suffix: '+', label: t('Mitra Insurer', 'Insurer Partners'), chip: '🤝' },
-              { target: 40, suffix: '+', label: t('Produk Tersedia', 'Products Available'), chip: '📦' },
+              {
+                target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients'),
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <circle cx="8" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M2 20c0-3.314 2.686-6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="16" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M12 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ),
+              },
+              {
+                target: 98, suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate'),
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                    <path d="M9 13l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ),
+              },
+              {
+                target: 18, suffix: '+', label: t('Mitra Insurer', 'Insurer Partners'),
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 9.5C6 7.015 8.015 5 10.5 5S15 7.015 15 9.5 12.985 14 10.5 14" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M9 19c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M4 19c0-1.5.7-2.8 1.8-3.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M15 9.5c0-2.485 2.015-4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ),
+              },
+              {
+                target: 40, suffix: '+', label: t('Produk Tersedia', 'Products Available'),
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M17.5 16v5M15 18.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ),
+              },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 80}>
                 <div className="text-center p-6 rounded-2xl min-h-[140px] flex flex-col items-center justify-center"
@@ -914,9 +953,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                     borderBottom: '2px solid rgba(1,235,2,0.15)',
                     backgroundImage: 'radial-gradient(circle at 50% 100%, rgba(1,235,2,0.08), transparent 70%)',
                   }}>
-                  {/* Category chip */}
-                  <span className="inline-block text-base mb-2 px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(1,235,2,0.06)', border: '1px solid rgba(1,235,2,0.1)' }}>{stat.chip}</span>
+                  {/* Category icon */}
+                  <span className="inline-flex items-center justify-center mb-3 w-10 h-10 rounded-2xl"
+                    style={{ background: 'rgba(1,235,2,0.08)', border: '1px solid rgba(1,235,2,0.15)', color: 'hsl(119,99%,46%)' }}>
+                    {stat.icon}
+                  </span>
                   <p className="font-black text-white mb-1"
                     style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1, color: 'hsl(119,99%,46%)' }}>
                     <AnimatedCounter target={stat.target} suffix={stat.suffix} />
@@ -1024,7 +1065,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             {
               n: '01', icon: MessageSquare, color: '#22c55e',
               title: t('Ceritakan Kebutuhanmu', 'Share Your Needs'),
-              desc: t('Konsultasikan kebutuhan proteksi Anda dengan agen berpengalaman kami atau melalui platform digital yang mudah digunakan.', 'Consult your protection needs with our experienced agents or through our easy-to-use digital platform.'),
+              desc: t('Ceritain kebutuhan perlindunganmu ke agen kami yang berpengalaman, atau langsung lewat platform digital kami yang simpel.', 'Consult your protection needs with our experienced agents or through our easy-to-use digital platform.'),
             },
             {
               n: '02', icon: Search, color: '#3b82f6',
@@ -1087,7 +1128,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 n: '01',
                 Icon: HeartHandshake,
                 title: t('Berpusat pada Manusia', 'Human-Centered'),
-                desc: t('Di tengah tren otomasi, kami percaya keputusan penting dalam hidup perlu pendampingan manusia yang nyata. Bukan robot, bukan skrip — agen yang benar-benar peduli.', 'Amid automation trends, we believe important life decisions need real human accompaniment. Not robots, not scripts — agents who truly care.'),
+                desc: t('Keputusan penting dalam hidup butuh pendampingan manusia yang nyata. Bukan robot, bukan skrip — tapi agen yang beneran dengerin dan peduli sama kamu.', 'Amid automation trends, we believe important life decisions need real human accompaniment. Not robots, not scripts — agents who truly care.'),
                 items: [t('Agen bersertifikat & berpengalaman', 'Certified & experienced agents'), t('Konsultasi tanpa target penjualan', 'Consultation without sales pressure'), t('Pendampingan jangka panjang', 'Long-term accompaniment')],
                 accent: '#22c55e',
               },
@@ -1095,7 +1136,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 n: '02',
                 Icon: BarChart2,
                 title: t('Transparan & Jujur', 'Transparent & Honest'),
-                desc: t('Kami percaya edukasi lebih bernilai dari promosi. Setiap produk yang kami rekomendasikan dijelaskan dengan jelas termasuk batasannya.', 'We believe education is more valuable than promotion. Every product we recommend is clearly explained including its limitations.'),
+                desc: t('Kita percaya edukasi lebih berharga dari promosi. Tiap produk yang kita rekomendasiin dijelasin tuntas — termasuk kekurangannya.', 'We believe education is more valuable than promotion. Every product we recommend is clearly explained including its limitations.'),
                 items: [t('Penjelasan klausa penting', 'Important clause explanations'), t('Tidak ada biaya tersembunyi', 'No hidden fees'), t('Laporan berkala yang jelas', 'Clear periodic reports')],
                 accent: '#3b82f6',
               },
@@ -1103,7 +1144,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 n: '03',
                 Icon: Leaf,
                 title: t('Mitra Jangka Panjang', 'Long-Term Partner'),
-                desc: t('Hubungan kami tidak berakhir saat polis diterbitkan. Kami tumbuh bersama nasabah dan memastikan perlindungan selalu relevan dengan perjalanan hidupmu.', 'Our relationship does not end when the policy is issued. We grow with clients and ensure protection always stays relevant to your life journey.'),
+                desc: t('Hubungan kita nggak berakhir pas polis terbit. Kita tumbuh bareng dan pastiin perlindunganmu selalu relevan seiring perjalanan hidupmu.', 'Our relationship does not end when the policy is issued. We grow with clients and ensure protection always stays relevant to your life journey.'),
                 items: [t('Review polis berkala', 'Periodic policy review'), t('Notifikasi sebelum jatuh tempo', 'Pre-expiry notifications'), t('Adaptasi sesuai perubahan hidup', 'Adapts to life changes')],
                 accent: '#a855f7',
               },
@@ -1180,7 +1221,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 <span style={{ color: '#22c55e' }}>{t('Bersama SurePath?', 'with SurePath?')}</span>
               </h3>
               <p className="text-sm leading-relaxed mb-8 max-w-xs" style={{ color: textMuted }}>
-                {t('Mulai dengan konsultasi gratis 30 menit bersama agen berpengalaman kami. Tanpa komitmen, tanpa tekanan.', 'Start with a free 30-minute consultation with our experienced agent. No commitment, no pressure.')}
+                {t('Mulai dengan konsultasi gratis 30 menit bareng agen kami yang berpengalaman. Santai aja — nggak ada tekanan, nggak ada komitmen.', 'Start with a free 30-minute consultation with our experienced agent. No commitment, no pressure.')}
               </p>
               <div className="space-y-3">
                 {[t('Analisis kebutuhan perlindunganmu', 'Analyze your protection needs'), t('Perbandingan produk yang relevan', 'Relevant product comparison'), t('Estimasi biaya yang transparan', 'Transparent cost estimate')].map(item => (
@@ -1303,7 +1344,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 </span>
               </h2>
               <p className="text-base max-w-xl mx-auto mb-10" style={{ color: textMuted }}>
-                {t('Bergabung dengan lebih dari 12.000 nasabah yang sudah mempercayakan ketenangan hidup mereka kepada SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
+                {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button onClick={onSignIn}
@@ -1343,7 +1384,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 </span>
               </div>
               <p className="text-sm leading-relaxed max-w-xs" style={{ color: textMuted }}>
-                {t('Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
+                {t('Asuransi yang transparan, manusiawi, dan beneran berpihak ke kamu — bukan ke komisi.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
               </p>
               <p className="text-xs font-bold italic" style={{ color: 'rgba(134,239,172,0.5)' }}>
                 "Your Path to Protection."

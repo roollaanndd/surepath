@@ -52,7 +52,7 @@ const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
 const detectLang = (): Language => {
   const s = localStorage.getItem('SUREPATH_LANG');
   if (s === 'EN' || s === 'ID') return s as Language;
-  return navigator.language?.toLowerCase().startsWith('id') ? Language.ID : Language.EN;
+  return Language.ID;
 };
 
 const COPY = {

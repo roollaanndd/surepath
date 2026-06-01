@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, Users, Shield, Wallet, ChevronRight,
   FileText, Lightbulb, Star, ClipboardList,
@@ -7,6 +7,7 @@ import {
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
+import { getAgentCoinBalance } from '../../services/supabaseService';
 
 interface Props {
   agent: any;
@@ -19,6 +20,13 @@ interface Props {
 
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const [coinBalance, setCoinBalance] = useState(0);
+
+  useEffect(() => {
+    if (agentId) {
+      getAgentCoinBalance(agentId).then(setCoinBalance);
+    }
+  }, [agentId]);
 
   const monthlyTarget = agent?.monthly_target ?? 10000000;
   const progress = Math.min((stats.totalCommissionMonth / monthlyTarget) * 100, 100);

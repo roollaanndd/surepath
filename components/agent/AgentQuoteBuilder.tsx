@@ -79,6 +79,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [onetimeName, setOnetimeName] = useState('');
   const [product, setProduct] = useState<ProductType | null>(null);
+  const [quoteMode, setQuoteMode] = useState<QuoteMode>(null);
 
   const [carInputs, setCarInputs] = useState<CarInputs>({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
   const [travelInputs, setTravelInputs] = useState<TravelInputs>({ destination: '', startDate: '', endDate: '', adults: 1, plan: 'GOLD' });
@@ -262,6 +263,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setSelectedClientId('');
     setOnetimeName('');
     setProduct(null);
+    setQuoteMode(null);
     setCarInputs({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
     setTravelInputs({ destination: '', startDate: '', endDate: '', adults: 1, plan: 'GOLD' });
     setPAInputs({ category: 'GENERAL', plan: 'BASIC' });
@@ -270,7 +272,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setCreatedPolicy(null);
   };
 
-  const stepIndex = ['client', 'product', 'inputs', 'summary'].indexOf(step);
+  const stepIndex = ['client', 'product', 'inputs', 'summary'].indexOf(
+    step === 'quote_summary' ? 'inputs' : step
+  );
 
   const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/30";
   const labelClass = "text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block";
@@ -357,8 +361,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={step === 'client' ? onBack : () => {
-          if (step === 'product') setStep('client');
-          else if (step === 'inputs') setStep('product');
+          if (step === 'product') { setStep('client'); setQuoteMode(null); }
+          else if (step === 'inputs') { setStep('product'); setQuoteMode(null); }
+          else if (step === 'quote_summary') setStep('inputs');
           else if (step === 'summary') setStep('inputs');
         }} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
           <ChevronLeft size={18} />

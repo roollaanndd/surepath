@@ -408,9 +408,11 @@ const App = () => {
   // Show splash on every fresh browser session (sessionStorage resets per tab/window open)
   const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [darkMode, setDarkMode]       = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
-  );
+  const [darkMode, setDarkMode]       = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hour = new Date().getHours();
+    return hour < 6 || hour >= 19; // dark from 7 PM to 5:59 AM
+  });
   const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || false
@@ -457,11 +459,17 @@ const App = () => {
     loadCustomProducts();
   }, []);
 
+  // Auto-update theme on the hour boundary (7 PM → dark, 6 AM → light)
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => setDarkMode(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    const check = () => {
+      const hour = new Date().getHours();
+      setDarkMode(prev => {
+        const auto = hour < 6 || hour >= 19;
+        return prev !== auto ? auto : prev;
+      });
+    };
+    const id = setInterval(check, 60_000); // check every minute
+    return () => clearInterval(id);
   }, []);
 
   const handleAuthSuccess = useCallback(async (user: any) => {

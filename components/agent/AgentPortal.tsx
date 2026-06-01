@@ -80,7 +80,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   const [activeTab, setActiveTab] = useState('home');
   const [tabKey, setTabKey] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const hour = new Date().getHours();
+    return hour < 6 || hour >= 19;
+  });
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -103,6 +106,15 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Auto-switch at 7 PM (dark) and 6 AM (light)
+  useEffect(() => {
+    const id = setInterval(() => {
+      const hour = new Date().getHours();
+      setDarkMode(hour < 6 || hour >= 19);
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const loadData = async () => {
     if (!agent?.id) return;

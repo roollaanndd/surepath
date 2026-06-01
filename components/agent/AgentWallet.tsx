@@ -214,6 +214,19 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
             {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
               <p className="text-[10px] text-amber-400 flex items-center gap-1"><AlertCircle size={10} />Nama tidak cocok dengan nama terdaftar: {profileName}</p>
             )}
+            {bankCode && accNum.trim() && accName.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
+                  setBankCode(''); setAccNum(''); setAccName(''); setAccLabel(''); setAddingNew(false);
+                }}
+                className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <CheckCircle2 size={14} />
+                Simpan Rekening
+              </button>
+            )}
           </div>
         )}
 

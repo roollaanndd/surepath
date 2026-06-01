@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Car, Bike, Search, User, ChevronRight, Upload, CheckCircle,
   AlertTriangle, XCircle, ArrowLeft, Loader2, FileText,
+  Mail, Package, Smartphone,
 } from 'lucide-react';
 import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
@@ -195,6 +196,10 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const [productConfig, setProductConfig] = useState<SpProductConfig | null>(null);
   const [discountRate, setDiscountRate] = useState(0); // 0.00 – max_discount_rate
 
+  // ── Step 6b: Delivery ──
+  const [deliveryMethod, setDeliveryMethod] = useState<'DIGITAL' | 'POS_STANDARD' | 'POS_OVERNIGHT'>('DIGITAL');
+  const [deliveryRegion, setDeliveryRegion] = useState<'JABODETABEK' | 'OUTSIDE'>('JABODETABEK');
+
   // ── Step 7: Order ──
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -211,6 +216,13 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   // ─── Derived ───────────────────────────────────────────────────────────────
 
   const zone: Zone = province ? getZone(province) : 3;
+
+  const deliveryFee =
+    deliveryMethod === 'DIGITAL'       ? 0
+    : deliveryMethod === 'POS_STANDARD'
+      ? (deliveryRegion === 'JABODETABEK' ? 10_000 : 15_000)
+      : /* POS_OVERNIGHT */
+        (deliveryRegion === 'JABODETABEK' ? 20_000 : 25_000);
 
   const filteredClients = clients.filter((c) => {
     const q = clientSearch.toLowerCase();
@@ -1369,6 +1381,93 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </SectionCard>
           );
         })()}
+
+        {/* ── Delivery Options ── */}
+        <SectionCard>
+          <h3 className="font-black text-slate-700 dark:text-slate-200 text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Package className="w-4 h-4 text-primary-500" />
+            Pengiriman Polis
+          </h3>
+
+          <div className="space-y-2 mb-4">
+            {/* Digital */}
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('DIGITAL')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'DIGITAL' ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-white/10'}`}
+            >
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'DIGITAL' ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                <Smartphone size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-slate-800 dark:text-white">Polis Digital</p>
+                <p className="text-[10px] text-slate-400">Email & Aplikasi</p>
+              </div>
+              <span className="text-xs font-black text-emerald-500">GRATIS</span>
+            </button>
+
+            {/* Pos Standard */}
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('POS_STANDARD')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_STANDARD' ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-white/10'}`}
+            >
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_STANDARD' ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                <Mail size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-slate-800 dark:text-white">Pos Indonesia Reguler</p>
+                <p className="text-[10px] text-slate-400">Jabodetabek Rp 10.000 · Luar Rp 15.000</p>
+              </div>
+              {deliveryMethod === 'POS_STANDARD' && (
+                <span className="text-xs font-black text-primary-500">{formatIDR(deliveryFee)}</span>
+              )}
+            </button>
+
+            {/* Pos One-Night */}
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('POS_OVERNIGHT')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_OVERNIGHT' ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-white/10'}`}
+            >
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_OVERNIGHT' ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                <Package size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-slate-800 dark:text-white">Pos One Night Service</p>
+                <p className="text-[10px] text-slate-400">Jabodetabek Rp 20.000 · Luar Rp 25.000</p>
+              </div>
+              {deliveryMethod === 'POS_OVERNIGHT' && (
+                <span className="text-xs font-black text-primary-500">{formatIDR(deliveryFee)}</span>
+              )}
+            </button>
+          </div>
+
+          {/* Region selector — shown when postal is chosen */}
+          {deliveryMethod !== 'DIGITAL' && (
+            <div className="space-y-2">
+              <Label>Area Pengiriman</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['JABODETABEK', 'OUTSIDE'] as const).map(r => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setDeliveryRegion(r)}
+                    className={`py-3 rounded-2xl border-2 text-xs font-black uppercase tracking-widest transition-all ${deliveryRegion === r ? 'border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}
+                  >
+                    {r === 'JABODETABEK' ? 'Jabodetabek' : 'Luar Jabodetabek'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-400 pl-1">Biaya pengiriman: <span className="font-bold text-slate-600 dark:text-slate-300">{formatIDR(deliveryFee)}</span></p>
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1.5">
+            <span className="text-amber-400">⚙️</span>
+            Pengiriman Express (Gojek/Grab) — Segera Hadir
+          </p>
+        </SectionCard>
 
         <PrimaryBtn onClick={() => setStep(7)}>
           Ajukan Order Polis <ChevronRight className="inline w-4 h-4 ml-1" />

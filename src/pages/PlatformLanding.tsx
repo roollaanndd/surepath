@@ -98,7 +98,7 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
   );
 };
 
-// ─── Lightweight canvas hero background (replaces Spline 2MB WebGL) ──────────
+// ─── Premium canvas hero background — SurePath Shield ────────────────────────
 const HeroCanvas: React.FC = () => {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -106,37 +106,192 @@ const HeroCanvas: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
     const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
+
+    // ── Subdued blob definitions (opacity reduced ~30%) ──────────────────────
     const blobs = [
-      { x: 0.72, y: 0.28, r: 0.38, color: '1,235,2',   phase: 0,   sx: 0.00045, sy: 0.00032 },
-      { x: 0.55, y: 0.60, r: 0.28, color: '34,197,94', phase: 2.1, sx: 0.00032, sy: 0.00055 },
-      { x: 0.85, y: 0.70, r: 0.22, color: '74,222,128',phase: 4.2, sx: 0.00060, sy: 0.00038 },
+      { x: 0.72, y: 0.28, r: 0.38, color: '1,235,2',    phase: 0,   sx: 0.00045, sy: 0.00032 },
+      { x: 0.55, y: 0.60, r: 0.28, color: '34,197,94',  phase: 2.1, sx: 0.00032, sy: 0.00055 },
+      { x: 0.85, y: 0.70, r: 0.22, color: '74,222,128', phase: 4.2, sx: 0.00060, sy: 0.00038 },
     ];
+
+    // ── Orbiting particles on 3 elliptical orbits ────────────────────────────
+    const orbits = [
+      { rx: 0.14, ry: 0.07, speed: 0.0007, phase: 0,    count: 3, radius: 2.5, color: '1,235,2',    alpha: 0.7 },
+      { rx: 0.20, ry: 0.11, speed: 0.0004, phase: 1.05, count: 4, radius: 2.0, color: '74,222,128', alpha: 0.5 },
+      { rx: 0.27, ry: 0.15, speed: 0.0002, phase: 2.1,  count: 3, radius: 1.5, color: '34,197,94',  alpha: 0.4 },
+    ];
+
+    // ── Floating micro-particles (18 total) ──────────────────────────────────
+    interface MicroParticle { x: number; y: number; vx: number; vy: number; r: number; alpha: number; }
+    const micros: MicroParticle[] = Array.from({ length: 18 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      vx: (Math.random() - 0.5) * 0.00018,
+      vy: (Math.random() - 0.5) * 0.00014,
+      r: 1 + Math.random() * 0.5,
+      alpha: 0.3 + Math.random() * 0.3,
+    }));
+
+    // ── Check-mark dash animation (6s loop, 60fps ≈ 360 frames) ─────────────
+    const CHECK_PERIOD = 360;
+
     let t = 0;
     let raf: number;
+
+    const drawShield = (cx: number, cy: number, sw: number, sh: number, opacity: number) => {
+      // Pentagon-style shield using bezier curves
+      const top   = cy - sh * 0.5;
+      const bot   = cy + sh * 0.5;
+      const left  = cx - sw * 0.5;
+      const right = cx + sw * 0.5;
+      const shoulder = cy - sh * 0.20; // where sides start curving in
+
+      ctx.beginPath();
+      // Top-left corner (rounded)
+      ctx.moveTo(cx, top);
+      ctx.lineTo(right, shoulder);
+      // Right side curving down to bottom point
+      ctx.bezierCurveTo(right, cy + sh * 0.15, cx + sw * 0.25, bot, cx, bot);
+      // Left side
+      ctx.bezierCurveTo(cx - sw * 0.25, bot, left, cy + sh * 0.15, left, shoulder);
+      ctx.closePath();
+
+      ctx.strokeStyle = `rgba(1,235,2,${opacity})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    };
+
+    const drawCheckmark = (cx: number, cy: number, sw: number, sh: number, progress: number) => {
+      // Checkmark path: left arm then right arm
+      const x1 = cx - sw * 0.18, y1 = cy + sh * 0.03;
+      const x2 = cx - sw * 0.03, y2 = cy + sh * 0.18;
+      const x3 = cx + sw * 0.22, y3 = cy - sh * 0.15;
+
+      // Total approximate path length in canvas units
+      const segLen1 = Math.hypot(x2 - x1, y2 - y1);
+      const segLen2 = Math.hypot(x3 - x2, y3 - y2);
+      const totalLen = segLen1 + segLen2;
+
+      const drawn = progress * totalLen;
+
+      ctx.beginPath();
+      if (drawn <= 0) return;
+      if (drawn <= segLen1) {
+        const frac = drawn / segLen1;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + (x2 - x1) * frac, y1 + (y2 - y1) * frac);
+      } else {
+        const frac = (drawn - segLen1) / segLen2;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x2 + (x3 - x2) * frac, y2 + (y3 - y2) * frac);
+      }
+      ctx.strokeStyle = `rgba(1,235,2,${0.55 * progress})`;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    };
+
     const draw = () => {
       const w = canvas.width, h = canvas.height;
       ctx.clearRect(0, 0, w, h);
+
+      // ── Shield center position ─────────────────────────────────────────────
+      const scx = w * 0.72;
+      const scy = h * 0.38;
+      const sw  = h * 0.32;
+      const sh  = h * 0.38;
+
+      // ── Radial glow behind shield ─────────────────────────────────────────
+      const glowR = Math.max(sw, sh) * 0.85;
+      const glow = ctx.createRadialGradient(scx, scy, 0, scx, scy, glowR);
+      glow.addColorStop(0,   'rgba(1,235,2,0.12)');
+      glow.addColorStop(0.5, 'rgba(1,235,2,0.04)');
+      glow.addColorStop(1,   'rgba(1,235,2,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+
+      // ── Subdued blobs ──────────────────────────────────────────────────────
       blobs.forEach(b => {
-        const cx = (b.x + Math.sin(t * b.sx + b.phase) * 0.12) * w;
-        const cy = (b.y + Math.cos(t * b.sy + b.phase) * 0.10) * h;
-        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, b.r * Math.max(w, h));
-        gr.addColorStop(0,   `rgba(${b.color},0.18)`);
-        gr.addColorStop(0.5, `rgba(${b.color},0.07)`);
+        const bx = (b.x + Math.sin(t * b.sx + b.phase) * 0.12) * w;
+        const by = (b.y + Math.cos(t * b.sy + b.phase) * 0.10) * h;
+        const gr = ctx.createRadialGradient(bx, by, 0, bx, by, b.r * Math.max(w, h));
+        gr.addColorStop(0,   `rgba(${b.color},0.126)`);  // 0.18 * 0.7
+        gr.addColorStop(0.5, `rgba(${b.color},0.049)`);  // 0.07 * 0.7
         gr.addColorStop(1,   `rgba(${b.color},0)`);
         ctx.fillStyle = gr;
         ctx.fillRect(0, 0, w, h);
       });
+
+      // ── Shield pulse (0.06–0.14, 4s @ 60fps ≈ 240 frames) ────────────────
+      const pulseT = (t % 240) / 240;
+      const shieldOpacity = 0.06 + 0.08 * (0.5 + 0.5 * Math.sin(pulseT * Math.PI * 2));
+      drawShield(scx, scy, sw, sh, shieldOpacity);
+
+      // ── Checkmark (6s loop ≈ 360 frames: 0→1 in first 150, hold, 1→0 last 60) ──
+      const checkPhase = t % CHECK_PERIOD;
+      let checkProgress = 0;
+      if (checkPhase < 150) {
+        checkProgress = checkPhase / 150;
+      } else if (checkPhase < 270) {
+        checkProgress = 1;
+      } else {
+        checkProgress = 1 - (checkPhase - 270) / 90;
+      }
+      drawCheckmark(scx, scy, sw, sh, checkProgress);
+
+      // ── Orbiting particles ─────────────────────────────────────────────────
+      orbits.forEach(orb => {
+        for (let i = 0; i < orb.count; i++) {
+          const angle = t * orb.speed + orb.phase + (i / orb.count) * Math.PI * 2;
+          const px = scx + Math.cos(angle) * orb.rx * w;
+          const py = scy + Math.sin(angle) * orb.ry * h;
+
+          // Glow halo
+          const glowDot = ctx.createRadialGradient(px, py, 0, px, py, orb.radius * 4);
+          glowDot.addColorStop(0, `rgba(${orb.color},${orb.alpha})`);
+          glowDot.addColorStop(1, `rgba(${orb.color},0)`);
+          ctx.fillStyle = glowDot;
+          ctx.beginPath();
+          ctx.arc(px, py, orb.radius * 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Core dot
+          ctx.fillStyle = `rgba(${orb.color},${orb.alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, orb.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // ── Floating micro-particles ───────────────────────────────────────────
+      micros.forEach(mp => {
+        mp.x += mp.vx;
+        mp.y += mp.vy;
+        if (mp.x < 0) { mp.x = 0; mp.vx *= -1; }
+        if (mp.x > 1) { mp.x = 1; mp.vx *= -1; }
+        if (mp.y < 0) { mp.y = 0; mp.vy *= -1; }
+        if (mp.y > 1) { mp.y = 1; mp.vy *= -1; }
+        ctx.fillStyle = `rgba(1,235,2,${mp.alpha})`;
+        ctx.beginPath();
+        ctx.arc(mp.x * w, mp.y * h, mp.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
       t++;
       raf = requestAnimationFrame(draw);
     };
+
     draw();
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, []);
-  return <canvas ref={ref} className="absolute inset-0 w-full h-full" style={{ opacity: 0.85 }} />;
+  return <canvas ref={ref} className="absolute inset-0 w-full h-full" />;
 };
 
 // ─── PWA Install Popup ────────────────────────────────────────────────────────

@@ -46,10 +46,19 @@ const COPY = {
 } as const;
 
 const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
-  <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
+  <div className="fixed inset-0 flex flex-col items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
+    {/* Top progress bar */}
+    <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
+      <div style={{
+        position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
+        background: 'linear-gradient(90deg, transparent, hsl(119,99%,46%), transparent)',
+        animation: 'portal-slide 1.4s cubic-bezier(.4,0,.2,1) infinite',
+      }} />
+    </div>
+    <style>{`@keyframes portal-slide { 0%{left:-60%} 100%{left:110%} }`}</style>
     <div className="flex flex-col items-center gap-4">
       <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
-        style={{ borderColor: 'rgba(6, 224, 0, 0.15)', borderTopColor: 'hsl(119, 99%, 46%)' }} />
+        style={{ borderColor: 'rgba(255,255,255,0.08)', borderTopColor: 'hsl(119, 99%, 46%)' }} />
       <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.65rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)' }}>
         {COPY[lang].loading}
       </p>
@@ -64,11 +73,11 @@ const SP_CSS = `
 @keyframes sp-orbit-0  { from { transform: rotate(0deg)   translateX(74px) rotate(0deg);    } to { transform: rotate(360deg)  translateX(74px)  rotate(-360deg);  } }
 @keyframes sp-orbit-1  { from { transform: rotate(130deg) translateX(94px) rotate(-130deg); } to { transform: rotate(490deg)  translateX(94px)  rotate(-490deg);  } }
 @keyframes sp-orbit-2  { from { transform: rotate(250deg) translateX(114px) rotate(-250deg);} to { transform: rotate(610deg)  translateX(114px) rotate(-610deg); } }
-@keyframes sp-glow     { 0%,100% { box-shadow: 0 0 28px rgba(6,224,0,0.10), 0 0 56px rgba(6,224,0,0.05); } 50% { box-shadow: 0 0 52px rgba(6,224,0,0.24), 0 0 100px rgba(6,224,0,0.10); } }
+@keyframes sp-glow     { 0%,100% { box-shadow: 0 0 28px rgba(99,102,241,0.15), 0 0 56px rgba(99,102,241,0.08); } 50% { box-shadow: 0 0 52px rgba(99,102,241,0.28), 0 0 100px rgba(99,102,241,0.12); } }
 @keyframes sp-float-a  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-14px) translateX(5px); } }
 @keyframes sp-float-b  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-9px) translateX(-8px); } }
 @keyframes sp-dot-ping { 0%,100% { opacity:.3; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
-@keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(6,224,0,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(6,224,0,.9)); } }
+@keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(99,102,241,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(99,102,241,.9)); } }
 `;
 function ensureSPKeyframes() {
   if (!document.getElementById('sp-kf')) {
@@ -96,10 +105,10 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     resize();
     window.addEventListener('resize', resize);
     const blobs = [
-      { size: 520, color: '6,224,0',    phase: 0,   speedX: 0.0007, speedY: 0.0005 },
-      { size: 420, color: '34,197,94',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
-      { size: 360, color: '74,222,128', phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
-      { size: 280, color: '16,185,129', phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
+      { size: 560, color: '30,58,138',  phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.14 },
+      { size: 440, color: '67,56,202',  phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.10 },
+      { size: 380, color: '109,40,217', phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.08 },
+      { size: 300, color: '37,99,235',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.09 },
     ];
     let frame = 0, animId = 0;
     const draw = () => {
@@ -108,9 +117,10 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
       blobs.forEach(blob => {
         const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(frame * blob.speedX + blob.phase)));
         const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(frame * blob.speedY + blob.phase * 1.4)));
+        const op = (blob as any).op ?? 0.14;
         const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
-        grd.addColorStop(0,   `rgba(${blob.color},0.18)`);
-        grd.addColorStop(0.5, `rgba(${blob.color},0.06)`);
+        grd.addColorStop(0,   `rgba(${blob.color},${op})`);
+        grd.addColorStop(0.5, `rgba(${blob.color},${(op * 0.35).toFixed(3)})`);
         grd.addColorStop(1,   `rgba(${blob.color},0)`);
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -134,7 +144,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   }, [lang]);
 
   const G   = COPY[lang];
-  const GRN = 'hsl(119, 99%, 46%)';
+  const GRN = 'hsl(237, 86%, 70%)'; // indigo-400 — replaces harsh green on splash bg
 
   return (
     <div
@@ -491,9 +501,16 @@ const App = () => {
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           buildAndLogin(session.user);
         }
+        // If auth reports no session, stop the loading spinner
+        if (event === 'INITIAL_SESSION' && !session) {
+          setOauthLoading(false);
+        }
       });
 
-      return () => subscription.unsubscribe();
+      // Safety timeout — if OAuth/PKCE never resolves, stop blocking the UI after 10s
+      const oauthTimeout = setTimeout(() => setOauthLoading(false), 10000);
+
+      return () => { subscription.unsubscribe(); clearTimeout(oauthTimeout); };
     }
   }, [handleAuthSuccess]);
 
@@ -582,8 +599,10 @@ const App = () => {
 
   const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
-  // Dedicated /admin login page
-  if ((pathname === '/admin' || pathname.startsWith('/admin/')) && !currentUser) {
+  // Dedicated /admin login page — show AdminLogin whenever the current user is not an admin,
+  // even if they're logged in as a customer/agent (prevents the app from falling through
+  // to their own portal when they visit /admin).
+  if ((pathname === '/admin' || pathname.startsWith('/admin/')) && (!currentUser || !ADMIN_ROLES.includes(currentUser.role))) {
     return (
       <Suspense fallback={<PortalLoader lang={lang} />}>
         <AdminLogin

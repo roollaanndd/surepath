@@ -10,11 +10,19 @@ interface Props {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  SUBMITTED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  REVIEWING: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  QUOTED:    'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
+  SUBMITTED: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  REVIEWING: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+  QUOTED:    'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
   ACCEPTED:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  SUBMITTED: 'Menunggu Review',
+  REVIEWING: 'Sedang Dikaji',
+  QUOTED:    'Penawaran Tersedia',
+  ACCEPTED:  'Diterima',
+  REJECTED:  'Ditolak',
 };
 
 const PRODUCT_COLOR: Record<string, string> = {
@@ -51,8 +59,8 @@ const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigat
           <div className="font-black text-sm mt-1 truncate">{sub.company_name}</div>
           <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{fmtDate(sub.created_at)}</div>
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
-          {sub.status}
+        <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
+          {STATUS_LABEL[sub.status] ?? sub.status}
         </span>
       </div>
 

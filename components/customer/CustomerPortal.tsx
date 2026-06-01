@@ -265,12 +265,30 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       </div>
                       <div>
                         <p className="text-sm font-black text-slate-900 dark:text-white">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
-                        <p className="text-xs text-slate-400 font-medium">{p.product_code} · {t('Expires', 'Berakhir')} {new Date(p.end_date ?? '').toLocaleDateString('id-ID')}</p>
+                        <p className="text-xs text-slate-400 font-medium">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
+                        {(() => {
+                          const desc: Record<string,string> = {
+                            SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
+                            APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
+                            REJECTED:'Pengajuan ditolak oleh penanggung',
+                          };
+                          return desc[p.status] ? <p className="text-[10px] text-slate-400 mt-0.5">{desc[p.status]}</p> : null;
+                        })()}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black text-emerald-500">{formatIDR(p.total_premium)}</p>
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'SUBMITTED' ? 'bg-blue-500/10 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
+                      {(() => {
+                        const s: Record<string,{label:string;cls:string}> = {
+                          SUBMITTED:    { label: 'Menunggu Review',         cls: 'bg-amber-500/10 text-amber-600' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',           cls: 'bg-blue-500/10 text-blue-600' },
+                          APPROVED:     { label: 'Disetujui',               cls: 'bg-indigo-500/10 text-indigo-600' },
+                          ISSUED:       { label: 'Polis Aktif',             cls: 'bg-emerald-500/10 text-emerald-600' },
+                          REJECTED:     { label: 'Ditolak',                 cls: 'bg-rose-500/10 text-rose-600' },
+                        };
+                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-slate-100 text-slate-400' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -296,7 +314,17 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black text-rose-500">{formatIDR(c.amount_estimated ?? 0)}</p>
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${c.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : c.status === 'SUBMITTED' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>{c.status}</span>
+                      {(() => {
+                        const s: Record<string,{label:string;cls:string}> = {
+                          SUBMITTED:    { label: 'Diajukan',       cls: 'bg-amber-500/10 text-amber-600' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',  cls: 'bg-blue-500/10 text-blue-600' },
+                          APPROVED:     { label: 'Disetujui',      cls: 'bg-emerald-500/10 text-emerald-600' },
+                          REJECTED:     { label: 'Ditolak',        cls: 'bg-rose-500/10 text-rose-600' },
+                          PAID:         { label: 'Dibayarkan',     cls: 'bg-violet-500/10 text-violet-600' },
+                        };
+                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-slate-100 text-slate-400' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                      })()}
                     </div>
                   </div>
                 ))}

@@ -15,6 +15,12 @@ const STATUS_BADGE: Record<string, string> = {
   REJECTED: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  PENDING:  'Menunggu Keputusan',
+  ACCEPTED: 'Diterima',
+  REJECTED: 'Ditolak',
+};
+
 type FilterTab = 'ALL' | 'PENDING' | 'ACCEPTED';
 
 interface QuoteCardProps {
@@ -47,8 +53,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, onAction }) => {
           <div className="font-black text-sm">{quote.insurer_name ?? t('Insurer', 'Penanggung')}</div>
           <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
-          {quote.status}
+        <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
+          {STATUS_LABEL[quote.status] ?? quote.status}
         </span>
       </div>
 

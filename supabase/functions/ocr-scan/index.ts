@@ -122,6 +122,10 @@ serve(async (req) => {
     if (!image_base64 || !doc_type) {
       return json({ status: 'ERROR', doc_type: doc_type ?? 'KTP', fields: {}, message: 'image_base64 and doc_type required' }, 400);
     }
+    // Reject oversized payloads (~5 MB base64 ≈ 3.75 MB image) to prevent DoS
+    if (image_base64.length > 5 * 1024 * 1024) {
+      return json({ status: 'ERROR', doc_type, fields: {}, message: 'Image too large (max 5 MB)' }, 413);
+    }
     if (doc_type !== 'KTP' && doc_type !== 'STNK') {
       return json({ status: 'ERROR', doc_type, fields: {}, message: 'doc_type must be KTP or STNK' }, 400);
     }

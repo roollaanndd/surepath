@@ -461,6 +461,10 @@ const App = () => {
       const buildAndLogin = async (u: any) => {
         if (resolved) return;
         resolved = true;
+        // Strip ?code= / #access_token= so a refresh doesn't re-trigger PKCE
+        if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
         const [byId, byEmail] = await Promise.allSettled([
           getAgentProfile(u.id),
           getAgentByEmail(u.email!),

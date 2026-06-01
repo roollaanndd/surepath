@@ -767,8 +767,16 @@ export async function updateOrderStatus(
 
 // ─── Storage: Upload vehicle image ────────────────────────────────────────────
 
+const ALLOWED_IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp', 'heic'];
+const ALLOWED_PDF_TYPES   = ['pdf'];
+
+function safeExt(filename: string, allowed: string[], fallback: string): string {
+  const raw = filename.split('.').pop()?.toLowerCase() ?? fallback;
+  return allowed.includes(raw) ? raw : fallback;
+}
+
 export async function uploadVehicleImage(file: File, orderId: string): Promise<string | null> {
-  const ext  = file.name.split('.').pop() ?? 'jpg';
+  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'jpg');
   const path = `${orderId}/vehicle.${ext}`;
   const { error } = await supabase.storage
     .from('vehicle-images')
@@ -779,7 +787,8 @@ export async function uploadVehicleImage(file: File, orderId: string): Promise<s
 }
 
 export async function uploadPolicyDocument(file: File, orderNumber: string): Promise<string | null> {
-  const path = `${orderNumber}/policy.pdf`;
+  const ext = safeExt(file.name, ALLOWED_PDF_TYPES, 'pdf');
+  const path = `${orderNumber}/policy.${ext}`;
   const { error } = await supabase.storage
     .from('policy-documents')
     .upload(path, file, { upsert: true, contentType: 'application/pdf' });
@@ -789,7 +798,7 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
 }
 
 export async function uploadLogoImage(file: File): Promise<string | null> {
-  const ext  = file.name.split('.').pop() ?? 'png';
+  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'png');
   const path = `logo/logo.${ext}`;
   const { error } = await supabase.storage
     .from('website-assets')
@@ -800,7 +809,7 @@ export async function uploadLogoImage(file: File): Promise<string | null> {
 }
 
 export async function uploadSectionImage(file: File, sectionKey: string): Promise<string | null> {
-  const ext  = file.name.split('.').pop() ?? 'jpg';
+  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'jpg');
   const path = `sections/${sectionKey}.${ext}`;
   const { error } = await supabase.storage
     .from('website-assets')

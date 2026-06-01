@@ -49,6 +49,11 @@ serve(async (req) => {
       return json({ success: false, error: 'Missing required fields: to, order_number, review_url' }, 400);
     }
 
+    // Escape HTML special characters in user-supplied strings before injecting into email HTML
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c)
+    );
+
     const emailSubject = subject ?? `Pengajuan Polis Baru: ${order_number} – ${client_name}`;
 
     const premiumFormatted = new Intl.NumberFormat('id-ID', {
@@ -82,7 +87,7 @@ serve(async (req) => {
 
         <!-- Body -->
         <tr><td style="padding:32px;">
-          <p style="font-size:14px;color:#64748b;margin:0 0 8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Kepada Tim ${insurer_name ?? 'Penanggung'}</p>
+          <p style="font-size:14px;color:#64748b;margin:0 0 8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Kepada Tim ${esc(insurer_name ?? 'Penanggung')}</p>
           <h1 style="font-size:26px;font-weight:900;color:#0f172a;margin:0 0 24px;letter-spacing:-1px;line-height:1.2;">Terdapat pengajuan polis<br/>baru yang perlu ditinjau</h1>
 
           <!-- Order Card -->
@@ -91,15 +96,15 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">No. Order</td>
-                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:800;color:#f97316;font-family:monospace;">${order_number}</td>
+                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:800;color:#f97316;font-family:monospace;">${esc(order_number)}</td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Nasabah</td>
-                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${client_name}</td>
+                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(client_name)}</td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Produk</td>
-                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${product_name}</td>
+                  <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(product_name)}</td>
                 </tr>
                 <tr>
                   <td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;border-top:1px solid #e2e8f0;">Total Premi</td>

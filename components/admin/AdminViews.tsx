@@ -23,6 +23,9 @@ import {
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
   registerAgent,
+  getOnlineUsers, type OnlineUsersResult,
+  getSecurityStats, getRateLimitBlocks, getSessionActivityByHour,
+  getTrafficStats, type TrafficStats,
 } from '../../services/supabaseService';
 import { TIER_CONFIG } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -228,47 +231,57 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
 )};
 
 export const SecurityView = () => {
-  const [pulse, setPulse] = useState(getSecurityPulse());
-  const [threats, setThreats] = useState<ThreatNode[]>(getRecentThreats());
-  const [activeTraffic, setActiveTraffic] = useState<number[]>(Array(40).fill(0).map(() => 20 + Math.random() * 40));
-  const [lastNotification, setLastNotification] = useState<string | null>(null);
+  const [pulse] = useState(getSecurityPulse());
+  const [sessionActivity, setSessionActivity] = useState<Array<{ hour: number; count: number }>>([]);
+  const [secStats, setSecStats] = useState<{ failedLogins24h: number; activeSessionsCount: number; lastLoginAt: string | null; blockedEntries: Array<{ email: string; attempts: number; until: number }> } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const updatePulse = useCallback(() => {
-    setPulse(getSecurityPulse());
-    setActiveTraffic(prev => [...prev.slice(1), 20 + Math.random() * 60]);
-    
-    if (Math.random() > 0.9) {
-      const newThreat = generateLiveThreat();
-      setThreats(prev => [newThreat, ...prev.slice(0, 4)]);
-      setLastNotification(`${newThreat.type} Neutralized from ${newThreat.ip}`);
-      setTimeout(() => setLastNotification(null), 3000);
-    }
+  const load = useCallback(async () => {
+    const [stats, activity] = await Promise.all([
+      getSecurityStats(),
+      getSessionActivityByHour(),
+    ]);
+    setSecStats(stats);
+    setSessionActivity(activity);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(updatePulse, 2000);
+    load();
+    const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
-  }, [updatePulse]);
+  }, [load]);
+
+  const maxActivity = Math.max(...sessionActivity.map(s => s.count), 1);
+  const uptimeStr = pulse.globalUptime;
 
   return (
     <div className="space-y-8 animate-fade-in relative">
-       {lastNotification && (
-         <div className="fixed top-24 right-10 z-[100] animate-pop-in">
-            <div className="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(16,185,129,0.4)] flex items-center gap-4 border border-white/20">
-               <ShieldCheck size={20} className="animate-pulse"/>
-               <div className="space-y-0.5">
-                  <p className="text-[0.55rem] font-black uppercase tracking-[0.2em] opacity-80">Sistem Keamanan Aktif</p>
-                  <p className="text-xs font-bold tracking-tight">{lastNotification}</p>
-               </div>
-            </div>
-         </div>
-       )}
-
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Celah Keamanan Difilter" value={pulse.threatsBlocked24h.toLocaleString()} trend={`+${Math.floor(Math.random() * 5)}`} icon={ShieldAlert} color="bg-primary-500/10 text-primary-500" />
-          <StatCard label="Beban Sistem" value={`${pulse.neuralLoad.toFixed(2)}%`} trend="-0.4%" icon={Cpu} color="bg-blue-500/10 text-blue-500" />
-          <StatCard label="Latensi Server" value="0.38ms" trend="-0.01" icon={Zap} color="bg-orange-500/10 text-orange-500" />
-          <StatCard label="Uptime Server" value={pulse.globalUptime} icon={Globe} color="bg-emerald-500/10 text-emerald-500" />
+          <StatCard
+            label="Login Gagal (24 jam)"
+            value={loading ? '…' : (secStats?.failedLogins24h ?? 0).toString()}
+            icon={ShieldAlert}
+            color="bg-primary-500/10 text-primary-500"
+          />
+          <StatCard
+            label="Sesi Aktif (5 mnt)"
+            value={loading ? '…' : (secStats?.activeSessionsCount ?? 0).toString()}
+            icon={Cpu}
+            color="bg-blue-500/10 text-blue-500"
+          />
+          <StatCard
+            label="Latensi Server"
+            value="N/A"
+            icon={Zap}
+            color="bg-orange-500/10 text-orange-500"
+          />
+          <StatCard
+            label="Uptime Server"
+            value={uptimeStr}
+            icon={Globe}
+            color="bg-emerald-500/10 text-emerald-500"
+          />
        </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -277,24 +290,38 @@ export const SecurityView = () => {
                 <div className="flex items-center gap-4">
                    <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><Terminal size={20}/></div>
                    <div>
-                      <h3 className="font-black uppercase tracking-widest text-sm">Monitoring Trafik Real-time</h3>
-                      <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">24/7 Backend Protection Monitoring</p>
+                      <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
+                      <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
                    </div>
                 </div>
              </div>
-             
+
              <div className="h-56 flex items-end gap-1 px-2 border-b border-white/5 pb-1">
-                {activeTraffic.map((h, i) => (
-                   <div 
-                     key={i} 
-                     className="flex-1 bg-primary-500 transition-all duration-700 rounded-t-sm" 
-                     style={{ 
-                       height: `${h}%`, 
-                       opacity: 0.1 + (i / 40) * 0.9,
-                       boxShadow: h > 70 ? '0 0 15px rgba(16, 185, 129, 0.3)' : 'none'
-                     }}
-                   ></div>
-                ))}
+                {sessionActivity.length > 0
+                  ? sessionActivity.map((s, i) => {
+                      const pct = (s.count / maxActivity) * 100;
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 bg-primary-500 transition-all duration-700 rounded-t-sm"
+                          style={{
+                            height: `${Math.max(pct, 2)}%`,
+                            opacity: 0.15 + (i / 24) * 0.85,
+                            boxShadow: pct > 70 ? '0 0 15px rgba(16,185,129,0.3)' : 'none',
+                          }}
+                          title={`${s.hour}:00 — ${s.count} sesi`}
+                        />
+                      );
+                    })
+                  : Array(24).fill(0).map((_, i) => (
+                      <div key={i} className="flex-1 bg-white/5 rounded-t-sm" style={{ height: '8%' }} />
+                    ))
+                }
+             </div>
+             <div className="flex justify-between mt-2 px-2">
+               <span className="text-[0.45rem] text-gray-600">00:00</span>
+               <span className="text-[0.45rem] text-gray-600">12:00</span>
+               <span className="text-[0.45rem] text-gray-600">23:00</span>
              </div>
           </Card>
 
@@ -302,26 +329,41 @@ export const SecurityView = () => {
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                    <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500"><ShieldX size={20}/></div>
-                   <h3 className="font-black uppercase tracking-widest text-sm">Log Mitigasi</h3>
+                   <h3 className="font-black uppercase tracking-widest text-sm">Blokir Login</h3>
                 </div>
-                <Badge color="rose">Live Feed</Badge>
+                <Badge color="rose">Real Data</Badge>
              </div>
-             <div className="space-y-4">
-                {threats.map((t, i) => (
-                   <div key={i} className={`p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-all animate-fade-in ${i === 0 ? 'border-primary-500/40 bg-primary-500/5' : ''}`}>
-                      <div className="space-y-1 overflow-hidden">
-                         <div className="flex items-center gap-2">
-                            <Badge color={t.type === 'HIJACKING_ATTEMPT' ? 'rose' : 'yellow'}>{t.type.split('_')[0]}</Badge>
-                            <span className="text-[0.6rem] font-mono text-gray-500 truncate">{t.ip}</span>
-                         </div>
-                         <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-widest">{t.timestamp} • Auto-Neutralized</p>
-                      </div>
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-primary-500 text-white animate-bounce' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                         <Check size={16} strokeWidth={3}/>
-                      </div>
+             {loading ? (
+               <p className="text-xs text-gray-500">Memuat…</p>
+             ) : secStats && secStats.blockedEntries.length > 0 ? (
+               <div className="space-y-3">
+                 {secStats.blockedEntries.slice(0, 5).map((entry, i) => (
+                   <div key={i} className={`p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-all ${i === 0 ? 'border-primary-500/40 bg-primary-500/5' : ''}`}>
+                     <div className="space-y-1 overflow-hidden">
+                       <div className="flex items-center gap-2">
+                         <Badge color="rose">RATE LIMIT</Badge>
+                         <span className="text-[0.6rem] font-mono text-gray-500 truncate">{entry.email}</span>
+                       </div>
+                       <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-widest">
+                         {entry.attempts} percobaan · {entry.until > Date.now() ? `Diblokir ${Math.ceil((entry.until - Date.now()) / 60000)} mnt` : 'Kadaluarsa'}
+                       </p>
+                     </div>
+                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-primary-500 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                       <Check size={16} strokeWidth={3} />
+                     </div>
                    </div>
-                ))}
-             </div>
+                 ))}
+               </div>
+             ) : (
+               <div className="space-y-3">
+                 <p className="text-xs text-gray-500 py-4 text-center">Tidak ada blokir aktif</p>
+                 {secStats?.lastLoginAt && (
+                   <p className="text-[0.5rem] text-gray-600 text-center uppercase tracking-widest">
+                     Login terakhir: {new Date(secStats.lastLoginAt).toLocaleString('id-ID')}
+                   </p>
+                 )}
+               </div>
+             )}
           </Card>
        </div>
     </div>
@@ -780,6 +822,159 @@ const BackupView: React.FC = () => {
           </table>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Role Permissions View (Task 1) ───────────────────────────────────────────
+
+const CONFIGURABLE_ROLES = [
+  UserRole.ADMIN,
+  UserRole.FINANCE,
+  UserRole.INSURANCE_ADMIN,
+  UserRole.FINANCE_MANAGER,
+  UserRole.FINANCE_DIRECTOR,
+] as const;
+
+const MENU_IDS = [
+  { id: 'dashboard',         label: 'Dashboard' },
+  { id: 'reports',           label: 'Laporan' },
+  { id: 'analytics',         label: 'Analytics' },
+  { id: 'users',             label: 'Pengguna' },
+  { id: 'user_mgmt',         label: 'Kelola Akun' },
+  { id: 'transactions',      label: 'Transaksi' },
+  { id: 'payments',          label: 'Pembayaran' },
+  { id: 'withdrawals',       label: 'Penarikan' },
+  { id: 'policy_orders',     label: 'Pesanan Polis' },
+  { id: 'approvals',         label: 'Antrean Polis' },
+  { id: 'claims_admin',      label: 'Antrean Klaim' },
+  { id: 'inventory',         label: 'Data Polis' },
+  { id: 'endorsements',      label: 'Endorsement' },
+  { id: 'agents',            label: 'Manajemen Agen' },
+  { id: 'commission_ledger', label: 'Komisi' },
+  { id: 'b2b',               label: 'B2B' },
+  { id: 'product_config',    label: 'Produk' },
+  { id: 'tier_promo',        label: 'Tier & Promo' },
+  { id: 'insurers',          label: 'Asuransi' },
+  { id: 'vehicle_pricelist', label: 'Kendaraan DB' },
+  { id: 'website_editor',    label: 'Editor Website' },
+  { id: 'financial',         label: 'Keuangan' },
+];
+
+const DEFAULT_PERMISSIONS: Record<string, string[]> = {
+  ADMIN: ['dashboard','reports','analytics','users','user_mgmt','transactions','payments','withdrawals','policy_orders','approvals','claims_admin','inventory','endorsements','agents','commission_ledger','b2b','product_config','tier_promo','insurers','vehicle_pricelist','website_editor'],
+  FINANCE: ['dashboard','reports','analytics','transactions','payments','withdrawals','commission_ledger','financial'],
+  INSURANCE_ADMIN: ['dashboard','approvals','policy_orders','claims_admin','endorsements','insurers'],
+  FINANCE_MANAGER: ['dashboard','withdrawals','commission_ledger','tier_promo'],
+  FINANCE_DIRECTOR: ['dashboard','withdrawals','financial'],
+};
+
+const SP_ROLE_PERMISSIONS_KEY = 'SP_ROLE_PERMISSIONS';
+
+function loadPermissions(): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(SP_ROLE_PERMISSIONS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { ...DEFAULT_PERMISSIONS };
+}
+
+export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ currentUserRole }) => {
+  const [perms, setPerms] = useState<Record<string, string[]>>(loadPermissions);
+  const [saved, setSaved] = useState(false);
+
+  if (currentUserRole !== UserRole.MASTER_ADMIN) {
+    return (
+      <div className="p-8 text-center text-gray-500 font-bold text-sm">
+        Hanya MASTER_ADMIN yang dapat mengakses konfigurasi ini.
+      </div>
+    );
+  }
+
+  const toggle = (role: string, menuId: string) => {
+    setPerms(prev => {
+      const current = prev[role] ?? [];
+      const next = current.includes(menuId)
+        ? current.filter(id => id !== menuId)
+        : [...current, menuId];
+      return { ...prev, [role]: next };
+    });
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    localStorage.setItem(SP_ROLE_PERMISSIONS_KEY, JSON.stringify(perms));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleReset = () => {
+    setPerms({ ...DEFAULT_PERMISSIONS });
+    localStorage.removeItem(SP_ROLE_PERMISSIONS_KEY);
+    setSaved(false);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in text-white">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Akses Menu Per Role</h3>
+          <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Centang menu yang boleh diakses oleh setiap role</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={handleReset}
+            className="px-5 py-2.5 bg-white/5 border border-white/10 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+          >
+            Reset Default
+          </button>
+          <button
+            onClick={handleSave}
+            className={`px-6 py-2.5 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all ${saved ? 'bg-emerald-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+          >
+            {saved ? 'Tersimpan!' : 'Simpan'}
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-white/5">
+        <table className="w-full text-left whitespace-nowrap min-w-[900px]">
+          <thead>
+            <tr className="border-b border-white/5 text-[0.5rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+              <th className="py-3 pl-5 pr-4 sticky left-0 bg-[#0a0a0a]">Menu</th>
+              {CONFIGURABLE_ROLES.map(role => (
+                <th key={role} className="py-3 px-3 text-center">
+                  {role.replace('_', ' ')}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MENU_IDS.map(menu => (
+              <tr key={menu.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                <td className="py-2.5 pl-5 pr-4 text-[0.65rem] font-bold text-gray-300 sticky left-0 bg-[#0a0a0a]">
+                  {menu.label}
+                </td>
+                {CONFIGURABLE_ROLES.map(role => {
+                  const checked = (perms[role] ?? []).includes(menu.id);
+                  return (
+                    <td key={role} className="py-2.5 px-3 text-center">
+                      <label className="inline-flex items-center justify-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggle(role, menu.id)}
+                          className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                        />
+                      </label>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, RefreshCw, Save, X, Car,
-  ToggleLeft, ToggleRight, Search,
+  ToggleLeft, ToggleRight, Search, Database, Upload,
 } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
+import { CAR_DATABASE } from '../../constants';
+import PricelistUploadModal from './PricelistUploadModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +27,15 @@ interface SpVehicleOverride {
 
 const fmtIDR = (v: number) => 'Rp ' + new Intl.NumberFormat('id-ID').format(v);
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
+
+function extractVersions(overrides: SpVehicleOverride[]): string[] {
+  const set = new Set<string>();
+  overrides.forEach(o => {
+    const m = o.notes?.match(/version:([^\s]+)/);
+    if (m) set.add(m[1]);
+  });
+  return Array.from(set).sort().reverse();
+}
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
@@ -120,126 +131,51 @@ const OverrideModal: React.FC<OverrideModalProps> = ({ initial, onSave, onClose 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <SectionLabel>Merek</SectionLabel>
-            <input
-              className={inputCls}
-              value={form.brand}
-              onChange={e => set('brand', e.target.value)}
-              placeholder="Toyota"
-              required
-            />
+            <input className={inputCls} value={form.brand} onChange={e => set('brand', e.target.value)} placeholder="Toyota" required />
           </div>
           <div>
             <SectionLabel>Model</SectionLabel>
-            <input
-              className={inputCls}
-              value={form.model}
-              onChange={e => set('model', e.target.value)}
-              placeholder="Avanza"
-              required
-            />
+            <input className={inputCls} value={form.model} onChange={e => set('model', e.target.value)} placeholder="Avanza" required />
           </div>
         </div>
-
         <div>
           <SectionLabel>Tahun Referensi</SectionLabel>
-          <input
-            type="number"
-            min={1990}
-            max={new Date().getFullYear() + 1}
-            className={inputCls}
-            value={form.ref_year}
-            onChange={e => set('ref_year', parseInt(e.target.value) || new Date().getFullYear())}
-          />
+          <input type="number" min={1990} max={new Date().getFullYear() + 1} className={inputCls} value={form.ref_year} onChange={e => set('ref_year', parseInt(e.target.value) || new Date().getFullYear())} />
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <SectionLabel>Harga List OTR (juta IDR)</SectionLabel>
-            <input
-              type="number"
-              min={0}
-              step={0.1}
-              className={inputCls}
-              value={form.list_price_m}
-              onChange={e => set('list_price_m', parseFloat(e.target.value) || 0)}
-              placeholder="250"
-            />
+            <input type="number" min={0} step={0.1} className={inputCls} value={form.list_price_m} onChange={e => set('list_price_m', parseFloat(e.target.value) || 0)} placeholder="250" />
           </div>
           <div>
             <SectionLabel>Nilai Pasar (IDR)</SectionLabel>
-            <input
-              type="number"
-              min={0}
-              className={inputCls}
-              value={form.market_value_rp}
-              onChange={e => set('market_value_rp', parseInt(e.target.value) || 0)}
-              placeholder="240000000"
-            />
+            <input type="number" min={0} className={inputCls} value={form.market_value_rp} onChange={e => set('market_value_rp', parseInt(e.target.value) || 0)} placeholder="240000000" />
           </div>
         </div>
-
         <div>
           <SectionLabel>Diskon Rate (%)</SectionLabel>
           <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min={0}
-              max={50}
-              step={0.1}
-              className={inputCls}
-              value={(form.discount_rate * 100).toFixed(1)}
-              onChange={e => set('discount_rate', parseFloat(e.target.value) / 100 || 0)}
-            />
+            <input type="number" min={0} max={50} step={0.1} className={inputCls} value={(form.discount_rate * 100).toFixed(1)} onChange={e => set('discount_rate', parseFloat(e.target.value) / 100 || 0)} />
             <span className="text-slate-400 font-black text-sm">%</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={50}
-            step={0.1}
-            value={form.discount_rate * 100}
-            onChange={e => set('discount_rate', parseFloat(e.target.value) / 100)}
-            className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10 accent-emerald-500 mt-2"
-          />
+          <input type="range" min={0} max={50} step={0.1} value={form.discount_rate * 100} onChange={e => set('discount_rate', parseFloat(e.target.value) / 100)} className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10 accent-emerald-500 mt-2" />
         </div>
-
         <div>
           <SectionLabel>Catatan</SectionLabel>
-          <textarea
-            className={`${inputCls} resize-none`}
-            rows={2}
-            value={form.notes}
-            onChange={e => set('notes', e.target.value)}
-            placeholder="Catatan tambahan..."
-          />
+          <textarea className={`${inputCls} resize-none`} rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Catatan tambahan..." />
         </div>
-
         <div className="flex items-center justify-between">
           <SectionLabel>Status Aktif</SectionLabel>
-          <button
-            type="button"
-            onClick={() => set('is_active', !form.is_active)}
-            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest"
-          >
-            {form.is_active ? (
-              <ToggleRight size={22} className="text-emerald-400" />
-            ) : (
-              <ToggleLeft size={22} className="text-slate-500" />
-            )}
-            <span className={form.is_active ? 'text-emerald-400' : 'text-slate-500'}>
-              {form.is_active ? 'Aktif' : 'Nonaktif'}
-            </span>
+          <button type="button" onClick={() => set('is_active', !form.is_active)} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest">
+            {form.is_active ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} className="text-slate-500" />}
+            <span className={form.is_active ? 'text-emerald-400' : 'text-slate-500'}>{form.is_active ? 'Aktif' : 'Nonaktif'}</span>
           </button>
         </div>
-
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving} className={`${primaryBtn} flex items-center gap-2 flex-1 justify-center`}>
-            <Save size={13} />
-            {saving ? 'Menyimpan...' : 'Simpan'}
+            <Save size={13} /> {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
-          <button type="button" onClick={onClose} className={secondaryBtn}>
-            Batal
-          </button>
+          <button type="button" onClick={onClose} className={secondaryBtn}>Batal</button>
         </div>
       </form>
     </Modal>
@@ -254,6 +190,10 @@ const VehiclePricelistAdmin: React.FC = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<SpVehicleOverride | null>(null);
   const [query, setQuery] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const [showUpload, setShowUpload] = useState(false);
+  const [activeVersion, setActiveVersion] = useState('');
 
   const fetchOverrides = useCallback(async () => {
     setLoading(true);
@@ -262,26 +202,67 @@ const VehiclePricelistAdmin: React.FC = () => {
       .select('*')
       .order('brand')
       .order('model');
-    setOverrides((data ?? []) as SpVehicleOverride[]);
+    const rows = (data ?? []) as SpVehicleOverride[];
+    setOverrides(rows);
     setLoading(false);
-  }, []);
+    // Auto-seed if empty
+    if (rows.length === 0) {
+      await syncFromConstants(rows);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchOverrides(); }, [fetchOverrides]);
 
+  const syncFromConstants = async (existing: SpVehicleOverride[]) => {
+    setSyncing(true);
+    setSyncMsg('Menyinkronkan...');
+    const existingKeys = new Set(existing.map(o => `${o.brand}|${o.model}|${o.ref_year}`));
+    const rows: Omit<SpVehicleOverride, 'id' | 'created_at' | 'updated_at'>[] = [];
+    for (const car of CAR_DATABASE) {
+      for (const [yearStr, price] of Object.entries(car.yearPrices)) {
+        const year = Number(yearStr);
+        const key = `${car.brand}|${car.modelName}|${year}`;
+        if (!existingKeys.has(key)) {
+          rows.push({
+            brand: car.brand,
+            model: car.modelName,
+            ref_year: year,
+            list_price_m: price,
+            market_value_rp: Math.round(price * 1_000_000 * 0.95),
+            discount_rate: 0.05,
+            is_active: true,
+            notes: 'version:constants-seed',
+          });
+        }
+      }
+    }
+    let inserted = 0;
+    const skipped = CAR_DATABASE.reduce((s, c) => s + Object.keys(c.yearPrices).length, 0) - rows.length;
+    // Batch insert in chunks of 200
+    for (let i = 0; i < rows.length; i += 200) {
+      const chunk = rows.slice(i, i + 200);
+      const { error } = await supabase.from('sp_vehicle_overrides').insert(chunk);
+      if (!error) inserted += chunk.length;
+    }
+    setSyncMsg(`Selesai: ${inserted} ditambahkan, ${skipped} sudah ada.`);
+    setSyncing(false);
+    await fetchOverrides();
+  };
+
+  const handleSyncClick = async () => {
+    const { data } = await supabase.from('sp_vehicle_overrides').select('brand,model,ref_year');
+    await syncFromConstants((data ?? []) as SpVehicleOverride[]);
+  };
+
   const handleAdd = async (form: FormData) => {
-    await supabase
-      .from('sp_vehicle_overrides')
-      .upsert({ ...form, updated_at: new Date().toISOString() }, { onConflict: 'brand,model' });
+    await supabase.from('sp_vehicle_overrides').upsert({ ...form, updated_at: new Date().toISOString() }, { onConflict: 'brand,model,ref_year' });
     setShowAdd(false);
     fetchOverrides();
   };
 
   const handleEdit = async (form: FormData) => {
     if (!editTarget) return;
-    await supabase
-      .from('sp_vehicle_overrides')
-      .update({ ...form, updated_at: new Date().toISOString() })
-      .eq('id', editTarget.id);
+    await supabase.from('sp_vehicle_overrides').update({ ...form, updated_at: new Date().toISOString() }).eq('id', editTarget.id);
     setEditTarget(null);
     fetchOverrides();
   };
@@ -293,26 +274,26 @@ const VehiclePricelistAdmin: React.FC = () => {
   };
 
   const handleToggle = async (ov: SpVehicleOverride) => {
-    await supabase
-      .from('sp_vehicle_overrides')
-      .update({ is_active: !ov.is_active, updated_at: new Date().toISOString() })
-      .eq('id', ov.id);
+    await supabase.from('sp_vehicle_overrides').update({ is_active: !ov.is_active, updated_at: new Date().toISOString() }).eq('id', ov.id);
     fetchOverrides();
   };
 
+  const versions = extractVersions(overrides);
   const q = query.toLowerCase();
-  const filtered = overrides.filter(
-    ov => !q || ov.brand.toLowerCase().includes(q) || ov.model.toLowerCase().includes(q)
-  );
+  const filtered = overrides.filter(ov => {
+    if (activeVersion && !(ov.notes ?? '').includes(`version:${activeVersion}`)) return false;
+    return !q || ov.brand.toLowerCase().includes(q) || ov.model.toLowerCase().includes(q);
+  });
 
   return (
     <div className="space-y-8">
       {showAdd && <OverrideModal onSave={handleAdd} onClose={() => setShowAdd(false)} />}
-      {editTarget && (
-        <OverrideModal
-          initial={editTarget}
-          onSave={handleEdit}
-          onClose={() => setEditTarget(null)}
+      {editTarget && <OverrideModal initial={editTarget} onSave={handleEdit} onClose={() => setEditTarget(null)} />}
+      {showUpload && (
+        <PricelistUploadModal
+          versions={versions}
+          onClose={() => setShowUpload(false)}
+          onDone={() => { fetchOverrides(); }}
         />
       )}
 
@@ -322,15 +303,27 @@ const VehiclePricelistAdmin: React.FC = () => {
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Manajemen</p>
           <h1 className="text-2xl font-black text-white">Database Kendaraan</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button onClick={fetchOverrides} className={`${secondaryBtn} flex items-center gap-2`}>
             <RefreshCw size={12} /> Refresh
+          </button>
+          <button onClick={handleSyncClick} disabled={syncing} className={`${secondaryBtn} flex items-center gap-2`}>
+            <Database size={12} /> {syncing ? 'Sinkronisasi...' : 'Sinkronisasi dari Database Bawaan'}
+          </button>
+          <button onClick={() => setShowUpload(true)} className={`${secondaryBtn} flex items-center gap-2`}>
+            <Upload size={12} /> Upload Pricelist
           </button>
           <button onClick={() => setShowAdd(true)} className={`${primaryBtn} flex items-center gap-2`}>
             <Plus size={13} /> Tambah Override
           </button>
         </div>
       </div>
+
+      {syncMsg && (
+        <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          {syncMsg}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="flex items-center gap-6 flex-wrap">
@@ -342,17 +335,35 @@ const VehiclePricelistAdmin: React.FC = () => {
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Aktif</p>
           <p className="text-xl font-black text-emerald-400">{overrides.filter(o => o.is_active).length}</p>
         </div>
+        {versions.length > 0 && (
+          <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Versi</p>
+            <p className="text-xl font-black text-white">{versions.length}</p>
+          </div>
+        )}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input
-          className="bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white"
-          placeholder="Cari merek / model..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
+      {/* Filters */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative max-w-sm flex-1">
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            className="bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white"
+            placeholder="Cari merek / model..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </div>
+        {versions.length > 0 && (
+          <select
+            className="bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+            value={activeVersion}
+            onChange={e => setActiveVersion(e.target.value)}
+          >
+            <option value="">Semua Versi</option>
+            {versions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Table */}
@@ -361,7 +372,7 @@ const VehiclePricelistAdmin: React.FC = () => {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-slate-500 text-sm font-bold flex flex-col items-center gap-4">
           <Car size={40} className="text-slate-600" />
-          {query ? 'Tidak ada hasil untuk pencarian ini.' : 'Belum ada data override. Klik "Tambah Override" untuk memulai.'}
+          {query || activeVersion ? 'Tidak ada hasil untuk filter ini.' : 'Belum ada data override. Klik "Tambah Override" atau "Sinkronisasi dari Database Bawaan".'}
         </div>
       ) : (
         <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden">
@@ -386,34 +397,20 @@ const VehiclePricelistAdmin: React.FC = () => {
                       <p className="text-[10px] text-slate-400">{ov.model}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-300 font-bold">{ov.ref_year}</td>
-                    <td className="px-4 py-3 text-right text-slate-300 font-bold">
-                      {fmtIDR(ov.list_price_m * 1_000_000)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-emerald-400 font-black">
-                      {fmtIDR(ov.market_value_rp)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-amber-400 font-black">
-                      {pct(ov.discount_rate)}
-                    </td>
+                    <td className="px-4 py-3 text-right text-slate-300 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</td>
+                    <td className="px-4 py-3 text-right text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</td>
+                    <td className="px-4 py-3 text-right text-amber-400 font-black">{pct(ov.discount_rate)}</td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => handleToggle(ov)}>
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                          ov.is_active
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : 'bg-rose-500/10 text-rose-400'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${ov.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                           {ov.is_active ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </button>
                     </td>
                     <td className="px-6 py-3 text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <button onClick={() => setEditTarget(ov)} className={editBtn}>
-                          <Pencil size={10} className="inline mr-1" />Edit
-                        </button>
-                        <button onClick={() => handleDelete(ov.id)} className={dangerBtn}>
-                          <Trash2 size={10} className="inline mr-1" />Hapus
-                        </button>
+                        <button onClick={() => setEditTarget(ov)} className={editBtn}><Pencil size={10} className="inline mr-1" />Edit</button>
+                        <button onClick={() => handleDelete(ov.id)} className={dangerBtn}><Trash2 size={10} className="inline mr-1" />Hapus</button>
                       </div>
                     </td>
                   </tr>

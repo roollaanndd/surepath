@@ -18,6 +18,8 @@
     <meta name="author" content="SurePath" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://myinsurepath.com/" />
+    <link rel="preload" as="video" href="/hero.mp4" type="video/mp4" />
+    <link rel="preload" as="image" href="/surepath-logo.png" />
     <meta name="geo.region" content="ID" />
     <meta name="geo.country" content="Indonesia" />
     <meta name="language" content="Indonesian" />
@@ -29,17 +31,28 @@
     <meta property="og:locale" content="id_ID" />
     <meta property="og:title" content="SurePath | Asuransi Mobil, Jiwa & Properti – Klaim Cepat di Indonesia" />
     <meta property="og:description" content="Platform asuransi digital terpercaya Indonesia. Beli asuransi mobil, jiwa, perjalanan & properti online. Klaim cepat via HP, premi terjangkau. Daftar agen gratis sekarang." />
-    <meta property="og:image" content="https://myinsurepath.com/og-image.png" />
+    <meta property="og:image" content="https://myinsurepath.com/surepath-logo.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="SurePath – Asuransi Digital Indonesia" />
+    <meta property="og:image:type" content="image/png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@SurePathID" />
     <meta name="twitter:title" content="SurePath | Asuransi Mobil & Jiwa Online di Indonesia" />
     <meta name="twitter:description" content="Platform asuransi digital terpercaya. Beli asuransi mobil, jiwa, properti & perjalanan. Klaim cepat via HP. Daftar agen gratis." />
-    <meta name="twitter:image" content="https://myinsurepath.com/og-image.png" />
+    <meta name="twitter:image" content="https://myinsurepath.com/surepath-logo.png" />
+
+    <!-- Additional SEO meta tags -->
+    <meta name="rating" content="safe for kids" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- hreflang for multi-language support -->
+    <link rel="alternate" hreflang="id" href="https://myinsurepath.com/" />
+    <link rel="alternate" hreflang="en" href="https://myinsurepath.com/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://myinsurepath.com/" />
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -56,6 +69,9 @@
             "url": "https://myinsurepath.com/logo.png"
           },
           "sameAs": [],
+          "address": { "@type": "PostalAddress", "addressLocality": "Jakarta", "addressCountry": "ID" },
+          "telephone": "+62-xxx-xxxx",
+          "email": "info@myinsurepath.com",
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer service",
@@ -122,6 +138,14 @@
               "name": "Berapa premi asuransi mobil di SurePath?",
               "acceptedAnswer": { "@type": "Answer", "text": "Premi asuransi mobil di SurePath bervariasi tergantung jenis kendaraan, tahun pembuatan, dan wilayah. Gunakan kalkulator premi kami untuk mendapatkan estimasi harga yang tepat." }
             }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Beranda", "item": "https://myinsurepath.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Produk Asuransi", "item": "https://myinsurepath.com/products" },
+            { "@type": "ListItem", "position": 3, "name": "Mitra Agen", "item": "https://myinsurepath.com/agent" }
           ]
         }
       ]
@@ -316,13 +340,14 @@
 }
 </script>
 
-  <!-- Google Analytics 4 — replace G-XXXXXXXXXX with your Measurement ID from analytics.google.com -->
+  <!-- IMPORTANT: Replace G-XXXXXXXXXX with your actual Google Analytics Measurement ID -->
   <!-- To get your ID: analytics.google.com → Admin → Create Property → Web → copy "G-XXXXXXXXXX" -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
+    if ('G-XXXXXXXXXX' === 'G-XXXXXXXXXX') console.warn('[SurePath] GA4 ID not configured — replace G-XXXXXXXXXX in index.html');
     gtag('config', 'G-XXXXXXXXXX', {
       page_title: document.title,
       send_page_view: true,

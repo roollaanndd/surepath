@@ -1379,6 +1379,131 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         </Reveal>
       </section>
 
+      {/* ══════════════════ MITRA PERUSAHAAN ASURANSI ════════════════════════ */}
+      <section id="partners" className="py-20 px-5" style={{ background: sectionBg2 }}>
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-12">
+              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+                {t('Mitra Terpercaya', 'Trusted Partners')}
+              </span>
+              <h2 className="font-black leading-tight tracking-[-0.03em]"
+                style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
+                {t('Mitra Perusahaan', 'Insurance Company')}{' '}
+                <span style={{ color: lpGreen }}>{t('Asuransi Kami', 'Partners')}</span>
+              </h2>
+              <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: textMuted }}>
+                {t('SurePath bekerja sama dengan perusahaan asuransi terkemuka yang telah terdaftar dan diawasi oleh OJK (Otoritas Jasa Keuangan).', 'SurePath partners with leading insurance companies registered and supervised by OJK.')}
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { name: 'Allianz',      color: '#003781', abbr: 'ALZ' },
+              { name: 'AXA Mandiri',  color: '#00008f', abbr: 'AXA' },
+              { name: 'Prudential',   color: '#e31837', abbr: 'PRU' },
+              { name: 'BRI Life',     color: '#003d82', abbr: 'BRI' },
+              { name: 'Sinarmas',     color: '#e30613', abbr: 'SIN' },
+              { name: 'Tokio Marine', color: '#003087', abbr: 'TKM' },
+            ].map((insurer, i) => (
+              <Reveal key={insurer.name} delay={i * 60}>
+                <div className="flex flex-col items-center justify-center gap-3 rounded-2xl p-5 transition-all duration-300 hover:scale-[1.04]"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, minHeight: 100 }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-xs tracking-wide"
+                    style={{ background: `${insurer.color}18`, border: `1px solid ${insurer.color}30`, color: insurer.color }}>
+                    {insurer.abbr}
+                  </div>
+                  <p className="text-xs font-bold text-center leading-tight" style={{ color: textMain }}
+                    aria-label={`Logo ${insurer.name}`}>{insurer.name}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={200}>
+            <p className="text-center text-[0.65rem] mt-8 flex items-center justify-center gap-1.5" style={{ color: textMuted }}>
+              <ShieldCheck size={12} style={{ color: lpGreen }} />
+              {t('Semua mitra asuransi SurePath sudah terdaftar dan diawasi oleh OJK (Otoritas Jasa Keuangan Indonesia).', 'All SurePath insurance partners are registered and supervised by OJK (Indonesia Financial Services Authority).')}
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════════════════════════ FAQ ════════════════════════════════════ */}
+      <section className="py-28 px-5" style={{ background: sectionBg3 }}>
+        <div className="max-w-3xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-14">
+              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+                FAQ
+              </span>
+              <h2 className="font-black leading-tight tracking-[-0.03em]"
+                style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
+                {t('Pertanyaan yang', 'Questions')}{' '}
+                <span style={{ color: lpGreen }}>{t('Sering Ditanyakan', 'Often Asked')}</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div itemScope itemType="https://schema.org/FAQPage" className="space-y-3">
+            {[
+              {
+                q: 'Cara beli asuransi mobil online di SurePath?',
+                a: 'Beli asuransi mobil di SurePath gampang banget — tinggal daftar, isi data kendaraan, pilih produk yang sesuai (all risk atau TLO), lalu bayar secara online. Polis aktif dalam hitungan menit dan dikirim langsung ke emailmu. Nggak perlu antre, nggak perlu tatap muka.',
+              },
+              {
+                q: 'Berapa premi asuransi kendaraan bermotor di SurePath?',
+                a: 'Premi asuransi kendaraan bermotor ditentukan berdasarkan jenis kendaraan, tahun produksi, wilayah penggunaan, dan tipe perlindungan (all risk atau TLO). Rata-rata premi all risk berkisar 1,5%–3,5% dari harga kendaraan per tahun, sedangkan TLO lebih terjangkau mulai 0,2%–0,8%. Pakai kalkulator premi gratis kami untuk estimasi akurat.',
+              },
+              {
+                q: 'Apa perbedaan asuransi jiwa unit link dan tradisional?',
+                a: 'Asuransi jiwa tradisional memberikan perlindungan murni tanpa komponen investasi — premi lebih terjangkau dan manfaat lebih pasti. Unit link menggabungkan proteksi jiwa dengan investasi di reksa dana, jadi nilai premi bisa bertumbuh. Pilihan tergantung tujuan kamu: kalau fokus proteksi, tradisional lebih cocok; kalau mau sekaligus investasi, unit link bisa jadi pilihan.',
+              },
+              {
+                q: 'Bagaimana cara klaim asuransi dengan cepat?',
+                a: 'Proses klaim di SurePath bisa dilakukan 100% online: lapor kejadian lewat aplikasi atau WhatsApp kami, upload dokumen yang dibutuhkan (foto kejadian, KTP, polis), lalu tim klaim kami akan memproses dalam 1–3 hari kerja. Untuk klaim darurat, tersedia layanan 24 jam yang bisa dihubungi kapan saja.',
+              },
+              {
+                q: 'Apa perbedaan asuransi all risk dan TLO untuk kendaraan?',
+                a: 'All risk menanggung semua kerusakan — dari goresan kecil sampai kecelakaan besar dan kehilangan kendaraan. TLO (Total Loss Only) hanya menanggung kerugian total, yaitu jika kendaraan hilang dicuri atau rusak lebih dari 75% nilai kendaraan. All risk lebih komprehensif tapi preminya lebih tinggi; TLO lebih hemat untuk kendaraan tua atau yang jarang digunakan.',
+              },
+              {
+                q: 'Apakah asuransi SurePath sudah terdaftar OJK?',
+                a: 'SurePath adalah platform pemasaran asuransi yang bermitra dengan perusahaan-perusahaan asuransi yang semuanya telah terdaftar dan diawasi oleh OJK (Otoritas Jasa Keuangan Indonesia). Produk yang kami pasarkan — dari Allianz, AXA Mandiri, Prudential, BRI Life, Sinarmas, dan Tokio Marine — sepenuhnya berlisensi dan diregulasi oleh OJK.',
+              },
+              {
+                q: 'Bagaimana cara daftar jadi agen asuransi di SurePath?',
+                a: 'Kamu bisa daftar sebagai agen di SurePath dengan mengisi formulir pendaftaran di halaman Program Agen kami. Syaratnya: usia minimal 21 tahun, punya KTP, dan bersedia mengikuti pelatihan sertifikasi asuransi. SurePath menyediakan pelatihan, materi, dan dukungan teknologi penuh — jadi kamu bisa mulai berkarir sebagai agen asuransi profesional tanpa modal besar.',
+              },
+              {
+                q: 'Apa manfaat asuransi perjalanan yang ditawarkan SurePath?',
+                a: 'Asuransi perjalanan SurePath menanggung berbagai risiko selama kamu bepergian: biaya medis darurat di luar negeri, pembatalan atau keterlambatan penerbangan, kehilangan bagasi, hingga evakuasi medis darurat. Tersedia untuk perjalanan domestik maupun internasional, dengan premi mulai dari Rp50.000 per perjalanan.',
+              },
+            ].map((item, i) => (
+              <Reveal key={i} delay={i * 40}>
+                <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question"
+                  className="rounded-2xl overflow-hidden"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  <details className="group">
+                    <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none select-none"
+                      style={{ color: textMain }}>
+                      <span itemProp="name" className="text-sm font-bold leading-snug">{item.q}</span>
+                      <ChevronDown size={16} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180"
+                        style={{ color: lpGreen }} />
+                    </summary>
+                    <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                      <p itemProp="text" className="px-5 pb-5 text-sm leading-relaxed"
+                        style={{ color: textMuted }}>{item.a}</p>
+                    </div>
+                  </details>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════════════════ FOOTER ══════════════════════════════════ */}
       <footer id="about" style={{ borderTop: '1px solid rgba(34,197,94,0.07)', background: footerBg }}>
         <div className="max-w-7xl mx-auto px-5 py-16">

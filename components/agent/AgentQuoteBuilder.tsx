@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone, Bike,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart
+  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart, FileText
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -9,10 +9,12 @@ import {
   saveQuote, createPolicy, addCommission,
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
-import { generatePolicyCertPDF } from '../../services/pdfService';
+import { generatePolicyCertPDF, generateQuotePDF } from '../../services/pdfService';
+import { calcPremium as calcOjkPremium, getZone, getVehicleCategory } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
+import { CAR_DATABASE } from '../../constants';
 
 interface Props {
   agentId: string;
@@ -23,8 +25,9 @@ interface Props {
 }
 
 type ProductType = 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
-type Step = 'client' | 'product' | 'inputs' | 'summary' | 'success';
+type Step = 'client' | 'product' | 'inputs' | 'quote_summary' | 'summary' | 'success';
 type QuoteTab = 'new' | 'orders';
+type QuoteMode = 'penawaran' | 'beli' | null;
 
 interface CarInputs { brand: string; model: string; year: number; price: number; coverage: 'COMPREHENSIVE' | 'TLO'; }
 interface TravelInputs { destination: string; startDate: string; endDate: string; adults: number; plan: 'PLATINUM' | 'GOLD'; }
@@ -61,6 +64,7 @@ const calcPremium = (product: ProductType, inputs: any): number => {
 };
 
 const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
+const CAR_BRANDS = Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort();
 
 const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -83,6 +87,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [printingQuote, setPrintingQuote] = useState(false);
   const [savedQuote, setSavedQuote] = useState<SpQuote | null>(null);
   const [createdPolicy, setCreatedPolicy] = useState<SpPolicy | null>(null);
 
@@ -207,6 +212,47 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       }
     } finally {
       setConverting(false);
+    }
+  };
+
+  const handlePrintQuote = async () => {
+    if (!product || product !== 'CAR') return;
+    setPrintingQuote(true);
+    try {
+      const zone = getZone('');  // default zone 3 when no province
+      const category = getVehicleCategory(carInputs.price);
+      const breakdown = calcOjkPremium('CAR', carInputs.coverage, carInputs.price, zone, {
+        flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0,
+      });
+      const addonsList = [
+        ...(breakdown.addonsDetail.flood > 0      ? [{ label: 'Perluasan Banjir',     amount: breakdown.addonsDetail.flood }]      : []),
+        ...(breakdown.addonsDetail.earthquake > 0 ? [{ label: 'Perluasan Gempa Bumi', amount: breakdown.addonsDetail.earthquake }] : []),
+        ...(breakdown.addonsDetail.riot > 0       ? [{ label: 'Perluasan Huru-Hara',  amount: breakdown.addonsDetail.riot }]       : []),
+        ...(breakdown.addonsDetail.tpl > 0        ? [{ label: 'TPL',                  amount: breakdown.addonsDetail.tpl }]        : []),
+        ...(breakdown.addonsDetail.paDriver > 0   ? [{ label: 'PA Pengemudi',         amount: breakdown.addonsDetail.paDriver }]   : []),
+        ...(breakdown.addonsDetail.paPassenger > 0? [{ label: 'PA Penumpang',         amount: breakdown.addonsDetail.paPassenger }]: []),
+      ];
+      await generateQuotePDF({
+        agentName: agent?.name ?? 'Agen SurePath',
+        agentCode: agent?.agent_code ?? '',
+        clientName,
+        vehicleBrand: carInputs.brand,
+        vehicleModel: carInputs.model,
+        vehicleYear: carInputs.year,
+        vehiclePrice: carInputs.price,
+        coverageType: carInputs.coverage,
+        zone,
+        category,
+        basePremium: breakdown.basePremium,
+        addons: addonsList,
+        adminFee: breakdown.adminFee,
+        stampDuty: breakdown.stampDuty,
+        totalPremium: breakdown.total,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
+      });
+    } finally {
+      setPrintingQuote(false);
     }
   };
 
@@ -662,6 +708,17 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             {saving ? <RefreshCw size={14} className="animate-spin" /> : <FileCheck size={14} />}
             {savedQuote ? t('Quote Saved!', 'Penawaran Tersimpan!') : t('Save Quote', 'Simpan Penawaran')}
           </button>
+
+          {product === 'CAR' && (
+            <button
+              onClick={handlePrintQuote}
+              disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
+              className="w-full py-4 rounded-2xl border border-orange-300 dark:border-orange-500/30 text-primary-500 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50 bg-orange-50 dark:bg-orange-500/5"
+            >
+              {printingQuote ? <RefreshCw size={14} className="animate-spin" /> : <FileText size={14} />}
+              {t('Print Quote PDF', 'Cetak Penawaran PDF')}
+            </button>
+          )}
 
           <a
             href={`https://wa.me/?text=${buildWAText()}`}

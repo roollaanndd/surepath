@@ -81,6 +81,14 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       setCommissions(commissionsData);
       setClients(clientsData);
       setUnreadCount(notifData.filter(n => !n.read).length);
+
+      // Fetch tier from DB
+      const { data: tierData } = await supabase
+        .from('sp_users')
+        .select('tier')
+        .eq('id', agent?.id)
+        .single();
+      if (tierData?.tier) setAgentTier(tierData.tier);
     } catch (err) {
       console.error('Error loading agent data:', err);
     } finally {
@@ -106,6 +114,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             recentCommissions={commissions.slice(0, 5)}
             onNavigate={handleTabChange}
             lang={lang}
+            agentTier={agentTier}
           />
         );
       case 'policy':
@@ -160,6 +169,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             lang={lang}
             onLogout={onLogout}
             stats={stats}
+            agentTier={agentTier}
           />
         );
       default:
@@ -198,11 +208,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
                 {agent?.agent_code ?? 'SP-AGT'}
               </div>
-              {(agent?.tier || agent?.agent_tier) && (
+              {agentTier && (
                 <div className={`text-[8px] font-black uppercase tracking-widest ${
-                  (agent?.tier || agent?.agent_tier) === 'ELITE' ? 'text-purple-400' : 'text-amber-400'
+                  agentTier === 'ELITE' ? 'text-purple-400' : 'text-amber-400'
                 }`}>
-                  {(agent?.tier || agent?.agent_tier) === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
                 </div>
               )}
             </div>

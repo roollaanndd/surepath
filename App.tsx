@@ -120,9 +120,15 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx]     = useState(0);
+  const [dotCount, setDotCount] = useState(0);
   const onFinishRef  = useRef(onFinish);
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
+
+  useEffect(() => {
+    const dotInt = setInterval(() => setDotCount(d => (d + 1) % 4), 400);
+    return () => clearInterval(dotInt);
+  }, []);
 
   // Animated blobs — identical to the login page AnimatedBackground
   useEffect(() => {
@@ -165,9 +171,9 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     const t0 = setTimeout(() => setPhase(1), 100);
     const t1 = setTimeout(() => setPhase(2), 520);
     const t2 = setTimeout(() => setPhase(3), 880);
-    const t3 = setTimeout(() => setPhase(4), 2600);
-    const t4 = setTimeout(() => onFinishRef.current(), 3100);
-    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.5, 100)), 18);
+    const t3 = setTimeout(() => setPhase(4), 3000);
+    const t4 = setTimeout(() => onFinishRef.current(), 3500);
+    const progInt = setInterval(() => setProgress(p => Math.min(p + 1.2, 100)), 18);
     const msgInt  = setInterval(() => setMsgIdx(i => Math.min(i + 1, COPY[lang].steps.length - 1)), 450);
     return () => { [t0,t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); clearInterval(msgInt); };
   }, [lang]);
@@ -236,6 +242,9 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
           </div>
           <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: 'rgba(255,255,255,0.07)' }}>
             <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: GRN, boxShadow: '0 0 8px rgba(6,224,0,0.6)' }} />
+          </div>
+          <div style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em' }}>
+            {lang === 'ID' ? 'Memuat' : 'Loading'}{'·'.repeat(dotCount)}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
@@ -396,6 +405,7 @@ const SESSION_KEY = 'SUREPATH_SESSION';
 
 
 const App = () => {
+  // Show splash on every fresh browser session (sessionStorage resets per tab/window open)
   const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() =>

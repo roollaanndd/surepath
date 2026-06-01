@@ -20,12 +20,13 @@ interface Props {
   onLogout: () => void;
   onNavigate?: (tab: string) => void;
   stats?: AgentStats | null;
+  agentTier?: string | null;
 }
 
 const inputCls =
   'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition';
 
-const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp }) => {
+const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [profile, setProfile] = useState<SpUser | null>(null);
@@ -199,13 +200,12 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             </div>
           )}
           {(() => {
-            const tier = (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+            const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
             return tier ? (
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <span className="text-sm">{tier === 'ELITE' ? '💎' : '⭐'}</span>
-                <span className={`text-xs font-black ${tier === 'ELITE' ? 'text-purple-500' : 'text-amber-500'}`}>
-                  {tier === 'ELITE' ? 'Agen Elite' : 'Agen Bintang'}
-                </span>
+              <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
+                tier === 'ELITE' ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-400'
+              }`}>
+                {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
               </div>
             ) : null;
           })()}

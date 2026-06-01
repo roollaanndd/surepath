@@ -1,7 +1,7 @@
 import React from 'react';
-import { 
-  FileText, FileSearch, Trash2, Camera, Loader2, AlertTriangle, Check, 
-  RefreshCw, Cpu, ShieldCheck, Activity, ShieldX,
+import {
+  FileText, FileSearch, Trash2, Camera, Loader2, AlertTriangle, Check,
+  RefreshCw, Cpu, ShieldCheck, Activity, ShieldX, Sparkles,
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';
@@ -27,6 +27,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 }) => {
 
   const [stnkError, setStnkError] = React.useState<string | null>(null);
+  const [analyzing, setAnalyzing] = React.useState(false);
 
   const handleStnkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,14 +113,17 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
   };
 
   const runSurveyAI = async () => {
-    const photoEntries = Object.entries(survey.photos).map(([id, data]) => ({ id, data: data as string }));
-    if (photoEntries.length < 5) {
-      alert("Harap lengkapi semua foto mobil (5 posisi) sebelum memulai pengecekan.");
+    const images = Object.entries(survey.photos).map(([slotId, data]) => ({ slotId, data: data as string }));
+    if (images.length < 3) {
+      alert("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
       return;
     }
+    setAnalyzing(true);
     setLoading(true);
     setLoadingType('SURVEY');
-    
+
+    const photoEntries = images.map(({ slotId, data }) => ({ id: slotId, data }));
+
     const expectedData = {
       brand: vehicle.brand,
       model: vehicle.model,
@@ -136,6 +140,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
     setLoading(false);
     setLoadingType(null);
+    setAnalyzing(false);
 
     if (response.success) {
       const finalScore = response.score || 0;
@@ -158,7 +163,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         ...prev,
         score: 0,
         verdict: 'MANUAL_REQUIRED',
-        underwritingReport: 'Pengecekan otomatis tidak tersedia. Dokumen akan ditinjau manual oleh tim kami.',
+        underwritingReport: 'AI tidak tersedia — lanjutkan dengan verifikasi manual.',
         manualVerif: true,
       }));
     }
@@ -244,7 +249,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
           Foto dari 5 sudut: Depan Serong, Belakang Serong, Sisi Kanan, Sisi Kiri, dan Dashboard
         </p>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
            {photoSlots.map((slot) => {
               const validation = photoValidation[slot.id];
               const isLoading = validation?.status === 'LOADING';
@@ -302,12 +307,12 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         </div>
       </div>
 
-      {capturedCount === 5 && survey.stnk && (
+      {capturedCount >= 3 && (
          <div className="space-y-6 pt-4">
             {loading && loadingType === 'SURVEY' ? (
               <div className="glass-card rounded-[3rem] shadow-2xl relative overflow-hidden bg-white dark:bg-black/20">
-                 <SmartProcessingView 
-                  label="Analisa AI" 
+                 <SmartProcessingView
+                  label="Analisa AI"
                   sublabel="AI SurePath sedang mengecek kecocokan data dan kondisi mobil kamu secara otomatis."
                  />
               </div>
@@ -437,14 +442,16 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                  )}
               </div>
             ) : (
-              <button 
+              <button
                 onClick={runSurveyAI}
-                disabled={loading}
-                className="w-full py-8 bg-midnight dark:bg-white text-white dark:text-black rounded-[3rem] font-black uppercase text-base tracking-[0.4em] shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex items-center justify-center gap-6 group active:scale-95 transition-all relative overflow-hidden border border-white/10"
+                disabled={analyzing}
+                className="w-full py-4 rounded-2xl bg-primary-500 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                <div className="absolute inset-0 bg-primary-500 translate-y-full group-hover:translate-y-0 transition-transform duration-700 opacity-20"></div>
-                {loading ? <Loader2 size={28} className="animate-spin text-primary-500"/> : <Cpu size={32} className="group-hover:rotate-12 transition-transform text-primary-500"/>}
-                <span className="relative z-10">CEK KONDISI MOBIL DENGAN AI</span>
+                {analyzing ? (
+                  <><div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" /> Menganalisa...</>
+                ) : (
+                  <><Sparkles size={16} /> Analisa Kendaraan AI</>
+                )}
               </button>
             )}
          </div>

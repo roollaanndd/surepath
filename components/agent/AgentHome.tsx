@@ -16,9 +16,10 @@ interface Props {
   recentCommissions: any[];
   onNavigate: (tab: string) => void;
   lang: Language;
+  agentTier?: string | null;
 }
 
-const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang }) => {
+const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [coinBalance, setCoinBalance] = useState(0);
 
@@ -87,10 +88,19 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               <h1 className="text-white font-black tracking-tighter text-2xl leading-tight">
                 {(agent?.name ?? 'Agent').toUpperCase()} 👋
               </h1>
-              <div className="mt-3">
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
                 <span className="px-3 py-1.5 rounded-full bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/30">
                   {agent?.agent_code ?? 'SP-AGT-001'}
                 </span>
+                {agentTier && (
+                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                    agentTier === 'ELITE'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  }`}>
+                    {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+                  </span>
+                )}
               </div>
             </div>
             {/* Trust Score badge */}

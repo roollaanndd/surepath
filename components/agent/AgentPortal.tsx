@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FileText, Wallet, Sun, Moon, ShieldCheck, Bell, UserCircle, Zap } from 'lucide-react';
+import { Home, FileText, Wallet, Sun, Moon, ShieldCheck, Bell, UserCircle, ShoppingBag } from 'lucide-react';
 import { Language } from '../../types';
 import {
+  supabase,
   getAgentCommissions,
   getAgentClients,
   getAgentStats,
@@ -32,7 +33,7 @@ interface Props {
 const TABS = [
   { id: 'home',       labelId: 'Beranda',  Icon: Home },
   { id: 'policy',     labelId: 'Polis',    Icon: FileText },
-  { id: 'quotes',     labelId: 'Jual',     Icon: Zap },
+  { id: 'quotes',     labelId: 'Beli',     Icon: ShoppingBag },
   { id: 'commission', labelId: 'Dompet',   Icon: Wallet },
   { id: 'profile',    labelId: 'Profil',   Icon: UserCircle },
 ];
@@ -46,6 +47,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const [agentTier, setAgentTier] = useState<string | null>(null);
   const [stats, setStats] = useState<AgentStats>({
     totalCommissionMonth: 0,
     totalCommissionAllTime: 0,

@@ -3,7 +3,7 @@ import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, Wallet,
   FileText, Trophy, Loader2, Network, RefreshCw, FileEdit,
-  AlertCircle, Camera,
+  AlertCircle, Camera, Building2,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -40,6 +40,29 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const ktpInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
+
+  interface BankAccount { bank_code: string; account_number: string; account_holder_name: string; }
+  const BANK_STORAGE_KEY = 'SUREPATH_SAVED_BANK';
+  const [savedAccount, setSavedAccount] = useState<BankAccount | null>(() => {
+    try { return JSON.parse(localStorage.getItem(BANK_STORAGE_KEY) ?? 'null'); } catch { return null; }
+  });
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [bankForm, setBankForm] = useState({ bank_code: '', account_number: '', account_holder_name: '' });
+
+  const INDONESIAN_BANKS = ['BCA', 'BRI', 'BNI', 'Mandiri', 'CIMB Niaga', 'BSI', 'Permata'];
+
+  const saveBankAccount = () => {
+    if (!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name) return;
+    localStorage.setItem(BANK_STORAGE_KEY, JSON.stringify(bankForm));
+    setSavedAccount(bankForm);
+    setShowBankForm(false);
+    setBankForm({ bank_code: '', account_number: '', account_holder_name: '' });
+  };
+
+  const deleteBankAccount = () => {
+    localStorage.removeItem(BANK_STORAGE_KEY);
+    setSavedAccount(null);
+  };
 
   useEffect(() => {
     if (!agentId) return;
@@ -505,6 +528,62 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           </div>
         </div>
       </div>
+
+      {/* Bank Account */}
+      <div>
+        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Rekening Bank</p>
+        {savedAccount ? (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-blue-400" />
+              <div>
+                <p className="text-xs font-black text-white">{savedAccount.bank_code} — {savedAccount.account_number}</p>
+                <p className="text-[10px] text-slate-400 font-bold">{savedAccount.account_holder_name}</p>
+              </div>
+            </div>
+            <button onClick={deleteBankAccount} className="text-rose-400 text-[10px] font-black">Hapus</button>
+          </div>
+        ) : (
+          <button onClick={() => setShowBankForm(true)}
+            className="w-full py-3 rounded-2xl border border-dashed border-white/20 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-primary-500/50 hover:text-primary-400 transition-all">
+            + Tambah Rekening Bank
+          </button>
+        )}
+      </div>
+
+      {/* Bank Form Modal */}
+      {showBankForm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowBankForm(false)}>
+          <div className="bg-[#111] rounded-t-[2rem] w-full max-w-lg p-6 pb-10 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-black text-white">Tambah Rekening Bank</p>
+              <button onClick={() => setShowBankForm(false)}><X className="w-5 h-5 text-slate-400" /></button>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Bank</label>
+              <select value={bankForm.bank_code} onChange={e => setBankForm(p => ({ ...p, bank_code: e.target.value }))} className={inputCls}>
+                <option value="">— Pilih Bank —</option>
+                {INDONESIAN_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nomor Rekening</label>
+              <input type="text" value={bankForm.account_number} onChange={e => setBankForm(p => ({ ...p, account_number: e.target.value }))} className={inputCls} placeholder="1234567890" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nama Pemilik Rekening</label>
+              <input type="text" value={bankForm.account_holder_name} onChange={e => setBankForm(p => ({ ...p, account_holder_name: e.target.value }))} className={inputCls} placeholder="Nama sesuai buku tabungan" />
+            </div>
+            <button
+              onClick={saveBankAccount}
+              disabled={!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name}
+              className="w-full py-3.5 rounded-2xl bg-primary-500 text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 transition"
+            >
+              Simpan Rekening
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Logout */}
       <button

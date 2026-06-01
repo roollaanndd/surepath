@@ -450,6 +450,48 @@ const AdminPortal = ({
           )}
         </div>
       </div>
+
+      {/* Traffic 7 Hari */}
+      <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
+        <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Traffic Website — 7 Hari Terakhir</p>
+        {trafficStats ? (
+          <div className="space-y-4">
+            {/* Bar chart */}
+            <div className="flex items-end gap-2 h-28">
+              {trafficStats.daily.map(d => {
+                const maxCount = Math.max(...trafficStats.daily.map(x => x.count), 1);
+                const pct = (d.count / maxCount) * 100;
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={`w-full rounded-t-sm transition-all duration-700 ${th(darkMode, 'bg-blue-500/50', 'bg-blue-400')}`}
+                      style={{ height: `${Math.max(pct, 4)}%` }}
+                      title={`${d.date}: ${d.count} views`}
+                    />
+                    <span className={`text-[0.45rem] font-mono ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>
+                      {d.date.slice(5)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Top pages */}
+            {trafficStats.topPages.length > 0 && (
+              <div className="space-y-1.5">
+                <p className={`text-[0.5rem] font-black uppercase tracking-widest ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>Halaman Terpopuler</p>
+                {trafficStats.topPages.map(p => (
+                  <div key={p.page} className="flex items-center justify-between">
+                    <span className={`text-[0.65rem] font-mono truncate max-w-[200px] ${th(darkMode, 'text-gray-400', 'text-slate-600')}`}>{p.page}</span>
+                    <span className={`text-[0.65rem] font-black ${th(darkMode, 'text-blue-400', 'text-blue-600')}`}>{p.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+        )}
+      </div>
     </div>
   );
 
@@ -481,7 +523,8 @@ const AdminPortal = ({
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;
       case 'security':         return <SecurityView />;
-      case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} /></SettingsErrorBoundary>;
+      case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} currentUserRole={userRole} /></SettingsErrorBoundary>;
+      case 'role_permissions': return <RolePermissionsView currentUserRole={userRole} />;
       default:                 return null;
     }
   };

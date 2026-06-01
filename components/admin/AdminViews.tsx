@@ -979,7 +979,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
   );
 };
 
-export const SettingsView = ({ products, setProducts }: { products: any[], setProducts: any }) => {
+export const SettingsView = ({ products, setProducts, currentUserRole }: { products: any[], setProducts: any, currentUserRole?: string }) => {
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
 
@@ -1149,6 +1149,14 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
             </Card>
           ))}
        </div>
+
+       {/* Role Permissions sub-section — only shown to MASTER_ADMIN */}
+       {currentUserRole === UserRole.MASTER_ADMIN && (
+         <div className="mt-8 space-y-4">
+           <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Konfigurasi Akses Role</h3>
+           <RolePermissionsView currentUserRole={currentUserRole} />
+         </div>
+       )}
     </div>
   );
 };

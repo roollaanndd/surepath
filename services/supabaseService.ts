@@ -2416,3 +2416,146 @@ export async function getUserTcStatus(userId: string): Promise<boolean> {
   const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
   return data?.tc_accepted === true;
 }
+
+// ─── Online Users / Heartbeat (Task 2) ───────────────────────────────────────
+
+export async function recordUserHeartbeat(userId: string, role: string): Promise<void> {
+  await supabase.from('sp_user_sessions').upsert(
+    { user_id: userId, role, last_seen: new Date().toISOString() },
+    { onConflict: 'user_id' },
+  );
+}
+
+export interface OnlineUsersResult {
+  total: number;
+  byRole: Record<string, number>;
+}
+
+export async function getOnlineUsers(): Promise<OnlineUsersResult> {
+  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('sp_user_sessions')
+    .select('role')
+    .gte('last_seen', since);
+  if (error || !data) return { total: 0, byRole: {} };
+  const byRole: Record<string, number> = {};
+  for (const row of data as { role: string }[]) {
+    byRole[row.role] = (byRole[row.role] ?? 0) + 1;
+  }
+  return { total: data.length, byRole };
+}
+
+// ─── Security real data (Task 3) ─────────────────────────────────────────────
+
+export interface SecurityStats {
+  failedLogins24h: number;
+  activeSessionsCount: number;
+  lastLoginAt: string | null;
+  blockedEntries: Array<{ email: string; attempts: number; until: number }>;
+}
+
+export function getFailedLoginAttempts(): number {
+  let total = 0;
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith('sp_rate_limit_')) continue;
+    try {
+      const val = JSON.parse(localStorage.getItem(key) ?? '{}');
+      if (val.resetAt && val.resetAt > cutoff) total += val.count ?? 0;
+    } catch { /* ignore */ }
+  }
+  return total;
+}
+
+export function getRateLimitBlocks(): Array<{ email: string; attempts: number; until: number }> {
+  const entries: Array<{ email: string; attempts: number; until: number }> = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith('sp_rate_limit_')) continue;
+    try {
+      const val = JSON.parse(localStorage.getItem(key) ?? '{}');
+      const email = key.replace('sp_rate_limit_', '');
+      entries.push({ email, attempts: val.count ?? 0, until: val.resetAt ?? 0 });
+    } catch { /* ignore */ }
+  }
+  return entries.sort((a, b) => b.attempts - a.attempts);
+}
+
+export async function getSecurityStats(): Promise<SecurityStats> {
+  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { data: sessions } = await supabase
+    .from('sp_user_sessions')
+    .select('last_seen')
+    .gte('last_seen', since);
+  const activeSessionsCount = sessions?.length ?? 0;
+  const allSessions = await supabase.from('sp_user_sessions').select('last_seen').order('last_seen', { ascending: false }).limit(1);
+  const lastLoginAt = (allSessions.data?.[0] as any)?.last_seen ?? null;
+  return {
+    failedLogins24h: getFailedLoginAttempts(),
+    activeSessionsCount,
+    lastLoginAt,
+    blockedEntries: getRateLimitBlocks(),
+  };
+}
+
+export async function getSessionActivityByHour(): Promise<Array<{ hour: number; count: number }>> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('sp_user_sessions')
+    .select('last_seen')
+    .gte('last_seen', since);
+  if (error || !data) return [];
+  const buckets: Record<number, number> = {};
+  for (const row of data as { last_seen: string }[]) {
+    const h = new Date(row.last_seen).getHours();
+    buckets[h] = (buckets[h] ?? 0) + 1;
+  }
+  return Array.from({ length: 24 }, (_, h) => ({ hour: h, count: buckets[h] ?? 0 }));
+}
+
+// ─── Page views / traffic (Task 4) ───────────────────────────────────────────
+
+export async function recordPageView(page: string): Promise<void> {
+  await supabase.from('sp_page_views').insert({
+    page,
+    ts: new Date().toISOString(),
+    user_agent: navigator.userAgent.slice(0, 200),
+  });
+}
+
+export interface TrafficStats {
+  daily: Array<{ date: string; count: number }>;
+  topPages: Array<{ page: string; count: number }>;
+}
+
+export async function getTrafficStats(): Promise<TrafficStats> {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('sp_page_views')
+    .select('page, ts')
+    .gte('ts', since)
+    .order('ts', { ascending: true });
+  if (error || !data) return { daily: [], topPages: [] };
+  const rows = data as { page: string; ts: string }[];
+  // Build last-7-days buckets
+  const dailyMap: Record<string, number> = {};
+  const pageMap: Record<string, number> = {};
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    dailyMap[d.toISOString().slice(0, 10)] = 0;
+  }
+  for (const row of rows) {
+    const date = row.ts.slice(0, 10);
+    if (date in dailyMap) dailyMap[date]++;
+    pageMap[row.page] = (pageMap[row.page] ?? 0) + 1;
+  }
+  const daily = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
+  const topPages = Object.entries(pageMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([page, count]) => ({ page, count }));
+  return { daily, topPages };
+}

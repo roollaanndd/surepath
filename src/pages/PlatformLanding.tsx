@@ -483,7 +483,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               {l.label}
             </a>
           ))}
-          <button onClick={() => { window.history.pushState({}, '', '/admin'); onSignIn(); }}
+          <button onClick={() => navigate('/admin')}
             className="text-sm uppercase tracking-widest transition-colors hover:text-white"
             style={{ color: 'hsl(0 0% 60%)' }}>
             Admin
@@ -523,7 +523,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               </button>
             ))}
             <div className="flex gap-2 mt-4">
-              <button onClick={() => { window.history.pushState({}, '', '/admin'); onSignIn(); }} className="flex-1 py-2.5 rounded-xl text-xs font-black"
+              <button onClick={() => navigate('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black"
                 style={{ background: 'rgba(6,224,0,0.08)', border: `1px solid rgba(6,224,0,0.2)`, color: lpGreen }}>Admin</button>
               <button onClick={onSignIn}
                 className="flex-1 py-2.5 rounded-xl text-xs font-black"

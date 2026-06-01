@@ -3,7 +3,7 @@ import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getUserByEmail, getUserTcStatus, recordTcAcceptance } from './services/supabaseService';
+import { supabase, getAgentProfile, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView } from './services/supabaseService';
 import TermsModal from './components/TermsModal';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
@@ -572,7 +572,36 @@ const App = () => {
     setCurrentPath(path);
   }, []);
 
+  // ── Heartbeat: record user session every 2 minutes while logged in ──────────
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (currentUser?.id && currentUser?.role) {
+      // Fire immediately, then every 2 minutes
+      recordUserHeartbeat(currentUser.id, currentUser.role).catch(() => {});
+      heartbeatRef.current = setInterval(() => {
+        recordUserHeartbeat(currentUser.id, currentUser.role).catch(() => {});
+      }, 2 * 60 * 1000);
+    }
+    return () => {
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+    };
+  }, [currentUser?.id, currentUser?.role]);
+
+  // ── Page view tracking ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (currentPath) {
+      recordPageView(currentPath).catch(() => {});
+    }
+  }, [currentPath]);
+
   const handleLogout = useCallback(async () => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
     await supabase.auth.signOut().catch(() => {});
     setCurrentUser(null);
     localStorage.removeItem(SESSION_KEY);

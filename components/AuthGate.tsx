@@ -16,24 +16,6 @@ interface AuthGateProps {
   initialMode?: 'LOGIN' | 'REGISTER';
 }
 
-// ─── Demo access ──────────────────────────────────────────────────────────────
-async function demoLogin(role: UserRole) {
-  const emailMap: Record<string, string> = {
-    [UserRole.MASTER_ADMIN]: 'master@surepath.ai',
-    [UserRole.AGENT]:        'agent@surepath.ai',
-    [UserRole.CUSTOMER]:     'user@surepath.ai',
-  };
-  return {
-    id:         `demo-${role}`,
-    name:       role === UserRole.MASTER_ADMIN ? 'Master Admin' : role === UserRole.AGENT ? 'Demo Agent' : 'Demo User',
-    email:      emailMap[role],
-    role,
-    supabaseId: role === UserRole.AGENT ? 'aaaaaaaa-0000-0000-0000-000000000001' : undefined,
-    nodeId:     `SP-DEMO-${role.slice(0, 3)}`,
-    trustScore: 100,
-  };
-}
-
 // ─── Animated canvas background ───────────────────────────────────────────────
 const AnimatedBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -187,13 +169,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
-
-  // ── Demo access ──────────────────────────────────────────────────────────────
-  const handleDemoAccess = async (role: UserRole) => {
-    setLoading(true);
-    const user = await demoLogin(role);
-    setTimeout(() => onAuthSuccess(user), 600);
-  };
 
   // ── Supabase login ───────────────────────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
@@ -666,26 +641,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* Demo — Nasabah only */}
-        {mode === 'LOGIN' && (
-          <div className="w-full space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[0.55rem] font-black text-gray-600 uppercase tracking-widest">Demo</span>
-              <div className="flex-1 h-px bg-white/10" />
-            </div>
-            <button
-              onClick={() => handleDemoAccess(UserRole.CUSTOMER)}
-              disabled={loading}
-              className="w-full p-3.5 bg-white/[0.03] border border-emerald-500/20 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-40 text-emerald-400 hover:bg-emerald-500/10"
-            >
-              <Smartphone size={18} />
-              <span className="text-[0.6rem] font-black uppercase tracking-widest">
-                {t('Try as Customer', 'Coba sebagai Nasabah')}
-              </span>
-            </button>
-          </div>
-        )}
 
         <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Shield size={10} style={{ color: 'rgba(6,224,0,0.4)' }} />

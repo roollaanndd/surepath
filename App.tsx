@@ -3,7 +3,8 @@ import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getUserByEmail } from './services/supabaseService';
+import { supabase, getAgentProfile, getUserByEmail, getUserTcStatus, recordTcAcceptance } from './services/supabaseService';
+import TermsModal from './components/TermsModal';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 
@@ -416,6 +417,7 @@ const App = () => {
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [pendingOAuthUser, setPendingOAuthUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [showTc, setShowTc] = useState(false);
 
   useEffect(() => {
     const loadCustomProducts = async () => {
@@ -510,6 +512,8 @@ const App = () => {
           (byEmail.status === 'fulfilled' ? byEmail.value : null);
         setOauthLoading(false);
         if (profile) {
+          const tcAccepted = await getUserTcStatus(profile.id).catch(() => true);
+          if (!tcAccepted) setShowTc(true);
           handleAuthSuccess({
             id:         profile.id,
             name:       profile.name,
@@ -586,6 +590,17 @@ const App = () => {
     />
   );
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
+
+  if (showTc && currentUser) {
+    return (
+      <TermsModal
+        onAccept={async () => {
+          await recordTcAcceptance(currentUser.id ?? currentUser.supabaseId);
+          setShowTc(false);
+        }}
+      />
+    );
+  }
 
   const pathname = currentPath;
 

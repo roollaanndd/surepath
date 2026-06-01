@@ -5,6 +5,10 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
+import {
+  CAR_COMP_MIN, CAR_COMP_MAX, CAR_TLO_MIN, CAR_TLO_MAX,
+  NON_VEHICLE_RATES,
+} from '../../services/ojkRates';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +40,7 @@ interface SpInsurerProduct {
   authorized_garage_max_age_years: number;
   is_active: boolean;
   notes?: string;
+  ojk_rate_band?: 'MIN' | 'MID' | 'MAX';
   created_at?: string;
   updated_at?: string;
 }
@@ -289,7 +294,9 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
 
 // ─── Add/Edit Product Modal ───────────────────────────────────────────────────
 
-type ProductFormData = Omit<SpInsurerProduct, 'id' | 'insurer_id' | 'created_at' | 'updated_at'>;
+type ProductFormData = Omit<SpInsurerProduct, 'id' | 'insurer_id' | 'created_at' | 'updated_at'> & {
+  ojk_rate_band: 'MIN' | 'MID' | 'MAX';
+};
 
 const defaultProductForm = (): ProductFormData => ({
   product_type: 'CAR',
@@ -304,6 +311,7 @@ const defaultProductForm = (): ProductFormData => ({
   authorized_garage_max_age_years: 5,
   is_active: true,
   notes: '',
+  ojk_rate_band: 'MID' as 'MIN' | 'MID' | 'MAX',
 });
 
 interface ProductModalProps {
@@ -329,6 +337,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
           authorized_garage_max_age_years: initial.authorized_garage_max_age_years,
           is_active: initial.is_active,
           notes: initial.notes ?? '',
+          ojk_rate_band: (initial.ojk_rate_band ?? 'MID') as 'MIN' | 'MID' | 'MAX',
         }
       : defaultProductForm()
   );
@@ -381,6 +390,85 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
             >
               {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
+          </div>
+        )}
+
+        {/* OJK Rate Band */}
+        <div>
+          <SectionLabel>Band Tarif OJK (SEOJK 6/2017)</SectionLabel>
+          <div className="grid grid-cols-3 gap-2">
+            {(['MIN', 'MID', 'MAX'] as const).map(band => (
+              <button
+                key={band}
+                type="button"
+                onClick={() => set('ojk_rate_band', band)}
+                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all ${
+                  form.ojk_rate_band === band
+                    ? band === 'MIN' ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                      : band === 'MID' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                      : 'border-amber-500 bg-amber-500/10 text-amber-400'
+                    : 'border-white/10 text-slate-400'
+                }`}
+              >
+                {band === 'MIN' ? '↓ Tarif Bawah' : band === 'MID' ? '— Tarif Tengah' : '↑ Tarif Atas'}
+              </button>
+            ))}
+          </div>
+          <p className="text-[9px] text-slate-500 mt-1.5">
+            {form.product_type === 'CAR'
+              ? `Harga kendaraan menentukan kategori OJK. Band ini menentukan posisi tarif dalam rentang yang diizinkan.`
+              : `Band menentukan tarif dasar produk non-kendaraan sesuai rentang OJK.`}
+          </p>
+        </div>
+
+        {/* CAR rate band reference table */}
+        {form.product_type === 'CAR' && form.ojk_rate_band && (
+          <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl text-[10px] text-slate-400 space-y-1">
+            <p className="font-black text-slate-300 text-xs mb-2">
+              Referensi Tarif OJK — Komprehensif ({form.ojk_rate_band})
+            </p>
+            <div className="grid grid-cols-4 gap-x-3 text-[9px] font-bold text-slate-500 mb-1">
+              <span>Kategori</span><span>Zona 1</span><span>Zona 2</span><span>Zona 3</span>
+            </div>
+            {([1, 2, 3, 4, 5] as const).map(cat => {
+              const tbl = form.vehicle_coverage === 'TLO'
+                ? (form.ojk_rate_band === 'MIN' ? CAR_TLO_MIN : CAR_TLO_MAX)
+                : (form.ojk_rate_band === 'MIN' ? CAR_COMP_MIN : CAR_COMP_MAX);
+              const r = tbl[cat];
+              return (
+                <div key={cat} className="grid grid-cols-4 gap-x-3">
+                  <span className="text-slate-300 font-black">Kat {cat}</span>
+                  <span>{(r[1] * 100).toFixed(2)}%</span>
+                  <span>{(r[2] * 100).toFixed(2)}%</span>
+                  <span>{(r[3] * 100).toFixed(2)}%</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Non-CAR rate reference */}
+        {form.product_type !== 'CAR' && (
+          <div className="p-4 bg-white/[0.03] border border-white/10 rounded-xl text-[10px] text-slate-400 space-y-1">
+            <p className="font-black text-slate-300 text-xs mb-2">Referensi Tarif OJK — {form.product_type}</p>
+            {form.product_type === 'TRAVEL' && (
+              <>
+                <p>Domestik: {(NON_VEHICLE_RATES.TRAVEL.domestic.min * 100).toFixed(2)}% – {(NON_VEHICLE_RATES.TRAVEL.domestic.max * 100).toFixed(2)}% dari nilai perjalanan</p>
+                <p>Internasional: {(NON_VEHICLE_RATES.TRAVEL.international.min * 100).toFixed(2)}% – {(NON_VEHICLE_RATES.TRAVEL.international.max * 100).toFixed(2)}% dari nilai perjalanan</p>
+              </>
+            )}
+            {form.product_type === 'PA' && (
+              <>
+                <p>Premi: Rp {NON_VEHICLE_RATES.PA.bands.min.toLocaleString('id-ID')} – Rp {NON_VEHICLE_RATES.PA.bands.max.toLocaleString('id-ID')} / orang / tahun</p>
+                <p>(tergantung uang pertanggungan &amp; profil risiko)</p>
+              </>
+            )}
+            {form.product_type === 'MPAR' && (
+              <>
+                <p>Premi: {(NON_VEHICLE_RATES.MPAR.bands.min * 100).toFixed(1)}% – {(NON_VEHICLE_RATES.MPAR.bands.max * 100).toFixed(1)}% dari nilai perangkat / tahun</p>
+                <p>(handphone, laptop, gadget)</p>
+              </>
+            )}
           </div>
         )}
 

@@ -2402,3 +2402,17 @@ export async function validatePromoCode(
   }
   return { valid: true, promo: p };
 }
+
+// ─── Terms & Conditions ───────────────────────────────────────────────────────
+
+export async function recordTcAcceptance(userId: string): Promise<void> {
+  await supabase.from('sp_users').update({
+    tc_accepted: true,
+    tc_accepted_at: new Date().toISOString(),
+  }).eq('id', userId);
+}
+
+export async function getUserTcStatus(userId: string): Promise<boolean> {
+  const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
+  return data?.tc_accepted === true;
+}

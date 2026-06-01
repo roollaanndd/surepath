@@ -1523,7 +1523,7 @@ export const ClaimsAdminView = () => {
 
 type UserWithActive = User & { isActive?: boolean };
 
-const ROLE_FILTERS = ['All', 'MASTER_ADMIN', 'ADMIN', 'FINANCE', 'INSURANCE_ADMIN', 'AGENT', 'CUSTOMER'] as const;
+const ROLE_FILTERS = ['All', 'MASTER_ADMIN', 'ADMIN', 'FINANCE', 'INSURANCE_ADMIN', 'AGENT', 'CUSTOMER', 'B2B_CLIENT'] as const;
 
 const ROLE_COLOR: Record<string, string> = {
   MASTER_ADMIN: 'rose',
@@ -1532,6 +1532,7 @@ const ROLE_COLOR: Record<string, string> = {
   INSURANCE_ADMIN: 'indigo',
   AGENT: 'yellow',
   CUSTOMER: 'emerald',
+  B2B_CLIENT: 'indigo',
 };
 
 export const UserManagementView = () => {
@@ -1648,6 +1649,7 @@ export const UserManagementView = () => {
                 <th className="py-4">Role</th>
                 <th className="py-4">Status</th>
                 <th className="py-4">Member Sejak</th>
+                <th className="py-4 text-center">T&amp;C</th>
                 <th className="py-4 text-right pr-6">Aksi</th>
               </tr>
             </thead>
@@ -1700,6 +1702,15 @@ export const UserManagementView = () => {
                     </td>
                     <td className="py-3.5 text-[0.6rem] text-gray-500 font-mono">
                       {u.memberSince ? new Date(u.memberSince).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                    </td>
+                    <td className="py-3.5 text-center">
+                      {(u as any).tc_accepted ? (
+                        <span className="text-emerald-400 font-black text-[0.6rem]" title={(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID') : 'Diterima'}>
+                          ✓ {(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : ''}
+                        </span>
+                      ) : (
+                        <span className="text-gray-600">–</span>
+                      )}
                     </td>
                     <td className="py-3.5 text-right pr-6">
                       <button

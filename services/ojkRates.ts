@@ -144,6 +144,82 @@ export function calcAddonPremium(addons: AddOns, sumInsured: number): number {
   return Math.round(total);
 }
 
+// ─── OJK Min/Max Rate Tables ──────────────────────────────────────────────────
+// Source: SEOJK No. 6/SEOJK.05/2017 — tarif bawah (MIN) and tarif atas (MAX)
+
+export const CAR_COMP_MIN: Record<VehicleCategory, Record<Zone, number>> = {
+  1: { 1: 0.0382, 2: 0.0326, 3: 0.0253 },
+  2: { 1: 0.0267, 2: 0.0247, 3: 0.0208 },
+  3: { 1: 0.0218, 2: 0.0208, 3: 0.0179 },
+  4: { 1: 0.0180, 2: 0.0171, 3: 0.0168 },
+  5: { 1: 0.0133, 2: 0.0133, 3: 0.0133 },
+};
+
+export const CAR_COMP_MAX: Record<VehicleCategory, Record<Zone, number>> = {
+  1: { 1: 0.0420, 2: 0.0359, 3: 0.0278 },
+  2: { 1: 0.0294, 2: 0.0272, 3: 0.0229 },
+  3: { 1: 0.0240, 2: 0.0229, 3: 0.0197 },
+  4: { 1: 0.0198, 2: 0.0188, 3: 0.0185 },
+  5: { 1: 0.0147, 2: 0.0147, 3: 0.0147 },
+};
+
+export const CAR_TLO_MIN: Record<VehicleCategory, Record<Zone, number>> = {
+  1: { 1: 0.0053, 2: 0.0042, 3: 0.0045 },
+  2: { 1: 0.0066, 2: 0.0061, 3: 0.0060 },
+  3: { 1: 0.0094, 2: 0.0091, 3: 0.0086 },
+  4: { 1: 0.0115, 2: 0.0109, 3: 0.0105 },
+  5: { 1: 0.0126, 2: 0.0120, 3: 0.0114 },
+};
+
+export const CAR_TLO_MAX: Record<VehicleCategory, Record<Zone, number>> = {
+  1: { 1: 0.0059, 2: 0.0046, 3: 0.0050 },
+  2: { 1: 0.0072, 2: 0.0067, 3: 0.0066 },
+  3: { 1: 0.0104, 2: 0.0100, 3: 0.0095 },
+  4: { 1: 0.0127, 2: 0.0120, 3: 0.0116 },
+  5: { 1: 0.0139, 2: 0.0132, 3: 0.0126 },
+};
+
+export type OjkBand = 'MIN' | 'MID' | 'MAX';
+
+export function getBaseRateByBand(
+  vehicleType: VehicleType,
+  coverage: CoverageType,
+  zone: Zone,
+  category: VehicleCategory,
+  band: OjkBand,
+): number {
+  if (vehicleType === 'MOTORCYCLE') {
+    const mid = coverage === 'COMPREHENSIVE' ? MOTO_COMP_RATE : MOTO_TLO_RATE;
+    if (band === 'MIN') return Math.round(mid * 0.95 * 10000) / 10000;
+    if (band === 'MAX') return Math.round(mid * 1.05 * 10000) / 10000;
+    return mid;
+  }
+  if (band === 'MID') {
+    const table = coverage === 'COMPREHENSIVE' ? CAR_COMP_RATES : CAR_TLO_RATES;
+    return table[category][zone];
+  }
+  const minT = coverage === 'COMPREHENSIVE' ? CAR_COMP_MIN : CAR_TLO_MIN;
+  const maxT = coverage === 'COMPREHENSIVE' ? CAR_COMP_MAX : CAR_TLO_MAX;
+  return band === 'MIN' ? minT[category][zone] : maxT[category][zone];
+}
+
+// Non-CAR product rate ranges (SEOJK 6/2017)
+export const NON_VEHICLE_RATES = {
+  TRAVEL: {
+    domestic:      { min: 0.0014, mid: 0.0017, max: 0.0020 },
+    international: { min: 0.0025, mid: 0.0035, max: 0.0045 },
+    label: '% dari nilai perjalanan',
+  },
+  PA: {
+    label: 'Rp per orang per tahun',
+    bands: { min: 30_000, mid: 75_000, max: 120_000 },
+  },
+  MPAR: {
+    label: '% dari nilai perangkat per tahun',
+    bands: { min: 0.025, mid: 0.035, max: 0.045 },
+  },
+} as const;
+
 // ─── Full Premium Breakdown ───────────────────────────────────────────────────
 
 export interface PremiumBreakdown {

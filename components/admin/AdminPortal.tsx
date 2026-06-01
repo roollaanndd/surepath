@@ -27,33 +27,51 @@ import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
 import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
-import { getAdminStats, type AdminStats, uploadLogoImage } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, supabase } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
 
 // ─── Menu definition ─────────────────────────────────────────────────────────
-const MENU_ITEMS = [
+const ALL_ROLES = Object.values(UserRole);
+
+type MenuItem =
+  | { id: string; isSeparator: true; groupLabel: string; roles: UserRole[] }
+  | { id: string; isSeparator?: false; label: string; icon: React.ElementType; roles: UserRole[] };
+
+const MENU_ITEMS: MenuItem[] = [
+  // OVERVIEW
+  { id: '_sep1', isSeparator: true, groupLabel: 'Overview',           roles: ALL_ROLES },
   { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'reports',          label: 'Laporan',             icon: BarChart3,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
   { id: 'analytics',        label: 'Analytics',           icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
-  { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  // NASABAH & TRANSAKSI
+  { id: '_sep2', isSeparator: true, groupLabel: 'Nasabah & Transaksi', roles: ALL_ROLES },
   { id: 'users',            label: 'Pengguna',            icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'user_mgmt',        label: 'Kelola Akun',         icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-  { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'withdrawals',      label: 'Penarikan Agen',      icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
+  // POLIS & KLAIM
+  { id: '_sep3', isSeparator: true, groupLabel: 'Polis & Klaim',      roles: ALL_ROLES },
+  { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  // AGEN & KOMISI
+  { id: '_sep4', isSeparator: true, groupLabel: 'Agen & Komisi',      roles: ALL_ROLES },
+  { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
+  // PRODUK & ASURANSI
+  { id: '_sep5', isSeparator: true, groupLabel: 'Produk & Asuransi',  roles: ALL_ROLES },
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
-  { id: 'tier_promo',      label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
+  { id: 'tier_promo',       label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+  // PLATFORM
+  { id: '_sep6', isSeparator: true, groupLabel: 'Platform',           roles: ALL_ROLES },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'ai_admin',         label: 'AI Admin Agent',      icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
@@ -87,11 +105,34 @@ const AdminPortal = ({
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [transaksiStats, setTransaksiStats] = useState<{
+    totalCustomers: number;
+    totalOrders: number;
+    totalPembayaranMasuk: number;
+    totalKomisiAgen: number;
+  } | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
     getAdminStats().then(setAdminStats).catch(() => {});
+
+    // Fetch Transaksi Overview stats
+    Promise.all([
+      supabase.from('sp_users').select('id', { count: 'exact', head: true }).in('role', ['CUSTOMER', 'B2B_CLIENT']),
+      supabase.from('sp_policy_orders').select('id', { count: 'exact', head: true }),
+      supabase.from('sp_payments').select('paid_amount').eq('status', 'PAID'),
+      supabase.from('sp_commissions').select('commission_amount'),
+    ]).then(([usersRes, ordersRes, paymentsRes, commissionsRes]) => {
+      const totalPembayaranMasuk = ((paymentsRes.data ?? []) as any[]).reduce((s, p) => s + (p.paid_amount ?? 0), 0);
+      const totalKomisiAgen = ((commissionsRes.data ?? []) as any[]).reduce((s, c) => s + (c.commission_amount ?? 0), 0);
+      setTransaksiStats({
+        totalCustomers: usersRes.count ?? 0,
+        totalOrders: ordersRes.count ?? 0,
+        totalPembayaranMasuk,
+        totalKomisiAgen,
+      });
+    }).catch(() => {});
 
     // Auto daily backup — runs silently on admin portal open if >23h since last
     if (shouldAutoBackup()) {
@@ -172,22 +213,33 @@ const AdminPortal = ({
 
       {/* Nav — scrollable */}
       <nav className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pr-1">
-        {filteredMenu.map(item => (
-          <button
-            key={item.id}
-            onClick={() => { setActiveTab(item.id); setMobileOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
-              activeTab === item.id
-                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                : th(darkMode,
-                    'text-gray-500 hover:text-white hover:bg-white/5',
-                    'text-slate-500 hover:text-slate-900 hover:bg-slate-100')
-            }`}
-          >
-            <item.icon size={17} className="flex-shrink-0" />
-            <span className="text-[0.68rem] font-bold tracking-wide">{item.label}</span>
-          </button>
-        ))}
+        {filteredMenu.map(item => {
+          if (item.isSeparator) {
+            return (
+              <div key={item.id} className="mt-4 mb-1 px-2">
+                <p className="text-[0.45rem] font-black uppercase tracking-[0.35em] text-gray-600">{(item as any).groupLabel}</p>
+              </div>
+            );
+          }
+          const navItem = item as { id: string; label: string; icon: React.ElementType; roles: UserRole[] };
+          const Icon = navItem.icon;
+          return (
+            <button
+              key={navItem.id}
+              onClick={() => { setActiveTab(navItem.id); setMobileOpen(false); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
+                activeTab === navItem.id
+                  ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                  : th(darkMode,
+                      'text-gray-500 hover:text-white hover:bg-white/5',
+                      'text-slate-500 hover:text-slate-900 hover:bg-slate-100')
+              }`}
+            >
+              <Icon size={17} className="flex-shrink-0" />
+              <span className="text-[0.68rem] font-bold tracking-wide">{navItem.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
       {/* User footer — always visible */}
@@ -242,6 +294,27 @@ const AdminPortal = ({
             <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Transaksi Overview */}
+      <div>
+        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>Transaksi Overview</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
+            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
+            { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+          ].map(card => (
+            <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
+                <card.icon size={20} />
+              </div>
+              <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-slate-900')}`}>{card.value}</p>
+              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -14,6 +14,7 @@ const getClient = () => new OpenAI({
   baseURL: AI_PROXY_URL,
   apiKey:  SUPABASE_ANON,
   defaultHeaders: { apikey: SUPABASE_ANON },
+  dangerouslyAllowBrowser: true,
 });
 
 // Strip markdown code-fences that some models add around JSON
@@ -102,6 +103,25 @@ export interface SurveyAnalysisResult {
   error?: string;
   isDirty?: boolean;
   cleanlinessComment?: string;
+}
+
+// ─── Image compression ────────────────────────────────────────────────────────
+
+async function compressImageBase64(base64: string, maxWidthPx = 1024): Promise<string> {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidthPx / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => resolve(base64); // fallback if load fails
+    img.src = base64.startsWith('data:') ? base64 : `data:image/jpeg;base64,${base64}`;
+  });
 }
 
 // ─── Functions ────────────────────────────────────────────────────────────────
@@ -229,6 +249,7 @@ export const summarizeClaimDocument = async (base64Doc: string): Promise<{ succe
 
 export const extractStnkData = async (base64: string, mimeType: string = 'image/jpeg'): Promise<{ success: boolean; data?: any }> => {
   try {
+    const compressed = await compressImageBase64(base64, 1200);
     const res = await getClient().chat.completions.create({
       model: VISION_MODEL,
       messages: [{
@@ -248,7 +269,7 @@ Ekstrak data seakurat mungkin:
 9. status: 'OK' jika dokumen terlihat asli, 'UNCLEAR' jika blur/terpotong
 
 Return JSON only: { "owner": string, "plate": string, "brand": string, "model": string, "color": string, "year": string, "vin": string, "engine": string, "status": string }` },
-          imageContent(base64, mimeType),
+          imageContent(compressed, mimeType),
         ],
       }],
     });
@@ -263,6 +284,7 @@ Return JSON only: { "owner": string, "plate": string, "brand": string, "model": 
 
 export const validateVehiclePhoto = async (base64: string, slotLabel: string): Promise<{ valid: boolean; issue?: string }> => {
   try {
+    const compressed = await compressImageBase64(base64, 800);
     const res = await getClient().chat.completions.create({
       model: VISION_MODEL,
       messages: [{
@@ -278,7 +300,7 @@ Check:
 
 Return JSON only: { "valid": boolean, "issue": "Brief reason in Indonesian (max 5 words) if invalid, or null" }
 Examples of issue: "Foto buram", "Bukan mobil", "Terlalu gelap"` },
-          imageContent(base64),
+          imageContent(compressed),
         ],
       }],
     });
@@ -331,7 +353,11 @@ Return JSON only:
   "rejectionReason": "alasan spesifik jika REJECTED atau null"
 }`;
 
-    const imagesParts = images.map(img => imageContent(img.data));
+    const compressedImages = await Promise.all(images.map(async img => ({
+      ...img,
+      data: await compressImageBase64(img.data, 600),
+    })));
+    const imagesParts = compressedImages.map(img => imageContent(img.data));
 
     const res = await getClient().chat.completions.create({
       model: SURVEY_MODEL,

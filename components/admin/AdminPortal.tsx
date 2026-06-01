@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component } from 'react';
 import {
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
@@ -85,6 +85,34 @@ const formatRole = (role: string) =>
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
 const th = (dark: boolean, darkCls: string, lightCls: string) => dark ? darkCls : lightCls;
+
+// ─── Settings error boundary ─────────────────────────────────────────────────
+class SettingsErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(e: Error) { console.error('[SettingsView error]', e); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 32, textAlign: 'center', color: '#fff' }}>
+          <p style={{ marginBottom: 16, fontSize: '0.9rem', fontWeight: 700 }}>
+            Terjadi kesalahan saat memuat pengaturan. Coba refresh halaman.
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            style={{ padding: '10px 24px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase' }}
+          >
+            Coba Lagi
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const AdminPortal = ({
@@ -406,7 +434,7 @@ const AdminPortal = ({
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;
       case 'security':         return <SecurityView />;
-      case 'settings':         return <SettingsView products={products} setProducts={setProducts} />;
+      case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} /></SettingsErrorBoundary>;
       default:                 return null;
     }
   };
@@ -418,6 +446,15 @@ const AdminPortal = ({
 
   return (
     <div className={`flex h-screen overflow-hidden font-sans ${rootBg}`}>
+      {/* ── Animated background ───────────────────────────────────────────── */}
+      <style>{`
+        @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,-40px) scale(1.15)} }
+        @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-50px,30px) scale(0.9)} 66%{transform:translate(40px,50px) scale(1.1)} }
+        @keyframes orb3 { 0%,100%{transform:translate(0,0) scale(1.05)} 50%{transform:translate(-30px,-60px) scale(0.95)} }
+      `}</style>
+      <div style={{ position:'fixed', top:'10%', left:'5%', width:600, height:600, borderRadius:'50%', background:'rgba(16,185,129,0.07)', filter:'blur(120px)', animation:'orb1 18s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(59,130,246,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position:'fixed', bottom:'10%', left:'40%', width:700, height:700, borderRadius:'50%', background:'rgba(245,158,11,0.05)', filter:'blur(120px)', animation:'orb3 20s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
@@ -437,7 +474,7 @@ const AdminPortal = ({
       )}
 
       {/* ── Main ───────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header */}
         <header className={`h-16 border-b flex items-center justify-between px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`}>
           <div className="flex items-center gap-4">

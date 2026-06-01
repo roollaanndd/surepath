@@ -695,7 +695,7 @@ const BackupView: React.FC = () => {
   const [running, setRunning] = useState(false);
   const lastTs = getLastBackupTime();
   const now = Date.now();
-  const ageH = lastTs ? (now - lastTs) / 3_600_000 : Infinity;
+  const ageH = lastTs ? (now - lastTs.getTime()) / 3_600_000 : Infinity;
   const pillColor = ageH < 24 ? 'bg-emerald-500/15 text-emerald-400' : ageH < 48 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400';
   const pillLabel = lastTs ? (ageH < 24 ? 'Up to date' : ageH < 48 ? 'Stale' : 'Outdated') : 'Never';
 
@@ -758,12 +758,12 @@ const BackupView: React.FC = () => {
                 <tr key={b.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors text-xs">
                   <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.createdAt).toLocaleString('id-ID')}</td>
                   <td className="py-3 pr-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-primary-500/10 text-primary-400'}`}>
-                      {b.type}
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-primary-500/10 text-primary-400'}`}>
+                      {b.backup_type}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{b.tablesCount}</td>
-                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{(b.sizeBytes / 1024).toFixed(1)}</td>
+                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{b.tables_list?.length ?? 0}</td>
+                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{(b.backup_size_bytes / 1024).toFixed(1)}</td>
                   <td className="py-3 pr-4 text-gray-500 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
                   <td className="py-3 text-right">
                     <button

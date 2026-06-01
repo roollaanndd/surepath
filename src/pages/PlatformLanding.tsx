@@ -4,7 +4,7 @@ import {
   Smartphone, Shield, BarChart2, Users, Zap,
   Star, Download, Gift, MessageSquare, ShieldCheck,
   Sparkles, CheckCircle, Search, Award, Play,
-  Car, Plane, Heart, Leaf, HeartHandshake,
+  Leaf, HeartHandshake,
 } from 'lucide-react';
 
 import { Language } from '../../types';
@@ -373,13 +373,90 @@ const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => void }> = 
   );
 };
 
+// ─── SurePath Custom Product Icons ───────────────────────────────────────────
+
+const IconVehicle: React.FC<{ color?: string; size?: number }> = ({ color = '#22c55e', size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Car body */}
+    <path d="M5 24 L8 16 Q9 13 12 13 L28 13 Q31 13 32 16 L35 24 L35 29 Q35 31 33 31 L7 31 Q5 31 5 29 Z" stroke={color} strokeWidth="1.6" fill={`${color}15`} strokeLinejoin="round"/>
+    {/* Windshield */}
+    <path d="M11 13 L13 8 Q14 6 16 6 L24 6 Q26 6 27 8 L29 13" stroke={color} strokeWidth="1.4" fill={`${color}10`}/>
+    {/* Wheels */}
+    <circle cx="12" cy="31" r="3.5" stroke={color} strokeWidth="1.6" fill={`${color}20`}/>
+    <circle cx="28" cy="31" r="3.5" stroke={color} strokeWidth="1.6" fill={`${color}20`}/>
+    {/* Shield badge on rear */}
+    <path d="M30 17 L30 13 Q30 12 31 12 L36 12 Q37 12 37 13 L37 17 Q37 20 33.5 22 Q30 20 30 17 Z" fill={`${color}30`} stroke={color} strokeWidth="1.3"/>
+    {/* Star/spark on shield */}
+    <path d="M33.5 14.5 L34 16 L35.5 16 L34.3 17 L34.8 18.5 L33.5 17.5 L32.2 18.5 L32.7 17 L31.5 16 L33 16 Z" fill={color}/>
+  </svg>
+);
+
+const IconTravel: React.FC<{ color?: string; size?: number }> = ({ color = '#3b82f6', size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Globe circle */}
+    <circle cx="20" cy="21" r="13" stroke={color} strokeWidth="1.6" fill={`${color}10`}/>
+    {/* Longitude arcs */}
+    <path d="M14 21 Q20 13 26 21 Q20 29 14 21" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+    <path d="M7 21 L33 21" stroke={color} strokeWidth="1.2" opacity="0.4"/>
+    {/* Flight arc (dashed) */}
+    <path d="M9 29 Q18 6 35 9" stroke={color} strokeWidth="1.4" strokeDasharray="2.5 2" fill="none"/>
+    {/* Tiny plane at arc end */}
+    <path d="M33 7 L37 9 L33 11 L34 9 Z" fill={color}/>
+    <path d="M33 8 L31 7 L32 9 Z" fill={color} opacity="0.6"/>
+    <path d="M33 10 L31 11 L32 9 Z" fill={color} opacity="0.6"/>
+  </svg>
+);
+
+const IconPersonalAccident: React.FC<{ color?: string; size?: number }> = ({ color = '#a855f7', size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Glow behind shield */}
+    <ellipse cx="20" cy="22" rx="12" ry="13" fill={`${color}12`}/>
+    {/* Shield outline */}
+    <path d="M20 4 L33 9 L33 22 Q33 32 20 37 Q7 32 7 22 L7 9 Z" stroke={color} strokeWidth="1.6" fill={`${color}18`} strokeLinejoin="round"/>
+    {/* Human figure — head */}
+    <circle cx="20" cy="15" r="3.2" stroke={color} strokeWidth="1.4" fill={`${color}20`}/>
+    {/* Human figure — body */}
+    <path d="M14 29 Q14 22 20 21 Q26 22 26 29" stroke={color} strokeWidth="1.4" fill={`${color}15`} strokeLinejoin="round"/>
+    {/* Arms */}
+    <path d="M14 23 L11 26 M26 23 L29 26" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconProperty: React.FC<{ color?: string; size?: number }> = ({ color = '#f59e0b', size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Phone body with rounded corners */}
+    <rect x="10" y="4" width="20" height="34" rx="4" stroke={color} strokeWidth="1.6" fill={`${color}12`}/>
+    {/* Screen area */}
+    <rect x="12.5" y="8" width="15" height="22" rx="2" stroke={color} strokeWidth="1" fill={`${color}08`} opacity="0.8"/>
+    {/* Home notch */}
+    <rect x="17" y="33" width="6" height="2" rx="1" fill={`${color}50`}/>
+    {/* Padlock body on screen */}
+    <rect x="16" y="19" width="8" height="7" rx="1.5" stroke={color} strokeWidth="1.3" fill={`${color}22`}/>
+    {/* Padlock shackle */}
+    <path d="M17.5 19 L17.5 16.5 Q17.5 13.5 20 13.5 Q22.5 13.5 22.5 16.5 L22.5 19" stroke={color} strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+    {/* Keyhole dot */}
+    <circle cx="20" cy="22" r="1" fill={color}/>
+    {/* Lightning bolt top-right */}
+    <path d="M27 4 L25 8 L27.5 8 L24.5 13 L27 13 L24 18" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
+  </svg>
+);
+
+const IconHealth: React.FC<{ color?: string; size?: number }> = ({ color = '#ef4444', size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Heart shape */}
+    <path d="M20 34 Q6 25 6 15 Q6 8 13 7 Q17 7 20 11 Q23 7 27 7 Q34 8 34 15 Q34 25 20 34 Z" stroke={color} strokeWidth="1.6" fill={`${color}20`} strokeLinejoin="round"/>
+    {/* EKG / heartbeat line crossing heart horizontally */}
+    <path d="M6 20 L12 20 L14 15 L16 25 L18 18 L20 23 L22 20 L28 20 L34 20" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
+);
+
 // ─── Product Card ─────────────────────────────────────────────────────────────
 const PRODUCTS = [
-  { Icon: Car,        slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
-  { Icon: Plane,      slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
-  { Icon: Shield,     slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
-  { Icon: Smartphone, slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
-  { Icon: Heart,      slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+  { Icon: IconVehicle,          slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
+  { Icon: IconTravel,           slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
+  { Icon: IconPersonalAccident, slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
+  { Icon: IconProperty,         slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
+  { Icon: IconHealth,           slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -698,7 +775,24 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           {/* Wide card */}
           <Reveal className="md:col-span-2" delay={0}>
             <div className="group relative overflow-hidden rounded-3xl p-8 h-full min-h-[220px] cursor-default transition-all duration-500 hover:scale-[1.01]"
-              style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.07), rgba(16,185,129,0.03))', border: `1px solid rgba(34,197,94,0.12)` }}>
+              style={{
+                background: 'linear-gradient(135deg, rgba(34,197,94,0.07), rgba(16,185,129,0.03))',
+                border: `1px solid rgba(34,197,94,0.12)`,
+                backgroundImage: 'linear-gradient(135deg, rgba(34,197,94,0.07), rgba(16,185,129,0.03)), repeating-linear-gradient(45deg, rgba(34,197,94,0.015) 0px, rgba(34,197,94,0.015) 1px, transparent 1px, transparent 12px)',
+              }}>
+              {/* Dot grid pattern top-right */}
+              <div className="absolute top-0 right-0 pointer-events-none" style={{ width: 120, height: 120 }}>
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {Array.from({ length: 5 }).flatMap((_, row) =>
+                    Array.from({ length: 5 }).map((_, col) => (
+                      <circle key={`${row}-${col}`} cx={12 + col * 24} cy={12 + row * 24} r="2" fill="rgba(34,197,94,0.22)" />
+                    ))
+                  )}
+                </svg>
+              </div>
+              {/* Large "01" watermark */}
+              <div className="absolute bottom-0 right-4 pointer-events-none select-none leading-none font-black"
+                style={{ fontSize: 120, opacity: 0.04, color: '#22c55e', lineHeight: 1 }}>01</div>
               <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                 style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.08), transparent)', transform: 'translate(40%,-40%)' }} />
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
@@ -713,44 +807,65 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
+            <div className="group relative overflow-hidden rounded-3xl h-full min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
               style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                <Users size={20} style={{ color: '#3b82f6' }} />
+              {/* Accent top-bar */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#3b82f6' }} />
+              {/* Card number pill */}
+              <div className="absolute top-4 right-4 text-[0.5rem] font-black tracking-widest px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.25)' }}>01/03</div>
+              <div className="p-7 pt-8">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                  <Users size={20} style={{ color: '#3b82f6' }} />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2">{t('Agen Berlisensi', 'Licensed Agents')}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                  {t('Seluruh agen kami telah lulus sertifikasi asuransi resmi dan terus diperbarui pengetahuannya.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
+                </p>
               </div>
-              <h3 className="text-lg font-black text-white mb-2">{t('Agen Berlisensi', 'Licensed Agents')}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                {t('Seluruh agen kami telah lulus sertifikasi asuransi resmi dan terus diperbarui pengetahuannya.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
-              </p>
             </div>
           </Reveal>
 
           <Reveal delay={120}>
-            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
+            <div className="group relative overflow-hidden rounded-3xl h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
               style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
-                <Search size={20} style={{ color: '#a855f7' }} />
+              {/* Accent top-bar */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#a855f7' }} />
+              {/* Card number pill */}
+              <div className="absolute top-4 right-4 text-[0.5rem] font-black tracking-widest px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.25)' }}>02/03</div>
+              <div className="p-7 pt-8">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                  <Search size={20} style={{ color: '#a855f7' }} />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2">{t('Transparansi 100%', '100% Transparent')}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                  {t('Tidak ada biaya tersembunyi. Semua ketentuan polis dijelaskan dengan bahasa yang jelas.', 'No hidden fees. All policy terms explained in clear language.')}
+                </p>
               </div>
-              <h3 className="text-lg font-black text-white mb-2">{t('Transparansi 100%', '100% Transparent')}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                {t('Tidak ada biaya tersembunyi. Semua ketentuan polis dijelaskan dengan bahasa yang jelas.', 'No hidden fees. All policy terms explained in clear language.')}
-              </p>
             </div>
           </Reveal>
 
           <Reveal delay={160}>
-            <div className="group relative overflow-hidden rounded-3xl p-7 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
+            <div className="group relative overflow-hidden rounded-3xl h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
               style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
-                style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                <BarChart2 size={20} style={{ color: '#f59e0b' }} />
+              {/* Accent top-bar */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#f59e0b' }} />
+              {/* Card number pill */}
+              <div className="absolute top-4 right-4 text-[0.5rem] font-black tracking-widest px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>03/03</div>
+              <div className="p-7 pt-8">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  <BarChart2 size={20} style={{ color: '#f59e0b' }} />
+                </div>
+                <h3 className="text-lg font-black text-white mb-2">{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                  {t('40+ produk dari 18 insurer terpercaya, satu platform untuk semua kebutuhan perlindunganmu.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
+                </p>
               </div>
-              <h3 className="text-lg font-black text-white mb-2">{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
-                {t('40+ produk dari 18 insurer terpercaya, satu platform untuk semua kebutuhan perlindunganmu.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
-              </p>
             </div>
           </Reveal>
 
@@ -758,6 +873,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <Reveal className="md:col-span-2" delay={200}>
             <div className="group relative overflow-hidden rounded-3xl p-8 h-full min-h-[180px] transition-all duration-500 hover:scale-[1.01]"
               style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.03))', border: '1px solid rgba(16,185,129,0.1)' }}>
+              {/* Right-side decorative rings */}
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                  <circle cx="60" cy="60" r="25" stroke="rgba(34,197,94,0.07)" strokeWidth="1.5"/>
+                  <circle cx="60" cy="60" r="40" stroke="rgba(34,197,94,0.05)" strokeWidth="1.5"/>
+                  <circle cx="60" cy="60" r="55" stroke="rgba(34,197,94,0.03)" strokeWidth="1.5"/>
+                </svg>
+              </div>
               <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                 style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.08), transparent)', transform: 'translate(-40%,40%)' }} />
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
@@ -778,14 +901,22 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients') },
-              { target: 98, suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate') },
-              { target: 18, suffix: '+', label: t('Mitra Insurer', 'Insurer Partners') },
-              { target: 40, suffix: '+', label: t('Produk Tersedia', 'Products Available') },
+              { target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients'), chip: '📊' },
+              { target: 98, suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate'), chip: '⭐' },
+              { target: 18, suffix: '+', label: t('Mitra Insurer', 'Insurer Partners'), chip: '🤝' },
+              { target: 40, suffix: '+', label: t('Produk Tersedia', 'Products Available'), chip: '📦' },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 80}>
-                <div className="text-center p-6 rounded-2xl"
-                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="text-center p-6 rounded-2xl min-h-[140px] flex flex-col items-center justify-center"
+                  style={{
+                    background: 'rgba(255,255,255,0.025)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderBottom: '2px solid rgba(1,235,2,0.15)',
+                    backgroundImage: 'radial-gradient(circle at 50% 100%, rgba(1,235,2,0.08), transparent 70%)',
+                  }}>
+                  {/* Category chip */}
+                  <span className="inline-block text-base mb-2 px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(1,235,2,0.06)', border: '1px solid rgba(1,235,2,0.1)' }}>{stat.chip}</span>
                   <p className="font-black text-white mb-1"
                     style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1, color: 'hsl(119,99%,46%)' }}>
                     <AnimatedCounter target={stat.target} suffix={stat.suffix} />
@@ -829,22 +960,33 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
-                <button className="group relative overflow-hidden rounded-3xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1 w-full text-left min-h-[200px]"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+                <button className="group relative overflow-hidden rounded-3xl cursor-pointer transition-all duration-500 hover:scale-[1.04] hover:-translate-y-1 w-full text-left min-h-[200px]"
+                  style={{
+                    background: cardBg,
+                    border: `1px solid ${cardBorder}`,
+                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                  }}
                   onClick={() => navigate(`/product/${p.slug}`)}
                   aria-label={`Learn more about ${p.name}`}>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:rotate-3 relative"
-                    style={{ background: `linear-gradient(135deg, ${p.color}22, ${p.color}11)`, border: `1px solid ${p.color}33` }}>
-                    <p.Icon size={28} style={{ color: p.color }} />
-                  </div>
-                  <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
-                  <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
-                  <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{p.desc}</p>
-                  <div className="flex items-center gap-1.5 mt-4 text-xs font-bold transition-all"
-                    style={{ color: p.color }}>
-                    {t('Pelajari', 'Learn more')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  {/* Top accent line */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: p.color }} />
+                  {/* Watermark index number */}
+                  <div className="absolute bottom-2 right-3 pointer-events-none select-none font-black leading-none"
+                    style={{ fontSize: 80, opacity: 0.04, color: p.color, lineHeight: 1 }}>#{i + 1}</div>
+                  <div className="p-6 pt-7">
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:rotate-3 relative"
+                      style={{ background: `linear-gradient(135deg, ${p.color}22, ${p.color}11)`, border: `1px solid ${p.color}33` }}>
+                      <p.Icon color={p.color} size={28} />
+                    </div>
+                    <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
+                    <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{p.desc}</p>
+                    <div className="flex items-center gap-1.5 mt-4 text-xs font-bold transition-all"
+                      style={{ color: p.color }}>
+                      {t('Pelajari', 'Learn more')} <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 </button>
               </Reveal>
@@ -942,6 +1084,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {[
               {
+                n: '01',
                 Icon: HeartHandshake,
                 title: t('Berpusat pada Manusia', 'Human-Centered'),
                 desc: t('Di tengah tren otomasi, kami percaya keputusan penting dalam hidup perlu pendampingan manusia yang nyata. Bukan robot, bukan skrip — agen yang benar-benar peduli.', 'Amid automation trends, we believe important life decisions need real human accompaniment. Not robots, not scripts — agents who truly care.'),
@@ -949,6 +1092,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 accent: '#22c55e',
               },
               {
+                n: '02',
                 Icon: BarChart2,
                 title: t('Transparan & Jujur', 'Transparent & Honest'),
                 desc: t('Kami percaya edukasi lebih bernilai dari promosi. Setiap produk yang kami rekomendasikan dijelaskan dengan jelas termasuk batasannya.', 'We believe education is more valuable than promotion. Every product we recommend is clearly explained including its limitations.'),
@@ -956,6 +1100,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 accent: '#3b82f6',
               },
               {
+                n: '03',
                 Icon: Leaf,
                 title: t('Mitra Jangka Panjang', 'Long-Term Partner'),
                 desc: t('Hubungan kami tidak berakhir saat polis diterbitkan. Kami tumbuh bersama nasabah dan memastikan perlindungan selalu relevan dengan perjalanan hidupmu.', 'Our relationship does not end when the policy is issued. We grow with clients and ensure protection always stays relevant to your life journey.'),
@@ -966,6 +1111,12 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               <Reveal key={p.title} delay={i * 100}>
                 <div className="group relative overflow-hidden rounded-3xl p-8 h-full transition-all duration-500 hover:scale-[1.02] cursor-default"
                   style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  {/* Large watermark number */}
+                  <div className="absolute top-0 right-3 pointer-events-none select-none font-black leading-none"
+                    style={{ fontSize: 100, opacity: 0.05, color: p.accent, lineHeight: 1 }}>{p.n}</div>
+                  {/* Diagonal band top-left corner triangle */}
+                  <div className="absolute top-0 left-0 pointer-events-none"
+                    style={{ width: 60, height: 60, background: p.accent, opacity: 0.10, clipPath: 'polygon(0 0, 60px 0, 0 60px)' }} />
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(circle at 50% 0%, ${p.accent}08, transparent 70%)` }} />
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 animate-float relative"
@@ -977,7 +1128,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   <ul className="space-y-2.5">
                     {p.items.map(item => (
                       <li key={item} className="flex items-center gap-2.5 text-sm">
-                        <CheckCircle size={14} style={{ color: p.accent, flexShrink: 0 }} />
+                        {/* Custom SVG checkmark */}
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                          <circle cx="8" cy="8" r="7" fill={`${p.accent}18`} stroke={p.accent} strokeWidth="1"/>
+                          <path d="M5 8 L7 10.5 L11 5.5" stroke={p.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
                         <span style={{ color: 'rgba(255,255,255,0.65)' }}>{item}</span>
                       </li>
                     ))}

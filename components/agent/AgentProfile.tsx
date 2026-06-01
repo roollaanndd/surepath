@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, Wallet,
-  FileText, Trophy, Loader2,
+  FileText, Trophy, Loader2, Network, RefreshCw, FileEdit,
+  AlertCircle,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -16,12 +17,13 @@ interface Props {
   agentId: string;
   lang: Language;
   onLogout: () => void;
+  onNavigate?: (tab: string) => void;
 }
 
 const inputCls =
   'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition';
 
-const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout }) => {
+const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [profile, setProfile] = useState<SpUser | null>(null);
@@ -114,6 +116,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout }) => {
               </span>
             </div>
           )}
+          {(profile as any)?.tier && (
+            <div className="flex items-center justify-center gap-1 mt-1">
+              <span className="text-sm">{(profile as any).tier === 'ELITE' ? '💎' : '⭐'}</span>
+              <span className={`text-xs font-black ${(profile as any).tier === 'ELITE' ? 'text-purple-500' : 'text-amber-500'}`}>
+                {(profile as any).tier === 'ELITE' ? 'Agen Elite' : 'Agen Bintang'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -147,6 +157,68 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout }) => {
               {t('Clients', 'Klien')}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Referral Link */}
+      <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Link Rekrutmen Agen</p>
+        <div className="flex items-center gap-2 bg-slate-50 dark:bg-black/20 rounded-xl p-3">
+          <p className="text-xs font-mono text-slate-600 dark:text-slate-300 flex-1 truncate">
+            https://myinsurepath.com?ref={profile?.agent_code}
+          </p>
+          <button
+            onClick={() => { navigator.clipboard.writeText(`https://myinsurepath.com?ref=${profile?.agent_code}`); }}
+            className="text-primary-500 hover:text-primary-600 transition"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        </div>
+        <p className="text-[9px] text-slate-400 mt-2">Bagikan link ini untuk merekrut agen baru di bawah kamu.</p>
+      </div>
+
+      {/* Document Status */}
+      <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10">
+          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Status Dokumen</span>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-white/5">
+          {[
+            { label: 'KTP', done: !!profile?.ktp },
+            { label: 'Foto Profil', done: false },
+            { label: 'Rekening Bank', done: false },
+            { label: 'Verifikasi Admin', done: !!profile?.verified },
+          ].map(doc => (
+            <div key={doc.label} className="flex items-center justify-between px-5 py-3">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{doc.label}</span>
+              {doc.done
+                ? <span className="flex items-center gap-1 text-xs font-black text-emerald-500"><CheckCircle className="w-4 h-4" /> Lengkap</span>
+                : <span className="flex items-center gap-1 text-xs font-black text-amber-500"><AlertCircle className="w-4 h-4" /> Belum</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Nav */}
+      {onNavigate && (
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { id: 'network', label: 'Jaringan Downline', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+            { id: 'renewals', label: 'Renewal Polis', icon: RefreshCw, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { id: 'endorsements', label: 'Endorsement', icon: FileEdit, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 active:scale-95 transition-all"
+            >
+              <div className={`w-9 h-9 ${item.bg} ${item.color} rounded-xl flex items-center justify-center`}>
+                <item.icon size={16} />
+              </div>
+              <span className="text-xs font-black text-slate-700 dark:text-slate-300 text-left leading-tight">{item.label}</span>
+            </button>
+          ))}
         </div>
       )}
 

@@ -348,7 +348,30 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
     <Modal title={`${initial ? 'Edit' : 'Tambah'} Produk — ${insurerName}`} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Type & Coverage */}
-        <div className="grid grid-cols-2 gap-4">
+        {form.product_type === 'CAR' ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <SectionLabel>Tipe Produk</SectionLabel>
+              <select
+                className={inputCls}
+                value={form.product_type}
+                onChange={e => set('product_type', e.target.value)}
+              >
+                {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <SectionLabel>Tipe Coverage</SectionLabel>
+              <select
+                className={inputCls}
+                value={form.vehicle_coverage}
+                onChange={e => set('vehicle_coverage', e.target.value)}
+              >
+                {COVERAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+        ) : (
           <div>
             <SectionLabel>Tipe Produk</SectionLabel>
             <select
@@ -359,31 +382,28 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
               {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div>
-            <SectionLabel>Tipe Coverage</SectionLabel>
-            <select
-              className={inputCls}
-              value={form.vehicle_coverage}
-              onChange={e => set('vehicle_coverage', e.target.value)}
-            >
-              {COVERAGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-        </div>
+        )}
 
-        {/* Max Vehicle Age */}
-        <div>
-          <SectionLabel>Maks. Usia Kendaraan (tahun, 0 = tidak terbatas)</SectionLabel>
-          <input
-            type="number"
-            min={0}
-            className={inputCls}
-            value={form.max_vehicle_age_years ?? 0}
-            onChange={e => set('max_vehicle_age_years', parseInt(e.target.value) || 0)}
-          />
-          {(form.max_vehicle_age_years ?? 0) === 0 && (
-            <p className="text-[10px] text-slate-500 mt-1">Tidak terbatas</p>
-          )}
+        {/* Max Vehicle Age — CAR only */}
+        {form.product_type === 'CAR' && (
+          <div>
+            <SectionLabel>Maks. Usia Kendaraan (tahun, 0 = tidak terbatas)</SectionLabel>
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={form.max_vehicle_age_years ?? 0}
+              onChange={e => set('max_vehicle_age_years', parseInt(e.target.value) || 0)}
+            />
+            {(form.max_vehicle_age_years ?? 0) === 0 && (
+              <p className="text-[10px] text-slate-500 mt-1">Tidak terbatas</p>
+            )}
+          </div>
+        )}
+
+        {/* Tarif & Komisi header */}
+        <div className="pt-2 border-t border-white/5">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-4">Tarif & Komisi</p>
         </div>
 
         {/* Commission Rate */}
@@ -416,15 +436,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
           accentClass="accent-yellow-500"
         />
 
-        {/* Authorized Garage Rate */}
-        <RateSlider
-          label="Tarif Bengkel Resmi"
-          value={form.authorized_garage_rate}
-          minPct={0}
-          maxPct={1}
-          onChange={v => set('authorized_garage_rate', v)}
-          accentClass="accent-blue-500"
-        />
+        {/* Authorized Garage Rate — CAR only */}
+        {form.product_type === 'CAR' && (
+          <RateSlider
+            label="Tarif Bengkel Resmi"
+            value={form.authorized_garage_rate}
+            minPct={0}
+            maxPct={1}
+            onChange={v => set('authorized_garage_rate', v)}
+            accentClass="accent-blue-500"
+          />
+        )}
 
         {/* IDR Costs */}
         <div className="grid grid-cols-2 gap-4">
@@ -450,17 +472,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
           </div>
         </div>
 
-        {/* Garage max age */}
-        <div>
-          <SectionLabel>Maks. Usia Kendaraan untuk Bengkel Resmi (tahun)</SectionLabel>
-          <input
-            type="number"
-            min={0}
-            className={inputCls}
-            value={form.authorized_garage_max_age_years}
-            onChange={e => set('authorized_garage_max_age_years', parseInt(e.target.value) || 0)}
-          />
-        </div>
+        {/* Garage max age — CAR only */}
+        {form.product_type === 'CAR' && (
+          <div>
+            <SectionLabel>Maks. Usia Kendaraan untuk Bengkel Resmi (tahun)</SectionLabel>
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={form.authorized_garage_max_age_years}
+              onChange={e => set('authorized_garage_max_age_years', parseInt(e.target.value) || 0)}
+            />
+          </div>
+        )}
 
         {/* Notes */}
         <div>

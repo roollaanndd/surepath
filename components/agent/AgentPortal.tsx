@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Users, FileText, Wallet, Trophy, Sun, Moon, ShieldCheck, Bell, ClipboardList, UserCircle, RefreshCw, Network, FileEdit } from 'lucide-react';
+import { Home, FileText, Wallet, Sun, Moon, ShieldCheck, Bell, UserCircle, Zap } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentCommissions,
@@ -21,6 +21,7 @@ import AgentProfile from './AgentProfile';
 import RenewalManager from './RenewalManager';
 import AgentNetwork from './AgentNetwork';
 import AgentEndorsements from './AgentEndorsements';
+import AgentOrderStatus from './AgentOrderStatus';
 
 interface Props {
   agent: any;
@@ -29,16 +30,11 @@ interface Props {
 }
 
 const TABS = [
-  { id: 'home',        labelEn: 'Home',    labelId: 'Beranda',  Icon: Home },
-  { id: 'clients',     labelEn: 'Clients', labelId: 'Klien',    Icon: Users },
-  { id: 'quotes',      labelEn: 'Quotes',  labelId: 'Kuotasi',  Icon: FileText },
-  { id: 'claims',      labelEn: 'Claims',  labelId: 'Klaim',    Icon: ClipboardList },
-  { id: 'commission',  labelEn: 'Wallet',  labelId: 'Komisi',   Icon: Wallet },
-  { id: 'leaderboard', labelEn: 'Rank',    labelId: 'Peringkat',Icon: Trophy },
-  { id: 'renewals',     labelEn: 'Renewals',  labelId: 'Renewal',  Icon: RefreshCw },
-  { id: 'network',      labelEn: 'Network',   labelId: 'Jaringan', Icon: Network },
-  { id: 'endorsements', labelEn: 'Endorse',   labelId: 'Endors',   Icon: FileEdit },
-  { id: 'profile',      labelEn: 'Profile',   labelId: 'Profil',   Icon: UserCircle },
+  { id: 'home',       labelId: 'Beranda',  Icon: Home },
+  { id: 'policy',     labelId: 'Polis',    Icon: FileText },
+  { id: 'quotes',     labelId: 'Jual',     Icon: Zap },
+  { id: 'commission', labelId: 'Dompet',   Icon: Wallet },
+  { id: 'profile',    labelId: 'Profil',   Icon: UserCircle },
 ];
 
 const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
@@ -104,6 +100,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             lang={lang}
           />
         );
+      case 'policy':
+        return <AgentOrderStatus agentId={agent?.id ?? ''} lang={lang} />;
       case 'clients':
         return <AgentCRM agentId={agent?.id ?? ''} lang={lang} />;
       case 'quotes':
@@ -229,25 +227,45 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation — 6 tabs */}
+      {/* Bottom Tab Navigation — 5 tabs */}
       <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-around px-1 py-2.5">
-          {TABS.map(({ id, labelEn, labelId, Icon }) => {
+          {TABS.map(({ id, labelId, Icon }, index) => {
             const active = activeTab === id;
+            const isCenter = index === 2;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
-                  active
-                    ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                className={`flex flex-col items-center gap-0.5 transition-all duration-200 ${
+                  isCenter
+                    ? '-mt-5'
+                    : `px-2 py-1.5 rounded-2xl ${
+                        active
+                          ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      }`
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none">
-                  {lang === Language.EN ? labelEn : labelId}
-                </span>
+                {isCenter ? (
+                  <div className={`w-14 h-14 rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl transition-all active:scale-90 ${
+                    active
+                      ? 'bg-primary-600 shadow-orange-600/50'
+                      : 'bg-primary-500 shadow-orange-500/40'
+                  }`}>
+                    <Icon size={22} strokeWidth={2.5} className="text-white" />
+                    <span className="text-[7px] font-black uppercase tracking-widest text-white/90 leading-none mt-0.5">
+                      {labelId}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">
+                      {labelId}
+                    </span>
+                  </>
+                )}
               </button>
             );
           })}

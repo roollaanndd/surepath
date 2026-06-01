@@ -1,7 +1,8 @@
 import React from 'react';
 import {
   TrendingUp, Users, Shield, Wallet, ChevronRight,
-  UserPlus, FileText, ShoppingCart, Lightbulb, Star, ClipboardList
+  FileText, Lightbulb, Star, ClipboardList,
+  Zap, Trophy, Network, RefreshCw, FileEdit
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -203,36 +204,64 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Renewal Alerts */}
       <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
-      {/* Quick Action Buttons — 4-col grid matching customer portal style */}
+      {/* Quick Action Buttons — 4-col grid, 2 rows */}
       <div className="grid grid-cols-4 gap-3">
         {[
           {
-            tab: 'clients',
-            label: t('Add Client', 'Tambah Klien'),
-            icon: UserPlus,
-            color: 'text-primary-500',
-            bg: 'bg-primary-500/10',
-          },
-          {
             tab: 'quotes',
-            label: t('New Quote', 'Buat Kuotasi'),
+            label: t('New Quote', 'Kuotasi'),
             icon: FileText,
             color: 'text-blue-500',
             bg: 'bg-blue-500/10',
           },
           {
-            tab: 'quotes',
-            label: t('Buy', 'Beli'),
-            icon: ShoppingCart,
+            tab: 'clients',
+            label: t('Clients', 'Klien'),
+            icon: Users,
+            color: 'text-primary-500',
+            bg: 'bg-primary-500/10',
+          },
+          {
+            tab: 'claims',
+            label: t('Claims', 'Klaim'),
+            icon: ClipboardList,
+            color: 'text-rose-500',
+            bg: 'bg-rose-500/10',
+          },
+          {
+            tab: 'policy',
+            label: t('Policy', 'Polis'),
+            icon: Shield,
             color: 'text-emerald-500',
             bg: 'bg-emerald-500/10',
           },
           {
-            tab: 'orders',
-            label: t('Orders', 'Pesanan'),
-            icon: ClipboardList,
+            tab: 'leaderboard',
+            label: t('Ranking', 'Ranking'),
+            icon: Trophy,
+            color: 'text-amber-500',
+            bg: 'bg-amber-500/10',
+          },
+          {
+            tab: 'network',
+            label: t('Network', 'Jaringan'),
+            icon: Network,
             color: 'text-violet-500',
             bg: 'bg-violet-500/10',
+          },
+          {
+            tab: 'renewals',
+            label: t('Renewal', 'Renewal'),
+            icon: RefreshCw,
+            color: 'text-cyan-500',
+            bg: 'bg-cyan-500/10',
+          },
+          {
+            tab: 'endorsements',
+            label: t('Endorse', 'Endors'),
+            icon: FileEdit,
+            color: 'text-indigo-500',
+            bg: 'bg-indigo-500/10',
           },
         ].map((action) => (
           <div

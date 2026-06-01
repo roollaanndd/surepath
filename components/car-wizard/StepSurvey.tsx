@@ -127,19 +127,24 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       plate: vehicle.plate
     };
 
-    const response = await analyzeVehicleSurvey(photoEntries, expectedData);
-    
+    let response: any;
+    try {
+      response = await analyzeVehicleSurvey(photoEntries, expectedData);
+    } catch {
+      response = { success: false };
+    }
+
     setLoading(false);
     setLoadingType(null);
-    
+
     if (response.success) {
       const finalScore = response.score || 0;
       const isRejected = response.auditVerdict === 'REJECTED';
       const needsManual = (finalScore < 80 || response.auditVerdict === 'REVIEW_REQUIRED') && !isRejected;
 
-      setSurvey((prev: any) => ({ 
-        ...prev, 
-        score: finalScore, 
+      setSurvey((prev: any) => ({
+        ...prev,
+        score: finalScore,
         summary: response.summary || '',
         underwritingReport: response.underwritingReport || '',
         detailedIssues: response.detailedIssues || [],
@@ -149,7 +154,13 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         manualVerif: needsManual
       }));
     } else {
-      alert(response.error || "Gagal melakukan pengecekan otomatis.");
+      setSurvey((prev: any) => ({
+        ...prev,
+        score: 0,
+        verdict: 'MANUAL_REQUIRED',
+        underwritingReport: 'Pengecekan otomatis tidak tersedia. Dokumen akan ditinjau manual oleh tim kami.',
+        manualVerif: true,
+      }));
     }
   };
 
@@ -183,7 +194,13 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
           <div className="p-6 bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 rounded-[2.5rem] space-y-6 shadow-xl relative overflow-hidden">
               <div className="flex items-center gap-4 mb-2">
                   <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner"><FileText size={20}/></div>
-                  <div><h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em]">Foto STNK</h4><p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Biar data mobil terisi otomatis</p></div>
+                  <div>
+                      <div className="flex items-center gap-2">
+                          <h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em]">Foto STNK</h4>
+                          <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[0.45rem] font-black uppercase tracking-widest rounded-full">WAJIB</span>
+                      </div>
+                      <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Biar data mobil terisi otomatis</p>
+                  </div>
               </div>
               {stnkError && (
                 <div className="px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-2">
@@ -223,6 +240,10 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
            <div className="px-3 py-1 bg-primary-500/10 rounded-full text-[0.5rem] font-black text-primary-500 uppercase">{capturedCount}/5 Selesai</div>
         </div>
         
+        <p className="text-[0.55rem] font-bold text-gray-400 px-2 -mt-1">
+          Foto dari 5 sudut: Depan Serong, Belakang Serong, Sisi Kanan, Sisi Kiri, dan Dashboard
+        </p>
+
         <div className="grid grid-cols-2 gap-4">
            {photoSlots.map((slot) => {
               const validation = photoValidation[slot.id];

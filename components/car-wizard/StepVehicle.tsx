@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2 } from 'lucide-react';
 import { CAR_DATABASE } from '../../constants';
 import { extractStnkData } from '../../services/geminiService';
-import { ScannerOverlay } from './WizardUI';
+import { ScannerOverlay, formatIDR } from './WizardUI';
 import { REGEX } from '../../services/authService';
 import { jsPDF } from 'jspdf';
 
@@ -31,6 +31,20 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
 
   const isVinValid = useMemo(() => REGEX.VIN.test(vehicle.vin), [vehicle.vin]);
   const isPlateValid = useMemo(() => REGEX.PLATE.test(vehicle.plate), [vehicle.plate]);
+
+  const availableModels = useMemo(
+    () => CAR_DATABASE.filter(c => c.brand === vehicle.brand),
+    [vehicle.brand]
+  );
+
+  const marketPriceEntry = useMemo(() => {
+    if (entryMode !== 'DATABASE' || !vehicle.brand || !vehicle.model) return null;
+    const entry = CAR_DATABASE.find(c => c.brand === vehicle.brand && c.modelName === vehicle.model);
+    if (!entry) return null;
+    const base = entry.yearPrices[vehicle.year];
+    if (!base) return null;
+    return { min: Math.round(base * 0.95 * 1_000_000), max: Math.round(base * 1.05 * 1_000_000) };
+  }, [entryMode, vehicle.brand, vehicle.model, vehicle.year]);
 
   const generateStnkPdf = async () => {
     if (!stnkBase64 || !extractedStnk) return;
@@ -283,10 +297,10 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-[0.2em]">Merk Mobil</label>
                     <div className="relative group">
                         {entryMode === 'DATABASE' ? (
-                            <select 
+                            <select
                                 className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm appearance-none transition-all text-primary-500 uppercase"
                                 value={vehicle.brand}
-                                onChange={(e) => setVehicle({...vehicle, brand: e.target.value})}
+                                onChange={(e) => setVehicle({...vehicle, brand: e.target.value, model: ''})}
                             >
                                 <option value="">Pilih Merk</option>
                                 {Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort().map(b => <option key={b} value={b}>{b}</option>)}
@@ -299,7 +313,29 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                 </div>
                 <div className="space-y-2">
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-[0.2em]">Tipe / Model</label>
-                    <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
+                    <div className="relative group">
+                        {entryMode === 'DATABASE' && vehicle.brand ? (
+                            <select
+                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm appearance-none transition-all text-primary-500 uppercase"
+                                value={vehicle.model}
+                                onChange={(e) => {
+                                    const selected = availableModels.find(c => c.modelName === e.target.value);
+                                    const yearPrice = selected?.yearPrices?.[vehicle.year];
+                                    setVehicle({
+                                        ...vehicle,
+                                        model: e.target.value,
+                                        ...(yearPrice ? { price: yearPrice * 1_000_000, manualPrice: false } : {})
+                                    });
+                                }}
+                            >
+                                <option value="">Pilih Model</option>
+                                {availableModels.map(c => <option key={c.modelName} value={c.modelName}>{c.modelName}</option>)}
+                            </select>
+                        ) : (
+                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
+                        )}
+                        {entryMode === 'DATABASE' && vehicle.brand && <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>}
+                    </div>
                 </div>
               </div>
 
@@ -319,6 +355,11 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                         <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">Rp</span>
                         <input className="w-full pl-12 pr-5 py-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 focus:border-primary-500 outline-none font-black text-lg text-primary-500 shadow-inner" value={formatInputCurrency(vehicle.price.toString())} onChange={e => setVehicle({...vehicle, price: parseInt(e.target.value.replace(/\D/g, "") || "0"), manualPrice: true})} />
                     </div>
+                    {marketPriceEntry && (
+                        <p className="text-[0.5rem] font-bold text-emerald-500 ml-2 mt-1">
+                            Estimasi pasar {vehicle.year}: {formatIDR(marketPriceEntry.min)} – {formatIDR(marketPriceEntry.max)}
+                        </p>
+                    )}
                  </div>
                  <div className="space-y-2 col-span-2 lg:col-span-1">
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Plat Nomor</label>

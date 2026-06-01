@@ -17,11 +17,13 @@ import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } fr
 import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
+  updateAgentTier,
   supabase,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
 } from '../../services/supabaseService';
+import { TIER_CONFIG } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import type { BackupRecord } from '../../services/backupService';
@@ -975,6 +977,18 @@ export const AgentManagementView = () => {
   const [editRate, setEditRate] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
 
+  const adminId: string = (() => {
+    try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.supabaseId ?? ''; }
+    catch { return ''; }
+  })();
+
+  const adminRole: string = (() => {
+    try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.role ?? ''; }
+    catch { return ''; }
+  })();
+
+  const canAssignTier = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER].includes(adminRole as UserRole);
+
   useEffect(() => {
     getAllAgents().then(data => { setAgents(data); setLoading(false); });
   }, []);
@@ -996,6 +1010,13 @@ export const AgentManagementView = () => {
     setSaving(null);
   };
 
+  const handleTierChange = async (agentId: string, tier: 'STAR' | 'ELITE' | null) => {
+    setSaving(agentId + '_tier');
+    await updateAgentTier(agentId, tier, adminId);
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier } : a));
+    setSaving(null);
+  };
+
   const pending = agents.filter(a => !(a as any).verified);
   const active  = agents.filter(a => (a as any).verified);
 
@@ -1005,10 +1026,26 @@ export const AgentManagementView = () => {
     </div>
   );
 
+  const TierBadge: React.FC<{ tier?: 'STAR' | 'ELITE' | null }> = ({ tier }) => {
+    if (!tier) return null;
+    const cfg = TIER_CONFIG[tier];
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-widest"
+        style={{ background: cfg.color + '22', color: cfg.color, border: `1px solid ${cfg.color}44` }}
+      >
+        {cfg.emoji} {cfg.label}
+      </span>
+    );
+  };
+
   const AgentRow: React.FC<{ a: SpUser }> = ({ a }) => {
     const verified = !!(a as any).verified;
     const rate     = (a as any).commission_rate ?? 0.1;
     const editing  = editRate[a.id] !== undefined;
+    const agentTier = a.tier ?? null;
+    const isSavingTier = saving === a.id + '_tier';
+
     return (
       <Card key={a.id} className="py-5">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -1018,11 +1055,45 @@ export const AgentManagementView = () => {
               {a.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="font-black text-sm truncate">{a.name}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-black text-sm truncate">{a.name}</p>
+                <TierBadge tier={agentTier} />
+              </div>
               <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest truncate">{a.email}</p>
               <p className="text-[0.6rem] font-bold text-primary-500 uppercase tracking-widest">{(a as any).agent_code ?? '-'}</p>
             </div>
           </div>
+
+          {/* Tier selector — business manager only */}
+          {canAssignTier && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {isSavingTier ? (
+                <span className="text-[0.6rem] text-gray-400">…</span>
+              ) : (
+                <>
+                  {(['STAR', 'ELITE'] as const).map(t => {
+                    const cfg = TIER_CONFIG[t];
+                    const active = agentTier === t;
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => handleTierChange(a.id, active ? null : t)}
+                        title={active ? `Hapus tier ${cfg.label}` : `Atur sebagai ${cfg.label}`}
+                        className="px-2.5 py-1.5 rounded-xl text-[0.58rem] font-black uppercase tracking-widest transition-all"
+                        style={{
+                          background: active ? cfg.color + '22' : 'rgba(255,255,255,0.04)',
+                          color: active ? cfg.color : 'rgba(255,255,255,0.3)',
+                          border: `1px solid ${active ? cfg.color + '55' : 'rgba(255,255,255,0.08)'}`,
+                        }}
+                      >
+                        {cfg.emoji} {t}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Commission rate editor */}
           <div className="flex items-center gap-2">
@@ -1076,14 +1147,19 @@ export const AgentManagementView = () => {
     );
   };
 
+  const starCount  = agents.filter(a => a.tier === 'STAR').length;
+  const eliteCount = agents.filter(a => a.tier === 'ELITE').length;
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Total Agents', value: agents.length, color: 'text-white' },
-          { label: 'Active', value: active.length, color: 'text-emerald-400' },
-          { label: 'Pending', value: pending.length, color: 'text-amber-400' },
+          { label: 'Total Agen',   value: agents.length, color: 'text-white' },
+          { label: 'Aktif',        value: active.length, color: 'text-emerald-400' },
+          { label: 'Pending',      value: pending.length, color: 'text-amber-400' },
+          { label: TIER_CONFIG.STAR.label,  value: starCount,  color: 'text-amber-400' },
+          { label: TIER_CONFIG.ELITE.label, value: eliteCount, color: 'text-violet-400' },
         ].map(({ label, value, color }) => (
           <Card key={label} className="py-5 text-center">
             <p className={`text-2xl font-black ${color}`}>{value}</p>
@@ -1106,10 +1182,10 @@ export const AgentManagementView = () => {
 
       <div>
         <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-4">
-          Active Agents ({active.length})
+          Agen Aktif ({active.length})
         </h3>
         {active.length === 0 ? (
-          <Card className="text-center py-10 text-gray-500 text-sm font-bold">No active agents yet.</Card>
+          <Card className="text-center py-10 text-gray-500 text-sm font-bold">Belum ada agen aktif.</Card>
         ) : (
           <div className="space-y-3">
             {active.map(a => <AgentRow key={a.id} a={a} />)}

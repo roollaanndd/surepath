@@ -22,6 +22,14 @@ export interface SpUser {
   address?: string;
   verified?: boolean;
   commission_rate?: number;
+  upline_id?: string;
+  tier?: 'STAR' | 'ELITE' | null;
+  tier_assigned_by?: string | null;
+  tier_assigned_at?: string | null;
+}
+
+export interface DownlineNode extends SpUser {
+  l2: SpUser[];
 }
 
 export interface SpClient {
@@ -1939,6 +1947,31 @@ export async function getAgentDownlines(agentId: string): Promise<SpUser[]> {
     .order('created_at', { ascending: false });
   if (error) { console.error('getAgentDownlines:', error); return []; }
   return (data ?? []) as SpUser[];
+}
+
+export async function getAgentDownlineTree(agentId: string): Promise<DownlineNode[]> {
+  const l1 = await getAgentDownlines(agentId);
+  if (l1.length === 0) return [];
+  const l2Results = await Promise.all(l1.map(a => getAgentDownlines(a.id)));
+  return l1.map((agent, i) => ({ ...agent, l2: l2Results[i] }));
+}
+
+export async function updateAgentTier(
+  agentId: string,
+  tier: 'STAR' | 'ELITE' | null,
+  assignedBy: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_users')
+    .update({
+      tier,
+      tier_assigned_by: tier ? assignedBy : null,
+      tier_assigned_at: tier ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', agentId);
+  if (error) { console.error('updateAgentTier:', error); return false; }
+  return true;
 }
 
 export async function getAgentReferralCode(agentId: string): Promise<string | null> {

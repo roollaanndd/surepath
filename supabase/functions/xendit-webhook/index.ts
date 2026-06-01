@@ -166,7 +166,7 @@ serve(async (req) => {
           }
         }
 
-        // Credit agent wallet with commission earned on this order
+        // Credit agent wallet + tier-based coin bonus + 2-layer downline overrides
         if (order.agent_id) {
           const { data: orderDetails } = await supabase
             .from('sp_policy_orders')
@@ -175,6 +175,21 @@ serve(async (req) => {
             .single();
 
           if (orderDetails?.commission_amount && orderDetails.commission_amount > 0) {
+            // Fetch selling agent's tier and upline chain (max 2 levels)
+            const { data: agentRow } = await supabase
+              .from('sp_users')
+              .select('upline_id, tier')
+              .eq('id', order.agent_id)
+              .single();
+
+            // Tier config (mirrors types.ts TIER_CONFIG — kept inline to avoid import)
+            const TIER_CFG: Record<string, { coinBonusRate: number; l1OverrideRate: number; l2OverrideRate: number }> = {
+              STAR:  { coinBonusRate: 0.10, l1OverrideRate: 0.03, l2OverrideRate: 0.01 },
+              ELITE: { coinBonusRate: 0.15, l1OverrideRate: 0.04, l2OverrideRate: 0.02 },
+            };
+            const STANDARD_CFG = { coinBonusRate: 0, l1OverrideRate: 0.02, l2OverrideRate: 0 };
+
+            // 1. Credit selling agent's commission
             await supabase.rpc('credit_agent_wallet', {
               p_agent_id:       order.agent_id,
               p_amount:         orderDetails.commission_amount,
@@ -183,22 +198,58 @@ serve(async (req) => {
               p_description:    `Komisi order ${orderDetails.order_number ?? ''} telah dikreditkan`,
             });
 
-            // Credit override commission to upline (3% of commission)
-            const { data: agentData } = await supabase
-              .from('sp_users')
-              .select('upline_id')
-              .eq('id', order.agent_id)
-              .single();
-
-            if (agentData?.upline_id) {
-              const overrideAmount = Math.round(orderDetails.commission_amount * 0.03);
-              if (overrideAmount > 0) {
-                await supabase.rpc('credit_override_commission', {
-                  p_upline_id:   agentData.upline_id,
-                  p_amount:      overrideAmount,
-                  p_reference_id: payment.order_id,
-                  p_description: `Override komisi dari agen downline - order ${orderDetails.order_number ?? ''}`,
+            // 2. Tier-based coin bonus for selling agent
+            const agentTierCfg = agentRow?.tier ? (TIER_CFG[agentRow.tier] ?? STANDARD_CFG) : STANDARD_CFG;
+            if (orderDetails.coin_reward && orderDetails.coin_reward > 0 && agentTierCfg.coinBonusRate > 0) {
+              const bonusCoins = Math.round(orderDetails.coin_reward * agentTierCfg.coinBonusRate);
+              if (bonusCoins > 0) {
+                await supabase.from('sp_coin_ledger').insert({
+                  agent_id:    order.agent_id,
+                  coins:       bonusCoins,
+                  type:        'EARNED',
+                  order_id:    payment.order_id,
+                  description: `Bonus koin tier ${agentRow?.tier} – order ${orderDetails.order_number ?? ''}`,
                 });
+              }
+            }
+
+            // 3. L1 upline override (based on L1 upline's own tier)
+            if (agentRow?.upline_id) {
+              const { data: l1Row } = await supabase
+                .from('sp_users')
+                .select('upline_id, tier')
+                .eq('id', agentRow.upline_id)
+                .single();
+
+              const l1TierCfg = l1Row?.tier ? (TIER_CFG[l1Row.tier] ?? STANDARD_CFG) : STANDARD_CFG;
+              const l1Override = Math.round(orderDetails.commission_amount * l1TierCfg.l1OverrideRate);
+              if (l1Override > 0) {
+                await supabase.rpc('credit_override_commission', {
+                  p_upline_id:    agentRow.upline_id,
+                  p_amount:       l1Override,
+                  p_reference_id: payment.order_id,
+                  p_description:  `Override L1 dari downline – order ${orderDetails.order_number ?? ''}`,
+                });
+              }
+
+              // 4. L2 upline override (grandparent — max 2 levels)
+              if (l1Row?.upline_id) {
+                const { data: l2Row } = await supabase
+                  .from('sp_users')
+                  .select('tier')
+                  .eq('id', l1Row.upline_id)
+                  .single();
+
+                const l2TierCfg = l2Row?.tier ? (TIER_CFG[l2Row.tier] ?? STANDARD_CFG) : STANDARD_CFG;
+                const l2Override = Math.round(orderDetails.commission_amount * l2TierCfg.l2OverrideRate);
+                if (l2Override > 0) {
+                  await supabase.rpc('credit_override_commission', {
+                    p_upline_id:    l1Row.upline_id,
+                    p_amount:       l2Override,
+                    p_reference_id: payment.order_id,
+                    p_description:  `Override L2 dari downline – order ${orderDetails.order_number ?? ''}`,
+                  });
+                }
               }
             }
           }

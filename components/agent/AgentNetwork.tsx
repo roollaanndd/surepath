@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Share2, Users, ChevronDown, ChevronUp, Coins } from 'lucide-react';
+import { Copy, Check, Share2, Users, ChevronDown, ChevronUp, ChevronRight, Coins } from 'lucide-react';
 import { Language } from '../../types';
+import { TIER_CONFIG } from '../../types';
 import {
-  getAgentDownlines,
-  getAgentReferralCode,
+  getAgentDownlineTree,
   getOverrideTransactions,
   getAgentOrders,
   type SpUser,
   type WalletTransaction,
   type SpPolicyOrder,
+  type DownlineNode,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
@@ -22,12 +23,7 @@ const now = new Date();
 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
 function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((w) => w[0] ?? '')
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  return name.split(' ').map(w => w[0] ?? '').slice(0, 2).join('').toUpperCase();
 }
 
 function fmtDate(iso?: string): string {
@@ -35,23 +31,41 @@ function fmtDate(iso?: string): string {
   return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function TierBadge({ tier }: { tier?: 'STAR' | 'ELITE' | null }) {
+  if (!tier) return null;
+  const cfg = TIER_CONFIG[tier];
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest"
+      style={{ background: cfg.color + '22', color: cfg.color, border: `1px solid ${cfg.color}44` }}
+    >
+      {cfg.emoji} {cfg.label}
+    </span>
+  );
+}
+
 const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
 
+  const agentTier = agent?.tier as 'STAR' | 'ELITE' | undefined;
+  const tierCfg = agentTier ? TIER_CONFIG[agentTier] : TIER_CONFIG.STANDARD;
+
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  const [downlines, setDownlines] = useState<SpUser[]>([]);
+  const [downlines, setDownlines] = useState<DownlineNode[]>([]);
   const [overrideTxns, setOverrideTxns] = useState<WalletTransaction[]>([]);
   const [allOrders, setAllOrders] = useState<SpPolicyOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [howOpen, setHowOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!agentId) return;
     setLoading(true);
     Promise.all([
-      getAgentReferralCode(agentId),
-      getAgentDownlines(agentId),
+      // Fetch referral code directly from agent prop or supabase
+      (async () => agent?.agent_code ?? null)(),
+      getAgentDownlineTree(agentId),
       getOverrideTransactions(agentId),
     ]).then(([code, dl, txns]) => {
       setReferralCode(code);
@@ -60,17 +74,29 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
     }).finally(() => setLoading(false));
   }, [agentId]);
 
-  // Fetch issued orders for each downline to show GWP this month
+  // Fetch issued orders for all agents in tree (L1 + L2)
   useEffect(() => {
     if (downlines.length === 0) return;
-    Promise.all(downlines.map((d) => getAgentOrders(d.id))).then((results) => {
+    const allAgents: SpUser[] = downlines.flatMap(d => [d, ...d.l2]);
+    const unique = [...new Map(allAgents.map(a => [a.id, a])).values()];
+    Promise.all(unique.map(a => getAgentOrders(a.id))).then(results => {
       setAllOrders(results.flat());
     });
   }, [downlines]);
 
   const referralLink = `https://myinsurepath.com?ref=${referralCode ?? ''}`;
+  const totalOverride = overrideTxns.reduce((s, tx) => s + tx.amount, 0);
+  const l1Count = downlines.length;
+  const l2Count = downlines.reduce((s, d) => s + d.l2.length, 0);
 
-  const totalOverride = overrideTxns.reduce((s, t) => s + t.amount, 0);
+  function agentOrders(id: string) {
+    return allOrders.filter(o => o.agent_id === id && o.status === 'ISSUED');
+  }
+  function agentGWPMonth(id: string) {
+    return allOrders
+      .filter(o => o.agent_id === id && o.status === 'ISSUED' && (o.created_at ?? '') >= startOfMonth)
+      .reduce((s, o) => s + (o.total_premium ?? 0), 0);
+  }
 
   function copyCode() {
     if (!referralCode) return;
@@ -87,23 +113,6 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   }
 
-  function downlineOrders(downlineId: string) {
-    return allOrders.filter(
-      (o) => o.agent_id === downlineId && o.status === 'ISSUED',
-    );
-  }
-
-  function downlineGWPMonth(downlineId: string) {
-    return allOrders
-      .filter(
-        (o) =>
-          o.agent_id === downlineId &&
-          o.status === 'ISSUED' &&
-          (o.created_at ?? '') >= startOfMonth,
-      )
-      .reduce((s, o) => s + (o.total_premium ?? 0), 0);
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -114,6 +123,61 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
 
   return (
     <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+
+      {/* ── My Tier Card ─────────────────────────────────────────────────── */}
+      {agentTier ? (
+        <div
+          className="rounded-[2rem] p-5 border"
+          style={{
+            background: `linear-gradient(135deg, ${tierCfg.color}14, ${tierCfg.color}08)`,
+            borderColor: tierCfg.color + '33',
+          }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-3xl">{tierCfg.emoji}</span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-0.5">
+                {t('Your Tier', 'Tier Anda')}
+              </p>
+              <p className="font-black text-lg" style={{ color: tierCfg.color }}>{tierCfg.label}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: t('Coin Bonus', 'Bonus Koin'), value: `+${(tierCfg.coinBonusRate * 100).toFixed(0)}%` },
+              { label: t('L1 Override', 'Override L1'), value: `${(tierCfg.l1OverrideRate * 100).toFixed(0)}%` },
+              { label: t('L2 Override', 'Override L2'), value: tierCfg.l2OverrideRate > 0 ? `${(tierCfg.l2OverrideRate * 100).toFixed(0)}%` : '—' },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="rounded-xl p-2.5 text-center"
+                style={{ background: tierCfg.color + '14', border: `1px solid ${tierCfg.color}22` }}
+              >
+                <p className="font-black text-sm" style={{ color: tierCfg.color }}>{value}</p>
+                <p className="text-[0.55rem] font-bold opacity-50 mt-0.5 uppercase tracking-widest">{label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[0.6rem] mt-3 opacity-40 text-center">
+            {t(
+              'Override is % of downline\'s commission. Coin bonus applied per sale.',
+              'Override adalah % dari komisi downline. Bonus koin dihitung per penjualan.',
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white/5 border border-white/10 rounded-[2rem] p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 flex-shrink-0">
+            <Users size={16} />
+          </div>
+          <div>
+            <p className="text-xs font-black text-white">Standard</p>
+            <p className="text-[0.6rem] text-gray-500">
+              {t('2% override on L1 downline commission.', '2% override dari komisi downline L1.')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Referral Code Card ──────────────────────────────────────────── */}
       <div className="bg-gradient-to-br from-primary-500 to-orange-600 rounded-[2rem] p-6 text-white shadow-xl shadow-orange-500/30">
@@ -143,8 +207,12 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
 
         <div className="flex justify-between mt-4 pt-4 border-t border-white/20">
           <div className="text-center">
-            <p className="text-2xl font-black">{downlines.length}</p>
-            <p className="text-[9px] uppercase tracking-widest opacity-70">{t('Downlines', 'Downline')}</p>
+            <p className="text-2xl font-black">{l1Count}</p>
+            <p className="text-[9px] uppercase tracking-widest opacity-70">{t('L1 Downlines', 'Downline L1')}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-black">{l2Count}</p>
+            <p className="text-[9px] uppercase tracking-widest opacity-70">{t('L2 Downlines', 'Downline L2')}</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-black">{formatIDR(totalOverride)}</p>
@@ -153,10 +221,10 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
         </div>
       </div>
 
-      {/* ── Downline Tree ───────────────────────────────────────────────── */}
+      {/* ── Downline Tree (2 levels) ────────────────────────────────────── */}
       <div>
         <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 px-1">
-          {t('My Downlines', 'Downline Saya')} ({downlines.length})
+          {t('My Network', 'Jaringan Saya')} ({l1Count + l2Count} {t('agents', 'agen')})
         </h3>
 
         {downlines.length === 0 ? (
@@ -173,29 +241,93 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {downlines.map((dl) => {
-              const orders = downlineOrders(dl.id);
-              const gwpMonth = downlineGWPMonth(dl.id);
+          <div className="space-y-2">
+            {downlines.map(dl => {
+              const l1Orders  = agentOrders(dl.id);
+              const l1GWP     = agentGWPMonth(dl.id);
+              const isOpen    = expanded[dl.id] ?? false;
+              const dl2Count  = dl.l2.length;
+
               return (
-                <div
-                  key={dl.id}
-                  className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[1.5rem] p-4 flex items-center gap-4"
-                >
-                  <div className="w-11 h-11 rounded-full bg-primary-500/10 flex items-center justify-center font-black text-primary-500 text-sm flex-shrink-0">
-                    {getInitials(dl.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-sm text-slate-900 dark:text-white truncate">{dl.name}</p>
-                    <p className="text-[10px] font-bold text-primary-500">{dl.agent_code ?? '—'}</p>
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500">
-                      {t('Joined', 'Bergabung')} {fmtDate(dl.created_at)}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs font-black text-slate-900 dark:text-white">{orders.length} {t('policies', 'polis')}</p>
-                    <p className="text-[9px] text-emerald-500 font-bold">{formatIDR(gwpMonth)}</p>
-                    <p className="text-[8px] text-slate-400">{t('GWP this month', 'GWP bulan ini')}</p>
+                <div key={dl.id}>
+                  {/* L1 row */}
+                  <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[1.5rem] p-4">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full bg-primary-500/10 flex items-center justify-center font-black text-primary-500 text-sm flex-shrink-0">
+                        {getInitials(dl.name)}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-black text-sm text-slate-900 dark:text-white truncate">{dl.name}</p>
+                          <TierBadge tier={dl.tier} />
+                        </div>
+                        <p className="text-[10px] font-bold text-primary-500">{dl.agent_code ?? '—'}</p>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500">
+                          {t('Joined', 'Bergabung')} {fmtDate(dl.created_at)}
+                        </p>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs font-black text-slate-900 dark:text-white">{l1Orders.length} {t('policies', 'polis')}</p>
+                        <p className="text-[9px] text-emerald-500 font-bold">{formatIDR(l1GWP)}</p>
+                        <p className="text-[8px] text-slate-400">{t('GWP this month', 'GWP bulan ini')}</p>
+                      </div>
+
+                      {/* Expand toggle (only if has L2) */}
+                      {dl2Count > 0 && (
+                        <button
+                          onClick={() => setExpanded(prev => ({ ...prev, [dl.id]: !isOpen }))}
+                          className="w-7 h-7 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0"
+                        >
+                          {isOpen
+                            ? <ChevronUp size={12} className="text-slate-400" />
+                            : <ChevronDown size={12} className="text-slate-400" />
+                          }
+                        </button>
+                      )}
+                    </div>
+
+                    {/* L2 sub-list */}
+                    {isOpen && dl.l2.length > 0 && (
+                      <div className="mt-3 ml-8 space-y-2 border-l-2 border-dashed border-slate-200 dark:border-white/10 pl-3">
+                        {dl.l2.map(l2 => {
+                          const l2Orders = agentOrders(l2.id);
+                          const l2GWP    = agentGWPMonth(l2.id);
+                          return (
+                            <div key={l2.id} className="flex items-center gap-2">
+                              <ChevronRight size={10} className="text-slate-300 flex-shrink-0" />
+                              <div className="flex-1 flex items-center gap-2.5 bg-slate-50 dark:bg-white/5 rounded-xl p-2.5">
+                                <div className="w-7 h-7 rounded-full bg-violet-500/10 flex items-center justify-center font-black text-violet-500 text-[0.6rem] flex-shrink-0">
+                                  {getInitials(l2.name)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    <p className="font-black text-[0.7rem] text-slate-900 dark:text-white truncate">{l2.name}</p>
+                                    <TierBadge tier={l2.tier} />
+                                  </div>
+                                  <p className="text-[0.55rem] text-slate-400">{l2.agent_code ?? '—'} · {t('Joined', 'Bergabung')} {fmtDate(l2.created_at)}</p>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-[0.65rem] font-black text-slate-900 dark:text-white">{l2Orders.length} {t('polis', 'polis')}</p>
+                                  <p className="text-[0.55rem] text-emerald-500 font-bold">{formatIDR(l2GWP)}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* L2 count hint */}
+                    {dl2Count > 0 && !isOpen && (
+                      <p className="mt-2 ml-13 text-[0.58rem] text-slate-400 dark:text-slate-500 pl-1">
+                        +{dl2Count} {t('indirect downline', 'downline tidak langsung')}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -217,7 +349,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
           </div>
         ) : (
           <div className="space-y-2">
-            {overrideTxns.slice(0, 15).map((tx) => (
+            {overrideTxns.slice(0, 15).map(tx => (
               <div
                 key={tx.id}
                 className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between"
@@ -244,46 +376,46 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
           <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-white">
             {t('How It Works', 'Cara Kerja')}
           </span>
-          {howOpen ? (
-            <ChevronUp size={16} className="text-slate-400" />
-          ) : (
-            <ChevronDown size={16} className="text-slate-400" />
-          )}
+          {howOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
         </button>
 
         {howOpen && (
-          <div className="px-5 pb-5 space-y-3 border-t border-slate-100 dark:border-white/10 pt-4">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-primary-500 font-black text-xs">L1</span>
-              </div>
-              <div>
-                <p className="text-xs font-black text-slate-800 dark:text-white">
-                  {t('Direct Downline Override', 'Override Downline Langsung')}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t(
-                    'You earn 3% override commission from your direct downline\'s commission whenever they close a policy.',
-                    'Anda mendapat 3% override dari komisi downline langsung Anda setiap kali mereka menutup polis.',
-                  )}
-                </p>
-              </div>
+          <div className="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-white/10 pt-4">
+            {/* Tier comparison table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-[0.65rem]">
+                <thead>
+                  <tr>
+                    <th className="text-left text-slate-500 font-bold pb-2 pr-3">{t('Tier', 'Tier')}</th>
+                    <th className="text-center text-slate-500 font-bold pb-2 px-2">{t('Coin Bonus', 'Bonus Koin')}</th>
+                    <th className="text-center text-slate-500 font-bold pb-2 px-2">{t('L1 Override', 'Override L1')}</th>
+                    <th className="text-center text-slate-500 font-bold pb-2 px-2">{t('L2 Override', 'Override L2')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {[
+                    { name: 'Standard', emoji: null,  color: '#6b7280', coin: '—',    l1: '2%', l2: '—' },
+                    { name: TIER_CONFIG.STAR.label,  emoji: '⭐', color: TIER_CONFIG.STAR.color,  coin: '+10%', l1: '3%', l2: '1%' },
+                    { name: TIER_CONFIG.ELITE.label, emoji: '💎', color: TIER_CONFIG.ELITE.color, coin: '+15%', l1: '4%', l2: '2%' },
+                  ].map(row => (
+                    <tr key={row.name}>
+                      <td className="py-2 pr-3 font-black" style={{ color: row.color }}>
+                        {row.emoji} {row.name}
+                      </td>
+                      <td className="py-2 px-2 text-center font-bold text-slate-700 dark:text-slate-300">{row.coin}</td>
+                      <td className="py-2 px-2 text-center font-bold text-slate-700 dark:text-slate-300">{row.l1}</td>
+                      <td className="py-2 px-2 text-center font-bold text-slate-700 dark:text-slate-300">{row.l2}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <Users size={14} className="text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-xs font-black text-slate-800 dark:text-white">
-                  {t('Recruit More, Earn More', 'Rekrut Lebih Banyak, Dapat Lebih')}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t(
-                    'Recruit more agents to grow your passive income. The more active your network, the more you earn.',
-                    'Rekrut lebih banyak agen untuk meningkatkan penghasilan pasif. Semakin aktif jaringan Anda, semakin besar penghasilan Anda.',
-                  )}
-                </p>
-              </div>
+
+            <div className="text-[0.65rem] text-slate-500 dark:text-slate-400 space-y-1.5 pt-1">
+              <p>• {t('Override is calculated from downline\'s commission amount (not from premium).', 'Override dihitung dari jumlah komisi downline (bukan dari premi).')}</p>
+              <p>• {t('Max 2 downline layers. L3 and beyond receive no override.', 'Maksimal 2 lapisan downline. L3 ke bawah tidak mendapat override.')}</p>
+              <p>• {t('Coin bonus is extra coins on top of the base reward per sale.', 'Bonus koin adalah koin tambahan di atas reward dasar per penjualan.')}</p>
+              <p>• {t('Tiers are assigned by SurePath business managers.', 'Tier ditetapkan oleh manajer bisnis SurePath.')}</p>
             </div>
           </div>
         )}

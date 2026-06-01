@@ -126,7 +126,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const clientId = clientMode === 'select' ? selectedClientId : undefined;
 
   const currentInputs = (): any => {
-    if (product === 'CAR') return carInputs;
+    if (product === 'CAR' || product === 'MOTORCYCLE') return carInputs;
     if (product === 'TRAVEL') return travelInputs;
     if (product === 'PA') return paInputs;
     if (product === 'MPAR') return mparInputs;
@@ -138,7 +138,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
   const canProceedClient = clientMode === 'select' ? !!selectedClientId : !!onetimeName.trim();
   const canProceedInputs = (): boolean => {
-    if (product === 'CAR') return !!carInputs.brand && !!carInputs.model && carInputs.price > 0;
+    if (product === 'CAR' || product === 'MOTORCYCLE') return !!carInputs.brand && !!carInputs.model && carInputs.price > 0;
     if (product === 'TRAVEL') return !!travelInputs.destination && !!travelInputs.startDate && !!travelInputs.endDate;
     if (product === 'PA') return true;
     if (product === 'MPAR') return !!mparInputs.itemName && mparInputs.price > 0;
@@ -747,10 +747,85 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
           <button
             disabled={!canProceedInputs()}
-            onClick={() => setStep('summary')}
+            onClick={() => {
+              if ((product === 'CAR' || product === 'MOTORCYCLE') && quoteMode === 'penawaran') {
+                setStep('quote_summary');
+              } else {
+                setStep('summary');
+              }
+            }}
             className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {t('See Quote', 'Lihat Penawaran')} <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* ─── STEP QUOTE_SUMMARY: Penawaran-only for CAR/MOTORCYCLE ─── */}
+      {step === 'quote_summary' && (product === 'CAR' || product === 'MOTORCYCLE') && (
+        <div className="space-y-4">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-2xl">
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Penawaran Kendaraan</p>
+            <h2 className="font-black text-2xl tracking-tight">{clientName}</h2>
+            <p className="text-slate-400 text-sm mt-0.5">{carInputs.brand} {carInputs.model} ({carInputs.year})</p>
+            <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-400 text-xs font-bold">Harga Kendaraan</span>
+                <span className="font-bold text-sm">{formatIDR(carInputs.price)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 text-xs font-bold">Perlindungan</span>
+                <span className="font-bold text-sm">{carInputs.coverage}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 text-xs font-bold">Rate OJK</span>
+                <span className="font-bold text-sm">{carInputs.coverage === 'COMPREHENSIVE' ? '2.5%' : '1.8%'}</span>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Est. Premi Tahunan</p>
+              <p className="font-black text-3xl text-white mt-0.5">{formatIDR(premium)}</p>
+            </div>
+            <div className="mt-3 bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <span className="text-slate-300 text-xs font-bold uppercase tracking-widest">Komisi Anda</span>
+              <span className="font-black text-emerald-400">{formatIDR(commission)}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handlePrintQuote}
+            disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
+            className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-blue-500/20 disabled:opacity-50"
+          >
+            {printingQuote ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
+            Cetak Penawaran PDF
+          </button>
+
+          <button
+            onClick={handleSaveQuote}
+            disabled={saving || !!savedQuote}
+            className="w-full py-4 rounded-2xl border border-slate-200 dark:border-white/10 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+          >
+            {saving ? <RefreshCw size={14} className="animate-spin" /> : <FileCheck size={14} />}
+            {savedQuote ? 'Penawaran Tersimpan!' : 'Simpan Penawaran'}
+          </button>
+
+          <a
+            href={`https://wa.me/?text=${buildWAText()}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-emerald-500/30"
+          >
+            <Send size={14} />
+            Kirim via WhatsApp
+          </a>
+
+          <button
+            onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
+            className="w-full py-4 rounded-2xl bg-primary-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-orange-500/30"
+          >
+            <ChevronRight size={14} />
+            Lanjut ke Pembelian
           </button>
         </div>
       )}

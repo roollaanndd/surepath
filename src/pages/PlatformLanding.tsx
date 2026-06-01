@@ -44,12 +44,27 @@ const SECTION_CSS = `
   from { opacity:0; transform:translateY(28px); }
   to   { opacity:1; transform:translateY(0); }
 }
-.animate-ticker    { animation: ticker-scroll 28s linear infinite; will-change: transform; }
-.animate-float     { animation: float 4s ease-out infinite; will-change: transform; }
-.animate-float-2   { animation: float 5s ease-out infinite 1.5s; will-change: transform; }
-.animate-glow      { animation: glow-pulse 3s ease-in-out infinite; }
-.animate-banner    { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
-.animate-fade-up   { animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes chevron-bounce {
+  0%,100% { transform: translateY(0); opacity: 0.9; }
+  50%     { transform: translateY(5px); opacity: 0.4; }
+}
+@keyframes chevron-bounce-delayed {
+  0%,100% { transform: translateY(0); opacity: 0.4; }
+  50%     { transform: translateY(5px); opacity: 0.9; }
+}
+@keyframes trust-pulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(1,235,2,0.5); }
+  50%     { opacity: 0.7; box-shadow: 0 0 0 4px rgba(1,235,2,0); }
+}
+.animate-ticker         { animation: ticker-scroll 28s linear infinite; will-change: transform; }
+.animate-float          { animation: float 4s ease-out infinite; will-change: transform; }
+.animate-float-2        { animation: float 5s ease-out infinite 1.5s; will-change: transform; }
+.animate-glow           { animation: glow-pulse 3s ease-in-out infinite; }
+.animate-banner         { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-fade-up        { animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-chevron-1      { animation: chevron-bounce 1.4s ease-in-out infinite; }
+.animate-chevron-2      { animation: chevron-bounce-delayed 1.4s ease-in-out infinite 0.3s; }
+.animate-trust-pulse    { animation: trust-pulse 2s ease-in-out infinite; }
 button:focus-visible, a:focus-visible {
   outline: 2px solid rgba(1,235,2,0.7);
   outline-offset: 3px;
@@ -57,7 +72,8 @@ button:focus-visible, a:focus-visible {
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker, .animate-float, .animate-float-2,
-  .animate-glow, .animate-banner, .animate-fade-up { animation: none; }
+  .animate-glow, .animate-banner, .animate-fade-up,
+  .animate-chevron-1, .animate-chevron-2, .animate-trust-pulse { animation: none; }
   .animate-fade-up { opacity: 1 !important; transform: none !important; }
   * { transition-duration: 0.01ms !important; }
 }
@@ -109,6 +125,7 @@ const HeroVideo: React.FC = () => (
     style={{ filter: 'blur(7px)', transform: 'scale(1.06)', willChange: 'transform' }}
   >
     <source src="/hero.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
 );
 
@@ -710,7 +727,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </nav>
 
       {/* ═══════════════════════════════════ HERO ═══════════════════════════ */}
-      <section data-hero className="relative min-h-screen flex items-end overflow-hidden"
+      <section data-hero className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden"
         style={{ background: 'hsl(0 0% 4%)' }}>
 
         {/* 1. Blurred looping video background */}
@@ -721,6 +738,12 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         {/* 2. Gradient scrim — bottom-heavy for text legibility */}
         <div className="absolute inset-0 pointer-events-none" style={{
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.72) 80%, rgba(0,0,0,0.88) 100%)',
+          zIndex: 1,
+        }} />
+
+        {/* 2b. Radial vignette — dark edges, transparent center */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)',
           zIndex: 1,
         }} />
 
@@ -736,7 +759,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           {/* Headline */}
           <h1 className="font-bold uppercase leading-[1.05] tracking-[-0.05em] mb-3 md:mb-5 opacity-0 animate-fade-up"
             style={{ fontSize: 'clamp(3rem,8vw,6rem)', animationDelay: '0.2s', color: 'hsl(0 0% 96%)' }}>
-            Sure<span style={{ color: lpGreen }}>Path</span>
+            Sure<span style={{ color: lpGreen, textShadow: '0 0 40px rgba(1,235,2,0.4)' }}>Path</span>
           </h1>
 
           {/* Subheading */}
@@ -746,7 +769,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           </p>
 
           {/* Description */}
-          <p className="font-light mb-6 md:mb-10 max-w-lg opacity-0 animate-fade-up"
+          <p className="font-light mb-6 md:mb-8 max-w-lg opacity-0 animate-fade-up"
             style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'hsl(0 0% 60%)', lineHeight: '1.7' }}>
             {t(
               'Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda — bukan sekadar angka di atas kertas. Satu platform, semua perlindungan.',
@@ -754,37 +777,61 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             )}
           </p>
 
+          {/* Separator */}
+          <div className="opacity-0 animate-fade-up mb-6 md:mb-8 max-w-lg"
+            style={{ animationDelay: '0.625s' }}>
+            <div style={{ height: '1px', background: `rgba(1,235,2,0.30)` }} />
+          </div>
+
           {/* CTA buttons */}
-          <div className="flex flex-wrap gap-3 font-bold opacity-0 animate-fade-up"
+          <div className="flex flex-wrap gap-3 opacity-0 animate-fade-up"
             style={{ animationDelay: '0.7s' }}>
             <button onClick={onSignIn}
-              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-xl cursor-pointer transition-[filter,transform] active:scale-[0.97] hover:brightness-110"
-              style={{ background: lpGreen, color: 'hsl(0 0% 4%)' }}>
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+              style={{
+                background: lpGreen,
+                color: 'hsl(0 0% 4%)',
+                borderRadius: '14px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                boxShadow: '0 0 24px rgba(1,235,2,0.35)',
+              }}>
               {t('Mulai Konsultasi', 'Book a Consultation')}
             </button>
             <button onClick={() => { navScroll('products', '/products'); }}
-              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm rounded-xl cursor-pointer transition-[filter,transform] active:scale-[0.97] hover:brightness-90 text-black"
-              style={{ background: 'white' }}>
+              className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1.5px solid rgba(255,255,255,0.25)',
+                color: 'white',
+                borderRadius: '14px',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+              }}>
               {t('Lihat Produk', 'Our Products')}
             </button>
           </div>
 
           {/* Trust line */}
-          <p className="mt-5 md:mt-7 text-xs font-light opacity-0 animate-fade-up"
-            style={{ animationDelay: '0.85s', color: 'hsl(0 0% 50%)' }}>
-            {t(
-              'Platform asuransi terpercaya · Jakarta, Indonesia · 12.400+ nasabah aktif',
-              'Trusted insurance platform · Jakarta, Indonesia · 12,400+ active clients',
-            )}
-          </p>
+          <div className="mt-5 md:mt-7 flex items-center gap-2 opacity-0 animate-fade-up"
+            style={{ animationDelay: '0.85s' }}>
+            {/* Green pulse dot */}
+            <span className="inline-block w-2 h-2 rounded-full flex-shrink-0 animate-trust-pulse"
+              style={{ background: 'rgba(1,235,2,0.85)' }} />
+            <p className="text-xs font-light" style={{ color: 'hsl(0 0% 50%)' }}>
+              {t('Platform asuransi terpercaya', 'Trusted insurance platform')}
+              <span className="mx-1.5" style={{ color: 'rgba(1,235,2,0.4)' }}>·</span>
+              {t('Jakarta, Indonesia', 'Jakarta, Indonesia')}
+              <span className="mx-1.5" style={{ color: 'rgba(1,235,2,0.4)' }}>·</span>
+              {t('12.400+ nasabah aktif', '12,400+ active clients')}
+            </p>
+          </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 right-8 z-10 flex flex-col items-center gap-2 animate-float pointer-events-none">
-          <div className="w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5"
-            style={{ borderColor: `${lpGreen}50` }}>
-            <div className="w-1 h-2 rounded-full" style={{ background: lpGreen, opacity: 0.7 }} />
-          </div>
+        {/* Scroll indicator — alternating chevron pair */}
+        <div className="absolute bottom-8 right-8 z-10 flex flex-col items-center pointer-events-none" style={{ gap: '2px' }}>
+          <ChevronDown size={20} className="animate-chevron-1" style={{ color: lpGreen }} />
+          <ChevronDown size={20} className="animate-chevron-2" style={{ color: lpGreen, marginTop: '-8px' }} />
         </div>
       </section>
 

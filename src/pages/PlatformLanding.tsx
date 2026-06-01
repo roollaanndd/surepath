@@ -114,6 +114,40 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
   );
 };
 
+// ─── Animated counter ─────────────────────────────────────────────────────────
+const AnimatedCounter: React.FC<{ target: number; suffix: string; duration?: number }> = ({
+  target, suffix, duration = 1500,
+}) => {
+  const { ref, visible } = useReveal(0.2);
+  const [count, setCount] = useState(0);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!visible || started.current) return;
+    started.current = true;
+    const steps = 60;
+    const increment = target / steps;
+    const delay = duration / steps;
+    let current = 0;
+    const iv = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        setCount(target);
+        clearInterval(iv);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, delay);
+    return () => clearInterval(iv);
+  }, [visible, target, duration]);
+
+  return (
+    <span ref={ref}>
+      {count.toLocaleString()}{suffix}
+    </span>
+  );
+};
+
 // ─── Video hero background ────────────────────────────────────────────────────
 const HeroVideo: React.FC = () => (
   <video
@@ -122,7 +156,6 @@ const HeroVideo: React.FC = () => (
     loop
     playsInline
     className="absolute inset-0 w-full h-full object-cover"
-    style={{ filter: 'blur(7px)', transform: 'scale(1.06)', willChange: 'transform' }}
   >
     <source src="/hero.mp4" type="video/mp4" />
     Your browser does not support the video tag.
@@ -635,6 +668,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // ── Section heading reveal hooks ────────────────────────────────────────────
+  const { ref: productsHeadingRef, visible: productsHeadingVisible } = useReveal(0.1);
+  const { ref: howItWorksHeadingRef, visible: howItWorksHeadingVisible } = useReveal(0.1);
+  const { ref: pillarsHeadingRef, visible: pillarsHeadingVisible } = useReveal(0.1);
+
   // ── Styling vars ────────────────────────────────────────────────────────────
   const cardBg     = 'rgba(255,255,255,0.025)';
   const cardBorder = 'rgba(255,255,255,0.07)';
@@ -737,7 +775,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
         {/* 2. Gradient scrim — bottom-heavy for text legibility */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.72) 80%, rgba(0,0,0,0.88) 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.55) 40%, rgba(0,0,0,0.72) 80%, rgba(0,0,0,0.88) 100%)',
           zIndex: 1,
         }} />
 
@@ -770,7 +808,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
           {/* Description */}
           <p className="font-light mb-6 md:mb-8 max-w-lg opacity-0 animate-fade-up"
-            style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'hsl(0 0% 60%)', lineHeight: '1.7' }}>
+            style={{ fontSize: 'clamp(0.875rem,1.5vw,1.125rem)', animationDelay: '0.55s', color: 'rgba(255,255,255,0.78)', lineHeight: '1.7', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
             {t(
               'Platform asuransi digital yang transparan, humanis, dan berpusat pada kebutuhan nyata Anda — bukan sekadar angka di atas kertas. Satu platform, semua perlindungan.',
               'A transparent, human-centered digital insurance platform built around your real needs — not just numbers on paper. One platform, all your protection.',
@@ -834,25 +872,6 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <ChevronDown size={20} className="animate-chevron-2" style={{ color: lpGreen, marginTop: '-8px' }} />
         </div>
       </section>
-
-      {/* ════════════════════════════ PARTNERS TICKER ════════════════════════ */}
-      <div className="relative py-8 overflow-hidden border-y"
-        style={{ borderColor: 'rgba(34,197,94,0.07)', background: 'hsl(0 0% 6%)' }}>
-        <div className="flex animate-ticker whitespace-nowrap">
-          {[...Array(2)].map((_, repeat) => (
-            <div key={repeat} className="flex items-center gap-12 px-6">
-              {['Allianz', 'ACA', 'Asuransi Adira', 'Jasindo', 'Tugu Insurance', 'Asuransi BCA', 'Sompo', 'Zurich', 'Astra Insurance', 'AXA Mandiri', 'Asuransi Sinar Mas', 'Lippo Insurance', 'Asuransi Reliance', 'MSIG', 'Asuransi Ramayana', 'Tokio Marine', 'Asuransi CAR', 'Asuransi Wahana Tata'].map(name => (
-                <span key={name} className="text-sm font-bold flex-shrink-0"
-                  style={{ color: 'rgba(134,239,172,0.35)' }}>
-                  {name}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="absolute inset-y-0 left-0 w-20" style={{ background: 'linear-gradient(to right, hsl(0 0% 6%), transparent)' }} />
-        <div className="absolute inset-y-0 right-0 w-20" style={{ background: 'linear-gradient(to left, hsl(0 0% 6%), transparent)' }} />
-      </div>
 
       {/* ════════════════════════════ BENTO GRID ═════════════════════════════ */}
       <section className="py-28 max-w-7xl mx-auto px-5">
@@ -954,6 +973,31 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         </div>
       </section>
 
+      {/* ══════════════════════════ STATS ════════════════════════════════════ */}
+      <section className="py-20 px-5" style={{ background: 'hsl(0 0% 5%)' }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients') },
+              { target: 98, suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate') },
+              { target: 18, suffix: '+', label: t('Mitra Insurer', 'Insurer Partners') },
+              { target: 40, suffix: '+', label: t('Produk Tersedia', 'Products Available') },
+            ].map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 80}>
+                <div className="text-center p-6 rounded-2xl"
+                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p className="font-black text-white mb-1"
+                    style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1, color: 'hsl(119,99%,46%)' }}>
+                    <AnimatedCounter target={stat.target} suffix={stat.suffix} />
+                  </p>
+                  <p className="text-xs font-medium mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{stat.label}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════════════════ PRODUCTS ════════════════════════════════ */}
       <section id="products" className="py-28 px-5" style={{ background: 'hsl(0 0% 6%)' }}>
         <div className="max-w-7xl mx-auto">
@@ -964,13 +1008,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
                   {t('Produk Kami', 'Our Products')}
                 </span>
-                <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                  style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
-                  {t('Perlindungan untuk Setiap', 'Protection for Every')}{' '}
-                  <span style={{ color: lpGreen }}>
-                    {t('Aspek Hidupmu', 'Aspect of Life')}
-                  </span>
-                </h2>
+                <div ref={productsHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${productsHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`}>
+                  <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                    style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                    {t('Perlindungan untuk Setiap', 'Protection for Every')}{' '}
+                    <span style={{ color: lpGreen }}>
+                      {t('Aspek Hidupmu', 'Aspect of Life')}
+                    </span>
+                  </h2>
+                </div>
               </div>
               <button onClick={() => navScroll('products', '/products')}
                 className="flex items-center gap-2 text-sm font-bold transition-colors"
@@ -989,9 +1035,9 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   aria-label={`Learn more about ${p.name}`}>
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 animate-float-2 relative"
-                    style={{ background: `${p.color}14`, border: `1px solid ${p.color}25`, animationDelay: `${i * 0.4}s` }}>
-                    <p.Icon size={22} style={{ color: p.color }} />
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:rotate-3 relative"
+                    style={{ background: `linear-gradient(135deg, ${p.color}22, ${p.color}11)`, border: `1px solid ${p.color}33` }}>
+                    <p.Icon size={28} style={{ color: p.color }} />
                   </div>
                   <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
                   <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
@@ -1015,13 +1061,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
               {t('Cara Kerja', 'How It Works')}
             </span>
-            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-              style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
-              {t('Tiga Langkah Menuju', 'Three Steps to')}{' '}
-              <span style={{ color: lpGreen }}>
-                {t('Ketenangan Pikiran', 'Peace of Mind')}
-              </span>
-            </h2>
+            <div ref={howItWorksHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${howItWorksHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
+              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                {t('Tiga Langkah Menuju', 'Three Steps to')}{' '}
+                <span style={{ color: lpGreen }}>
+                  {t('Ketenangan Pikiran', 'Peace of Mind')}
+                </span>
+              </h2>
+            </div>
           </div>
         </Reveal>
 
@@ -1079,13 +1127,15 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
                 {t('Nilai Kami', 'Our Values')}
               </span>
-              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
-                {t('Cara Berbeda', 'A Different Way')}{' '}
-                <span style={{ color: lpGreen }}>
-                  {t('Cara Kami Bekerja', 'We Work')}
-                </span>
-              </h2>
+              <div ref={pillarsHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${pillarsHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '150ms' }}>
+                <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
+                  style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                  {t('Cara Berbeda', 'A Different Way')}{' '}
+                  <span style={{ color: lpGreen }}>
+                    {t('Cara Kami Bekerja', 'We Work')}
+                  </span>
+                </h2>
+              </div>
             </div>
           </Reveal>
 

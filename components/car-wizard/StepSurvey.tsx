@@ -156,7 +156,15 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         photoFlags: response.photoFlags || [],
         verdict: isRejected ? 'REJECTED' : (needsManual ? 'MANUAL_REQUIRED' : 'CLEAN'),
         rejectionReason: response.rejectionReason || (isRejected ? 'Mobil tidak sesuai dengan data STNK.' : ''),
-        manualVerif: needsManual
+        manualVerif: needsManual,
+        identityMatchScore: response.identityMatchScore,
+        bodyConditionScore: response.bodyConditionScore,
+        paintConditionScore: response.paintConditionScore,
+        glassConditionScore: response.glassConditionScore,
+        interiorConditionScore: response.interiorConditionScore,
+        fraudRiskScore: response.fraudRiskScore,
+        fraudAnalysis: response.fraudAnalysis,
+        recommendations: response.recommendations || [],
       }));
     } else {
       setSurvey((prev: any) => ({
@@ -249,19 +257,20 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
           Foto dari 5 sudut: Depan Serong, Belakang Serong, Sisi Kanan, Sisi Kiri, dan Dashboard
         </p>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-           {photoSlots.map((slot) => {
+        <div className="grid grid-cols-2 gap-3">
+           {photoSlots.map((slot, slotIndex) => {
               const validation = photoValidation[slot.id];
               const isLoading = validation?.status === 'LOADING';
               const isInvalid = validation?.status === 'INVALID';
               const isValid = validation?.status === 'VALID';
+              const isLastSlot = slotIndex === photoSlots.length - 1;
 
               return (
-              <div key={slot.id} className={`group relative aspect-video rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center gap-2 overflow-hidden shadow-sm ${survey.photos[slot.id] ? (isInvalid ? 'border-rose-500 bg-rose-500/[0.03]' : 'border-primary-500 bg-primary-500/[0.03] border-solid') : 'border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03]'}`}>
+              <div key={slot.id} className={`group relative rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center gap-2 overflow-hidden shadow-sm ${isLastSlot ? 'col-span-2 aspect-[3/1]' : 'aspect-video'} ${survey.photos[slot.id] ? (isInvalid ? 'border-rose-500 bg-rose-500/[0.03]' : 'border-primary-500 bg-primary-500/[0.03] border-solid') : 'border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03]'}`}>
                  {survey.photos[slot.id] ? (
                    <>
                       <img src={survey.photos[slot.id]} className="absolute inset-0 w-full h-full object-cover rounded-[1.8rem]" alt={slot.label} />
-                      
+
                       {/* Loading & Status Overlay */}
                       <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-black/50 backdrop-blur-[4px] transition-all duration-300 z-20" style={{ opacity: isLoading || isInvalid ? 1 : 0 }}>
                          {isLoading && (
@@ -284,9 +293,9 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                       </div>
 
                       {isValid && !isLoading && <div className="absolute top-3 right-3 bg-emerald-500 text-white p-1 rounded-full shadow-lg animate-pop-in z-20"><Check size={12} strokeWidth={4}/></div>}
-                      
+
                       <button onClick={() => { const newPhotos = {...survey.photos}; delete newPhotos[slot.id]; setSurvey({...survey, photos: newPhotos, score: 0, verdict: ''}); setPhotoValidation(prev => { const n = {...prev}; delete n[slot.id]; return n; }); }} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white rounded-[1.8rem] backdrop-blur-[2px] cursor-pointer pointer-events-auto z-30"><Trash2 size={24}/></button>
-                      
+
                       <div className="absolute top-3 left-3 px-2 py-0.5 bg-black/60 text-white rounded text-[0.45rem] font-black uppercase tracking-widest z-20">{slot.label}</div>
                    </>
                  ) : (
@@ -339,15 +348,59 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                        </div>
                     </div>
                     
+                    {/* Per-category score bars */}
+                    {(survey.bodyConditionScore !== undefined) && (
+                      <div className="space-y-3 relative z-10">
+                        <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest px-1">Skor Per Kategori</p>
+                        {[
+                          { label: 'Identitas Kendaraan', key: 'identityMatchScore', color: 'bg-blue-500' },
+                          { label: 'Kondisi Bodi', key: 'bodyConditionScore', color: 'bg-emerald-500' },
+                          { label: 'Kondisi Cat', key: 'paintConditionScore', color: 'bg-teal-500' },
+                          { label: 'Kondisi Kaca', key: 'glassConditionScore', color: 'bg-sky-500' },
+                          { label: 'Interior / Dashboard', key: 'interiorConditionScore', color: 'bg-violet-500' },
+                        ].map(({ label, key, color }) => {
+                          const val: number = survey[key] ?? 0;
+                          return (
+                            <div key={key} className="space-y-1">
+                              <div className="flex justify-between items-center px-1">
+                                <span className="text-[0.55rem] font-bold text-gray-500 dark:text-gray-400">{label}</span>
+                                <span className={`text-[0.55rem] font-black ${val >= 80 ? 'text-emerald-500' : val >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>{val}</span>
+                              </div>
+                              <div className="h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${val}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Fraud Risk */}
+                        {survey.fraudRiskScore !== undefined && (
+                          <div className="space-y-1 pt-1 border-t border-black/5 dark:border-white/5">
+                            <div className="flex justify-between items-center px-1">
+                              <span className="text-[0.55rem] font-bold text-gray-500 dark:text-gray-400">Risiko Fraud</span>
+                              <span className={`text-[0.55rem] font-black ${survey.fraudRiskScore <= 20 ? 'text-emerald-500' : survey.fraudRiskScore <= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                {survey.fraudRiskScore <= 20 ? 'Rendah' : survey.fraudRiskScore <= 50 ? 'Sedang' : 'Tinggi'} ({survey.fraudRiskScore})
+                              </span>
+                            </div>
+                            <div className="h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-700 ${survey.fraudRiskScore <= 20 ? 'bg-emerald-500' : survey.fraudRiskScore <= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${survey.fraudRiskScore}%` }} />
+                            </div>
+                            {survey.fraudAnalysis && (
+                              <p className="text-[0.55rem] font-medium text-gray-500 dark:text-gray-400 px-1 leading-relaxed">{survey.fraudAnalysis}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="p-6 bg-gray-50 dark:bg-white/[0.02] rounded-[2rem] border border-black/5 dark:border-white/5 relative z-10 space-y-4">
                        <div className="flex items-center gap-3">
                           <FileText size={14} className="text-primary-500"/>
-                          <span className="text-[0.55rem] font-black uppercase text-primary-500 tracking-widest">Laporan Hasil AI</span>
+                          <span className="text-[0.55rem] font-black uppercase text-primary-500 tracking-widest">Laporan Hasil Surveyor AI</span>
                        </div>
                        <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed">
                           {survey.underwritingReport || "Laporan kondisi mobil berdasarkan foto yang diunggah."}
                        </p>
-                       
+
                        {survey.rejectionReason && survey.verdict === 'REJECTED' && (
                           <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
                              <p className="text-[0.5rem] font-black uppercase text-rose-500 tracking-widest mb-1">Penyebab Ditolak</p>
@@ -361,7 +414,19 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                              {survey.detailedIssues.map((issue: any, idx: number) => (
                                 <div key={idx} className="flex justify-between items-start text-[0.6rem] bg-white dark:bg-black/20 p-2 rounded-lg border border-black/5">
                                    <span className="font-bold text-gray-700 dark:text-gray-200">{issue.part}: {issue.description}</span>
-                                   <span className={`${issue.severity === 'Severe' ? 'text-rose-500' : 'text-amber-500'} font-black uppercase text-[0.5rem]`}>{issue.severity}</span>
+                                   <span className={`${issue.severity === 'Severe' ? 'text-rose-500' : 'text-amber-500'} font-black uppercase text-[0.5rem] ml-2 shrink-0`}>{issue.severity}</span>
+                                </div>
+                             ))}
+                          </div>
+                       )}
+
+                       {survey.recommendations && survey.recommendations.length > 0 && (
+                          <div className="space-y-2 pt-2 border-t border-black/5 dark:border-white/5">
+                             <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Rekomendasi</p>
+                             {survey.recommendations.map((rec: string, idx: number) => (
+                                <div key={idx} className="flex items-start gap-2 text-[0.6rem]">
+                                   <span className="text-primary-500 font-black mt-0.5">→</span>
+                                   <span className="font-medium text-gray-600 dark:text-gray-300">{rec}</span>
                                 </div>
                              ))}
                           </div>

@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 
 // ─── Model constants — swap any of these to change the model used ─────────────
 const VISION_MODEL  = 'openai/gpt-4o-mini';              // OCR, photo validation, damage
-const SURVEY_MODEL  = 'openai/gpt-4o-mini';              // multi-image underwriting
+const SURVEY_MODEL  = 'openai/gpt-4o';                   // multi-image underwriting
 const TEXT_MODEL    = 'anthropic/claude-3.5-haiku-20241022'; // product explainer
 export const CHAT_MODEL = 'anthropic/claude-3.5-haiku-20241022'; // health chatbot
 
@@ -103,6 +103,14 @@ export interface SurveyAnalysisResult {
   error?: string;
   isDirty?: boolean;
   cleanlinessComment?: string;
+  identityMatchScore?: number;
+  bodyConditionScore?: number;
+  paintConditionScore?: number;
+  glassConditionScore?: number;
+  interiorConditionScore?: number;
+  fraudRiskScore?: number;
+  fraudAnalysis?: string;
+  recommendations?: string[];
 }
 
 // ─── Image compression ────────────────────────────────────────────────────────
@@ -318,44 +326,88 @@ export const analyzeVehicleSurvey = async (
   expectedData?: { brand: string; model: string; color: string; plate: string }
 ): Promise<SurveyAnalysisResult> => {
   try {
-    const contextPrompt = expectedData
-      ? `DATA EKSPEKTASI (Wajib Cocok):
-- Merk: ${expectedData.brand}
-- Model: ${expectedData.model}
-- Warna: ${expectedData.color}
-- Plat Nomor: ${expectedData.plate}`
-      : '';
+    const contextBlock = expectedData
+      ? `KONTEKS KENDARAAN YANG DIASURANSIKAN:
+- Merk   : ${expectedData.brand}
+- Model  : ${expectedData.model}
+- Warna  : ${expectedData.color}
+- Plat   : ${expectedData.plate}`
+      : 'KONTEKS KENDARAAN: tidak tersedia — lakukan analisa tanpa verifikasi identitas.';
 
-    const prompt = `Lakukan audit pra-asuransi (Underwriting Risk Assessment) ketat menggunakan Computer Vision. Anda adalah Chief Underwriter.
+    const prompt = `Anda adalah Surveyor Asuransi Senior di SurePath Insurance. Lakukan inspeksi pra-asuransi (Pre-Insurance Vehicle Survey) secara menyeluruh dan teliti terhadap ${images.length} foto kendaraan berikut.
 
-1. VERIFIKASI IDENTITAS: Bandingkan unit di foto dengan:
-${contextPrompt}
-Jika Warna, Merk, atau Plat berbeda → status WAJIB 'REJECTED'.
+${contextBlock}
 
-2. KUALITAS FOTO: Cek apakah mobil kotor. Cek pencahayaan dan fokus setiap foto.
-Status 'DARK_PHOTO' jika gelap. Status 'POOR_QUALITY' jika blur.
+INSTRUKSI — Nilai 6 dimensi secara independen:
 
-3. IDENTIFIKASI KERUSAKAN: Periksa Bumper, Pintu, Fender, Kap Mesin, Atap, Kaca.
-Cari: Goresan (Scratch), Penyok (Dent), Pecah (Crack).
+1. VERIFIKASI IDENTITAS (identityMatchScore 0-100)
+   - Cocokkan merk, model, warna, dan plat nomor di foto dengan data di atas
+   - Score 100 = semua persis cocok
+   - Score 0 = tidak cocok sama sekali / tidak terbaca
+   - Jika merk/plat jelas berbeda → auditVerdict WAJIB REJECTED
 
-4. SKOR (0-100): 100 = mulus bersih. <80 = ada kerusakan atau terlalu kotor.
+2. DETEKSI FRAUD (fraudRiskScore 0-100; semakin tinggi = semakin berisiko)
+   Tanda-tanda kecurangan yang harus dicari:
+   a) Foto layar / foto-dalam-foto: tampak piksel kasar, cahaya tidak alami, refleksi monitor/layar
+   b) Foto stok atau unduhan internet: background terlalu bersih, tidak ada lingkungan nyata, watermark, kualitas terlalu sempurna
+   c) Hasil editing: bayangan tidak konsisten antar panel, warna panel yang berbeda-beda secara tidak wajar, artefak digital, tepi yang terlalu tajam / blur selektif
+   d) Inkonsistensi antar foto: latar belakang atau kondisi cahaya sangat berbeda padahal diambil pada sesi yang sama
+   e) Nomor plat tidak terbaca atau sengaja ditutup/buram
+   Score 0-20 = Aman, 21-50 = Perlu perhatian, 51-100 = Indikasi kuat fraud
 
-Return JSON only:
+3. KONDISI BODI EKSTERIOR (bodyConditionScore 0-100)
+   - Periksa bumper depan & belakang, semua pintu, fender, kap mesin, atap, side skirt
+   - Cari: goresan (scratch), penyok (dent), lecet, karat, deformasi struktural, lipatan bodi
+   - Score 100 = mulus sempurna, 0 = kerusakan parah / struktural
+
+4. KONDISI CAT (paintConditionScore 0-100)
+   - Keseragaman warna cat di semua panel (deteksi repaint sebagian)
+   - Oksidasi, baret halus (swirl marks), cat terkelupas / mengelupas
+   - Score 100 = cat original mulus, 0 = cat rusak / banyak repaint
+
+5. KONDISI KACA (glassConditionScore 0-100)
+   - Kaca depan (windshield), belakang, samping kiri & kanan
+   - Retak (crack), chip, baret dalam, atau tambalan kaca
+   - Score 100 = kaca sempurna, 0 = kaca retak / tidak layak
+
+6. KONDISI INTERIOR / DASHBOARD (interiorConditionScore 0-100)
+   - Dashboard, konsol tengah, jok, trim pintu, plafon
+   - Indikator lampu check engine atau airbag menyala (jika terlihat)
+   - Score 100 = interior bersih sempurna, 0 = rusak parah
+
+PERHITUNGAN SKOR TOTAL (score 0-100):
+score = (bodyConditionScore × 0.30) + (paintConditionScore × 0.20) + (identityMatchScore × 0.25) + (glassConditionScore × 0.15) + (interiorConditionScore × 0.10)
+Kurangi score sebesar (fraudRiskScore × 0.3) jika fraudRiskScore > 30
+
+VERDICT:
+- CLEAN             : score ≥ 80 DAN fraudRiskScore ≤ 20 DAN identityMatchScore ≥ 90
+- REVIEW_REQUIRED   : score 65-79 ATAU fraudRiskScore 21-50
+- REJECTED          : score < 65 ATAU fraudRiskScore > 50 ATAU identityMatchScore < 70
+
+Return JSON only (tidak ada teks di luar JSON):
 {
   "score": number,
-  "summary": "kesimpulan underwriting (Bahasa Indonesia)",
-  "underwritingReport": "laporan naratif faktual",
+  "identityMatchScore": number,
+  "bodyConditionScore": number,
+  "paintConditionScore": number,
+  "glassConditionScore": number,
+  "interiorConditionScore": number,
+  "fraudRiskScore": number,
+  "fraudAnalysis": "deskripsi analisa fraud (2-3 kalimat Bahasa Indonesia)",
+  "summary": "kesimpulan underwriting 2-3 kalimat (Bahasa Indonesia)",
+  "underwritingReport": "laporan naratif faktual lengkap (Bahasa Indonesia)",
   "isDirty": boolean,
-  "cleanlinessComment": "komentar kebersihan",
+  "cleanlinessComment": "komentar kebersihan kendaraan",
   "detailedIssues": [{ "part": string, "description": string, "severity": "Minor|Moderate|Severe", "scorePenalty": number }],
   "photoFlags": [{ "id": string, "status": "OK|FRAUD_DETECTED|POOR_QUALITY|NOT_MATCHING|DARK_PHOTO", "reason": string }],
   "auditVerdict": "CLEAN|REVIEW_REQUIRED|REJECTED",
-  "rejectionReason": "alasan spesifik jika REJECTED atau null"
+  "rejectionReason": "alasan spesifik jika REJECTED, atau null",
+  "recommendations": ["rekomendasi tindak lanjut 1", "rekomendasi 2"]
 }`;
 
     const compressedImages = await Promise.all(images.map(async img => ({
       ...img,
-      data: await compressImageBase64(img.data, 600),
+      data: await compressImageBase64(img.data, 768),
     })));
     const imagesParts = compressedImages.map(img => imageContent(img.data));
 
@@ -365,6 +417,7 @@ Return JSON only:
         role: 'user',
         content: [{ type: 'text', text: prompt }, ...imagesParts],
       }],
+      max_tokens: 2000,
     });
 
     const text = res.choices[0]?.message?.content ?? '';

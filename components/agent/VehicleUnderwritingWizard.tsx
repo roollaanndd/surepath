@@ -3,6 +3,7 @@ import {
   Car, Bike, Search, User, ChevronRight, Upload, CheckCircle,
   AlertTriangle, XCircle, ArrowLeft, Loader2, FileText,
 } from 'lucide-react';
+import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
 import { analyzeVehicleSurvey, SurveyAnalysisResult } from '../../services/geminiService';
 import {
@@ -625,18 +626,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             {/* Make */}
             <div>
               <Label>Merek *</Label>
-              <select
+              <SearchableSelect
                 value={vehicleDetails.make}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleMakeChange(e.target.value)
-                }
-                className={inputCls}
-              >
-                <option value="">Pilih merek...</option>
-                {brandList.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+                options={brandList}
+                onChange={handleMakeChange}
+                placeholder="Pilih merek..."
+              />
             </div>
             {/* Model — searchable datalist for both cars and motorcycles */}
             <div>

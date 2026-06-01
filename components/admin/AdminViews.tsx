@@ -22,6 +22,7 @@ import {
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
+  registerAgent,
 } from '../../services/supabaseService';
 import { TIER_CONFIG } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -957,6 +958,206 @@ export const SettingsView = ({ products, setProducts }: { products: any[], setPr
   );
 };
 
+// ── Bulk Import Modal ────────────────────────────────────────────────────────
+
+interface BulkImportRow {
+  name: string;
+  email: string;
+  phone: string;
+  upline_code: string;
+  status: 'pending' | 'success' | 'error';
+  error?: string;
+}
+
+const parseCSV = (text: string): BulkImportRow[] => {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const [name, email, phone, upline_code] = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+    return { name: name || '', email: email || '', phone: phone || '', upline_code: upline_code || '', status: 'pending' };
+  });
+};
+
+interface BulkImportModalProps {
+  onClose: () => void;
+}
+
+const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
+  const [csvText, setCsvText] = useState('');
+  const [rows, setRows] = useState<BulkImportRow[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [done, setDone] = useState(false);
+
+  const handleParse = () => {
+    if (!csvText.trim()) return;
+    setRows(parseCSV(csvText));
+    setProgress(null);
+    setDone(false);
+  };
+
+  const handleImport = async () => {
+    if (rows.length === 0) return;
+    setImporting(true);
+    const updated = [...rows];
+    let successCount = 0;
+    setProgress({ done: 0, total: rows.length });
+
+    for (let i = 0; i < updated.length; i++) {
+      const row = updated[i];
+      if (!row.name || !row.email || !row.phone) {
+        updated[i] = { ...row, status: 'error', error: 'name/email/phone wajib diisi' };
+      } else {
+        try {
+          const result = await registerAgent({ name: row.name, email: row.email, phone: row.phone });
+          if (result) {
+            updated[i] = { ...row, status: 'success' };
+            successCount++;
+          } else {
+            updated[i] = { ...row, status: 'error', error: 'Gagal menyimpan' };
+          }
+        } catch (err: any) {
+          updated[i] = { ...row, status: 'error', error: err?.message ?? 'Error' };
+        }
+      }
+      setRows([...updated]);
+      setProgress({ done: i + 1, total: rows.length });
+    }
+
+    setImporting(false);
+    setDone(true);
+  };
+
+  const successCount = rows.filter(r => r.status === 'success').length;
+  const errorCount   = rows.filter(r => r.status === 'error').length;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={importing ? undefined : onClose} />
+      <div className="relative z-10 w-full max-w-2xl mx-4 bg-[#0d0d0d] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-3">
+            <Upload size={18} className="text-blue-400" />
+            Impor Agen dari CSV/Excel
+          </h3>
+          {!importing && (
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+              <X size={18} />
+            </button>
+          )}
+        </div>
+
+        {/* Instructions */}
+        <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mb-4">
+          Format kolom: name, email, phone, upline_code (opsional)
+        </p>
+
+        {/* Textarea */}
+        {!done && (
+          <>
+            <textarea
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-all resize-none mb-3"
+              rows={6}
+              placeholder={"Budi Santoso,budi@email.com,08123456789,SP-AGT-0001\nSiti Rahma,siti@email.com,08234567890,"}
+              value={csvText}
+              onChange={e => setCsvText(e.target.value)}
+              disabled={importing}
+            />
+            <button
+              onClick={handleParse}
+              disabled={!csvText.trim() || importing}
+              className="px-5 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all disabled:opacity-40 mb-5"
+            >
+              Parse CSV
+            </button>
+          </>
+        )}
+
+        {/* Preview table */}
+        {rows.length > 0 && (
+          <div className="space-y-4">
+            <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-500">
+              Preview — {rows.length} baris
+            </p>
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full text-[0.6rem]">
+                <thead>
+                  <tr className="text-[0.5rem] font-black uppercase tracking-widest text-gray-500 border-b border-white/10">
+                    <th className="py-2.5 px-3 text-left">Nama</th>
+                    <th className="py-2.5 px-3 text-left">Email</th>
+                    <th className="py-2.5 px-3 text-left">Phone</th>
+                    <th className="py-2.5 px-3 text-left">Upline</th>
+                    <th className="py-2.5 px-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-white/[0.02]">
+                      <td className="py-2 px-3 text-white font-bold">{row.name || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-gray-400 font-mono">{row.email || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-gray-400 font-mono">{row.phone || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-gray-500">{row.upline_code || '—'}</td>
+                      <td className="py-2 px-3 text-center">
+                        {row.status === 'pending' && <span className="text-gray-500">—</span>}
+                        {row.status === 'success' && <span className="text-emerald-400 font-black">OK</span>}
+                        {row.status === 'error' && (
+                          <span className="text-rose-400 font-black" title={row.error}>ERR</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Progress */}
+            {progress && (
+              <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest">
+                {progress.done}/{progress.total} diproses
+                {done && ` — ${successCount} berhasil, ${errorCount} gagal`}
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              {!done ? (
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {importing ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <Upload size={14} />
+                  )}
+                  {importing ? 'Mengimpor...' : 'Import'}
+                </button>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
+                >
+                  <CheckCircle size={14} />
+                  Selesai — {successCount}/{rows.length} berhasil
+                </button>
+              )}
+              {!importing && !done && (
+                <button
+                  onClick={onClose}
+                  className="px-5 py-3 bg-white/5 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Batal
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── Agent Management View ────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<string, string> = {
@@ -976,6 +1177,7 @@ export const AgentManagementView = () => {
   const [loading, setLoading] = useState(true);
   const [editRate, setEditRate] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   const adminId: string = (() => {
     try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.supabaseId ?? ''; }
@@ -1152,6 +1354,19 @@ export const AgentManagementView = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
+
+      {/* Header actions */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setShowBulkImport(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
+        >
+          <Upload size={14} />
+          Bulk Import
+        </button>
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[

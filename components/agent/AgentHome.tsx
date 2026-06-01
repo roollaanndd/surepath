@@ -2,7 +2,7 @@ import React from 'react';
 import {
   TrendingUp, Users, Shield, Wallet, ChevronRight,
   FileText, Lightbulb, Star, ClipboardList,
-  Zap, Trophy, Network, RefreshCw, FileEdit
+  Trophy, Network, RefreshCw, FileEdit
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';

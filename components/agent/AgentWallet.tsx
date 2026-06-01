@@ -41,13 +41,22 @@ const statusBadge = (status: string) => {
   return { cls: map[status] ?? 'bg-gray-500/10 text-gray-400', label: label[status] ?? status };
 };
 
+interface SavedAccount {
+  bank_code: string;
+  account_number: string;
+  account_holder_name: string;
+}
+
 interface WithdrawFormProps {
   balance: number;
   onSuccess: () => void;
   onCancel: () => void;
+  savedAccount?: SavedAccount | null;
+  onSaveAccount?: (account: SavedAccount) => void;
+  profileName?: string;
 }
 
-const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCancel }) => {
+const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCancel, savedAccount, onSaveAccount, profileName }) => {
   const [amount, setAmount] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [accNum, setAccNum] = useState('');
@@ -73,6 +82,9 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
     const res = await requestWithdrawal({ amount: amt, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
     setLoading(false);
     if (res.success) {
+      if (onSaveAccount) {
+        onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
+      }
       onSuccess();
     } else {
       setErr(res.error ?? 'Terjadi kesalahan');
@@ -81,6 +93,21 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
 
   return (
     <div className="space-y-4">
+      {savedAccount && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-between">
+          <div>
+            <p className="text-xs font-black text-emerald-400">{savedAccount.bank_code} · {savedAccount.account_number}</p>
+            <p className="text-[10px] text-slate-400">{savedAccount.account_holder_name}</p>
+          </div>
+          <button
+            onClick={() => { setBankCode(savedAccount.bank_code); setAccNum(savedAccount.account_number); setAccName(savedAccount.account_holder_name); }}
+            className="px-3 py-1.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+          >
+            Pakai
+          </button>
+        </div>
+      )}
+
       <div className="space-y-1.5">
         <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Jumlah Penarikan</label>
         <input
@@ -135,6 +162,12 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
           placeholder="Sesuai buku tabungan"
           value={accName} onChange={e => setAccName(e.target.value)}
         />
+        {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
+          <p className="text-[10px] text-amber-400 flex items-center gap-1">
+            <AlertCircle size={10} />
+            Pastikan nama rekening sama dengan nama terdaftar: {profileName}
+          </p>
+        )}
       </div>
 
       {err && <p className="text-xs text-red-400 font-bold px-1">{err}</p>}
@@ -156,6 +189,8 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({ balance, onSuccess, onCance
   );
 };
 
+const SAVED_BANK_KEY = 'SUREPATH_SAVED_BANK';
+
 const AgentWalletView: React.FC = () => {
   const [wallet, setWallet] = useState<AgentWallet | null>(null);
   const [txns, setTxns] = useState<WalletTransaction[]>([]);
@@ -163,6 +198,27 @@ const AgentWalletView: React.FC = () => {
   const [tab, setTab] = useState<'ledger' | 'withdrawals'>('ledger');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [savedAccount, setSavedAccount] = useState<SavedAccount | null>(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_BANK_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const profileName: string | undefined = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') || '{}')?.name;
+    } catch {
+      return undefined;
+    }
+  })();
+
+  const handleSaveAccount = (account: SavedAccount) => {
+    localStorage.setItem(SAVED_BANK_KEY, JSON.stringify(account));
+    setSavedAccount(account);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -200,6 +256,9 @@ const AgentWalletView: React.FC = () => {
           balance={wallet?.balance ?? 0}
           onSuccess={() => { setShowWithdrawForm(false); load(); }}
           onCancel={() => setShowWithdrawForm(false)}
+          savedAccount={savedAccount}
+          onSaveAccount={handleSaveAccount}
+          profileName={profileName}
         />
       </div>
     );

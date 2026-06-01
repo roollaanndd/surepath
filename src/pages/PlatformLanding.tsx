@@ -79,14 +79,16 @@ button:focus-visible, a:focus-visible {
 }
 `;
 
-// ─── Dark section background (for sections below hero) ───────────────────────
-const BODY_BG_CSS = `body { background: hsl(0 0% 8%) !important; }`;
-const SectionBackground: React.FC = () => (
-  <>
-    <style>{SECTION_CSS}</style>
-    <style>{BODY_BG_CSS}</style>
-  </>
-);
+// ─── Section background (body bg adapts to dark/light mode) ─────────────────
+const SectionBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
+  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(0 0% 8%)' : '#ffffff'} !important; }`;
+  return (
+    <>
+      <style>{SECTION_CSS}</style>
+      <style>{BODY_BG_CSS}</style>
+    </>
+  );
+};
 
 // ─── Reveal hook ──────────────────────────────────────────────────────────────
 const useReveal = (threshold = 0.12) => {
@@ -555,26 +557,39 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
   const { ref: howItWorksHeadingRef, visible: howItWorksHeadingVisible } = useReveal(0.1);
   const { ref: pillarsHeadingRef, visible: pillarsHeadingVisible } = useReveal(0.1);
 
-  // ── Styling vars ────────────────────────────────────────────────────────────
-  const cardBg     = 'rgba(255,255,255,0.025)';
-  const cardBorder = 'rgba(255,255,255,0.07)';
-  const textMuted  = 'rgba(255,255,255,0.65)';
+  // ── Styling vars (dark/light mode aware) ────────────────────────────────────
+  const cardBg     = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.03)';
+  const cardBorder = darkMode ? 'rgba(255,255,255,0.07)'  : 'rgba(0,0,0,0.08)';
+  const textMuted  = darkMode ? 'rgba(255,255,255,0.65)'  : '#64748b';
+  const textMain   = darkMode ? '#ffffff'                 : '#0f172a';
+  const sectionBg1 = darkMode ? 'hsl(0 0% 8%)'           : '#ffffff';
+  const sectionBg2 = darkMode ? 'hsl(0 0% 5%)'           : '#f8fafc';
+  const sectionBg3 = darkMode ? 'hsl(0 0% 6%)'           : '#f1f5f9';
+  const sectionBg4 = darkMode ? 'rgba(4,12,6,0.6)'       : '#f0fdf4';
+  const sectionBg5 = darkMode ? 'rgba(4,12,6,0.7)'       : '#f0fdf4';
+  const footerBg   = darkMode ? 'rgba(4,12,6,0.95)'      : '#0f172a';
+  const navBg      = darkMode ? 'rgba(10,10,10,0.85)'    : 'rgba(255,255,255,0.92)';
+  const navBorder  = darkMode ? 'rgba(255,255,255,0.06)'  : 'rgba(0,0,0,0.08)';
+  const navBtnBg   = darkMode ? 'hsl(0 0% 18%)'          : '#f1f5f9';
+  const navBtnColor = darkMode ? 'hsl(0 0% 96%)'         : '#334155';
+  const mobilMenuBg = darkMode ? 'hsl(0 0% 10%)'         : '#ffffff';
+  const mobileMenuBorder = darkMode ? 'hsl(0 0% 20%)'    : '#e2e8f0';
 
   // ── lp green ─────────────────────────────────────────────────────────────
   const lpGreen = 'hsl(119 99% 46%)';
 
   return (
-    <div className="min-h-screen text-white font-sora" style={{ background: 'hsl(0 0% 8%)' }}>
-      <SectionBackground />
+    <div className="min-h-screen font-sora" style={{ background: sectionBg1, color: textMain }}>
+      <SectionBackground darkMode={darkMode} />
 
       {/* ════════════════════════════════ NAVBAR ════════════════════════════ */}
       <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5 transition-all duration-300 ${scrolled ? 'backdrop-blur-md' : ''}`}
-        style={{ background: scrolled ? 'rgba(10,10,10,0.85)' : 'transparent', borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+        style={{ background: scrolled ? navBg : 'transparent', borderBottom: scrolled ? `1px solid ${navBorder}` : 'none' }}>
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 group">
           <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          <span className="text-xl font-semibold tracking-tight text-white">
+          <span className="text-xl font-semibold tracking-tight" style={{ color: textMain }}>
             Sure<span style={{ color: lpGreen }}>Path</span>
           </span>
         </a>
@@ -584,14 +599,14 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           {navLinks.map(l => (
             <a key={l.id} href={l.path}
               onClick={e => { e.preventDefault(); navScroll(l.id, l.path); }}
-              className="text-sm uppercase tracking-widest transition-colors hover:text-white"
-              style={{ color: 'hsl(0 0% 60%)' }}>
+              className="text-sm uppercase tracking-widest transition-colors"
+              style={{ color: textMuted }}>
               {l.label}
             </a>
           ))}
           <button onClick={() => navigate('/admin')}
-            className="text-sm uppercase tracking-widest transition-colors hover:text-white"
-            style={{ color: 'hsl(0 0% 60%)' }}>
+            className="text-sm uppercase tracking-widest transition-colors"
+            style={{ color: textMuted }}>
             Admin
           </button>
         </div>
@@ -601,18 +616,18 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
           <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)}
             aria-label="Switch language"
             className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all hover:opacity-80"
-            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            style={{ background: navBtnBg, color: navBtnColor }}>
             <Globe size={12} /> {lang}
           </button>
           <button onClick={onSignIn}
-            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-white transition-all active:scale-[0.97] hover:opacity-80"
-            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.97] hover:opacity-80"
+            style={{ background: navBtnBg, color: navBtnColor }}>
             {t('Masuk', 'Get Started')}
           </button>
           <button onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
             className="md:hidden p-2.5 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
-            style={{ background: 'hsl(0 0% 18%)', color: 'hsl(0 0% 96%)' }}>
+            style={{ background: navBtnBg, color: navBtnColor }}>
             {menuOpen ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>
@@ -620,11 +635,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 mx-4 mt-2 rounded-2xl border p-4"
-            style={{ background: 'hsl(0 0% 10%)', borderColor: 'hsl(0 0% 20%)', backdropFilter: 'blur(24px)' }}>
+            style={{ background: mobilMenuBg, borderColor: mobileMenuBorder, backdropFilter: 'blur(24px)' }}>
             {navLinks.map(l => (
               <button key={l.id} onClick={() => navScroll(l.id, l.path)}
                 className="flex items-center justify-between w-full py-3 border-b text-sm font-medium uppercase tracking-widest"
-                style={{ borderColor: 'hsl(0 0% 20%)', color: 'hsl(0 0% 60%)' }}>
+                style={{ borderColor: mobileMenuBorder, color: textMuted }}>
                 <span>{l.label}</span><ChevronRight size={14} />
               </button>
             ))}
@@ -639,7 +654,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             </div>
             <button onClick={() => { setLang(lang === Language.EN ? Language.ID : Language.EN); localStorage.setItem('SUREPATH_LANG', lang === Language.EN ? 'ID' : 'EN'); }}
               className="flex items-center justify-center gap-2 w-full mt-2 py-2.5 rounded-xl text-xs font-bold border transition-all"
-              style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
+              style={{ borderColor: cardBorder, color: textMuted }}>
               <Globe size={12} /> {lang === Language.EN ? 'Switch to Bahasa' : 'Switch to English'}
             </button>
           </div>
@@ -758,8 +773,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
               {t('Kenapa SurePath?', 'Why SurePath?')}
             </span>
-            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)' }}>
+            <h2 className="font-black leading-tight tracking-[-0.03em]"
+              style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: textMain }}>
               {t('Asuransi yang Benar-Benar', 'Insurance That Truly')}{' '}
               <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 {t('Bekerja Untukmu', 'Works for You')}
@@ -799,7 +814,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
                 <Sparkles size={22} style={{ color: '#22c55e' }} />
               </div>
-              <h3 className="text-xl font-black text-white mb-3">{t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis')}</h3>
+              <h3 className="text-xl font-black mb-3" style={{ color: textMain }}>{t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis')}</h3>
               <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                 {t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu secara menyeluruh. Agen dan teknologi kami saling melengkapi buat nemuin solusi yang beneran cocok — bukan yang paling menguntungkan komisi.', 'Before recommending any product, we fully understand your life context. Our agents and technology work together to find truly suitable solutions — not the most commission-profitable ones.')}
               </p>
@@ -819,7 +834,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
                   <Users size={20} style={{ color: '#3b82f6' }} />
                 </div>
-                <h3 className="text-lg font-black text-white mb-2">{t('Agen Berlisensi', 'Licensed Agents')}</h3>
+                <h3 className="text-lg font-black mb-2" style={{ color: textMain }}>{t('Agen Berlisensi', 'Licensed Agents')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                   {t('Semua agen kami udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our agents hold official insurance certifications and continuously updated knowledge.')}
                 </p>
@@ -840,7 +855,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
                   <Search size={20} style={{ color: '#a855f7' }} />
                 </div>
-                <h3 className="text-lg font-black text-white mb-2">{t('Transparansi 100%', '100% Transparent')}</h3>
+                <h3 className="text-lg font-black mb-2" style={{ color: textMain }}>{t('Transparansi 100%', '100% Transparent')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                   {t('Nggak ada biaya tersembunyi. Semua ketentuan polis dijelasin pakai bahasa yang gampang dipahami.', 'No hidden fees. All policy terms explained in clear language.')}
                 </p>
@@ -861,7 +876,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)' }}>
                   <BarChart2 size={20} style={{ color: '#f59e0b' }} />
                 </div>
-                <h3 className="text-lg font-black text-white mb-2">{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
+                <h3 className="text-lg font-black mb-2" style={{ color: textMain }}>{t('Pilihan Terlengkap', 'Widest Selection')}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                   {t('40+ produk dari 18 insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', '40+ products from 18 trusted insurers, one platform for all your protection needs.')}
                 </p>
@@ -887,7 +902,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
                 <Zap size={20} style={{ color: '#10b981' }} />
               </div>
-              <h3 className="text-xl font-black text-white mb-3">{t('Digital-First, Human Touch', 'Digital-First, Human Touch')}</h3>
+              <h3 className="text-xl font-black mb-3" style={{ color: textMain }}>{t('Digital-First, Human Touch', 'Digital-First, Human Touch')}</h3>
               <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                 {t('Teknologi kami bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli. Agen kami siap jawab pertanyaan yang nggak bisa dijawab algoritma.', 'Modern technology makes access easy, but behind it are real humans who care. Our agents are here to answer the deep questions algorithms cannot.')}
               </p>
@@ -897,7 +912,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </section>
 
       {/* ══════════════════════════ STATS ════════════════════════════════════ */}
-      <section className="py-20 px-5" style={{ background: 'hsl(0 0% 5%)' }}>
+      <section className="py-20 px-5" style={{ background: sectionBg2 }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
@@ -948,8 +963,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               <Reveal key={stat.label} delay={i * 80}>
                 <div className="text-center p-6 rounded-2xl min-h-[140px] flex flex-col items-center justify-center"
                   style={{
-                    background: 'rgba(255,255,255,0.025)',
-                    border: '1px solid rgba(255,255,255,0.07)',
+                    background: cardBg,
+                    border: `1px solid ${cardBorder}`,
                     borderBottom: '2px solid rgba(1,235,2,0.15)',
                     backgroundImage: 'radial-gradient(circle at 50% 100%, rgba(1,235,2,0.08), transparent 70%)',
                   }}>
@@ -958,11 +973,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                     style={{ background: 'rgba(1,235,2,0.08)', border: '1px solid rgba(1,235,2,0.15)', color: 'hsl(119,99%,46%)' }}>
                     {stat.icon}
                   </span>
-                  <p className="font-black text-white mb-1"
+                  <p className="font-black mb-1"
                     style={{ fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1, color: 'hsl(119,99%,46%)' }}>
                     <AnimatedCounter target={stat.target} suffix={stat.suffix} />
                   </p>
-                  <p className="text-xs font-medium mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{stat.label}</p>
+                  <p className="text-xs font-medium mt-2" style={{ color: textMuted }}>{stat.label}</p>
                 </div>
               </Reveal>
             ))}
@@ -971,7 +986,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </section>
 
       {/* ═══════════════════════════ PRODUCTS ════════════════════════════════ */}
-      <section id="products" className="py-28 px-5" style={{ background: 'hsl(0 0% 6%)' }}>
+      <section id="products" className="py-28 px-5" style={{ background: sectionBg3 }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="flex items-end justify-between mb-14 flex-wrap gap-6">
@@ -981,8 +996,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   {t('Produk Kami', 'Our Products')}
                 </span>
                 <div ref={productsHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${productsHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`}>
-                  <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                    style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                  <h2 className="font-black leading-tight tracking-[-0.03em]"
+                    style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: textMain }}>
                     {t('Perlindungan untuk Setiap', 'Protection for Every')}{' '}
                     <span style={{ color: lpGreen }}>
                       {t('Aspek Hidupmu', 'Aspect of Life')}
@@ -1017,11 +1032,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                   <div className="p-6 pt-7">
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                       style={{ background: `radial-gradient(circle at 50% 0%, ${p.color}12, transparent 70%)` }} />
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:rotate-3 relative"
+                    <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:rotate-3 relative"
                       style={{ background: `linear-gradient(135deg, ${p.color}22, ${p.color}11)`, border: `1px solid ${p.color}33` }}>
-                      <p.Icon color={p.color} size={28} />
+                      <p.Icon color={p.color} size={36} />
                     </div>
-                    <h3 className="font-black text-white text-sm mb-1 leading-tight">{p.name}</h3>
+                    <h3 className="font-black text-sm mb-1 leading-tight" style={{ color: textMain }}>{p.name}</h3>
                     <p className="text-[0.65rem] font-bold mb-3" style={{ color: p.color }}>{p.sub}</p>
                     <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{p.desc}</p>
                     <div className="flex items-center gap-1.5 mt-4 text-xs font-bold transition-all"
@@ -1045,8 +1060,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               {t('Cara Kerja', 'How It Works')}
             </span>
             <div ref={howItWorksHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${howItWorksHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '100ms' }}>
-              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+              <h2 className="font-black leading-tight tracking-[-0.03em]"
+                style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: textMain }}>
                 {t('Tiga Langkah Menuju', 'Three Steps to')}{' '}
                 <span style={{ color: lpGreen }}>
                   {t('Ketenangan Pikiran', 'Peace of Mind')}
@@ -1092,7 +1107,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                         style={{ background: step.color, color: 'white' }}>{step.n}</span>
                     </div>
                   </div>
-                  <h3 className="text-lg font-black text-white mb-3">{step.title}</h3>
+                  <h3 className="text-lg font-black mb-3" style={{ color: textMain }}>{step.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{step.desc}</p>
                 </div>
               </Reveal>
@@ -1102,7 +1117,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </section>
 
       {/* ════════════════════════════ PILLARS ════════════════════════════════ */}
-      <section className="py-28 overflow-hidden" style={{ background: 'rgba(4,12,6,0.6)' }}>
+      <section className="py-28 overflow-hidden" style={{ background: sectionBg4 }}>
         <div className="max-w-7xl mx-auto px-5">
           <Reveal>
             <div className="text-center mb-20">
@@ -1111,8 +1126,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 {t('Nilai Kami', 'Our Values')}
               </span>
               <div ref={pillarsHeadingRef} className={`transition-[opacity,transform] duration-700 ease-out ${pillarsHeadingVisible ? 'animate-fade-up' : 'opacity-0 translate-y-4'}`} style={{ transitionDelay: '150ms' }}>
-                <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                  style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+                <h2 className="font-black leading-tight tracking-[-0.03em]"
+                  style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: textMain }}>
                   {t('Cara Berbeda', 'A Different Way')}{' '}
                   <span style={{ color: lpGreen }}>
                     {t('Cara Kami Bekerja', 'We Work')}
@@ -1160,11 +1175,11 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                     style={{ width: 60, height: 60, background: p.accent, opacity: 0.10, clipPath: 'polygon(0 0, 60px 0, 0 60px)' }} />
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(circle at 50% 0%, ${p.accent}08, transparent 70%)` }} />
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 animate-float relative"
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 animate-float relative"
                     style={{ background: `${p.accent}12`, border: `1px solid ${p.accent}25`, animationDelay: `${i * 0.8}s` }}>
                     <p.Icon size={26} style={{ color: p.accent }} />
                   </div>
-                  <h3 className="text-xl font-black text-white mb-4">{p.title}</h3>
+                  <h3 className="text-xl font-black mb-4" style={{ color: textMain }}>{p.title}</h3>
                   <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted }}>{p.desc}</p>
                   <ul className="space-y-2.5">
                     {p.items.map(item => (
@@ -1174,7 +1189,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                           <circle cx="8" cy="8" r="7" fill={`${p.accent}18`} stroke={p.accent} strokeWidth="1"/>
                           <path d="M5 8 L7 10.5 L11 5.5" stroke={p.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                        <span style={{ color: 'rgba(255,255,255,0.65)' }}>{item}</span>
+                        <span style={{ color: textMuted }}>{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -1193,8 +1208,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
               {t('Penawaran & Promosi', 'Offers & Promotions')}
             </span>
-            <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-              style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+            <h2 className="font-black leading-tight tracking-[-0.03em]"
+              style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: textMain }}>
               {t('Program Eksklusif', 'Exclusive Programs')}{' '}
               <span style={{ color: lpGreen }}>
                 {t('untuk Nasabah Kami', 'for Our Clients')}
@@ -1216,7 +1231,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ade80' }}>
                 {t('Mulai Sekarang', 'Start Now')}
               </span>
-              <h3 className="text-3xl font-black text-white leading-tight mb-4">
+              <h3 className="text-3xl font-black leading-tight mb-4" style={{ color: textMain }}>
                 {t('Pertama Kali', 'First Time')}<br />
                 <span style={{ color: '#22c55e' }}>{t('Bersama SurePath?', 'with SurePath?')}</span>
               </h3>
@@ -1227,7 +1242,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 {[t('Analisis kebutuhan perlindunganmu', 'Analyze your protection needs'), t('Perbandingan produk yang relevan', 'Relevant product comparison'), t('Estimasi biaya yang transparan', 'Transparent cost estimate')].map(item => (
                   <div key={item} className="flex items-center gap-2.5 text-sm">
                     <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#22c55e' }} />
-                    <span style={{ color: 'rgba(255,255,255,0.65)' }}>{item}</span>
+                    <span style={{ color: textMuted }}>{item}</span>
                   </div>
                 ))}
               </div>
@@ -1242,7 +1257,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </section>
 
       {/* ════════════════════════ TESTIMONIALS ═══════════════════════════════ */}
-      <section className="py-28 px-5" style={{ background: 'rgba(4,12,6,0.7)' }}>
+      <section className="py-28 px-5" style={{ background: sectionBg5 }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="text-center mb-16">
@@ -1250,8 +1265,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
                 {t('Cerita Nasabah', 'Client Stories')}
               </span>
-              <h2 className="font-black leading-tight tracking-[-0.03em] text-white"
-                style={{ fontSize: 'clamp(2rem,4vw,3rem)' }}>
+              <h2 className="font-black leading-tight tracking-[-0.03em]"
+                style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: textMain }}>
                 {t('Dipercaya, Karena', 'Trusted, Because')}{' '}
                 <span style={{ color: lpGreen }}>
                   {t('Mereka Merasakannya', 'They Felt It')}
@@ -1299,7 +1314,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                       <Star key={j} size={14} fill="#f59e0b" style={{ color: '#f59e0b' }} />
                     ))}
                   </div>
-                  <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: textMuted }}>
                     "{t_.quote}"
                   </p>
                   <div className="flex items-center gap-3">
@@ -1308,7 +1323,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                       {t_.initial}
                     </div>
                     <div>
-                      <p className="text-sm font-black text-white">{t_.name}</p>
+                      <p className="text-sm font-black" style={{ color: textMain }}>{t_.name}</p>
                       <p className="text-[0.65rem]" style={{ color: textMuted }}>{t_.role} · {t_.city}</p>
                     </div>
                   </div>
@@ -1336,8 +1351,8 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#86efac' }}>
                 {t('Mulai Hari Ini', 'Start Today')}
               </span>
-              <h2 className="font-black leading-tight tracking-[-0.03em] text-white mb-6"
-                style={{ fontSize: 'clamp(2.2rem,5vw,4rem)' }}>
+              <h2 className="font-black leading-tight tracking-[-0.03em] mb-6"
+                style={{ fontSize: 'clamp(2.2rem,5vw,4rem)', color: textMain }}>
                 {t('Siap Memulai', 'Ready to Begin')}<br />
                 <span style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   {t('Perjalanan Proteksimu?', 'Your Protection Journey?')}
@@ -1365,7 +1380,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
       </section>
 
       {/* ═══════════════════════════ FOOTER ══════════════════════════════════ */}
-      <footer id="about" style={{ borderTop: '1px solid rgba(34,197,94,0.07)', background: 'rgba(4,12,6,0.95)' }}>
+      <footer id="about" style={{ borderTop: '1px solid rgba(34,197,94,0.07)', background: footerBg }}>
         <div className="max-w-7xl mx-auto px-5 py-16">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Brand */}
@@ -1379,7 +1394,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 <div className="hidden w-9 h-9 rounded-xl items-center justify-center" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
                   <SurePathLogo className="w-5 h-5" />
                 </div>
-                <span className="font-black text-xl tracking-tight text-white">
+                <span className="font-black text-xl tracking-tight" style={{ color: '#ffffff' }}>
                   Sure<span style={{ color: '#22c55e' }}>Path</span>
                 </span>
               </div>

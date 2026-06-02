@@ -48,6 +48,7 @@ const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
+const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
 const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
 
 const detectLang = (): Language => {
@@ -684,6 +685,18 @@ const App = () => {
       <Suspense fallback={<PortalLoader />}>
         <ProductInfoPage
           productId={productMatch[1]}
+          onBack={() => navigate('/')}
+          onSignIn={() => { navigate('/'); setAppMode(true); }}
+        />
+      </Suspense>
+    );
+  }
+
+  // Calculator route
+  if (pathname === '/kalkulator') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <PremiumCalculatorPage
           onBack={() => navigate('/')}
           onSignIn={() => { navigate('/'); setAppMode(true); }}
         />

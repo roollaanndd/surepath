@@ -1054,6 +1054,46 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         </div>
       </section>
 
+      {/* ══════════════════════ KALKULATOR PREMI CTA ════════════════════════ */}
+      <section className="py-16 px-5" style={{ background: sectionBg4 }}>
+        <div className="max-w-4xl mx-auto">
+          <Reveal>
+            <div className="rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8"
+              style={{ background: darkMode ? 'rgba(255,255,255,0.04)' : '#ffffff', border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
+              <div className="flex-1 text-center md:text-left">
+                <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-4"
+                  style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', color: '#16a34a' }}>
+                  {t('Hitung Premi Sekarang', 'Calculate Premium Now')}
+                </span>
+                <h2 className="font-black leading-tight tracking-[-0.02em] mb-3"
+                  style={{ fontSize: 'clamp(1.5rem,3vw,2.25rem)', color: textMain }}>
+                  {t('Berapa Premi Asuransi', 'What\'s Your Car')}{' '}
+                  <span style={{ color: lpGreen }}>{t('Mobil Anda?', 'Insurance Premium?')}</span>
+                </h2>
+                <p className="text-sm leading-relaxed max-w-md" style={{ color: textMuted }}>
+                  {t(
+                    'Hitung estimasi premi asuransi mobil Anda berdasarkan tarif resmi OJK (batas bawah). Transparan, akurat, dan gratis.',
+                    'Get your car insurance premium estimate using official OJK minimum rates. Transparent, accurate, and free.'
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 items-center md:items-end shrink-0">
+                <button
+                  onClick={() => navigate('/kalkulator')}
+                  className="flex items-center gap-2.5 px-8 py-4 rounded-2xl font-black text-sm transition-all hover:scale-105 active:scale-95"
+                  style={{ background: lpGreen, color: '#000', boxShadow: '0 4px 24px rgba(6,230,0,0.35)' }}>
+                  <Shield size={18} />
+                  {t('Hitung Premi Gratis', 'Calculate Free')}
+                </button>
+                <p className="text-[0.65rem] font-medium" style={{ color: textMuted }}>
+                  {t('Berdasarkan SE OJK No.06/SEOJK.05/2017', 'Based on SE OJK No.06/SEOJK.05/2017')}
+                </p>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ══════════════════════ HOW IT WORKS ═════════════════════════════════ */}
       <section id="how-it-works" className="py-28 max-w-7xl mx-auto px-5">
         <Reveal>

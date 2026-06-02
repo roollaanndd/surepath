@@ -81,7 +81,7 @@ button:focus-visible, a:focus-visible {
 
 // ─── Section background (body bg adapts to dark/light mode) ─────────────────
 const SectionBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(0 0% 8%)' : '#ffffff'} !important; }`;
+  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(0 0% 8%)' : '#f0fdf4'} !important; }`;
   return (
     <>
       <style>{SECTION_CSS}</style>
@@ -558,15 +558,16 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
   const { ref: pillarsHeadingRef, visible: pillarsHeadingVisible } = useReveal(0.1);
 
   // ── Styling vars (dark/light mode aware) ────────────────────────────────────
-  const cardBg     = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.03)';
-  const cardBorder = darkMode ? 'rgba(255,255,255,0.07)'  : 'rgba(0,0,0,0.08)';
-  const textMuted  = darkMode ? 'rgba(255,255,255,0.65)'  : '#64748b';
+  const cardBg     = darkMode ? 'rgba(255,255,255,0.025)' : '#ffffff';
+  const cardBorder = darkMode ? 'rgba(255,255,255,0.07)'  : '#d1fae5';
+  const cardShadow = darkMode ? 'none' : '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(16,185,129,0.06)';
+  const textMuted  = darkMode ? 'rgba(255,255,255,0.65)'  : '#475569';
   const textMain   = darkMode ? '#ffffff'                 : '#0f172a';
-  const sectionBg1 = darkMode ? 'hsl(0 0% 8%)'           : '#ffffff';
-  const sectionBg2 = darkMode ? 'hsl(0 0% 5%)'           : '#f8fafc';
-  const sectionBg3 = darkMode ? 'hsl(0 0% 6%)'           : '#f1f5f9';
-  const sectionBg4 = darkMode ? 'rgba(4,12,6,0.6)'       : '#f0fdf4';
-  const sectionBg5 = darkMode ? 'rgba(4,12,6,0.7)'       : '#f0fdf4';
+  const sectionBg1 = darkMode ? 'hsl(0 0% 8%)'           : '#f0fdf4';
+  const sectionBg2 = darkMode ? 'hsl(0 0% 5%)'           : '#ffffff';
+  const sectionBg3 = darkMode ? 'hsl(0 0% 6%)'           : '#ecfdf5';
+  const sectionBg4 = darkMode ? 'rgba(4,12,6,0.6)'       : '#d1fae5';
+  const sectionBg5 = darkMode ? 'rgba(4,12,6,0.7)'       : '#a7f3d0';
   const footerBg   = darkMode ? 'rgba(4,12,6,0.95)'      : '#0f172a';
   const navBg      = darkMode ? 'rgba(10,10,10,0.85)'    : 'rgba(255,255,255,0.92)';
   const navBorder  = darkMode ? 'rgba(255,255,255,0.06)'  : 'rgba(0,0,0,0.08)';
@@ -823,7 +824,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
           <Reveal delay={80}>
             <div className="group relative overflow-hidden rounded-3xl h-full min-h-[220px] transition-all duration-500 hover:scale-[1.02]"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
               {/* Accent top-bar */}
               <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#3b82f6' }} />
               {/* Card number pill */}
@@ -844,7 +845,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
           <Reveal delay={120}>
             <div className="group relative overflow-hidden rounded-3xl h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
               {/* Accent top-bar */}
               <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#a855f7' }} />
               {/* Card number pill */}
@@ -865,7 +866,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
 
           <Reveal delay={160}>
             <div className="group relative overflow-hidden rounded-3xl h-full min-h-[180px] transition-all duration-500 hover:scale-[1.02]"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+              style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
               {/* Accent top-bar */}
               <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-3xl" style={{ background: '#f59e0b' }} />
               {/* Card number pill */}
@@ -967,6 +968,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                     border: `1px solid ${cardBorder}`,
                     borderBottom: '2px solid rgba(1,235,2,0.15)',
                     backgroundImage: 'radial-gradient(circle at 50% 100%, rgba(1,235,2,0.08), transparent 70%)',
+                    boxShadow: cardShadow,
                   }}>
                   {/* Category icon */}
                   <span className="inline-flex items-center justify-center mb-3 w-10 h-10 rounded-2xl"
@@ -1021,6 +1023,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                     background: cardBg,
                     border: `1px solid ${cardBorder}`,
                     clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                    boxShadow: cardShadow,
                   }}
                   onClick={() => navigate(`/product/${p.slug}`)}
                   aria-label={`Learn more about ${p.name}`}>
@@ -1166,7 +1169,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             ].map((p, i) => (
               <Reveal key={p.title} delay={i * 100}>
                 <div className="group relative overflow-hidden rounded-3xl p-8 h-full transition-all duration-500 hover:scale-[1.02] cursor-default"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
                   {/* Large watermark number */}
                   <div className="absolute top-0 right-3 pointer-events-none select-none font-black leading-none"
                     style={{ fontSize: 100, opacity: 0.05, color: p.accent, lineHeight: 1 }}>{p.n}</div>
@@ -1307,7 +1310,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
             ].map((t_, i) => (
               <Reveal key={t_.name} delay={i * 100}>
                 <div className="relative overflow-hidden rounded-3xl p-7 h-full flex flex-col"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
                   {/* Stars */}
                   <div className="flex gap-1 mb-5">
                     {[...Array(t_.rating)].map((_, j) => (
@@ -1379,56 +1382,6 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
         </Reveal>
       </section>
 
-      {/* ══════════════════ MITRA PERUSAHAAN ASURANSI ════════════════════════ */}
-      <section id="partners" className="py-20 px-5" style={{ background: sectionBg2 }}>
-        <div className="max-w-7xl mx-auto">
-          <Reveal>
-            <div className="text-center mb-12">
-              <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
-                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
-                {t('Mitra Terpercaya', 'Trusted Partners')}
-              </span>
-              <h2 className="font-black leading-tight tracking-[-0.03em]"
-                style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
-                {t('Mitra Perusahaan', 'Insurance Company')}{' '}
-                <span style={{ color: lpGreen }}>{t('Asuransi Kami', 'Partners')}</span>
-              </h2>
-              <p className="mt-4 text-sm max-w-xl mx-auto" style={{ color: textMuted }}>
-                {t('SurePath bekerja sama dengan perusahaan asuransi terkemuka yang telah terdaftar dan diawasi oleh OJK (Otoritas Jasa Keuangan).', 'SurePath partners with leading insurance companies registered and supervised by OJK.')}
-              </p>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { name: 'Allianz',      color: '#003781', abbr: 'ALZ' },
-              { name: 'AXA Mandiri',  color: '#00008f', abbr: 'AXA' },
-              { name: 'Prudential',   color: '#e31837', abbr: 'PRU' },
-              { name: 'BRI Life',     color: '#003d82', abbr: 'BRI' },
-              { name: 'Sinarmas',     color: '#e30613', abbr: 'SIN' },
-              { name: 'Tokio Marine', color: '#003087', abbr: 'TKM' },
-            ].map((insurer, i) => (
-              <Reveal key={insurer.name} delay={i * 60}>
-                <div className="flex flex-col items-center justify-center gap-3 rounded-2xl p-5 transition-all duration-300 hover:scale-[1.04]"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, minHeight: 100 }}>
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-xs tracking-wide"
-                    style={{ background: `${insurer.color}18`, border: `1px solid ${insurer.color}30`, color: insurer.color }}>
-                    {insurer.abbr}
-                  </div>
-                  <p className="text-xs font-bold text-center leading-tight" style={{ color: textMain }}
-                    aria-label={`Logo ${insurer.name}`}>{insurer.name}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal delay={200}>
-            <p className="text-center text-[0.65rem] mt-8 flex items-center justify-center gap-1.5" style={{ color: textMuted }}>
-              <ShieldCheck size={12} style={{ color: lpGreen }} />
-              {t('Semua mitra asuransi SurePath sudah terdaftar dan diawasi oleh OJK (Otoritas Jasa Keuangan Indonesia).', 'All SurePath insurance partners are registered and supervised by OJK (Indonesia Financial Services Authority).')}
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
       {/* ════════════════════════════ FAQ ════════════════════════════════════ */}
       <section className="py-28 px-5" style={{ background: sectionBg3 }}>
         <div className="max-w-3xl mx-auto">
@@ -1484,7 +1437,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
               <Reveal key={i} delay={i * 40}>
                 <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question"
                   className="rounded-2xl overflow-hidden"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
                   <details className="group">
                     <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none select-none"
                       style={{ color: textMain }}>
@@ -1538,7 +1491,7 @@ const PlatformLanding: React.FC<Props> = ({ onSignIn, navigate, lang, setLang, d
                 ].map(s => (
                   <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
                     className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:border-emerald-500/30"
-                    style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                    style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
                     <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: textMuted }}>{s.key}</span>
                   </a>
                 ))}

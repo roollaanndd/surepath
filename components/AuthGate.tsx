@@ -79,6 +79,56 @@ const AnimatedBackground: React.FC = () => {
   );
 };
 
+// ─── Brand showcase panel with promo video (desktop only) ─────────────────────
+const BrandVideoPanel: React.FC<{ t: (en: string, id: string) => string }> = ({ t }) => {
+  const points = [
+    t('Claims paid in under 5 minutes', 'Klaim cair di bawah 5 menit'),
+    t('Licensed, certified agents', 'Agen resmi & berlisensi'),
+    t('40+ products from 18 insurers', '40+ produk dari 18 insurer'),
+  ];
+  return (
+    <div className="hidden lg:flex lg:w-[46%] xl:w-1/2 relative overflow-hidden flex-col justify-between p-12" style={{ background: '#05080d' }}>
+      {/* Promo video background */}
+      <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.6 }}>
+        <source src="/promo.mp4" type="video/mp4" />
+      </video>
+      {/* Cinematic gradient wash */}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.5) 45%, rgba(5,8,13,0.94) 100%)' }} />
+      <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full blur-3xl" style={{ background: 'rgba(6,224,0,0.16)' }} />
+      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(6,224,0,0.5), transparent)' }} />
+
+      {/* Top: wordmark */}
+      <div className="relative z-10 flex items-center gap-3">
+        <SurePathLogo className="w-10 h-10" />
+        <span style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff' }}>
+          Sure<span style={{ color: 'hsl(119,99%,46%)' }}>Path</span>
+        </span>
+      </div>
+
+      {/* Bottom: tagline + trust points */}
+      <div className="relative z-10 space-y-7 max-w-md">
+        <h2 style={{ fontSize: 'clamp(2rem,3.2vw,3rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', color: '#fff' }}>
+          {t('Protection,', 'Proteksi,')}<br />
+          <span style={{ color: 'hsl(119,99%,46%)' }}>{t('made human.', 'lebih manusiawi.')}</span>
+        </h2>
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          {t('Join 12,400+ Indonesians who trust SurePath for transparent, no-nonsense protection.', 'Bergabung dengan 12.400+ orang yang percayakan ketenangan hidupnya ke SurePath.')}
+        </p>
+        <div className="flex flex-col gap-3">
+          {points.map((p) => (
+            <div key={p} className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(6,224,0,0.14)', border: '1px solid rgba(6,224,0,0.3)' }}>
+                <CheckCircle2 size={13} style={{ color: 'hsl(119,99%,46%)' }} />
+              </div>
+              <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>{p}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AuthGate: React.FC<AuthGateProps> = ({
   onAuthSuccess,
   initialLang = Language.ID,
@@ -330,38 +380,46 @@ const AuthGate: React.FC<AuthGateProps> = ({
   }
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center justify-center p-5 relative overflow-hidden" style={{ background: 'hsl(0, 0%, 8%)', fontFamily: "'Sora', sans-serif" }}>
+    <div className="min-h-screen text-white flex" style={{ background: 'hsl(0, 0%, 7%)', fontFamily: "'Sora', sans-serif" }}>
 
-      <AnimatedBackground />
+      {/* Left brand + promo video panel (desktop) */}
+      <BrandVideoPanel t={t} />
 
-      {/* Subtle grid overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.018]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
+      {/* Right form panel */}
+      <div className="relative flex-1 flex flex-col items-center justify-center p-5 sm:p-8 overflow-hidden">
 
-      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-7">
+        <AnimatedBackground />
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-5">
-          <div className="relative">
-            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-20" style={{ background: 'hsl(119, 99%, 46%)' }} />
-            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border" style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
-              <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
+        {/* Subtle grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.018]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)',
+            backgroundSize: '60px 60px',
+          }}
+        />
+
+        <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-6">
+
+          {/* Logo (compact — full brand lives on the left panel on desktop) */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="absolute -inset-5 rounded-[2.5rem] blur-3xl opacity-20" style={{ background: 'hsl(119, 99%, 46%)' }} />
+              <div className="relative w-20 h-20 rounded-[1.8rem] flex items-center justify-center border" style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
+                <SurePathLogo className="w-12 h-12" />
+              </div>
+            </div>
+            <div className="text-center">
+              <h1 className="lg:hidden" style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
+                Sure<span style={{ color: 'hsl(119, 99%, 46%)' }}>Path</span>
+              </h1>
+              <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
+                {mode === 'REGISTER'
+                  ? t('Create your account', 'Buat akun kamu')
+                  : t('Welcome back', 'Selamat datang kembali')}
+              </p>
             </div>
           </div>
-          <div className="text-center">
-            <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
-              Sure<span style={{ color: 'hsl(119, 99%, 46%)' }}>Path</span>
-            </h1>
-            <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
-              {t('Your protection, made simple.', 'Perlindungan kamu, dibuat mudah.')}
-            </p>
-          </div>
-        </div>
 
         {/* Check-email screen */}
         {mode === 'CHECK_EMAIL' && (
@@ -642,10 +700,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
         )}
 
 
-        <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Shield size={10} style={{ color: 'rgba(6,224,0,0.4)' }} />
-          SurePath · Secure Connection
-        </p>
+          <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Shield size={10} style={{ color: 'rgba(6,224,0,0.4)' }} />
+            SurePath · Secure Connection
+          </p>
+        </div>
       </div>
     </div>
   );

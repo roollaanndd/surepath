@@ -3,7 +3,7 @@ import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { SurePathLogo } from './components/Navbar';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView } from './services/supabaseService';
+import { supabase, getAgentProfile, getAgentByEmail, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView } from './services/supabaseService';
 import TermsModal from './components/TermsModal';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';

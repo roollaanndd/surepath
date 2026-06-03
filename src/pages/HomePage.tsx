@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   ArrowRight, ChevronRight, ChevronDown, Shield, CheckCircle,
-  Zap, Users, Search, BarChart2,
+  Zap, Users, Search, BarChart2, Volume2, VolumeX, Play, Pause,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
 import {
@@ -14,6 +14,21 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
   const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3 } = th;
+
+  // Promo video controls
+  const promoRef = useRef<HTMLVideoElement>(null);
+  const [promoMuted, setPromoMuted] = useState(true);
+  const [promoPlaying, setPromoPlaying] = useState(true);
+  const togglePromoMute = () => {
+    const v = promoRef.current; if (!v) return;
+    v.muted = !v.muted; setPromoMuted(v.muted);
+    if (v.paused) { v.play().catch(() => {}); setPromoPlaying(true); }
+  };
+  const togglePromoPlay = () => {
+    const v = promoRef.current; if (!v) return;
+    if (v.paused) { v.play().catch(() => {}); setPromoPlaying(true); }
+    else { v.pause(); setPromoPlaying(false); }
+  };
 
   const heroConfig   = useWebsiteConfig('hero');
   const statsConfig  = useWebsiteConfig('stats');
@@ -138,6 +153,75 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ VIDEO SHOWCASE ═══════════════ */}
+      <section className="py-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-12 max-w-xl mx-auto">
+              <SectionLabel darkMode={props.darkMode}>{t('Video', 'Video')}</SectionLabel>
+              <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
+                {t('Lihat SurePath', 'See SurePath')}{' '}
+                <span style={{ color: ACCENT }}>{t('beraksi', 'in action')}</span>
+              </h2>
+              <p className="mt-4 text-base leading-relaxed" style={{ color: textMuted }}>
+                {t('Kenali bagaimana kami melindungi ribuan keluarga Indonesia — dalam satu video singkat.', 'See how we protect thousands of Indonesian families — in one short video.')}
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <div
+              className="group relative rounded-[1.75rem] overflow-hidden mx-auto"
+              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${ACCENT}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
+            >
+              <video
+                ref={promoRef}
+                src="/promo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                onClick={togglePromoPlay}
+                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+              />
+              {/* Soft vignette */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
+
+              {/* Center play/pause (shows on hover or when paused) */}
+              <button
+                onClick={togglePromoPlay}
+                aria-label={promoPlaying ? 'Pause video' : 'Play video'}
+                className={`absolute inset-0 m-auto w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 ${promoPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}
+                style={{ background: 'rgba(255,255,255,0.14)', border: '1.5px solid rgba(255,255,255,0.35)' }}
+              >
+                {promoPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white translate-x-0.5" />}
+              </button>
+
+              {/* Mute / unmute */}
+              <button
+                onClick={togglePromoMute}
+                aria-label={promoMuted ? 'Unmute video' : 'Mute video'}
+                className="absolute bottom-4 right-4 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 hover:scale-105"
+                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.25)' }}
+              >
+                {promoMuted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
+              </button>
+
+              {/* Tap-to-unmute hint */}
+              {promoMuted && (
+                <div
+                  className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md pointer-events-none animate-fade-in"
+                  style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.2)' }}
+                >
+                  <Volume2 size={14} style={{ color: ACCENT }} />
+                  <span className="text-[0.65rem] font-bold uppercase tracking-widest text-white">{t('Ketuk untuk suara', 'Tap for sound')}</span>
+                </div>
+              )}
+            </div>
+          </Reveal>
         </div>
       </section>
 

@@ -41,7 +41,10 @@ const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
 const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
 const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
-const PlatformLanding   = lazy(() => import('./src/pages/PlatformLanding'));
+const HomePage          = lazy(() => import('./src/pages/HomePage'));
+const ProductsPage      = lazy(() => import('./src/pages/ProductsPage'));
+const HowItWorksPage    = lazy(() => import('./src/pages/HowItWorksPage'));
+const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
 const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
@@ -704,6 +707,28 @@ const App = () => {
     );
   }
 
+  // Marketing pages — public, accessible without authentication
+  const MARKETING_PAGES: Record<string, React.FC<any>> = {
+    '/products': ProductsPage,
+    '/how-it-works': HowItWorksPage,
+    '/about': AboutPage,
+  };
+  const MarketingPage = MARKETING_PAGES[pathname];
+  if (MarketingPage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <MarketingPage
+          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          navigate={navigate}
+          lang={lang}
+          setLang={setLang}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+        />
+      </Suspense>
+    );
+  }
+
   // Blog routes — /blog and /blog/:slug
   const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
   if (pathname === '/blog' || blogSlugMatch) {
@@ -718,7 +743,7 @@ const App = () => {
     );
   }
 
-  const STATIC_PAGES = ['about', 'careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
+  const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
   const staticPageId = STATIC_PAGES.find(p => pathname === `/${p}`);
   if (staticPageId) {
     return (
@@ -809,7 +834,7 @@ const App = () => {
     return (
       <div className={darkMode ? 'dark' : ''}>
         <Suspense fallback={<PortalLoader />}>
-          <PlatformLanding
+          <HomePage
             onSignIn={() => setAppMode(true)}
             navigate={navigate}
             lang={lang}

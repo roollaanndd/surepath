@@ -1547,9 +1547,12 @@ export async function getMyWalletTransactions(limit = 50): Promise<WalletTransac
 }
 
 export async function getMyWithdrawals(limit = 20): Promise<Withdrawal[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
   const { data, error } = await supabase
     .from('sp_withdrawals')
     .select('*')
+    .eq('agent_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) { console.error('getMyWithdrawals:', error); return []; }
@@ -1577,10 +1580,14 @@ export async function requestWithdrawal(params: {
     ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     : null;
 
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) return { success: false, error: 'Tidak terautentikasi' };
+
   const { data: wd, error: wdErr } = await supabase
     .from('sp_withdrawals')
     .insert({
       ...params,
+      agent_id: authUser.id,
       xendit_fee: XENDIT_FEE,
       net_amount,
       status: initial_status,
@@ -1594,7 +1601,7 @@ export async function requestWithdrawal(params: {
   // Atomically deduct wallet via RPC (SECURITY DEFINER)
   const { error: deductErr } = await supabase.rpc('request_withdrawal_deduct', {
     p_withdrawal_id: wd.id,
-    p_agent_id:      (await supabase.auth.getUser()).data.user?.id,
+    p_agent_id:      authUser.id,
     p_amount:        params.amount,
   });
 

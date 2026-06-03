@@ -30,14 +30,23 @@ INSERT INTO sp_website_config (section_key, is_visible) VALUES
   ('marquee',       true)
 ON CONFLICT (section_key) DO NOTHING;
 
--- RLS: public can read visible sections; admin writes are allowed via anon key (production: restrict to service_role or admin auth)
+-- RLS: public may READ (the marketing site needs this), but writes are NOT open to anon.
+-- Anonymous visitors must never be able to modify/deface website content.
 ALTER TABLE sp_website_config ENABLE ROW LEVEL SECURITY;
 
+-- Public read: anyone (incl. logged-out visitors) can render the site.
 CREATE POLICY "website_config_public_read"
   ON sp_website_config FOR SELECT
+  TO anon, authenticated
   USING (true);
 
-CREATE POLICY "website_config_admin_write"
+-- Writes: signed-in users only. The anon role (logged-out / unauthenticated)
+-- is explicitly excluded, so the public cannot insert/update/delete content.
+-- NOTE: the admin "Editor Website" must run with a Supabase Auth session for
+-- these to succeed. For defense-in-depth, route admin writes through an edge
+-- function using the service_role key instead of the client anon key.
+CREATE POLICY "website_config_authenticated_write"
   ON sp_website_config FOR ALL
+  TO authenticated
   USING (true)
   WITH CHECK (true);

@@ -24,7 +24,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
-const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'INSURANCE_ADMIN', 'OPERATIONS', 'SUPERVISOR'];
+const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR', 'INSURANCE_ADMIN'];
 
 interface Caller {
   authId: string;
@@ -109,6 +109,110 @@ serve(async (req) => {
           .select('id, email, name, phone, role, agent_code, tier, verified, created_at')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Agent stats — own data only; admins may pass agent_id ──────────────
+      case 'get_agent_stats': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const agentId = caller.isAdmin && params.agent_id ? params.agent_id : caller.spUser.id;
+        const [commRes, clientRes, policyRes] = await Promise.all([
+          db.from('sp_commissions').select('commission_amount, status, created_at').eq('agent_id', agentId),
+          db.from('sp_clients').select('id', { count: 'exact', head: true }).eq('agent_id', agentId),
+          db.from('sp_policies').select('id', { count: 'exact', head: true }).eq('agent_id', agentId).eq('status', 'ACTIVE'),
+        ]);
+        return json({ data: { commissions: commRes.data ?? [], clientCount: clientRes.count ?? 0, activePolicies: policyRes.count ?? 0 } });
+      }
+
+      // ── Admin: single user with full PII ─────────────────────────────────
+      case 'admin_get_user': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.user_id) return json({ error: 'Missing user_id' }, 400);
+        const { data, error } = await db.from('sp_users').select('*').eq('id', params.user_id).maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: 'User not found' }, 404);
+        return json({ data });
+      }
+
+      // ── Admin: update user fields (role, verified, suspension, etc.) ─────
+      case 'admin_update_user': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.user_id) return json({ error: 'Missing user_id' }, 400);
+        const ALLOWED = ['role', 'verified', 'is_suspended', 'tier', 'commission_rate', 'name', 'phone'];
+        const updates: Record<string, unknown> = {};
+        for (const k of ALLOWED) {
+          if (k in params) updates[k] = params[k];
+        }
+        if (Object.keys(updates).length === 0) return json({ error: 'No valid fields to update' }, 400);
+        const { data, error } = await db.from('sp_users').update(updates).eq('id', params.user_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list all clients; agent can list their own ────────────────
+      case 'admin_list_clients': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        let q = db.from('sp_clients').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        if (caller.isAdmin && params.agent_id) {
+          q = q.eq('agent_id', params.agent_id);
+        } else if (!caller.isAdmin) {
+          q = q.eq('agent_id', caller.spUser.id);
+        }
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list commissions ───────────────────────────────────────────
+      case 'admin_list_commissions': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_commissions').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        if (params.agent_id) q = q.eq('agent_id', params.agent_id);
+        if (params.status)   q = q.eq('status', params.status);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: approve / reject commission ───────────────────────────────
+      case 'admin_update_commission': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.commission_id || !params.status) return json({ error: 'Missing commission_id or status' }, 400);
+        const VALID_STATUSES = ['PENDING', 'APPROVED', 'PAID', 'REJECTED'];
+        if (!VALID_STATUSES.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
+        const { data, error } = await db.from('sp_commissions').update({ status: params.status }).eq('id', params.commission_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list claims ────────────────────────────────────────────────
+      case 'admin_list_claims': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_claims').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        if (params.status) q = q.eq('status', params.status);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list payments ──────────────────────────────────────────────
+      case 'admin_list_payments': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_payments').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        if (params.status) q = q.eq('status', params.status);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list policies ──────────────────────────────────────────────
+      case 'admin_list_policies': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_policies').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        if (params.agent_id) q = q.eq('agent_id', params.agent_id);
+        if (params.status)   q = q.eq('status', params.status);
+        const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
         return json({ data });
       }

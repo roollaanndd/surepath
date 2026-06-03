@@ -2585,6 +2585,33 @@ export async function getTrafficStats(): Promise<TrafficStats> {
   return { daily, topPages };
 }
 
+// ─── Data Gateway Client ─────────────────────────────────────────────────────
+// Calls the data-gateway edge function with the current Supabase Auth session JWT.
+// All sensitive table reads/writes should go through here instead of direct DB calls.
+
+export async function callGateway(
+  action: string,
+  params?: Record<string, unknown>,
+): Promise<{ data?: any; error?: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) return { error: 'Not authenticated' };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action, params }),
+    });
+    return res.json();
+  } catch (e) {
+    return { error: String((e as Error)?.message ?? e) };
+  }
+}
+
 // ─── Website CMS Config (sp_website_config) ──────────────────────────────────
 
 export interface SpWebsiteConfig {

@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, AlertTriangle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { supabase } from '../../services/supabaseService';
 import { db } from '../../db';
 import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
+
+const ADMIN_ROLES = [
+  UserRole.MASTER_ADMIN,
+  UserRole.ADMIN,
+  UserRole.FINANCE,
+  UserRole.FINANCE_MANAGER,
+  UserRole.FINANCE_DIRECTOR,
+  UserRole.INSURANCE_ADMIN,
+];
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 interface AdminLoginProps {
   onLoginSuccess: (user: any) => void;
@@ -10,18 +21,21 @@ interface AdminLoginProps {
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [showPass, setShowPass]         = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+  const [legacyWarning, setLegacyWarning] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setLegacyWarning(false);
 
-    const rl = checkRateLimit(email);
+    const normalEmail = email.trim().toLowerCase();
+    const rl = checkRateLimit(normalEmail);
     if (!rl.allowed) {
       const mins = Math.ceil(((rl.lockedUntilMs ?? Date.now()) - Date.now()) / 60000);
       setError(`Terlalu banyak percobaan. Coba lagi dalam ${mins} menit.`);
@@ -30,30 +44,79 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
     }
 
     try {
-      const user = await db.users.where('email').equals(email.trim().toLowerCase()).first();
+      // ── Path 1: Supabase Auth (preferred — provides verifiable JWT for data-gateway) ──
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: normalEmail,
+        password,
+      });
 
-      if (user && user.passwordHash && user.salt) {
-        if (![UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN].includes(user.role)) {
-          recordFailedAttempt(email);
+      if (!authError && authData.user && authData.session) {
+        // Fetch the caller's SurePath profile via the gateway (uses service_role, no direct DB)
+        const gwRes = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authData.session.access_token}`,
+          },
+          body: JSON.stringify({ action: 'get_my_profile' }),
+        });
+        const gwData: { data?: any; error?: string } = await gwRes.json();
+        const spUser = gwData.data ?? null;
+
+        if (!spUser) {
+          await supabase.auth.signOut();
+          recordFailedAttempt(normalEmail);
+          setError('Akun tidak ditemukan di profil SurePath. Hubungi administrator.');
+          return;
+        }
+
+        if (!ADMIN_ROLES.includes(spUser.role as UserRole)) {
+          await supabase.auth.signOut();
+          recordFailedAttempt(normalEmail);
           setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
-          setLoading(false);
+          return;
+        }
+
+        clearRateLimit(normalEmail);
+        onLoginSuccess({
+          id:         spUser.id,
+          name:       spUser.name,
+          email:      spUser.email,
+          role:       spUser.role,
+          supabaseId: authData.user.id,
+          nodeId:     spUser.agent_code ?? `SP-${authData.user.id.slice(0, 8).toUpperCase()}`,
+          trustScore: spUser.trust_score ?? 85,
+          token:      authData.session.access_token,
+        });
+        return;
+      }
+
+      // ── Path 2: IndexedDB legacy (deprecated — unmigrated admins only) ──────────────
+      // This path has no server-verifiable identity. Admins should be migrated to
+      // Supabase Auth so they can authenticate with the data-gateway.
+      const user = await db.users.where('email').equals(normalEmail).first();
+
+      if (user?.passwordHash && user?.salt) {
+        if (!ADMIN_ROLES.includes(user.role as UserRole)) {
+          recordFailedAttempt(normalEmail);
+          setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
           return;
         }
 
         const isValid = await verifyPassword(password, user.passwordHash, user.salt);
         if (isValid) {
-          clearRateLimit(email);
-          const token = createSessionToken(user);
-          onLoginSuccess({ ...user, token });
+          clearRateLimit(normalEmail);
+          setLegacyWarning(true);
+          onLoginSuccess({ ...user, token: createSessionToken(user) });
         } else {
-          recordFailedAttempt(email);
-          const remaining = checkRateLimit(email).remainingAttempts;
+          recordFailedAttempt(normalEmail);
+          const remaining = checkRateLimit(normalEmail).remainingAttempts;
           setError(remaining > 0
             ? `Kredensial salah. Sisa percobaan: ${remaining}`
             : 'Akun dikunci sementara. Coba lagi dalam 15 menit.');
         }
       } else {
-        recordFailedAttempt(email);
+        recordFailedAttempt(normalEmail);
         setError('Kredensial salah atau akun tidak ditemukan.');
       }
     } catch {
@@ -74,7 +137,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         backgroundSize: '80px 80px',
       }} />
 
-      {/* Faint radial glow at centre — not bright */}
+      {/* Faint radial glow at centre */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(22,163,74,0.06) 0%, transparent 70%)',
       }} />
@@ -126,6 +189,18 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
           className="rounded-2xl p-6 space-y-5"
           style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
+          {legacyWarning && (
+            <div
+              className="p-3 rounded-xl flex items-start gap-2.5"
+              style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
+            >
+              <AlertTriangle className="shrink-0 mt-0.5" size={14} style={{ color: '#f59e0b' }} />
+              <p style={{ fontSize: '0.68rem', fontWeight: 500, color: '#fcd34d' }}>
+                Akun ini belum terhubung ke Supabase Auth. Hubungi super admin untuk migrasi.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div
               className="p-3 rounded-xl flex items-start gap-2.5"

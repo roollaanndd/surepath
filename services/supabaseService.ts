@@ -542,18 +542,13 @@ export async function submitClaim(data: Omit<SpClaim, 'id' | 'created_at' | 'cla
 }
 
 export async function updateClaimStatus(id: string, status: SpClaim['status'], admin_notes?: string): Promise<boolean> {
-  const payload: any = { status };
-  if (admin_notes !== undefined) payload.admin_notes = admin_notes;
-  const { error } = await supabase.from('sp_claims').update(payload).eq('id', id);
+  const { error } = await callGateway('admin_update_claim', { claim_id: id, status, adjuster_notes: admin_notes });
   if (error) { console.error('updateClaimStatus:', error); return false; }
   return true;
 }
 
 export async function getAllClaims(): Promise<SpClaim[]> {
-  const { data, error } = await supabase
-    .from('sp_claims')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await callGateway('admin_list_claims', { limit: 500 });
   if (error) { console.error('getAllClaims:', error); return []; }
   return (data ?? []) as SpClaim[];
 }
@@ -594,32 +589,22 @@ export async function addNotification(data: Omit<SpNotification, 'id' | 'created
   await supabase.from('sp_notifications').insert({ ...data, read: false });
 }
 
-// ─── Admin: Agent Management ──────────────────────────────────────────────────
+// ─── Admin: Agent Management (via data-gateway) ───────────────────────────────
 
 export async function getAllAgents(): Promise<SpUser[]> {
-  const { data, error } = await supabase
-    .from('sp_users')
-    .select('*')
-    .eq('role', 'AGENT')
-    .order('created_at', { ascending: false });
+  const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 500 });
   if (error) { console.error('getAllAgents:', error); return []; }
   return (data ?? []) as SpUser[];
 }
 
 export async function updateAgentVerification(agentId: string, verified: boolean): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_users')
-    .update({ verified, updated_at: new Date().toISOString() })
-    .eq('id', agentId);
+  const { error } = await callGateway('admin_update_user', { user_id: agentId, verified });
   if (error) { console.error('updateAgentVerification:', error); return false; }
   return true;
 }
 
 export async function updateAgentCommissionRate(agentId: string, rate: number): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_users')
-    .update({ commission_rate: rate, updated_at: new Date().toISOString() })
-    .eq('id', agentId);
+  const { error } = await callGateway('admin_update_user', { user_id: agentId, commission_rate: rate });
   if (error) { console.error('updateAgentCommissionRate:', error); return false; }
   return true;
 }
@@ -633,30 +618,8 @@ export async function registerAgent(data: {
   ktp?: string;
   address?: string;
 }): Promise<SpUser | null> {
-  const agentCode =
-    'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000));
-
-  const payload = {
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    ktp: data.ktp ?? null,
-    address: data.address ?? null,
-    role: 'AGENT',
-    agent_code: agentCode,
-    commission_rate: 0.1,
-    monthly_target: 50000000,
-    trust_score: 80,
-    verified: false,
-  };
-
-  const { data: result, error } = await supabase
-    .from('sp_users')
-    .insert(payload)
-    .select()
-    .single();
-
-  if (error) return null;
+  const { data: result, error } = await callGateway('admin_register_agent', data);
+  if (error) { console.error('registerAgent:', error); return null; }
   return result as SpUser;
 }
 
@@ -1628,18 +1591,9 @@ export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
   client_name?: string;
   product_name?: string;
 }>> {
-  const { data, error } = await supabase
-    .from('sp_payments')
-    .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const { data, error } = await callGateway('admin_list_payments', { limit });
   if (error) { console.error('getAdminPayments:', error); return []; }
-  return (data ?? []).map((p: any) => ({
-    ...p,
-    order_number: p.sp_policy_orders?.order_number,
-    client_name: p.sp_policy_orders?.client_name,
-    product_name: p.sp_policy_orders?.product_name,
-  }));
+  return (data ?? []) as SpPayment[];
 }
 
 // ─── Agent Wallet ─────────────────────────────────────────────────────────────
@@ -1777,11 +1731,7 @@ export async function getAdminWithdrawals(limit = 200): Promise<Array<Withdrawal
   agent_email?: string;
   agent_phone?: string;
 }>> {
-  const { data, error } = await supabase
-    .from('sp_withdrawals')
-    .select('*, sp_users!agent_id(name, email, phone)')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  const { data, error } = await callGateway('admin_list_withdrawals', { limit });
   if (error) { console.error('getAdminWithdrawals:', error); return []; }
   return (data ?? []).map((w: any) => ({
     ...w,
@@ -1796,29 +1746,9 @@ export async function approveWithdrawal(
   level: 1 | 2 | 3,
   approver_id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const ts = new Date().toISOString();
-  const updates: Record<string, unknown> = { updated_at: ts };
-
-  if (level === 1) {
-    updates.l1_approved_by = approver_id;
-    updates.l1_approved_at = ts;
-    // Check if needs L2
-    const { data: wd } = await supabase.from('sp_withdrawals').select('amount').eq('id', withdrawal_id).single();
-    updates.status = (wd?.amount ?? 0) >= 10_000_000 ? 'PENDING_L2' : 'APPROVED';
-  } else if (level === 2) {
-    updates.l2_approved_by = approver_id;
-    updates.l2_approved_at = ts;
-    const { data: wd } = await supabase.from('sp_withdrawals').select('amount').eq('id', withdrawal_id).single();
-    updates.status = (wd?.amount ?? 0) >= 25_000_000 ? 'PENDING_L3' : 'APPROVED';
-  } else {
-    updates.l3_approved_by = approver_id;
-    updates.l3_approved_at = ts;
-    updates.status = 'APPROVED';
-  }
-
-  const { error } = await supabase.from('sp_withdrawals').update(updates).eq('id', withdrawal_id);
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  const { data, error } = await callGateway('admin_approve_withdrawal', { withdrawal_id, level, approver_id });
+  if (error) return { success: false, error };
+  return { success: true, ...data };
 }
 
 export async function rejectWithdrawal(
@@ -1826,34 +1756,9 @@ export async function rejectWithdrawal(
   rejector_id: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Fetch withdrawal details first
-  const { data: wd, error: fetchErr } = await supabase
-    .from('sp_withdrawals')
-    .select('agent_id, amount')
-    .eq('id', withdrawal_id)
-    .single();
-
-  if (fetchErr || !wd) return { success: false, error: 'Withdrawal not found' };
-
-  const { error: updErr } = await supabase.from('sp_withdrawals').update({
-    status:           'REJECTED',
-    rejected_by:      rejector_id,
-    rejected_at:      new Date().toISOString(),
-    rejection_reason: reason,
-    updated_at:       new Date().toISOString(),
-  }).eq('id', withdrawal_id);
-
-  if (updErr) return { success: false, error: updErr.message };
-
-  // Reverse wallet deduction
-  await supabase.rpc('reverse_withdrawal', {
-    p_withdrawal_id: withdrawal_id,
-    p_agent_id:      wd.agent_id,
-    p_amount:        wd.amount,
-    p_reason:        'Penarikan ditolak: ' + reason,
-  });
-
-  return { success: true };
+  const { data, error } = await callGateway('admin_reject_withdrawal', { withdrawal_id, rejector_id, reason });
+  if (error) return { success: false, error };
+  return { success: true, ...data };
 }
 
 export async function triggerDisbursement(withdrawal_id: string): Promise<{ success: boolean; error?: string }> {
@@ -1960,15 +1865,12 @@ export async function updateAgentTier(
   tier: 'STAR' | 'ELITE' | null,
   assignedBy: string,
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_users')
-    .update({
-      tier,
-      tier_assigned_by: tier ? assignedBy : null,
-      tier_assigned_at: tier ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', agentId);
+  const { error } = await callGateway('admin_update_user', {
+    user_id: agentId,
+    tier,
+    tier_assigned_by: tier ? assignedBy : null,
+    tier_assigned_at: tier ? new Date().toISOString() : null,
+  });
   if (error) { console.error('updateAgentTier:', error); return false; }
   return true;
 }

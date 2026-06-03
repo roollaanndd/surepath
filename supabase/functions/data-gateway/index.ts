@@ -100,17 +100,67 @@ serve(async (req) => {
         return json({ data });
       }
 
-      // Admin-only: list users. Rejected for non-admins and (by design) for
-      // any caller without a verifiable Supabase Auth admin identity.
+      // Admin-only: list users. Optional role filter via params.role.
       case 'admin_list_users': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        const { data, error } = await db
+        let q = db
           .from('sp_users')
-          .select('id, email, name, phone, role, agent_code, tier, verified, created_at')
+          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, is_suspended, tc_accepted, tc_accepted_at, created_at')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
+        if (params.role) q = q.eq('role', params.role);
+        const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+      // Update caller's own profile (safe fields only — role never changes here).
+      case 'update_my_profile': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const SAFE = ['name', 'phone', 'address', 'profile_photo_url', 'ktp_document_url'];
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const k of SAFE) {
+          if (k in params) updates[k] = params[k];
+        }
+        const { data, error } = await db.from('sp_users').update(updates).eq('id', caller.spUser.id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // Admin: create a new agent profile in sp_users.
+      case 'admin_register_agent': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.name || !params.email || !params.phone) return json({ error: 'name, email, phone required' }, 400);
+        const agentCode = 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000));
+        const { data, error } = await db.from('sp_users').insert({
+          name: params.name, email: params.email, phone: params.phone,
+          ktp: params.ktp ?? null, address: params.address ?? null,
+          role: 'AGENT', agent_code: agentCode, commission_rate: 0.1,
+          monthly_target: 50000000, trust_score: 80, verified: false,
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // Admin: invite a user to Supabase Auth (sends a magic-link email).
+      case 'admin_invite_user': {
+        if (caller.role !== 'MASTER_ADMIN') return json({ error: 'Forbidden: MASTER_ADMIN only' }, 403);
+        if (!params.email) return json({ error: 'email required' }, 400);
+        const invRole = String(params.role ?? 'ADMIN');
+        const invName = params.name ? String(params.name) : String(params.email).split('@')[0];
+        const { data: inv, error: invErr } = await db.auth.admin.inviteUserByEmail(String(params.email), {
+          redirectTo: 'https://myinsurepath.com/admin',
+        });
+        if (invErr) return json({ error: invErr.message }, 400);
+        if (inv.user?.id) {
+          await db.from('sp_users').upsert({
+            id: inv.user.id,
+            email: String(params.email),
+            name: invName,
+            role: invRole,
+          }, { onConflict: 'id' });
+        }
+        return json({ data: { id: inv.user?.id, email: inv.user?.email } });
       }
 
       // ── Agent stats — own data only; admins may pass agent_id ──────────────
@@ -135,16 +185,16 @@ serve(async (req) => {
         return json({ data });
       }
 
-      // ── Admin: update user fields (role, verified, suspension, etc.) ─────
+      // ── Admin: update user fields (role, verified, tier, etc.) ──────────
       case 'admin_update_user': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.user_id) return json({ error: 'Missing user_id' }, 400);
-        const ALLOWED = ['role', 'verified', 'is_suspended', 'tier', 'commission_rate', 'name', 'phone'];
-        const updates: Record<string, unknown> = {};
+        const ALLOWED = ['role', 'verified', 'is_suspended', 'tier', 'tier_assigned_by', 'tier_assigned_at', 'commission_rate', 'name', 'phone'];
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const k of ALLOWED) {
           if (k in params) updates[k] = params[k];
         }
-        if (Object.keys(updates).length === 0) return json({ error: 'No valid fields to update' }, 400);
+        if (Object.keys(updates).length === 1) return json({ error: 'No valid fields to update' }, 400);
         const { data, error } = await db.from('sp_users').update(updates).eq('id', params.user_id).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
@@ -215,6 +265,79 @@ serve(async (req) => {
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+      // ── Admin: update claim status ────────────────────────────────────────
+      case 'admin_update_claim': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.claim_id || !params.status) return json({ error: 'claim_id and status required' }, 400);
+        const VALID = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'PAID'];
+        if (!VALID.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
+        const updates: Record<string, unknown> = { status: params.status, updated_at: new Date().toISOString() };
+        if (params.adjuster_notes) updates.adjuster_notes = params.adjuster_notes;
+        const { data, error } = await db.from('sp_claims').update(updates).eq('id', params.claim_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: list withdrawal requests ──────────────────────────────────
+      case 'admin_list_withdrawals': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_withdrawals')
+          .select('*, sp_users!agent_id(name, email, phone)')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (params.status) q = q.eq('status', params.status);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: multi-level withdrawal approval ───────────────────────────
+      case 'admin_approve_withdrawal': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.withdrawal_id || !params.level || !params.approver_id) {
+          return json({ error: 'withdrawal_id, level, approver_id required' }, 400);
+        }
+        const level = Number(params.level);
+        const ts = new Date().toISOString();
+        const updates: Record<string, unknown> = { updated_at: ts };
+        if (level === 1) {
+          updates.l1_approved_by = params.approver_id; updates.l1_approved_at = ts;
+          const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
+          updates.status = (wd?.amount ?? 0) >= 10_000_000 ? 'PENDING_L2' : 'APPROVED';
+        } else if (level === 2) {
+          updates.l2_approved_by = params.approver_id; updates.l2_approved_at = ts;
+          const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
+          updates.status = (wd?.amount ?? 0) >= 25_000_000 ? 'PENDING_L3' : 'APPROVED';
+        } else {
+          updates.l3_approved_by = params.approver_id; updates.l3_approved_at = ts;
+          updates.status = 'APPROVED';
+        }
+        const { data, error } = await db.from('sp_withdrawals').update(updates).eq('id', params.withdrawal_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: reject a withdrawal and reverse wallet deduction ──────────
+      case 'admin_reject_withdrawal': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.withdrawal_id || !params.rejector_id || !params.reason) {
+          return json({ error: 'withdrawal_id, rejector_id, reason required' }, 400);
+        }
+        const { data: wd, error: fetchErr } = await db.from('sp_withdrawals').select('agent_id, amount').eq('id', params.withdrawal_id).single();
+        if (fetchErr || !wd) return json({ error: 'Withdrawal not found' }, 404);
+        const { error: updErr } = await db.from('sp_withdrawals').update({
+          status: 'REJECTED', rejected_by: params.rejector_id,
+          rejected_at: new Date().toISOString(), rejection_reason: params.reason,
+          updated_at: new Date().toISOString(),
+        }).eq('id', params.withdrawal_id);
+        if (updErr) return json({ error: updErr.message }, 400);
+        await db.rpc('reverse_withdrawal', {
+          p_withdrawal_id: params.withdrawal_id, p_agent_id: wd.agent_id,
+          p_amount: wd.amount, p_reason: 'Penarikan ditolak: ' + String(params.reason),
+        });
+        return json({ data: { success: true } });
       }
 
       default:

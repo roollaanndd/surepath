@@ -18,7 +18,7 @@ import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   updateAgentTier,
-  supabase,
+  supabase, callGateway,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
@@ -1760,12 +1760,27 @@ export const UserManagementView = () => {
   const [users, setUsers] = useState<UserWithActive[]>([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('All');
-  const [editRoleId, setEditRoleId] = useState<number | null>(null);
+  const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: UserRole.CUSTOMER as UserRole });
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: UserRole.ADMIN as UserRole });
   const [addError, setAddError] = useState<string | null>(null);
+  const [addLoading, setAddLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const load = () => db.users.toArray().then(all => setUsers(all as UserWithActive[]));
+  const load = async () => {
+    setLoadError(null);
+    try {
+      const result = await callGateway('admin_list_users', { limit: 500 });
+      const rows = (result as any)?.data ?? [];
+      setUsers(rows.map((u: any) => ({
+        ...u,
+        isActive: !u.is_suspended,
+        memberSince: u.created_at,
+      })));
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Gagal memuat data user');
+    }
+  };
 
   useEffect(() => { load(); }, []);
 
@@ -1778,16 +1793,21 @@ export const UserManagementView = () => {
   });
 
   const handleRoleChange = async (u: UserWithActive, newRole: UserRole) => {
-    if (u.id == null) return;
-    await db.users.update(u.id, { role: newRole });
-    setEditRoleId(null);
-    load();
+    if (!u.id) return;
+    try {
+      await callGateway('admin_update_user', { user_id: u.id, role: newRole });
+      setEditRoleId(null);
+      load();
+    } catch { /* role update failed silently */ }
   };
 
   const handleToggleActive = async (u: UserWithActive) => {
-    if (u.id == null) return;
-    await db.users.update(u.id, { isActive: !(u.isActive !== false) } as Partial<User>);
-    load();
+    if (!u.id) return;
+    const isActive = u.isActive !== false;
+    try {
+      await callGateway('admin_update_user', { user_id: u.id, is_suspended: isActive });
+      load();
+    } catch { /* toggle failed silently */ }
   };
 
   const handleAddUser = async () => {
@@ -1796,28 +1816,28 @@ export const UserManagementView = () => {
       setAddError('Nama dan email wajib diisi.');
       return;
     }
-    const existing = await db.users.where('email').equals(newUser.email).first();
-    if (existing) {
-      setAddError('Email sudah terdaftar.');
-      return;
+    setAddLoading(true);
+    try {
+      await callGateway('admin_invite_user', {
+        email: newUser.email.trim(),
+        name: newUser.name.trim(),
+        role: newUser.role,
+      });
+      setShowAddModal(false);
+      setNewUser({ name: '', email: '', role: UserRole.ADMIN });
+      load();
+    } catch (e: any) {
+      setAddError(e?.message ?? 'Gagal mengirim undangan.');
+    } finally {
+      setAddLoading(false);
     }
-    await db.users.add({
-      name: newUser.name.trim(),
-      email: newUser.email.trim(),
-      role: newUser.role,
-      phone: '',
-      nodeId: `SP-NODE-${Date.now()}`,
-      trustScore: 70,
-      memberSince: new Date().toISOString(),
-      verified: false,
-    });
-    setShowAddModal(false);
-    setNewUser({ name: '', email: '', role: UserRole.CUSTOMER });
-    load();
   };
 
   return (
     <div className="space-y-6 animate-fade-in text-white">
+      {loadError && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 font-bold">{loadError}</div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -2015,9 +2035,10 @@ export const UserManagementView = () => {
               </button>
               <button
                 onClick={handleAddUser}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95"
+                disabled={addLoading}
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Simpan
+                {addLoading ? 'Mengirim...' : 'Kirim Undangan'}
               </button>
             </div>
           </div>

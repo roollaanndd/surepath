@@ -102,13 +102,9 @@ export interface AgentStats {
 // ─── Agent Profile ────────────────────────────────────────────────────────────
 
 export async function getAgentProfile(agentId: string): Promise<SpUser | null> {
-  const { data, error } = await supabase
-    .from('sp_users')
-    .select('*')
-    .eq('id', agentId)
-    .single();
+  const { data, error } = await callGateway('get_user_profile', { user_id: agentId });
   if (error) return null;
-  return data as SpUser;
+  return (data as SpUser) ?? null;
 }
 
 export async function updateAgentProfile(
@@ -887,32 +883,14 @@ export async function getAgentCoinBalance(agentId: string): Promise<number> {
 export async function awardCoins(
   agentId: string, coins: number, orderId: string, description: string
 ): Promise<void> {
-  await supabase.from('sp_coin_ledger').insert({
-    agent_id: agentId,
-    type: 'EARNED',
-    coins,
-    rp_value: coins * 1000,
-    order_id: orderId,
-    description,
-  });
-  // Update cached balance on sp_users
-  await supabase.rpc('increment_coins_balance', { p_agent_id: agentId, p_delta: coins }).then(() => {});
+  await callGateway('award_coins', { agent_id: agentId, coins, order_id: orderId, description }).catch(e => console.error('awardCoins:', e));
 }
 
 export async function redeemCoins(
-  agentId: string, coins: number, description: string
+  _agentId: string, coins: number, description: string
 ): Promise<boolean> {
-  const balance = await getAgentCoinBalance(agentId);
-  if (balance < coins) return false;
-  const { error } = await supabase.from('sp_coin_ledger').insert({
-    agent_id: agentId,
-    type: 'REDEEMED',
-    coins: -Math.abs(coins),
-    rp_value: -(coins * 1000),
-    description,
-  });
+  const { error } = await callGateway('redeem_coins', { coins, description });
   if (error) { console.error('redeemCoins:', error); return false; }
-  await supabase.rpc('increment_coins_balance', { p_agent_id: agentId, p_delta: -coins }).then(() => {});
   return true;
 }
 
@@ -970,56 +948,9 @@ export interface AdminStats {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-  const [ordersRes, paymentsRes, agentsRes, commissionsRes] = await Promise.all([
-    supabase.from('sp_policy_orders').select('status, total_premium, agent_id'),
-    supabase.from('sp_payments').select('status, paid_amount'),
-    supabase.from('sp_users').select('id, name').eq('role', 'AGENT'),
-    supabase.from('sp_commissions').select('status, commission_amount').eq('status', 'PENDING'),
-  ]);
-
-  const orders = (ordersRes.data ?? []) as any[];
-  const payments = (paymentsRes.data ?? []) as any[];
-  const agents = (agentsRes.data ?? []) as any[];
-  const commissions = (commissionsRes.data ?? []) as any[];
-
-  const ordersByStatus: Record<string, number> = {};
-  let totalPremiumIssued = 0;
-  const agentPremiumMap: Record<string, { premium: number; orders: number }> = {};
-
-  orders.forEach((o: any) => {
-    ordersByStatus[o.status] = (ordersByStatus[o.status] ?? 0) + 1;
-    if (o.status === 'ISSUED') totalPremiumIssued += o.total_premium ?? 0;
-    if (o.agent_id) {
-      if (!agentPremiumMap[o.agent_id]) agentPremiumMap[o.agent_id] = { premium: 0, orders: 0 };
-      agentPremiumMap[o.agent_id].premium += o.total_premium ?? 0;
-      agentPremiumMap[o.agent_id].orders += 1;
-    }
-  });
-
-  const agentNameMap: Record<string, string> = {};
-  agents.forEach((a: any) => { agentNameMap[a.id] = a.name; });
-
-  const topAgents = Object.entries(agentPremiumMap)
-    .map(([agent_id, v]) => ({ agent_id, name: agentNameMap[agent_id] ?? 'Agent', ...v }))
-    .sort((a, b) => b.premium - a.premium)
-    .slice(0, 5);
-
-  const totalPremiumPaid = payments
-    .filter((p: any) => p.status === 'PAID')
-    .reduce((sum: number, p: any) => sum + (p.paid_amount ?? 0), 0);
-
-  const pendingCommissions = commissions
-    .reduce((sum: number, c: any) => sum + (c.commission_amount ?? 0), 0);
-
-  return {
-    totalOrders: orders.length,
-    ordersByStatus,
-    totalPremiumIssued,
-    totalPremiumPaid,
-    activeAgents: agents.length,
-    pendingCommissions,
-    topAgents,
-  };
+  const { data, error } = await callGateway('admin_stats', {});
+  if (error) { console.error('getAdminStats:', error); return { totalOrders: 0, ordersByStatus: {}, totalPremiumIssued: 0, totalPremiumPaid: 0, activeAgents: 0, pendingCommissions: 0, topAgents: [] }; }
+  return (data as any) as AdminStats;
 }
 
 // ─── Insurer & Product Terms ──────────────────────────────────────────────────
@@ -1388,19 +1319,17 @@ export interface SpAdminNotification {
 }
 
 export async function createAdminNotification(data: Omit<SpAdminNotification, 'id' | 'created_at' | 'read'>): Promise<void> {
-  await supabase.from('sp_admin_notifications').insert({ ...data, read: false });
+  await callGateway('admin_create_notification', data).catch(() => {});
 }
 
 export async function getAdminNotifications(unreadOnly = false): Promise<SpAdminNotification[]> {
-  let q = supabase.from('sp_admin_notifications').select('*').order('created_at', { ascending: false }).limit(50);
-  if (unreadOnly) q = q.eq('read', false);
-  const { data, error } = await q;
+  const { data, error } = await callGateway('admin_list_notifications', { unread_only: unreadOnly, limit: 50 });
   if (error) { console.error('getAdminNotifications:', error); return []; }
   return (data ?? []) as SpAdminNotification[];
 }
 
 export async function markAdminNotificationRead(id: string): Promise<void> {
-  await supabase.from('sp_admin_notifications').update({ read: true }).eq('id', id);
+  await callGateway('admin_mark_notification_read', { notification_id: id }).catch(() => {});
 }
 
 // ─── Auto-send review link on order submission ────────────────────────────────
@@ -2336,31 +2265,21 @@ export function getRateLimitBlocks(): Array<{ email: string; attempts: number; u
 }
 
 export async function getSecurityStats(): Promise<SecurityStats> {
-  const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const { data: sessions } = await supabase
-    .from('sp_user_sessions')
-    .select('last_seen')
-    .gte('last_seen', since);
-  const activeSessionsCount = sessions?.length ?? 0;
-  const allSessions = await supabase.from('sp_user_sessions').select('last_seen').order('last_seen', { ascending: false }).limit(1);
-  const lastLoginAt = (allSessions.data?.[0] as any)?.last_seen ?? null;
+  const { data } = await callGateway('admin_security_stats', {});
+  const d = (data as any) ?? {};
   return {
     failedLogins24h: getFailedLoginAttempts(),
-    activeSessionsCount,
-    lastLoginAt,
+    activeSessionsCount: d.activeSessionsCount ?? 0,
+    lastLoginAt: d.lastLoginAt ?? null,
     blockedEntries: getRateLimitBlocks(),
   };
 }
 
 export async function getSessionActivityByHour(): Promise<Array<{ hour: number; count: number }>> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase
-    .from('sp_user_sessions')
-    .select('last_seen')
-    .gte('last_seen', since);
-  if (error || !data) return [];
+  const { data } = await callGateway('admin_security_stats', {});
+  const rows: Array<{ last_seen: string }> = (data as any)?.sessionsByHour ?? [];
   const buckets: Record<number, number> = {};
-  for (const row of data as { last_seen: string }[]) {
+  for (const row of rows) {
     const h = new Date(row.last_seen).getHours();
     buckets[h] = (buckets[h] ?? 0) + 1;
   }
@@ -2394,7 +2313,7 @@ export async function uploadAgentAvatar(agentId: string, base64: string): Promis
   const { error } = await supabase.storage.from('agent-profiles').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
   if (error) { console.error('uploadAgentAvatar:', error); return null; }
   const { data } = supabase.storage.from('agent-profiles').getPublicUrl(path);
-  await supabase.from('sp_users').update({ profile_photo_url: data.publicUrl }).eq('id', agentId);
+  await callGateway('update_my_profile', { profile_photo_url: data.publicUrl }).catch(() => {});
   return data.publicUrl;
 }
 
@@ -2404,20 +2323,14 @@ export async function uploadAgentKtp(agentId: string, file: File): Promise<strin
   const { error } = await supabase.storage.from('agent-docs').upload(path, file, { upsert: true, contentType: file.type });
   if (error) { console.error('uploadAgentKtp:', error); return null; }
   const { data } = supabase.storage.from('agent-docs').getPublicUrl(path);
-  await supabase.from('sp_users').update({ ktp_document_url: data.publicUrl }).eq('id', agentId);
+  await callGateway('update_my_profile', { ktp_document_url: data.publicUrl }).catch(() => {});
   return data.publicUrl;
 }
 
 export async function getTrafficStats(): Promise<TrafficStats> {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase
-    .from('sp_page_views')
-    .select('page, ts')
-    .gte('ts', since)
-    .order('ts', { ascending: true });
+  const { data, error } = await callGateway('admin_traffic_stats', {});
   if (error || !data) return { daily: [], topPages: [] };
-  const rows = data as { page: string; ts: string }[];
-  // Build last-7-days buckets
+  const rows = (data as any[]);
   const dailyMap: Record<string, number> = {};
   const pageMap: Record<string, number> = {};
   const today = new Date();
@@ -2427,15 +2340,12 @@ export async function getTrafficStats(): Promise<TrafficStats> {
     dailyMap[d.toISOString().slice(0, 10)] = 0;
   }
   for (const row of rows) {
-    const date = row.ts.slice(0, 10);
+    const date = (row.ts as string).slice(0, 10);
     if (date in dailyMap) dailyMap[date]++;
     pageMap[row.page] = (pageMap[row.page] ?? 0) + 1;
   }
   const daily = Object.entries(dailyMap).map(([date, count]) => ({ date, count }));
-  const topPages = Object.entries(pageMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([page, count]) => ({ page, count }));
+  const topPages = Object.entries(pageMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([page, count]) => ({ page, count }));
   return { daily, topPages };
 }
 

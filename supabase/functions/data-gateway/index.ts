@@ -340,6 +340,113 @@ serve(async (req) => {
         return json({ data: { success: true } });
       }
 
+      // ── Award coins to an agent (admin only) ─────────────────────────────
+      case 'award_coins': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.agent_id || !params.coins || !params.order_id) return json({ error: 'agent_id, coins, order_id required' }, 400);
+        const coins = Number(params.coins);
+        const { error } = await db.from('sp_coin_ledger').insert({
+          agent_id: params.agent_id,
+          type: 'EARNED',
+          coins,
+          rp_value: coins * 1000,
+          order_id: params.order_id,
+          description: params.description ?? 'Komisi polis',
+        });
+        if (error) return json({ error: error.message }, 400);
+        await db.rpc('increment_coins_balance', { p_agent_id: params.agent_id, p_delta: coins });
+        return json({ data: { success: true } });
+      }
+
+      // ── Redeem coins (agent self-service) ────────────────────────────────
+      case 'redeem_coins': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const coins = Number(params.coins);
+        if (!coins || coins <= 0) return json({ error: 'coins must be positive' }, 400);
+        const { data: ledger } = await db.from('sp_coin_ledger').select('type, coins').eq('agent_id', caller.spUser.id);
+        const balance = (ledger ?? []).reduce((s: number, r: any) => s + (r.type === 'REDEEMED' ? -r.coins : r.coins), 0);
+        if (balance < coins) return json({ error: 'Insufficient balance' }, 400);
+        const { error } = await db.from('sp_coin_ledger').insert({
+          agent_id: caller.spUser.id,
+          type: 'REDEEMED',
+          coins: -Math.abs(coins),
+          rp_value: -(coins * 1000),
+          description: params.description ?? 'Pencairan koin',
+        });
+        if (error) return json({ error: error.message }, 400);
+        await db.rpc('increment_coins_balance', { p_agent_id: caller.spUser.id, p_delta: -coins });
+        return json({ data: { success: true } });
+      }
+
+      // ── Get any user profile by id (admin or self) ───────────────────────
+      case 'get_user_profile': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const targetId = params.user_id ? String(params.user_id) : caller.spUser.id;
+        if (targetId !== caller.spUser.id && !caller.isAdmin) return json({ error: 'Forbidden' }, 403);
+        const { data, error } = await db.from('sp_users').select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, created_at').eq('id', targetId).maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin notifications CRUD ─────────────────────────────────────────
+      case 'admin_list_notifications': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_admin_notifications').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 50));
+        if (params.unread_only) q = q.eq('read', false);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      case 'admin_mark_notification_read': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.notification_id) return json({ error: 'notification_id required' }, 400);
+        await db.from('sp_admin_notifications').update({ read: true }).eq('id', params.notification_id);
+        return json({ data: { success: true } });
+      }
+
+      case 'admin_create_notification': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_admin_notifications').insert({ ...params, read: false }).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: dashboard stats (cross-table aggregation) ─────────────────
+      case 'admin_stats': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const [ordersRes, paymentsRes, agentsRes, commissionsRes] = await Promise.all([
+          db.from('sp_policy_orders').select('status, total_premium, agent_id'),
+          db.from('sp_payments').select('status, paid_amount'),
+          db.from('sp_users').select('id, name').eq('role', 'AGENT'),
+          db.from('sp_commissions').select('status, commission_amount').eq('status', 'PENDING'),
+        ]);
+        const orders = (ordersRes.data ?? []) as any[];
+        const payments = (paymentsRes.data ?? []) as any[];
+        const agents = (agentsRes.data ?? []) as any[];
+        const commissions = (commissionsRes.data ?? []) as any[];
+        const ordersByStatus: Record<string, number> = {};
+        let totalPremiumIssued = 0;
+        const agentPremiumMap: Record<string, { premium: number; orders: number }> = {};
+        orders.forEach((o: any) => {
+          ordersByStatus[o.status] = (ordersByStatus[o.status] ?? 0) + 1;
+          if (o.status === 'ISSUED') totalPremiumIssued += o.total_premium ?? 0;
+          if (o.agent_id) {
+            if (!agentPremiumMap[o.agent_id]) agentPremiumMap[o.agent_id] = { premium: 0, orders: 0 };
+            agentPremiumMap[o.agent_id].premium += o.total_premium ?? 0;
+            agentPremiumMap[o.agent_id].orders += 1;
+          }
+        });
+        const agentNameMap: Record<string, string> = {};
+        agents.forEach((a: any) => { agentNameMap[a.id] = a.name; });
+        const topAgents = Object.entries(agentPremiumMap)
+          .map(([agent_id, v]) => ({ agent_id, name: agentNameMap[agent_id] ?? 'Agent', ...v }))
+          .sort((a, b) => b.premium - a.premium).slice(0, 5);
+        const totalPremiumPaid = payments.filter((p: any) => p.status === 'PAID').reduce((s: number, p: any) => s + (p.paid_amount ?? 0), 0);
+        const pendingCommissions = commissions.reduce((s: number, c: any) => s + (c.commission_amount ?? 0), 0);
+        return json({ data: { totalOrders: orders.length, ordersByStatus, totalPremiumIssued, totalPremiumPaid, activeAgents: agents.length, pendingCommissions, topAgents } });
+      }
+
       // ── Admin: list all policy orders ────────────────────────────────────
       case 'admin_list_orders': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
@@ -396,6 +503,32 @@ serve(async (req) => {
           .limit(Number(params.limit ?? 200));
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+      // ── Admin: security stats (cross-user session data) ──────────────────
+      case 'admin_security_stats': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const since5m = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const [activeSessRes, allSessRes, hourSessRes] = await Promise.all([
+          db.from('sp_user_sessions').select('last_seen').gte('last_seen', since5m),
+          db.from('sp_user_sessions').select('last_seen').order('last_seen', { ascending: false }).limit(1),
+          db.from('sp_user_sessions').select('last_seen').gte('last_seen', since24h),
+        ]);
+        return json({ data: {
+          activeSessionsCount: activeSessRes.data?.length ?? 0,
+          lastLoginAt: (allSessRes.data?.[0] as any)?.last_seen ?? null,
+          sessionsByHour: hourSessRes.data ?? [],
+        }});
+      }
+
+      // ── Admin: traffic stats (cross-page analytics) ───────────────────────
+      case 'admin_traffic_stats': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await db.from('sp_page_views').select('page, ts').gte('ts', since).order('ts', { ascending: true });
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: data ?? [] });
       }
 
       // ── Admin: leaderboard (cross-agent commission aggregation) ──────────

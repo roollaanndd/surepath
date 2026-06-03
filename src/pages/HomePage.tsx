@@ -106,8 +106,14 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ STATS BAR ═══════════════ */}
-      <section className="py-16 px-5" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+      <section className="relative py-16 px-5 overflow-hidden" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
+        <video autoPlay muted loop playsInline preload="none"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+          style={{ opacity: props.darkMode ? 0.18 : 0.09 }}>
+          <source src="/bg2.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
+        <div className="relative max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8" style={{ zIndex: 1 }}>
           {STATS.map((stat, i) => (
             <Reveal key={stat.label} delay={i * 70}>
               <div className="text-center p-5 rounded-2xl" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
@@ -122,8 +128,14 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ WHY SUREPATH ═══════════════ */}
-      <section className="py-24 px-5" style={{ background: sectionBg3 }}>
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg3 }}>
+        <video autoPlay muted loop playsInline preload="none"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+          style={{ opacity: props.darkMode ? 0.20 : 0.10 }}>
+          <source src="/bg1.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg3 }} />
+        <div className="relative max-w-7xl mx-auto" style={{ zIndex: 1 }}>
           <Reveal>
             <div className="text-center mb-16 max-w-xl mx-auto">
               <SectionLabel darkMode={props.darkMode}>{t('Kenapa SurePath?', 'Why SurePath?')}</SectionLabel>
@@ -227,8 +239,14 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ PRODUCTS TEASER ═══════════════ */}
-      <section className="py-24 px-5" style={{ background: sectionBg2 }}>
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg2 }}>
+        <video autoPlay muted loop playsInline preload="none"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+          style={{ opacity: props.darkMode ? 0.16 : 0.09 }}>
+          <source src="/bg3.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
+        <div className="relative max-w-7xl mx-auto" style={{ zIndex: 1 }}>
           <Reveal>
             <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
               <div>
@@ -302,30 +320,38 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ FINAL CTA ═══════════════ */}
-      <section className="py-24 px-5" style={{ background: sectionBg2 }}>
-        <Reveal>
-          <div className="max-w-3xl mx-auto text-center">
-            <SectionLabel darkMode={props.darkMode}>{t('Mulai Hari Ini', 'Start Today')}</SectionLabel>
-            <h2 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', color: textMain }}>
-              {t('Siap memulai', 'Ready to begin')} <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
-            </h2>
-            <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
-              {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={onSignIn}
-                className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
-                style={{ background: textMain }}>
-                {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button onClick={() => navigate('/products')}
-                className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-semibold transition-all"
-                style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textMain }}>
-                {t('Lihat Semua Produk', 'View All Products')}
-              </button>
+      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg2 }}>
+        <video autoPlay muted loop playsInline preload="none"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+          style={{ opacity: props.darkMode ? 0.20 : 0.10 }}>
+          <source src="/bg4.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
+        <div className="relative" style={{ zIndex: 1 }}>
+          <Reveal>
+            <div className="max-w-3xl mx-auto text-center">
+              <SectionLabel darkMode={props.darkMode}>{t('Mulai Hari Ini', 'Start Today')}</SectionLabel>
+              <h2 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', color: textMain }}>
+                {t('Siap memulai', 'Ready to begin')} <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
+              </h2>
+              <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
+                {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onClick={onSignIn}
+                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
+                  style={{ background: textMain }}>
+                  {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button onClick={() => navigate('/products')}
+                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-semibold transition-all"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textMain }}>
+                  {t('Lihat Semua Produk', 'View All Products')}
+                </button>
+              </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </section>
 
     </SiteLayout>

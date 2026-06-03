@@ -38,11 +38,11 @@ const usePwa = () => {
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
+  { path: '/',             id: 'home',         label: ['Home', 'Home'] as const },
   { path: '/products',     id: 'products',     label: ['Produk', 'Products'] as const },
   { path: '/how-it-works', id: 'how-it-works', label: ['Cara Kerja', 'How It Works'] as const },
   { path: '/about',        id: 'about',        label: ['Tentang', 'About'] as const },
   { path: '/blog',         id: 'blog',         label: ['Blog', 'Blog'] as const },
-  { path: '/contact',      id: 'contact',      label: ['Kontak', 'Contact'] as const },
 ];
 
 const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navigate, lang, setLang, darkMode, active }) => {

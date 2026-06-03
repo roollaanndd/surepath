@@ -52,7 +52,6 @@ const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
-const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
 const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
 
 const detectLang = (): Language => {
@@ -713,7 +712,6 @@ const App = () => {
     '/products': ProductsPage,
     '/how-it-works': HowItWorksPage,
     '/about': AboutPage,
-    '/contact': ContactPage,
   };
   const MarketingPage = MARKETING_PAGES[pathname];
   if (MarketingPage) {

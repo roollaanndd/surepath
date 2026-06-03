@@ -1,0 +1,54 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- LOCKDOWN: move sensitive tables behind the data-gateway edge function.
+--
+--  ⚠️  DO NOT APPLY THIS MIGRATION WHOLESALE TO PRODUCTION YET.  ⚠️
+--
+-- Each table below currently has an "always-true" RLS policy that lets the
+-- public anon key read/write it. Dropping that policy makes the table deny-all
+-- to anon + authenticated; only service_role (the data-gateway and other edge
+-- functions) can then access it.
+--
+-- BREAKING: the live browser app still queries these tables directly with the
+-- anon key. Dropping a policy BEFORE the client is refactored to call
+-- `data-gateway` for that table WILL break production.
+--
+-- CUTOVER RUNBOOK (per table, one at a time):
+--   1. Implement the table's reads/writes as actions in `data-gateway`.
+--   2. Refactor services/supabaseService.ts to call the gateway for that table.
+--   3. Merge to main and confirm the production deploy is live & working.
+--   4. THEN run the matching DROP POLICY statement below for that table.
+--   5. Verify in the app, then move to the next table.
+--
+-- Re-enabling RLS is already done (all tables have RLS enabled); this only
+-- removes the permissive policies. To roll back, re-create the dropped policy.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── Tier 1: PII (highest priority) ──────────────────────────────────────────
+-- sp_users: KTP, address, phone, commission_rate, tier
+-- DROP POLICY IF EXISTS "sp_users_open"   ON public.sp_users;
+-- sp_clients: client KTP, address, contact
+-- DROP POLICY IF EXISTS "sp_clients_open" ON public.sp_clients;
+
+-- ── Tier 2: financial / business ────────────────────────────────────────────
+-- DROP POLICY IF EXISTS "sp_commissions_open"     ON public.sp_commissions;
+-- DROP POLICY IF EXISTS "sp_transactions_open"    ON public.sp_transactions;
+-- DROP POLICY IF EXISTS "anon_all_payments"       ON public.sp_payments;
+-- DROP POLICY IF EXISTS "sp_policies_open"        ON public.sp_policies;
+-- DROP POLICY IF EXISTS "anon_all_policy_orders"  ON public.sp_policy_orders;
+-- DROP POLICY IF EXISTS "sp_claims_open"          ON public.sp_claims;
+-- DROP POLICY IF EXISTS "open_coin_ledger"        ON public.sp_coin_ledger;
+
+-- ── Tier 3: workflow / config ───────────────────────────────────────────────
+-- DROP POLICY IF EXISTS "admins_manage_tokens"            ON public.sp_review_tokens;
+-- DROP POLICY IF EXISTS "insurer_auth_tokens_insert"      ON public.sp_insurer_auth_tokens;
+-- DROP POLICY IF EXISTS "insurer_auth_tokens_update_used_at" ON public.sp_insurer_auth_tokens;
+-- DROP POLICY IF EXISTS "anon_all_notifications"          ON public.sp_notifications;
+-- DROP POLICY IF EXISTS "admins_manage_admin_notifications" ON public.sp_admin_notifications;
+-- DROP POLICY IF EXISTS "allow all"                       ON public.sp_user_sessions;
+
+-- ── Needs decision before locking (public flows may depend on these) ─────────
+--   sp_quotes          — public "get a quote" may insert as anon; keep an
+--                        INSERT-only anon policy, route reads via gateway.
+--   sp_product_configs — the calculator/site may read pricing as anon; consider
+--                        a SELECT-only anon policy on non-sensitive columns.
+--   sp_page_views      — keep anon INSERT (analytics); no change.

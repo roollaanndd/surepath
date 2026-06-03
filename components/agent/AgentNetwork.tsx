@@ -116,13 +116,13 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+    <div className="px-4 py-6 space-y-6 max-w-lg mx-auto font-sora">
 
       {/* ── My Tier Card ─────────────────────────────────────────────────── */}
       {agentTier ? (
@@ -180,7 +180,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       )}
 
       {/* ── Referral Code Card ──────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-primary-500 to-orange-600 rounded-[2rem] p-6 text-white shadow-xl shadow-orange-500/30">
+      <div className="bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-[2rem] p-6 text-white shadow-xl shadow-[#16a34a]/30">
         <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">
           {t('Your Referral Code', 'Kode Referral Anda')}
         </p>
@@ -254,7 +254,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                   <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[1.5rem] p-4">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-primary-500/10 flex items-center justify-center font-black text-primary-500 text-sm flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-[#16a34a]/10 flex items-center justify-center font-black text-[#16a34a] text-sm flex-shrink-0">
                         {getInitials(dl.name)}
                       </div>
 
@@ -264,7 +264,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                           <p className="font-black text-sm text-slate-900 dark:text-white truncate">{dl.name}</p>
                           <TierBadge tier={dl.tier} />
                         </div>
-                        <p className="text-[10px] font-bold text-primary-500">{dl.agent_code ?? '—'}</p>
+                        <p className="text-[10px] font-bold text-[#16a34a]">{dl.agent_code ?? '—'}</p>
                         <p className="text-[9px] text-slate-400 dark:text-slate-500">
                           {t('Joined', 'Bergabung')} {fmtDate(dl.created_at)}
                         </p>

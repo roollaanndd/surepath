@@ -34,7 +34,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const [agreed, setAgreed] = useState(false);
 
   const inputClass =
-    'w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm focus:border-primary-500/50';
+    'w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm focus:border-[#16a34a]/60';
 
   const canProceedStep1 =
     name.trim() && email.trim() && phone.trim() && password.length >= 6 && password === confirmPassword;
@@ -80,7 +80,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#16a34a]/8 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-md flex flex-col gap-6 relative z-10">
 
@@ -108,7 +108,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                s <= step ? 'bg-primary-500' : 'bg-slate-200 dark:bg-white/10'
+                s <= step ? 'bg-[#16a34a]' : 'bg-slate-200 dark:bg-white/10'
               }`}
             />
           ))}
@@ -182,7 +182,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
                 >
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -202,7 +202,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
                 >
                   {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -257,7 +257,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   placeholder={t('Address (optional)', 'Alamat (opsional)')}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm resize-none focus:border-primary-500/50"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm resize-none focus:border-[#16a34a]/60"
                 />
               </div>
 
@@ -267,7 +267,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-primary-500 flex-shrink-0"
+                  className="mt-0.5 w-4 h-4 accent-[#16a34a] flex-shrink-0"
                 />
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
                   {t(
@@ -289,7 +289,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
               >
                 {loading ? (
-                  <RefreshCw size={18} className="animate-spin text-primary-500" />
+                  <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-[#16a34a]" />
                 ) : (
                   <>
                     <ShieldCheck size={16} />

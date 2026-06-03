@@ -774,6 +774,7 @@ const App = () => {
       <Suspense fallback={<PortalLoader />}>
         <ProductInfoPage
           productId={productMatch[1]}
+          lang={lang}
           onBack={() => navigate('/')}
           onSignIn={() => { navigate('/'); setAppMode(true); }}
         />
@@ -786,6 +787,7 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <PremiumCalculatorPage
+          lang={lang}
           onBack={() => navigate('/')}
           onSignIn={() => { navigate('/'); setAppMode(true); }}
         />
@@ -836,6 +838,7 @@ const App = () => {
       <Suspense fallback={<PortalLoader />}>
         <StaticInfoPage
           pageId={staticPageId}
+          lang={lang}
           onBack={() => navigate('/')}
           onSignIn={() => { navigate('/'); setAppMode(true); }}
         />

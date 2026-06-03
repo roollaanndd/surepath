@@ -24,7 +24,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition';
+  'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] transition';
 
 const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -140,7 +140,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
+        <Loader2 className="w-10 h-10 text-[#16a34a] animate-spin motion-reduce:animate-none" />
         <p className="text-slate-400 text-sm">{t('Loading profile…', 'Memuat profil…')}</p>
       </div>
     );
@@ -154,24 +154,24 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     .toUpperCase();
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32">
+    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
       {/* Avatar + Name */}
       <div className="flex flex-col items-center gap-3 pt-2 pb-4">
         <div className="relative w-20 h-20 mx-auto mb-2">
           <button
             onClick={() => avatarInputRef.current?.click()}
-            className="w-20 h-20 rounded-full overflow-hidden bg-primary-500/20 flex items-center justify-center relative"
+            className="w-20 h-20 rounded-full overflow-hidden bg-[#16a34a]/15 flex items-center justify-center relative"
           >
             {(profile as any)?.profile_photo_url
               ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
-              : <span className="text-2xl font-black text-primary-500">{initials}</span>
+              : <span className="text-2xl font-black text-[#16a34a]">{initials}</span>
             }
             {avatarUploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin motion-reduce:animate-none" />
               </div>
             )}
-            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#16a34a] flex items-center justify-center">
               <Camera size={10} className="text-white" />
             </div>
           </button>
@@ -185,7 +185,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               {profile?.agent_code ?? agent?.agent_code}
             </span>
-            <button onClick={copyCode} className="text-slate-400 hover:text-primary-500 transition">
+            <button onClick={copyCode} className="text-slate-400 hover:text-[#16a34a] transition">
               {copied
                 ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
                 : <Copy className="w-3.5 h-3.5" />}
@@ -216,7 +216,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {stats && (
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-3 text-center">
-            <FileText className="w-5 h-5 text-primary-500 mx-auto mb-1" />
+            <FileText className="w-5 h-5 text-[#16a34a] mx-auto mb-1" />
             <p className="font-black text-lg text-slate-800 dark:text-white leading-none">
               {stats.policiesCount}
             </p>
@@ -254,7 +254,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           </p>
           <button
             onClick={() => { navigator.clipboard.writeText(`https://myinsurepath.com?ref=${profile?.agent_code}`); }}
-            className="text-primary-500 hover:text-primary-600 transition"
+            className="text-[#16a34a] hover:text-[#15803d] transition"
           >
             <Copy className="w-4 h-4" />
           </button>
@@ -296,7 +296,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 active:scale-95 transition-all"
+              className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 active:scale-95 motion-reduce:active:scale-100 hover:border-[#16a34a]/30 transition-all"
             >
               <div className={`w-9 h-9 ${item.bg} ${item.color} rounded-xl flex items-center justify-center`}>
                 <item.icon size={16} />
@@ -316,7 +316,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           {!editing ? (
             <button
               onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-primary-500 hover:text-primary-600 transition"
+              className="flex items-center gap-1.5 text-xs font-bold text-[#16a34a] hover:text-[#15803d] transition"
             >
               <Edit2 className="w-3.5 h-3.5" />
               {t('Edit', 'Ubah')}
@@ -332,7 +332,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-500 text-white text-xs font-bold disabled:opacity-50 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white text-xs font-bold disabled:opacity-50 transition"
               >
                 {saving
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -490,7 +490,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Kode Referral</p>
           <button
             onClick={() => { navigator.clipboard.writeText(agent?.agent_code ?? profile?.agent_code ?? ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-            className="text-xs font-black text-primary-400 flex items-center gap-1"
+            className="text-xs font-black text-[#22c55e] flex items-center gap-1"
           >
             {agent?.agent_code ?? profile?.agent_code ?? '—'} {copied ? '✓' : <Copy size={10} />}
           </button>
@@ -545,7 +545,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           </div>
         ) : (
           <button onClick={() => setShowBankForm(true)}
-            className="w-full py-3 rounded-2xl border border-dashed border-white/20 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-primary-500/50 hover:text-primary-400 transition-all">
+            className="w-full py-3 rounded-2xl border border-dashed border-white/20 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-[#16a34a]/50 hover:text-[#22c55e] transition-all">
             + Tambah Rekening Bank
           </button>
         )}
@@ -577,7 +577,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <button
               onClick={saveBankAccount}
               disabled={!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name}
-              className="w-full py-3.5 rounded-2xl bg-primary-500 text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 transition"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 transition"
             >
               Simpan Rekening
             </button>

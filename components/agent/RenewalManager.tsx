@@ -138,14 +138,14 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
         <p className="text-sm text-slate-400 font-bold">{t('Loading renewals…', 'Memuat renewal…')}</p>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-6 space-y-5 max-w-2xl mx-auto">
+    <div className="px-4 py-6 space-y-5 max-w-2xl mx-auto font-sora">
       {/* Stats header */}
       <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
@@ -167,7 +167,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(b.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === b.id
-                ? 'bg-primary-500 text-white shadow-md shadow-orange-500/20'
+                ? 'bg-[#16a34a] text-white shadow-md shadow-[#16a34a]/25'
                 : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -254,7 +254,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
                     ) : (
                       <button
                         onClick={() => setModal(order)}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform shadow-md shadow-orange-500/20"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-md shadow-[#16a34a]/25"
                       >
                         <RefreshCw size={11} />
                         {t('Proses Renewal','Proses Renewal')}

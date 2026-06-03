@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Shield, Car, CheckCircle } from 'lucide-react';
+import { Language } from '../../types';
 
 // Rate batas bawah OJK per SE OJK No.06/SEOJK.05/2017
 // [allRisk%, tlo%]
@@ -40,6 +41,7 @@ type Coverage = 'allRisk' | 'tlo';
 type Step = 'form' | 'results' | 'success';
 
 interface Props {
+  lang: Language;
   onSignIn: () => void;
   onBack: () => void;
 }
@@ -79,7 +81,15 @@ const cardStyle: React.CSSProperties = {
   padding: '16px 20px',
 };
 
-export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
+export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props) {
+  const isEN = lang === Language.EN;
+  const t = (id: string, en: string) => (isEN ? en : id);
+  const wilayahDescEN: Record<WilayahKey, string> = {
+    wilayah1: 'Sumatra, Papua, Maluku, East Nusa Tenggara, Riau Islands, Bangka',
+    wilayah2: 'Jakarta, Banten, West Java',
+    wilayah3: 'Central Java, East Java, Bali, Kalimantan, Sulawesi',
+  };
+
   // Form state
   const [hargaJuta, setHargaJuta] = useState(250);
   const [wilayah, setWilayah] = useState<WilayahKey>('wilayah2');
@@ -165,7 +175,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
             cursor: 'pointer', fontSize: 14, padding: '6px 0', marginBottom: 24,
           }}
         >
-          <ArrowLeft size={16} /> Kembali
+          <ArrowLeft size={16} /> {t('Kembali', 'Back')}
         </button>
 
         {/* Header */}
@@ -174,7 +184,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
             <Car size={26} color={GREEN} />
             <div>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>
-                Kalkulator Premi Asuransi Mobil
+                {t('Kalkulator Premi Asuransi Mobil', 'Car Insurance Premium Calculator')}
               </h1>
               <span style={{
                 display: 'inline-block', marginTop: 6,
@@ -182,7 +192,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                 border: `1px solid rgba(57,255,20,0.3)`,
                 borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
               }}>
-                Tarif Resmi OJK
+                {t('Tarif Resmi OJK', 'Official OJK Rates')}
               </span>
             </div>
           </div>
@@ -195,7 +205,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
             {/* Harga Kendaraan */}
             <div style={cardStyle}>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 15 }}>
-                Harga Kendaraan
+                {t('Harga Kendaraan', 'Vehicle Value')}
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                 <input
@@ -205,7 +215,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                   onChange={e => setHargaJuta(Math.max(50, Math.min(2000, Number(e.target.value))))}
                   style={{ ...inputStyle, width: 130, flexShrink: 0 }}
                 />
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>juta rupiah</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>{t('juta rupiah', 'million rupiah')}</span>
                 <span style={{ marginLeft: 'auto', color: GREEN, fontWeight: 700, fontSize: 15 }}>
                   {formatRupiah(hargaJuta * 1_000_000)}
                 </span>
@@ -218,14 +228,14 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                 style={{ width: '100%', accentColor: GREEN, cursor: 'pointer' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
-                <span>Rp 50 juta</span><span>Rp 2.000 juta</span>
+                <span>{t('Rp 50 juta', 'Rp 50 million')}</span><span>{t('Rp 2.000 juta', 'Rp 2,000 million')}</span>
               </div>
             </div>
 
             {/* Wilayah */}
             <div style={cardStyle}>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 15 }}>
-                Wilayah Kendaraan
+                {t('Wilayah Kendaraan', 'Vehicle Region')}
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {wilayahOptions.map(opt => (
@@ -248,8 +258,8 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                       style={{ accentColor: GREEN, marginTop: 2, flexShrink: 0 }}
                     />
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{opt.label}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{opt.desc}</div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{isEN ? opt.label.replace('Wilayah', 'Region') : opt.label}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{isEN ? wilayahDescEN[opt.key] : opt.desc}</div>
                     </div>
                   </label>
                 ))}
@@ -259,22 +269,22 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
             {/* Jenis Perlindungan */}
             <div style={cardStyle}>
               <label style={{ display: 'block', fontWeight: 600, marginBottom: 12, fontSize: 15 }}>
-                Jenis Perlindungan
+                {t('Jenis Perlindungan', 'Coverage Type')}
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {([
                   {
                     key: 'allRisk' as Coverage,
                     title: 'All Risk',
-                    sub: 'Komprehensif',
-                    desc: 'Menanggung semua jenis kerusakan — goresan ringan, kecelakaan, hingga bencana alam.',
+                    sub: t('Komprehensif', 'Comprehensive'),
+                    desc: t('Menanggung semua jenis kerusakan — goresan ringan, kecelakaan, hingga bencana alam.', 'Covers all types of damage — from minor scratches and accidents to natural disasters.'),
                     icon: <Shield size={22} color={GREEN} />,
                   },
                   {
                     key: 'tlo' as Coverage,
                     title: 'TLO',
                     sub: 'Total Loss Only',
-                    desc: 'Menanggung kehilangan atau kerusakan total ≥ 75% dari nilai kendaraan.',
+                    desc: t('Menanggung kehilangan atau kerusakan total ≥ 75% dari nilai kendaraan.', 'Covers loss or total damage of ≥ 75% of the vehicle value.'),
                     icon: <Car size={22} color={coverage === 'tlo' ? GREEN : 'rgba(255,255,255,0.4)'} />,
                   },
                 ] as const).map(opt => (
@@ -306,7 +316,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                     <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{opt.desc}</p>
                     {coverage === opt.key && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: GREEN, fontSize: 12, fontWeight: 600 }}>
-                        <CheckCircle size={13} /> Dipilih
+                        <CheckCircle size={13} /> {t('Dipilih', 'Selected')}
                       </div>
                     )}
                   </label>
@@ -323,7 +333,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                 cursor: 'pointer', letterSpacing: 0.3,
               }}
             >
-              Hitung Premi →
+              {t('Hitung Premi', 'Calculate Premium')} →
             </button>
           </div>
         )}
@@ -340,22 +350,22 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
               textAlign: 'center', padding: '28px 24px',
             }}>
               <p style={{ margin: '0 0 4px', fontSize: 13, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                Estimasi Premi Tahunan
+                {t('Estimasi Premi Tahunan', 'Estimated Annual Premium')}
               </p>
               <p style={{ margin: '0 0 8px', fontSize: 36, fontWeight: 800, color: GREEN, lineHeight: 1.1 }}>
                 {formatRupiah(annualPremium)}
               </p>
               <p style={{ margin: '0 0 20px', fontSize: 16, color: 'rgba(255,255,255,0.55)' }}>
-                {formatRupiah(Math.round(annualPremium / 12))} <span style={{ fontSize: 13 }}>/bulan</span>
+                {formatRupiah(Math.round(annualPremium / 12))} <span style={{ fontSize: 13 }}>{t('/bulan', '/month')}</span>
               </p>
 
               {/* Summary grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, textAlign: 'left', marginTop: 8 }}>
                 {[
-                  { label: 'Tarif Digunakan', value: `${rateUsed.toFixed(2)}% (batas bawah OJK)` },
-                  { label: 'Harga Kendaraan', value: `Rp ${hargaJuta} juta` },
-                  { label: 'Perlindungan', value: coverage === 'allRisk' ? 'All Risk' : 'TLO' },
-                  { label: 'Wilayah', value: wilayahLabel },
+                  { label: t('Tarif Digunakan', 'Rate Applied'), value: `${rateUsed.toFixed(2)}% ${t('(batas bawah OJK)', '(OJK lower limit)')}` },
+                  { label: t('Harga Kendaraan', 'Vehicle Value'), value: `Rp ${hargaJuta} ${t('juta', 'million')}` },
+                  { label: t('Perlindungan', 'Coverage'), value: coverage === 'allRisk' ? 'All Risk' : 'TLO' },
+                  { label: t('Wilayah', 'Region'), value: isEN ? wilayahLabel.replace('Wilayah', 'Region') : wilayahLabel },
                 ].map(item => (
                   <div key={item.label} style={{
                     background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '10px 12px',
@@ -370,8 +380,8 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                 margin: '18px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.35)',
                 lineHeight: 1.6, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14,
               }}>
-                Estimasi berdasarkan tarif batas bawah OJK (SE OJK No.06/SEOJK.05/2017).<br />
-                Premi final ditentukan oleh perusahaan asuransi.
+                {t('Estimasi berdasarkan tarif batas bawah OJK (SE OJK No.06/SEOJK.05/2017).', 'Estimate based on OJK lower-limit rates (SE OJK No.06/SEOJK.05/2017).')}<br />
+                {t('Premi final ditentukan oleh perusahaan asuransi.', 'The final premium is determined by the insurance company.')}
               </p>
             </div>
 
@@ -382,16 +392,16 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                 cursor: 'pointer', fontSize: 13, textDecoration: 'underline', textAlign: 'left', padding: 0,
               }}
             >
-              ← Hitung Ulang
+              ← {t('Hitung Ulang', 'Recalculate')}
             </button>
 
             {/* Lead Capture */}
             <div style={cardStyle}>
               <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700 }}>
-                Dapatkan penawaran resmi dari agen SurePath
+                {t('Dapatkan penawaran resmi dari agen SurePath', 'Get an official quote from a SurePath agent')}
               </h3>
               <p style={{ margin: '0 0 16px', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
-                Isi data berikut dan kami akan menghubungi kamu via WhatsApp.
+                {t('Isi data berikut dan kami akan menghubungi kamu via WhatsApp.', 'Fill in the details below and we will contact you via WhatsApp.')}
               </p>
 
               {step === 'success' ? (
@@ -400,21 +410,21 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                   gap: 10, padding: '20px 0', textAlign: 'center',
                 }}>
                   <CheckCircle size={36} color={GREEN} />
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>Terima kasih!</p>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{t('Terima kasih!', 'Thank you!')}</p>
                   <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-                    Agen kami akan segera menghubungi kamu.
+                    {t('Agen kami akan segera menghubungi kamu.', 'Our agent will contact you shortly.')}
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'rgba(255,255,255,0.7)' }}>
-                      Nama Lengkap
+                      {t('Nama Lengkap', 'Full Name')}
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Nama kamu"
+                      placeholder={t('Nama kamu', 'Your name')}
                       value={leadName}
                       onChange={e => setLeadName(e.target.value)}
                       style={inputStyle}
@@ -422,7 +432,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'rgba(255,255,255,0.7)' }}>
-                      No. WhatsApp
+                      {t('No. WhatsApp', 'WhatsApp Number')}
                     </label>
                     <input
                       type="tel"
@@ -441,7 +451,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                       cursor: 'pointer', marginTop: 4,
                     }}
                   >
-                    Kirim &amp; Dapatkan Penawaran
+                    {t('Kirim & Dapatkan Penawaran', 'Send & Get Quote')}
                   </button>
                 </form>
               )}
@@ -457,10 +467,10 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                   color: '#fff', fontWeight: 600, fontSize: 15, cursor: 'pointer',
                 }}
               >
-                Beli Langsung di App
+                {t('Beli Langsung di App', 'Buy Directly in App')}
               </button>
               <p style={{ textAlign: 'center', margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-                Sudah punya akun?{' '}
+                {t('Sudah punya akun?', 'Already have an account?')}{' '}
                 <button
                   onClick={onSignIn}
                   style={{
@@ -468,7 +478,7 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
                     cursor: 'pointer', fontSize: 13, textDecoration: 'underline', padding: 0,
                   }}
                 >
-                  Masuk dulu
+                  {t('Masuk dulu', 'Sign in first')}
                 </button>
               </p>
             </div>

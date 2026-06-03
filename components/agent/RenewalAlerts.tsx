@@ -88,7 +88,7 @@ const RenewalAlerts: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
         </div>
         <button
           onClick={() => onNavigate('clients')}
-          className="flex items-center gap-1 text-primary-500 text-xs font-black uppercase tracking-widest"
+          className="flex items-center gap-1 text-[#16a34a] text-xs font-black uppercase tracking-widest"
         >
           {t('View All', 'Lihat Semua')} <ChevronRight size={14} />
         </button>
@@ -134,7 +134,7 @@ const RenewalAlerts: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
         <div className="px-5 pb-4">
           <button
             onClick={() => onNavigate('clients')}
-            className="text-xs font-black text-slate-400 hover:text-primary-500 transition-colors uppercase tracking-widest"
+            className="text-xs font-black text-slate-400 hover:text-[#16a34a] transition-colors uppercase tracking-widest"
           >
             +{extra} {t('more', 'lainnya')}
           </button>

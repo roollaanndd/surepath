@@ -86,7 +86,7 @@ const tierMotivation = (tier: Tier, lang: Language): string => {
 
 // Circular SVG Progress
 const CircularProgress: React.FC<{ value: number; size?: number; color?: string }> = ({
-  value, size = 110, color = '#f97316',
+  value, size = 110, color = '#16a34a',
 }) => {
   const strokeWidth = 10;
   const r = (size - strokeWidth) / 2;
@@ -154,7 +154,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
   const myRank = myEntry ? leaderboard.indexOf(myEntry) + 1 : null;
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32">
+    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
 
       {/* Page header */}
       <div className="flex items-center justify-between">
@@ -164,9 +164,9 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         </div>
         <button
           onClick={loadData}
-          className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 motion-reduce:active:scale-100 transition-transform"
         >
-          <RefreshCw size={15} className={loading ? 'animate-spin text-primary-500' : 'text-slate-500'} />
+          <RefreshCw size={15} className={loading ? 'animate-spin motion-reduce:animate-none text-[#16a34a]' : 'text-slate-500'} />
         </button>
       </div>
 
@@ -272,7 +272,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
           <p className="text-slate-400 text-xs font-black uppercase tracking-widest">
             {t('Top Agents', 'Agen Terbaik')}
           </p>
-          <div className="flex items-center gap-1 text-primary-500">
+          <div className="flex items-center gap-1 text-[#16a34a]">
             <TrendingUp size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest">
               {t('This Month', 'Bulan Ini')}
@@ -310,7 +310,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
                 <div
                   key={entry.agent_id}
                   className={`flex items-center gap-3 px-5 py-3.5 transition-colors ${
-                    isMe ? 'bg-primary-500/5 dark:bg-primary-500/10' : ''
+                    isMe ? 'bg-[#16a34a]/5 dark:bg-[#16a34a]/10' : ''
                   }`}
                 >
                   {/* Rank badge */}
@@ -329,7 +329,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
 
                   {/* Name & code */}
                   <div className="flex-1 min-w-0">
-                    <p className={`font-black text-sm truncate ${isMe ? 'text-primary-500' : ''}`}>
+                    <p className={`font-black text-sm truncate ${isMe ? 'text-[#16a34a]' : ''}`}>
                       {entry.agent_name}
                       {isMe && (
                         <span className="ml-1 text-[10px] font-bold opacity-70">
@@ -347,7 +347,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
 
                   {/* Commission */}
                   <div className="text-right flex-shrink-0">
-                    <p className={`font-black text-sm ${isMe ? 'text-primary-500' : 'text-emerald-500'}`}>
+                    <p className={`font-black text-sm ${isMe ? 'text-[#16a34a]' : 'text-emerald-500'}`}>
                       {formatIDR(entry.total_commission)}
                     </p>
                     <p className="text-[9px] text-slate-400 font-bold">{t('commission', 'komisi')}</p>

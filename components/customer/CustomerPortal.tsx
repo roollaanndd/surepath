@@ -90,22 +90,26 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               {/* Greeting */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="relative cursor-pointer" onClick={() => navigate('profile')}>
-                    <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.8rem] shadow-xl flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-emerald-400 flex items-center justify-center text-xl font-black text-white">
+                  <button
+                    type="button"
+                    onClick={() => navigate('profile')}
+                    className="relative cursor-pointer active:scale-[0.96] transition-transform duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded-[1.8rem]"
+                  >
+                    <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden ring-1 ring-emerald-500/10">
+                      <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 flex items-center justify-center text-xl font-black text-white">
                         {currentUser?.name?.[0]}
                       </div>
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-[#fafaf9] dark:border-[#0a0a0a] flex items-center justify-center text-[0.55rem] text-white font-black shadow-lg">
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full border-4 border-[#fafaf9] dark:border-[#0a0a0a] flex items-center justify-center text-[0.55rem] text-white font-black shadow-lg shadow-emerald-500/40">
                       {currentUser?.trustScore || 85}
                     </div>
-                  </div>
+                  </button>
                   <div>
                     <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
                       {timeGreeting}, {currentUser?.name?.split(' ')[0]}!
                     </h3>
-                    <p className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-1 mt-1">
-                      <ShieldCheck size={11} className="animate-pulse" />
+                    <p className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-1 mt-1.5">
+                      <ShieldCheck size={11} className="animate-pulse motion-reduce:animate-none" />
                       {t('SECURE ACCOUNT', 'AKUN AMAN')}
                     </p>
                   </div>
@@ -117,30 +121,32 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               {/* Quick actions */}
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10' },
-                  { id: 'claim',    label: t('Claim', 'Klaim'),      icon: Zap,         color: 'text-rose-500',    bg: 'bg-rose-500/10' },
-                  { id: 'history',  label: t('History', 'Riwayat'),  icon: History,     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                  { id: 'bot',      label: 'Chat AI',                icon: Bot,         color: 'text-amber-500',   bg: 'bg-amber-500/10' },
+                  { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10',    ring: 'group-hover:ring-blue-500/20' },
+                  { id: 'claim',    label: t('Claim', 'Klaim'),      icon: Zap,         color: 'text-rose-500',    bg: 'bg-rose-500/10',    ring: 'group-hover:ring-rose-500/20' },
+                  { id: 'history',  label: t('History', 'Riwayat'),  icon: History,     color: 'text-emerald-500', bg: 'bg-emerald-500/10', ring: 'group-hover:ring-emerald-500/20' },
+                  { id: 'bot',      label: 'Chat AI',                icon: Bot,         color: 'text-amber-500',   bg: 'bg-amber-500/10',   ring: 'group-hover:ring-amber-500/20' },
                 ].map(action => (
-                  <div
+                  <button
+                    type="button"
                     key={action.id}
                     onClick={() => navigate(action.id)}
-                    className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-all"
+                    className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-transform duration-200 motion-reduce:transition-none focus:outline-none"
                   >
-                    <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500`}>
+                    <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 ${action.ring} group-hover:scale-110 group-hover:-translate-y-0.5 group-active:shadow-inner transition-all duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
                       <action.icon size={26} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight">
+                    <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
                       {action.label}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
 
               {/* Latest policy card */}
               {latestPolicy && (
-                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-xl group">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
+                  <div className="absolute -top-10 -left-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 text-emerald-600 group-hover:rotate-0 transition-transform duration-1000 motion-reduce:transition-none">
                     {latestPolicy.type === 'CAR' ? <Car size={130} /> : <Plane size={130} />}
                   </div>
                   <div className="relative z-10 space-y-5">
@@ -153,7 +159,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                           {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
                         </h4>
                       </div>
-                      <div className="p-2.5 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                      <div className="p-2.5 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 rounded-2xl border border-emerald-500/20 shadow-sm">
                         <ShieldCheck size={20} className="text-emerald-500" />
                       </div>
                     </div>
@@ -171,7 +177,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       </div>
                       <button
                         onClick={() => navigate('profile')}
-                        className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-xl active:scale-95 transition-all"
+                        className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 motion-reduce:transition-none"
                       >
                         {t('Details', 'Detail')}
                       </button>
@@ -181,8 +187,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               )}
 
               {/* Tip */}
-              <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex gap-4 shadow-lg">
-                <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0">
+              <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 ring-1 ring-inset ring-amber-500/10">
                   <Lightbulb size={24} />
                 </div>
                 <div className="space-y-1">
@@ -216,9 +222,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 ${p.active ? 'cursor-pointer hover:border-primary-500/30 shadow-xl active:scale-[0.98]' : 'opacity-40 grayscale'}`}
+                    className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
                   >
-                    <div className={`w-14 h-14 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-inner group-hover:scale-110 transition-transform`}>
+                    <div className={`w-14 h-14 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
                       <p.icon size={26} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -247,20 +253,29 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'history':
         return (
           <PageTransition>
-            <div className="space-y-6 pb-32">
+            <div className="space-y-6 pb-32 pt-2">
               <h2 className="text-3xl font-black uppercase tracking-tighter">{t('My History', 'Riwayat Saya')}</h2>
 
               {/* Policies */}
               <div className="space-y-3">
                 <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={12} />{t('Active Policies', 'Polis Aktif')}</p>
                 {customerPolicies.length === 0 ? (
-                  <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 text-center text-slate-400 text-sm font-bold">
-                    {t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}
+                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
+                      <FileText size={22} />
+                    </div>
+                    <p className="text-slate-400 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
+                    <button
+                      onClick={() => navigate('products')}
+                      className="px-5 py-2 bg-primary-500 text-white rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg shadow-orange-500/20 active:scale-95 transition-transform duration-200 motion-reduce:transition-none"
+                    >
+                      {t('Browse Plans', 'Lihat Paket')}
+                    </button>
                   </div>
                 ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
+                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-primary-500/10 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-2xl bg-primary-500/10 ring-1 ring-inset ring-primary-500/10 flex items-center justify-center">
                         {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
                       </div>
                       <div>
@@ -298,13 +313,16 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <div className="space-y-3">
                 <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><AlertCircle size={12} />{t('My Claims', 'Klaim Saya')}</p>
                 {customerClaims.length === 0 ? (
-                  <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 text-center text-slate-400 text-sm font-bold">
-                    {t('No claims submitted.', 'Belum ada klaim.')}
+                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+                      <AlertCircle size={22} />
+                    </div>
+                    <p className="text-slate-400 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
                 ) : customerClaims.map((c, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm">
+                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-rose-500/10 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-2xl bg-rose-500/10 ring-1 ring-inset ring-rose-500/10 flex items-center justify-center">
                         <AlertCircle size={20} className="text-rose-500" />
                       </div>
                       <div>
@@ -375,10 +393,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
+        <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 shadow-[0_1px_20px_-12px_rgba(0,0,0,0.3)]">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-400 to-primary-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <SurePathLogo className="w-5 h-5" />
               </div>
               <div>
@@ -401,20 +419,26 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
               </div>
 
-              <button className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+              <button
+                aria-label={t('Notifications', 'Notifikasi')}
+                className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+              >
                 <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#111]" />
               </button>
 
               <button
+                aria-label={t('Toggle theme', 'Ganti tema')}
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
               >
                 {darkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
               </button>
 
               <button
+                aria-label={t('Log out', 'Keluar')}
                 onClick={onLogout}
-                className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1"
+                className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1 hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
               >
                 <LogOut size={13} className="text-rose-500" />
               </button>
@@ -433,22 +457,24 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
+        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/85 dark:bg-[#111]/85 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5 ring-1 ring-black/5 dark:ring-white/5">
           <div className="flex items-center justify-around px-1 py-2.5">
             {TABS.map(({ id, labelEn, labelId, Icon }) => {
               const active = activeTab === id;
               return (
                 <button
                   key={id}
+                  aria-label={lang === Language.EN ? labelEn : labelId}
+                  aria-current={active ? 'page' : undefined}
                   onClick={() => navigate(id)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
                     active
-                      ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-gradient-to-br from-primary-400 to-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
                   }`}
                 >
                   <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                  <span className="text-[8px] font-black uppercase tracking-widest leading-none">
+                  <span className={`text-[8px] font-black uppercase tracking-widest leading-none transition-all duration-300 motion-reduce:transition-none ${active ? 'opacity-100' : 'opacity-80'}`}>
                     {lang === Language.EN ? labelEn : labelId}
                   </span>
                 </button>

@@ -58,20 +58,20 @@ const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () =
       <div className="bg-[#111] border border-white/10 rounded-[2rem] w-full max-w-md p-6 space-y-5">
         <h3 className="text-base font-black text-white">Syarat Penarikan Dana</h3>
         <div className="space-y-2.5 text-[11px] text-slate-400 leading-relaxed">
-          <div className="flex gap-2"><span className="text-primary-400 font-black">①</span> Biaya transfer: <span className="text-white font-bold">{IDR(fee)}</span> per transaksi</div>
-          <div className="flex gap-2"><span className="text-primary-400 font-black">②</span> Minimum penarikan: <span className="text-white font-bold">Rp 10.000</span></div>
-          <div className="flex gap-2"><span className="text-primary-400 font-black">③</span> Proses pencairan: <span className="text-white font-bold">1–3 hari kerja</span> setelah semua persetujuan</div>
+          <div className="flex gap-2"><span className="text-[#22c55e] font-black">①</span> Biaya transfer: <span className="text-white font-bold">{IDR(fee)}</span> per transaksi</div>
+          <div className="flex gap-2"><span className="text-[#22c55e] font-black">②</span> Minimum penarikan: <span className="text-white font-bold">Rp 10.000</span></div>
+          <div className="flex gap-2"><span className="text-[#22c55e] font-black">③</span> Proses pencairan: <span className="text-white font-bold">1–3 hari kerja</span> setelah semua persetujuan</div>
           <div className="flex gap-2"><span className="text-amber-400 font-black">④</span> Penarikan <span className="text-white font-bold">&gt; Rp 10 juta</span> memerlukan persetujuan L1 + L2</div>
           <div className="flex gap-2"><span className="text-red-400 font-black">⑤</span> Penarikan <span className="text-white font-bold">&gt; Rp 25 juta</span> memerlukan persetujuan L1 + L2 + L3 (24 jam)</div>
-          <div className="flex gap-2"><span className="text-primary-400 font-black">⑥</span> Dana hanya ditransfer ke rekening yang telah terdaftar atas nama agen</div>
-          <div className="flex gap-2"><span className="text-primary-400 font-black">⑦</span> SurePath tidak bertanggung jawab atas kesalahan data rekening yang diinput agen</div>
+          <div className="flex gap-2"><span className="text-[#22c55e] font-black">⑥</span> Dana hanya ditransfer ke rekening yang telah terdaftar atas nama agen</div>
+          <div className="flex gap-2"><span className="text-[#22c55e] font-black">⑦</span> SurePath tidak bertanggung jawab atas kesalahan data rekening yang diinput agen</div>
         </div>
         <div className="bg-white/5 rounded-2xl px-4 py-3 flex justify-between items-center">
           <span className="text-xs font-bold text-slate-300">Jumlah yang diterima</span>
           <span className="text-sm font-black text-white">{IDR(Math.max(0, amount - fee))}</span>
         </div>
         <label className="flex items-start gap-3 cursor-pointer" onClick={() => setAgreed(v => !v)}>
-          <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${agreed ? 'bg-primary-500 border-primary-500' : 'border-white/20'}`}>
+          <div className={`mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${agreed ? 'bg-[#16a34a] border-[#16a34a]' : 'border-white/20'}`}>
             {agreed && <CheckCircle2 size={12} className="text-white" />}
           </div>
           <span className="text-[11px] text-slate-300 leading-relaxed">Saya membaca dan menyetujui seluruh syarat dan ketentuan penarikan dana SurePath.</span>
@@ -81,7 +81,7 @@ const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () =
           <button
             onClick={onAccept}
             disabled={!agreed}
-            className="flex-1 py-3.5 bg-primary-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all"
+            className="flex-1 py-3.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-40 active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             Lanjut
           </button>
@@ -181,7 +181,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <div className="space-y-2">
             <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Terdaftar</p>
             {savedAccounts.map((acc, idx) => (
-              <div key={idx} className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${bankCode === acc.bank_code && accNum === acc.account_number ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 bg-white/5'}`}>
+              <div key={idx} className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${bankCode === acc.bank_code && accNum === acc.account_number ? 'border-[#16a34a] bg-[#16a34a]/10' : 'border-white/10 bg-white/5'}`}>
                 <button className="flex-1 text-left" onClick={() => fillAccount(acc)}>
                   <p className="text-xs font-black text-white">{acc.bank_code} · {acc.account_number}</p>
                   <p className="text-[10px] text-slate-400">{acc.account_holder_name}{acc.label ? ` · ${acc.label}` : ''}</p>
@@ -204,13 +204,13 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         {addingNew && (
           <div className="space-y-3 p-4 rounded-2xl border border-white/10 bg-white/5">
             <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Baru</p>
-            <select className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-primary-500" value={bankCode} onChange={e => setBankCode(e.target.value)}>
+            <select className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-[#16a34a]" value={bankCode} onChange={e => setBankCode(e.target.value)}>
               <option value="">Pilih Bank</option>
               {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
             </select>
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-mono outline-none focus:border-primary-500" placeholder="Nomor Rekening" value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))} />
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-primary-500" placeholder="Nama Pemegang (sesuai buku tabungan)" value={accName} onChange={e => setAccName(e.target.value)} />
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-primary-500 text-gray-300" placeholder='Label (opsional, cth: "Rekening Utama")' value={accLabel} onChange={e => setAccLabel(e.target.value)} />
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-mono outline-none focus:border-[#16a34a]" placeholder="Nomor Rekening" value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))} />
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-[#16a34a]" placeholder="Nama Pemegang (sesuai buku tabungan)" value={accName} onChange={e => setAccName(e.target.value)} />
+            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-[#16a34a] text-gray-300" placeholder='Label (opsional, cth: "Rekening Utama")' value={accLabel} onChange={e => setAccLabel(e.target.value)} />
             {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
               <p className="text-[10px] text-amber-400 flex items-center gap-1"><AlertCircle size={10} />Nama tidak cocok dengan nama terdaftar: {profileName}</p>
             )}
@@ -233,7 +233,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         <div className="space-y-1.5">
           <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Jumlah Penarikan</label>
           <input
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-lg font-black outline-none focus:border-primary-500 font-mono"
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-lg font-black outline-none focus:border-[#16a34a] font-mono"
             placeholder="0"
             value={amount ? parseInt(amount.replace(/\D/g, '') || '0').toLocaleString('id-ID') : ''}
             onChange={e => setAmount(e.target.value.replace(/\D/g, ''))}
@@ -292,9 +292,9 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <button
             onClick={handleSubmitClick}
             disabled={loading || amt < 10000 || !bankCode || !accNum || !accName}
-            className="flex-2 flex-grow py-4 bg-primary-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-2 flex-grow py-4 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {loading ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+            {loading ? <RefreshCw size={16} className="animate-spin motion-reduce:animate-none" /> : <ArrowUpRight size={16} />}
             {loading ? 'Memproses...' : 'Tarik Dana'}
           </button>
         </div>
@@ -371,16 +371,16 @@ const AgentWalletView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw size={24} className="animate-spin text-primary-500" />
+        <RefreshCw size={24} className="animate-spin motion-reduce:animate-none text-[#16a34a]" />
       </div>
     );
   }
 
   if (showWithdrawForm) {
     return (
-      <div className="space-y-6 animate-fade-in pb-24 px-1">
+      <div className="space-y-6 animate-fade-in motion-reduce:animate-none pb-24 px-1 font-sora">
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowWithdrawForm(false)} className="p-2 rounded-xl bg-white/5 active:scale-95 transition-all">
+          <button onClick={() => setShowWithdrawForm(false)} className="p-2 rounded-xl bg-white/5 active:scale-95 motion-reduce:active:scale-100 transition-all">
             <ChevronRight size={20} className="rotate-180" />
           </button>
           <h2 className="text-xl font-black uppercase tracking-tight">Tarik Dana</h2>
@@ -401,9 +401,9 @@ const AgentWalletView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-24">
+    <div className="space-y-6 animate-fade-in motion-reduce:animate-none pb-24 font-sora">
       {/* Balance card */}
-      <div className="relative bg-gradient-to-br from-primary-600 via-indigo-700 to-slate-900 rounded-[3rem] p-8 overflow-hidden shadow-2xl">
+      <div className="relative bg-gradient-to-br from-[#15803d] via-emerald-800 to-slate-900 rounded-[3rem] p-8 overflow-hidden shadow-2xl">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
         <div className="relative z-10 space-y-6">
           <div className="flex justify-between items-start">
@@ -453,8 +453,8 @@ const AgentWalletView: React.FC = () => {
           <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Rekening Terdaftar</p>
           {savedAccounts.map((acc, idx) => (
             <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <div className="w-9 h-9 rounded-xl bg-primary-500/10 flex items-center justify-center">
-                <Building2 size={14} className="text-primary-400" />
+              <div className="w-9 h-9 rounded-xl bg-[#16a34a]/10 flex items-center justify-center">
+                <Building2 size={14} className="text-[#22c55e]" />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-black text-white">{acc.bank_code} · {acc.account_number}</p>
@@ -474,7 +474,7 @@ const AgentWalletView: React.FC = () => {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400'}`}
+            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-[#16a34a] text-white shadow-lg' : 'text-gray-400'}`}
           >
             {t === 'ledger' ? 'Riwayat Kredit' : 'Penarikan'}
           </button>

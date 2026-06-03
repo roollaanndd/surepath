@@ -57,15 +57,15 @@ const PolicyAndQuotes: React.FC<{
     );
   }
   return (
-    <div className="space-y-4 pb-8">
-      <div className="px-4 pt-4 flex items-center justify-between">
+    <div className="space-y-4 pb-8 font-sora">
+      <div className="px-5 pt-5 flex items-center justify-between">
         <div>
           <h2 className="font-black text-xl tracking-tight">Polis & Penawaran</h2>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order aktif & riwayat</p>
         </div>
         <button
           onClick={() => setShowQuoteBuilder(true)}
-          className="px-4 py-2.5 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all"
+          className="px-4 py-2.5 rounded-2xl bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#16a34a]/30 active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           📄 Buat Penawaran
         </button>
@@ -235,25 +235,28 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   return (
-    <div className={`min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300`}>
+    <div className={`min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300 font-sora`}>
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @media (prefers-reduced-motion: reduce) {
+          [data-sp-anim] { animation: none !important; }
+        }
       `}</style>
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
+      <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
-              <ShieldCheck size={16} className="text-white" strokeWidth={3} />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#16a34a] to-[#15803d] flex items-center justify-center shadow-lg shadow-[#16a34a]/30">
+              <ShieldCheck size={17} className="text-white" strokeWidth={3} />
             </div>
             <div>
               <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                Sure<span className="text-primary-500">Path</span>
+                Sure<span className="text-[#16a34a]">Path</span>
               </div>
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mt-0.5">
                 Agent Portal
               </div>
             </div>
@@ -262,7 +265,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           <div className="flex items-center gap-1">
             <div className="text-right mr-2">
               <div className="text-xs font-black tracking-tight leading-none">{agent?.name ?? 'Agent'}</div>
-              <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
+              <div className="text-[10px] font-bold text-[#16a34a] uppercase tracking-widest leading-none mt-0.5">
                 {agent?.agent_code ?? 'SP-AGT'}
               </div>
               {agentTier && (
@@ -277,11 +280,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             {/* Notification bell */}
             <button
               onClick={() => setShowNotifications(true)}
-              className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+              className="relative w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+              <Bell size={15} className="text-slate-600 dark:text-slate-300" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary-500 text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#16a34a] text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-white dark:ring-[#111]">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -289,16 +292,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              {darkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
+              {darkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-slate-600" />}
             </button>
 
             <button
               onClick={() => handleTabChange('profile')}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center ml-1"
+              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center ml-1 active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              <UserCircle size={14} className="text-slate-600 dark:text-slate-300" />
+              <UserCircle size={15} className="text-slate-600 dark:text-slate-300" />
             </button>
           </div>
         </div>
@@ -308,11 +311,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       <main className="pt-16 pb-32 min-h-screen">
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-            <div className="w-12 h-12 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+            <div className="w-12 h-12 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
             <p className="text-slate-400 text-sm font-bold">{t('Loading your dashboard…', 'Memuat dashboard…')}</p>
           </div>
         ) : (
-          <div key={tabKey} style={{ animation: 'spFadeIn 0.2s ease-out' }}>
+          <div key={tabKey} data-sp-anim style={{ animation: 'spFadeIn 0.25s ease-out' }}>
             {renderTab()}
           </div>
         )}
@@ -328,21 +331,21 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-0.5 transition-all duration-200 ${
+                className={`flex flex-col items-center gap-0.5 transition-all duration-200 motion-reduce:transition-none ${
                   isCenter
                     ? '-mt-5'
                     : `px-2 py-1.5 rounded-2xl ${
                         active
-                          ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                          ? 'bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white scale-110 shadow-lg shadow-[#16a34a]/30'
                           : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                       }`
                 }`}
               >
                 {isCenter ? (
-                  <div className={`w-14 h-14 rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl transition-all active:scale-90 ${
+                  <div className={`w-14 h-14 rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl transition-all active:scale-90 motion-reduce:active:scale-100 bg-gradient-to-br ${
                     active
-                      ? 'bg-primary-600 shadow-orange-600/50'
-                      : 'bg-primary-500 shadow-orange-500/40'
+                      ? 'from-[#15803d] to-[#166534] shadow-[#15803d]/50'
+                      : 'from-[#16a34a] to-[#15803d] shadow-[#16a34a]/40'
                   }`}>
                     <Icon size={22} strokeWidth={2.5} className="text-white" />
                     <span className="text-[7px] font-black uppercase tracking-widest text-white/90 leading-none mt-0.5">

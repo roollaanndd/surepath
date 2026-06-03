@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Menu, X, Globe } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
@@ -132,9 +132,8 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
 };
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
-const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
+const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
   const t = useT(lang);
-  const th = useSiteTheme(darkMode);
   const columns = [
     { title: t('Produk', 'Products'), links: [
       { label: t('Asuransi Kendaraan', 'Car Insurance'),    path: '/product/car' },
@@ -220,6 +219,11 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
             ].map(l => (
               <button key={l.path} onClick={() => navigate(l.path)} className="text-[0.65rem] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)' }}>{l.label}</button>
             ))}
+            <button onClick={() => navigate('/admin')} aria-label="Admin"
+              className="flex items-center gap-1 text-[0.65rem] transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.18)' }}>
+              <Lock size={9} /> Admin
+            </button>
           </div>
         </div>
       </div>

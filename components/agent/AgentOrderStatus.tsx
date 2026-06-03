@@ -20,7 +20,7 @@ const STATUS_META: Record<SpPolicyOrder['status'], { en: string; id: string; col
   SUBMITTED:    { en: 'Submitted',    id: 'Diajukan',   color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',     Icon: Clock },
   UNDER_REVIEW: { en: 'In Review',    id: 'Ditinjau',   color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',          Icon: Eye },
   APPROVED:     { en: 'Approved',     id: 'Disetujui',  color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit',color:'bg-primary-500/10 text-primary-500',                                         Icon: FileText },
+  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit',color:'bg-[#16a34a]/10 text-[#16a34a]',                                         Icon: FileText },
   REJECTED:     { en: 'Rejected',     id: 'Ditolak',    color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',           Icon: XCircle },
 };
 
@@ -138,7 +138,7 @@ const OrderSheet: React.FC<{
               <button
                 onClick={onPay}
                 disabled={paying}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-500 disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-transform"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
               >
                 {paying ? <Loader2 size={12} className="animate-spin" /> : <CreditCard size={12} />}
                 {paying ? t('Creating Invoice…', 'Membuat Invoice…') : t('Pay Premium', 'Bayar Premi')}
@@ -230,7 +230,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
   const visible = filter === 'ALL' ? orders : orders.filter(o => o.status === filter);
 
   return (
-    <div>
+    <div className="font-sora">
       {/* Filter row */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
         {FILTERS.map(f => (
@@ -239,7 +239,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(f.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === f.id
-                ? 'bg-primary-500 text-white shadow-md shadow-orange-500/25'
+                ? 'bg-[#16a34a] text-white shadow-md shadow-[#16a34a]/25'
                 : 'bg-white dark:bg-white/5 text-slate-400 border border-slate-100 dark:border-white/10'
             }`}
           >
@@ -254,7 +254,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-9 h-9 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-9 h-9 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-12">
@@ -292,7 +292,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                       <meta.Icon size={9} />
                       {lang === Language.EN ? meta.en : meta.id}
                     </span>
-                    <span className="text-[9px] font-bold text-primary-500">{formatIDR(order.total_premium)}</span>
+                    <span className="text-[9px] font-bold text-[#16a34a]">{formatIDR(order.total_premium)}</span>
                     {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (() => {
                       const pmt = payments[order.id];
                       if (pmt?.status === 'PAID') return (

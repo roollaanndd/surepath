@@ -62,12 +62,12 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   };
 
   return (
-    <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32">
+    <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32 font-sora">
 
       {/* Greeting Hero Banner */}
-      <div className="rounded-[2.5rem] overflow-hidden relative shadow-2xl">
+      <div className="rounded-[2.5rem] overflow-hidden relative shadow-2xl shadow-[#16a34a]/10">
         {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-primary-700" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-[#15803d]" />
         {/* Subtle grid pattern overlay */}
         <div
           className="absolute inset-0 opacity-[0.08]"
@@ -89,7 +89,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                 {(agent?.name ?? 'Agent').toUpperCase()} 👋
               </h1>
               <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1.5 rounded-full bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/30">
+                <span className="px-3 py-1.5 rounded-full bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#16a34a]/30">
                   {agent?.agent_code ?? 'SP-AGT-001'}
                 </span>
                 {agentTier && (
@@ -116,10 +116,10 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Stat Cards 2×2 */}
       <div className="grid grid-cols-2 gap-3">
         {/* GWP This Month */}
-        <div className="bg-gradient-to-br from-primary-500/10 to-primary-500/5 dark:from-primary-500/15 dark:to-primary-500/5 rounded-[1.5rem] shadow-lg p-4">
+        <div className="bg-gradient-to-br from-[#16a34a]/10 to-[#16a34a]/5 dark:from-[#16a34a]/15 dark:to-[#16a34a]/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-primary-500/20 rounded-xl flex items-center justify-center">
-              <TrendingUp size={14} className="text-primary-500" />
+            <div className="w-7 h-7 bg-[#16a34a]/20 rounded-xl flex items-center justify-center">
+              <TrendingUp size={14} className="text-[#16a34a]" />
             </div>
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               {t('GWP / Month', 'GWP Bulan Ini')}
@@ -132,7 +132,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Total Clients */}
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/15 dark:to-blue-500/5 rounded-[1.5rem] shadow-lg p-4">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/15 dark:to-blue-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 bg-blue-500/20 rounded-xl flex items-center justify-center">
               <Users size={14} className="text-blue-500" />
@@ -148,7 +148,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Active Policies */}
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/15 dark:to-emerald-500/5 rounded-[1.5rem] shadow-lg p-4">
+        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/15 dark:to-emerald-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 bg-emerald-500/20 rounded-xl flex items-center justify-center">
               <Shield size={14} className="text-emerald-500" />
@@ -164,7 +164,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Earned This Month */}
-        <div className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 dark:from-violet-500/15 dark:to-violet-500/5 rounded-[1.5rem] shadow-lg p-4">
+        <div className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 dark:from-violet-500/15 dark:to-violet-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 bg-violet-500/20 rounded-xl flex items-center justify-center">
               <Wallet size={14} className="text-violet-500" />
@@ -197,18 +197,18 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               <span className="text-slate-400 font-bold text-sm"> / {formatIDR(monthlyTarget)}</span>
             </p>
           </div>
-          <span className={`text-lg font-black ${progress >= 100 ? 'text-emerald-500' : 'text-primary-500'}`}>
+          <span className={`text-lg font-black ${progress >= 100 ? 'text-emerald-500' : 'text-[#16a34a]'}`}>
             {Math.round(progress)}%
           </span>
         </div>
         <div className="h-3 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700"
+            className="h-full rounded-full transition-all duration-700 motion-reduce:transition-none"
             style={{
               width: `${progress}%`,
               background: progress >= 100
                 ? 'linear-gradient(90deg, #10b981, #34d399)'
-                : 'linear-gradient(90deg, #f97316, #fb923c)',
+                : 'linear-gradient(90deg, #16a34a, #4ade80)',
             }}
           />
         </div>
@@ -241,8 +241,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             tab: 'clients',
             label: t('Clients', 'Klien'),
             icon: Users,
-            color: 'text-primary-500',
-            bg: 'bg-primary-500/10',
+            color: 'text-[#16a34a]',
+            bg: 'bg-[#16a34a]/10',
           },
           {
             tab: 'claims',
@@ -310,7 +310,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           </p>
           <button
             onClick={() => onNavigate('commission')}
-            className="flex items-center gap-1 text-primary-500 text-xs font-black uppercase tracking-widest"
+            className="flex items-center gap-1 text-[#16a34a] text-xs font-black uppercase tracking-widest active:scale-95 transition-transform motion-reduce:active:scale-100"
           >
             {t('See all', 'Lihat semua')} <ChevronRight size={14} />
           </button>

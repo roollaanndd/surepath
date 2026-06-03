@@ -148,7 +148,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
   const avatarColor = (name: string) => avatarColors[name.charCodeAt(0) % avatarColors.length];
 
   return (
-    <div className="relative min-h-screen pb-32">
+    <div className="relative min-h-screen pb-32 font-sora">
 
       {/* Header */}
       <div className="px-4 pt-6 pb-3 space-y-3">
@@ -160,7 +160,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
             placeholder={t('Search clients…', 'Cari klien…')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/30 shadow-lg"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/40 shadow-lg"
           />
         </div>
 
@@ -186,8 +186,8 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
           <p className="text-slate-400 text-xs font-bold">
             {filtered.length} {t('clients', 'klien')}
           </p>
-          <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-primary-500 transition-colors">
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+          <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-[#16a34a] transition-colors">
+            <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
             {t('Refresh', 'Perbarui')}
           </button>
         </div>
@@ -213,7 +213,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
               <div
                 key={client.id}
                 onClick={() => { setSelectedClient(client); onSelectClient?.(client); }}
-                className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all hover:border-primary-500/20"
+                className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all hover:border-[#16a34a]/30"
               >
                 <div className={`w-11 h-11 rounded-2xl ${avatarColor(client.name)} flex items-center justify-center flex-shrink-0`}>
                   <span className="text-white font-black text-sm">{initials(client.name)}</span>
@@ -234,7 +234,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={(e) => openEdit(client, e)}
-                    className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center hover:bg-primary-500/10 transition-colors"
+                    className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center hover:bg-[#16a34a]/10 transition-colors"
                   >
                     <Pencil size={13} className="text-slate-400" />
                   </button>
@@ -249,7 +249,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-28 right-6 w-14 h-14 bg-primary-500 rounded-full shadow-[0_8px_30px_rgba(249,115,22,0.5)] flex items-center justify-center z-30 active:scale-95 transition-transform"
+        className="fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-full shadow-[0_8px_30px_rgba(22,163,74,0.5)] flex items-center justify-center z-30 active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
       >
         <Plus size={24} className="text-white" strokeWidth={3} />
       </button>
@@ -359,9 +359,9 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-primary-500/5 rounded-2xl border border-primary-500/20">
-                <FileText size={14} className="text-primary-500 flex-shrink-0" />
-                <p className="text-xs text-primary-500 font-bold">
+              <div className="flex items-center gap-2 p-3 bg-[#16a34a]/5 rounded-2xl border border-[#16a34a]/20">
+                <FileText size={14} className="text-[#16a34a] flex-shrink-0" />
+                <p className="text-xs text-[#16a34a] font-bold">
                   {t('Go to Quotes tab to create a new quote or policy for this client.', 'Buka tab Penawaran untuk membuat penawaran atau polis baru untuk klien ini.')}
                 </p>
               </div>
@@ -412,7 +412,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                       type={field.type}
                       value={(form as any)[field.key]}
                       onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/40"
                     />
                   </div>
                 ))}
@@ -450,7 +450,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                     value={form.notes}
                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                     rows={3}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/40 resize-none"
                   />
                 </div>
               </div>

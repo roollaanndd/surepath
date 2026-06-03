@@ -279,13 +279,13 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     step === 'quote_summary' ? 'inputs' : step
   );
 
-  const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/30";
+  const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/30";
   const labelClass = "text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block";
 
   // ─── SUCCESS SCREEN ───
   if (step === 'success') {
     return (
-      <div className="px-4 py-6 max-w-lg mx-auto flex flex-col items-center text-center gap-6 min-h-[70vh] justify-center">
+      <div className="px-4 py-6 max-w-lg mx-auto flex flex-col items-center text-center gap-6 min-h-[70vh] justify-center font-sora">
         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
           <FileCheck size={40} className="text-emerald-500" />
         </div>
@@ -316,7 +316,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               coverageDetails: createdPolicy?.coverage_details,
             });
           }}
-          className="w-full py-3.5 rounded-2xl bg-primary-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-orange-500/20"
+          className="w-full py-3.5 rounded-2xl bg-[#16a34a] text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/20"
         >
           <Download size={14} />
           {t('Download Certificate (PDF)', 'Unduh Sertifikat (PDF)')}
@@ -334,7 +334,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   }
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
+    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
       {/* Tab switcher */}
       <div className="flex gap-2 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
         <button
@@ -382,7 +382,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* Progress bar */}
       <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
         <div
-          className="h-full bg-primary-500 rounded-full transition-all duration-500"
+          className="h-full bg-[#16a34a] rounded-full transition-all duration-500"
           style={{ width: `${((stepIndex + 1) / 4) * 100}%` }}
         />
       </div>
@@ -424,7 +424,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   onClick={() => setSelectedClientId(c.id)}
                   className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
                     selectedClientId === c.id
-                      ? 'border-primary-500 bg-primary-500/5'
+                      ? 'border-[#16a34a] bg-[#16a34a]/5'
                       : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
                   }`}
                 >
@@ -435,7 +435,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                     <p className="font-black text-sm">{c.name}</p>
                     <p className="text-xs text-slate-400">{c.phone}</p>
                   </div>
-                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-primary-500 ml-auto" />}
+                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-[#16a34a] ml-auto" />}
                 </button>
               ))}
             </div>
@@ -478,7 +478,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   onClick={() => { setProduct(p.type); setActiveProduct(null); }}
                   className={`p-5 rounded-[1.5rem] border text-left transition-all active:scale-95 ${
                     active
-                      ? 'border-primary-500 bg-primary-500/5 shadow-lg'
+                      ? 'border-[#16a34a] bg-[#16a34a]/5 shadow-lg'
                       : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
                   }`}
                 >
@@ -491,9 +491,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
                     {lang === Language.EN ? p.enDesc : p.idDesc}
                   </p>
-                  {active && <CheckCircle2 size={14} className="text-primary-500 mt-2" />}
+                  {active && <CheckCircle2 size={14} className="text-[#16a34a] mt-2" />}
                   {p.ojk && (
-                    <span className="mt-1.5 inline-block text-[8px] font-black uppercase tracking-widest bg-primary-500/10 text-primary-500 px-2 py-0.5 rounded-full">OJK</span>
+                    <span className="mt-1.5 inline-block text-[8px] font-black uppercase tracking-widest bg-[#16a34a]/10 text-[#16a34a] px-2 py-0.5 rounded-full">OJK</span>
                   )}
                 </button>
               );
@@ -543,12 +543,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
                   className="w-full rounded-[1.5rem] overflow-hidden text-left active:scale-95 transition-all shadow-lg"
                 >
-                  <div className="bg-gradient-to-r from-primary-500 to-orange-600 p-5">
+                  <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] p-5">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">🛒</div>
                       <div>
                         <p className="font-black text-white text-sm">Beli Langsung</p>
-                        <p className="text-[10px] text-orange-100/80 mt-0.5">Proses polis lengkap + survei + pembayaran.</p>
+                        <p className="text-[10px] text-emerald-100/80 mt-0.5">Proses polis lengkap + survei + pembayaran.</p>
                       </div>
                       <ChevronRight size={16} className="ml-auto text-white/60" />
                     </div>
@@ -840,7 +840,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
           <button
             onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
-            className="w-full py-4 rounded-2xl bg-primary-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-orange-500/30"
+            className="w-full py-4 rounded-2xl bg-[#16a34a] text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/30"
           >
             <ChevronRight size={14} />
             Lanjut ke Pembelian
@@ -893,9 +893,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             <button
               onClick={handlePrintQuote}
               disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-              className="w-full py-4 rounded-2xl border border-orange-300 dark:border-orange-500/30 text-primary-500 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50 bg-orange-50 dark:bg-orange-500/5"
+              className="w-full py-4 rounded-2xl border border-[#16a34a]/40 dark:border-[#16a34a]/30 text-[#16a34a] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 motion-reduce:active:scale-100 transition-transform disabled:opacity-50 bg-[#16a34a]/5 dark:bg-[#16a34a]/10"
             >
-              {printingQuote ? <RefreshCw size={14} className="animate-spin" /> : <FileText size={14} />}
+              {printingQuote ? <RefreshCw size={14} className="animate-spin motion-reduce:animate-none" /> : <FileText size={14} />}
               {t('Print Quote PDF', 'Cetak Penawaran PDF')}
             </button>
           )}
@@ -913,7 +913,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handleConvert}
             disabled={converting}
-            className="w-full py-4 rounded-2xl bg-primary-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-orange-500/30 disabled:opacity-50"
+            className="w-full py-4 rounded-2xl bg-[#16a34a] text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/30 disabled:opacity-50"
           >
             {converting ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
             {t('Convert to Policy', 'Buat Polis')}

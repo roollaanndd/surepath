@@ -114,7 +114,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   ];
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32">
+    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
 
       {/* Toast */}
       {toastVisible && (
@@ -151,7 +151,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
         <button
           onClick={handleWithdraw}
           disabled={totalPending === 0}
-          className="w-full py-3.5 bg-primary-500 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 active:scale-95 transition-transform disabled:opacity-40"
+          className="w-full py-3.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-[#16a34a]/30 active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 disabled:opacity-40"
         >
           <ArrowDownToLine size={14} />
           {t('Request Withdrawal', 'Minta Pencairan')}
@@ -207,7 +207,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 motion-reduce:active:scale-100 ${
               activeTab === tab.id
                 ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg'
                 : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-400'
@@ -220,8 +220,8 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* Refresh */}
       <div className="flex justify-end">
-        <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-primary-500 transition-colors">
-          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+        <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-[#16a34a] transition-colors">
+          <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
           {t('Refresh', 'Perbarui')}
         </button>
       </div>

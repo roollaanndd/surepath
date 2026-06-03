@@ -110,12 +110,12 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
     // These wizards are launched via CarInsuranceWizard or direct — route through QuoteBuilder for now
     // with buy mode
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 gap-4 font-sora">
         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
           {React.createElement(PRODUCTS.find(p => p.id === selected)!.icon, { size: 28, className: 'text-slate-500' })}
         </div>
         <p className="text-sm font-bold text-slate-400">Segera hadir — formulir pembelian {selected}</p>
-        <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-white/10 text-sm font-black uppercase tracking-widest">
+        <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-white/10 text-sm font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 transition-transform">
           Kembali
         </button>
       </div>
@@ -123,10 +123,10 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
   }
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
+    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+        <button onClick={onBack} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 motion-reduce:active:scale-100 transition-transform">
           <ArrowLeft size={18} />
         </button>
         <div>
@@ -141,7 +141,7 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
           <button
             key={id}
             onClick={() => setSelected(id)}
-            className={`relative rounded-[1.75rem] overflow-hidden text-left active:scale-95 transition-all shadow-xl ${shadow}`}
+            className={`relative rounded-[1.75rem] overflow-hidden text-left active:scale-95 motion-reduce:active:scale-100 hover:-translate-y-0.5 hover:brightness-105 transition-all duration-200 motion-reduce:transition-none shadow-xl ${shadow}`}
           >
             <div className={`bg-gradient-to-br ${gradient} p-5 h-full flex flex-col gap-3`}>
               {badge && (

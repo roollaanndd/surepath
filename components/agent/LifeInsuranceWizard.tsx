@@ -222,14 +222,14 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           {t('Application Submitted!', 'Aplikasi Berhasil Dikirim!')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">
-          {t('Order Number', 'Nomor Aplikasi')}: <span className="font-mono font-bold text-primary-500">{successApp.order_number}</span>
+          {t('Order Number', 'Nomor Aplikasi')}: <span className="font-mono font-bold text-[#16a34a]">{successApp.order_number}</span>
         </p>
         <p className="text-xs text-slate-400 mb-6">
           {t('Prudential will review and contact within 3-5 business days.', 'Prudential akan mereview dan menghubungi dalam 3-5 hari kerja.')}
         </p>
         <button
           onClick={() => { setSuccessApp(null); setStep(1); setProductCode(''); setClientName(''); setClientDob(''); setClientPhone(''); setClientEmail(''); setSmoker(false); setSumAssured(500_000_000); setRiders([]); setHealthDecl({}); setBenefName(''); setHealthIdx(0); }}
-          className="px-6 py-2 bg-primary-500 text-white rounded-xl font-semibold text-sm"
+          className="px-6 py-2 bg-[#16a34a] text-white rounded-xl font-semibold text-sm"
         >
           {t('New Application', 'Aplikasi Baru')}
         </button>
@@ -238,10 +238,10 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-white dark:bg-[#0f0f0f]">
+    <div className="flex flex-col min-h-full bg-white dark:bg-[#0f0f0f] font-sora">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-white/5">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 motion-reduce:active:scale-100 transition-transform">
           <ChevronLeft size={20} className="text-slate-500" />
         </button>
         <div>
@@ -258,7 +258,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <div key={s} className="flex items-center gap-1.5">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
               s < step ? 'bg-green-500 text-white' :
-              s === step ? 'bg-primary-500 text-white' :
+              s === step ? 'bg-[#16a34a] text-white' :
               'bg-slate-100 dark:bg-white/5 text-slate-400'
             }`}>{s < step ? <CheckCircle2 size={14} /> : s}</div>
             {s < 7 && <div className={`w-4 h-0.5 rounded ${s < step ? 'bg-green-400' : 'bg-slate-200 dark:bg-white/10'}`} />}
@@ -333,7 +333,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <button
             disabled={!canNext()}
             onClick={() => setStep(s => s + 1)}
-            className="flex-1 py-3 rounded-xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-[#16a34a] text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>
@@ -341,7 +341,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <button
             disabled={submitting}
             onClick={handleSubmit}
-            className="flex-1 py-3 rounded-xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-[#16a34a] text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             {t('Submit Application', 'Submit Aplikasi')}
@@ -408,7 +408,7 @@ const StepPlanType: React.FC<{
               <p className="font-bold text-sm text-slate-900 dark:text-white">{label}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{desc}</p>
             </div>
-            {selected && <CheckCircle2 size={18} className="ml-auto text-primary-500 flex-shrink-0" />}
+            {selected && <CheckCircle2 size={18} className="ml-auto text-[#16a34a] flex-shrink-0" />}
           </button>
         );
       })}
@@ -447,7 +447,7 @@ const StepPersonal: React.FC<{
           <div className="flex gap-2">
             {(['M', 'F'] as const).map(g => (
               <button key={g} onClick={() => setClientGender(g)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${clientGender === g ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${clientGender === g ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {g === 'M' ? t('Male', 'Pria') : t('Female', 'Wanita')}
               </button>
             ))}
@@ -463,7 +463,7 @@ const StepPersonal: React.FC<{
           <div className="flex gap-2">
             {([true, false] as const).map(v => (
               <button key={String(v)} onClick={() => setSmoker(v)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${smoker === v ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${smoker === v ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {v ? t('Yes', 'Ya') : t('No', 'Tidak')}
               </button>
             ))}
@@ -501,7 +501,7 @@ const StepCoverage: React.FC<{
           <div className="flex gap-2 flex-wrap">
             {terms.map(y => (
               <button key={y} onClick={() => setPolicyTermYears(y)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${policyTermYears === y ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${policyTermYears === y ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {y === 99 ? t('Lifetime', 'Seumur Hidup') : `${y} ${t('yr', 'thn')}`}
               </button>
             ))}
@@ -511,16 +511,16 @@ const StepCoverage: React.FC<{
           <div className="flex gap-2 flex-wrap">
             {FREQS.map(f => (
               <button key={f.value} onClick={() => setPaymentFreq(f.value)}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${paymentFreq === f.value ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
+                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${paymentFreq === f.value ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
                 {f.label}
               </button>
             ))}
           </div>
         </Field>
-        <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-500/20 rounded-2xl">
-          <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1">{t('Indicative Premium', 'Premi Indikatif')}</p>
-          <p className="text-2xl font-black text-orange-500">{fmtIDR(Math.round(periodPremium))}<span className="text-sm font-medium">/{FREQS.find(f => f.value === paymentFreq)?.label ?? ''}</span></p>
-          <p className="text-xs text-orange-400 mt-0.5">{t('Annual:', 'Tahunan:')} {fmtIDR(annualPremium)}</p>
+        <div className="p-4 bg-[#16a34a]/5 dark:bg-[#16a34a]/10 border border-[#16a34a]/20 dark:border-[#16a34a]/20 rounded-2xl">
+          <p className="text-xs font-semibold text-[#15803d] dark:text-[#22c55e] mb-1">{t('Indicative Premium', 'Premi Indikatif')}</p>
+          <p className="text-2xl font-black text-[#16a34a]">{fmtIDR(Math.round(periodPremium))}<span className="text-sm font-medium">/{FREQS.find(f => f.value === paymentFreq)?.label ?? ''}</span></p>
+          <p className="text-xs text-[#22c55e] mt-0.5">{t('Annual:', 'Tahunan:')} {fmtIDR(annualPremium)}</p>
           <p className="text-[10px] text-slate-400 mt-2 italic">Premi ini bersifat indikatif dan dapat berubah sesuai hasil underwriting Prudential</p>
         </div>
       </div>
@@ -544,15 +544,15 @@ const StepRiders: React.FC<{
           const selected = riders.includes(code);
           return (
             <button key={code} onClick={() => toggle(code)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${selected ? 'border-primary-400 bg-orange-50 dark:bg-orange-900/10' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5'}`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selected ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-slate-100 dark:bg-white/5'}`}>
-                <Icon size={20} className={selected ? 'text-primary-500' : 'text-slate-400'} />
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all ${selected ? 'border-[#22c55e] bg-[#16a34a]/5 dark:bg-[#16a34a]/10' : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selected ? 'bg-[#dcfce7] dark:bg-[#14532d]/30' : 'bg-slate-100 dark:bg-white/5'}`}>
+                <Icon size={20} className={selected ? 'text-[#16a34a]' : 'text-slate-400'} />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-sm text-slate-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-400">{desc}</p>
               </div>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selected ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>{loading}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selected ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>{loading}</span>
             </button>
           );
         })}
@@ -585,7 +585,7 @@ const StepHealth: React.FC<{
       <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{t('Health Declaration', 'Deklarasi Kesehatan')}</h2>
       <p className="text-xs text-slate-400 mb-4">{healthIdx + 1} / {HEALTH_QUESTIONS.length}</p>
       <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-1.5 mb-6">
-        <div className="bg-primary-500 h-1.5 rounded-full transition-all" style={{ width: `${((Object.keys(healthDecl).length) / HEALTH_QUESTIONS.length) * 100}%` }} />
+        <div className="bg-[#16a34a] h-1.5 rounded-full transition-all" style={{ width: `${((Object.keys(healthDecl).length) / HEALTH_QUESTIONS.length) * 100}%` }} />
       </div>
       <div className="p-5 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 mb-4 min-h-[100px] flex items-center">
         <p className="text-sm font-medium text-slate-800 dark:text-white leading-relaxed">{question}</p>
@@ -631,7 +631,7 @@ const StepBeneficiary: React.FC<{
         <div className="flex flex-wrap gap-2">
           {RELATIONS.map(r => (
             <button key={r} onClick={() => setBenefRelation(r)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${benefRelation === r ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${benefRelation === r ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
               {r}
             </button>
           ))}
@@ -686,8 +686,8 @@ const StepSummary: React.FC<{
           <SummaryRow label={t('Relation', 'Hubungan')} value={benefRelation} />
           <SummaryRow label={t('Percentage', 'Persentase')} value={`${benefPct}%`} />
         </SummarySection>
-        <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-500/20 rounded-2xl">
-          <p className="text-sm font-bold text-orange-600 dark:text-orange-400 mb-2">{t('Premium Breakdown', 'Rincian Premi')}</p>
+        <div className="p-4 bg-[#16a34a]/5 dark:bg-[#16a34a]/10 border border-[#16a34a]/20 dark:border-[#16a34a]/20 rounded-2xl">
+          <p className="text-sm font-bold text-[#15803d] dark:text-[#22c55e] mb-2">{t('Premium Breakdown', 'Rincian Premi')}</p>
           <SummaryRow label={t('Annual', 'Tahunan')} value={fmtIDR(annualPremium)} />
           <SummaryRow label={`${freqLabel}`} value={fmtIDR(Math.round(periodPremium))} />
           <p className="text-[10px] text-slate-400 mt-2 italic">Premi ini bersifat indikatif dan dapat berubah sesuai hasil underwriting Prudential</p>
@@ -699,7 +699,7 @@ const StepSummary: React.FC<{
 
 // ─── Shared UI atoms ──────────────────────────────────────────────────────────
 
-const INPUT_CLS = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400';
+const INPUT_CLS = 'w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#22c55e]';
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>

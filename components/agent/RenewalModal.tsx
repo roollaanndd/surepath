@@ -141,7 +141,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({ order, agentId, lang, onClo
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="w-full py-3.5 bg-primary-500 text-white rounded-2xl font-black text-sm tracking-tight disabled:opacity-60 active:scale-[0.98] transition-transform shadow-lg shadow-orange-500/20"
+              className="w-full py-3.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-sm tracking-tight disabled:opacity-60 active:scale-[0.98] motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-lg shadow-[#16a34a]/25"
             >
               {saving ? t('Creating…', 'Membuat…') : t('Create Renewal Order', 'Buat Order Renewal')}
             </button>

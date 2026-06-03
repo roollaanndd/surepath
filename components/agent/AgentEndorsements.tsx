@@ -109,13 +109,13 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+        <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
+    <div className="px-4 py-6 space-y-5 max-w-lg mx-auto font-sora">
 
       {/* Header + CTA */}
       <div className="flex items-center justify-between">
@@ -129,7 +129,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
         </div>
         <button
           onClick={openModal}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#16a34a]/30 hover:brightness-105 transition-all"
         >
           <Plus size={14} /> {t('Request', 'Ajukan')}
         </button>
@@ -164,7 +164,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                   <span className={`inline-block px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border mr-2 ${STATUS_STYLE[e.status]}`}>
                     {e.status}
                   </span>
-                  <span className="text-[10px] font-black text-primary-500 uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-[#16a34a] uppercase tracking-widest">
                     {TYPE_LABELS[e.type]}
                   </span>
                 </div>
@@ -227,7 +227,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                     required
                     value={formOrderId}
                     onChange={(e) => setFormOrderId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary-500"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#16a34a]"
                   >
                     <option value="">{t('— Select —', '— Pilih —')}</option>
                     {issuedOrders.map((o) => (
@@ -247,7 +247,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                 <select
                   value={formType}
                   onChange={(e) => setFormType(e.target.value as SpEndorsement['type'])}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-primary-500"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#16a34a]"
                 >
                   {ENDORSEMENT_TYPES.map((type) => (
                     <option key={type} value={type}>{TYPE_LABELS[type]}</option>
@@ -266,7 +266,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                     value={formOldValue}
                     onChange={(e) => setFormOldValue(e.target.value)}
                     placeholder={t('e.g. B 1234 ABC', 'mis. B 1234 ABC')}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#16a34a]"
                   />
                 </div>
                 <div>
@@ -278,7 +278,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                     value={formNewValue}
                     onChange={(e) => setFormNewValue(e.target.value)}
                     placeholder={t('e.g. B 5678 XYZ', 'mis. B 5678 XYZ')}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#16a34a]"
                   />
                 </div>
               </div>
@@ -294,7 +294,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                   onChange={(e) => setFormDescription(e.target.value)}
                   rows={3}
                   placeholder={t('Describe the requested change…', 'Jelaskan perubahan yang diminta…')}
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#16a34a] resize-none"
                 />
               </div>
 
@@ -311,7 +311,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
               <button
                 type="submit"
                 disabled={submitting || !formOrderId}
-                className="w-full py-3 bg-primary-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                className="w-full py-3 bg-gradient-to-br from-[#16a34a] to-[#15803d] hover:brightness-105 disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
               >
                 {submitting ? t('Submitting…', 'Mengirim…') : t('Submit Request', 'Kirim Permintaan')}
               </button>

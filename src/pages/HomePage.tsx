@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import {
   ArrowRight, ChevronRight, ChevronDown, Shield, CheckCircle,
-  Zap, Users, Search, BarChart2, Volume2, VolumeX, Play, Pause,
+  Zap, Users, Search, BarChart2,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
 import {
@@ -13,22 +13,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, navigate, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
-
-  // Promo video controls
-  const promoRef = useRef<HTMLVideoElement>(null);
-  const [promoMuted, setPromoMuted] = useState(true);
-  const [promoPlaying, setPromoPlaying] = useState(true);
-  const togglePromoMute = () => {
-    const v = promoRef.current; if (!v) return;
-    v.muted = !v.muted; setPromoMuted(v.muted);
-    if (v.paused) { v.play().catch(() => {}); setPromoPlaying(true); }
-  };
-  const togglePromoPlay = () => {
-    const v = promoRef.current; if (!v) return;
-    if (v.paused) { v.play().catch(() => {}); setPromoPlaying(true); }
-    else { v.pause(); setPromoPlaying(false); }
-  };
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, videoBg2, videoBg3, accent } = th;
 
   const heroConfig   = useWebsiteConfig('hero');
   const statsConfig  = useWebsiteConfig('stats');
@@ -54,7 +39,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   ];
 
   return (
-    <SiteLayout {...props} active="home">
+    <SiteLayout {...props} active="home" bgVideo="/promo.mp4">
 
       {/* ═══════════════ HERO (kept) ═══════════════ */}
       <section className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden" style={{ background: 'hsl(0 0% 4%)' }}>
@@ -105,72 +90,9 @@ const HomePage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ═══════════════ PROMO VIDEO (relocated) ═══════════════ */}
-      <section className="py-16 md:py-20 px-5" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto">
-          <Reveal>
-            <div
-              className="group relative rounded-[1.75rem] overflow-hidden mx-auto"
-              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${accent}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
-            >
-              <video
-                ref={promoRef}
-                src="/promo.mp4"
-                poster="/promo-poster.jpg"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                onClick={togglePromoPlay}
-                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-              />
-              {/* Soft vignette */}
-              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
-
-              {/* Center play/pause (shows on hover or when paused) */}
-              <button
-                onClick={togglePromoPlay}
-                aria-label={promoPlaying ? 'Pause video' : 'Play video'}
-                className={`absolute inset-0 m-auto w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 ${promoPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}
-                style={{ background: 'rgba(255,255,255,0.14)', border: '1.5px solid rgba(255,255,255,0.35)' }}
-              >
-                {promoPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white translate-x-0.5" />}
-              </button>
-
-              {/* Mute / unmute — moved to bottom-LEFT so the logo can cover the watermark */}
-              <button
-                onClick={togglePromoMute}
-                aria-label={promoMuted ? 'Unmute video' : 'Mute video'}
-                className="absolute bottom-4 left-4 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 hover:scale-105"
-                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.25)' }}
-              >
-                {promoMuted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
-              </button>
-
-              {/* SurePath logo badge — covers the Gemini watermark in the bottom-right corner */}
-              <div className="absolute bottom-3 right-3 flex items-center gap-2 px-3.5 py-2 rounded-xl backdrop-blur-md pointer-events-none select-none"
-                style={{ background: 'rgba(5,8,13,0.78)', border: '1px solid rgba(255,255,255,0.14)' }}>
-                <img src="/surepath-logo.png" alt="SurePath" className="h-4 w-auto object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                <span className="text-[0.7rem] font-bold tracking-tight text-white">
-                  Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
-                </span>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
       {/* ═══════════════ STATS BAR ═══════════════ */}
-      <section className="relative py-16 px-5 overflow-hidden" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
-        <video autoPlay muted loop playsInline preload="none"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-          style={{ opacity: props.darkMode ? 0.18 : 0.09 }}>
-          <source src="/bg2.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
-        <div className="relative max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8" style={{ zIndex: 1 }}>
+      <section className="py-16 px-5" style={{ background: videoBg2, borderBottom: `1px solid ${cardBorder}` }}>
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
           {STATS.map((stat, i) => (
             <Reveal key={stat.label} delay={i * 70}>
               <div className="text-center p-5 rounded-2xl" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
@@ -185,14 +107,8 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ WHY SUREPATH ═══════════════ */}
-      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg3 }}>
-        <video autoPlay muted loop playsInline preload="none"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-          style={{ opacity: props.darkMode ? 0.20 : 0.10 }}>
-          <source src="/bg1.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg3 }} />
-        <div className="relative max-w-7xl mx-auto" style={{ zIndex: 1 }}>
+      <section className="py-24 px-5" style={{ background: videoBg3 }}>
+        <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="text-center mb-16 max-w-xl mx-auto">
               <SectionLabel darkMode={props.darkMode}>{t('Kenapa SurePath?', 'Why SurePath?')}</SectionLabel>
@@ -226,14 +142,8 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ PRODUCTS TEASER ═══════════════ */}
-      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg2 }}>
-        <video autoPlay muted loop playsInline preload="none"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-          style={{ opacity: props.darkMode ? 0.16 : 0.09 }}>
-          <source src="/bg3.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
-        <div className="relative max-w-7xl mx-auto" style={{ zIndex: 1 }}>
+      <section className="py-24 px-5" style={{ background: videoBg2 }}>
+        <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="flex items-end justify-between mb-12 flex-wrap gap-6">
               <div>
@@ -275,7 +185,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ CALCULATOR CTA ═══════════════ */}
-      <section className="py-16 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-16 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <div className="rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8"
@@ -307,38 +217,30 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ═══════════════ FINAL CTA ═══════════════ */}
-      <section className="relative py-24 px-5 overflow-hidden" style={{ background: sectionBg2 }}>
-        <video autoPlay muted loop playsInline preload="none"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-          style={{ opacity: props.darkMode ? 0.20 : 0.10 }}>
-          <source src="/bg4.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute bottom-0 right-0 w-44 h-14 pointer-events-none" style={{ background: sectionBg2 }} />
-        <div className="relative" style={{ zIndex: 1 }}>
-          <Reveal>
-            <div className="max-w-3xl mx-auto text-center">
-              <SectionLabel darkMode={props.darkMode}>{t('Mulai Hari Ini', 'Start Today')}</SectionLabel>
-              <h2 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', color: textMain }}>
-                {t('Siap memulai', 'Ready to begin')} <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
-              </h2>
-              <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
-                {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button onClick={onSignIn}
-                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
-                  style={{ background: accent, boxShadow: `0 10px 30px -10px ${accent}` }}>
-                  {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button onClick={() => navigate('/products')}
-                  className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-semibold transition-all"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textMain }}>
-                  {t('Lihat Semua Produk', 'View All Products')}
-                </button>
-              </div>
+      <section className="py-24 px-5" style={{ background: videoBg2 }}>
+        <Reveal>
+          <div className="max-w-3xl mx-auto text-center">
+            <SectionLabel darkMode={props.darkMode}>{t('Mulai Hari Ini', 'Start Today')}</SectionLabel>
+            <h2 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', color: textMain }}>
+              {t('Siap memulai', 'Ready to begin')} <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
+            </h2>
+            <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
+              {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button onClick={onSignIn}
+                className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
+                style={{ background: accent, boxShadow: `0 10px 30px -10px ${accent}` }}>
+                {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button onClick={() => navigate('/products')}
+                className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-semibold transition-all"
+                style={{ background: cardBg, border: `1px solid ${cardBorder}`, color: textMain }}>
+                {t('Lihat Semua Produk', 'View All Products')}
+              </button>
             </div>
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
       </section>
 
     </SiteLayout>

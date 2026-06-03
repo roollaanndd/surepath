@@ -7,7 +7,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, videoBg2, videoBg3, accent } = th;
 
   const config     = useWebsiteConfig('about');
   const testiConf  = useWebsiteConfig('testimonials');
@@ -44,10 +44,10 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
   ];
 
   return (
-    <SiteLayout {...props} active="about">
+    <SiteLayout {...props} active="about" bgVideo="/bg3.mp4">
 
       {/* ─── Story ─── */}
-      <section className="pt-36 pb-20 px-5" style={{ background: sectionBg2 }}>
+      <section className="pt-36 pb-20 px-5" style={{ background: videoBg2 }}>
         <div className="max-w-4xl mx-auto text-center">
           <Reveal>
             <SectionLabel darkMode={props.darkMode}>{t('Tentang Kami', 'About Us')}</SectionLabel>
@@ -62,7 +62,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Mission + Values ─── */}
-      <section className="py-20 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-20 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <div className="rounded-2xl p-8 md:p-10 mb-12 text-center"
@@ -90,7 +90,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Stats ─── */}
-      <section className="py-16 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-16 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-5">
           {STATS.map((stat, i) => (
             <Reveal key={stat.label} delay={i * 70}>
@@ -106,7 +106,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Testimonials ─── */}
-      <section className="py-24 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-24 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
@@ -140,7 +140,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="py-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-3xl mx-auto">
           <Reveal>
             <div className="text-center mb-12">

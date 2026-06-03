@@ -7,7 +7,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, videoBg2, videoBg3, accent } = th;
   const { onInstall } = useSiteChrome();
 
   const config = useWebsiteConfig('how_it_works');
@@ -25,10 +25,10 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
   ];
 
   return (
-    <SiteLayout {...props} active="how-it-works">
+    <SiteLayout {...props} active="how-it-works" bgVideo="/bg2.mp4">
 
       {/* ─── Header ─── */}
-      <section className="pt-36 pb-20 px-5 text-center" style={{ background: sectionBg2 }}>
+      <section className="pt-36 pb-20 px-5 text-center" style={{ background: videoBg2 }}>
         <Reveal>
           <SectionLabel darkMode={props.darkMode}>{t('Cara Kerja', 'How It Works')}</SectionLabel>
           <h1 className="font-bold leading-tight tracking-tight mb-4" style={{ fontSize: 'clamp(2rem,5vw,3.25rem)', color: textMain }}>
@@ -41,7 +41,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Steps ─── */}
-      <section className="pb-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="pb-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-5xl mx-auto pt-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
             <div className="hidden md:block absolute top-12 left-[22%] right-[22%] h-px"
@@ -70,7 +70,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Pillars / Values ─── */}
-      <section className="py-24 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-24 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="text-center mb-16">
@@ -110,7 +110,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Offers / Promo ─── */}
-      <section className="py-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-7xl mx-auto">
           <Reveal>
             <div className="text-center mb-14">
@@ -123,7 +123,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Reveal delay={0}><PromoBanners onSignIn={onSignIn} onInstall={onInstall} /></Reveal>
             <Reveal delay={100}>
-              <div className="rounded-2xl p-8 h-full flex flex-col" style={{ background: sectionBg3, border: `1px solid ${cardBorder}`, minHeight: 300 }}>
+              <div className="rounded-2xl p-8 h-full flex flex-col" style={{ background: videoBg3, border: `1px solid ${cardBorder}`, minHeight: 300 }}>
                 <SectionLabel darkMode={props.darkMode}>{t('Mulai Sekarang', 'Start Now')}</SectionLabel>
                 <h3 className="text-2xl font-bold leading-tight mb-4" style={{ color: textMain }}>
                   {t('Pertama kali', 'First time')}{' '}

@@ -231,16 +231,38 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
 interface LayoutProps extends SitePageProps {
   children: React.ReactNode;
   active?: string;
+  bgVideo?: string;
 }
 
 const SiteLayout: React.FC<LayoutProps> = (props) => {
-  const { children, active, ...page } = props;
+  const { children, active, bgVideo, ...page } = props;
   const th = useSiteTheme(page.darkMode);
   const pwa = usePwa();
 
   return (
     <SiteChromeContext.Provider value={{ onInstall: pwa.handleInstallClick }}>
-      <div className="min-h-screen font-sora" style={{ background: th.sectionBg1, color: th.textMain }}>
+      <div className="min-h-screen font-sora"
+        style={{ background: bgVideo ? 'transparent' : th.sectionBg1, color: th.textMain }}>
+
+        {/* Fixed looping video background — sits behind all page content */}
+        {bgVideo && (
+          <video autoPlay muted loop playsInline preload="auto"
+            style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
+            <source src={bgVideo} type="video/mp4" />
+          </video>
+        )}
+
+        {/* SurePath badge — covers the Gemini watermark in the bottom-right corner */}
+        {bgVideo && (
+          <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
+            <img src="/surepath-logo.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
+              Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
+            </span>
+          </div>
+        )}
+
         <SectionBackground darkMode={page.darkMode} />
         <SiteNav {...page} active={active} />
         {children}

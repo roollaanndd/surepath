@@ -60,6 +60,12 @@ export const useSiteTheme = (darkMode: boolean) => ({
   sectionBg4:  darkMode ? 'hsl(215 28% 12%)'         : '#efebe4',
   sectionBg5:  darkMode ? 'hsl(215 28% 10%)'         : '#e6e0d6',
 
+  // Semi-transparent section backgrounds for pages with a fixed video background
+  // (allow ~12–18% of the underlying video to show through)
+  videoBg1:    darkMode ? 'rgba(15,23,42,0.84)'       : 'rgba(250,248,245,0.90)',
+  videoBg2:    darkMode ? 'rgba(18,26,44,0.82)'       : 'rgba(255,255,255,0.88)',
+  videoBg3:    darkMode ? 'rgba(22,30,50,0.84)'       : 'rgba(245,242,237,0.90)',
+
   // Nav — warm translucent white in day
   navBg:          darkMode ? 'rgba(15,23,42,0.92)'   : 'rgba(250,248,245,0.92)',
   navBorder:      darkMode ? 'rgba(255,255,255,0.06)': 'rgba(28,25,23,0.07)',

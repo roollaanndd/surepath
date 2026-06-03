@@ -45,10 +45,10 @@ interface Props {
 }
 
 const GREEN = 'hsl(119,99%,46%)';
-const BG = 'hsl(0,0%,8%)';
-const CARD_BG = 'rgba(255,255,255,0.04)';
-const CARD_BORDER = 'rgba(255,255,255,0.08)';
-const INPUT_BG = 'rgba(255,255,255,0.06)';
+const BG = 'rgba(6,9,18,0.86)';
+const CARD_BG = 'rgba(255,255,255,0.06)';
+const CARD_BORDER = 'rgba(255,255,255,0.10)';
+const INPUT_BG = 'rgba(255,255,255,0.08)';
 
 function formatRupiah(n: number): string {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -141,7 +141,20 @@ export default function PremiumCalculatorPage({ onSignIn, onBack }: Props) {
   const wilayahLabel = wilayahOptions.find(w => w.key === wilayah)?.label ?? '';
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: BG, color: '#fff', fontFamily: 'system-ui, sans-serif', position: 'relative' }}>
+      {/* Fixed looping video background */}
+      <video autoPlay muted loop playsInline preload="auto"
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
+        <source src="/bg4.mp4" type="video/mp4" />
+      </video>
+      {/* SurePath badge — covers Gemini watermark */}
+      <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
+        <img src="/surepath-logo.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
+          Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
+        </span>
+      </div>
       {/* Top bar */}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '20px 16px 0' }}>
         <button

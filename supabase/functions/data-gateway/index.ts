@@ -505,6 +505,40 @@ serve(async (req) => {
         return json({ data });
       }
 
+      // ── Admin: analytics dashboard data ──────────────────────────────────
+      case 'admin_analytics_data': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const now = new Date();
+        const yearStart = new Date(now.getFullYear(), 0, 1).toISOString();
+        const [ordersRes, agentsRes, claimsRes, paymentsRes] = await Promise.all([
+          db.from('sp_policy_orders').select('status, total_premium, product_code, agent_id, created_at').gte('created_at', yearStart),
+          db.from('sp_users').select('id, name').eq('role', 'AGENT').eq('verified', true),
+          db.from('sp_claims').select('claim_amount, total_premium').gte('created_at', yearStart),
+          db.from('sp_payments').select('status').gte('created_at', yearStart),
+        ]);
+        return json({ data: { orders: ordersRes.data ?? [], agents: agentsRes.data ?? [], claims: claimsRes.data ?? [], payments: paymentsRes.data ?? [] } });
+      }
+
+      // ── Admin: financial detail data ──────────────────────────────────────
+      case 'admin_financial_detail': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const from = params.from ? String(params.from) : null;
+        const to = params.to ? String(params.to) : null;
+        let ordQ = db.from('sp_policy_orders').select('id, order_number, client_name, product_name, total_premium, discount_amount, net_premium, commission_amount, coin_reward, created_at, status').eq('status', 'ISSUED').order('created_at', { ascending: false });
+        let comQ = db.from('sp_commissions').select('commission_amount, status, created_at');
+        let payQ = db.from('sp_payments').select('paid_amount, status, created_at');
+        let coinQ = db.from('sp_coin_ledger').select('coins, type, created_at');
+        if (from && to) {
+          ordQ = ordQ.gte('created_at', from).lte('created_at', to);
+          comQ = comQ.gte('created_at', from).lte('created_at', to);
+          payQ = payQ.gte('created_at', from).lte('created_at', to);
+          coinQ = coinQ.gte('created_at', from).lte('created_at', to);
+        }
+        const { count: agentCount } = await db.from('sp_users').select('id', { count: 'exact', head: true }).eq('role', 'AGENT');
+        const [ordRes, comRes, payRes, coinRes] = await Promise.all([ordQ, comQ, payQ, coinQ]);
+        return json({ data: { orders: ordRes.data ?? [], commissions: comRes.data ?? [], payments: payRes.data ?? [], coins: coinRes.data ?? [], agent_count: agentCount ?? 0 } });
+      }
+
       // ── Admin: security stats (cross-user session data) ──────────────────
       case 'admin_security_stats': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);

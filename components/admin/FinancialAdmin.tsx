@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabaseService';
+import { callGateway } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -91,39 +91,13 @@ const FinancialAdmin: React.FC = () => {
       setLoading(true);
       const { from, to } = getDateRange(range);
 
-      // ── Build date-filtered queries ──────────────────────────────────────
-      let ordersQuery = supabase
-        .from('sp_policy_orders')
-        .select('id, order_number, client_name, product_name, total_premium, discount_amount, net_premium, commission_amount, coin_reward, created_at, status')
-        .eq('status', 'ISSUED')
-        .order('created_at', { ascending: false });
-
-      let commissionsQuery = supabase
-        .from('sp_commissions')
-        .select('commission_amount, status, created_at');
-
-      let paymentsQuery = supabase
-        .from('sp_payments')
-        .select('paid_amount, status, created_at');
-
-      let coinQuery = supabase
-        .from('sp_coin_ledger')
-        .select('coins, type, created_at');
-
-      if (from && to) {
-        ordersQuery = ordersQuery.gte('created_at', from).lte('created_at', to);
-        commissionsQuery = commissionsQuery.gte('created_at', from).lte('created_at', to);
-        paymentsQuery = paymentsQuery.gte('created_at', from).lte('created_at', to);
-        coinQuery = coinQuery.gte('created_at', from).lte('created_at', to);
-      }
-
-      const [ordersRes, commRes, payRes, coinRes, agentsRes] = await Promise.all([
-        ordersQuery,
-        commissionsQuery,
-        paymentsQuery,
-        coinQuery,
-        supabase.from('sp_users').select('id', { count: 'exact', head: true }).eq('role', 'AGENT'),
-      ]);
+      const { data: finRaw } = await callGateway('admin_financial_detail', { from, to });
+      const finData = (finRaw as any) ?? {};
+      const ordersRes = { data: finData.orders ?? [], error: null, count: null };
+      const commRes   = { data: finData.commissions ?? [], error: null };
+      const payRes    = { data: finData.payments ?? [], error: null };
+      const coinRes   = { data: finData.coins ?? [], error: null };
+      const agentsRes = { count: finData.agent_count ?? 0, error: null };
 
       if (cancelled) return;
 

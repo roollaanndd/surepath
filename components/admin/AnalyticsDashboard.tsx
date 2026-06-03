@@ -3,7 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   Tooltip, ResponsiveContainer, XAxis, YAxis, Legend,
 } from 'recharts';
-import { supabase } from '../../services/supabaseService';
+import { callGateway } from '../../services/supabaseService';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface KPI { gwpYTD: number; policiesIssued: number; activeAgents: number; claimsRatio: number }
@@ -81,30 +81,12 @@ const AnalyticsDashboard = () => {
       const yearStart = new Date(now.getFullYear(), 0, 1).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      const [ordersRes, agentsRes, claimsRes, paymentsRes] = await Promise.all([
-        supabase
-          .from('sp_policy_orders')
-          .select('status, total_premium, product_code, agent_id, created_at')
-          .gte('created_at', yearStart),
-        supabase
-          .from('sp_users')
-          .select('id, name')
-          .eq('role', 'AGENT')
-          .eq('verified', true),
-        supabase
-          .from('sp_claims')
-          .select('claim_amount, total_premium')
-          .gte('created_at', yearStart),
-        supabase
-          .from('sp_payments')
-          .select('status')
-          .gte('created_at', yearStart),
-      ]);
-
-      const orders = (ordersRes.data ?? []) as any[];
-      const agents = (agentsRes.data ?? []) as any[];
-      const claims = (claimsRes.data ?? []) as any[];
-      const payments = (paymentsRes.data ?? []) as any[];
+      const { data: analyticsRaw } = await callGateway('admin_analytics_data', {});
+      const analyticsData = (analyticsRaw as any) ?? {};
+      const orders = (analyticsData.orders ?? []) as any[];
+      const agents = (analyticsData.agents ?? []) as any[];
+      const claims = (analyticsData.claims ?? []) as any[];
+      const payments = (analyticsData.payments ?? []) as any[];
 
       // ── KPI ────────────────────────────────────────────────────────────────
       const issuedOrders = orders.filter((o: any) => o.status === 'ISSUED');

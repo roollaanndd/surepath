@@ -4,7 +4,7 @@ import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
   SitePageProps, useT, useSiteTheme,
-  SectionBackground, PWAPopup, InstallModal, SiteChromeContext,
+  SectionBackground, PWAPopup, InstallModal, SiteChromeContext, ACCENT,
 } from './siteKit';
 
 // ─── PWA install state hook ───────────────────────────────────────────────────
@@ -42,6 +42,7 @@ const NAV_LINKS = [
   { path: '/how-it-works', id: 'how-it-works', label: ['Cara Kerja', 'How It Works'] as const },
   { path: '/about',        id: 'about',        label: ['Tentang', 'About'] as const },
   { path: '/blog',         id: 'blog',         label: ['Blog', 'Blog'] as const },
+  { path: '/contact',      id: 'contact',      label: ['Kontak', 'Contact'] as const },
 ];
 
 const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navigate, lang, setLang, darkMode, active }) => {
@@ -60,38 +61,39 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
   const isActive = (id: string) => active === id;
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 py-5 transition-all duration-300 ${scrolled ? 'backdrop-blur-md' : ''}`}
+    <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 lg:px-14 py-4 transition-all duration-300 ${scrolled ? 'backdrop-blur-md' : ''}`}
       style={{ background: scrolled ? th.navBg : 'transparent', borderBottom: scrolled ? `1px solid ${th.navBorder}` : 'none' }}>
-      <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="flex items-center gap-2.5 group">
+
+      {/* Logo */}
+      <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="flex items-center gap-2.5 group flex-shrink-0">
         <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         <span className="text-xl font-semibold tracking-tight" style={{ color: th.textMain }}>
-          Sure<span style={{ color: th.lpGreen }}>Path</span>
+          Sure<span style={{ color: ACCENT }}>Path</span>
         </span>
       </a>
 
-      <div className="hidden md:flex items-center gap-8">
+      {/* Desktop links */}
+      <div className="hidden md:flex items-center gap-7">
         {NAV_LINKS.map(l => (
           <a key={l.id} href={l.path} onClick={e => { e.preventDefault(); go(l.path); }}
-            className="text-sm uppercase tracking-widest transition-colors"
-            style={{ color: isActive(l.id) ? th.lpGreen : th.textMuted }}>
+            className="text-[0.8rem] font-medium transition-colors"
+            style={{ color: isActive(l.id) ? ACCENT : th.textMuted }}>
             {t(l.label[0], l.label[1])}
           </a>
         ))}
-        <button onClick={() => go('/admin')} className="text-sm uppercase tracking-widest transition-colors" style={{ color: th.textMuted }}>
-          Admin
-        </button>
       </div>
 
+      {/* Right actions */}
       <div className="flex items-center gap-2">
         <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)} aria-label="Switch language"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all hover:opacity-80"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-80"
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
           <Globe size={12} /> {lang}
         </button>
         <button onClick={onSignIn}
-          className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.97] hover:opacity-80"
-          style={{ background: th.navBtnBg, color: th.navBtnColor }}>
+          className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-[0.97] hover:opacity-90"
+          style={{ background: th.textMain, color: darkMode ? '#0f172a' : '#ffffff' }}>
           {t('Masuk', 'Get Started')}
         </button>
         <button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu"
@@ -101,21 +103,22 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
         </button>
       </div>
 
+      {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 mx-4 mt-2 rounded-2xl border p-4"
+        <div className="md:hidden absolute top-full left-4 right-4 mt-2 rounded-2xl border p-4 shadow-lg"
           style={{ background: th.mobilMenuBg, borderColor: th.mobileMenuBorder, backdropFilter: 'blur(24px)' }}>
           {NAV_LINKS.map(l => (
             <button key={l.id} onClick={() => go(l.path)}
-              className="flex items-center justify-between w-full py-3 border-b text-sm font-medium uppercase tracking-widest"
-              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? th.lpGreen : th.textMuted }}>
+              className="flex items-center justify-between w-full py-3 border-b text-sm font-medium"
+              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? ACCENT : th.textMuted }}>
               <span>{t(l.label[0], l.label[1])}</span><ChevronRight size={14} />
             </button>
           ))}
           <div className="flex gap-2 mt-4">
-            <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black"
-              style={{ background: 'rgba(6,224,0,0.08)', border: `1px solid rgba(6,224,0,0.2)`, color: th.lpGreen }}>Admin</button>
-            <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black"
-              style={{ background: th.lpGreen, color: 'hsl(0 0% 4%)' }}>{t('Masuk', 'Get Started')}</button>
+            <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
+              style={{ borderColor: th.cardBorder, color: th.textMuted }}>Admin</button>
+            <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black text-white"
+              style={{ background: th.textMain }}>{t('Masuk', 'Get Started')}</button>
           </div>
           <button onClick={() => { setLang(lang === Language.EN ? Language.ID : Language.EN); localStorage.setItem('SUREPATH_LANG', lang === Language.EN ? 'ID' : 'EN'); }}
             className="flex items-center justify-center gap-2 w-full mt-2 py-2.5 rounded-xl text-xs font-bold border transition-all"
@@ -153,28 +156,30 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
       { label: t('Keamanan Data', 'Data Security'),            path: '/security' },
     ]},
   ];
+
   return (
-    <footer style={{ borderTop: '1px solid rgba(34,197,94,0.07)', background: th.footerBg }}>
-      <div className="max-w-7xl mx-auto px-5 py-16">
+    <footer style={{ background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-10">
+          {/* Brand column */}
           <div className="col-span-2 flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <img src="/surepath-logo.png" alt="SurePath" className="h-9 w-auto object-contain"
+              <img src="/surepath-logo.png" alt="SurePath" className="h-8 w-auto object-contain"
                 onError={(e) => {
                   const tg = e.target as HTMLImageElement; tg.style.display = 'none';
                   const n = tg.nextElementSibling as HTMLElement | null; if (n) n.style.display = 'flex';
                 }} />
-              <div className="hidden w-9 h-9 rounded-xl items-center justify-center" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <div className="hidden w-8 h-8 rounded-xl items-center justify-center" style={{ background: 'rgba(22,163,74,0.1)' }}>
                 <SurePathLogo className="w-5 h-5" />
               </div>
-              <span className="font-black text-xl tracking-tight" style={{ color: '#ffffff' }}>
-                Sure<span style={{ color: '#22c55e' }}>Path</span>
+              <span className="font-bold text-xl tracking-tight text-white">
+                Sure<span style={{ color: ACCENT }}>Path</span>
               </span>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: th.textMuted }}>
-              {t('Asuransi yang transparan, manusiawi, dan beneran berpihak ke kamu — bukan ke komisi.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {t('Platform asuransi digital yang transparan, manusiawi, dan beneran berpihak ke kamu.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
             </p>
-            <p className="text-xs font-bold italic" style={{ color: 'rgba(134,239,172,0.5)' }}>"Your Path to Protection."</p>
+            <p className="text-xs font-light italic" style={{ color: 'rgba(255,255,255,0.2)' }}>"Your Path to Protection."</p>
             <div className="flex gap-3 mt-1">
               {[
                 { key: 'ig', label: 'Instagram',  href: 'https://instagram.com/surepath.id' },
@@ -182,21 +187,22 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
                 { key: 'tw', label: 'Twitter / X', href: 'https://x.com/surepath_id' },
               ].map(s => (
                 <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:border-emerald-500/30"
-                  style={{ background: th.cardBg, border: `1px solid ${th.cardBorder}`, boxShadow: th.cardShadow }}>
-                  <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: th.textMuted }}>{s.key}</span>
+                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.key}</span>
                 </a>
               ))}
             </div>
           </div>
 
+          {/* Link columns */}
           {columns.map(col => (
             <div key={col.title}>
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.25em] mb-5" style={{ color: '#22c55e' }}>{col.title}</p>
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.25em] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>{col.title}</p>
               <ul className="space-y-3">
                 {col.links.map(l => (
                   <li key={l.path}>
-                    <button onClick={() => navigate(l.path)} className="text-sm transition-colors hover:text-white" style={{ color: th.textMuted }}>{l.label}</button>
+                    <button onClick={() => navigate(l.path)} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.4)' }}>{l.label}</button>
                   </li>
                 ))}
               </ul>
@@ -205,14 +211,14 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
         </div>
 
         <div className="mt-14 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.2)' }}>© 2025 SurePath. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
+          <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.18)' }}>© 2025 SurePath. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
           <div className="flex items-center gap-6">
             {[
               { label: t('Privasi', 'Privacy'), path: '/privacy' },
               { label: t('Ketentuan', 'Terms'), path: '/terms' },
               { label: t('Cookie', 'Cookie'),   path: '/cookie' },
             ].map(l => (
-              <button key={l.path} onClick={() => navigate(l.path)} className="text-[0.65rem] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.2)' }}>{l.label}</button>
+              <button key={l.path} onClick={() => navigate(l.path)} className="text-[0.65rem] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)' }}>{l.label}</button>
             ))}
           </div>
         </div>
@@ -221,7 +227,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang, darkMode }) => {
   );
 };
 
-// ─── Layout shell — wraps every marketing page ────────────────────────────────
+// ─── Layout shell ─────────────────────────────────────────────────────────────
 interface LayoutProps extends SitePageProps {
   children: React.ReactNode;
   active?: string;

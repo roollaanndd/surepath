@@ -3,23 +3,26 @@ import {
   Monitor, Layout, Type, Image, Eye, EyeOff, Save,
   RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2, Sparkles,
 } from 'lucide-react';
-import { db, WebsiteSection } from '../../db';
-import { uploadSectionImage } from '../../services/supabaseService';
+import {
+  SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection,
+  resetWebsiteSection, uploadSectionImage,
+} from '../../services/supabaseService';
 
-type SectionKey = 'hero' | 'marquee' | 'products' | 'claims' | 'stats' | 'testimonials' | 'footer' | 'splash';
+type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash';
 
 const SECTIONS: { key: SectionKey; label: string; desc: string }[] = [
   { key: 'splash',       label: 'Splash Screen', desc: 'Loading / welcome screen awal' },
   { key: 'hero',         label: 'Hero',          desc: 'Headline utama & CTA pertama' },
   { key: 'marquee',      label: 'Ticker',        desc: 'Strip teks berjalan' },
   { key: 'products',     label: 'Produk',        desc: 'Grid kartu produk asuransi' },
-  { key: 'claims',       label: 'Klaim',         desc: 'Seksi cara lapor klaim' },
+  { key: 'how_it_works', label: 'Cara Kerja',    desc: 'Langkah-langkah penggunaan' },
   { key: 'stats',        label: 'Statistik',     desc: 'Bar angka kepercayaan' },
   { key: 'testimonials', label: 'Testimoni',     desc: 'Ulasan dari pelanggan' },
+  { key: 'about',        label: 'Tentang',       desc: 'Seksi cerita perusahaan' },
   { key: 'footer',       label: 'Footer',        desc: 'Bagian bawah halaman' },
 ];
 
-const BG_TYPES: { value: WebsiteSection['bgType']; label: string; desc: string }[] = [
+const BG_TYPES: { value: SpWebsiteConfig['bg_type']; label: string; desc: string }[] = [
   { value: 'animated-mesh', label: 'Animated Mesh', desc: 'Canvas blob animation (default)' },
   { value: 'gradient',      label: 'Gradient CSS',  desc: 'Custom gradient string' },
   { value: 'solid',         label: 'Solid Color',   desc: 'Warna latar polos' },
@@ -30,17 +33,18 @@ const BG_TYPES: { value: WebsiteSection['bgType']; label: string; desc: string }
 const inputCls = 'bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
 const labelCls = 'text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block';
 
-const defaultSection = (key: SectionKey): WebsiteSection => ({
-  sectionKey: key,
-  bgType: 'animated-mesh',
-  isVisible: true,
-  updatedAt: '',
+const defaultSection = (key: SectionKey): SpWebsiteConfig => ({
+  section_key: key,
+  bg_type: 'none',
+  is_visible: true,
 });
 
 const WebsiteEditorAdmin: React.FC = () => {
   const [activeKey, setActiveKey] = useState<SectionKey>('hero');
-  const [form, setForm] = useState<WebsiteSection>(defaultSection('hero'));
+  const [form, setForm] = useState<SpWebsiteConfig>(defaultSection('hero'));
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'background'>('content');
   const [uploading, setUploading]       = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -48,8 +52,10 @@ const WebsiteEditorAdmin: React.FC = () => {
   const logoInputRef    = useRef<HTMLInputElement>(null);
 
   const loadSection = useCallback(async (key: SectionKey) => {
-    const existing = await db.websiteConfig.where('sectionKey').equals(key).first();
+    setLoading(true);
+    const existing = await fetchWebsiteSection(key);
     setForm(existing ?? defaultSection(key));
+    setLoading(false);
     setSaved(false);
   }, []);
 
@@ -59,26 +65,29 @@ const WebsiteEditorAdmin: React.FC = () => {
   }, [activeKey, loadSection]);
 
   const handleSave = async () => {
-    const payload: WebsiteSection = { ...form, updatedAt: new Date().toISOString() };
-    if (payload.id !== undefined) {
-      await db.websiteConfig.put(payload);
-    } else {
-      const id = await db.websiteConfig.add(payload);
-      setForm(prev => ({ ...prev, id, updatedAt: payload.updatedAt }));
-    }
+    setSaving(true);
+    await upsertWebsiteSection({
+      section_key:        form.section_key,
+      headline:           form.headline,
+      subtitle:           form.subtitle,
+      cta_text:           form.cta_text,
+      cta_secondary_text: form.cta_secondary_text,
+      bg_type:            form.bg_type,
+      bg_value:           form.bg_value,
+      is_visible:         form.is_visible,
+    });
+    setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
   const handleReset = async () => {
-    if (form.id !== undefined) {
-      await db.websiteConfig.delete(form.id);
-    }
+    await resetWebsiteSection(activeKey);
     setForm(defaultSection(activeKey));
     setSaved(false);
   };
 
-  const set = (field: Partial<WebsiteSection>) => setForm(prev => ({ ...prev, ...field }));
+  const set = (field: Partial<SpWebsiteConfig>) => setForm(prev => ({ ...prev, ...field }));
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,7 +95,7 @@ const WebsiteEditorAdmin: React.FC = () => {
     setUploading(true);
     const url = await uploadSectionImage(file, activeKey);
     setUploading(false);
-    if (url) set({ bgValue: url });
+    if (url) set({ bg_value: url });
     e.target.value = '';
   };
 
@@ -96,11 +105,11 @@ const WebsiteEditorAdmin: React.FC = () => {
     setLogoUploading(true);
     const url = await uploadSectionImage(file, 'splash-logo');
     setLogoUploading(false);
-    if (url) set({ ctaText: url });
+    if (url) set({ cta_text: url });
     e.target.value = '';
   };
 
-  const savedAt = form.updatedAt ? new Date(form.updatedAt).toLocaleString('id-ID') : null;
+  const savedAt = form.updated_at ? new Date(form.updated_at).toLocaleString('id-ID') : null;
 
   return (
     <div className="flex gap-6 h-full min-h-[70vh]">
@@ -143,20 +152,23 @@ const WebsiteEditorAdmin: React.FC = () => {
               {savedAt && (
                 <p className="text-[10px] text-gray-600">Terakhir disimpan: {savedAt}</p>
               )}
+              {loading && (
+                <p className="text-[10px] text-emerald-500 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
+              )}
             </div>
           </div>
 
           {/* Visibility toggle */}
           <button
-            onClick={() => set({ isVisible: !form.isVisible })}
+            onClick={() => set({ is_visible: !form.is_visible })}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
-              form.isVisible
+              form.is_visible
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
             }`}
           >
-            {form.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-            {form.isVisible ? 'Visible' : 'Hidden'}
+            {form.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
+            {form.is_visible ? 'Visible' : 'Hidden'}
           </button>
         </div>
 
@@ -209,12 +221,12 @@ const WebsiteEditorAdmin: React.FC = () => {
                 <input
                   className={inputCls}
                   placeholder="/logo.png"
-                  value={form.ctaText ?? ''}
-                  onChange={e => set({ ctaText: e.target.value })}
+                  value={form.cta_text ?? ''}
+                  onChange={e => set({ cta_text: e.target.value })}
                 />
                 <div className="mt-3 h-24 rounded-2xl border border-white/10 bg-black/30 flex items-center justify-center overflow-hidden">
                   <img
-                    src={form.ctaText || '/logo.png'}
+                    src={form.cta_text || '/logo.png'}
                     alt="preview"
                     className="h-16 w-auto object-contain"
                     style={{ filter: 'drop-shadow(0 0 12px rgba(34,197,94,0.4))' }}
@@ -241,11 +253,11 @@ const WebsiteEditorAdmin: React.FC = () => {
                   <input
                     className={inputCls}
                     placeholder="#22c55e"
-                    value={form.bgValue ?? ''}
-                    onChange={e => set({ bgValue: e.target.value })}
+                    value={form.bg_value ?? ''}
+                    onChange={e => set({ bg_value: e.target.value })}
                   />
                   <div className="w-10 h-10 flex-shrink-0 rounded-xl border border-white/10 transition-all"
-                    style={{ background: form.bgValue || '#22c55e' }} />
+                    style={{ background: form.bg_value || '#22c55e' }} />
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {[
@@ -256,12 +268,12 @@ const WebsiteEditorAdmin: React.FC = () => {
                     { hex: '#a855f7', name: 'Ungu' },
                     { hex: '#ef4444', name: 'Merah' },
                   ].map(c => (
-                    <button key={c.hex} onClick={() => set({ bgValue: c.hex })} title={c.name}
+                    <button key={c.hex} onClick={() => set({ bg_value: c.hex })} title={c.name}
                       className="w-8 h-8 rounded-xl border-2 transition-all hover:scale-110"
                       style={{
                         background: c.hex,
-                        borderColor: form.bgValue === c.hex ? 'white' : 'transparent',
-                        boxShadow: form.bgValue === c.hex ? `0 0 12px ${c.hex}80` : 'none',
+                        borderColor: form.bg_value === c.hex ? 'white' : 'transparent',
+                        boxShadow: form.bg_value === c.hex ? `0 0 12px ${c.hex}80` : 'none',
                       }} />
                   ))}
                 </div>
@@ -296,8 +308,8 @@ const WebsiteEditorAdmin: React.FC = () => {
                   <input
                     className={inputCls}
                     placeholder="mis: Mulai Gratis →"
-                    value={form.ctaText ?? ''}
-                    onChange={e => set({ ctaText: e.target.value })}
+                    value={form.cta_text ?? ''}
+                    onChange={e => set({ cta_text: e.target.value })}
                   />
                 </div>
                 <div>
@@ -305,8 +317,8 @@ const WebsiteEditorAdmin: React.FC = () => {
                   <input
                     className={inputCls}
                     placeholder="mis: Lihat Demo"
-                    value={form.ctaSecondaryText ?? ''}
-                    onChange={e => set({ ctaSecondaryText: e.target.value })}
+                    value={form.cta_secondary_text ?? ''}
+                    onChange={e => set({ cta_secondary_text: e.target.value })}
                   />
                 </div>
               </div>
@@ -317,8 +329,7 @@ const WebsiteEditorAdmin: React.FC = () => {
             <div className="flex items-start gap-3 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
               <Palette size={14} className="text-gray-500 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-gray-500 leading-relaxed">
-                Background splash screen menggunakan animated canvas dengan partikel hijau yang sudah dioptimalkan.
-                Gunakan tab <strong className="text-gray-300">Konten</strong> untuk mengubah warna aksen.
+                Background splash screen menggunakan animated canvas. Gunakan tab <strong className="text-gray-300">Konten</strong> untuk mengubah warna aksen.
               </p>
             </div>
           )}
@@ -332,7 +343,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                     <label
                       key={bt.value}
                       className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                        form.bgType === bt.value
+                        form.bg_type === bt.value
                           ? 'bg-emerald-500/10 border-emerald-500/30 text-white'
                           : 'bg-white/[0.02] border-white/5 text-gray-400 hover:border-white/15'
                       }`}
@@ -341,8 +352,8 @@ const WebsiteEditorAdmin: React.FC = () => {
                         type="radio"
                         name="bgType"
                         value={bt.value}
-                        checked={form.bgType === bt.value}
-                        onChange={() => set({ bgType: bt.value })}
+                        checked={form.bg_type === bt.value}
+                        onChange={() => set({ bg_type: bt.value })}
                         className="mt-0.5 accent-emerald-500"
                       />
                       <div>
@@ -354,24 +365,17 @@ const WebsiteEditorAdmin: React.FC = () => {
                 </div>
               </div>
 
-              {(form.bgType === 'gradient' || form.bgType === 'solid' || form.bgType === 'image') && (
+              {(form.bg_type === 'gradient' || form.bg_type === 'solid' || form.bg_type === 'image') && (
                 <div>
                   <label className={labelCls}>
-                    {form.bgType === 'gradient' && 'CSS Gradient (e.g. linear-gradient(135deg, #667eea 0%, #764ba2 100%))'}
-                    {form.bgType === 'solid'    && 'Hex Color (e.g. #0f0f1a)'}
-                    {form.bgType === 'image'    && 'Gambar Background'}
+                    {form.bg_type === 'gradient' && 'CSS Gradient (e.g. linear-gradient(135deg, #667eea 0%, #764ba2 100%))'}
+                    {form.bg_type === 'solid'    && 'Hex Color (e.g. #0f0f1a)'}
+                    {form.bg_type === 'image'    && 'Gambar Background'}
                   </label>
 
-                  {form.bgType === 'image' ? (
+                  {form.bg_type === 'image' ? (
                     <div className="space-y-3">
-                      {/* Upload button */}
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
+                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -381,8 +385,6 @@ const WebsiteEditorAdmin: React.FC = () => {
                         {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                         {uploading ? 'Mengupload...' : 'Upload Gambar dari Perangkat'}
                       </button>
-
-                      {/* URL fallback */}
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-px bg-white/5" />
                         <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">atau URL</span>
@@ -391,15 +393,13 @@ const WebsiteEditorAdmin: React.FC = () => {
                       <input
                         className={inputCls}
                         placeholder="https://..."
-                        value={form.bgValue ?? ''}
-                        onChange={e => set({ bgValue: e.target.value })}
+                        value={form.bg_value ?? ''}
+                        onChange={e => set({ bg_value: e.target.value })}
                       />
-
-                      {/* Preview */}
-                      {form.bgValue && (
+                      {form.bg_value && (
                         <div
                           className="mt-1 h-32 rounded-2xl border border-white/10 bg-center bg-cover relative overflow-hidden"
-                          style={{ backgroundImage: `url(${form.bgValue})` }}
+                          style={{ backgroundImage: `url(${form.bg_value})` }}
                         >
                           <div className="absolute inset-0 bg-black/20 flex items-end p-2">
                             <span className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Preview</span>
@@ -411,15 +411,12 @@ const WebsiteEditorAdmin: React.FC = () => {
                     <>
                       <input
                         className={inputCls}
-                        placeholder={form.bgType === 'gradient' ? 'linear-gradient(...)' : '#0f0f1a'}
-                        value={form.bgValue ?? ''}
-                        onChange={e => set({ bgValue: e.target.value })}
+                        placeholder={form.bg_type === 'gradient' ? 'linear-gradient(...)' : '#0f0f1a'}
+                        value={form.bg_value ?? ''}
+                        onChange={e => set({ bg_value: e.target.value })}
                       />
-                      {form.bgValue && (
-                        <div
-                          className="mt-3 h-12 rounded-2xl border border-white/10"
-                          style={{ background: form.bgValue }}
-                        />
+                      {form.bg_value && (
+                        <div className="mt-3 h-12 rounded-2xl border border-white/10" style={{ background: form.bg_value }} />
                       )}
                     </>
                   )}
@@ -433,10 +430,11 @@ const WebsiteEditorAdmin: React.FC = () => {
         <div className="flex items-center gap-3 mt-5">
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-lg shadow-emerald-500/20"
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-60"
           >
-            {saved ? <CheckCircle size={14} /> : <Save size={14} />}
-            {saved ? 'Tersimpan!' : 'Simpan Perubahan'}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} /> : <Save size={14} />}
+            {saving ? 'Menyimpan...' : saved ? 'Tersimpan!' : 'Simpan Perubahan'}
           </button>
           <button
             onClick={handleReset}
@@ -446,14 +444,14 @@ const WebsiteEditorAdmin: React.FC = () => {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/5 rounded-xl">
-            <Layout size={12} className="text-gray-600" />
-            <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Live Preview on Website</span>
-            <Image size={12} className="text-gray-600" />
+            <Layout size={12} className="text-emerald-600" />
+            <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
+            <Image size={12} className="text-emerald-600" />
           </div>
         </div>
 
         <p className="text-[10px] text-gray-700 mt-3 leading-relaxed">
-          Perubahan berlaku setelah disimpan dan halaman website di-refresh. Kosongkan field untuk kembali ke konten default.
+          Perubahan disimpan ke Supabase dan langsung aktif di website setelah pengunjung refresh. Kosongkan field untuk kembali ke konten default.
         </p>
       </div>
     </div>

@@ -2584,3 +2584,56 @@ export async function getTrafficStats(): Promise<TrafficStats> {
     .map(([page, count]) => ({ page, count }));
   return { daily, topPages };
 }
+
+// ─── Website CMS Config (sp_website_config) ──────────────────────────────────
+
+export interface SpWebsiteConfig {
+  id?: number;
+  section_key: string;
+  headline?: string | null;
+  subtitle?: string | null;
+  cta_text?: string | null;
+  cta_secondary_text?: string | null;
+  bg_type: 'animated-mesh' | 'gradient' | 'solid' | 'image' | 'none';
+  bg_value?: string | null;
+  is_visible: boolean;
+  extra_json?: Record<string, any>;
+  updated_at?: string;
+  created_at?: string;
+}
+
+export async function fetchWebsiteSection(sectionKey: string): Promise<SpWebsiteConfig | null> {
+  const { data, error } = await supabase
+    .from('sp_website_config')
+    .select('*')
+    .eq('section_key', sectionKey)
+    .single();
+  if (error) return null;
+  return data as SpWebsiteConfig;
+}
+
+export async function fetchAllWebsiteSections(): Promise<SpWebsiteConfig[]> {
+  const { data, error } = await supabase
+    .from('sp_website_config')
+    .select('*')
+    .order('section_key');
+  if (error) return [];
+  return (data ?? []) as SpWebsiteConfig[];
+}
+
+export async function upsertWebsiteSection(payload: Partial<SpWebsiteConfig> & { section_key: string }): Promise<SpWebsiteConfig | null> {
+  const { data, error } = await supabase
+    .from('sp_website_config')
+    .upsert({ ...payload, updated_at: new Date().toISOString() }, { onConflict: 'section_key' })
+    .select()
+    .single();
+  if (error) { console.error('upsertWebsiteSection:', error); return null; }
+  return data as SpWebsiteConfig;
+}
+
+export async function resetWebsiteSection(sectionKey: string): Promise<void> {
+  await supabase
+    .from('sp_website_config')
+    .update({ headline: null, subtitle: null, cta_text: null, cta_secondary_text: null, bg_type: 'none', bg_value: null, is_visible: true, extra_json: {}, updated_at: new Date().toISOString() })
+    .eq('section_key', sectionKey);
+}

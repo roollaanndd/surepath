@@ -3,6 +3,7 @@ import {
   ArrowRight, MessageSquare, Gift, Smartphone, Download, Award,
 } from 'lucide-react';
 import { Language } from '../../../types';
+import { fetchWebsiteSection, SpWebsiteConfig } from '../../../services/supabaseService';
 
 // ─── Shared page props (every marketing page receives these) ──────────────────
 export interface SitePageProps {
@@ -18,57 +19,78 @@ export interface SitePageProps {
 export const tx = (id: string, en: string, lang: Language) => (lang === Language.EN ? en : id);
 export const useT = (lang: Language) => useCallback((id: string, en: string) => tx(id, en, lang), [lang]);
 
-// ─── Theme (dark/light mode aware style vars) ─────────────────────────────────
-export const LP_GREEN = 'hsl(119 99% 46%)';
+// ─── CMS hook — fetches a section from Supabase, returns null while loading ──
+export const useWebsiteConfig = (sectionKey: string): SpWebsiteConfig | null => {
+  const [config, setConfig] = useState<SpWebsiteConfig | null>(null);
+  useEffect(() => {
+    fetchWebsiteSection(sectionKey).then(data => { if (data) setConfig(data); });
+  }, [sectionKey]);
+  return config;
+};
+
+// ─── Design tokens — reduced green, premium insurer palette ──────────────────
+export const ACCENT = '#16a34a';           // green-700, used sparingly
+export const LP_GREEN = 'hsl(119 99% 46%)'; // kept for hero dark-bg only
 
 export const useSiteTheme = (darkMode: boolean) => ({
-  lpGreen:          LP_GREEN,
-  cardBg:           darkMode ? 'rgba(255,255,255,0.025)' : '#ffffff',
-  cardBorder:       darkMode ? 'rgba(255,255,255,0.07)'  : '#d1fae5',
-  cardShadow:       darkMode ? 'none' : '0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(16,185,129,0.06)',
-  textMuted:        darkMode ? 'rgba(255,255,255,0.65)'  : '#475569',
-  textMain:         darkMode ? '#ffffff'                 : '#0f172a',
-  sectionBg1:       darkMode ? 'hsl(0 0% 8%)'            : '#f0fdf4',
-  sectionBg2:       darkMode ? 'hsl(0 0% 5%)'            : '#ffffff',
-  sectionBg3:       darkMode ? 'hsl(0 0% 6%)'            : '#ecfdf5',
-  sectionBg4:       darkMode ? 'rgba(4,12,6,0.6)'        : '#d1fae5',
-  sectionBg5:       darkMode ? 'rgba(4,12,6,0.7)'        : '#a7f3d0',
-  footerBg:         darkMode ? 'rgba(4,12,6,0.95)'       : '#0f172a',
-  navBg:            darkMode ? 'rgba(10,10,10,0.85)'     : 'rgba(255,255,255,0.92)',
-  navBorder:        darkMode ? 'rgba(255,255,255,0.06)'  : 'rgba(0,0,0,0.08)',
-  navBtnBg:         darkMode ? 'hsl(0 0% 18%)'           : '#f1f5f9',
-  navBtnColor:      darkMode ? 'hsl(0 0% 96%)'           : '#334155',
-  mobilMenuBg:      darkMode ? 'hsl(0 0% 10%)'           : '#ffffff',
-  mobileMenuBorder: darkMode ? 'hsl(0 0% 20%)'           : '#e2e8f0',
+  accent:      ACCENT,
+  lpGreen:     LP_GREEN,
+
+  // Text
+  textMain:    darkMode ? '#f8fafc'                  : '#0f172a',
+  textMuted:   darkMode ? '#94a3b8'                  : '#64748b',
+  textSubtle:  darkMode ? '#475569'                  : '#94a3b8',
+
+  // Cards
+  cardBg:      darkMode ? 'hsl(215 28% 17%)'         : '#ffffff',
+  cardBorder:  darkMode ? 'hsl(215 28% 24%)'         : '#e2e8f0',
+  cardShadow:  darkMode ? 'none'                     : '0 1px 3px rgba(15,23,42,0.07), 0 0 0 1px rgba(15,23,42,0.03)',
+
+  // Section backgrounds (no more green-tinted sections)
+  sectionBg1:  darkMode ? 'hsl(222 47% 11%)'         : '#f8fafc',
+  sectionBg2:  darkMode ? 'hsl(215 28% 13%)'         : '#ffffff',
+  sectionBg3:  darkMode ? 'hsl(215 28% 15%)'         : '#f1f5f9',
+  sectionBg4:  darkMode ? 'hsl(215 28% 12%)'         : '#e2e8f0',
+  sectionBg5:  darkMode ? 'hsl(215 28% 10%)'         : '#cbd5e1',
+
+  // Nav
+  navBg:          darkMode ? 'rgba(15,23,42,0.92)'   : 'rgba(255,255,255,0.96)',
+  navBorder:      darkMode ? 'rgba(255,255,255,0.06)': 'rgba(15,23,42,0.08)',
+  navBtnBg:       darkMode ? 'hsl(215 28% 20%)'      : '#f1f5f9',
+  navBtnColor:    darkMode ? '#f8fafc'                : '#334155',
+  mobilMenuBg:    darkMode ? 'hsl(222 47% 11%)'      : '#ffffff',
+  mobileMenuBorder: darkMode ? 'hsl(215 28% 24%)'    : '#e2e8f0',
+
+  // Footer always dark navy
+  footerBg:    '#0f172a',
 });
 
 export type SiteTheme = ReturnType<typeof useSiteTheme>;
 
-// ─── Keyframe injection + body background ─────────────────────────────────────
+// ─── Keyframes + body background ─────────────────────────────────────────────
 const SECTION_CSS = `
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-@keyframes glow-pulse {
-  0%,100% { box-shadow: 0 0 20px rgba(1,235,2,0.2); }
-  50%     { box-shadow: 0 0 40px rgba(1,235,2,0.45), 0 0 80px rgba(1,235,2,0.15); }
-}
 @keyframes banner-in { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fade-up { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
 @keyframes chevron-bounce { 0%,100% { transform: translateY(0); opacity: 0.9; } 50% { transform: translateY(5px); opacity: 0.4; } }
 @keyframes chevron-bounce-delayed { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(5px); opacity: 0.9; } }
 @keyframes trust-pulse { 0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(1,235,2,0.5); } 50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(1,235,2,0); } }
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(1,235,2,0.2); }
+  50%     { box-shadow: 0 0 40px rgba(1,235,2,0.45), 0 0 80px rgba(1,235,2,0.15); }
+}
 .animate-ticker      { animation: ticker-scroll 28s linear infinite; will-change: transform; }
 .animate-float       { animation: float 4s ease-out infinite; will-change: transform; }
-.animate-float-2     { animation: float 5s ease-out infinite 1.5s; will-change: transform; }
 .animate-glow        { animation: glow-pulse 3s ease-in-out infinite; }
 .animate-banner      { animation: banner-in 0.45s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-fade-up     { animation: fade-up 0.7s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-chevron-1   { animation: chevron-bounce 1.4s ease-in-out infinite; }
 .animate-chevron-2   { animation: chevron-bounce-delayed 1.4s ease-in-out infinite 0.3s; }
 .animate-trust-pulse { animation: trust-pulse 2s ease-in-out infinite; }
-button:focus-visible, a:focus-visible { outline: 2px solid rgba(1,235,2,0.7); outline-offset: 3px; border-radius: 8px; }
+button:focus-visible, a:focus-visible { outline: 2px solid rgba(22,163,74,0.6); outline-offset: 3px; border-radius: 8px; }
 @media (prefers-reduced-motion: reduce) {
-  .animate-ticker, .animate-float, .animate-float-2, .animate-glow, .animate-banner,
+  .animate-ticker, .animate-float, .animate-glow, .animate-banner,
   .animate-fade-up, .animate-chevron-1, .animate-chevron-2, .animate-trust-pulse { animation: none; }
   .animate-fade-up { opacity: 1 !important; transform: none !important; }
   * { transition-duration: 0.01ms !important; }
@@ -76,7 +98,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid rgba(1,235,2,0.7); ou
 `;
 
 export const SectionBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(0 0% 8%)' : '#f0fdf4'} !important; }`;
+  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(222 47% 11%)' : '#f8fafc'} !important; }`;
   return (
     <>
       <style>{SECTION_CSS}</style>
@@ -142,6 +164,18 @@ export const HeroVideo: React.FC = () => (
   </video>
 );
 
+// ─── Section label pill ───────────────────────────────────────────────────────
+export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: boolean }> = ({ children, darkMode }) => (
+  <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+    style={{
+      background: darkMode ? 'rgba(22,163,74,0.12)' : 'rgba(22,163,74,0.08)',
+      border: '1px solid rgba(22,163,74,0.2)',
+      color: darkMode ? '#86efac' : '#15803d',
+    }}>
+    {children}
+  </span>
+);
+
 // ─── Product icons ────────────────────────────────────────────────────────────
 const IconVehicle: React.FC<{ color?: string; size?: number }> = ({ color = '#22c55e', size = 28 }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -192,11 +226,11 @@ const IconHealth: React.FC<{ color?: string; size?: number }> = ({ color = '#ef4
 );
 
 export const PRODUCTS = [
-  { Icon: IconVehicle,          slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#22c55e', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
-  { Icon: IconTravel,           slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#3b82f6', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
-  { Icon: IconPersonalAccident, slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#a855f7', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
-  { Icon: IconProperty,         slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#f59e0b', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
-  { Icon: IconHealth,           slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#ef4444', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+  { Icon: IconVehicle,          slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#16a34a', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
+  { Icon: IconTravel,           slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#2563eb', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
+  { Icon: IconPersonalAccident, slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#7c3aed', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
+  { Icon: IconProperty,         slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#d97706', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
+  { Icon: IconHealth,           slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#dc2626', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
 ];
 
 // ─── Promo banners ────────────────────────────────────────────────────────────
@@ -247,17 +281,17 @@ export const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => voi
       <div className="grid grid-cols-2 gap-3">
         <button onClick={onInstall}
           className="relative overflow-hidden rounded-2xl p-4 text-left cursor-pointer transition-all hover:scale-[1.03] active:scale-95 w-full"
-          style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.04))', border: '1px solid rgba(34,197,94,0.15)' }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(34,197,94,0.12)' }}>
-            <Download size={16} style={{ color: '#22c55e' }} />
+          style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.08), rgba(16,185,129,0.04))', border: '1px solid rgba(22,163,74,0.15)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(22,163,74,0.12)' }}>
+            <Download size={16} style={{ color: '#16a34a' }} />
           </div>
           <p className="text-xs font-black text-white leading-tight">Download<br />Mobile App</p>
           <p className="text-[10px] text-gray-500 mt-1">iOS &amp; Android</p>
         </button>
         <div className="relative overflow-hidden rounded-2xl p-4"
-          style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.08), rgba(139,92,246,0.04))', border: '1px solid rgba(168,85,247,0.15)' }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(168,85,247,0.12)' }}>
-            <Award size={16} style={{ color: '#a855f7' }} />
+          style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(109,40,217,0.04))', border: '1px solid rgba(124,58,237,0.15)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(124,58,237,0.12)' }}>
+            <Award size={16} style={{ color: '#7c3aed' }} />
           </div>
           <p className="text-xs font-black text-white leading-tight">Trusted<br />Partner</p>
           <p className="text-[10px] text-gray-500 mt-1">18+ Insurer</p>
@@ -271,11 +305,10 @@ export const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => voi
 export const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }> = ({ onDismiss, onInstall }) => (
   <div className="fixed bottom-0 left-0 right-0 z-[200] p-4 animate-banner">
     <div className="max-w-md mx-auto rounded-3xl border border-white/10 backdrop-blur-xl overflow-hidden"
-      style={{ background: 'rgba(5,20,10,0.95)', boxShadow: '0 -8px 60px rgba(34,197,94,0.2)' }}>
-      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, rgba(34,197,94,1) 0%, transparent 60%)' }} />
+      style={{ background: 'rgba(15,23,42,0.97)', boxShadow: '0 -8px 60px rgba(22,163,74,0.15)' }}>
       <div className="relative p-5 flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 animate-glow"
-          style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)' }}>
+          style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.3)' }}>
           <img src="/surepath-logo.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
         </div>
         <div className="flex-1 min-w-0">
@@ -284,7 +317,7 @@ export const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }
         </div>
         <div className="flex flex-col gap-2">
           <button onClick={onInstall} className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide text-white transition-all"
-            style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>Install</button>
+            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>Install</button>
           <button onClick={onDismiss} className="px-4 py-1.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors">Nanti</button>
         </div>
       </div>
@@ -299,7 +332,7 @@ export const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; ha
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} onClick={onClose}>
       <div className="w-full max-w-sm rounded-3xl p-7 space-y-5"
-        style={{ background: 'rgba(10,20,12,0.98)', border: '1px solid rgba(34,197,94,0.2)', boxShadow: '0 -8px 60px rgba(34,197,94,0.15)' }}
+        style={{ background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(22,163,74,0.2)' }}
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-base font-black text-white">Install SurePath</h3>
@@ -310,8 +343,8 @@ export const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; ha
         </p>
         {hasPwaPrompt ? (
           <button onClick={onPwa}
-            className="w-full py-3.5 rounded-2xl text-sm font-black text-black transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
-            style={{ background: 'hsl(119,99%,46%)' }}>
+            className="w-full py-3.5 rounded-2xl text-sm font-black text-white transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>
             <Download size={16} /> Pasang ke Layar Utama
           </button>
         ) : (

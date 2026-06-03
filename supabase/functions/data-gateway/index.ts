@@ -505,6 +505,44 @@ serve(async (req) => {
         return json({ data });
       }
 
+      // ── Admin: transaksi overview stats ──────────────────────────────────
+      case 'admin_transaksi_overview': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const [usersRes, ordersRes, paymentsRes, commissionsRes] = await Promise.all([
+          db.from('sp_users').select('id', { count: 'exact', head: true }).in('role', ['CUSTOMER', 'B2B_CLIENT']),
+          db.from('sp_policy_orders').select('id', { count: 'exact', head: true }),
+          db.from('sp_payments').select('paid_amount').eq('status', 'PAID'),
+          db.from('sp_commissions').select('commission_amount'),
+        ]);
+        const totalPembayaranMasuk = ((paymentsRes.data ?? []) as any[]).reduce((s: number, p: any) => s + (p.paid_amount ?? 0), 0);
+        const totalKomisiAgen = ((commissionsRes.data ?? []) as any[]).reduce((s: number, c: any) => s + (c.commission_amount ?? 0), 0);
+        return json({ data: { totalCustomers: usersRes.count ?? 0, totalOrders: ordersRes.count ?? 0, totalPembayaranMasuk, totalKomisiAgen } });
+      }
+
+      // ── Admin: list all commissions (with agent name) ─────────────────────
+      case 'admin_list_commissions': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_commissions')
+          .select('*, sp_users!agent_id(name)')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 1000));
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: update commission status ───────────────────────────────────
+      case 'admin_update_commission': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.commission_id || !params.status) return json({ error: 'commission_id and status required' }, 400);
+        const VALID = ['PENDING', 'PAID', 'CANCELLED'];
+        if (!VALID.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
+        const updates: Record<string, unknown> = { status: params.status, updated_at: new Date().toISOString() };
+        if (params.status === 'PAID') updates.paid_at = new Date().toISOString();
+        const { data, error } = await db.from('sp_commissions').update(updates).eq('id', params.commission_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
       // ── Admin: analytics dashboard data ──────────────────────────────────
       case 'admin_analytics_data': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);

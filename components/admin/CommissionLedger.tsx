@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search } from 'lucide-react';
-import { supabase } from '../../services/supabaseService';
+import { callGateway } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -58,10 +58,7 @@ const CommissionLedger: React.FC = () => {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('sp_commissions')
-      .select('*, sp_users!agent_id(name)')
-      .order('created_at', { ascending: false });
+    const { data, error } = await callGateway('admin_list_commissions', { limit: 1000 });
 
     if (error) {
       console.error('CommissionLedger load:', error);
@@ -97,10 +94,7 @@ const CommissionLedger: React.FC = () => {
 
   const payCommission = async (id: string) => {
     setSaving(prev => new Set(prev).add(id));
-    const { error } = await supabase
-      .from('sp_commissions')
-      .update({ status: 'PAID', paid_at: new Date().toISOString() })
-      .eq('id', id);
+    const { error } = await callGateway('admin_update_commission', { commission_id: id, status: 'PAID' });
     if (!error) {
       setRows(prev =>
         prev.map(r =>
@@ -117,10 +111,7 @@ const CommissionLedger: React.FC = () => {
 
   const cancelCommission = async (id: string) => {
     setSaving(prev => new Set(prev).add(id));
-    const { error } = await supabase
-      .from('sp_commissions')
-      .update({ status: 'CANCELLED' })
-      .eq('id', id);
+    const { error } = await callGateway('admin_update_commission', { commission_id: id, status: 'CANCELLED' });
     if (!error) {
       setRows(prev =>
         prev.map(r => (r.id === id ? { ...r, status: 'CANCELLED' } : r))

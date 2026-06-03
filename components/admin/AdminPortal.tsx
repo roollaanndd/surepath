@@ -27,7 +27,7 @@ import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
 import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
-import { getAdminStats, type AdminStats, uploadLogoImage, supabase, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
@@ -148,20 +148,8 @@ const AdminPortal = ({
     getAdminStats().then(setAdminStats).catch(() => {});
 
     // Fetch Transaksi Overview stats
-    Promise.all([
-      supabase.from('sp_users').select('id', { count: 'exact', head: true }).in('role', ['CUSTOMER', 'B2B_CLIENT']),
-      supabase.from('sp_policy_orders').select('id', { count: 'exact', head: true }),
-      supabase.from('sp_payments').select('paid_amount').eq('status', 'PAID'),
-      supabase.from('sp_commissions').select('commission_amount'),
-    ]).then(([usersRes, ordersRes, paymentsRes, commissionsRes]) => {
-      const totalPembayaranMasuk = ((paymentsRes.data ?? []) as any[]).reduce((s, p) => s + (p.paid_amount ?? 0), 0);
-      const totalKomisiAgen = ((commissionsRes.data ?? []) as any[]).reduce((s, c) => s + (c.commission_amount ?? 0), 0);
-      setTransaksiStats({
-        totalCustomers: usersRes.count ?? 0,
-        totalOrders: ordersRes.count ?? 0,
-        totalPembayaranMasuk,
-        totalKomisiAgen,
-      });
+    callGateway('admin_transaksi_overview', {}).then(({ data }) => {
+      if (data) setTransaksiStats(data as any);
     }).catch(() => {});
 
     // Online users

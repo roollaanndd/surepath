@@ -7,17 +7,17 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, navigate, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, videoBg2, videoBg3, accent } = th;
 
   const config    = useWebsiteConfig('products');
   const subtitle  = config?.subtitle  || t('40+ produk dari 18 insurer terpercaya dalam satu platform. Bandingkan, pilih, dan beli — semuanya online.', '40+ products from 18 trusted insurers in one platform. Compare, choose, and buy — all online.');
   const ctaText   = config?.cta_text   || t('Konsultasi Gratis', 'Free Consultation');
 
   return (
-    <SiteLayout {...props} active="products">
+    <SiteLayout {...props} active="products" bgVideo="/bg1.mp4">
 
       {/* ─── Header ─── */}
-      <section className="pt-36 pb-14 px-5 text-center" style={{ background: sectionBg2 }}>
+      <section className="pt-36 pb-14 px-5 text-center" style={{ background: videoBg2 }}>
         <Reveal>
           <SectionLabel darkMode={props.darkMode}>{t('Produk Kami', 'Our Products')}</SectionLabel>
           <h1 className="font-bold leading-tight tracking-tight mb-4" style={{ fontSize: 'clamp(2rem,5vw,3.25rem)', color: textMain }}>
@@ -29,7 +29,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Product grid ─── */}
-      <section className="pb-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="pb-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-7xl mx-auto pt-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {PRODUCTS.map((p, i) => (
@@ -58,7 +58,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
             {/* Consultation card */}
             <Reveal delay={PRODUCTS.length * 60}>
               <div className="rounded-2xl p-8 h-full min-h-[240px] flex flex-col justify-center"
-                style={{ background: sectionBg3, border: `1px solid ${cardBorder}` }}>
+                style={{ background: videoBg3, border: `1px solid ${cardBorder}` }}>
                 <h3 className="font-bold text-lg mb-2" style={{ color: textMain }}>{t('Belum yakin pilih yang mana?', 'Not sure which to pick?')}</h3>
                 <p className="text-sm leading-relaxed mb-6" style={{ color: textMuted }}>
                   {t('Ngobrol gratis dengan agen kami. Kami bantu temukan perlindungan yang paling pas — tanpa tekanan jualan.', 'Chat free with our agent. We help you find the right fit — no sales pressure.')}
@@ -75,7 +75,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Calculator CTA ─── */}
-      <section className="py-16 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-16 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <div className="rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8"

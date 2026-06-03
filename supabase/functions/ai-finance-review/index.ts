@@ -1,11 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from '../_shared/cors.ts';
+import { verifyAuth, adminOnly } from '../_shared/auth.ts';
 
 const SYSTEM_PROMPT = `You are an experienced CFO and financial controller at SurePath, an OJK-licensed Indonesian insurtech company. You analyze financial data including GWP (Gross Written Premium), commissions, claim payouts, and transaction anomalies.
 
@@ -41,12 +37,21 @@ Always respond with ONLY valid JSON (no markdown) in this exact shape:
 Be thorough, conservative, and flag anything unusual. Use Bahasa Indonesia for all text fields.`;
 
 serve(async (req) => {
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  const SUPABASE_URL         = Deno.env.get('SUPABASE_URL') ?? '';
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const ANON_KEY             = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+  // ── Auth: admin only ──────────────────────────────────────────────────────
+  const { caller, errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, SUPABASE_SERVICE_KEY, CORS);
+  if (errorResponse) return errorResponse;
+  const denied = adminOnly(caller!, CORS);
+  if (denied) return denied;
+
   try {
-    const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
-    const SUPABASE_URL         = Deno.env.get('SUPABASE_URL') ?? '';
-    const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 
     if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }), {
@@ -56,6 +61,7 @@ serve(async (req) => {
 
     const { period_days = 30 } = await req.json().catch(() => ({}));
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
 
     const since = new Date(Date.now() - period_days * 86400000).toISOString();
 

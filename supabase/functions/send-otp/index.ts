@@ -1,14 +1,13 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders as buildCors } from '../_shared/cors.ts'
 
 const FONNTE_TOKEN = Deno.env.get('FONNTE_TOKEN') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const OTP_RATE_LIMIT = 3       // max OTPs per window
+const OTP_WINDOW_MINUTES = 10  // rolling window
 
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '')
@@ -22,6 +21,7 @@ function generateOtp(): string {
 }
 
 serve(async (req) => {
+  const corsHeaders = buildCors(req.headers.get('origin'))
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -39,6 +39,20 @@ serve(async (req) => {
     const code = generateOtp()
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // ── Server-side rate limit: max OTP_RATE_LIMIT requests per OTP_WINDOW_MINUTES ──
+    const windowStart = new Date(Date.now() - OTP_WINDOW_MINUTES * 60 * 1000).toISOString()
+    const { count: recentCount } = await supabase
+      .from('sp_otp_codes')
+      .select('id', { count: 'exact', head: true })
+      .eq('phone', normalized)
+      .eq('purpose', purpose)
+      .gte('created_at', windowStart)
+    if ((recentCount ?? 0) >= OTP_RATE_LIMIT) {
+      return new Response(JSON.stringify({ ok: false, error: `Terlalu banyak permintaan OTP. Coba lagi dalam ${OTP_WINDOW_MINUTES} menit.` }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Invalidate previous unused codes for this phone+purpose
     await supabase

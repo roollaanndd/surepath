@@ -2,6 +2,9 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
 const TELEGRAM_CHAT_ID   = Deno.env.get('TELEGRAM_ADMIN_CHAT_ID') ?? ''
+// Shared secret for DB webhook calls — set WEBHOOK_SECRET in Supabase env vars
+// and configure the same value in the pg_net / Supabase webhook header.
+const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') ?? ''
 
 async function sendTelegram(text: string) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return
@@ -19,6 +22,16 @@ async function sendTelegram(text: string) {
 
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok', { status: 200 })
+
+  // Validate webhook secret if configured
+  if (WEBHOOK_SECRET) {
+    const provided = req.headers.get('x-webhook-secret') ?? ''
+    if (provided !== WEBHOOK_SECRET) {
+      return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
 
   try {
     const payload = await req.json()

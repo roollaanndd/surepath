@@ -1,31 +1,24 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from '../_shared/cors.ts';
+import { verifyAuth } from '../_shared/auth.ts';
 
 serve(async (req) => {
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
-  // Require a Bearer token (Supabase anon key or user JWT)
-  const auth = req.headers.get('authorization') ?? '';
-  if (!auth.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
-    });
-  }
+  const SUPABASE_URL  = Deno.env.get('SUPABASE_URL')  ?? '';
+  const ANON_KEY      = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const SERVICE_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+  // ── Auth: require a verified Supabase JWT (any authenticated user) ────────
+  const { errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
+  if (errorResponse) return errorResponse;
 
   try {
-    const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')              ?? '';
-    const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
-    // Resolve OpenRouter key from env first, fall back to Vault
     let OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
-    if (!OPENROUTER_KEY && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    if (!OPENROUTER_KEY && SUPABASE_URL && SERVICE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
       const { data } = await supabase.rpc('get_app_secret', { secret_name: 'OPENROUTER_KEY' });
       OPENROUTER_KEY = data ?? '';
     }
@@ -37,7 +30,6 @@ serve(async (req) => {
       });
     }
 
-    // Forward the body as-is to OpenRouter (OpenAI-compatible format)
     const body = await req.text();
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

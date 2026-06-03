@@ -1,7 +1,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
+// Server-to-server only: called by Supabase cron, not from a browser.
+// Protect with a shared secret stored in CRON_SECRET env var.
+const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
 function wib(dt: Date | string) {
   return new Date(dt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
@@ -15,7 +17,16 @@ function fmtIDR(n: number) {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+  if (req.method === 'OPTIONS') return new Response('ok');
+
+  // Require Authorization: Bearer <CRON_SECRET>
+  const authHeader = req.headers.get('authorization') ?? '';
+  const providedSecret = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!CRON_SECRET || providedSecret !== CRON_SECRET) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -101,10 +112,10 @@ serve(async (req) => {
     });
 
     const tgData = await tgRes.json();
-    return new Response(JSON.stringify({ ok: true, telegram: tgData }), { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ok: true, telegram: tgData }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   } catch (err) {
     console.error('daily-report error:', err);
-    return new Response(JSON.stringify({ ok: false, error: String(err) }), { status: 500, headers: CORS });
+    return new Response(JSON.stringify({ ok: false, error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 });

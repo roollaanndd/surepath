@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ChevronDown, Star, CheckCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, Star } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
 import { SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter, SectionLabel, useWebsiteConfig } from './site/siteKit';
 
@@ -28,7 +28,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
 
   const TESTIMONIALS = [
     { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: accent, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Agen mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their agent took time to genuinely listen.') },
-    { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Agen SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', 'For the first time I truly understood my insurance policy. SurePath\'s agent patiently explained each clause clearly.') },
+    { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Agen SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', "For the first time I truly understood my insurance policy. SurePath's agent patiently explained each clause clearly.") },
     { name: 'Hendra K.', role: t('Arsitek', 'Architect'), city: 'Bandung', initial: 'H', color: '#7c3aed', quote: t('Proses seluruhnya digital namun saya tetap merasa ditangani secara personal. Ada manusia di balik teknologinya.', 'The process is fully digital yet I still felt handled personally. There are real humans behind the technology.') },
   ];
 
@@ -52,7 +52,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
           <Reveal>
             <SectionLabel darkMode={props.darkMode}>{t('Tentang Kami', 'About Us')}</SectionLabel>
             <h1 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: textMain }}>
-              {config?.headline || <>{t('Asuransi yang ', 'Insurance that\'s ')}<span style={{ color: accent }}>{t('berpihak ke kamu', 'on your side')}</span></>}
+              {config?.headline || <>{t('Asuransi yang ', "Insurance that's ")}<span style={{ color: accent }}>{t('berpihak ke kamu', 'on your side')}</span></>}
             </h1>
             <p className="text-base leading-relaxed max-w-2xl mx-auto" style={{ color: textMuted }}>
               {config?.subtitle || t('SurePath adalah platform insurtech Indonesia yang menggabungkan teknologi AI mutakhir dengan sentuhan manusiawi. Didirikan pada 2023, kami hadir untuk menyederhanakan pengalaman asuransi yang selama ini terasa rumit dan tidak transparan.', 'SurePath is an Indonesian insurtech platform combining cutting-edge AI technology with a human touch. Founded in 2023, we simplify an insurance experience that has long felt complex and opaque.')}
@@ -65,23 +65,32 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
       <section className="py-20 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-5xl mx-auto">
           <Reveal>
-            <div className="rounded-2xl p-8 md:p-10 mb-12 text-center"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
-              <h2 className="text-xl font-bold mb-3" style={{ color: textMain }}>{t('Misi Kami', 'Our Mission')}</h2>
-              <p className="text-base leading-relaxed max-w-2xl mx-auto" style={{ color: textMuted }}>
+            {/* Mission — accent gradient bg */}
+            <div className="rounded-2xl p-8 md:p-12 mb-12 text-center relative overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${accent}18 0%, ${accent}05 100%)`, border: `1px solid ${accent}30` }}>
+              <div style={{ position: 'absolute', top: -30, right: -10, fontSize: '10rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.04, pointerEvents: 'none', userSelect: 'none', fontFamily: 'Georgia, serif' }}>M</div>
+              <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 14 }}>
+                {t('MISI KAMI', 'OUR MISSION')}
+              </p>
+              <p className="text-lg leading-relaxed max-w-2xl mx-auto font-medium relative" style={{ color: textMain }}>
                 {t('Menjadikan perlindungan finansial mudah diakses oleh semua orang Indonesia — dengan proses yang transparan, cepat, dan dapat dipercaya penuh.', 'Making financial protection accessible to all Indonesians — with a transparent, fast, and fully trustworthy process.')}
               </p>
             </div>
           </Reveal>
+          {/* Values — left border cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {VALUES.map((v, i) => (
               <Reveal key={v.title} delay={i * 70}>
-                <div className="p-6 rounded-2xl h-full" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <CheckCircle size={16} style={{ color: accent }} />
-                    <h3 className="font-bold text-base" style={{ color: textMain }}>{v.title}</h3>
+                <div className="p-6 rounded-2xl h-full relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px]"
+                  style={{ background: cardBg, borderLeft: `4px solid ${accent}` }}>
+                  <div style={{ position: 'absolute', top: -8, right: 12, fontSize: '4.5rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>
+                    {String(i + 1).padStart(2, '0')}
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{v.desc}</p>
+                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 10 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </p>
+                  <h3 className="font-bold text-base mb-2 relative" style={{ color: textMain }}>{v.title}</h3>
+                  <p className="text-sm leading-relaxed relative" style={{ color: textMuted }}>{v.desc}</p>
                 </div>
               </Reveal>
             ))}
@@ -89,19 +98,24 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ─── Stats ─── */}
+      {/* ─── Stats — giant numbers, borderless ─── */}
       <section className="py-16 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-5">
-          {STATS.map((stat, i) => (
-            <Reveal key={stat.label} delay={i * 70}>
-              <div className="text-center p-6 rounded-2xl" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
-                <p className="font-black mb-1" style={{ fontSize: 'clamp(1.75rem,4vw,2.5rem)', lineHeight: 1, color: textMain }}>
-                  <AnimatedCounter target={stat.target} suffix={stat.suffix} />
-                </p>
-                <p className="text-xs font-medium mt-1.5" style={{ color: textMuted }}>{stat.label}</p>
-              </div>
-            </Reveal>
-          ))}
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-wrap justify-between gap-10">
+            {STATS.map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 70}>
+                <div>
+                  <div style={{ fontSize: 'clamp(2.5rem,5.5vw,4rem)', fontWeight: 900, lineHeight: 1, color: textMain, letterSpacing: '-0.04em' }}>
+                    <AnimatedCounter target={stat.target} suffix={stat.suffix} />
+                  </div>
+                  <div style={{ width: 28, height: 3, background: accent, margin: '10px 0 8px', borderRadius: 99 }} />
+                  <div style={{ fontSize: '0.6rem', fontWeight: 700, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                    {stat.label}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -119,14 +133,17 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((tm, i) => (
               <Reveal key={tm.name} delay={i * 100}>
-                <div className="p-7 rounded-2xl h-full flex flex-col" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
-                  <div className="flex gap-1 mb-5">
+                <div className="p-7 rounded-2xl h-full flex flex-col relative overflow-hidden"
+                  style={{ background: cardBg, borderLeft: `4px solid ${tm.color}`, boxShadow: cardShadow }}>
+                  {/* Giant quote mark */}
+                  <div style={{ position: 'absolute', top: -14, left: 16, fontSize: '8rem', fontWeight: 900, lineHeight: 1, color: tm.color, opacity: 0.08, fontFamily: 'Georgia, serif', pointerEvents: 'none', userSelect: 'none' }}>"</div>
+                  <div className="flex gap-1 mb-5 relative">
                     {[...Array(5)].map((_, j) => (<Star key={j} size={13} fill="#f59e0b" style={{ color: '#f59e0b' }} />))}
                   </div>
-                  <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: textMuted }}>"{tm.quote}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
-                      style={{ background: `${tm.color}12`, border: `1px solid ${tm.color}25`, color: tm.color }}>{tm.initial}</div>
+                  <p className="text-sm leading-relaxed flex-1 mb-6 relative" style={{ color: textMuted }}>{tm.quote}</p>
+                  <div className="flex items-center gap-3 relative">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 text-white"
+                      style={{ background: tm.color }}>{tm.initial}</div>
                     <div>
                       <p className="text-sm font-bold" style={{ color: textMain }}>{tm.name}</p>
                       <p className="text-[0.65rem]" style={{ color: textMuted }}>{tm.role} · {tm.city}</p>
@@ -139,7 +156,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ─── FAQ ─── */}
+      {/* ─── FAQ — editorial dividers ─── */}
       <section className="py-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-3xl mx-auto">
           <Reveal>
@@ -150,18 +167,18 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
               </h2>
             </div>
           </Reveal>
-          <div itemScope itemType="https://schema.org/FAQPage" className="space-y-2.5">
+          <div itemScope itemType="https://schema.org/FAQPage" style={{ borderTop: `1px solid ${cardBorder}` }}>
             {FAQS.map((item, i) => (
               <Reveal key={i} delay={i * 40}>
                 <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question"
-                  className="rounded-xl overflow-hidden" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
+                  style={{ borderBottom: `1px solid ${cardBorder}` }}>
                   <details className="group">
-                    <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none select-none" style={{ color: textMain }}>
+                    <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none" style={{ color: textMain }}>
                       <span itemProp="name" className="text-sm font-semibold leading-snug">{item.q}</span>
                       <ChevronDown size={15} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180" style={{ color: accent }} />
                     </summary>
                     <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
-                      <p itemProp="text" className="px-5 pb-5 text-sm leading-relaxed" style={{ color: textMuted }}>{item.a}</p>
+                      <p itemProp="text" className="pb-5 text-sm leading-relaxed" style={{ color: textMuted }}>{item.a}</p>
                     </div>
                   </details>
                 </div>

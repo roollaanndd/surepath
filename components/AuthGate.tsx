@@ -16,8 +16,8 @@ interface AuthGateProps {
   initialMode?: 'LOGIN' | 'REGISTER';
 }
 
-// ─── Animated canvas background ───────────────────────────────────────────────
-const AnimatedBackground: React.FC = () => {
+// ─── Premium animated aurora background ───────────────────────────────────────
+const AuroraBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -26,43 +26,43 @@ const AnimatedBackground: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
     const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width  = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     window.addEventListener('resize', resize);
 
+    // Desaturated, premium palette — indigo / violet / blue / slate. No green.
     const blobs = [
-      { size: 520, color: '6,224,0',    phase: 0,   speedX: 0.0007, speedY: 0.0005 },
-      { size: 420, color: '34,197,94',  phase: 2.1, speedX: 0.0005, speedY: 0.0008 },
-      { size: 360, color: '74,222,128', phase: 4.2, speedX: 0.0009, speedY: 0.0006 },
-      { size: 280, color: '16,185,129', phase: 1.0, speedX: 0.0006, speedY: 0.0009 },
+      { size: 560, color: '99,102,241',  phase: 0.0, speedX: 0.00045, speedY: 0.00033, op: 0.20 },
+      { size: 460, color: '139,92,246',  phase: 2.1, speedX: 0.00033, speedY: 0.00052, op: 0.16 },
+      { size: 420, color: '56,103,214',  phase: 4.2, speedX: 0.00058, speedY: 0.00040, op: 0.14 },
+      { size: 320, color: '129,140,248', phase: 1.0, speedX: 0.00040, speedY: 0.00060, op: 0.12 },
     ];
 
     let frame = 0;
     let animId = 0;
-
     const draw = () => {
       frame++;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = window.innerWidth, h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
       const t = frame;
-
-      blobs.forEach((blob) => {
-        const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(t * blob.speedX + blob.phase)));
-        const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(t * blob.speedY + blob.phase * 1.4)));
-
-        const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
-        grd.addColorStop(0, `rgba(${blob.color},0.18)`);
-        grd.addColorStop(0.5, `rgba(${blob.color},0.06)`);
-        grd.addColorStop(1, `rgba(${blob.color},0)`);
+      blobs.forEach((b) => {
+        const x = w * (0.18 + 0.64 * (0.5 + 0.5 * Math.sin(t * b.speedX + b.phase)));
+        const y = h * (0.18 + 0.64 * (0.5 + 0.5 * Math.cos(t * b.speedY + b.phase * 1.4)));
+        const grd = ctx.createRadialGradient(x, y, 0, x, y, b.size);
+        grd.addColorStop(0,   `rgba(${b.color},${b.op})`);
+        grd.addColorStop(0.5, `rgba(${b.color},${(b.op * 0.32).toFixed(3)})`);
+        grd.addColorStop(1,   `rgba(${b.color},0)`);
         ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, w, h);
       });
-
       animId = requestAnimationFrame(draw);
     };
-
     draw();
 
     return () => {
@@ -71,62 +71,7 @@ const AnimatedBackground: React.FC = () => {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-    />
-  );
-};
-
-// ─── Brand showcase panel with promo video (desktop only) ─────────────────────
-const BrandVideoPanel: React.FC<{ t: (en: string, id: string) => string }> = ({ t }) => {
-  const points = [
-    t('Claims paid in under 5 minutes', 'Klaim cair di bawah 5 menit'),
-    t('Licensed, certified agents', 'Agen resmi & berlisensi'),
-    t('40+ products from 18 insurers', '40+ produk dari 18 insurer'),
-  ];
-  return (
-    <div className="hidden lg:flex lg:w-[46%] xl:w-1/2 relative overflow-hidden flex-col justify-between p-12" style={{ background: '#05080d' }}>
-      {/* Promo video background */}
-      <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.6 }}>
-        <source src="/promo.mp4" type="video/mp4" />
-      </video>
-      {/* Cinematic gradient wash */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(120deg, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.5) 45%, rgba(5,8,13,0.94) 100%)' }} />
-      <div className="absolute -bottom-32 -left-24 w-[28rem] h-[28rem] rounded-full blur-3xl" style={{ background: 'rgba(6,224,0,0.16)' }} />
-      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(6,224,0,0.5), transparent)' }} />
-
-      {/* Top: wordmark */}
-      <div className="relative z-10 flex items-center gap-3">
-        <SurePathLogo className="w-10 h-10" />
-        <span style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#fff' }}>
-          Sure<span style={{ color: 'hsl(119,99%,46%)' }}>Path</span>
-        </span>
-      </div>
-
-      {/* Bottom: tagline + trust points */}
-      <div className="relative z-10 space-y-7 max-w-md">
-        <h2 style={{ fontSize: 'clamp(2rem,3.2vw,3rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', color: '#fff' }}>
-          {t('Protection,', 'Proteksi,')}<br />
-          <span style={{ color: 'hsl(119,99%,46%)' }}>{t('made human.', 'lebih manusiawi.')}</span>
-        </h2>
-        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          {t('Join 12,400+ Indonesians who trust SurePath for transparent, no-nonsense protection.', 'Bergabung dengan 12.400+ orang yang percayakan ketenangan hidupnya ke SurePath.')}
-        </p>
-        <div className="flex flex-col gap-3">
-          {points.map((p) => (
-            <div key={p} className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(6,224,0,0.14)', border: '1px solid rgba(6,224,0,0.3)' }}>
-                <CheckCircle2 size={13} style={{ color: 'hsl(119,99%,46%)' }} />
-              </div>
-              <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>{p}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 };
 
 const AuthGate: React.FC<AuthGateProps> = ({
@@ -379,73 +324,80 @@ const AuthGate: React.FC<AuthGateProps> = ({
     );
   }
 
+  // ── Premium design tokens (no green) ──────────────────────────────────────
+  const GRAD = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+  const primaryBtn: React.CSSProperties = {
+    background: GRAD,
+    color: '#fff',
+    boxShadow: '0 10px 30px -8px rgba(99,102,241,0.55)',
+  };
+  const inputCls = 'w-full pl-11 pr-4 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-indigo-400/60 focus:bg-white/[0.05] transition-all';
+
   return (
-    <div className="min-h-screen text-white flex" style={{ background: 'hsl(0, 0%, 7%)', fontFamily: "'Sora', sans-serif" }}>
+    <div className="min-h-screen text-white flex items-center justify-center p-5 relative overflow-hidden" style={{ background: '#0a0a0f', fontFamily: "'Sora', sans-serif" }}>
 
-      {/* Left brand + promo video panel (desktop) */}
-      <BrandVideoPanel t={t} />
+      <AuroraBackground />
 
-      {/* Right form panel */}
-      <div className="relative flex-1 flex flex-col items-center justify-center p-5 sm:p-8 overflow-hidden">
+      {/* Fine grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.025]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,.7) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.7) 1px,transparent 1px)',
+          backgroundSize: '64px 64px',
+        }}
+      />
+      {/* Center vignette for focus */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 45%, transparent 30%, rgba(10,10,15,0.7) 100%)' }} />
 
-        <AnimatedBackground />
+      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-6">
 
-        {/* Subtle grid overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.018]"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-
-        <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-6">
-
-          {/* Logo (compact — full brand lives on the left panel on desktop) */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="absolute -inset-5 rounded-[2.5rem] blur-3xl opacity-20" style={{ background: 'hsl(119, 99%, 46%)' }} />
-              <div className="relative w-20 h-20 rounded-[1.8rem] flex items-center justify-center border" style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
-                <SurePathLogo className="w-12 h-12" />
-              </div>
-            </div>
-            <div className="text-center">
-              <h1 className="lg:hidden" style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
-                Sure<span style={{ color: 'hsl(119, 99%, 46%)' }}>Path</span>
-              </h1>
-              <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
-                {mode === 'REGISTER'
-                  ? t('Create your account', 'Buat akun kamu')
-                  : t('Welcome back', 'Selamat datang kembali')}
-              </p>
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-5 rounded-[2.5rem] blur-3xl opacity-30" style={{ background: GRAD }} />
+            <div className="relative w-20 h-20 rounded-[1.8rem] flex items-center justify-center border" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 0 60px rgba(99,102,241,0.12)' }}>
+              {/* Brand mark neutralized to premium monochrome so the login stays green-free */}
+              <SurePathLogo className="w-12 h-12 grayscale brightness-150 contrast-125 opacity-90" />
             </div>
           </div>
+          <div className="text-center">
+            <h1 style={{ fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1, color: '#fff' }}>
+              Sure<span style={{ background: 'linear-gradient(135deg,#a5b4fc,#c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
+            </h1>
+            <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.34)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
+              {mode === 'REGISTER'
+                ? t('Create your account', 'Buat akun kamu')
+                : t('Welcome back', 'Selamat datang kembali')}
+            </p>
+          </div>
+        </div>
 
         {/* Check-email screen */}
         {mode === 'CHECK_EMAIL' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm text-center space-y-5">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.5rem] flex items-center justify-center mx-auto">
-              <CheckCircle2 size={32} className="text-emerald-400" />
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl text-center space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
+            <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)' }}>
+              <CheckCircle2 size={32} className="text-indigo-300" />
             </div>
             <div>
-              <h3 className="text-xl font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-gray-400 text-sm mt-2 leading-relaxed">
+              <h3 className="text-xl font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-white/55 text-sm mt-2 leading-relaxed">
                 {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
-                <span className="text-emerald-400 font-bold">{formData.email}</span>.
+                <span className="text-indigo-300 font-bold">{formData.email}</span>.
                 {t(' Click it to activate your account.', ' Klik untuk mengaktifkan akunmu.')}
               </p>
             </div>
             <button
               onClick={handleResend}
               disabled={resending}
-              className="w-full py-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl font-black text-xs uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-indigo-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              style={{ background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.22)' }}
             >
               <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
               {resending ? t('Sent!', 'Terkirim!') : t('Resend Email', 'Kirim Ulang Email')}
             </button>
             <button
               onClick={() => setMode('LOGIN')}
-              className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
             >
               {t('Back to Login', 'Kembali ke Login')}
             </button>
@@ -454,85 +406,85 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Forgot password — enter email */}
         {mode === 'FORGOT_PASSWORD' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
-            <h3 className="text-lg font-black uppercase text-center">{t('Reset Password', 'Reset Password')}</h3>
-            <p className="text-gray-400 text-xs text-center leading-relaxed">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
+            <h3 className="text-lg font-bold tracking-tight text-center">{t('Reset Password', 'Reset Password')}</h3>
+            <p className="text-white/50 text-xs text-center leading-relaxed">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                 <input required type="email" placeholder="email@contoh.com" value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
+                  className={inputCls} />
               </div>
               {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send Reset Link', 'Kirim Link Reset')}<ArrowRight size={14} /></>}
               </button>
             </form>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
           </div>
         )}
 
         {/* Forgot password — sent */}
         {mode === 'FORGOT_SENT' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm text-center space-y-5">
-            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.5rem] flex items-center justify-center mx-auto"><CheckCircle2 size={32} className="text-emerald-400" /></div>
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl text-center space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
+            <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)' }}><CheckCircle2 size={32} className="text-indigo-300" /></div>
             <div>
-              <h3 className="text-xl font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-gray-400 text-sm mt-2 leading-relaxed">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-emerald-400 font-bold">{formData.email}</span>.</p>
+              <h3 className="text-xl font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-white/55 text-sm mt-2 leading-relaxed">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-indigo-300 font-bold">{formData.email}</span>.</p>
             </div>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
         {/* Email OTP — verify */}
         {mode === 'EMAIL_OTP_VERIFY' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
-            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-[1.2rem] flex items-center justify-center mx-auto">
-              <Mail size={26} className="text-emerald-400" />
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
+            <div className="w-14 h-14 rounded-[1.2rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)' }}>
+              <Mail size={26} className="text-indigo-300" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-black uppercase">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+              <h3 className="text-lg font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-white/50 text-xs mt-1 leading-relaxed">
                 {t('Enter the 6-digit code sent to ', 'Masukkan kode 6 digit yang dikirim ke ')}
-                <span className="text-emerald-400 font-bold">{formData.email}</span>.<br/>
+                <span className="text-indigo-300 font-bold">{formData.email}</span>.<br/>
                 {t('Or click the link in the email.', 'Atau klik link di email.')}
               </p>
             </div>
             <form onSubmit={handleVerifyEmailOtp} className="space-y-3">
               <input required type="text" inputMode="numeric" maxLength={6} placeholder="· · · · · ·" value={otpCode}
                 onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full text-center py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] placeholder:text-gray-700 focus:border-green-500/40 transition-all" />
+                className="w-full text-center py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] text-white placeholder:text-white/20 focus:border-indigo-400/60 transition-all" />
               {error && <p className="text-rose-400 text-xs font-bold text-center">{error}</p>}
-              <button type="submit" disabled={loading || otpCode.length < 6} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+              <button type="submit" disabled={loading || otpCode.length < 6} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Sign In', 'Verifikasi & Masuk')}<ArrowRight size={14} /></>}
               </button>
             </form>
             <button onClick={() => { handleSendEmailOtp(); setOtpCode(''); }} disabled={loading}
-              className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {t('Resend Code', 'Kirim Ulang Kode')}
             </button>
-            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full py-2 text-gray-600 hover:text-gray-400 font-black text-[0.55rem] uppercase tracking-widest transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full py-2 text-white/40 hover:text-white/70 font-bold text-[0.55rem] uppercase tracking-widest transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
         {/* Reset password (from email link) */}
         {mode === 'RESET_PASSWORD' && (
-          <div className="w-full bg-white/[0.04] border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-sm space-y-5">
-            <h3 className="text-lg font-black uppercase text-center">{t('New Password', 'Password Baru')}</h3>
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
+            <h3 className="text-lg font-bold tracking-tight text-center">{t('New Password', 'Password Baru')}</h3>
             <form onSubmit={handleResetPassword} className="space-y-3">
               <div className="relative">
-                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                 <input required type={showNewPass ? 'text' : 'password'} placeholder={t('New password (min 6 chars)', 'Password baru (min 6 karakter)')} minLength={6} value={newPassword}
                   onChange={e => setNewPass(e.target.value)}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all" />
-                <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors">
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-indigo-400/60 transition-all" />
+                <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-indigo-300 transition-colors">
                   {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={{ background: 'hsl(119,99%,46%)', color: 'hsl(0,0%,4%)' }}>
+              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Save Password', 'Simpan Password')}<ArrowRight size={14} /></>}
               </button>
             </form>
@@ -541,21 +493,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Main form */}
         {(mode === 'LOGIN' || mode === 'REGISTER') && (
-          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.5rem] p-7 backdrop-blur-sm space-y-6">
+          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-7 backdrop-blur-2xl space-y-6" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.85)' }}>
 
             {/* Tab switcher */}
-            <div className="flex bg-white/[0.05] p-1 rounded-2xl border border-white/5">
+            <div className="flex bg-white/[0.04] p-1 rounded-2xl border border-white/[0.06]">
               <button
                 onClick={() => { setMode('LOGIN'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                style={mode === 'LOGIN' ? { background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 4px 20px rgba(6,224,0,0.25)' } : {}}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                style={mode === 'LOGIN' ? { background: GRAD, boxShadow: '0 6px 20px -6px rgba(99,102,241,0.6)' } : {}}
               >
                 {t('Sign In', 'Masuk')}
               </button>
               <button
                 onClick={() => { setMode('REGISTER'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                style={mode === 'REGISTER' ? { background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 4px 20px rgba(6,224,0,0.25)' } : {}}
+                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+                style={mode === 'REGISTER' ? { background: GRAD, boxShadow: '0 6px 20px -6px rgba(99,102,241,0.6)' } : {}}
               >
                 {t('Register', 'Daftar')}
               </button>
@@ -566,11 +518,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
               {mode === 'REGISTER' && (
                 <>
                   <div className="relative">
-                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                     <input
                       required
                       placeholder={t('Full Name', 'Nama Lengkap')}
-                      className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
+                      className={inputCls}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -579,14 +531,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <button
                       type="button"
                       onClick={() => setRegRole(UserRole.CUSTOMER)}
-                      className={`py-3 rounded-2xl text-[0.55rem] font-black uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
+                      className={`py-3 rounded-2xl text-[0.55rem] font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-indigo-400/70 bg-indigo-500/10 text-indigo-200' : 'border-white/10 text-white/40 hover:border-white/20'}`}
                     >
                       <Smartphone size={14} /> {t('Customer', 'Nasabah')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setRegRole(UserRole.AGENT)}
-                      className={`py-3 rounded-2xl text-[0.55rem] font-black uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-blue-500 bg-blue-500/10 text-blue-400' : 'border-white/10 text-gray-500 hover:border-white/20'}`}
+                      className={`py-3 rounded-2xl text-[0.55rem] font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-violet-400/70 bg-violet-500/10 text-violet-200' : 'border-white/10 text-white/40 hover:border-white/20'}`}
                     >
                       <Briefcase size={14} /> {t('Agent', 'Agen')}
                     </button>
@@ -596,13 +548,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
               {/* Email */}
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                 <input
                   required
                   type="email"
                   autoComplete="email"
                   placeholder="email@contoh.com"
-                  className="w-full pl-11 pr-4 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
+                  className={inputCls}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -610,21 +562,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
               {/* Password */}
               <div className="relative">
-                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                 <input
                   required
                   type={showPass ? 'text' : 'password'}
                   autoComplete={mode === 'LOGIN' ? 'current-password' : 'new-password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.04] border border-white/10 rounded-2xl outline-none text-sm font-bold placeholder:text-gray-600 focus:border-green-500/40 transition-all"
+                  className="w-full pl-11 pr-12 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-indigo-400/60 focus:bg-white/[0.05] transition-all"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-green-400 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-indigo-300 transition-colors"
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -638,7 +590,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               {mode === 'LOGIN' && (
                 <div className="flex justify-end">
                   <button type="button" onClick={() => { setMode('FORGOT_PASSWORD'); setError(null); }}
-                    className="text-[0.6rem] font-bold text-gray-500 hover:text-green-400 transition-colors uppercase tracking-widest">
+                    className="text-[0.6rem] font-bold text-white/40 hover:text-indigo-300 transition-colors uppercase tracking-widest">
                     {t('Forgot password?', 'Lupa password?')}
                   </button>
                 </div>
@@ -654,8 +606,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-                style={{ background: 'hsl(119, 99%, 46%)', color: 'hsl(0, 0%, 4%)', boxShadow: '0 8px 32px rgba(6,224,0,0.25)' }}
+                className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                style={primaryBtn}
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -676,35 +628,34 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <div className="space-y-3 mt-4">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-[0.5rem] font-black text-gray-600 uppercase tracking-widest">{t('Or continue with', 'Atau lanjutkan dengan')}</span>
+                  <span className="text-[0.5rem] font-bold text-white/35 uppercase tracking-widest">{t('Or continue with', 'Atau lanjutkan dengan')}</span>
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
                 <button onClick={handleGoogleSignIn} disabled={loading}
-                  className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-2.5 hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50">
+                  className="w-full py-3.5 bg-white/[0.05] border border-white/10 rounded-2xl flex items-center justify-center gap-2.5 hover:bg-white/10 transition-all active:scale-[0.98] disabled:opacity-50">
                   <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('Google', 'Google')}</span>
+                  <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Google', 'Google')}</span>
                 </button>
                 <button onClick={handleSendEmailOtp} disabled={loading}
-                  className="w-full py-3.5 bg-white/5 border border-emerald-500/20 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-400 hover:bg-emerald-500/10 transition-all active:scale-95 disabled:opacity-50">
+                  className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-indigo-200 transition-all active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.22)' }}>
                   <Mail size={16} />
-                  <span className="text-[0.6rem] font-black uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
+                  <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
               </div>
             )}
           </div>
         )}
 
-
-          <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Shield size={10} style={{ color: 'rgba(6,224,0,0.4)' }} />
-            SurePath · Secure Connection
-          </p>
-        </div>
+        <p style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Shield size={10} style={{ color: 'rgba(165,180,252,0.5)' }} />
+          SurePath · Secure Connection
+        </p>
       </div>
     </div>
   );

@@ -179,6 +179,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <video
                 ref={promoRef}
                 src="/promo.mp4"
+                poster="/promo-poster.jpg"
                 autoPlay
                 muted
                 loop

@@ -51,14 +51,16 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
               const Icon = step.icon;
               return (
                 <Reveal key={step.n} delay={i * 120}>
-                  <div className="relative flex flex-col items-center text-center pt-8">
+                  <div className="group relative flex flex-col items-center text-center pt-8">
                     {/* Giant ordinal watermark */}
-                    <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: '7rem', fontWeight: 900, lineHeight: 1, color: step.color, opacity: 0.07, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                    <div className="transition-opacity duration-300 group-hover:opacity-[0.12]" style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: '7rem', fontWeight: 900, lineHeight: 1, color: step.color, opacity: 0.07, pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>
                       {step.n}
                     </div>
                     {/* Solid circle icon */}
                     <div className="relative mb-7 z-10">
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
+                      {/* Pulsing halo */}
+                      <div className="absolute inset-0 rounded-full transition-transform duration-500 group-hover:scale-150" style={{ background: step.color, opacity: 0.18, filter: 'blur(10px)' }} />
+                      <div className="relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
                         style={{ background: step.color }}>
                         <Icon size={26} color="#fff" />
                       </div>
@@ -87,8 +89,8 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {PILLARS.map((p, i) => (
               <Reveal key={p.title} delay={i * 100}>
-                <div className="p-8 rounded-2xl h-full flex flex-col relative overflow-hidden"
-                  style={{ background: cardBg, borderLeft: `4px solid ${p.accent}`, boxShadow: cardShadow }}>
+                <div className="spx-card spx-sheen p-8 rounded-2xl h-full flex flex-col"
+                  style={{ background: cardBg, borderLeft: `4px solid ${p.accent}`, boxShadow: cardShadow, ['--spx-accent' as string]: p.accent }}>
                   {/* Faded ordinal watermark */}
                   <div style={{ position: 'absolute', top: -8, right: 16, fontSize: '5rem', fontWeight: 900, lineHeight: 1, color: p.accent, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>
                     {p.n}
@@ -128,7 +130,8 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Reveal delay={0}><PromoBanners onSignIn={onSignIn} onInstall={onInstall} /></Reveal>
             <Reveal delay={100}>
-              <div className="rounded-2xl h-full flex flex-col overflow-hidden" style={{ minHeight: 300, background: accent }}>
+              <div className="spx-card spx-grid spx-sheen rounded-2xl h-full flex flex-col overflow-hidden" style={{ minHeight: 300, background: accent, ['--spx-accent' as string]: accent }}>
+                <div className="spx-grid-tex" style={{ ['--spx-accent' as string]: '#ffffff' }} />
                 <div className="p-8 flex flex-col flex-1 justify-center">
                   <p style={{ fontSize: '0.55rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
                     {t('MULAI SEKARANG', 'START NOW')}

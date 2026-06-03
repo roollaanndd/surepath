@@ -66,8 +66,9 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
         <div className="max-w-5xl mx-auto">
           <Reveal>
             {/* Mission — accent gradient bg */}
-            <div className="rounded-2xl p-8 md:p-12 mb-12 text-center relative overflow-hidden"
-              style={{ background: `linear-gradient(135deg, ${accent}18 0%, ${accent}05 100%)`, border: `1px solid ${accent}30` }}>
+            <div className="spx-card spx-grid spx-sheen rounded-2xl p-8 md:p-12 mb-12 text-center overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${accent}18 0%, ${accent}05 100%)`, border: `1px solid ${accent}30`, ['--spx-accent' as string]: accent }}>
+              <div className="spx-grid-tex" />
               <div style={{ position: 'absolute', top: -30, right: -10, fontSize: '10rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.04, pointerEvents: 'none', userSelect: 'none', fontFamily: 'Georgia, serif' }}>M</div>
               <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 14 }}>
                 {t('MISI KAMI', 'OUR MISSION')}
@@ -81,8 +82,8 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {VALUES.map((v, i) => (
               <Reveal key={v.title} delay={i * 70}>
-                <div className="p-6 rounded-2xl h-full relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px]"
-                  style={{ background: cardBg, borderLeft: `4px solid ${accent}` }}>
+                <div className="spx-card spx-sheen p-6 rounded-2xl h-full"
+                  style={{ background: cardBg, borderLeft: `4px solid ${accent}`, ['--spx-accent' as string]: accent }}>
                   <div style={{ position: 'absolute', top: -8, right: 12, fontSize: '4.5rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>
                     {String(i + 1).padStart(2, '0')}
                   </div>
@@ -133,8 +134,8 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((tm, i) => (
               <Reveal key={tm.name} delay={i * 100}>
-                <div className="p-7 rounded-2xl h-full flex flex-col relative overflow-hidden"
-                  style={{ background: cardBg, borderLeft: `4px solid ${tm.color}`, boxShadow: cardShadow }}>
+                <div className="spx-card spx-sheen p-7 rounded-2xl h-full flex flex-col"
+                  style={{ background: cardBg, borderLeft: `4px solid ${tm.color}`, boxShadow: cardShadow, ['--spx-accent' as string]: tm.color }}>
                   {/* Giant quote mark */}
                   <div style={{ position: 'absolute', top: -14, left: 16, fontSize: '8rem', fontWeight: 900, lineHeight: 1, color: tm.color, opacity: 0.08, fontFamily: 'Georgia, serif', pointerEvents: 'none', userSelect: 'none' }}>"</div>
                   <div className="flex gap-1 mb-5 relative">
@@ -172,10 +173,10 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
               <Reveal key={i} delay={i * 40}>
                 <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question"
                   style={{ borderBottom: `1px solid ${cardBorder}` }}>
-                  <details className="group">
+                  <details className="group spx-faq">
                     <summary className="flex items-center justify-between gap-4 py-5 cursor-pointer list-none select-none" style={{ color: textMain }}>
-                      <span itemProp="name" className="text-sm font-semibold leading-snug">{item.q}</span>
-                      <ChevronDown size={15} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180" style={{ color: accent }} />
+                      <span itemProp="name" className="text-sm font-semibold leading-snug transition-colors group-hover:opacity-90">{item.q}</span>
+                      <ChevronDown size={15} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180 group-hover:translate-y-0.5" style={{ color: accent }} />
                     </summary>
                     <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
                       <p itemProp="text" className="pb-5 text-sm leading-relaxed" style={{ color: textMuted }}>{item.a}</p>

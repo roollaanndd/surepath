@@ -35,8 +35,8 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
                 <button
-                  className="group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 w-full text-left h-full min-h-[240px] flex flex-col"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}
+                  className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left h-full min-h-[240px] flex flex-col"
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow, ['--spx-accent' as string]: p.color }}
                   onClick={() => navigate(`/product/${p.slug}`)} aria-label={p.name}>
                   {/* Color gradient header */}
                   <div className="flex items-center justify-center flex-shrink-0"
@@ -60,8 +60,9 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
 
             {/* Consultation card — solid accent, inverted */}
             <Reveal delay={PRODUCTS.length * 60}>
-              <div className="rounded-2xl h-full min-h-[240px] flex flex-col overflow-hidden"
-                style={{ background: accent }}>
+              <div className="spx-card spx-grid spx-sheen rounded-2xl h-full min-h-[240px] flex flex-col overflow-hidden"
+                style={{ background: accent, ['--spx-accent' as string]: accent }}>
+                <div className="spx-grid-tex" style={{ ['--spx-accent' as string]: '#ffffff' }} />
                 <div className="p-8 flex flex-col flex-1 justify-center">
                   <p style={{ fontSize: '0.55rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
                     {t('KONSULTASI', 'CONSULTATION')}
@@ -88,8 +89,9 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
       <section className="py-16 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-4xl mx-auto">
           <Reveal>
-            <div className="rounded-2xl overflow-hidden flex flex-col md:flex-row"
-              style={{ background: cardBg, boxShadow: cardShadow, border: `1px solid ${cardBorder}` }}>
+            <div className="spx-card spx-grid spx-sheen rounded-2xl overflow-hidden flex flex-col md:flex-row"
+              style={{ background: cardBg, boxShadow: cardShadow, border: `1px solid ${cardBorder}`, ['--spx-accent' as string]: accent }}>
+              <div className="spx-grid-tex" />
               {/* Left accent bar */}
               <div className="md:w-1.5 h-1.5 md:h-auto flex-shrink-0" style={{ background: accent }} />
               <div className="flex flex-col md:flex-row items-center gap-8 p-8 md:p-10 flex-1">

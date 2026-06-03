@@ -102,10 +102,43 @@ const SECTION_CSS = `
 .animate-chevron-2   { animation: chevron-bounce-delayed 1.4s ease-in-out infinite 0.3s; }
 .animate-trust-pulse { animation: trust-pulse 2s ease-in-out infinite; }
 button:focus-visible, a:focus-visible { outline: 2px solid rgba(22,163,74,0.6); outline-offset: 3px; border-radius: 8px; }
+
+/* ── Lively card system: per-card accent glow that breathes, lift + colored
+   shadow on hover, and a one-pass light sheen sweep. Each card sets its own
+   colour via the --spx-accent custom property so one class fits every box. ── */
+@keyframes spx-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8%,-6%); } }
+.spx-card { position: relative; isolation: isolate; transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease, border-color .4s ease; will-change: transform; }
+.spx-card::before {
+  content: ''; position: absolute; inset: -25% -25% auto auto; width: 78%; height: 78%; z-index: -1;
+  background: radial-gradient(circle at 70% 30%, var(--spx-accent, #16a34a), transparent 70%);
+  opacity: .10; pointer-events: none; animation: spx-drift 9s ease-in-out infinite;
+}
+.spx-card:hover { transform: translateY(-5px); box-shadow: 0 24px 50px -24px var(--spx-accent, rgba(0,0,0,.5)); }
+.spx-card:hover::before { opacity: .22; }
+.spx-sheen { overflow: hidden; }
+.spx-sheen::after {
+  content: ''; position: absolute; top: 0; left: -85%; width: 55%; height: 100%; z-index: 2;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.14) 50%, transparent);
+  transform: skewX(-16deg); transition: left .8s cubic-bezier(.22,1,.36,1); pointer-events: none;
+}
+.spx-sheen:hover::after { left: 140%; }
+/* Faint dot-grid texture for the larger feature/CTA cards */
+.spx-grid > .spx-grid-tex {
+  position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background-image: radial-gradient(var(--spx-accent, #16a34a) 1px, transparent 1px);
+  background-size: 22px 22px; opacity: .05;
+}
+/* FAQ row: soft highlight + indent on hover */
+.spx-faq { border-radius: 10px; padding-inline: 4px; transition: background-color .25s ease, padding-inline .25s ease; }
+.spx-faq:hover { background-color: rgba(128,128,128,0.07); padding-inline: 12px; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-ticker, .animate-float, .animate-glow, .animate-banner,
   .animate-fade-up, .animate-chevron-1, .animate-chevron-2, .animate-trust-pulse { animation: none; }
   .animate-fade-up { opacity: 1 !important; transform: none !important; }
+  .spx-card::before { animation: none; }
+  .spx-card:hover { transform: none; }
+  .spx-sheen::after { display: none; }
   * { transition-duration: 0.01ms !important; }
 }
 `;

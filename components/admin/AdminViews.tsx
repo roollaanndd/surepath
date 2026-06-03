@@ -26,6 +26,7 @@ import {
   getOnlineUsers, type OnlineUsersResult,
   getSecurityStats, getRateLimitBlocks, getSessionActivityByHour,
   getTrafficStats, type TrafficStats,
+  getAdminPayments, getAdminFinancialReports,
 } from '../../services/supabaseService';
 import { TIER_CONFIG } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -451,16 +452,10 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
     useEffect(() => {
         const load = async () => {
             setLoading(true);
-            const fromDate = new Date(selectedYear, 0, 1).toISOString();
-            const toDate = new Date(selectedYear + 1, 0, 1).toISOString();
-            const [ordersRes, commissionsRes, claimsRes] = await Promise.all([
-                supabase.from('sp_policy_orders').select('total_premium, created_at').eq('status', 'ISSUED').gte('created_at', fromDate).lt('created_at', toDate),
-                supabase.from('sp_commissions').select('commission_amount, created_at').gte('created_at', fromDate).lt('created_at', toDate),
-                supabase.from('sp_claims').select('amount_approved, created_at').in('status', ['APPROVED', 'PAID']).gte('created_at', fromDate).lt('created_at', toDate),
-            ]);
-            setOrderData((ordersRes.data ?? []) as any[]);
-            setCommissionData((commissionsRes.data ?? []) as any[]);
-            setClaimsData((claimsRes.data ?? []) as any[]);
+            const { orders, commissions, claims } = await getAdminFinancialReports(selectedYear);
+            setOrderData(orders);
+            setCommissionData(commissions);
+            setClaimsData(claims);
             setLoading(false);
         };
         load();
@@ -2055,17 +2050,13 @@ export const PaymentsAdminView = () => {
 
     const loadPayments = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('sp_payments')
-            .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
-            .order('created_at', { ascending: false })
-            .limit(200);
-        if (!error && data) {
+        const data = await getAdminPayments(200);
+        if (data.length >= 0) {
             setPayments(data.map((p: any) => ({
                 ...p,
-                order_number: p.sp_policy_orders?.order_number,
-                client_name: p.sp_policy_orders?.client_name,
-                product_name: p.sp_policy_orders?.product_name,
+                order_number: p.order_number ?? p.sp_policy_orders?.order_number,
+                client_name: p.client_name ?? p.sp_policy_orders?.client_name,
+                product_name: p.product_name ?? p.sp_policy_orders?.product_name,
             })));
         }
         setLoading(false);

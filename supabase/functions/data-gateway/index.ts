@@ -340,6 +340,88 @@ serve(async (req) => {
         return json({ data: { success: true } });
       }
 
+      // ── Admin: list all policy orders ────────────────────────────────────
+      case 'admin_list_orders': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_policy_orders').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 500));
+        if (params.status) q = q.eq('status', String(params.status));
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: update policy order status ────────────────────────────────
+      case 'admin_update_order': {
+        if (!caller.isAdmin && caller.role !== 'INSURER') return json({ error: 'Forbidden' }, 403);
+        if (!params.order_id || !params.status) return json({ error: 'order_id and status required' }, 400);
+        const ALLOWED_STATUS = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'ISSUED', 'CANCELLED'];
+        if (!ALLOWED_STATUS.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
+        const ALLOWED = ['status', 'reviewer_notes', 'policy_number', 'policy_document_url', 'sp_policy_id', 'reviewed_at', 'issued_at'];
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const k of ALLOWED) { if (k in params && k !== 'order_id') updates[k] = params[k]; }
+        const s = String(params.status);
+        if (['UNDER_REVIEW', 'APPROVED', 'REJECTED'].includes(s) && !updates.reviewed_at) updates.reviewed_at = new Date().toISOString();
+        if (s === 'ISSUED' && !updates.issued_at) updates.issued_at = new Date().toISOString();
+        const { data, error } = await db.from('sp_policy_orders').update(updates).eq('id', params.order_id).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: financial report data (GWP, commissions, claims by period) ──
+      case 'admin_financial_reports': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const year = Number(params.year ?? new Date().getFullYear());
+        const fromDate = new Date(year, 0, 1).toISOString();
+        const toDate = new Date(year + 1, 0, 1).toISOString();
+        const [ordersRes, commissionsRes, claimsRes] = await Promise.all([
+          db.from('sp_policy_orders').select('total_premium, created_at').eq('status', 'ISSUED').gte('created_at', fromDate).lt('created_at', toDate),
+          db.from('sp_commissions').select('commission_amount, created_at').gte('created_at', fromDate).lt('created_at', toDate),
+          db.from('sp_claims').select('amount_approved, created_at').in('status', ['APPROVED', 'PAID']).gte('created_at', fromDate).lt('created_at', toDate),
+        ]);
+        return json({
+          data: {
+            orders: ordersRes.data ?? [],
+            commissions: commissionsRes.data ?? [],
+            claims: claimsRes.data ?? [],
+          }
+        });
+      }
+
+      // ── Admin: list payments (joined with policy orders) ─────────────────
+      case 'admin_list_payments': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_payments')
+          .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: leaderboard (cross-agent commission aggregation) ──────────
+      case 'get_leaderboard': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const { data: commData, error: commErr } = await db.from('sp_commissions')
+          .select('agent_id, commission_amount')
+          .eq('status', 'PAID')
+          .gte('created_at', startOfMonth);
+        if (commErr) return json({ error: commErr.message }, 400);
+        const map: Record<string, number> = {};
+        (commData ?? []).forEach((r: any) => { map[r.agent_id] = (map[r.agent_id] ?? 0) + (r.commission_amount ?? 0); });
+        const agentIds = Object.keys(map);
+        if (agentIds.length === 0) return json({ data: [] });
+        const { data: users } = await db.from('sp_users').select('id, name, agent_code').in('id', agentIds);
+        const userMap: Record<string, { name: string; agent_code: string }> = {};
+        (users ?? []).forEach((u: any) => { userMap[u.id] = { name: u.name, agent_code: u.agent_code ?? '' }; });
+        const result = agentIds
+          .map(id => ({ agent_id: id, agent_name: userMap[id]?.name ?? 'Agent', agent_code: userMap[id]?.agent_code ?? '', total_commission: map[id] }))
+          .sort((a, b) => b.total_commission - a.total_commission)
+          .slice(0, 10);
+        return json({ data: result });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

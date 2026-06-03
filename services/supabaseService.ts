@@ -112,13 +112,10 @@ export async function getAgentProfile(agentId: string): Promise<SpUser | null> {
 }
 
 export async function updateAgentProfile(
-  agentId: string,
+  _agentId: string,
   updates: { name?: string; phone?: string; address?: string },
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_users')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', agentId);
+  const { error } = await callGateway('update_my_profile', updates);
   if (error) { console.error('updateAgentProfile:', error); return false; }
   return true;
 }
@@ -298,49 +295,9 @@ export async function updateQuoteStatus(id: string, status: SpQuote['status']): 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
 export async function getLeaderboard(): Promise<Array<{ agent_id: string; agent_name: string; agent_code: string; total_commission: number }>> {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-  const { data, error } = await supabase
-    .from('sp_commissions')
-    .select('agent_id, commission_amount')
-    .eq('status', 'PAID')
-    .gte('created_at', startOfMonth);
-
-  if (error) {
-    console.error('getLeaderboard error:', error);
-    return [];
-  }
-
-  // Aggregate by agent_id
-  const map: Record<string, number> = {};
-  (data ?? []).forEach((row: any) => {
-    map[row.agent_id] = (map[row.agent_id] ?? 0) + (row.commission_amount ?? 0);
-  });
-
-  // Fetch agent names
-  const agentIds = Object.keys(map);
-  if (agentIds.length === 0) return [];
-
-  const { data: users } = await supabase
-    .from('sp_users')
-    .select('id, name, agent_code')
-    .in('id', agentIds);
-
-  const userMap: Record<string, { name: string; agent_code: string }> = {};
-  (users ?? []).forEach((u: any) => {
-    userMap[u.id] = { name: u.name, agent_code: u.agent_code ?? '' };
-  });
-
-  return agentIds
-    .map((id) => ({
-      agent_id: id,
-      agent_name: userMap[id]?.name ?? 'Agent',
-      agent_code: userMap[id]?.agent_code ?? '',
-      total_commission: map[id],
-    }))
-    .sort((a, b) => b.total_commission - a.total_commission)
-    .slice(0, 10);
+  const { data, error } = await callGateway('get_leaderboard', {});
+  if (error) { console.error('getLeaderboard:', error); return []; }
+  return (data as any) ?? [];
 }
 
 // ─── Agent Stats ──────────────────────────────────────────────────────────────
@@ -765,10 +722,7 @@ export async function getCustomerClaims(userId: string): Promise<SpClaim[]> {
 }
 
 export async function getAllOrders(): Promise<SpPolicyOrder[]> {
-  const { data, error } = await supabase
-    .from('sp_policy_orders')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await callGateway('admin_list_orders', { limit: 500 });
   if (error) { console.error('getAllOrders:', error); return []; }
   return (data ?? []) as SpPolicyOrder[];
 }
@@ -778,19 +732,7 @@ export async function updateOrderStatus(
   status: SpPolicyOrder['status'],
   extras?: { reviewer_notes?: string; policy_number?: string; policy_document_url?: string; sp_policy_id?: string }
 ): Promise<boolean> {
-  const payload: any = {
-    status,
-    updated_at: new Date().toISOString(),
-  };
-  if (status === 'UNDER_REVIEW' || status === 'APPROVED' || status === 'REJECTED') {
-    payload.reviewed_at = new Date().toISOString();
-  }
-  if (status === 'ISSUED') {
-    payload.issued_at = new Date().toISOString();
-  }
-  if (extras) Object.assign(payload, extras);
-
-  const { error } = await supabase.from('sp_policy_orders').update(payload).eq('id', id);
+  const { error } = await callGateway('admin_update_order', { order_id: id, status, ...extras });
   if (error) { console.error('updateOrderStatus:', error); return false; }
   return true;
 }
@@ -1594,6 +1536,16 @@ export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
   const { data, error } = await callGateway('admin_list_payments', { limit });
   if (error) { console.error('getAdminPayments:', error); return []; }
   return (data ?? []) as SpPayment[];
+}
+
+export async function getAdminFinancialReports(year: number): Promise<{
+  orders: Array<{ total_premium: number; created_at: string }>;
+  commissions: Array<{ commission_amount: number; created_at: string }>;
+  claims: Array<{ amount_approved: number; created_at: string }>;
+}> {
+  const { data, error } = await callGateway('admin_financial_reports', { year });
+  if (error) { console.error('getAdminFinancialReports:', error); return { orders: [], commissions: [], claims: [] }; }
+  return (data as any) ?? { orders: [], commissions: [], claims: [] };
 }
 
 // ─── Agent Wallet ─────────────────────────────────────────────────────────────

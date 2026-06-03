@@ -112,6 +112,7 @@ const SP_CSS = `
 @keyframes sp-float-b  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-9px) translateX(-8px); } }
 @keyframes sp-dot-ping { 0%,100% { opacity:.3; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
 @keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(99,102,241,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(99,102,241,.9)); } }
+@keyframes sp-expand-ring { 0% { transform:scale(0.6); opacity:.7; } 100% { transform:scale(2.2); opacity:0; } }
 `;
 function ensureSPKeyframes() {
   if (!document.getElementById('sp-kf')) {
@@ -189,71 +190,108 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   return (
     <div
       className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: 'hsl(0, 0%, 8%)', fontFamily: "'Sora', sans-serif" }}
+      style={{ background: '#04060c', fontFamily: "'Sora', sans-serif" }}
     >
-      {/* Animated canvas blobs — same as login page */}
+      {/* Animated canvas blobs */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
-      {/* White grid overlay — same as login page */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.018]"
-        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
+      {/* Fine dot-matrix overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `radial-gradient(rgba(99,102,241,0.09) 1px, transparent 1px)`,
+        backgroundSize: '28px 28px',
+      }} />
+      {/* Center-focus vignette */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, rgba(4,6,12,0.72) 100%)',
+      }} />
+      {/* Top + bottom hairlines */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.30) 50%, transparent 85%)' }} />
+      <div className="absolute bottom-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.12) 50%, transparent 85%)' }} />
 
       <div className="relative z-10 flex flex-col items-center gap-7">
 
         {/* Logo with orbital rings */}
         <div className={`relative flex items-center justify-center transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
           {/* Outer dashed ring */}
-          <svg width="228" height="228" viewBox="0 0 228 228" className="absolute pointer-events-none"
-            style={{ animation: 'sp-ring-fwd 20s linear infinite', opacity: 0.22 }}>
-            <circle cx="114" cy="114" r="110" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="6 9" />
+          <svg width="240" height="240" viewBox="0 0 240 240" className="absolute pointer-events-none"
+            style={{ animation: 'sp-ring-fwd 22s linear infinite', opacity: 0.22 }}>
+            <circle cx="120" cy="120" r="116" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="5 10" />
           </svg>
           {/* Inner dashed ring */}
-          <svg width="172" height="172" viewBox="0 0 172 172" className="absolute pointer-events-none"
-            style={{ animation: 'sp-ring-rev 13s linear infinite', opacity: 0.16 }}>
-            <circle cx="86" cy="86" r="82" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="3 13" />
+          <svg width="178" height="178" viewBox="0 0 178 178" className="absolute pointer-events-none"
+            style={{ animation: 'sp-ring-rev 14s linear infinite', opacity: 0.15 }}>
+            <circle cx="89" cy="89" r="85" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="3 14" />
           </svg>
           {/* Orbiting dots */}
           {([0, 1, 2] as const).map(i => (
             <div key={i} className="absolute inset-0 flex items-center justify-center pointer-events-none"
               style={{ animation: `sp-orbit-${i} ${5 + i * 1.8}s linear infinite` }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: GRN, boxShadow: `0 0 10px ${GRN}, 0 0 22px rgba(6,224,0,.5)` }} />
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: GRN, boxShadow: `0 0 10px ${GRN}, 0 0 22px rgba(99,102,241,.4)` }} />
             </div>
           ))}
-          {/* Logo tile — matching login page style */}
+          {/* Vertical light beam below logo */}
+          <div className="absolute pointer-events-none" style={{
+            top: '50%', left: '50%', transform: 'translateX(-50%)',
+            width: 1, height: 200, marginTop: 56,
+            background: `linear-gradient(to bottom, ${GRN}44, transparent)`,
+          }} />
+          {/* Logo tile */}
           <div className="relative">
-            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-20" style={{ background: GRN }} />
-            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border"
-              style={{ background: 'rgba(6,224,0,0.06)', borderColor: 'rgba(6,224,0,0.22)', boxShadow: '0 0 60px rgba(6,224,0,0.10)', animation: 'sp-glow 3.2s ease-in-out infinite' }}>
-              <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
+            <div className="absolute rounded-full pointer-events-none" style={{
+              inset: -28, background: `radial-gradient(circle, ${GRN}18 0%, transparent 68%)`,
+              animation: 'sp-glow 3.2s ease-in-out infinite',
+            }} />
+            {/* Gradient-border wrapper */}
+            <div className="relative p-px rounded-[2.5rem]" style={{
+              background: `linear-gradient(135deg, ${GRN}55, ${GRN}10 55%, ${GRN}30)`,
+            }}>
+              <div className="relative w-28 h-28 rounded-[calc(2.5rem-1px)] flex items-center justify-center"
+                style={{ background: `linear-gradient(135deg, ${GRN}0a 0%, rgba(4,6,12,0.96) 100%)` }}>
+                <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Brand — matching login page typography */}
+        {/* Brand */}
         <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff', lineHeight: 1 }}>
             Sure<span style={{ color: GRN }}>Path</span>
           </h1>
-          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.38em', textTransform: 'uppercase', marginTop: '0.55rem' }}>
             {G.tagline}
           </p>
         </div>
 
         {/* Progress */}
-        <div className={`flex flex-col items-center gap-3 w-56 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+        <div className={`flex flex-col items-center gap-3 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+          {/* Step message */}
           <div className="flex items-center gap-2">
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
-            <span style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.36)', letterSpacing: '0.04em' }}>{G.steps[msgIdx]}</span>
           </div>
-          <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: 'rgba(255,255,255,0.07)' }}>
-            <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: GRN, boxShadow: '0 0 8px rgba(6,224,0,0.6)' }} />
+          {/* Progress bar — gradient fill with glow */}
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 3, background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-full rounded-full transition-all duration-200" style={{
+              width: `${progress}%`,
+              background: `linear-gradient(90deg, ${GRN}bb, ${GRN})`,
+              boxShadow: `0 0 10px ${GRN}90`,
+            }} />
           </div>
-          <div style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em' }}>
+          {/* Loading dots */}
+          <div style={{ fontSize: '0.56rem', fontWeight: 500, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em' }}>
             {lang === 'ID' ? 'Memuat' : 'Loading'}{'·'.repeat(dotCount)}
           </div>
+          {/* Feature chips */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
-              <span key={chip} style={{ fontSize: '0.6rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '99px', padding: '0.18rem 0.55rem' }}>
+              <span key={chip} style={{
+                fontSize: '0.58rem', fontWeight: 500,
+                color: 'rgba(255,255,255,0.32)',
+                background: `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(255,255,255,0.03))`,
+                border: '1px solid rgba(99,102,241,0.16)',
+                borderRadius: '99px', padding: '0.22rem 0.7rem',
+              }}>
                 {chip}
               </span>
             ))}
@@ -261,20 +299,29 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
         </div>
 
         {/* Language toggle */}
-        <div className={`flex items-center gap-1 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
-          {(['ID', 'EN'] as const).map(l => (
-            <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
-              style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.62rem', fontWeight: lang === l ? 600 : 400, color: lang === l ? GRN : 'rgba(255,255,255,0.25)', padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer', background: lang === l ? 'rgba(6,224,0,0.08)' : 'transparent', border: `1px solid ${lang === l ? 'rgba(6,224,0,0.20)' : 'transparent'}`, transition: 'all 0.2s' }}>
-              {l}
-            </button>
-          ))}
+        <div className={`flex items-center gap-1.5 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="flex items-center p-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            {(['ID', 'EN'] as const).map(l => (
+              <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
+                className="transition-all duration-200"
+                style={{
+                  fontFamily: "'Sora',sans-serif", fontSize: '0.6rem', fontWeight: lang === l ? 700 : 400,
+                  color: lang === l ? '#fff' : 'rgba(255,255,255,0.28)',
+                  padding: '0.22rem 0.75rem', borderRadius: '99px', cursor: 'pointer',
+                  background: lang === l ? GRN : 'transparent',
+                  boxShadow: lang === l ? `0 2px 10px ${GRN}50` : 'none',
+                }}>
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
       </div>
 
-      {/* Footer — matching login page */}
-      <div className="absolute bottom-8" style={{ fontSize: '0.5rem', fontWeight: 500, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(6,224,0,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {/* Footer */}
+      <div className="absolute bottom-8 flex items-center gap-2" style={{ fontSize: '0.46rem', fontWeight: 600, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.32em', textTransform: 'uppercase' }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`${GRN}55`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         SurePath · Secure Connection
@@ -304,40 +351,79 @@ const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => vo
   return (
     <div
       className={`fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#060a09', fontFamily: "'Sora', sans-serif" }}
+      style={{ background: '#04060c', fontFamily: "'Sora', sans-serif" }}
     >
-      {/* Radial glow */}
+      {/* Dot-matrix background */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(rgba(6,224,0,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }} />
+
+      {/* Deep radial glow behind icon */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div style={{ width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,224,0,0.10) 0%, transparent 68%)', opacity: visible ? 1 : 0, transition: 'opacity 1s' }} />
+        <div style={{
+          width: 520, height: 520, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(6,224,0,0.09) 0%, transparent 65%)',
+          opacity: visible ? 1 : 0, transition: 'opacity 1.2s ease',
+        }} />
       </div>
 
-      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
-        {/* Animated shield */}
-        <div className="relative mx-auto mb-7" style={{ width: 120, height: 120 }}>
-          <div className="absolute inset-0 rounded-[2.5rem] blur-2xl" style={{ background: GRN, opacity: 0.14 }} />
-          <div className="relative w-full h-full rounded-[2.5rem] flex items-center justify-center border"
-            style={{ background: 'rgba(6,224,0,0.05)', borderColor: 'rgba(6,224,0,0.18)', boxShadow: '0 0 60px rgba(6,224,0,0.10)' }}>
-            <svg width="54" height="54" viewBox="0 0 54 54" fill="none" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
-              <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
-                fill="rgba(6,224,0,0.12)" stroke={GRN} strokeWidth="1.5" />
-              <path d="M19 27L23.5 31.5L35 20"
-                stroke={GRN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
-            </svg>
+      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}>
+
+        {/* Expanding pulse rings + shield */}
+        <div className="relative mx-auto mb-8" style={{ width: 144, height: 144 }}>
+          {/* Three concentric expanding rings */}
+          {[0, 1, 2].map(i => (
+            <div key={i} className="absolute inset-0 rounded-full pointer-events-none" style={{
+              border: `1px solid ${GRN}`,
+              animation: `sp-expand-ring 2.4s ease-out ${i * 0.55}s infinite`,
+            }} />
+          ))}
+          {/* Gradient-border shield tile */}
+          <div className="absolute inset-4 p-px rounded-[2rem]" style={{
+            background: `linear-gradient(135deg, ${GRN}55, ${GRN}12 50%, ${GRN}35)`,
+          }}>
+            <div className="w-full h-full rounded-[calc(2rem-1px)] flex items-center justify-center" style={{
+              background: 'linear-gradient(135deg, rgba(6,224,0,0.08) 0%, rgba(4,6,12,0.97) 100%)',
+            }}>
+              <svg width="54" height="54" viewBox="0 0 54 54" fill="none" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
+                <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
+                  fill="rgba(6,224,0,0.10)" stroke={GRN} strokeWidth="1.5" />
+                <path d="M19 27L23.5 31.5L35 20"
+                  stroke={GRN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
+              </svg>
+            </div>
           </div>
         </div>
 
-        <p style={{ fontSize: '0.75rem', fontWeight: 500, color: GRN, marginBottom: '0.4rem', letterSpacing: '0.02em' }}>
-          {G.welcome},
+        {/* Welcome text */}
+        <p style={{ fontSize: '0.72rem', fontWeight: 600, color: `${GRN}cc`, marginBottom: '0.35rem', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          {G.welcome}
         </p>
-        <h2 style={{ fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1, marginBottom: '1.2rem' }}>
-          {name} 👋
+        <h2 style={{ fontSize: 'clamp(2.2rem,7vw,3rem)', fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1, marginBottom: '1.4rem' }}>
+          {name}
         </h2>
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
-          style={{ borderColor: 'rgba(6,224,0,0.22)', background: 'rgba(6,224,0,0.07)' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
-          <span style={{ fontSize: '0.7rem', fontWeight: 500, color: GRN }}>{G.verified}</span>
+
+        {/* Verified badge — gradient border */}
+        <div className="inline-block p-px rounded-full" style={{
+          background: `linear-gradient(90deg, ${GRN}44, ${GRN}18, ${GRN}44)`,
+        }}>
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full" style={{
+            background: 'rgba(4,6,12,0.9)',
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, boxShadow: `0 0 6px ${GRN}`, animation: 'sp-dot-ping 1.3s ease-in-out infinite', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: GRN, letterSpacing: '0.06em' }}>{G.verified}</span>
+          </div>
         </div>
+      </div>
+
+      {/* Bottom wordmark */}
+      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 600, color: 'rgba(255,255,255,0.16)', letterSpacing: '0.32em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`${GRN}44`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        SurePath
       </div>
     </div>
   );

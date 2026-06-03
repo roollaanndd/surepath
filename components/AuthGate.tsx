@@ -329,35 +329,38 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const primaryBtn: React.CSSProperties = {
     background: GRAD,
     color: '#fff',
-    boxShadow: '0 10px 30px -8px rgba(99,102,241,0.55)',
+    boxShadow: '0 12px 32px -10px rgba(99,102,241,0.65)',
   };
-  const inputCls = 'w-full pl-11 pr-4 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-indigo-400/60 focus:bg-white/[0.05] transition-all';
+  const inputCls = 'w-full pl-11 pr-4 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/25 transition-all duration-200 focus:border-indigo-400/50 focus:bg-indigo-500/[0.05] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.08),inset_0_0_0_1px_rgba(99,102,241,0.12)]';
 
   return (
-    <div className="min-h-screen text-white flex items-center justify-center p-5 relative overflow-hidden" style={{ background: '#0a0a0f', fontFamily: "'Sora', sans-serif" }}>
+    <div className="min-h-screen text-white flex items-center justify-center p-5 relative overflow-hidden" style={{ background: '#07070f', fontFamily: "'Sora', sans-serif" }}>
 
       <AuroraBackground />
 
-      {/* Fine grid overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.7) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.7) 1px,transparent 1px)',
-          backgroundSize: '64px 64px',
-        }}
-      />
+      {/* Fine dot-matrix overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: 'radial-gradient(rgba(99,102,241,0.07) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }} />
+      {/* Top + bottom hairlines */}
+      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.28) 50%, transparent 85%)' }} />
+      <div className="absolute bottom-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.10) 50%, transparent 85%)' }} />
       {/* Center vignette for focus */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 45%, transparent 30%, rgba(10,10,15,0.7) 100%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 45%, transparent 30%, rgba(7,7,15,0.75) 100%)' }} />
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-6">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="absolute -inset-5 rounded-[2.5rem] blur-3xl opacity-30" style={{ background: GRAD }} />
-            <div className="relative w-20 h-20 rounded-[1.8rem] flex items-center justify-center border" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 0 60px rgba(99,102,241,0.12)' }}>
-              {/* Brand mark neutralized to premium monochrome so the login stays green-free */}
-              <SurePathLogo className="w-12 h-12 grayscale brightness-150 contrast-125 opacity-90" />
+            <div className="absolute -inset-6 rounded-full blur-3xl opacity-25" style={{ background: GRAD }} />
+            {/* Gradient-border logo tile */}
+            <div className="relative p-px rounded-[1.9rem]" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.6), rgba(139,92,246,0.15) 55%, rgba(99,102,241,0.35))' }}>
+              <div className="relative w-20 h-20 rounded-[calc(1.9rem-1px)] flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(7,7,15,0.96) 100%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+                <SurePathLogo className="w-12 h-12 grayscale brightness-150 contrast-125 opacity-90" />
+              </div>
             </div>
           </div>
           <div className="text-center">
@@ -493,21 +496,29 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Main form */}
         {(mode === 'LOGIN' || mode === 'REGISTER') && (
-          <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-7 backdrop-blur-2xl space-y-6" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.85)' }}>
+          /* Gradient-border card wrapper */
+          <div className="w-full p-px rounded-[2.3rem]" style={{ background: 'linear-gradient(145deg, rgba(99,102,241,0.30) 0%, rgba(255,255,255,0.04) 45%, rgba(139,92,246,0.18) 100%)' }}>
+          <div className="w-full bg-white/[0.04] rounded-[calc(2.3rem-1px)] p-7 backdrop-blur-2xl space-y-6" style={{ boxShadow: '0 32px 80px -30px rgba(0,0,0,0.9)' }}>
 
-            {/* Tab switcher */}
-            <div className="flex bg-white/[0.04] p-1 rounded-2xl border border-white/[0.06]">
+            {/* Sliding-pill tab switcher */}
+            <div className="relative flex bg-white/[0.04] p-1 rounded-2xl border border-white/[0.06]">
+              {/* Sliding pill */}
+              <div className="absolute top-1 bottom-1 rounded-xl transition-all duration-300 ease-out pointer-events-none"
+                style={{
+                  left: mode === 'LOGIN' ? '4px' : '50%',
+                  right: mode === 'LOGIN' ? '50%' : '4px',
+                  background: GRAD,
+                  boxShadow: '0 6px 22px -6px rgba(99,102,241,0.7)',
+                }} />
               <button
                 onClick={() => { setMode('LOGIN'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-all ${mode === 'LOGIN' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
-                style={mode === 'LOGIN' ? { background: GRAD, boxShadow: '0 6px 20px -6px rgba(99,102,241,0.6)' } : {}}
+                className={`relative flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'LOGIN' ? 'text-white' : 'text-white/40 hover:text-white/65'}`}
               >
                 {t('Sign In', 'Masuk')}
               </button>
               <button
                 onClick={() => { setMode('REGISTER'); setError(null); }}
-                className={`flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-all ${mode === 'REGISTER' ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
-                style={mode === 'REGISTER' ? { background: GRAD, boxShadow: '0 6px 20px -6px rgba(99,102,241,0.6)' } : {}}
+                className={`relative flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'REGISTER' ? 'text-white' : 'text-white/40 hover:text-white/65'}`}
               >
                 {t('Register', 'Daftar')}
               </button>
@@ -649,6 +660,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </button>
               </div>
             )}
+          </div>
           </div>
         )}
 

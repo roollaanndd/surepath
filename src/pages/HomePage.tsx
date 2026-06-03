@@ -105,6 +105,63 @@ const HomePage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
+      {/* ═══════════════ PROMO VIDEO (relocated) ═══════════════ */}
+      <section className="py-16 md:py-20 px-5" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <div
+              className="group relative rounded-[1.75rem] overflow-hidden mx-auto"
+              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${accent}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
+            >
+              <video
+                ref={promoRef}
+                src="/promo.mp4"
+                poster="/promo-poster.jpg"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                onClick={togglePromoPlay}
+                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+              />
+              {/* Soft vignette */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
+
+              {/* Center play/pause (shows on hover or when paused) */}
+              <button
+                onClick={togglePromoPlay}
+                aria-label={promoPlaying ? 'Pause video' : 'Play video'}
+                className={`absolute inset-0 m-auto w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 ${promoPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}
+                style={{ background: 'rgba(255,255,255,0.14)', border: '1.5px solid rgba(255,255,255,0.35)' }}
+              >
+                {promoPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white translate-x-0.5" />}
+              </button>
+
+              {/* Mute / unmute — moved to bottom-LEFT so the logo can cover the watermark */}
+              <button
+                onClick={togglePromoMute}
+                aria-label={promoMuted ? 'Unmute video' : 'Mute video'}
+                className="absolute bottom-4 left-4 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 hover:scale-105"
+                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.25)' }}
+              >
+                {promoMuted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
+              </button>
+
+              {/* SurePath logo badge — covers the Gemini watermark in the bottom-right corner */}
+              <div className="absolute bottom-3 right-3 flex items-center gap-2 px-3.5 py-2 rounded-xl backdrop-blur-md pointer-events-none select-none"
+                style={{ background: 'rgba(5,8,13,0.78)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                <img src="/surepath-logo.png" alt="SurePath" className="h-4 w-auto object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <span className="text-[0.7rem] font-bold tracking-tight text-white">
+                  Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ═══════════════ STATS BAR ═══════════════ */}
       <section className="relative py-16 px-5 overflow-hidden" style={{ background: sectionBg2, borderBottom: `1px solid ${cardBorder}` }}>
         <video autoPlay muted loop playsInline preload="none"
@@ -165,76 +222,6 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ═══════════════ VIDEO SHOWCASE ═══════════════ */}
-      <section className="py-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto">
-          <Reveal>
-            <div className="text-center mb-12 max-w-xl mx-auto">
-              <SectionLabel darkMode={props.darkMode}>{t('Video', 'Video')}</SectionLabel>
-              <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
-                {t('Lihat SurePath', 'See SurePath')}{' '}
-                <span style={{ color: accent }}>{t('beraksi', 'in action')}</span>
-              </h2>
-              <p className="mt-4 text-base leading-relaxed" style={{ color: textMuted }}>
-                {t('Kenali bagaimana kami melindungi ribuan keluarga Indonesia — dalam satu video singkat.', 'See how we protect thousands of Indonesian families — in one short video.')}
-              </p>
-            </div>
-          </Reveal>
-          <Reveal delay={80}>
-            <div
-              className="group relative rounded-[1.75rem] overflow-hidden mx-auto"
-              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${accent}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
-            >
-              <video
-                ref={promoRef}
-                src="/promo.mp4"
-                poster="/promo-poster.jpg"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                onClick={togglePromoPlay}
-                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-              />
-              {/* Soft vignette */}
-              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%)' }} />
-
-              {/* Center play/pause (shows on hover or when paused) */}
-              <button
-                onClick={togglePromoPlay}
-                aria-label={promoPlaying ? 'Pause video' : 'Play video'}
-                className={`absolute inset-0 m-auto w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 ${promoPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}
-                style={{ background: 'rgba(255,255,255,0.14)', border: '1.5px solid rgba(255,255,255,0.35)' }}
-              >
-                {promoPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white translate-x-0.5" />}
-              </button>
-
-              {/* Mute / unmute */}
-              <button
-                onClick={togglePromoMute}
-                aria-label={promoMuted ? 'Unmute video' : 'Mute video'}
-                className="absolute bottom-4 right-4 w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all active:scale-90 hover:scale-105"
-                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.25)' }}
-              >
-                {promoMuted ? <VolumeX size={18} className="text-white" /> : <Volume2 size={18} className="text-white" />}
-              </button>
-
-              {/* Tap-to-unmute hint */}
-              {promoMuted && (
-                <div
-                  className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md pointer-events-none animate-fade-in"
-                  style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.2)' }}
-                >
-                  <Volume2 size={14} style={{ color: accent }} />
-                  <span className="text-[0.65rem] font-bold uppercase tracking-widest text-white">{t('Ketuk untuk suara', 'Tap for sound')}</span>
-                </div>
-              )}
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -340,7 +327,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button onClick={onSignIn}
                   className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
-                  style={{ background: textMain }}>
+                  style={{ background: accent, boxShadow: `0 10px 30px -10px ${accent}` }}>
                   {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button onClick={() => navigate('/products')}

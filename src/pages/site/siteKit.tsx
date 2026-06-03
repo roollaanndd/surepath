@@ -142,25 +142,42 @@ export const Reveal: React.FC<{ children: React.ReactNode; className?: string; d
 
 // ─── Animated counter ─────────────────────────────────────────────────────────
 export const AnimatedCounter: React.FC<{ target: number; suffix: string; duration?: number }> = ({
-  target, suffix, duration = 1500,
+  target, suffix, duration = 1800,
 }) => {
-  const { ref, visible } = useReveal(0.2);
+  const ref = useRef<HTMLSpanElement>(null);
   const [count, setCount] = useState(0);
   const started = useRef(false);
+
   useEffect(() => {
-    if (!visible || started.current) return;
-    started.current = true;
-    const steps = 60;
-    const increment = target / steps;
-    const delay = duration / steps;
-    let current = 0;
-    const iv = setInterval(() => {
-      current += increment;
-      if (current >= target) { setCount(target); clearInterval(iv); }
-      else { setCount(Math.floor(current)); }
-    }, delay);
-    return () => clearInterval(iv);
-  }, [visible, target, duration]);
+    const el = ref.current;
+    if (!el) return;
+
+    const run = () => {
+      if (started.current) return;
+      started.current = true;
+      const start = performance.now();
+      // easeOutExpo — fast then settles, makes the count-up clearly visible
+      const ease = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        setCount(Math.round(target * ease(p)));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { run(); obs.disconnect(); }
+    }, { threshold: 0.25 });
+    obs.observe(el);
+
+    // Fallback: if already on screen at mount, kick it off after a beat
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) setTimeout(run, 200);
+
+    return () => obs.disconnect();
+  }, [target, duration]);
+
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 };
 

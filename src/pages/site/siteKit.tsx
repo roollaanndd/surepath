@@ -28,38 +28,45 @@ export const useWebsiteConfig = (sectionKey: string): SpWebsiteConfig | null => 
   return config;
 };
 
-// ─── Design tokens — reduced green, premium insurer palette ──────────────────
-export const ACCENT = '#16a34a';           // green-700, used sparingly
+// ─── Design tokens — two distinct identities ─────────────────────────────────
+//   NIGHT: signature green on dark navy (cinematic, brand hero).
+//   DAY:   premium indigo on a warm ivory/pearl palette — deliberately
+//          different from night, and free of the green that dominated before.
+export const ACCENT = '#16a34a';            // night / signature green
+export const DAY_ACCENT = '#4f46e5';        // day / premium indigo (matches login)
 export const LP_GREEN = 'hsl(119 99% 46%)'; // kept for hero dark-bg only
 
+// Mode-aware accent — use this everywhere a highlight/CTA must adapt to the mode.
+export const accentFor = (darkMode: boolean) => (darkMode ? ACCENT : DAY_ACCENT);
+
 export const useSiteTheme = (darkMode: boolean) => ({
-  accent:      ACCENT,
+  accent:      accentFor(darkMode),
   lpGreen:     LP_GREEN,
 
-  // Text
-  textMain:    darkMode ? '#f8fafc'                  : '#0f172a',
-  textMuted:   darkMode ? '#94a3b8'                  : '#64748b',
-  textSubtle:  darkMode ? '#475569'                  : '#94a3b8',
+  // Text — warm stone tones in day, cool slate in night
+  textMain:    darkMode ? '#f8fafc'                  : '#1c1917',
+  textMuted:   darkMode ? '#94a3b8'                  : '#78716c',
+  textSubtle:  darkMode ? '#475569'                  : '#a8a29e',
 
-  // Cards
+  // Cards — warm pearl surfaces with a soft warm shadow in day
   cardBg:      darkMode ? 'hsl(215 28% 17%)'         : '#ffffff',
-  cardBorder:  darkMode ? 'hsl(215 28% 24%)'         : '#e2e8f0',
-  cardShadow:  darkMode ? 'none'                     : '0 1px 3px rgba(15,23,42,0.07), 0 0 0 1px rgba(15,23,42,0.03)',
+  cardBorder:  darkMode ? 'hsl(215 28% 24%)'         : '#ece9e3',
+  cardShadow:  darkMode ? 'none'                     : '0 1px 2px rgba(28,25,23,0.06), 0 8px 24px -16px rgba(28,25,23,0.18)',
 
-  // Section backgrounds (no more green-tinted sections)
-  sectionBg1:  darkMode ? 'hsl(222 47% 11%)'         : '#f8fafc',
+  // Section backgrounds — warm ivory/cream layering in day (no cool slate)
+  sectionBg1:  darkMode ? 'hsl(222 47% 11%)'         : '#faf8f5',
   sectionBg2:  darkMode ? 'hsl(215 28% 13%)'         : '#ffffff',
-  sectionBg3:  darkMode ? 'hsl(215 28% 15%)'         : '#f1f5f9',
-  sectionBg4:  darkMode ? 'hsl(215 28% 12%)'         : '#e2e8f0',
-  sectionBg5:  darkMode ? 'hsl(215 28% 10%)'         : '#cbd5e1',
+  sectionBg3:  darkMode ? 'hsl(215 28% 15%)'         : '#f5f2ed',
+  sectionBg4:  darkMode ? 'hsl(215 28% 12%)'         : '#efebe4',
+  sectionBg5:  darkMode ? 'hsl(215 28% 10%)'         : '#e6e0d6',
 
-  // Nav
-  navBg:          darkMode ? 'rgba(15,23,42,0.92)'   : 'rgba(255,255,255,0.96)',
-  navBorder:      darkMode ? 'rgba(255,255,255,0.06)': 'rgba(15,23,42,0.08)',
-  navBtnBg:       darkMode ? 'hsl(215 28% 20%)'      : '#f1f5f9',
-  navBtnColor:    darkMode ? '#f8fafc'                : '#334155',
-  mobilMenuBg:    darkMode ? 'hsl(222 47% 11%)'      : '#ffffff',
-  mobileMenuBorder: darkMode ? 'hsl(215 28% 24%)'    : '#e2e8f0',
+  // Nav — warm translucent white in day
+  navBg:          darkMode ? 'rgba(15,23,42,0.92)'   : 'rgba(250,248,245,0.92)',
+  navBorder:      darkMode ? 'rgba(255,255,255,0.06)': 'rgba(28,25,23,0.07)',
+  navBtnBg:       darkMode ? 'hsl(215 28% 20%)'      : '#f0ece4',
+  navBtnColor:    darkMode ? '#f8fafc'                : '#44403c',
+  mobilMenuBg:    darkMode ? 'hsl(222 47% 11%)'      : '#faf8f5',
+  mobileMenuBorder: darkMode ? 'hsl(215 28% 24%)'    : '#ece9e3',
 
   // Footer always dark navy
   footerBg:    '#0f172a',
@@ -98,7 +105,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid rgba(22,163,74,0.6); 
 `;
 
 export const SectionBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(222 47% 11%)' : '#f8fafc'} !important; }`;
+  const BODY_BG_CSS = `body { background: ${darkMode ? 'hsl(222 47% 11%)' : '#faf8f5'} !important; }`;
   return (
     <>
       <style>{SECTION_CSS}</style>
@@ -167,11 +174,11 @@ export const HeroVideo: React.FC = () => (
 // ─── Section label pill ───────────────────────────────────────────────────────
 export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: boolean }> = ({ children, darkMode }) => (
   <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
-    style={{
-      background: darkMode ? 'rgba(22,163,74,0.12)' : 'rgba(22,163,74,0.08)',
-      border: '1px solid rgba(22,163,74,0.2)',
-      color: darkMode ? '#86efac' : '#15803d',
-    }}>
+    style={
+      darkMode
+        ? { background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.2)', color: '#86efac' }
+        : { background: 'rgba(79,70,229,0.07)', border: '1px solid rgba(79,70,229,0.18)', color: '#4338ca' }
+    }>
     {children}
   </span>
 );

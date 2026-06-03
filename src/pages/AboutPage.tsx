@@ -1,13 +1,13 @@
 import React from 'react';
 import { ArrowRight, ChevronDown, Star, CheckCircle } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
-import { SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter, SectionLabel, useWebsiteConfig, ACCENT } from './site/siteKit';
+import { SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter, SectionLabel, useWebsiteConfig } from './site/siteKit';
 
 const AboutPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3 } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
 
   const config     = useWebsiteConfig('about');
   const testiConf  = useWebsiteConfig('testimonials');
@@ -27,7 +27,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
   ];
 
   const TESTIMONIALS = [
-    { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: ACCENT, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Agen mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their agent took time to genuinely listen.') },
+    { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: accent, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Agen mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their agent took time to genuinely listen.') },
     { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Agen SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', 'For the first time I truly understood my insurance policy. SurePath\'s agent patiently explained each clause clearly.') },
     { name: 'Hendra K.', role: t('Arsitek', 'Architect'), city: 'Bandung', initial: 'H', color: '#7c3aed', quote: t('Proses seluruhnya digital namun saya tetap merasa ditangani secara personal. Ada manusia di balik teknologinya.', 'The process is fully digital yet I still felt handled personally. There are real humans behind the technology.') },
   ];
@@ -52,7 +52,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
           <Reveal>
             <SectionLabel darkMode={props.darkMode}>{t('Tentang Kami', 'About Us')}</SectionLabel>
             <h1 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: textMain }}>
-              {config?.headline || <>{t('Asuransi yang ', 'Insurance that\'s ')}<span style={{ color: ACCENT }}>{t('berpihak ke kamu', 'on your side')}</span></>}
+              {config?.headline || <>{t('Asuransi yang ', 'Insurance that\'s ')}<span style={{ color: accent }}>{t('berpihak ke kamu', 'on your side')}</span></>}
             </h1>
             <p className="text-base leading-relaxed max-w-2xl mx-auto" style={{ color: textMuted }}>
               {config?.subtitle || t('SurePath adalah platform insurtech Indonesia yang menggabungkan teknologi AI mutakhir dengan sentuhan manusiawi. Didirikan pada 2023, kami hadir untuk menyederhanakan pengalaman asuransi yang selama ini terasa rumit dan tidak transparan.', 'SurePath is an Indonesian insurtech platform combining cutting-edge AI technology with a human touch. Founded in 2023, we simplify an insurance experience that has long felt complex and opaque.')}
@@ -78,7 +78,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
               <Reveal key={v.title} delay={i * 70}>
                 <div className="p-6 rounded-2xl h-full" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow }}>
                   <div className="flex items-center gap-2.5 mb-2">
-                    <CheckCircle size={16} style={{ color: ACCENT }} />
+                    <CheckCircle size={16} style={{ color: accent }} />
                     <h3 className="font-bold text-base" style={{ color: textMain }}>{v.title}</h3>
                   </div>
                   <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{v.desc}</p>
@@ -112,7 +112,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
             <div className="text-center mb-14">
               <SectionLabel darkMode={props.darkMode}>{t('Cerita Nasabah', 'Client Stories')}</SectionLabel>
               <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
-                {testiConf?.headline || <>{t('Dipercaya, karena ', 'Trusted, because ')}<span style={{ color: ACCENT }}>{t('mereka merasakannya', 'they felt it')}</span></>}
+                {testiConf?.headline || <>{t('Dipercaya, karena ', 'Trusted, because ')}<span style={{ color: accent }}>{t('mereka merasakannya', 'they felt it')}</span></>}
               </h2>
             </div>
           </Reveal>
@@ -146,7 +146,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
             <div className="text-center mb-12">
               <SectionLabel darkMode={props.darkMode}>FAQ</SectionLabel>
               <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
-                {t('Pertanyaan yang ', 'Questions ')}<span style={{ color: ACCENT }}>{t('sering ditanyakan', 'often asked')}</span>
+                {t('Pertanyaan yang ', 'Questions ')}<span style={{ color: accent }}>{t('sering ditanyakan', 'often asked')}</span>
               </h2>
             </div>
           </Reveal>
@@ -158,7 +158,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
                   <details className="group">
                     <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none select-none" style={{ color: textMain }}>
                       <span itemProp="name" className="text-sm font-semibold leading-snug">{item.q}</span>
-                      <ChevronDown size={15} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180" style={{ color: ACCENT }} />
+                      <ChevronDown size={15} className="flex-shrink-0 transition-transform duration-300 group-open:rotate-180" style={{ color: accent }} />
                     </summary>
                     <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
                       <p itemProp="text" className="px-5 pb-5 text-sm leading-relaxed" style={{ color: textMuted }}>{item.a}</p>
@@ -172,7 +172,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
             <div className="text-center mt-12">
               <button onClick={onSignIn}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02]"
-                style={{ background: ACCENT }}>
+                style={{ background: accent }}>
                 {t('Mulai Sekarang', 'Get Started')} <ArrowRight size={16} />
               </button>
             </div>

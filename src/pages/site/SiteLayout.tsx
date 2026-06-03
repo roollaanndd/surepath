@@ -78,7 +78,7 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
         {NAV_LINKS.map(l => (
           <a key={l.id} href={l.path} onClick={e => { e.preventDefault(); go(l.path); }}
             className="text-[0.8rem] font-medium transition-colors"
-            style={{ color: isActive(l.id) ? ACCENT : th.textMuted }}>
+            style={{ color: isActive(l.id) ? th.accent : th.textMuted }}>
             {t(l.label[0], l.label[1])}
           </a>
         ))}
@@ -110,7 +110,7 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
           {NAV_LINKS.map(l => (
             <button key={l.id} onClick={() => go(l.path)}
               className="flex items-center justify-between w-full py-3 border-b text-sm font-medium"
-              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? ACCENT : th.textMuted }}>
+              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? th.accent : th.textMuted }}>
               <span>{t(l.label[0], l.label[1])}</span><ChevronRight size={14} />
             </button>
           ))}

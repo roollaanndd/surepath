@@ -6,14 +6,14 @@ import {
 import SiteLayout from './site/SiteLayout';
 import {
   SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter,
-  HeroVideo, PRODUCTS, SectionLabel, useWebsiteConfig, ACCENT,
+  HeroVideo, PRODUCTS, SectionLabel, useWebsiteConfig,
 } from './site/siteKit';
 
 const HomePage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, navigate, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3 } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
 
   // Promo video controls
   const promoRef = useRef<HTMLVideoElement>(null);
@@ -50,7 +50,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
     { color: '#2563eb', Icon: Search,    title: t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis'),   desc: t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu. Bukan yang paling menguntungkan komisi.', 'Before recommending any product, we deeply understand your life context — not just the most commission-profitable ones.') },
     { color: '#7c3aed', Icon: Users,     title: t('Agen Berlisensi', 'Licensed Agents'),                  desc: t('Semua agen udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our agents hold official certifications and continuously update their knowledge.') },
     { color: '#d97706', Icon: BarChart2, title: t('Pilihan Terlengkap', 'Widest Selection'),               desc: t('40+ produk dari 18 insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', '40+ products from 18 trusted insurers in one platform.') },
-    { color: ACCENT,   Icon: Zap,       title: 'Digital-First, Human Touch',                              desc: t('Teknologi bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli dan siap bantu.', 'Technology makes everything easy, but behind it are real humans who care and are ready to help.') },
+    { color: accent,   Icon: Zap,       title: 'Digital-First, Human Touch',                              desc: t('Teknologi bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli dan siap bantu.', 'Technology makes everything easy, but behind it are real humans who care and are ready to help.') },
   ];
 
   return (
@@ -129,7 +129,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <SectionLabel darkMode={props.darkMode}>{t('Kenapa SurePath?', 'Why SurePath?')}</SectionLabel>
               <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
                 {t('Asuransi yang benar-benar', 'Insurance that truly')}{' '}
-                <span style={{ color: ACCENT }}>{t('bekerja untukmu', 'works for you')}</span>
+                <span style={{ color: accent }}>{t('bekerja untukmu', 'works for you')}</span>
               </h2>
               <p className="mt-4 text-base leading-relaxed" style={{ color: textMuted }}>
                 {t('Kami tidak menjual sebanyak-banyaknya. Kami membantu kamu menemukan perlindungan yang paling pas.', 'We don\'t just sell. We help you find the protection that fits your actual life.')}
@@ -164,7 +164,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <SectionLabel darkMode={props.darkMode}>{t('Video', 'Video')}</SectionLabel>
               <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
                 {t('Lihat SurePath', 'See SurePath')}{' '}
-                <span style={{ color: ACCENT }}>{t('beraksi', 'in action')}</span>
+                <span style={{ color: accent }}>{t('beraksi', 'in action')}</span>
               </h2>
               <p className="mt-4 text-base leading-relaxed" style={{ color: textMuted }}>
                 {t('Kenali bagaimana kami melindungi ribuan keluarga Indonesia — dalam satu video singkat.', 'See how we protect thousands of Indonesian families — in one short video.')}
@@ -174,7 +174,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
           <Reveal delay={80}>
             <div
               className="group relative rounded-[1.75rem] overflow-hidden mx-auto"
-              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${ACCENT}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
+              style={{ border: `1px solid ${cardBorder}`, boxShadow: `0 24px 80px -24px ${accent}55, ${cardShadow}`, aspectRatio: '16 / 9', background: '#05080d' }}
             >
               <video
                 ref={promoRef}
@@ -217,7 +217,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                   className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-md pointer-events-none animate-fade-in"
                   style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.2)' }}
                 >
-                  <Volume2 size={14} style={{ color: ACCENT }} />
+                  <Volume2 size={14} style={{ color: accent }} />
                   <span className="text-[0.65rem] font-bold uppercase tracking-widest text-white">{t('Ketuk untuk suara', 'Tap for sound')}</span>
                 </div>
               )}
@@ -235,10 +235,10 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                 <SectionLabel darkMode={props.darkMode}>{productsLabel}</SectionLabel>
                 <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
                   {t('Perlindungan untuk setiap', 'Protection for every')}{' '}
-                  <span style={{ color: ACCENT }}>{t('aspek hidupmu', 'aspect of life')}</span>
+                  <span style={{ color: accent }}>{t('aspek hidupmu', 'aspect of life')}</span>
                 </h2>
               </div>
-              <button onClick={() => navigate('/products')} className="flex items-center gap-2 text-sm font-semibold transition-colors" style={{ color: ACCENT }}>
+              <button onClick={() => navigate('/products')} className="flex items-center gap-2 text-sm font-semibold transition-colors" style={{ color: accent }}>
                 {t('Lihat Semua', 'View All')} <ChevronRight size={16} />
               </button>
             </div>
@@ -279,12 +279,12 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                 <SectionLabel darkMode={props.darkMode}>{t('Kalkulator Premi', 'Premium Calculator')}</SectionLabel>
                 <h2 className="font-bold leading-tight mb-3" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', color: textMain }}>
                   {t('Berapa premi asuransi', 'What\'s your car')}{' '}
-                  <span style={{ color: ACCENT }}>{t('mobil Anda?', 'insurance premium?')}</span>
+                  <span style={{ color: accent }}>{t('mobil Anda?', 'insurance premium?')}</span>
                 </h2>
                 <ul className="space-y-1.5 mt-2">
                   {[t('Tarif resmi OJK batas bawah', 'Official OJK minimum rates'), t('Estimasi all risk & TLO', 'All risk & TLO estimate'), t('Gratis, tanpa daftar', 'Free, no sign-up')].map(it => (
                     <li key={it} className="flex items-center gap-2 text-sm" style={{ color: textMuted }}>
-                      <CheckCircle size={14} style={{ color: ACCENT }} /> {it}
+                      <CheckCircle size={14} style={{ color: accent }} /> {it}
                     </li>
                   ))}
                 </ul>
@@ -292,7 +292,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <div className="shrink-0">
                 <button onClick={() => navigate('/kalkulator')}
                   className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
-                  style={{ background: ACCENT, color: '#ffffff' }}>
+                  style={{ background: accent, color: '#ffffff' }}>
                   <Shield size={16} /> {t('Hitung Sekarang', 'Calculate Now')}
                 </button>
               </div>
@@ -307,7 +307,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
           <div className="max-w-3xl mx-auto text-center">
             <SectionLabel darkMode={props.darkMode}>{t('Mulai Hari Ini', 'Start Today')}</SectionLabel>
             <h2 className="font-bold leading-tight tracking-tight mb-5" style={{ fontSize: 'clamp(2rem,4.5vw,3.5rem)', color: textMain }}>
-              {t('Siap memulai', 'Ready to begin')} <span style={{ color: ACCENT }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
+              {t('Siap memulai', 'Ready to begin')} <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
             </h2>
             <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
               {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}

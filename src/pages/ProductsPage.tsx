@@ -1,13 +1,13 @@
 import React from 'react';
 import { ArrowRight, CheckCircle, Shield } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
-import { SitePageProps, useT, useSiteTheme, Reveal, PRODUCTS, SectionLabel, useWebsiteConfig, ACCENT } from './site/siteKit';
+import { SitePageProps, useT, useSiteTheme, Reveal, PRODUCTS, SectionLabel, useWebsiteConfig } from './site/siteKit';
 
 const ProductsPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, navigate, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3 } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
 
   const config    = useWebsiteConfig('products');
   const subtitle  = config?.subtitle  || t('40+ produk dari 18 insurer terpercaya dalam satu platform. Bandingkan, pilih, dan beli — semuanya online.', '40+ products from 18 trusted insurers in one platform. Compare, choose, and buy — all online.');
@@ -22,7 +22,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
           <SectionLabel darkMode={props.darkMode}>{t('Produk Kami', 'Our Products')}</SectionLabel>
           <h1 className="font-bold leading-tight tracking-tight mb-4" style={{ fontSize: 'clamp(2rem,5vw,3.25rem)', color: textMain }}>
             {config?.headline || t('Perlindungan untuk setiap ', 'Protection for every ')}
-            <span style={{ color: ACCENT }}>{t('aspek hidupmu', 'aspect of life')}</span>
+            <span style={{ color: accent }}>{t('aspek hidupmu', 'aspect of life')}</span>
           </h1>
           <p className="text-base max-w-2xl mx-auto leading-relaxed" style={{ color: textMuted }}>{subtitle}</p>
         </Reveal>
@@ -65,7 +65,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                 </p>
                 <button onClick={onSignIn}
                   className="self-start flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.03]"
-                  style={{ background: ACCENT, color: '#ffffff' }}>
+                  style={{ background: accent, color: '#ffffff' }}>
                   {ctaText} <ArrowRight size={14} />
                 </button>
               </div>
@@ -84,12 +84,12 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                 <SectionLabel darkMode={props.darkMode}>{t('Hitung Premi Sekarang', 'Calculate Premium Now')}</SectionLabel>
                 <h2 className="font-bold leading-tight mb-3" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', color: textMain }}>
                   {t('Berapa premi asuransi', 'What\'s your car')}{' '}
-                  <span style={{ color: ACCENT }}>{t('mobil Anda?', 'insurance premium?')}</span>
+                  <span style={{ color: accent }}>{t('mobil Anda?', 'insurance premium?')}</span>
                 </h2>
                 <ul className="space-y-1.5 mt-2">
                   {[t('Tarif resmi OJK batas bawah', 'Official OJK minimum rates'), t('Estimasi all risk & TLO', 'All risk & TLO estimate'), t('Gratis, tanpa daftar', 'Free, no sign-up')].map(it => (
                     <li key={it} className="flex items-center gap-2 text-sm" style={{ color: textMuted }}>
-                      <CheckCircle size={13} style={{ color: ACCENT }} /> {it}
+                      <CheckCircle size={13} style={{ color: accent }} /> {it}
                     </li>
                   ))}
                 </ul>
@@ -97,7 +97,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
               <div className="shrink-0">
                 <button onClick={() => navigate('/kalkulator')}
                   className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
-                  style={{ background: ACCENT, color: '#ffffff' }}>
+                  style={{ background: accent, color: '#ffffff' }}>
                   <Shield size={16} /> {t('Hitung Premi Gratis', 'Calculate Free')}
                 </button>
               </div>

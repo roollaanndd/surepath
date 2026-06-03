@@ -1,5 +1,6 @@
+import { supabase } from './supabaseService';
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 export interface XenditInvoiceResult {
   invoice_url: string;
@@ -18,11 +19,13 @@ export async function createXenditInvoice(params: {
   total_premium: number;
 }): Promise<XenditInvoiceResult | null> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY as string;
     const res = await fetch(`${SUPABASE_URL}/functions/v1/create-xendit-invoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(params),
     });

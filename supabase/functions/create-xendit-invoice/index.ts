@@ -1,18 +1,21 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from '../_shared/cors.ts';
+import { verifyAuth } from '../_shared/auth.ts';
 
 serve(async (req) => {
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')             ?? '';
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const ANON_KEY             = Deno.env.get('SUPABASE_ANON_KEY')         ?? '';
+
+  // ── Auth: any authenticated user (agents/customers creating invoices) ─────
+  const { errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
+  if (errorResponse) return errorResponse;
+
   try {
-    const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')        ?? '';
-    const SUPABASE_SERVICE_KEY= Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
     // Read config secrets from Vault
     const vaultClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);

@@ -357,7 +357,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <div className="absolute -inset-5 rounded-[2.5rem] blur-3xl opacity-30" style={{ background: GRAD }} />
             <div className="relative w-20 h-20 rounded-[1.8rem] flex items-center justify-center border" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 0 60px rgba(99,102,241,0.12)' }}>
               {/* Brand mark neutralized to premium monochrome so the login stays green-free */}
-              <SurePathLogo className="w-12 h-12 grayscale brightness-150 contrast-125 opacity-90" />
+              <SurePathLogo className="w-[4.25rem] h-[4.25rem] object-contain grayscale brightness-150 contrast-125 opacity-90" />
             </div>
           </div>
           <div className="text-center">

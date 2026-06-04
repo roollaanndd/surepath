@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FileText, Wallet, Sun, Moon, ShieldCheck, Bell, UserCircle, ShoppingBag } from 'lucide-react';
+import { Home, FileText, Wallet, Sun, Moon, Bell, UserCircle, ShoppingBag } from 'lucide-react';
 import { Language } from '../../types';
+import { SurePathLogo } from '../Navbar';
 import {
   supabase,
   getAgentCommissions,
@@ -246,8 +247,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
-              <ShieldCheck size={16} className="text-white" strokeWidth={3} />
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/30 ring-1 ring-orange-500/20 overflow-hidden">
+              <SurePathLogo className="w-8 h-8 object-contain" />
             </div>
             <div>
               <div className="font-black text-sm tracking-tighter uppercase leading-none">

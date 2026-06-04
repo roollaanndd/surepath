@@ -170,10 +170,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         {/* Icon + title */}
         <div className="flex flex-col items-center mb-10">
           <div
-            className="mb-5 w-14 h-14 rounded-2xl flex items-center justify-center"
+            className="mb-5 w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.15)' }}
           >
-            <ShieldCheck size={26} style={{ color: '#16a34a' }} />
+            <ShieldCheck size={40} style={{ color: '#16a34a' }} />
           </div>
 
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, letterSpacing: '-0.03em', color: '#e5e7eb', lineHeight: 1, marginBottom: '0.35rem' }}>

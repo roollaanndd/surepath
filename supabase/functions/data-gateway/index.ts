@@ -22,7 +22,27 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+
+// CORS allowlist (inlined — keeps this critical gateway self-contained, no
+// cross-file dependency at deploy time).
+const ALLOWED_ORIGINS = [
+  'https://myinsurepath.com',
+  'https://www.myinsurepath.com',
+];
+const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+const LOCAL_RE = /^http:\/\/localhost(:\d+)?$/i;
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allow =
+    origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_RE.test(origin) || LOCAL_RE.test(origin))
+      ? origin
+      : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  };
+}
 
 const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR', 'INSURANCE_ADMIN'];
 
@@ -214,42 +234,10 @@ serve(async (req) => {
         return json({ data });
       }
 
-      // ── Admin: list commissions ───────────────────────────────────────────
-      case 'admin_list_commissions': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        let q = db.from('sp_commissions').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
-        if (params.agent_id) q = q.eq('agent_id', params.agent_id);
-        if (params.status)   q = q.eq('status', params.status);
-        const { data, error } = await q;
-        if (error) return json({ error: error.message }, 400);
-        return json({ data });
-      }
-
-      // ── Admin: approve / reject commission ───────────────────────────────
-      case 'admin_update_commission': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        if (!params.commission_id || !params.status) return json({ error: 'Missing commission_id or status' }, 400);
-        const VALID_STATUSES = ['PENDING', 'APPROVED', 'PAID', 'REJECTED'];
-        if (!VALID_STATUSES.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
-        const { data, error } = await db.from('sp_commissions').update({ status: params.status }).eq('id', params.commission_id).select().maybeSingle();
-        if (error) return json({ error: error.message }, 400);
-        return json({ data });
-      }
-
       // ── Admin: list claims ────────────────────────────────────────────────
       case 'admin_list_claims': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db.from('sp_claims').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
-        if (params.status) q = q.eq('status', params.status);
-        const { data, error } = await q;
-        if (error) return json({ error: error.message }, 400);
-        return json({ data });
-      }
-
-      // ── Admin: list payments ──────────────────────────────────────────────
-      case 'admin_list_payments': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        let q = db.from('sp_payments').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
         if (params.status) q = q.eq('status', params.status);
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);

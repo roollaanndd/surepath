@@ -91,6 +91,11 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
           <Globe size={12} /> {lang}
         </button>
+        <button onClick={() => go('/admin')}
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
+          style={{ background: th.navBtnBg, color: th.navBtnColor }}>
+          <Lock size={12} /> Admin
+        </button>
         <button onClick={onSignIn}
           className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold transition-all active:scale-[0.97] hover:opacity-90"
           style={{ background: th.textMain, color: darkMode ? '#0f172a' : '#ffffff' }}>

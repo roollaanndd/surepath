@@ -8,6 +8,7 @@ interface Props {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  allowCustom?: boolean;
 }
 
 const SearchableSelect: React.FC<Props> = ({
@@ -17,6 +18,7 @@ const SearchableSelect: React.FC<Props> = ({
   placeholder = 'Pilih...',
   disabled = false,
   className = '',
+  allowCustom = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -89,22 +91,43 @@ const SearchableSelect: React.FC<Props> = ({
           {/* Option list */}
           <div className="overflow-y-auto max-h-56 overscroll-contain">
             {filtered.length === 0 ? (
-              <div className="px-4 py-5 text-center text-slate-400 text-xs">Tidak ditemukan</div>
-            ) : (
-              filtered.map(opt => (
+              allowCustom && search.trim() ? (
                 <button
-                  key={opt}
                   type="button"
-                  onMouseDown={e => { e.preventDefault(); onChange(opt); setOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                    opt === value
-                      ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-                  }`}
+                  onMouseDown={e => { e.preventDefault(); onChange(search.trim()); setOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm text-primary-600 dark:text-primary-400 font-bold hover:bg-primary-500/10 transition-colors"
                 >
-                  {opt}
+                  ✎ Masukkan manual: "{search.trim()}"
                 </button>
-              ))
+              ) : (
+                <div className="px-4 py-5 text-center text-slate-400 text-xs">Tidak ditemukan</div>
+              )
+            ) : (
+              <>
+                {filtered.map(opt => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onMouseDown={e => { e.preventDefault(); onChange(opt); setOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                      opt === value
+                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+                {allowCustom && search.trim() && !filtered.some(o => o.toLowerCase() === search.toLowerCase()) && (
+                  <button
+                    type="button"
+                    onMouseDown={e => { e.preventDefault(); onChange(search.trim()); setOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-500/5 transition-colors border-t border-slate-100 dark:border-white/5"
+                  >
+                    ✎ Masukkan manual: "{search.trim()}"
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

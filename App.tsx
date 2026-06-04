@@ -117,6 +117,15 @@ const SP_CSS = `
 @keyframes sp-twinkle { 0%,100% { opacity:.15; transform: scale(0.7); } 50% { opacity:.95; transform: scale(1); } }
 @keyframes sp-celest-in { from { opacity:0; transform: scale(.5) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
 @keyframes sp-shoot { 0% { transform: translate(0,0); opacity:0; } 10% { opacity:1; } 60% { opacity:1; } 100% { transform: translate(-120px,60px); opacity:0; } }
+/* ── Mascot "Pathy" splash animations ── */
+@keyframes pathy-bob   { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-12px) rotate(1deg); } }
+@keyframes pathy-wave  { 0%,60%,100% { transform: rotate(8deg); } 70% { transform: rotate(34deg); } 80% { transform: rotate(2deg); } 90% { transform: rotate(30deg); } }
+@keyframes pathy-blink { 0%,90%,100% { transform: scaleY(1); } 94% { transform: scaleY(0.12); } }
+@keyframes pathy-bubble{ 0% { opacity:0; transform: scale(0.5) translateY(8px); } 60% { transform: scale(1.06) translateY(0); } 100% { opacity:1; transform: scale(1) translateY(0); } }
+@keyframes pathy-pulse { 0%,100% { transform: scale(1); opacity:.5; } 50% { transform: scale(1.18); opacity:.18; } }
+@keyframes pathy-rise  { 0% { transform: translateY(0) scale(1); opacity:0; } 12% { opacity:.7; } 100% { transform: translateY(-130px) scale(1.3); opacity:0; } }
+@keyframes pathy-spark { 0%,100% { opacity:.2; transform: scale(0.7) rotate(0deg); } 50% { opacity:1; transform: scale(1.1) rotate(45deg); } }
+@keyframes pathy-pop   { 0% { opacity:0; transform: scale(0.6); } 100% { opacity:1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) {
   .sp-anim, .sp-anim * { animation: none !important; }
 }
@@ -246,6 +255,63 @@ const Celestial: React.FC<{ th: SplashTheme; show: boolean }> = ({ th, show }) =
   </div>
 );
 
+// ─── Pathy — the animated SurePath mascot (waves, blinks, bobs) ───────────────
+const PathyMascot: React.FC<{ accentRgb: string; size?: number; wave?: boolean }> = ({ accentRgb, size = 150, wave = true }) => {
+  const W = size, H = Math.round(size * 1.16);
+  const eye = (left: number): React.CSSProperties => ({
+    position: 'absolute', left, top: H * 0.40, width: W * 0.13, height: W * 0.17,
+  });
+  return (
+    <div className="sp-anim" style={{ position: 'relative', width: W, height: H, animation: wave ? 'pathy-bob 3.2s ease-in-out infinite' : 'none' }}>
+      {/* Pulsing halo */}
+      <div className="sp-anim" style={{ position: 'absolute', left: '50%', top: '46%', width: W * 1.25, height: W * 1.25, transform: 'translate(-50%,-50%)', borderRadius: '50%', border: `2px solid rgba(${accentRgb},0.5)`, animation: 'pathy-pulse 2.6s ease-in-out infinite' }} />
+
+      {/* Shield body */}
+      <svg viewBox="0 0 120 140" width={W} height={H} style={{ position: 'absolute', inset: 0, filter: `drop-shadow(0 16px 32px rgba(${accentRgb},0.4))` }}>
+        <defs>
+          <linearGradient id="pathy-body" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#2BE07A" />
+            <stop offset="1" stopColor="#0E9D57" />
+          </linearGradient>
+        </defs>
+        <path d="M60 6 L110 26 V70 C110 104 88 126 60 134 C32 126 10 104 10 70 V26 Z"
+          fill="url(#pathy-body)" stroke="rgba(255,255,255,0.45)" strokeWidth="1.6" strokeLinejoin="round" />
+        {/* glossy highlight */}
+        <path d="M60 14 L100 30 V46 C84 36 70 33 60 33 C50 33 36 36 20 46 V30 Z" fill="rgba(255,255,255,0.16)" />
+      </svg>
+
+      {/* Cheeks */}
+      <div style={{ position: 'absolute', left: W * 0.27, top: H * 0.50, width: W * 0.12, height: W * 0.08, borderRadius: '50%', background: 'rgba(255,120,140,0.55)', filter: 'blur(1px)' }} />
+      <div style={{ position: 'absolute', left: W * 0.61, top: H * 0.50, width: W * 0.12, height: W * 0.08, borderRadius: '50%', background: 'rgba(255,120,140,0.55)', filter: 'blur(1px)' }} />
+
+      {/* Eyes (blink) */}
+      {[W * 0.345, W * 0.525].map((lx, i) => (
+        <div key={i} className="sp-anim" style={{ ...eye(lx), animation: `pathy-blink 4.2s ease-in-out ${i * 0.05}s infinite`, transformOrigin: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, background: '#0b3d24', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', left: '52%', top: '18%', width: '34%', height: '30%', background: '#fff', borderRadius: '50%' }} />
+        </div>
+      ))}
+
+      {/* Smile */}
+      <svg viewBox="0 0 40 20" width={W * 0.30} height={W * 0.15} style={{ position: 'absolute', left: '50%', top: H * 0.55, transform: 'translateX(-50%)' }}>
+        <path d="M4 4 Q20 20 36 4" fill="none" stroke="#0b3d24" strokeWidth="3.5" strokeLinecap="round" />
+      </svg>
+
+      {/* White check badge on belly */}
+      <div style={{ position: 'absolute', left: '50%', top: H * 0.70, transform: 'translateX(-50%)', width: W * 0.22, height: W * 0.22, borderRadius: '50%', background: '#fff', boxShadow: '0 4px 10px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg viewBox="0 0 24 24" width={W * 0.13} height={W * 0.13} fill="none" stroke="#0E9D57" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      {/* Waving hand */}
+      <div className="sp-anim" style={{ position: 'absolute', left: W * 0.80, top: H * 0.30, width: W * 0.20, height: W * 0.20, transformOrigin: '30% 80%', animation: wave ? 'pathy-wave 1.6s ease-in-out infinite' : 'none' }}>
+        <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#2BE07A,#0E9D57)', borderRadius: '50% 50% 50% 20%', border: '1.5px solid rgba(255,255,255,0.45)', boxShadow: '0 4px 10px rgba(0,0,0,0.18)' }} />
+      </div>
+    </div>
+  );
+};
+
 // ─── Splash screen (auto-advances, no interaction needed) ──────────────────────
 const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l: Language) => void; darkMode: boolean }> = ({ onFinish, lang, setLang, darkMode }) => {
   const [phase, setPhase]       = useState(0);
@@ -253,7 +319,6 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   const [msgIdx, setMsgIdx]     = useState(0);
   const [dotCount, setDotCount] = useState(0);
   const onFinishRef  = useRef(onFinish);
-  const canvasRef    = useRef<HTMLCanvasElement>(null);
   const th = splashTheme(darkMode);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
@@ -261,37 +326,6 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     const dotInt = setInterval(() => setDotCount(d => (d + 1) % 4), 400);
     return () => clearInterval(dotInt);
   }, []);
-
-  // Animated blobs — palette follows day/night theme.
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    resize();
-    window.addEventListener('resize', resize);
-    const blobs = th.blobs;
-    let frame = 0, animId = 0;
-    const draw = () => {
-      frame++;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      blobs.forEach(blob => {
-        const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(frame * blob.speedX + blob.phase)));
-        const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(frame * blob.speedY + blob.phase * 1.4)));
-        const op = blob.op ?? 0.14;
-        const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
-        grd.addColorStop(0,   `rgba(${blob.color},${op})`);
-        grd.addColorStop(0.5, `rgba(${blob.color},${(op * 0.35).toFixed(3)})`);
-        grd.addColorStop(1,   `rgba(${blob.color},0)`);
-        ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      });
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
-  }, [th]);
 
   useEffect(() => {
     ensureSPKeyframes();
@@ -306,77 +340,81 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
   }, [lang]);
 
   const G = COPY[lang];
+  const greet = lang === Language.EN ? 'Hi there!' : 'Halo!';
+
+  // Floating bubbles — fresh, playful backdrop (replaces the old orbital field).
+  const bubbles = [
+    { l: '12%', s: 54, d: 0,   dur: 9  }, { l: '24%', s: 26, d: 2.2, dur: 11 },
+    { l: '40%', s: 38, d: 4.1, dur: 8  }, { l: '58%', s: 30, d: 1.4, dur: 12 },
+    { l: '72%', s: 60, d: 3.0, dur: 10 }, { l: '86%', s: 34, d: 5.0, dur: 9.5 },
+    { l: '6%',  s: 22, d: 6.0, dur: 13 }, { l: '92%', s: 20, d: 1.0, dur: 11.5 },
+  ];
 
   return (
     <div
       className={`sp-anim fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       style={{ background: th.bg, fontFamily: "'Sora', sans-serif", transition: 'background 0.6s ease, opacity 0.5s ease' }}
     >
-      {/* Animated canvas blobs — theme-aware palette */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+      {/* Soft accent aurora */}
+      <div className="absolute pointer-events-none" style={{ top: '-10%', left: '50%', transform: 'translateX(-50%)', width: '85vw', height: '60vh', borderRadius: '50%', background: `radial-gradient(ellipse at center, rgba(${th.accentRgb},0.18), transparent 65%)`, filter: 'blur(20px)' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-10%', width: '50vw', height: '50vh', borderRadius: '50%', background: `radial-gradient(circle, rgba(${th.accentRgb},0.12), transparent 70%)`, filter: 'blur(20px)' }} />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ opacity: th.gridOpacity, backgroundImage: `linear-gradient(rgba(${th.gridRgb},.6) 1px,transparent 1px),linear-gradient(90deg,rgba(${th.gridRgb},.6) 1px,transparent 1px)`, backgroundSize: '60px 60px' }} />
+      {/* Rising bubbles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {bubbles.map((b, i) => (
+          <div key={i} className="sp-anim" style={{
+            position: 'absolute', left: b.l, bottom: -80, width: b.s, height: b.s, borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 30%, rgba(${th.accentRgb},0.22), rgba(${th.accentRgb},0.05))`,
+            border: `1px solid rgba(${th.accentRgb},0.18)`,
+            animation: `pathy-rise ${b.dur}s linear ${b.d}s infinite`,
+          }} />
+        ))}
+      </div>
 
-      {/* Day/night celestial indicator */}
-      <Celestial th={th} show={phase >= 1} />
+      <div className="relative z-10 flex flex-col items-center gap-6 px-6">
 
-      <div className="relative z-10 flex flex-col items-center gap-7">
+        {/* Speech bubble greeting */}
+        <div className="sp-anim" style={{
+          opacity: phase >= 1 ? 1 : 0,
+          animation: phase >= 1 ? 'pathy-bubble 0.5s cubic-bezier(.22,1,.36,1) forwards' : 'none',
+          position: 'relative', padding: '10px 18px', borderRadius: 18,
+          background: th.isDay ? '#ffffff' : 'rgba(255,255,255,0.06)',
+          border: `1.5px solid rgba(${th.accentRgb},0.30)`,
+          boxShadow: `0 10px 28px -12px rgba(${th.accentRgb},0.5)`,
+          marginBottom: 4,
+        }}>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: th.text }}>{greet} <span style={{ display: 'inline-block', animation: 'pathy-wave 1.6s ease-in-out infinite', transformOrigin: '70% 70%' }}>👋</span></span>
+          {/* tail */}
+          <div style={{ position: 'absolute', bottom: -7, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 14, height: 14, background: th.isDay ? '#ffffff' : 'rgba(20,28,24,0.95)', borderRight: `1.5px solid rgba(${th.accentRgb},0.30)`, borderBottom: `1.5px solid rgba(${th.accentRgb},0.30)` }} />
+        </div>
 
-        {/* Logo with orbital rings */}
-        <div className={`relative flex items-center justify-center transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-          {/* Outer dashed ring */}
-          <svg width="232" height="232" viewBox="0 0 232 232" className="absolute pointer-events-none sp-anim"
-            style={{ animation: 'sp-ring-fwd 20s linear infinite', opacity: 0.22 }}>
-            <circle cx="116" cy="116" r="112" fill="none" stroke={th.accent} strokeWidth="1" strokeDasharray="6 9" />
-          </svg>
-          {/* Inner dashed ring */}
-          <svg width="176" height="176" viewBox="0 0 176 176" className="absolute pointer-events-none sp-anim"
-            style={{ animation: 'sp-ring-rev 13s linear infinite', opacity: 0.16 }}>
-            <circle cx="88" cy="88" r="84" fill="none" stroke={th.accent} strokeWidth="1" strokeDasharray="3 13" />
-          </svg>
-          {/* Orbiting dots */}
-          {([0, 1, 2] as const).map(i => (
-            <div key={i} className="absolute inset-0 flex items-center justify-center pointer-events-none sp-anim"
-              style={{ animation: `sp-orbit-${i} ${5 + i * 1.8}s linear infinite` }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: th.accent, boxShadow: `0 0 10px ${th.accent}, 0 0 22px rgba(${th.accentRgb},.5)` }} />
-            </div>
-          ))}
-          {/* Logo tile — icon sized to fill the box */}
-          <div className="relative">
-            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-25" style={{ background: th.accent }} />
-            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border sp-anim"
-              style={{ background: th.tileBg, borderColor: th.tileBorder, boxShadow: `0 0 60px rgba(${th.accentRgb},0.12)`, animation: 'sp-glow 3.2s ease-in-out infinite' }}>
-              <SurePathLogo className="w-[5.5rem] h-[5.5rem] object-contain" />
-            </div>
-          </div>
+        {/* Mascot */}
+        <div className={`transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+          <PathyMascot accentRgb={th.accentRgb} size={148} />
         </div>
 
         {/* Brand */}
-        <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: th.text, lineHeight: 1 }}>
+        <div className={`text-center transition-all duration-500 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+          <h1 style={{ fontSize: '2.3rem', fontWeight: 700, letterSpacing: '-0.05em', color: th.text, lineHeight: 1 }}>
             Sure<span style={{ color: th.accent }}>Path</span>
           </h1>
-          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
             {G.tagline}
           </p>
         </div>
 
         {/* Progress */}
         <div className={`flex flex-col items-center gap-3 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
-          {/* Step message */}
           <div className="flex items-center gap-2">
             <div className="sp-anim" style={{ width: 6, height: 6, borderRadius: '50%', background: th.accent, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
             <span style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
           </div>
-          <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: `rgba(${th.accentRgb},0.12)` }}>
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 3, background: `rgba(${th.accentRgb},0.14)` }}>
             <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: th.accent, boxShadow: `0 0 8px rgba(${th.accentRgb},0.6)` }} />
           </div>
           <div style={{ fontSize: '0.58rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.12em' }}>
             {lang === 'ID' ? 'Memuat' : 'Loading'}{'·'.repeat(dotCount)}
           </div>
-          {/* Feature chips */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
               <span key={chip} style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, background: th.chipBg, border: `1px solid ${th.chipBorder}`, borderRadius: '99px', padding: '0.18rem 0.55rem' }}>

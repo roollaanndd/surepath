@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-  ArrowRight, ChevronRight, ChevronDown, Shield, CheckCircle,
+  ArrowRight, ChevronRight, ChevronDown,
   Zap, Users, Search, BarChart2,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
+import PremiumCalcWidget from './site/PremiumCalcWidget';
 import {
   SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter,
   HeroVideo, PRODUCTS, SectionLabel, useWebsiteConfig,
@@ -188,40 +189,29 @@ const HomePage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ═══════════════ CALC CTA — accent-border card ═══════════════ */}
-      <section className="py-16 px-6" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
-        <div className="max-w-4xl mx-auto">
+      {/* ═══════════════ LIVE PREMIUM CALCULATOR ═══════════════ */}
+      <section className="py-20 px-6" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
+        <div className="max-w-5xl mx-auto">
           <Reveal>
-            <div className="spx-card spx-grid spx-sheen rounded-2xl overflow-hidden flex flex-col md:flex-row" style={{ background: cardBg, ['--spx-accent' as string]: accent }}>
-              <div className="spx-grid-tex" />
-              {/* Accent bar left on desktop, top on mobile */}
-              <div className="md:w-1.5 h-1.5 md:h-auto flex-shrink-0" style={{ background: accent }} />
-              <div className="flex flex-col md:flex-row items-center gap-8 p-8 md:p-10 flex-1">
-                <div className="flex-1 text-center md:text-left">
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 10 }}>
-                    {t('KALKULATOR PREMI', 'PREMIUM CALCULATOR')}
-                  </p>
-                  <h2 className="font-bold leading-tight mb-3" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', color: textMain }}>
-                    {t('Berapa premi asuransi', 'What\'s your car')}{' '}
-                    <span style={{ color: accent }}>{t('mobil Anda?', 'insurance premium?')}</span>
-                  </h2>
-                  <ul className="space-y-1.5 mt-3">
-                    {[t('Tarif resmi OJK batas bawah', 'Official OJK minimum rates'), t('Estimasi all risk & TLO', 'All risk & TLO estimate'), t('Gratis, tanpa daftar', 'Free, no sign-up')].map(it => (
-                      <li key={it} className="flex items-center gap-2 text-sm" style={{ color: textMuted }}>
-                        <CheckCircle size={13} style={{ color: accent }} /> {it}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="shrink-0">
-                  <button onClick={() => navigate('/kalkulator')}
-                    className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 text-white"
-                    style={{ background: accent, boxShadow: `0 8px 24px -8px ${accent}` }}>
-                    <Shield size={16} /> {t('Hitung Sekarang', 'Calculate Now')}
-                  </button>
-                </div>
-              </div>
+            <div className="text-center mb-10 max-w-2xl mx-auto">
+              <SectionLabel darkMode={props.darkMode}>{t('Kalkulator Premi', 'Premium Calculator')}</SectionLabel>
+              <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
+                {t('Cek premi mobilmu', 'Check your premium')}{' '}
+                <span style={{ color: accent }}>{t('langsung di sini', 'right here')}</span>
+              </h2>
+              <p className="text-base mt-3" style={{ color: textMuted }}>
+                {t('Tanpa daftar, tanpa ribet — hasilnya muncul seketika saat kamu mengatur pilihan.',
+                   'No sign-up, no hassle — the estimate updates the instant you adjust the options.')}
+              </p>
             </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <PremiumCalcWidget
+              lang={lang}
+              darkMode={props.darkMode}
+              onSignIn={onSignIn}
+              onDetail={() => navigate('/kalkulator')}
+            />
           </Reveal>
         </div>
       </section>

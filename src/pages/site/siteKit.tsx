@@ -106,6 +106,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid rgba(22,163,74,0.6); 
    shadow on hover, and a one-pass light sheen sweep. Each card sets its own
    colour via the --spx-accent custom property so one class fits every box. ── */
 @keyframes spx-drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8%,-6%); } }
+@keyframes calc-pop { 0% { opacity: 0.4; transform: translateY(4px) scale(0.99); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
 .spx-card { position: relative; isolation: isolate; transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease, border-color .4s ease; will-change: transform; }
 .spx-card::before {
   content: ''; position: absolute; inset: -25% -25% auto auto; width: 78%; height: 78%; z-index: -1;

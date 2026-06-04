@@ -116,24 +116,19 @@ export async function updateAgentProfile(
   return true;
 }
 
-export async function getAgentByEmail(email: string): Promise<SpUser | null> {
-  const { data, error } = await supabase
-    .from('sp_users')
-    .select('*')
-    .eq('email', email)
-    .eq('role', 'AGENT')
-    .single();
-  if (error) return null;
+export async function getAgentByEmail(_email: string): Promise<SpUser | null> {
+  // Always called with the current user's own email after Supabase Auth sign-in.
+  // Route through the gateway so the result is always the authenticated caller's
+  // own profile, avoiding a direct open query on sp_users.
+  const { data, error } = await callGateway('get_my_profile');
+  if (error || !data) return null;
   return data as SpUser;
 }
 
-export async function getUserByEmail(email: string): Promise<SpUser | null> {
-  const { data, error } = await supabase
-    .from('sp_users')
-    .select('*')
-    .eq('email', email)
-    .single();
-  if (error) return null;
+export async function getUserByEmail(_email: string): Promise<SpUser | null> {
+  // Same as above — always fetches the current authenticated user's own profile.
+  const { data, error } = await callGateway('get_my_profile');
+  if (error || !data) return null;
   return data as SpUser;
 }
 

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
-import { analyzeVehicleSurvey, SurveyAnalysisResult } from '../../services/geminiService';
+import { analyzeVehicleSurvey, validateVehiclePhoto, SurveyAnalysisResult } from '../../services/geminiService';
 import {
   calcPremium, getZone, getVehicleCategory, PROVINCES,
   VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
@@ -35,6 +35,95 @@ interface Props {
   onBack: () => void;
   onOrderCreated?: (orderNumber: string) => void;
 }
+
+// ─── Plate Codes (Indonesian regional plate → OJK province) ──────────────────
+
+interface PlateCodeEntry { code: string; region: string; province: string; }
+
+const PLATE_CODES: PlateCodeEntry[] = [
+  // Zone 2 — DKI Jakarta, Jawa Barat, Banten
+  { code: 'B',  region: 'DKI Jakarta / Bekasi / Depok / Tangerang', province: 'DKI Jakarta' },
+  { code: 'D',  region: 'Bandung & sekitarnya', province: 'Jawa Barat' },
+  { code: 'E',  region: 'Cirebon', province: 'Jawa Barat' },
+  { code: 'F',  region: 'Bogor / Sukabumi / Cianjur', province: 'Jawa Barat' },
+  { code: 'T',  region: 'Purwakarta / Karawang / Subang', province: 'Jawa Barat' },
+  { code: 'Z',  region: 'Tasikmalaya / Garut / Ciamis', province: 'Jawa Barat' },
+  { code: 'A',  region: 'Banten / Serang / Tangerang', province: 'Banten' },
+  // Zone 3 — Jawa Tengah & DIY
+  { code: 'H',  region: 'Semarang & sekitarnya', province: 'Jawa Tengah' },
+  { code: 'G',  region: 'Pekalongan / Tegal', province: 'Jawa Tengah' },
+  { code: 'K',  region: 'Pati / Kudus / Blora / Jepara', province: 'Jawa Tengah' },
+  { code: 'R',  region: 'Banyumas / Cilacap / Purbalingga', province: 'Jawa Tengah' },
+  { code: 'AA', region: 'Magelang / Temanggung / Kedu', province: 'Jawa Tengah' },
+  { code: 'AD', region: 'Surakarta / Solo', province: 'Jawa Tengah' },
+  { code: 'AB', region: 'DI Yogyakarta', province: 'DI Yogyakarta' },
+  // Zone 3 — Jawa Timur
+  { code: 'AE', region: 'Madiun', province: 'Jawa Timur' },
+  { code: 'AG', region: 'Kediri / Blitar / Tulungagung', province: 'Jawa Timur' },
+  { code: 'L',  region: 'Surabaya', province: 'Jawa Timur' },
+  { code: 'M',  region: 'Madura', province: 'Jawa Timur' },
+  { code: 'N',  region: 'Malang & sekitarnya', province: 'Jawa Timur' },
+  { code: 'P',  region: 'Besuki / Banyuwangi', province: 'Jawa Timur' },
+  { code: 'S',  region: 'Bojonegoro / Tuban / Lamongan', province: 'Jawa Timur' },
+  { code: 'W',  region: 'Sidoarjo / Mojokerto / Gresik', province: 'Jawa Timur' },
+  // Zone 3 — Bali & Nusa Tenggara
+  { code: 'DK', region: 'Bali', province: 'Bali' },
+  { code: 'DR', region: 'Lombok / NTB', province: 'Nusa Tenggara Barat' },
+  { code: 'EA', region: 'Sumbawa', province: 'Nusa Tenggara Barat' },
+  { code: 'DH', region: 'Kupang / NTT', province: 'Nusa Tenggara Timur' },
+  { code: 'EB', region: 'Flores / Ende', province: 'Nusa Tenggara Timur' },
+  { code: 'ED', region: 'Sumba', province: 'Nusa Tenggara Timur' },
+  // Zone 1 — Sumatera
+  { code: 'BL', region: 'Aceh', province: 'Aceh' },
+  { code: 'BK', region: 'Medan & Sumatera Utara', province: 'Sumatera Utara' },
+  { code: 'BB', region: 'Tapanuli / Sumatera Utara', province: 'Sumatera Utara' },
+  { code: 'BA', region: 'Padang / Sumatera Barat', province: 'Sumatera Barat' },
+  { code: 'BM', region: 'Pekanbaru / Riau', province: 'Riau' },
+  { code: 'BP', region: 'Batam / Kepulauan Riau', province: 'Kepulauan Riau' },
+  { code: 'BN', region: 'Bangka Belitung', province: 'Kepulauan Bangka Belitung' },
+  { code: 'BH', region: 'Jambi', province: 'Jambi' },
+  { code: 'BD', region: 'Bengkulu', province: 'Bengkulu' },
+  { code: 'BE', region: 'Lampung', province: 'Lampung' },
+  { code: 'BG', region: 'Palembang / Sumatera Selatan', province: 'Sumatera Selatan' },
+  // Zone 3 — Kalimantan
+  { code: 'DA', region: 'Banjarmasin / Kalimantan Selatan', province: 'Kalimantan Selatan' },
+  { code: 'KB', region: 'Pontianak / Kalimantan Barat', province: 'Kalimantan Barat' },
+  { code: 'KH', region: 'Palangkaraya / Kalimantan Tengah', province: 'Kalimantan Tengah' },
+  { code: 'KT', region: 'Samarinda / Kalimantan Timur', province: 'Kalimantan Timur' },
+  { code: 'KU', region: 'Tarakan / Kalimantan Utara', province: 'Kalimantan Utara' },
+  // Zone 3 — Sulawesi
+  { code: 'DB', region: 'Manado / Sulawesi Utara', province: 'Sulawesi Utara' },
+  { code: 'DM', region: 'Gorontalo', province: 'Gorontalo' },
+  { code: 'DN', region: 'Palu / Sulawesi Tengah', province: 'Sulawesi Tengah' },
+  { code: 'DC', region: 'Mamuju / Sulawesi Barat', province: 'Sulawesi Barat' },
+  { code: 'DD', region: 'Makassar / Sulawesi Selatan', province: 'Sulawesi Selatan' },
+  { code: 'DW', region: 'Gowa / Takalar (Sulsel)', province: 'Sulawesi Selatan' },
+  { code: 'DP', region: 'Kendari / Sulawesi Tenggara', province: 'Sulawesi Tenggara' },
+  { code: 'DT', region: 'Bau-Bau / Sulawesi Tenggara', province: 'Sulawesi Tenggara' },
+  // Zone 3 — Maluku & Papua
+  { code: 'DE', region: 'Ambon / Maluku', province: 'Maluku' },
+  { code: 'DG', region: 'Ternate / Maluku Utara', province: 'Maluku Utara' },
+  { code: 'DS', region: 'Jayapura / Papua', province: 'Papua' },
+  { code: 'PB', region: 'Manokwari / Papua Barat', province: 'Papua Barat' },
+];
+
+const PHOTO_SLOTS = [
+  { id: 'front',     label: 'Depan',      desc: 'Bagian depan kendaraan' },
+  { id: 'back',      label: 'Belakang',   desc: 'Bagian belakang kendaraan' },
+  { id: 'left',      label: 'Sisi Kiri',  desc: 'Samping kiri kendaraan' },
+  { id: 'right',     label: 'Sisi Kanan', desc: 'Samping kanan kendaraan' },
+  { id: 'dashboard', label: 'Dashboard',  desc: 'Bagian dalam / kabin kendaraan' },
+] as const;
+
+const PHOTO_GUIDELINES = [
+  'Kendaraan dalam kondisi bersih sebelum difoto',
+  'Tidak ada objek yang menghalangi kendaraan',
+  'Pencahayaan terang dan merata (tidak di malam hari)',
+  'Tidak di dalam basement atau tempat gelap',
+  'Plat nomor kendaraan harus terlihat jelas',
+  'Foto langsung dari kamera — bukan foto layar / foto dari internet',
+  'Pastikan seluruh bodi kendaraan terlihat dari sudut yang diminta',
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -160,6 +249,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     year: currentYear,
     variant: '',
     plate: '',
+    plateCode: '',
+    plateNum: '',
+    plateSuffix: '',
     chassis: '',
     engine: '',
     color: '',
@@ -186,11 +278,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const [selectedInsurerProduct, setSelectedInsurerProduct] = useState<SpInsurerProduct | null>(null);
 
   // ── Step 5: Photo + AI ──
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [photoFiles, setPhotoFiles] = useState<Record<string, File>>({});
+  const [photoPreviews, setPhotoPreviews] = useState<Record<string, string>>({});
+  const [photoValidation, setPhotoValidation] = useState<Record<string, { status: 'LOADING' | 'VALID' | 'INVALID'; msg?: string }>>({});
   const [aiScoring, setAiScoring] = useState(false);
   const [aiResult, setAiResult] = useState<SurveyAnalysisResult | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Step 6: Discount ──
   const [productConfig, setProductConfig] = useState<SpProductConfig | null>(null);
@@ -245,45 +337,79 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     setSumInsuredDisplay(num === 0 ? '' : num.toLocaleString('id-ID'));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setAiResult(null);
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
-  };
-
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    setAiResult(null);
-    setImagePreview(URL.createObjectURL(file));
+  const handlePlatePartChange = useCallback((field: 'plateCode' | 'plateNum' | 'plateSuffix', value: string) => {
+    setVehicleDetails(prev => {
+      const updated = { ...prev, [field]: value };
+      const combined = [updated.plateCode, updated.plateNum, updated.plateSuffix].filter(Boolean).join(' ');
+      return { ...updated, plate: combined };
+    });
   }, []);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+  const handlePlateCodeChange = useCallback((code: string) => {
+    setVehicleDetails(prev => {
+      const combined = [code, prev.plateNum, prev.plateSuffix].filter(Boolean).join(' ');
+      return { ...prev, plateCode: code, plate: combined };
+    });
+    const entry = PLATE_CODES.find(p => p.code === code);
+    if (entry) setProvince(p => p || entry.province);
+  }, []);
 
-  const handleRunAI = async () => {
-    if (!imageFile) return;
-    setAiScoring(true);
+  const handlePhotoUpload = useCallback(async (file: File, slotId: string, slotLabel: string) => {
+    const preview = URL.createObjectURL(file);
+    setPhotoFiles(prev => ({ ...prev, [slotId]: file }));
+    setPhotoPreviews(prev => ({ ...prev, [slotId]: preview }));
+    setAiResult(null);
+
+    if (file.size > 10 * 1024 * 1024) {
+      setPhotoValidation(prev => ({ ...prev, [slotId]: { status: 'INVALID', msg: 'Ukuran file terlalu besar (maks 10MB)' } }));
+      return;
+    }
+    setPhotoValidation(prev => ({ ...prev, [slotId]: { status: 'LOADING' } }));
     try {
-      const b64 = await fileToBase64(imageFile);
-      const result = await analyzeVehicleSurvey(
-        [{ id: 'vehicle-main', data: b64 }],
-        {
-          brand: vehicleDetails.make,
-          model: vehicleDetails.model,
-          color: vehicleDetails.color,
-          plate: vehicleDetails.plate,
-        },
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const b64 = ev.target?.result as string;
+        const result = await validateVehiclePhoto(b64, slotLabel);
+        setPhotoValidation(prev => ({
+          ...prev,
+          [slotId]: { status: result.valid ? 'VALID' : 'INVALID', msg: result.issue },
+        }));
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setPhotoValidation(prev => ({ ...prev, [slotId]: { status: 'VALID' } }));
+    }
+  }, []);
+
+  const handleRunAI = useCallback(async () => {
+    const entries = Object.entries(photoFiles);
+    if (entries.length < 3) return;
+    setAiScoring(true);
+    setAiResult(null);
+    try {
+      const images = await Promise.all(
+        entries.map(async ([id, file]: [string, File]) => ({ id, data: await fileToBase64(file) }))
       );
+      const result = await analyzeVehicleSurvey(images, {
+        brand: vehicleDetails.make,
+        model: vehicleDetails.model,
+        color: vehicleDetails.color,
+        plate: vehicleDetails.plate,
+      });
       setAiResult(result);
     } finally {
       setAiScoring(false);
     }
-  };
+  }, [photoFiles, vehicleDetails.make, vehicleDetails.model, vehicleDetails.color, vehicleDetails.plate]);
+
+  // ─── Auto-run AI when all 5 photos are uploaded ───────────────────────────
+
+  const photoCount = Object.keys(photoFiles).length;
+  useEffect(() => {
+    if (photoCount === PHOTO_SLOTS.length && !aiScoring && !aiResult) {
+      handleRunAI();
+    }
+  }, [photoCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Fetch product config when step 6 is reached ──────────────────────────
 
@@ -340,12 +466,23 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const coinRate = selectedInsurerProduct?.coin_rate ?? productConfig?.coin_rate ?? 0.05;
         const coinReward = Math.floor(breakdown.total * coinRate / 1000);
 
-        // Upload image first
+        // Upload front photo as main vehicle image
         let vehicleImageUrl: string | undefined;
-        if (imageFile) {
-          const uploadedUrl = await uploadVehicleImage(imageFile, `tmp-${Date.now()}`);
+        const frontFile = photoFiles['front'] ?? Object.values(photoFiles)[0];
+        if (frontFile) {
+          const uploadedUrl = await uploadVehicleImage(frontFile, `tmp-${Date.now()}`);
           vehicleImageUrl = uploadedUrl ?? undefined;
         }
+
+        // Merge AI report into vehicle_details for admin notes
+        const vehicleDetailsWithAI = {
+          ...vehicleDetails,
+          ...(aiResult ? {
+            ai_report: aiResult.underwritingReport,
+            ai_fraud_analysis: aiResult.fraudAnalysis,
+            ai_recommendations: aiResult.recommendations,
+          } : {}),
+        };
 
         const order = await createPolicyOrder({
           agent_id: agentId,
@@ -356,7 +493,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           product_code: productCode,
           product_name: productName,
           vehicle_type: vehicleType === 'CAR' ? 'CAR' : 'MOTORCYCLE',
-          vehicle_details: vehicleDetails,
+          vehicle_details: vehicleDetailsWithAI,
           vehicle_image_url: vehicleImageUrl,
           ai_score: aiResult?.score,
           ai_verdict: aiResult?.auditVerdict,
@@ -427,7 +564,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const canProceedStep3 =
     vehicleDetails.make &&
     vehicleDetails.model &&
-    vehicleDetails.plate &&
+    vehicleDetails.plateCode &&
+    vehicleDetails.plateNum &&
+    vehicleDetails.plateSuffix &&
     vehicleDetails.chassis &&
     vehicleDetails.engine &&
     vehicleDetails.color;
@@ -645,33 +784,28 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 placeholder="Pilih merek..."
               />
             </div>
-            {/* Model — searchable datalist for both cars and motorcycles */}
+            {/* Model — searchable dropdown with manual fallback */}
             <div>
               <Label>Model *</Label>
-              <>
-                <input
-                  type="text"
-                  list="vehicle-model-list"
-                  value={vehicleDetails.model}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleModelChange(e.target.value)
-                  }
-                  className={inputCls}
-                  placeholder={vehicleDetails.make ? 'Ketik untuk cari model...' : 'Pilih merek dulu'}
-                  disabled={!vehicleDetails.make}
-                />
-                <datalist id="vehicle-model-list">
-                  {modelOptions.map((m) => (
-                    <option key={m} value={m} />
-                  ))}
-                </datalist>
-                {autoValue && autoValue > 0 && (
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
-                  </p>
-                )}
-              </>
+              <SearchableSelect
+                value={vehicleDetails.model}
+                options={modelOptions}
+                onChange={handleModelChange}
+                placeholder={vehicleDetails.make ? 'Cari model...' : 'Pilih merek dulu'}
+                disabled={!vehicleDetails.make}
+                allowCustom
+              />
+              {autoValue && autoValue > 0 && (
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
+                </p>
+              )}
+              {vehicleDetails.model && !modelOptions.includes(vehicleDetails.model) && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+                  ✎ Model diinput manual
+                </p>
+              )}
             </div>
             {/* Year */}
             <div>
@@ -703,18 +837,54 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 placeholder="Contoh: 1.5 G CVT"
               />
             </div>
-            {/* Plate */}
-            <div>
-              <Label>Nomor Polisi *</Label>
-              <input
-                type="text"
-                value={vehicleDetails.plate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleVehicleDetailChange('plate', e.target.value.toUpperCase())
-                }
-                className={inputCls}
-                placeholder="B 1234 XYZ"
-              />
+            {/* Plate — structured XX-YYYY-ZZZ input */}
+            <div className="sm:col-span-2">
+              <Label>Nomor Polisi * (format: Kode Wilayah – Nomor – Huruf)</Label>
+              <div className="flex items-center gap-2">
+                <div className="w-36 flex-shrink-0">
+                  <SearchableSelect
+                    value={vehicleDetails.plateCode}
+                    options={PLATE_CODES.map(p => p.code)}
+                    onChange={handlePlateCodeChange}
+                    placeholder="Kode"
+                  />
+                </div>
+                <span className="text-slate-400 font-black text-lg">–</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={vehicleDetails.plateNum}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handlePlatePartChange('plateNum', e.target.value.replace(/\D/g, ''))
+                  }
+                  className={`${inputCls} w-24 text-center font-black tracking-widest`}
+                  placeholder="1234"
+                />
+                <span className="text-slate-400 font-black text-lg">–</span>
+                <input
+                  type="text"
+                  maxLength={3}
+                  value={vehicleDetails.plateSuffix}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handlePlatePartChange('plateSuffix', e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))
+                  }
+                  className={`${inputCls} w-20 text-center font-black tracking-widest`}
+                  placeholder="XYZ"
+                />
+              </div>
+              {vehicleDetails.plateCode && (
+                <p className="text-[10px] text-slate-400 font-bold mt-1">
+                  {PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.region}
+                  {' · '}
+                  <span className="text-primary-500">OJK Zone {getZone(PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.province ?? '')}</span>
+                </p>
+              )}
+              {vehicleDetails.plate && (
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                  Plat: <span className="font-black text-slate-700 dark:text-slate-200">{vehicleDetails.plate}</span>
+                </p>
+              )}
             </div>
             {/* Color */}
             <div>
@@ -1069,60 +1239,128 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         ? { label: 'LAYAK', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }
         : score >= 60
         ? { label: 'PERLU REVIEW', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }
-        : { label: 'DITOLAK', cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' };
+        : { label: 'TIDAK MEMENUHI SYARAT', cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' };
     const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-rose-500';
 
     return (
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-black text-slate-800 dark:text-white">Foto & Survei AI</h2>
 
-        {/* Upload Box */}
+        {/* Photography Guidelines */}
         <SectionCard>
-          <div
-            className="border-2 border-dashed border-slate-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center gap-3 p-8 cursor-pointer hover:border-[#22c55e] transition"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview kendaraan"
-                className="max-h-52 rounded-xl object-contain"
-              />
-            ) : (
-              <>
-                <Upload className="w-10 h-10 text-slate-300 dark:text-slate-600" />
-                <p className="text-sm text-slate-400 text-center">
-                  Seret foto kendaraan ke sini, atau klik untuk memilih file
-                </p>
-              </>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
+          <p className="text-xs font-black uppercase text-slate-500 tracking-widest mb-3">Panduan Pengambilan Foto</p>
+          <ul className="flex flex-col gap-1.5">
+            {PHOTO_GUIDELINES.map((g, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                {g}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+
+        {/* 5-Photo Upload Grid */}
+        <SectionCard>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase text-slate-500 tracking-widest">Foto Kendaraan</p>
+            <span className={`text-xs font-black px-2 py-0.5 rounded-full ${photoCount >= 5 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-500'}`}>
+              {photoCount}/5 foto
+            </span>
           </div>
-          {imageFile && !aiResult && (
-            <div className="mt-4 flex justify-center">
-              <PrimaryBtn onClick={handleRunAI} disabled={aiScoring}>
-                {aiScoring ? (
-                  <>
-                    <Loader2 className="inline w-4 h-4 mr-2 animate-spin" />
-                    Menganalisis...
-                  </>
-                ) : (
-                  'Mulai Survei AI'
-                )}
-              </PrimaryBtn>
+          <div className="grid grid-cols-2 gap-3">
+            {PHOTO_SLOTS.map((slot, idx) => {
+              const isLast = idx === PHOTO_SLOTS.length - 1;
+              const preview = photoPreviews[slot.id];
+              const validation = photoValidation[slot.id];
+              const isLoading = validation?.status === 'LOADING';
+              const isInvalid = validation?.status === 'INVALID';
+              const isValid = validation?.status === 'VALID';
+
+              return (
+                <div
+                  key={slot.id}
+                  className={`group relative rounded-2xl border-2 border-dashed transition-all overflow-hidden ${isLast ? 'col-span-2 aspect-[3/1]' : 'aspect-video'} ${
+                    preview
+                      ? isInvalid
+                        ? 'border-rose-400 border-solid'
+                        : 'border-primary-400 border-solid bg-primary-500/5'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02]'
+                  }`}
+                >
+                  {preview ? (
+                    <>
+                      <img src={preview} className="absolute inset-0 w-full h-full object-cover" alt={slot.label} />
+                      {(isLoading || isInvalid) && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                          {isLoading && <Loader2 className="w-6 h-6 text-white animate-spin" />}
+                          {isInvalid && (
+                            <div className="flex flex-col items-center gap-1 px-3 py-2 bg-rose-500/90 rounded-xl">
+                              <AlertTriangle className="w-4 h-4 text-white" />
+                              <span className="text-[0.5rem] font-black text-white uppercase tracking-widest text-center leading-tight">{validation.msg || 'Foto tidak sesuai'}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {isValid && (
+                        <div className="absolute top-2 right-2 bg-emerald-500 rounded-full p-0.5 z-10">
+                          <CheckCircle className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotoFiles(prev => { const n = { ...prev }; delete n[slot.id]; return n; });
+                          setPhotoPreviews(prev => { const n = { ...prev }; delete n[slot.id]; return n; });
+                          setPhotoValidation(prev => { const n = { ...prev }; delete n[slot.id]; return n; });
+                          setAiResult(null);
+                        }}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white z-20"
+                      >
+                        <XCircle className="w-6 h-6" />
+                      </button>
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white rounded text-[0.45rem] font-black uppercase z-10">{slot.label}</div>
+                    </>
+                  ) : (
+                    <label className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 cursor-pointer">
+                      <Upload className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-400 transition-colors" />
+                      <span className="text-[0.6rem] font-black uppercase text-slate-400 group-hover:text-primary-500 transition-colors">{slot.label}</span>
+                      <span className="text-[0.5rem] text-slate-300 dark:text-slate-600">{slot.desc}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePhotoUpload(file, slot.id, slot.desc);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* AI trigger */}
+          {photoCount >= 3 && !aiResult && (
+            <div className="mt-4">
+              {aiScoring ? (
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menganalisis foto kendaraan…</p>
+                </div>
+              ) : (
+                <PrimaryBtn onClick={handleRunAI}>
+                  <Upload className="inline w-4 h-4 mr-2" />
+                  Analisa AI ({photoCount} foto)
+                </PrimaryBtn>
+              )}
             </div>
           )}
-          {aiScoring && (
-            <p className="text-center text-sm text-slate-400 mt-3 animate-pulse">
-              Menganalisis kondisi kendaraan…
+          {photoCount < 3 && (
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Unggah minimal 3 foto untuk memulai analisa AI. Semua 5 foto akan memicu analisa otomatis.
             </p>
           )}
         </SectionCard>
@@ -1133,9 +1371,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <div className="flex items-center gap-4 mb-4">
               <span className={`text-5xl font-black ${scoreColor}`}>{score}</span>
               <div>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase ${scoreBadge.cls}`}
-                >
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase ${scoreBadge.cls}`}>
                   {scoreBadge.label}
                 </span>
                 <p className="text-xs text-slate-400 mt-1">Skor Kelayakan Kendaraan</p>
@@ -1146,6 +1382,13 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{aiResult.summary}</p>
             )}
 
+            {aiResult.underwritingReport && (
+              <div className="mb-4 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10">
+                <p className="text-[0.55rem] font-black uppercase text-primary-500 tracking-widest mb-1">Laporan Surveyor AI</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{aiResult.underwritingReport}</p>
+              </div>
+            )}
+
             {aiResult.detailedIssues && aiResult.detailedIssues.length > 0 && (
               <div className="flex flex-col gap-2 mb-4">
                 <p className="text-xs font-bold uppercase text-slate-400 tracking-widest">Temuan</p>
@@ -1153,29 +1396,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                   <div
                     key={i}
                     className={`flex items-start gap-2 rounded-xl p-3 text-sm ${
-                      issue.severity === 'Severe'
-                        ? 'bg-rose-50 dark:bg-rose-900/20'
-                        : issue.severity === 'Moderate'
-                        ? 'bg-amber-50 dark:bg-amber-900/20'
-                        : 'bg-slate-50 dark:bg-white/5'
+                      issue.severity === 'Severe' ? 'bg-rose-50 dark:bg-rose-900/20' :
+                      issue.severity === 'Moderate' ? 'bg-amber-50 dark:bg-amber-900/20' :
+                      'bg-slate-50 dark:bg-white/5'
                     }`}
                   >
-                    <AlertTriangle
-                      className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                        issue.severity === 'Severe'
-                          ? 'text-rose-500'
-                          : issue.severity === 'Moderate'
-                          ? 'text-amber-500'
-                          : 'text-slate-400'
-                      }`}
-                    />
+                    <AlertTriangle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${issue.severity === 'Severe' ? 'text-rose-500' : issue.severity === 'Moderate' ? 'text-amber-500' : 'text-slate-400'}`} />
                     <div>
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">
-                        {issue.part}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400 ml-1">
-                        — {issue.description}
-                      </span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">{issue.part}</span>
+                      <span className="text-slate-500 dark:text-slate-400 ml-1">— {issue.description}</span>
                     </div>
                   </div>
                 ))}
@@ -1183,7 +1412,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             )}
 
             {score < 80 && (
-              <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 p-4 flex flex-col gap-3">
+              <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 p-4 flex flex-col gap-3 mb-4">
                 <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-black">
                   <XCircle className="w-5 h-5" />
                   Kendaraan Tidak Memenuhi Syarat
@@ -1191,18 +1420,16 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 {aiResult.rejectionReason && (
                   <p className="text-sm text-rose-700 dark:text-rose-300">{aiResult.rejectionReason}</p>
                 )}
-                <SecondaryBtn onClick={() => { setAiResult(null); setImageFile(null); setImagePreview(''); }}>
-                  Ulangi Survei
+                <SecondaryBtn onClick={() => setAiResult(null)}>
+                  Ganti Foto & Analisa Ulang
                 </SecondaryBtn>
               </div>
             )}
 
             {canProceedStep5 && (
-              <div className="mt-4">
-                <PrimaryBtn onClick={() => setStep(6)}>
-                  Lanjutkan ke Perhitungan Premi <ChevronRight className="inline w-4 h-4 ml-1" />
-                </PrimaryBtn>
-              </div>
+              <PrimaryBtn onClick={() => setStep(6)}>
+                Lanjutkan ke Perhitungan Premi <ChevronRight className="inline w-4 h-4 ml-1" />
+              </PrimaryBtn>
             )}
           </SectionCard>
         )}

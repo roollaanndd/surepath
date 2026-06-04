@@ -182,11 +182,11 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
               inset: -20, background: 'radial-gradient(circle, rgba(22,163,74,0.12) 0%, transparent 72%)',
               animation: 'adm-ping 3s ease-in-out infinite',
             }} />
-            {/* Shield icon tile with gradient border */}
+            {/* Shield icon tile with gradient border — enlarged icon fitted to box */}
             <div className="relative p-px rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.4), rgba(22,163,74,0.08) 60%, rgba(22,163,74,0.25))' }}>
-              <div className="w-14 h-14 rounded-[calc(1rem-1px)] flex items-center justify-center"
+              <div className="w-16 h-16 rounded-[calc(1rem-1px)] flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.10) 0%, rgba(3,5,10,0.95) 100%)' }}>
-                <ShieldCheck size={26} style={{ color: '#16a34a' }} />
+                <ShieldCheck size={40} style={{ color: '#16a34a' }} />
               </div>
             </div>
           </div>

@@ -112,7 +112,14 @@ const SP_CSS = `
 @keyframes sp-float-b  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-9px) translateX(-8px); } }
 @keyframes sp-dot-ping { 0%,100% { opacity:.3; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
 @keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(99,102,241,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(99,102,241,.9)); } }
-@keyframes sp-expand-ring { 0% { transform:scale(0.6); opacity:.7; } 100% { transform:scale(2.2); opacity:0; } }
+@keyframes sp-sun-ray { to { transform: rotate(360deg); } }
+@keyframes sp-sun-pulse { 0%,100% { transform: scale(1); opacity:.9; } 50% { transform: scale(1.08); opacity:1; } }
+@keyframes sp-twinkle { 0%,100% { opacity:.15; transform: scale(0.7); } 50% { opacity:.95; transform: scale(1); } }
+@keyframes sp-celest-in { from { opacity:0; transform: scale(.5) translateY(10px); } to { opacity:1; transform: scale(1) translateY(0); } }
+@keyframes sp-shoot { 0% { transform: translate(0,0); opacity:0; } 10% { opacity:1; } 60% { opacity:1; } 100% { transform: translate(-120px,60px); opacity:0; } }
+@media (prefers-reduced-motion: reduce) {
+  .sp-anim, .sp-anim * { animation: none !important; }
+}
 `;
 function ensureSPKeyframes() {
   if (!document.getElementById('sp-kf')) {
@@ -121,14 +128,133 @@ function ensureSPKeyframes() {
   }
 }
 
+// ─── Day / night palette for the splash + welcome-back screens ────────────────
+// Splash auto-switches with the clock: ivory + indigo by day, deep charcoal by night.
+type SplashTheme = {
+  isDay: boolean;
+  bg: string;
+  accent: string;      // hex/hsl for strokes, text accents
+  accentRgb: string;   // "r,g,b" for rgba() glows
+  text: string;
+  textMuted: string;
+  textFaint: string;
+  tileBg: string;
+  tileBorder: string;
+  gridRgb: string;     // grid line color base
+  gridOpacity: number;
+  chipBg: string;
+  chipBorder: string;
+  blobs: { size: number; color: string; phase: number; speedX: number; speedY: number; op: number }[];
+};
+
+const splashTheme = (darkMode: boolean): SplashTheme =>
+  darkMode
+    ? {
+        isDay: false,
+        bg: 'hsl(0, 0%, 8%)',
+        accent: 'hsl(237, 86%, 70%)',
+        accentRgb: '129,140,248',
+        text: '#ffffff',
+        textMuted: 'rgba(255,255,255,0.38)',
+        textFaint: 'rgba(255,255,255,0.25)',
+        tileBg: 'rgba(129,140,248,0.07)',
+        tileBorder: 'rgba(129,140,248,0.22)',
+        gridRgb: '255,255,255',
+        gridOpacity: 0.018,
+        chipBg: 'rgba(255,255,255,0.04)',
+        chipBorder: 'rgba(255,255,255,0.07)',
+        blobs: [
+          { size: 560, color: '30,58,138',  phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.14 },
+          { size: 440, color: '67,56,202',  phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.10 },
+          { size: 380, color: '109,40,217', phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.08 },
+          { size: 300, color: '37,99,235',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.09 },
+        ],
+      }
+    : {
+        isDay: true,
+        bg: 'hsl(40, 36%, 97%)', // warm ivory
+        accent: 'hsl(243, 75%, 59%)', // indigo-600
+        accentRgb: '79,70,229',
+        text: '#1e1b2e',
+        textMuted: 'rgba(30,27,46,0.55)',
+        textFaint: 'rgba(30,27,46,0.38)',
+        tileBg: 'rgba(79,70,229,0.07)',
+        tileBorder: 'rgba(79,70,229,0.20)',
+        gridRgb: '79,70,229',
+        gridOpacity: 0.04,
+        chipBg: 'rgba(79,70,229,0.05)',
+        chipBorder: 'rgba(79,70,229,0.14)',
+        blobs: [
+          { size: 560, color: '129,140,248', phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.18 },
+          { size: 440, color: '167,139,250', phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.14 },
+          { size: 380, color: '251,191,36',  phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.10 }, // warm amber sun-tint
+          { size: 300, color: '96,165,250',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.12 },
+        ],
+      };
+
+// Celestial badge — animated sun by day, crescent moon + stars by night.
+const Celestial: React.FC<{ th: SplashTheme; show: boolean }> = ({ th, show }) => (
+  <div
+    className="sp-anim"
+    style={{
+      position: 'absolute', top: 28, right: 28, width: 44, height: 44,
+      opacity: show ? 1 : 0,
+      animation: show ? 'sp-celest-in .7s cubic-bezier(.22,1,.36,1) forwards' : 'none',
+    }}
+    aria-hidden
+  >
+    {th.isDay ? (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {/* rays */}
+        <svg width="44" height="44" viewBox="0 0 44 44" style={{ position: 'absolute', inset: 0, animation: 'sp-sun-ray 22s linear infinite' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <line key={i} x1="22" y1="3" x2="22" y2="9"
+              stroke={th.accent} strokeWidth="2" strokeLinecap="round"
+              transform={`rotate(${i * 45} 22 22)`} opacity="0.7" />
+          ))}
+        </svg>
+        {/* core */}
+        <div style={{
+          position: 'absolute', inset: '12px', borderRadius: '50%',
+          background: `radial-gradient(circle, rgba(251,191,36,0.95), rgba(${th.accentRgb},0.7))`,
+          boxShadow: `0 0 18px rgba(251,191,36,0.6)`,
+          animation: 'sp-sun-pulse 3.5s ease-in-out infinite',
+        }} />
+      </div>
+    ) : (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {/* crescent moon */}
+        <svg width="44" height="44" viewBox="0 0 44 44" style={{ position: 'absolute', inset: 0 }}>
+          <defs>
+            <mask id="sp-moon-mask">
+              <rect width="44" height="44" fill="white" />
+              <circle cx="28" cy="18" r="11" fill="black" />
+            </mask>
+          </defs>
+          <circle cx="22" cy="22" r="11" fill={th.accent} mask="url(#sp-moon-mask)"
+            style={{ filter: `drop-shadow(0 0 8px rgba(${th.accentRgb},0.6))` }} />
+        </svg>
+        {/* twinkling stars */}
+        {[[6, 8, 0], [38, 30, 0.6], [34, 6, 1.2]].map(([x, y, d], i) => (
+          <div key={i} style={{
+            position: 'absolute', left: x, top: y, width: 3, height: 3, borderRadius: '50%',
+            background: th.accent, animation: `sp-twinkle 2.${4 + i}s ease-in-out ${d}s infinite`,
+          }} />
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 // ─── Splash screen (auto-advances, no interaction needed) ──────────────────────
-const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l: Language) => void }> = ({ onFinish, lang, setLang }) => {
+const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l: Language) => void; darkMode: boolean }> = ({ onFinish, lang, setLang, darkMode }) => {
   const [phase, setPhase]       = useState(0);
   const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx]     = useState(0);
   const [dotCount, setDotCount] = useState(0);
   const onFinishRef  = useRef(onFinish);
   const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const th = splashTheme(darkMode);
   useEffect(() => { onFinishRef.current = onFinish; }, [onFinish]);
 
   useEffect(() => {
@@ -136,7 +262,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     return () => clearInterval(dotInt);
   }, []);
 
-  // Animated blobs — identical to the login page AnimatedBackground
+  // Animated blobs — palette follows day/night theme.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -145,12 +271,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
     window.addEventListener('resize', resize);
-    const blobs = [
-      { size: 560, color: '30,58,138',  phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.14 },
-      { size: 440, color: '67,56,202',  phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.10 },
-      { size: 380, color: '109,40,217', phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.08 },
-      { size: 300, color: '37,99,235',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.09 },
-    ];
+    const blobs = th.blobs;
     let frame = 0, animId = 0;
     const draw = () => {
       frame++;
@@ -158,7 +279,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
       blobs.forEach(blob => {
         const x = canvas.width  * (0.15 + 0.7 * (0.5 + 0.5 * Math.sin(frame * blob.speedX + blob.phase)));
         const y = canvas.height * (0.15 + 0.7 * (0.5 + 0.5 * Math.cos(frame * blob.speedY + blob.phase * 1.4)));
-        const op = (blob as any).op ?? 0.14;
+        const op = blob.op ?? 0.14;
         const grd = ctx.createRadialGradient(x, y, 0, x, y, blob.size);
         grd.addColorStop(0,   `rgba(${blob.color},${op})`);
         grd.addColorStop(0.5, `rgba(${blob.color},${(op * 0.35).toFixed(3)})`);
@@ -170,7 +291,7 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     };
     draw();
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
-  }, []);
+  }, [th]);
 
   useEffect(() => {
     ensureSPKeyframes();
@@ -184,81 +305,60 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
     return () => { [t0,t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); clearInterval(msgInt); };
   }, [lang]);
 
-  const G   = COPY[lang];
-  const GRN = 'hsl(237, 86%, 70%)'; // indigo-400 — replaces harsh green on splash bg
+  const G = COPY[lang];
 
   return (
     <div
-      className={`fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#04060c', fontFamily: "'Sora', sans-serif" }}
+      className={`sp-anim fixed inset-0 z-[5000] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${phase >= 4 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ background: th.bg, fontFamily: "'Sora', sans-serif", transition: 'background 0.6s ease, opacity 0.5s ease' }}
     >
-      {/* Animated canvas blobs */}
+      {/* Animated canvas blobs — theme-aware palette */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 
-      {/* Fine dot-matrix overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `radial-gradient(rgba(99,102,241,0.09) 1px, transparent 1px)`,
-        backgroundSize: '28px 28px',
-      }} />
-      {/* Center-focus vignette */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, rgba(4,6,12,0.72) 100%)',
-      }} />
-      {/* Top + bottom hairlines */}
-      <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.30) 50%, transparent 85%)' }} />
-      <div className="absolute bottom-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(99,102,241,0.12) 50%, transparent 85%)' }} />
+      {/* Grid overlay */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ opacity: th.gridOpacity, backgroundImage: `linear-gradient(rgba(${th.gridRgb},.6) 1px,transparent 1px),linear-gradient(90deg,rgba(${th.gridRgb},.6) 1px,transparent 1px)`, backgroundSize: '60px 60px' }} />
+
+      {/* Day/night celestial indicator */}
+      <Celestial th={th} show={phase >= 1} />
 
       <div className="relative z-10 flex flex-col items-center gap-7">
 
         {/* Logo with orbital rings */}
         <div className={`relative flex items-center justify-center transition-all duration-700 ease-out ${phase >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
           {/* Outer dashed ring */}
-          <svg width="240" height="240" viewBox="0 0 240 240" className="absolute pointer-events-none"
-            style={{ animation: 'sp-ring-fwd 22s linear infinite', opacity: 0.22 }}>
-            <circle cx="120" cy="120" r="116" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="5 10" />
+          <svg width="232" height="232" viewBox="0 0 232 232" className="absolute pointer-events-none sp-anim"
+            style={{ animation: 'sp-ring-fwd 20s linear infinite', opacity: 0.22 }}>
+            <circle cx="116" cy="116" r="112" fill="none" stroke={th.accent} strokeWidth="1" strokeDasharray="6 9" />
           </svg>
           {/* Inner dashed ring */}
-          <svg width="178" height="178" viewBox="0 0 178 178" className="absolute pointer-events-none"
-            style={{ animation: 'sp-ring-rev 14s linear infinite', opacity: 0.15 }}>
-            <circle cx="89" cy="89" r="85" fill="none" stroke={GRN} strokeWidth="1" strokeDasharray="3 14" />
+          <svg width="176" height="176" viewBox="0 0 176 176" className="absolute pointer-events-none sp-anim"
+            style={{ animation: 'sp-ring-rev 13s linear infinite', opacity: 0.16 }}>
+            <circle cx="88" cy="88" r="84" fill="none" stroke={th.accent} strokeWidth="1" strokeDasharray="3 13" />
           </svg>
           {/* Orbiting dots */}
           {([0, 1, 2] as const).map(i => (
-            <div key={i} className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            <div key={i} className="absolute inset-0 flex items-center justify-center pointer-events-none sp-anim"
               style={{ animation: `sp-orbit-${i} ${5 + i * 1.8}s linear infinite` }}>
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: GRN, boxShadow: `0 0 10px ${GRN}, 0 0 22px rgba(99,102,241,.4)` }} />
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: th.accent, boxShadow: `0 0 10px ${th.accent}, 0 0 22px rgba(${th.accentRgb},.5)` }} />
             </div>
           ))}
-          {/* Vertical light beam below logo */}
-          <div className="absolute pointer-events-none" style={{
-            top: '50%', left: '50%', transform: 'translateX(-50%)',
-            width: 1, height: 200, marginTop: 56,
-            background: `linear-gradient(to bottom, ${GRN}44, transparent)`,
-          }} />
-          {/* Logo tile */}
+          {/* Logo tile — icon sized to fill the box */}
           <div className="relative">
-            <div className="absolute rounded-full pointer-events-none" style={{
-              inset: -28, background: `radial-gradient(circle, ${GRN}18 0%, transparent 68%)`,
-              animation: 'sp-glow 3.2s ease-in-out infinite',
-            }} />
-            {/* Gradient-border wrapper */}
-            <div className="relative p-px rounded-[2.5rem]" style={{
-              background: `linear-gradient(135deg, ${GRN}55, ${GRN}10 55%, ${GRN}30)`,
-            }}>
-              <div className="relative w-28 h-28 rounded-[calc(2.5rem-1px)] flex items-center justify-center"
-                style={{ background: `linear-gradient(135deg, ${GRN}0a 0%, rgba(4,6,12,0.96) 100%)` }}>
-                <SurePathLogo className="w-[4.5rem] h-[4.5rem]" />
-              </div>
+            <div className="absolute -inset-6 rounded-[3rem] blur-3xl opacity-25" style={{ background: th.accent }} />
+            <div className="relative w-28 h-28 rounded-[2.5rem] flex items-center justify-center border sp-anim"
+              style={{ background: th.tileBg, borderColor: th.tileBorder, boxShadow: `0 0 60px rgba(${th.accentRgb},0.12)`, animation: 'sp-glow 3.2s ease-in-out infinite' }}>
+              <SurePathLogo className="w-[5.5rem] h-[5.5rem] object-contain" />
             </div>
           </div>
         </div>
 
         {/* Brand */}
         <div className={`text-center transition-all duration-600 ${phase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff', lineHeight: 1 }}>
-            Sure<span style={{ color: GRN }}>Path</span>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: th.text, lineHeight: 1 }}>
+            Sure<span style={{ color: th.accent }}>Path</span>
           </h1>
-          <p style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.38em', textTransform: 'uppercase', marginTop: '0.55rem' }}>
+          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.35em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
             {G.tagline}
           </p>
         </div>
@@ -267,31 +367,19 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
         <div className={`flex flex-col items-center gap-3 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
           {/* Step message */}
           <div className="flex items-center gap-2">
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: GRN, animation: 'sp-dot-ping 1.3s ease-in-out infinite', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.58rem', fontWeight: 500, color: 'rgba(255,255,255,0.36)', letterSpacing: '0.04em' }}>{G.steps[msgIdx]}</span>
+            <div className="sp-anim" style={{ width: 6, height: 6, borderRadius: '50%', background: th.accent, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
+            <span style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
           </div>
-          {/* Progress bar — gradient fill with glow */}
-          <div className="w-full rounded-full overflow-hidden" style={{ height: 3, background: 'rgba(255,255,255,0.06)' }}>
-            <div className="h-full rounded-full transition-all duration-200" style={{
-              width: `${progress}%`,
-              background: `linear-gradient(90deg, ${GRN}bb, ${GRN})`,
-              boxShadow: `0 0 10px ${GRN}90`,
-            }} />
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 2, background: `rgba(${th.accentRgb},0.12)` }}>
+            <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: th.accent, boxShadow: `0 0 8px rgba(${th.accentRgb},0.6)` }} />
           </div>
-          {/* Loading dots */}
-          <div style={{ fontSize: '0.56rem', fontWeight: 500, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em' }}>
+          <div style={{ fontSize: '0.58rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.12em' }}>
             {lang === 'ID' ? 'Memuat' : 'Loading'}{'·'.repeat(dotCount)}
           </div>
           {/* Feature chips */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
-              <span key={chip} style={{
-                fontSize: '0.58rem', fontWeight: 500,
-                color: 'rgba(255,255,255,0.32)',
-                background: `linear-gradient(135deg, rgba(99,102,241,0.08), rgba(255,255,255,0.03))`,
-                border: '1px solid rgba(99,102,241,0.16)',
-                borderRadius: '99px', padding: '0.22rem 0.7rem',
-              }}>
+              <span key={chip} style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, background: th.chipBg, border: `1px solid ${th.chipBorder}`, borderRadius: '99px', padding: '0.18rem 0.55rem' }}>
                 {chip}
               </span>
             ))}
@@ -299,29 +387,20 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
         </div>
 
         {/* Language toggle */}
-        <div className={`flex items-center gap-1.5 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="flex items-center p-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            {(['ID', 'EN'] as const).map(l => (
-              <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
-                className="transition-all duration-200"
-                style={{
-                  fontFamily: "'Sora',sans-serif", fontSize: '0.6rem', fontWeight: lang === l ? 700 : 400,
-                  color: lang === l ? '#fff' : 'rgba(255,255,255,0.28)',
-                  padding: '0.22rem 0.75rem', borderRadius: '99px', cursor: 'pointer',
-                  background: lang === l ? GRN : 'transparent',
-                  boxShadow: lang === l ? `0 2px 10px ${GRN}50` : 'none',
-                }}>
-                {l}
-              </button>
-            ))}
-          </div>
+        <div className={`flex items-center gap-1 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
+          {(['ID', 'EN'] as const).map(l => (
+            <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
+              style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.62rem', fontWeight: lang === l ? 600 : 400, color: lang === l ? th.accent : th.textFaint, padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer', background: lang === l ? `rgba(${th.accentRgb},0.10)` : 'transparent', border: `1px solid ${lang === l ? `rgba(${th.accentRgb},0.22)` : 'transparent'}`, transition: 'all 0.2s' }}>
+              {l}
+            </button>
+          ))}
         </div>
 
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-8 flex items-center gap-2" style={{ fontSize: '0.46rem', fontWeight: 600, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.32em', textTransform: 'uppercase' }}>
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`${GRN}55`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div className="absolute bottom-8" style={{ fontSize: '0.5rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={`rgba(${th.accentRgb},0.6)`} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         SurePath · Secure Connection
@@ -331,10 +410,11 @@ const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setLang: (l
 };
 
 // ─── Welcome-back screen (shown after login, auto-advances) ───────────────────
-const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => void; lang: Language }) => {
+const AppEntryScreen = ({ name, onDone, lang, darkMode }: { name: string; onDone: () => void; lang: Language; darkMode: boolean }) => {
   const [visible, setVisible] = useState(false);
   const [fade, setFade]       = useState(false);
   const onDoneRef = useRef(onDone);
+  const th = splashTheme(darkMode);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
@@ -345,82 +425,53 @@ const AppEntryScreen = ({ name, onDone, lang }: { name: string; onDone: () => vo
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
-  const G   = COPY[lang];
-  const GRN = '#06e000';
+  const G = COPY[lang];
 
   return (
     <div
-      className={`fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: '#04060c', fontFamily: "'Sora', sans-serif" }}
+      className={`sp-anim fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      style={{ background: th.bg, fontFamily: "'Sora', sans-serif", transition: 'background 0.6s ease, opacity 0.5s ease' }}
     >
-      {/* Dot-matrix background */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(6,224,0,0.07) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }} />
+      {/* Day/night celestial indicator */}
+      <Celestial th={th} show={visible} />
 
-      {/* Deep radial glow behind icon */}
+      {/* Radial glow */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div style={{
-          width: 520, height: 520, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(6,224,0,0.09) 0%, transparent 65%)',
-          opacity: visible ? 1 : 0, transition: 'opacity 1.2s ease',
-        }} />
+        <div style={{ width: 440, height: 440, borderRadius: '50%', background: `radial-gradient(circle, rgba(${th.accentRgb},0.12) 0%, transparent 68%)`, opacity: visible ? 1 : 0, transition: 'opacity 1s' }} />
       </div>
 
-      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-90'}`}>
-
-        {/* Expanding pulse rings + shield */}
-        <div className="relative mx-auto mb-8" style={{ width: 144, height: 144 }}>
-          {/* Three concentric expanding rings */}
-          {[0, 1, 2].map(i => (
-            <div key={i} className="absolute inset-0 rounded-full pointer-events-none" style={{
-              border: `1px solid ${GRN}`,
-              animation: `sp-expand-ring 2.4s ease-out ${i * 0.55}s infinite`,
-            }} />
-          ))}
-          {/* Gradient-border shield tile */}
-          <div className="absolute inset-4 p-px rounded-[2rem]" style={{
-            background: `linear-gradient(135deg, ${GRN}55, ${GRN}12 50%, ${GRN}35)`,
-          }}>
-            <div className="w-full h-full rounded-[calc(2rem-1px)] flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, rgba(6,224,0,0.08) 0%, rgba(4,6,12,0.97) 100%)',
-            }}>
-              <svg width="54" height="54" viewBox="0 0 54 54" fill="none" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
-                <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
-                  fill="rgba(6,224,0,0.10)" stroke={GRN} strokeWidth="1.5" />
-                <path d="M19 27L23.5 31.5L35 20"
-                  stroke={GRN} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
-              </svg>
-            </div>
+      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
+        {/* Animated shield — icon scaled to fill the tile */}
+        <div className="relative mx-auto mb-7" style={{ width: 124, height: 124 }}>
+          <div className="absolute inset-0 rounded-[2.5rem] blur-2xl" style={{ background: th.accent, opacity: 0.16 }} />
+          <div className="relative w-full h-full rounded-[2.5rem] flex items-center justify-center border"
+            style={{ background: th.tileBg, borderColor: th.tileBorder, boxShadow: `0 0 60px rgba(${th.accentRgb},0.12)` }}>
+            <svg width="72" height="72" viewBox="0 0 54 54" fill="none" className="sp-anim" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
+              <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
+                fill={`rgba(${th.accentRgb},0.12)`} stroke={th.accent} strokeWidth="1.5" />
+              <path d="M19 27L23.5 31.5L35 20"
+                stroke={th.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
+            </svg>
           </div>
         </div>
 
-        {/* Welcome text */}
-        <p style={{ fontSize: '0.72rem', fontWeight: 600, color: `${GRN}cc`, marginBottom: '0.35rem', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-          {G.welcome}
+        <p style={{ fontSize: '0.75rem', fontWeight: 500, color: th.accent, marginBottom: '0.4rem', letterSpacing: '0.02em' }}>
+          {G.welcome},
         </p>
-        <h2 style={{ fontSize: 'clamp(2.2rem,7vw,3rem)', fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', lineHeight: 1, marginBottom: '1.4rem' }}>
-          {name}
+        <h2 style={{ fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: th.text, lineHeight: 1, marginBottom: '1.2rem' }}>
+          {name} 👋
         </h2>
-
-        {/* Verified badge — gradient border */}
-        <div className="inline-block p-px rounded-full" style={{
-          background: `linear-gradient(90deg, ${GRN}44, ${GRN}18, ${GRN}44)`,
-        }}>
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full" style={{
-            background: 'rgba(4,6,12,0.9)',
-          }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: GRN, boxShadow: `0 0 6px ${GRN}`, animation: 'sp-dot-ping 1.3s ease-in-out infinite', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: GRN, letterSpacing: '0.06em' }}>{G.verified}</span>
-          </div>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
+          style={{ borderColor: `rgba(${th.accentRgb},0.22)`, background: `rgba(${th.accentRgb},0.08)` }}>
+          <div className="sp-anim" style={{ width: 6, height: 6, borderRadius: '50%', background: th.accent, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 500, color: th.accent }}>{G.verified}</span>
         </div>
       </div>
 
       {/* Bottom wordmark */}
-      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 600, color: 'rgba(255,255,255,0.16)', letterSpacing: '0.32em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`${GRN}44`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 600, color: th.textFaint, letterSpacing: '0.32em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`rgba(${th.accentRgb},0.27)`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
         SurePath
@@ -718,7 +769,7 @@ const App = () => {
     setAppMode(false);
   }, []);
 
-  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} />;
+  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
   if (oauthLoading && !currentUser) return <PortalLoader />;
   if (pendingOAuthUser) return (
     <RoleSelectionScreen
@@ -727,7 +778,7 @@ const App = () => {
       onCancel={() => { setPendingOAuthUser(null); handleLogout(); }}
     />
   );
-  if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} />;
+  if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} darkMode={darkMode} />;
 
   if (showTc && currentUser) {
     return (

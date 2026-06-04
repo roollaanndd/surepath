@@ -355,11 +355,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="absolute -inset-6 rounded-full blur-3xl opacity-25" style={{ background: GRAD }} />
-            {/* Gradient-border logo tile */}
+            {/* Gradient-border logo tile with enlarged monochrome brand mark */}
             <div className="relative p-px rounded-[1.9rem]" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.6), rgba(139,92,246,0.15) 55%, rgba(99,102,241,0.35))' }}>
               <div className="relative w-20 h-20 rounded-[calc(1.9rem-1px)] flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(7,7,15,0.96) 100%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)' }}>
-                <SurePathLogo className="w-12 h-12 grayscale brightness-150 contrast-125 opacity-90" />
+                <SurePathLogo className="w-[4.25rem] h-[4.25rem] object-contain grayscale brightness-150 contrast-125 opacity-90" />
               </div>
             </div>
           </div>

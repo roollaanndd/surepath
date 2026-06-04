@@ -28,13 +28,12 @@ export const useWebsiteConfig = (sectionKey: string): SpWebsiteConfig | null => 
   return config;
 };
 
-// ─── Design tokens — two distinct identities ─────────────────────────────────
+// ─── Design tokens — unified green brand identity ────────────────────────────
 //   NIGHT: signature green on dark navy (cinematic, brand hero).
-//   DAY:   premium indigo on a warm ivory/pearl palette — deliberately
-//          different from night, and free of the green that dominated before.
-export const ACCENT = '#16a34a';            // night / signature green
-export const DAY_ACCENT = '#4f46e5';        // day / premium indigo (matches login)
-export const LP_GREEN = 'hsl(119 99% 46%)'; // kept for hero dark-bg only
+//   DAY:   same signature green on warm ivory/pearl — consistent brand colour.
+export const ACCENT = '#16a34a';            // signature green
+export const DAY_ACCENT = '#16a34a';        // day accent — matches brand green
+export const LP_GREEN = 'hsl(119 99% 46%)'; // kept for hero dark-bg neon glow only
 
 // Mode-aware accent — use this everywhere a highlight/CTA must adapt to the mode.
 export const accentFor = (darkMode: boolean) => (darkMode ? ACCENT : DAY_ACCENT);
@@ -233,7 +232,7 @@ export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: bool
     style={
       darkMode
         ? { background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.2)', color: '#86efac' }
-        : { background: 'rgba(79,70,229,0.07)', border: '1px solid rgba(79,70,229,0.18)', color: '#4338ca' }
+        : { background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.18)', color: '#15803d' }
     }>
     {children}
   </span>

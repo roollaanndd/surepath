@@ -107,11 +107,11 @@ const SP_CSS = `
 @keyframes sp-orbit-0  { from { transform: rotate(0deg)   translateX(74px) rotate(0deg);    } to { transform: rotate(360deg)  translateX(74px)  rotate(-360deg);  } }
 @keyframes sp-orbit-1  { from { transform: rotate(130deg) translateX(94px) rotate(-130deg); } to { transform: rotate(490deg)  translateX(94px)  rotate(-490deg);  } }
 @keyframes sp-orbit-2  { from { transform: rotate(250deg) translateX(114px) rotate(-250deg);} to { transform: rotate(610deg)  translateX(114px) rotate(-610deg); } }
-@keyframes sp-glow     { 0%,100% { box-shadow: 0 0 28px rgba(99,102,241,0.15), 0 0 56px rgba(99,102,241,0.08); } 50% { box-shadow: 0 0 52px rgba(99,102,241,0.28), 0 0 100px rgba(99,102,241,0.12); } }
+@keyframes sp-glow     { 0%,100% { box-shadow: 0 0 28px rgba(22,163,74,0.15), 0 0 56px rgba(22,163,74,0.08); } 50% { box-shadow: 0 0 52px rgba(22,163,74,0.28), 0 0 100px rgba(22,163,74,0.12); } }
 @keyframes sp-float-a  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-14px) translateX(5px); } }
 @keyframes sp-float-b  { 0%,100% { transform: translateY(0) translateX(0); } 50% { transform: translateY(-9px) translateX(-8px); } }
 @keyframes sp-dot-ping { 0%,100% { opacity:.3; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
-@keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(99,102,241,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(99,102,241,.9)); } }
+@keyframes sp-check-glow { 0%,100% { filter:drop-shadow(0 0 4px rgba(22,163,74,.5)); } 50% { filter:drop-shadow(0 0 12px rgba(22,163,74,.9)); } }
 @keyframes sp-sun-ray { to { transform: rotate(360deg); } }
 @keyframes sp-sun-pulse { 0%,100% { transform: scale(1); opacity:.9; } 50% { transform: scale(1.08); opacity:1; } }
 @keyframes sp-twinkle { 0%,100% { opacity:.15; transform: scale(0.7); } 50% { opacity:.95; transform: scale(1); } }
@@ -152,43 +152,43 @@ const splashTheme = (darkMode: boolean): SplashTheme =>
     ? {
         isDay: false,
         bg: 'hsl(0, 0%, 8%)',
-        accent: 'hsl(237, 86%, 70%)',
-        accentRgb: '129,140,248',
+        accent: 'hsl(119, 99%, 46%)',
+        accentRgb: '1,235,2',
         text: '#ffffff',
         textMuted: 'rgba(255,255,255,0.38)',
         textFaint: 'rgba(255,255,255,0.25)',
-        tileBg: 'rgba(129,140,248,0.07)',
-        tileBorder: 'rgba(129,140,248,0.22)',
+        tileBg: 'rgba(1,235,2,0.07)',
+        tileBorder: 'rgba(1,235,2,0.22)',
         gridRgb: '255,255,255',
         gridOpacity: 0.018,
         chipBg: 'rgba(255,255,255,0.04)',
         chipBorder: 'rgba(255,255,255,0.07)',
         blobs: [
-          { size: 560, color: '30,58,138',  phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.14 },
-          { size: 440, color: '67,56,202',  phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.10 },
-          { size: 380, color: '109,40,217', phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.08 },
-          { size: 300, color: '37,99,235',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.09 },
+          { size: 560, color: '5,46,22',    phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.16 },
+          { size: 440, color: '6,78,59',    phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.12 },
+          { size: 380, color: '22,163,74',  phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.10 },
+          { size: 300, color: '4,120,87',   phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.11 },
         ],
       }
     : {
         isDay: true,
         bg: 'hsl(40, 36%, 97%)', // warm ivory
-        accent: 'hsl(243, 75%, 59%)', // indigo-600
-        accentRgb: '79,70,229',
+        accent: '#16a34a', // brand green
+        accentRgb: '22,163,74',
         text: '#1e1b2e',
         textMuted: 'rgba(30,27,46,0.55)',
         textFaint: 'rgba(30,27,46,0.38)',
-        tileBg: 'rgba(79,70,229,0.07)',
-        tileBorder: 'rgba(79,70,229,0.20)',
-        gridRgb: '79,70,229',
+        tileBg: 'rgba(22,163,74,0.07)',
+        tileBorder: 'rgba(22,163,74,0.20)',
+        gridRgb: '22,163,74',
         gridOpacity: 0.04,
-        chipBg: 'rgba(79,70,229,0.05)',
-        chipBorder: 'rgba(79,70,229,0.14)',
+        chipBg: 'rgba(22,163,74,0.05)',
+        chipBorder: 'rgba(22,163,74,0.14)',
         blobs: [
-          { size: 560, color: '129,140,248', phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.18 },
-          { size: 440, color: '167,139,250', phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.14 },
-          { size: 380, color: '251,191,36',  phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.10 }, // warm amber sun-tint
-          { size: 300, color: '96,165,250',  phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.12 },
+          { size: 560, color: '22,163,74',   phase: 0,   speedX: 0.0007, speedY: 0.0005, op: 0.18 },
+          { size: 440, color: '134,239,172',  phase: 2.1, speedX: 0.0005, speedY: 0.0008, op: 0.14 },
+          { size: 380, color: '251,191,36',   phase: 4.2, speedX: 0.0009, speedY: 0.0006, op: 0.10 }, // warm amber sun-tint
+          { size: 300, color: '16,185,129',   phase: 1.0, speedX: 0.0006, speedY: 0.0009, op: 0.12 },
         ],
       };
 

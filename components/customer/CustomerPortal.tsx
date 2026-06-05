@@ -129,7 +129,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               <PortalHero onAction={navigate} lang={lang} />
 
-              {/* Layanan Kami — circular icon grid (myBCA Main Menu style) */}
+              {/* Layanan Kami — circular icon grid (SurePath green Main Menu style) */}
               <div>
                 <div className="flex items-center justify-between mb-4 px-1">
                   <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">
@@ -138,7 +138,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {[
-                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#0B2447', circleBg: '#DBEAFE' },
+                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#052e16', circleBg: '#DBEAFE' },
                     { id: 'claim',    label: t('Klaim', 'Klaim'),      icon: Zap,         iconColor: '#be123c', circleBg: '#FFE4E6' },
                     { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#047857', circleBg: '#D1FAE5' },
                     { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#92400e', circleBg: '#FEF3C7' },
@@ -163,14 +163,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
               </div>
 
-              {/* Active policy card — teal gradient (myBCA account card style) */}
+              {/* Active policy card — SurePath green gradient */}
               {latestPolicy && (
                 <div
                   className="rounded-[1.75rem] p-5 relative overflow-hidden shadow-xl"
-                  style={{ background: 'linear-gradient(135deg, #0E7490 0%, #0B2447 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #16a34a 0%, #052e16 100%)' }}
                 >
                   {/* decorative glow */}
-                  <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #5CE1E6, transparent)' }} />
+                  <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #4ade80, transparent)' }} />
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -429,13 +429,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF4FB] dark:bg-[#0a1929] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-[#f0fdf4] dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300">
 
-      {/* Fixed header — navy gradient (myBCA-style) */}
+      {/* Fixed header — SurePath green gradient */}
       {!isFullscreen && (
         <header
           className="fixed top-0 inset-x-0 z-40"
-          style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 65%, #0E7490 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 65%, #16a34a 100%)' }}
         >
           {/* Top row: logo + action icons */}
           <div className="flex items-center justify-between px-5 pt-4 pb-1">
@@ -444,7 +444,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <SurePathLogo className="w-6 h-6 object-contain" />
               </div>
               <span className="text-white font-black text-[15px] tracking-tight">
-                Sure<span style={{ color: '#5CE1E6' }}>Path</span>
+                Sure<span style={{ color: '#4ade80' }}>Path</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -525,11 +525,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         {renderContent()}
       </main>
 
-      {/* Bottom tab navigation — flat dark navy bar (myBCA-style) */}
+      {/* Bottom tab navigation — flat dark SurePath green bar */}
       {!isFullscreen && (
         <nav
           className="fixed bottom-0 inset-x-0 z-50"
-          style={{ background: '#0B2447', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
+          style={{ background: '#052e16', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
         >
           <div className="flex items-center justify-around px-2 pt-2 pb-3">
             {TABS.map(({ id, labelEn, labelId, Icon }, index) => {
@@ -546,16 +546,16 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   {isCenter ? (
                     <div
                       className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
-                      style={{ background: 'linear-gradient(135deg, #0E7490, #1a3a6b)', boxShadow: '0 4px 20px rgba(14,116,144,0.5)' }}
+                      style={{ background: 'linear-gradient(135deg, #16a34a, #14532d)', boxShadow: '0 4px 20px rgba(22,163,74,0.5)' }}
                     >
                       <Icon size={22} strokeWidth={2.5} className="text-white" />
                     </div>
                   ) : (
                     <>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${active ? 'bg-white/15' : ''}`}>
-                        <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }} />
+                        <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#4ade80' : 'rgba(255,255,255,0.35)' }} />
                       </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }}>
+                      <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#4ade80' : 'rgba(255,255,255,0.35)' }}>
                         {lang === Language.EN ? labelEn : labelId}
                       </span>
                     </>

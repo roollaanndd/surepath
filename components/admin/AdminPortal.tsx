@@ -295,7 +295,7 @@ const AdminPortal = ({
           </div>
           <div className="min-w-0 flex-1">
             <p className={`text-xs font-black truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{formatRole(userRole)}</p>
-            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{currentUser?.email ?? 'Admin'}</p>
+            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{currentUser?.name ?? 'Admin'}</p>
           </div>
         </div>
         <button
@@ -518,7 +518,7 @@ const AdminPortal = ({
   };
 
   // ── Layout vars ────────────────────────────────────────────────────────────
-  const rootBg   = th(darkMode, 'bg-[#050505] text-white',           'bg-slate-50 text-slate-900');
+  const rootBg   = th(darkMode, 'bg-[#050f0a] text-white',           'bg-slate-50 text-slate-900');
   const headerBg = th(darkMode, 'bg-black/20 border-white/5',        'bg-white border-slate-200');
   const inputBg  = th(darkMode, 'bg-white/5 border-white/10 text-white placeholder-gray-600', 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400');
 
@@ -531,8 +531,8 @@ const AdminPortal = ({
         @keyframes orb3 { 0%,100%{transform:translate(0,0) scale(1.05)} 50%{transform:translate(-30px,-60px) scale(0.95)} }
       `}</style>
       <div style={{ position:'fixed', top:'10%', left:'5%', width:600, height:600, borderRadius:'50%', background:'rgba(16,185,129,0.07)', filter:'blur(120px)', animation:'orb1 18s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
-      <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(59,130,246,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
-      <div style={{ position:'fixed', bottom:'10%', left:'40%', width:700, height:700, borderRadius:'50%', background:'rgba(245,158,11,0.05)', filter:'blur(120px)', animation:'orb3 20s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(22,163,74,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position:'fixed', bottom:'10%', left:'40%', width:700, height:700, borderRadius:'50%', background:'rgba(34,197,94,0.03)', filter:'blur(120px)', animation:'orb3 20s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
@@ -576,7 +576,7 @@ const AdminPortal = ({
                 <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-[0.5rem]`}>
                   {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
                 </span>
-                {currentUser.email}
+                {currentUser.name ?? currentUser.email}
               </span>
             )}
             {/* Day / Night toggle */}

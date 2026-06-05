@@ -3,7 +3,7 @@
 > Living tracker for the multi-agent remediation effort. Update statuses as slices land.
 > Status keys: ⬜ todo · 🟡 in progress (agent) · ✅ done & deployed · 🔒 reserved (lead-only) · ⏭️ deferred/follow-up
 
-Last updated by lead: after live-DB RLS verification + team dispatch.
+Last updated by lead: Batch 2 (app-misc + custwiz + security gateway) deployed 4c3fec3.
 
 ---
 
@@ -21,9 +21,9 @@ Verified against Supabase project `uyjgeteelnswphyzkjwi`:
 
 ## A) SECURITY / DB  🔒 lead-controlled (agent preps code; lead applies prod migration)
 
-- ⬜ Add data-gateway actions: `create_policy_order`, `get_my_orders`, `get_my_claims`, `get_my_payments` (service_role, validate amounts/ownership server-side).
-- ⬜ Route `services/supabaseService.ts` (createPolicyOrder / getCustomerOrders / getCustomerClaims) through `callGateway(...)` — keep function signatures stable so wizards don't change.
-- ⬜ Deploy data-gateway (additive, safe).
+- ✅ Add data-gateway actions: `create_policy_order`, `get_my_orders`, `get_my_claims`, `get_my_payments` (service_role, validate amounts/ownership server-side).
+- ✅ Route `services/supabaseService.ts` (createPolicyOrder / getCustomerOrders / getCustomerClaims) through `callGateway(...)` — keep function signatures stable so wizards don't change.
+- ✅ Deploy data-gateway (additive, safe) — v3 deployed 2026-06-05.
 - 🔒 Apply RLS lockdown migration (drop `anon_all_*` / `sp_claims_open`; add scoped self-only SELECT + service_role policies) — LEAD applies after deployed code verified, to avoid breaking live buy flow.
 - ⬜ Re-run `get_advisors security` after lockdown.
 
@@ -38,14 +38,14 @@ Verified against Supabase project `uyjgeteelnswphyzkjwi`:
 ## C) CUSTOMER BUYING FLOW  (agent: CUST-WIZ)
 Owns: `TravelInsuranceWizard.tsx`, `CustomInsuranceWizard.tsx`, `MPARInsuranceWizard.tsx`, `CarInsuranceWizard.tsx`, `car-wizard/*`, `PaymentRedirect.tsx`
 
-- ⬜ CRIT-1: Travel KYC inputs use `defaultValue` w/o onChange → convert to controlled state (add birth-date) (`TravelInsuranceWizard.tsx:225-248`).
-- ⬜ CRIT-2: CustomInsuranceWizard writes only to Dexie → route through `createPolicyOrder` + `createXenditInvoice` like other wizards (`CustomInsuranceWizard.tsx:49-70`).
+- ✅ CRIT-1: Travel KYC inputs (name, NIK, email, birthDate) now controlled state; traveler data submitted to order + invoice.
+- ✅ CRIT-2: CustomInsuranceWizard routes through `createPolicyOrder` + `createXenditInvoice`; shows confirmation screen with payment link.
 - ⬜ HIGH-3: StepPayment CC form is decorative & marks order paid w/o charge → remove CC option, rely on Xendit hosted invoice (`car-wizard/StepPayment.tsx:141-165`).
 - ⬜ HIGH-4: PaymentRedirect `/payment/success` doesn't update order → poll gateway for PAID / show "verifying" state (`PaymentRedirect.tsx`).
 - ⬜ MED-3: MPAR `aiScore=0` on AI fail blocks step silently → show error + retry, don't hard-block (`MPARInsuranceWizard.tsx:127-136`).
 - ⬜ MED-2: StepPayment `loading` prop unused (`car-wizard/StepPayment.tsx:16`).
 - ⬜ MED-8: CarInsuranceWizard `discountType` stored but never applied (`CarInsuranceWizard.tsx:70`).
-- ⬜ LOW-4: Replace `alert()` payment errors with inline UI in these wizards.
+- ✅ LOW-4: `alert()` replaced with inline error UI in TravelInsuranceWizard and CustomInsuranceWizard.
 - ⬜ LOW-5: Add Terrorism/SRCC toggle to coverage UI (`car-wizard/StepCoverage.tsx`).
 
 ## D) AGENT APP  (agent: AGENT-APP)  ✅ DEPLOYED (2d1852f)
@@ -55,11 +55,11 @@ Owns: `TravelInsuranceWizard.tsx`, `CustomInsuranceWizard.tsx`, `MPARInsuranceWi
 ## E) APP / MISC  (agent: APP-MISC)
 Owns: `App.tsx`, `components/ContactPage.tsx`, `components/customer/CustomerPortal.tsx`, `.env.example`
 
-- ⬜ HIGH-5: T&C bypass for localStorage-restored sessions → run `getUserTcStatus` in the localStorage branch (`App.tsx:679-689`).
-- ⬜ LOW-1: `sessionStorage` vs `localStorage` session inconsistency → make session persist correctly across reload (`App.tsx:584,664,679`).
-- ⬜ LOW-2: CustomerPortal bell has no onClick + always-on red dot → wire to notifications or remove dot when none (`CustomerPortal.tsx:422-428`).
-- ⬜ MED-1: ContactPage "Kirim Transmisi" button is a no-op → wire submit (store via gateway or mailto fallback) (`ContactPage.tsx:98`).
-- ⬜ LOW-3: `.env.example` contains real project URL + anon key → replace with placeholders.
+- ✅ HIGH-5: `getUserTcStatus` now called in localStorage restore branch; sessions never skip T&C gate.
+- ✅ LOW-1: Session written to `localStorage` on login; survives page reload.
+- ✅ LOW-2: Bell wired to `getNotifications`; red dot only shows when `unreadCount > 0`; click-away panel with empty state.
+- ✅ MED-1: ContactPage submit opens `mailto:` with prefilled subject/body; inline confirmation shown.
+- ⬜ LOW-3: `.env.example` contains real project URL + anon key → replace with placeholders (file read-protected in container; do manually).
 - ⬜ HIGH-6 (note): Health product routes to chatbot, no purchase wizard → set honest expectation now; full Health wizard = deferred feature (see G).
 
 ## F) HOUSEKEEPING / GUIDELINE
@@ -86,7 +86,8 @@ replacing NeuralGuard simulation, audit-log viewer — retained in planner repor
 ---
 
 ## DEPLOY LOG
-- 2d1852f → main (Vercel auto): Batch 1 = OJK rates (B) + agent marketplace (D). Feature branch synced.
-- Pending: custwiz (fix/customer-buyflow), appmisc (fix/app-misc), security (fix/security-gateway) still running.
-- Reserved (lead): deploy gateway-routing frontend, THEN apply RLS lockdown migration, THEN re-run security advisors.
-- NOTE: stray worktree `agent-a67450ab71f875b29` ("landing page pro-max redesign", commit 91f5d1a) is NOT part of this plan — left untouched, provenance unknown. Review/clean before relying on it.
+- 2d1852f → main: Batch 1 = OJK rates (B) + agent marketplace (D).
+- 4c3fec3 → main: Batch 2 = app-misc (E), custwiz (C CRIT-1/2 + LOW-4), security gateway (A ✅ frontend + gateway v3).
+- data-gateway v3 deployed to Supabase project uyjgeteelnswphyzkjwi (2026-06-05).
+- 🔒 NEXT (lead only): verify live buy flow on 4c3fec3 → DROP anon_all_policy_orders / anon_all_payments / sp_claims_open → re-run get_advisors.
+- Stray worktree `agent-a67450ab71f875b29` discarded.

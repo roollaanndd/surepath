@@ -237,7 +237,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF4FB] dark:bg-[#0a1929] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
+    <div className="min-h-screen bg-[#f0fdf4] dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }
@@ -247,10 +247,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           [data-sp-anim] { animation: none !important; }
         }
       `}</style>
-      {/* Top Header — navy gradient (myBCA-style) */}
+      {/* Top Header — SurePath green gradient */}
       <header
         className="fixed top-0 inset-x-0 z-40"
-        style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 65%, #0E7490 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 65%, #16a34a 100%)' }}
       >
         {/* Top row */}
         <div className="flex items-center justify-between px-5 pt-4 pb-1">
@@ -259,7 +259,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <SurePathLogo className="w-6 h-6 object-contain" />
             </div>
             <span className="text-white font-black text-[15px] tracking-tight">
-              Sure<span style={{ color: '#5CE1E6' }}>Path</span>
+              Sure<span style={{ color: '#4ade80' }}>Path</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -321,10 +321,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation — flat dark navy bar (myBCA-style) */}
+      {/* Bottom Tab Navigation — flat dark SurePath green bar */}
       <nav
         className="fixed bottom-0 inset-x-0 z-50"
-        style={{ background: '#0B2447', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
+        style={{ background: '#052e16', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
       >
         <div className="flex items-center justify-around px-2 pt-2 pb-3">
           {TABS.map(({ id, labelId, Icon }, index) => {
@@ -339,7 +339,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                 {isCenter ? (
                   <div
                     className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
-                    style={{ background: 'linear-gradient(135deg, #0E7490, #1a3a6b)', boxShadow: '0 4px 20px rgba(14,116,144,0.5)' }}
+                    style={{ background: 'linear-gradient(135deg, #16a34a, #14532d)', boxShadow: '0 4px 20px rgba(22,163,74,0.5)' }}
                   >
                     <Icon size={22} strokeWidth={2.5} className="text-white" />
                   </div>

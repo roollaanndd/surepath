@@ -189,6 +189,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                 <ShieldCheck size={40} style={{ color: '#16a34a' }} />
               </div>
             </div>
+            <p style={{ textAlign: 'center', marginTop: 8, fontSize: '0.72rem', fontWeight: 900, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.55)' }}>
+              Sure<span style={{ color: '#4ade80' }}>Path</span>
+            </p>
           </div>
 
           <h1 style={{ fontSize: '1.65rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#f3f4f6', lineHeight: 1, marginBottom: '0.55rem' }}>
@@ -239,7 +242,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                   <input
                     type="email" required autoComplete="username"
                     value={email} onChange={e => setEmail(e.target.value)}
-                    placeholder="admin@surepath.ai"
+                    placeholder="Email admin"
                     className="block w-full pl-10 pr-4 py-3 rounded-xl text-gray-200 placeholder-gray-700 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'monospace', fontSize: '0.78rem' }}
                     onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(22,163,74,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}

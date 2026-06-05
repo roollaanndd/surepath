@@ -27,13 +27,13 @@ Verified against Supabase project `uyjgeteelnswphyzkjwi`:
 - 🔒 Apply RLS lockdown migration (drop `anon_all_*` / `sp_claims_open`; add scoped self-only SELECT + service_role policies) — LEAD applies after deployed code verified, to avoid breaking live buy flow.
 - ⬜ Re-run `get_advisors security` after lockdown.
 
-## B) OJK RATES & CONSTANTS  (agent: RATES — owns `constants.ts`)
+## B) OJK RATES & CONSTANTS  (agent: RATES)  ✅ DEPLOYED (2d1852f)
 
-- ⬜ HIGH-1: Region 3 / Cat 2 (126–200M) comprehensive rate 2.69% → correct 2.18% (`constants.ts:21`).
-- ⬜ HIGH-2: Flood 0.05%→0.15%, Earthquake 0.10%→0.12% to meet OJK minimums (`constants.ts:50-51`).
-- ⬜ MED-4: Reconcile the TWO rate systems — make `services/ojkRates.ts` the single source of truth; `constants.ts` should re-export/align (customer & agent must price identically).
-- ⬜ MED-5: De-dupe `AUTHORIZED_WORKSHOP_RATE` (defined twice, L54 & L59).
-- ⬜ MED-6: Review `BASE_COMMISSION_PERCENT = 25` vs OJK cap (flag/confirm; do not silently change business rule — add comment + TODO if unsure).
+- ✅ HIGH-1: R3/Cat2 (126–200M) comprehensive 2.69% → 2.08% (= CAR_COMP_MIN[2][3]; lead-verified).
+- ✅ HIGH-2: Flood 0.05%→0.15%, Earthquake 0.10%→0.12%.
+- ✅ MED-4: `constants.ts::getOJKRate` now mirrors `services/ojkRates.ts` MIN tables (single source of truth); customer & agent price identically.
+- ✅ MED-5: De-duped `AUTHORIZED_WORKSHOP_RATE` (single top-level export).
+- ✅ MED-6: `BASE_COMMISSION_PERCENT=25` unchanged + `// TODO confirm vs OJK cap` added.
 
 ## C) CUSTOMER BUYING FLOW  (agent: CUST-WIZ)
 Owns: `TravelInsuranceWizard.tsx`, `CustomInsuranceWizard.tsx`, `MPARInsuranceWizard.tsx`, `CarInsuranceWizard.tsx`, `car-wizard/*`, `PaymentRedirect.tsx`
@@ -48,10 +48,9 @@ Owns: `TravelInsuranceWizard.tsx`, `CustomInsuranceWizard.tsx`, `MPARInsuranceWi
 - ⬜ LOW-4: Replace `alert()` payment errors with inline UI in these wizards.
 - ⬜ LOW-5: Add Terrorism/SRCC toggle to coverage UI (`car-wizard/StepCoverage.tsx`).
 
-## D) AGENT APP  (agent: AGENT-APP)
-Owns: `agent/AgentBuyMarketplace.tsx`, `agent/AgentQuoteBuilder.tsx`
+## D) AGENT APP  (agent: AGENT-APP)  ✅ DEPLOYED (2d1852f)
 
-- ⬜ CRIT-3: Travel/PA/MPAR show "Segera hadir" dead-end for agents → wire to working wizards (`AgentBuyMarketplace.tsx:109-123`).
+- ✅ CRIT-3: Travel→TravelInsuranceWizard, PA→PAInsuranceWizard, MPAR→MPARInsuranceWizard wired in agent context; no "Segera hadir" stubs left. Car/Motorcycle/Life unchanged.
 
 ## E) APP / MISC  (agent: APP-MISC)
 Owns: `App.tsx`, `components/ContactPage.tsx`, `components/customer/CustomerPortal.tsx`, `.env.example`
@@ -87,4 +86,7 @@ replacing NeuralGuard simulation, audit-log viewer — retained in planner repor
 ---
 
 ## DEPLOY LOG
-- Pending: integrate fix branches → main → Vercel prod (auto). Apply RLS lockdown migration last (lead).
+- 2d1852f → main (Vercel auto): Batch 1 = OJK rates (B) + agent marketplace (D). Feature branch synced.
+- Pending: custwiz (fix/customer-buyflow), appmisc (fix/app-misc), security (fix/security-gateway) still running.
+- Reserved (lead): deploy gateway-routing frontend, THEN apply RLS lockdown migration, THEN re-run security advisors.
+- NOTE: stray worktree `agent-a67450ab71f875b29` ("landing page pro-max redesign", commit 91f5d1a) is NOT part of this plan — left untouched, provenance unknown. Review/clean before relying on it.

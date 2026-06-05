@@ -391,7 +391,18 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'buy-mpar':
         return <MPARInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
       case 'buy-health-ind':
-        return <HealthChat onBack={() => navigate('home')} lang={lang} />;
+        return (
+          <div className="flex flex-col">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-3">
+              <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                <strong>Konsultasi Kesehatan:</strong> Fitur pembelian polis kesehatan sedang dalam pengembangan.
+                Gunakan chatbot ini untuk berkonsultasi — tim kami akan menghubungi Anda.
+              </p>
+            </div>
+            <HealthChat onBack={() => navigate('home')} lang={lang} />
+          </div>
+        );
 
       default:
         if (activePage.startsWith('buy-custom_')) {

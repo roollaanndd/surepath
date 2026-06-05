@@ -852,6 +852,11 @@ const App = () => {
   }
 
   if (pathname === '/insurer-portal') {
+    const insurerAllowed = !currentUser || ['MASTER_ADMIN', 'ADMIN', 'INSURANCE_ADMIN'].includes(currentUser.role ?? '');
+    if (!insurerAllowed) {
+      navigate('/');
+      return null;
+    }
     return (
       <Suspense fallback={<PortalLoader />}>
         <InsurerPortal />

@@ -22,6 +22,7 @@ interface Props {
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [coinBalance, setCoinBalance] = useState(0);
+  const [forecastGwp, setForecastGwp] = useState(20_000_000);
 
   useEffect(() => {
     if (agentId) {
@@ -222,6 +223,32 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             {formatIDR(monthlyTarget - stats.totalCommissionMonth)} {t('more to reach your target', 'lagi untuk capai target')}
           </p>
         )}
+      </div>
+
+      {/* Commission Forecast Slider */}
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-5">
+        <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold mb-3">
+          {t('Commission Forecast', 'Proyeksi Komisi')}
+        </p>
+        <input
+          type="range"
+          min={0}
+          max={100_000_000}
+          step={1_000_000}
+          value={forecastGwp}
+          onChange={e => setForecastGwp(Number(e.target.value))}
+          className="w-full accent-[#16a34a] mb-3"
+        />
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-[10px] text-slate-400 font-bold">{t('Target GWP', 'Target GWP')}</p>
+            <p className="font-black text-base tracking-tight">{formatIDR(forecastGwp)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-slate-400 font-bold">{t('Est. Commission (25%)', 'Estimasi Komisi (25%)')}</p>
+            <p className="font-black text-base tracking-tight text-[#16a34a]">{formatIDR(forecastGwp * 0.25)}</p>
+          </div>
+        </div>
       </div>
 
       {/* Renewal Alerts */}

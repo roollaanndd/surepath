@@ -14,6 +14,7 @@ const chatClient = new OpenAI({
   baseURL: AI_PROXY_URL,
   apiKey:  SUPABASE_ANON,
   defaultHeaders: { apikey: SUPABASE_ANON },
+  dangerouslyAllowBrowser: true,
 });
 
 /* Fix: Added lang prop to HealthChat component */

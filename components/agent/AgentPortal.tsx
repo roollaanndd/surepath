@@ -237,7 +237,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0fdf4] dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
+    <div className="min-h-screen bg-white dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }

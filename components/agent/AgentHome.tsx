@@ -119,8 +119,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
         {/* Total Clients */}
         <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center mb-3">
-            <Users size={18} style={{ color: '#15803d' }} />
+          <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
+            <Users size={18} style={{ color: '#2563eb' }} />
           </div>
           <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             {t('Clients', 'Klien')}
@@ -242,14 +242,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { tab: 'quotes',       label: t('Penawaran', 'Penawaran'), icon: FileText,    circleBg: '#D1FAE5', iconColor: '#15803d' },
-            { tab: 'clients',      label: t('Klien', 'Klien'),         icon: Users,       circleBg: '#DCFCE7', iconColor: '#047857' },
+            { tab: 'quotes',       label: t('Penawaran', 'Penawaran'), icon: FileText,    circleBg: '#DBEAFE', iconColor: '#2563eb' },
+            { tab: 'clients',      label: t('Klien', 'Klien'),         icon: Users,       circleBg: '#D1FAE5', iconColor: '#15803d' },
             { tab: 'claims',       label: t('Klaim', 'Klaim'),         icon: ClipboardList, circleBg: '#FFE4E6', iconColor: '#be123c' },
             { tab: 'policy',       label: t('Polis', 'Polis'),         icon: Shield,      circleBg: '#CCFBF1', iconColor: '#0f766e' },
-            { tab: 'leaderboard',  label: t('Ranking', 'Ranking'),     icon: Trophy,      circleBg: '#FEF9C3', iconColor: '#a16207' },
-            { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#DCFCE7', iconColor: '#047857' },
-            { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#D1FAE5', iconColor: '#065f46' },
-            { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#D9F99D', iconColor: '#4d7c0f' },
+            { tab: 'leaderboard',  label: t('Ranking', 'Ranking'),     icon: Trophy,      circleBg: '#FEF3C7', iconColor: '#d97706' },
+            { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#EDE9FE', iconColor: '#7c3aed' },
+            { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#CFFAFE', iconColor: '#0891b2' },
+            { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#FFEDD5', iconColor: '#ea580c' },
           ].map((action) => (
             <div
               key={`${action.tab}-${action.label}`}

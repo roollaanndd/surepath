@@ -138,10 +138,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {[
-                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#15803d', circleBg: '#D1FAE5' },
+                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#2563eb', circleBg: '#DBEAFE' },
                     { id: 'claim',    label: t('Klaim', 'Klaim'),      icon: Zap,         iconColor: '#be123c', circleBg: '#FFE4E6' },
-                    { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#047857', circleBg: '#DCFCE7' },
-                    { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#0f766e', circleBg: '#CCFBF1' },
+                    { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#d97706', circleBg: '#FEF3C7' },
+                    { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#7c3aed', circleBg: '#EDE9FE' },
                   ].map(action => (
                     <button
                       type="button"
@@ -429,7 +429,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-[#f0fdf4] dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300">
 
       {/* Fixed header — SurePath green gradient */}
       {!isFullscreen && (

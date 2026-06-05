@@ -40,13 +40,13 @@ Owns: `TravelInsuranceWizard.tsx`, `CustomInsuranceWizard.tsx`, `MPARInsuranceWi
 
 - ✅ CRIT-1: Travel KYC inputs (name, NIK, email, birthDate) now controlled state; traveler data submitted to order + invoice.
 - ✅ CRIT-2: CustomInsuranceWizard routes through `createPolicyOrder` + `createXenditInvoice`; shows confirmation screen with payment link.
-- ⬜ HIGH-3: StepPayment CC form is decorative & marks order paid w/o charge → remove CC option, rely on Xendit hosted invoice (`car-wizard/StepPayment.tsx:141-165`).
-- ⬜ HIGH-4: PaymentRedirect `/payment/success` doesn't update order → poll gateway for PAID / show "verifying" state (`PaymentRedirect.tsx`).
-- ⬜ MED-3: MPAR `aiScore=0` on AI fail blocks step silently → show error + retry, don't hard-block (`MPARInsuranceWizard.tsx:127-136`).
-- ⬜ MED-2: StepPayment `loading` prop unused (`car-wizard/StepPayment.tsx:16`).
-- ⬜ MED-8: CarInsuranceWizard `discountType` stored but never applied (`CarInsuranceWizard.tsx:70`).
-- ✅ LOW-4: `alert()` replaced with inline error UI in TravelInsuranceWizard and CustomInsuranceWizard.
-- ⬜ LOW-5: Add Terrorism/SRCC toggle to coverage UI (`car-wizard/StepCoverage.tsx`).
+- ✅ HIGH-3: CC option + decorative card form removed from StepPayment; 2-col grid; button renamed "LANJUT KE TAGIHAN".
+- ✅ HIGH-4: PaymentRedirect polls `get_my_orders` (6×, 3s) for PAID/ISSUED; shows verifying spinner; timeout shows amber processing note.
+- ✅ MED-3: MPAR AI fail sets `aiError` state; shows red banner + "Coba Lagi" + "Lanjut Tanpa Scan" — no silent hard-block.
+- ✅ MED-2: `loading` prop wired into StepPayment button disable + spinner.
+- ✅ MED-8: `discountType` default changed to PERCENT; premiumBreakdown branches on NOMINAL vs PERCENT correctly.
+- ✅ LOW-4: `alert()` replaced with inline error UI in TravelInsuranceWizard, CustomInsuranceWizard, MPARInsuranceWizard.
+- ✅ LOW-5: "Terorisme & Sabotase" toggle added to StepCoverage (was calculated in premiumBreakdown but had no UI).
 
 ## D) AGENT APP  (agent: AGENT-APP)  ✅ DEPLOYED (2d1852f)
 
@@ -88,6 +88,7 @@ replacing NeuralGuard simulation, audit-log viewer — retained in planner repor
 ## DEPLOY LOG
 - 2d1852f → main: Batch 1 = OJK rates (B) + agent marketplace (D).
 - 4c3fec3 → main: Batch 2 = app-misc (E), custwiz (C CRIT-1/2 + LOW-4), security gateway (A ✅ frontend + gateway v3).
+- bcffd77 → main: Batch 3 = HIGH-3/4, MED-2/3/8, LOW-4/5 (all C-section items now done).
 - data-gateway v3 deployed to Supabase project uyjgeteelnswphyzkjwi (2026-06-05).
 - 🔒 NEXT (lead only): verify live buy flow on 4c3fec3 → DROP anon_all_policy_orders / anon_all_payments / sp_claims_open → re-run get_advisors.
 - Stray worktree `agent-a67450ab71f875b29` discarded.

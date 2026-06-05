@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ShieldCheck, FileText, Zap, ChevronRight,
-  Plane, Car, Sparkles, QrCode, Bot
+  FileText, Zap, ChevronRight,
+  Plane, Car, Sparkles, QrCode, Bot, Star
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -113,14 +113,23 @@ const PortalHero: React.FC<PortalHeroProps> = ({
             </span>
           </div>
 
-          <div className="relative z-10 mt-4">
-            <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em]">
-              {t('SurePath Protection', 'Proteksi SurePath')}
-            </p>
-            <div className="flex items-end gap-2 mt-1">
-              <h2 className="text-white font-black text-2xl tracking-tight leading-none">
-                {policyCount} <span className="text-white/70 text-base font-bold">{t('active policies', 'polis aktif')}</span>
-              </h2>
+          <div className="relative z-10 mt-4 flex items-end justify-between">
+            <div>
+              <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em]">
+                {t('SurePath Protection', 'Proteksi SurePath')}
+              </p>
+              <div className="flex items-end gap-2 mt-1">
+                <h2 className="text-white font-black text-2xl tracking-tight leading-none">
+                  {policyCount} <span className="text-white/70 text-base font-bold">{t('active policies', 'polis aktif')}</span>
+                </h2>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/12 border border-white/20 rounded-full pl-1.5 pr-2.5 py-1">
+              <span className="w-5 h-5 rounded-full bg-amber-400/20 flex items-center justify-center">
+                <Star size={11} className="text-amber-300" fill="currentColor" />
+              </span>
+              <span className="text-white text-[11px] font-black leading-none">{trustScore}</span>
+              <span className="text-white/55 text-[9px] font-bold uppercase tracking-wider">Trust</span>
             </div>
           </div>
         </div>

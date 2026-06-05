@@ -74,14 +74,6 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
     [notifications],
   );
 
-  const timeGreeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 11) return t('Good Morning', 'Selamat Pagi');
-    if (hour < 15) return t('Good Afternoon', 'Selamat Siang');
-    if (hour < 19) return t('Good Afternoon', 'Selamat Sore');
-    return t('Good Evening', 'Selamat Malam');
-  }, [lang]);
-
   const navigate = (page: string) => {
     setActivePage(page);
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -97,36 +89,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'home':
         return (
           <PageTransition>
-            <div className="space-y-7 pb-32">
-              {/* Greeting */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => navigate('profile')}
-                    className="relative cursor-pointer active:scale-[0.96] transition-transform duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded-[1.8rem]"
-                  >
-                    <div className="w-14 h-14 bg-white dark:bg-[#0d2618] rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-[#16a34a]/20 overflow-hidden ring-1 ring-emerald-500/10">
-                      <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 flex items-center justify-center text-xl font-black text-white">
-                        {currentUser?.name?.[0]}
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full border-4 border-[#fafaf9] dark:border-[#0a0a0a] flex items-center justify-center text-[0.55rem] text-white font-black shadow-lg shadow-emerald-500/40">
-                      {currentUser?.trustScore || 85}
-                    </div>
-                  </button>
-                  <div>
-                    <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                      {timeGreeting}, {currentUser?.name?.split(' ')[0]}!
-                    </h3>
-                    <p className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-1 mt-1.5">
-                      <ShieldCheck size={11} className="animate-pulse motion-reduce:animate-none" />
-                      {t('SECURE ACCOUNT', 'AKUN AMAN')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
+            <div className="space-y-6 pb-32">
               <PortalHero
                 onAction={navigate}
                 lang={lang}

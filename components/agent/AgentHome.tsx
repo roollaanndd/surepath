@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp, Users, Shield, Wallet, ChevronRight,
+  TrendingUp, Users, Shield, ShieldCheck, Wallet, ChevronRight,
   FileText, Lightbulb, Star, ClipboardList,
   Trophy, Network, RefreshCw, FileEdit
 } from 'lucide-react';
@@ -54,14 +54,6 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   ];
   const tip = tips[new Date().getDate() % tips.length];
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 11) return t('Good Morning', 'Selamat Pagi');
-    if (h < 15) return t('Good Afternoon', 'Selamat Siang');
-    if (h < 18) return t('Good Evening', 'Selamat Sore');
-    return t('Good Night', 'Selamat Malam');
-  };
-
   return (
     <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32 font-sora">
       <style>{`
@@ -88,38 +80,34 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-25 pointer-events-none" style={{ background: 'radial-gradient(circle, #4ade80, transparent 70%)' }} />
           <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
 
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em] mb-1">{t('Agent Portal', 'Portal Agen')}</p>
-              <p className="text-white/70 text-sm font-bold">{greeting()},</p>
-              <h1 className="text-white font-black tracking-tight text-2xl leading-tight">
-                {(agent?.name ?? 'Agent').toUpperCase()}
-              </h1>
-              <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 rounded-full bg-white/12 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
-                  {agent?.agent_code ?? 'SP-AGT-001'}
-                </span>
-                {agentTier && (
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                    agentTier === 'ELITE'
-                      ? 'bg-amber-400/20 text-amber-200 border border-amber-300/30'
-                      : 'bg-white/12 text-white border border-white/20'
-                  }`}>
-                    {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
-                  </span>
-                )}
-              </div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 bg-white/12 border border-white/20 rounded-full pl-1.5 pr-3 py-1 backdrop-blur-sm">
+              <span className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center">
+                <ShieldCheck size={13} className="text-white" />
+              </span>
+              <span className="text-white text-[11px] font-black tracking-wide">{agent?.agent_code ?? 'SP-AGT-001'}</span>
             </div>
-            <div className="flex flex-col items-center bg-white/12 border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
-              <Star size={16} className="text-amber-300 mb-0.5" fill="currentColor" />
-              <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
-              <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
+            <div className="flex items-center gap-2">
+              {agentTier && (
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  agentTier === 'ELITE'
+                    ? 'bg-amber-400/20 text-amber-200 border border-amber-300/30'
+                    : 'bg-white/12 text-white border border-white/20'
+                }`}>
+                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 bg-white/12 border border-white/20 rounded-full pl-1.5 pr-2.5 py-1">
+                <Star size={11} className="text-amber-300" fill="currentColor" />
+                <span className="text-white text-[11px] font-black leading-none">{agent?.trust_score ?? 85}</span>
+                <span className="text-white/55 text-[9px] font-bold uppercase tracking-wider">Trust</span>
+              </div>
             </div>
           </div>
 
-          <div className="relative z-10 mt-4">
+          <div className="relative z-10 mt-5">
             <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em]">{t('Commission This Month', 'Komisi Bulan Ini')}</p>
-            <h2 className="text-white font-black text-2xl tracking-tight leading-none mt-1">{formatIDR(stats.totalCommissionMonth)}</h2>
+            <h2 className="text-white font-black text-3xl tracking-tight leading-none mt-1.5">{formatIDR(stats.totalCommissionMonth)}</h2>
           </div>
         </div>
 

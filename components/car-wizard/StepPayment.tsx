@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { 
-  CreditCard, Smartphone, Landmark, Check, 
-  Lock, ShieldCheck, Zap, 
+import {
+  Smartphone, Landmark, Check,
+  Lock, ShieldCheck, Zap,
   Loader2, Info, CalendarClock
 } from 'lucide-react';
 import { formatIDR } from './WizardUI';
@@ -13,8 +13,8 @@ interface StepPaymentProps {
   loading: boolean;
 }
 
-const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSuccess }) => {
-  const [method, setMethod] = useState<'VA' | 'EWALLET' | 'CC' | null>(null);
+const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSuccess, loading }) => {
+  const [method, setMethod] = useState<'VA' | 'EWALLET' | null>(null);
   const [selectedSubMethod, setSelectedSubMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -68,27 +68,20 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
             </div>
          </div>
 
-         <div className="grid grid-cols-3 gap-3 relative z-10">
-            <button 
+         <div className="grid grid-cols-2 gap-3 relative z-10">
+            <button
                onClick={() => { setMethod('VA'); setSelectedSubMethod(null); }}
                className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'VA' ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
             >
                <Landmark size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Bank VA</span>
             </button>
-            <button 
+            <button
                onClick={() => { setMethod('EWALLET'); setSelectedSubMethod(null); }}
                className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'EWALLET' ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
             >
                <Smartphone size={24}/>
-               <span className="text-[0.5rem] font-black uppercase tracking-widest">Dompet</span>
-            </button>
-            <button 
-               onClick={() => { setMethod('CC'); setSelectedSubMethod('Kartu Kredit'); }}
-               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'CC' ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
-            >
-               <CreditCard size={24}/>
-               <span className="text-[0.5rem] font-black uppercase tracking-widest">Kartu</span>
+               <span className="text-[0.5rem] font-black uppercase tracking-widest">Dompet Digital</span>
             </button>
          </div>
       </div>
@@ -138,33 +131,6 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
             </div>
          )}
 
-         {method === 'CC' && (
-            <div className="p-8 bg-white dark:bg-white/5 rounded-[3rem] border-2 border-primary-500/20 space-y-6 shadow-lg">
-               <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-3">
-                     <CreditCard size={20} className="text-primary-500"/>
-                     <h4 className="text-lg font-black uppercase tracking-tighter">Akses Kartu Aman</h4>
-                  </div>
-               </div>
-               <div className="space-y-4">
-                  <div className="space-y-1.5">
-                     <label className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest ml-1">Nomor Kartu (PAN)</label>
-                     <input className="w-full bg-gray-50 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-xl py-4 px-4 text-xs font-mono tracking-widest outline-none focus:border-primary-500" placeholder="4242 4242 4242 4242" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-1.5">
-                        <label className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest ml-1">Masa Berlaku (BB/TT)</label>
-                        <input className="w-full bg-gray-50 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-xl py-4 px-4 text-xs font-mono outline-none focus:border-primary-500" placeholder="12 / 28" />
-                     </div>
-                     <div className="space-y-1.5">
-                        <label className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest ml-1">CVC / CVV</label>
-                        <input className="w-full bg-gray-50 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-xl py-4 px-4 text-xs font-mono outline-none focus:border-primary-500" placeholder="***" type="password" />
-                     </div>
-                  </div>
-               </div>
-            </div>
-         )}
-
          {!method && (
             <div className="flex flex-col items-center justify-center py-12 opacity-40 text-center space-y-4">
                <Zap size={48} strokeWidth={1.5} className="text-primary-500 animate-pulse"/>
@@ -174,12 +140,12 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
       </div>
 
       <div className="space-y-4">
-         <button 
+         <button
             onClick={handlePay}
-            disabled={!selectedSubMethod || isProcessing}
+            disabled={!selectedSubMethod || isProcessing || loading}
             className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-base tracking-[0.3em] shadow-2xl active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 flex items-center justify-center gap-4 relative overflow-hidden"
          >
-            {isProcessing ? (
+            {isProcessing || loading ? (
                <>
                   <Loader2 size={24} className="animate-spin text-primary-500"/>
                   <span>Memproses...</span>
@@ -187,7 +153,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
             ) : (
                <>
                   <Zap size={24} className="text-primary-500 fill-primary-500"/>
-                  <span>BAYAR SEKARANG</span>
+                  <span>LANJUT KE TAGIHAN</span>
                </>
             )}
          </button>

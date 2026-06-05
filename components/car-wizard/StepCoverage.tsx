@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, Building, CloudRain, Zap, AlertCircle, Percent, ArrowDown } from 'lucide-react';
+import { Info, Building, CloudRain, Zap, AlertCircle, AlertTriangle, Percent, ArrowDown } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 import { InsuranceType } from '../../types';
 
@@ -46,7 +46,8 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
             { id: 'authorized', label: 'Bengkel Resmi', icon: Building, desc: 'Perbaikan di Dealer' },
             { id: 'flood', label: 'Banjir & Angin', icon: CloudRain, desc: 'Bencana Alam' },
             { id: 'earthquake', label: 'Gempa & Tsunami', icon: Zap, desc: 'Gempa Bumi' },
-            { id: 'srcc', label: 'Kerusuhan', icon: AlertCircle, desc: 'Huru-hara (SRCC)' },
+            { id: 'srcc', label: 'Kerusuhan (SRCC)', icon: AlertCircle, desc: 'Huru-hara & Riot' },
+            { id: 'terrorism', label: 'Terorisme & Sabotase', icon: AlertTriangle, desc: 'TS / Sabotase' },
           ].map(opt => (
             <button 
               key={opt.id}

@@ -32,10 +32,12 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
 
   const [photos, setPhotos] = useState<{front?: string, back?: string, label?: string}>({});
   const [aiScore, setAiScore] = useState<number | null>(null);
+  const [aiError, setAiError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const currentPremium = useMemo(() => {
     const { category, subCategory, itemPrice, periodMonths } = mpar;
@@ -63,6 +65,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   const handleActivate = async () => {
     if (isProcessing || currentPremium === 0) return;
     setIsProcessing(true);
+    setSubmitError(null);
     try {
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
@@ -114,7 +117,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
       setIsSuccess(true);
     } catch (e) {
       console.error('handleActivate MPAR:', e);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      setSubmitError('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
     }
@@ -126,13 +129,15 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   const runAiAudit = async () => {
     if (!photos.front) return;
     setLoading(true);
-    // Reuse survey logic for item condition check
+    setAiError(false);
     const response = await analyzeVehicleSurvey([{ id: 'item_front', data: photos.front }]);
     setLoading(false);
-    if (response.success) {
+    if (response.success && (response.score ?? 0) > 0) {
       setAiScore(response.score || 95);
+      setAiError(false);
     } else {
-      setAiScore(0); // No score — user must retry
+      setAiScore(null);
+      setAiError(true);
     }
   };
 
@@ -322,10 +327,37 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
           </div>
        </div>
 
-       {photos.front && !aiScore && !loading && (
+       {photos.front && !aiScore && !loading && !aiError && (
           <button onClick={runAiAudit} className="w-full py-5 bg-amber-500 text-white rounded-[2rem] font-black uppercase text-[0.7rem] tracking-[0.3em] shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
              MULAI SCANNING
           </button>
+       )}
+
+       {aiError && (
+         <div className="space-y-3">
+           <div className="bg-rose-500/10 p-5 rounded-[2rem] border border-rose-500/20 flex gap-4 items-start">
+             <AlertCircle className="text-rose-500 flex-shrink-0 mt-0.5" size={22}/>
+             <div>
+               <p className="text-[0.65rem] font-black text-rose-700 dark:text-rose-300 leading-relaxed uppercase tracking-wider">
+                 AI tidak dapat memverifikasi kondisi item. Coba foto ulang dengan pencahayaan lebih baik.
+               </p>
+             </div>
+           </div>
+           <div className="grid grid-cols-2 gap-3">
+             <button
+               onClick={runAiAudit}
+               className="py-4 bg-amber-500 text-white rounded-[2rem] font-black uppercase text-[0.65rem] tracking-[0.2em] active:scale-95 transition-all"
+             >
+               Coba Lagi
+             </button>
+             <button
+               onClick={handleNext}
+               className="py-4 bg-white dark:bg-white/5 border-2 border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-300 rounded-[2rem] font-black uppercase text-[0.65rem] tracking-[0.2em] active:scale-95 transition-all"
+             >
+               Lanjut Tanpa Scan
+             </button>
+           </div>
+         </div>
        )}
     </div>
   );
@@ -370,6 +402,13 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
               </div>
           </div>
        </div>
+
+       {submitError && (
+         <div className="bg-rose-500/10 p-5 rounded-[2rem] border border-rose-500/20 flex gap-4 items-center">
+           <AlertCircle className="text-rose-500 flex-shrink-0" size={22}/>
+           <p className="text-[0.65rem] font-black text-rose-700 dark:text-rose-300 leading-relaxed uppercase tracking-wider">{submitError}</p>
+         </div>
+       )}
 
        <button
          onClick={handleActivate}

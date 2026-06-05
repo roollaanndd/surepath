@@ -67,7 +67,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     tpl: 0, 
     paDriver: 0, 
     paPassenger: 0,
-    promo: '', discount: 0, discountType: 'NOMINAL' as 'NOMINAL' | 'PERCENT'
+    promo: '', discount: 0, discountType: 'PERCENT' as 'NOMINAL' | 'PERCENT'
   });
 
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
@@ -135,8 +135,10 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     const expansionTotal = expansions.reduce((acc: number, curr: any) => acc + curr.val, 0) + tplPremium + paDriverPremium + paPassengerPremium;
     const grossPremium = basicPremium + expansionTotal;
     
-    const discountPercent = Math.min(coverage.discount || 0, 25);
-    const discountAmount = grossPremium * (discountPercent / 100);
+    const discountAmount = coverage.discountType === 'NOMINAL'
+      ? Math.min(Math.max(coverage.discount || 0, 0), grossPremium)
+      : grossPremium * (Math.min(coverage.discount || 0, 25) / 100);
+    const discountPercent = grossPremium > 0 ? (discountAmount / grossPremium) * 100 : 0;
     const netPremium = grossPremium - discountAmount;
 
     return {

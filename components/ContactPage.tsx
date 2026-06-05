@@ -1,11 +1,27 @@
 
-import React from 'react';
-import { Mail, Phone, MapPin, MessageSquare, ArrowRight, Globe, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mail, Phone, MapPin, MessageSquare, ArrowRight, Globe, Clock, CheckCircle2 } from 'lucide-react';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
 
+const SUPPORT_EMAIL = 'info@myinsurepath.com';
+
 const ContactPage = ({ lang }: { lang: Language }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // No backend gateway exists for contact messages, so fall back to the user's
+    // mail client with a prefilled subject/body addressed to support (MED-1).
+    const mailSubject = subject.trim() || t('Policy / Claim Inquiry', 'Pertanyaan Polis / Klaim');
+    const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(message)}`;
+    window.location.href = mailto;
+    setSent(true);
+  };
 
   return (
     <div className="space-y-16 animate-fade-in pb-20">
@@ -80,25 +96,49 @@ const ContactPage = ({ lang }: { lang: Language }) => {
          </div>
 
          {/* Form Module */}
-         <div className="p-10 bg-white dark:bg-slate-900 rounded-[4rem] border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col justify-between">
+         <form onSubmit={handleSubmit} className="p-10 bg-white dark:bg-slate-900 rounded-[4rem] border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col justify-between">
             <div className="space-y-8">
                <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">{t("Secure Message", "Pesan Terenkripsi")}</h3>
                <div className="space-y-5">
                   <div className="space-y-1">
                      <label className="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Subject Protocol</label>
-                     <input className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary-500 transition-all" placeholder={t("Policy Inquiry / Claim Status", "Pertanyaan Polis / Status Klaim")} />
+                     <input
+                        value={subject}
+                        onChange={(e) => { setSubject(e.target.value); setSent(false); }}
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary-500 transition-all"
+                        placeholder={t("Policy Inquiry / Claim Status", "Pertanyaan Polis / Status Klaim")}
+                     />
                   </div>
                   <div className="space-y-1">
                      <label className="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Detail Matrix</label>
-                     <textarea rows={4} className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-3xl py-4 px-6 text-sm font-medium outline-none focus:border-primary-500 transition-all resize-none" placeholder={t("Type your message here...", "Ketik pesan Anda di sini...")}></textarea>
+                     <textarea
+                        rows={4}
+                        value={message}
+                        onChange={(e) => { setMessage(e.target.value); setSent(false); }}
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-3xl py-4 px-6 text-sm font-medium outline-none focus:border-primary-500 transition-all resize-none"
+                        placeholder={t("Type your message here...", "Ketik pesan Anda di sini...")}
+                     ></textarea>
                   </div>
                </div>
             </div>
-            
-            <button className="mt-8 w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.3em] shadow-xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-4">
+
+            {sent && (
+               <div className="mt-6 flex items-center gap-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-500/20 px-5 py-4 text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 size={18} className="shrink-0" />
+                  <p className="text-xs font-bold leading-snug">
+                     {t(`Your mail client is opening. If nothing happens, email us at ${SUPPORT_EMAIL}.`,
+                        `Aplikasi email Anda sedang dibuka. Jika tidak terbuka, kirim email ke ${SUPPORT_EMAIL}.`)}
+                  </p>
+               </div>
+            )}
+
+            <button
+               type="submit"
+               disabled={!message.trim() && !subject.trim()}
+               className="mt-8 w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.3em] shadow-xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-4 disabled:opacity-40 disabled:pointer-events-none">
                {t("Initialize Transmission", "Kirim Transmisi")} <ArrowRight size={18}/>
             </button>
-         </div>
+         </form>
       </div>
     </div>
   );

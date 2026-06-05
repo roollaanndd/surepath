@@ -661,7 +661,10 @@ const App = () => {
     setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
     setTimeout(() => {
       setCurrentUser(enrichedUser);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
+      // Persist to localStorage so a fresh login survives a page reload (LOW-1).
+      // The startup restore branch reads localStorage first; previously the session
+      // was written only to sessionStorage, so a reload logged the user out.
+      localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
       setAppMode(true);
     }, 1400);
   }, []);
@@ -683,6 +686,15 @@ const App = () => {
         setCurrentUser(user);
         setAppMode(true);
         setOauthLoading(false);
+        // HIGH-5: enforce T&C on restored sessions too, mirroring the fresh-OAuth
+        // path below. Without this, a user who never accepted the T&C could skip
+        // the gate simply by having a session persisted in storage.
+        const restoredId = user?.supabaseId ?? user?.id;
+        if (restoredId) {
+          getUserTcStatus(restoredId)
+            .then((tcAccepted) => { if (!tcAccepted) setShowTc(true); })
+            .catch(() => {});
+        }
       } catch {
         localStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_KEY);

@@ -18,7 +18,7 @@ import CustomInsuranceWizard from '../CustomInsuranceWizard';
 import HealthChat from '../HealthChat';
 import ContactPage from '../ContactPage';
 import { PageTransition } from '../car-wizard/WizardUI';
-import { getCustomerOrders, getCustomerClaims, type SpPolicyOrder, type SpClaim } from '../../services/supabaseService';
+import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { Badge } from '../shared/UI';
 import PathyChat from '../shared/PathyChat';
 
@@ -46,6 +46,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [latestPolicy, setLatestPolicy] = useState<SpPolicyOrder | null>(null);
   const [customerPolicies, setCustomerPolicies] = useState<SpPolicyOrder[]>([]);
   const [customerClaims, setCustomerClaims] = useState<SpClaim[]>([]);
+  const [notifications, setNotifications] = useState<SpNotification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -61,8 +63,16 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       getCustomerClaims(currentUser.id).then(claims => {
         setCustomerClaims(claims);
       }).catch(() => {});
+      getNotifications(currentUser.id).then(notifs => {
+        setNotifications(notifs);
+      }).catch(() => {});
     }
   }, [currentUser?.id]);
+
+  const unreadCount = useMemo(
+    () => notifications.filter(n => !n.read).length,
+    [notifications],
+  );
 
   const timeGreeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -423,13 +433,54 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
               </div>
 
-              <button
-                aria-label={t('Notifications', 'Notifikasi')}
-                className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
-              >
-                <Bell size={14} className="text-slate-600 dark:text-slate-300" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#111]" />
-              </button>
+              <div className="relative">
+                <button
+                  aria-label={t('Notifications', 'Notifikasi')}
+                  aria-haspopup="true"
+                  aria-expanded={showNotifications}
+                  onClick={() => setShowNotifications(v => !v)}
+                  className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+                >
+                  <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#111]" />
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <>
+                    {/* Click-away backdrop */}
+                    <button
+                      aria-label={t('Close notifications', 'Tutup notifikasi')}
+                      onClick={() => setShowNotifications(false)}
+                      className="fixed inset-0 z-40 cursor-default"
+                    />
+                    <div
+                      role="menu"
+                      className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#161616] rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl p-2"
+                    >
+                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        {t('Notifications', 'Notifikasi')}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div className="px-3 py-6 text-center text-xs font-bold text-slate-400">
+                          {t('No notifications yet', 'Belum ada notifikasi')}
+                        </div>
+                      ) : (
+                        notifications.map(n => (
+                          <div
+                            key={n.id}
+                            className={`px-3 py-2.5 rounded-xl mb-1 last:mb-0 ${n.read ? 'opacity-60' : 'bg-slate-50 dark:bg-white/5'}`}
+                          >
+                            <div className="text-xs font-black text-slate-800 dark:text-white leading-tight">{n.title}</div>
+                            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{n.body}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
 
               <button
                 aria-label={t('Toggle theme', 'Ganti tema')}

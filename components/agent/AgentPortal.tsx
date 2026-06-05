@@ -25,6 +25,7 @@ import RenewalManager from './RenewalManager';
 import AgentNetwork from './AgentNetwork';
 import AgentEndorsements from './AgentEndorsements';
 import AgentOrderStatus from './AgentOrderStatus';
+import PathyChat from '../shared/PathyChat';
 
 interface Props {
   agent: any;
@@ -376,6 +377,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           onNavigate={setActiveTab}
         />
       )}
+
+      {/* Floating Pathy assistant */}
+      <PathyChat lang={lang} />
     </div>
   );
 };

@@ -20,6 +20,7 @@ import ContactPage from '../ContactPage';
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, type SpPolicyOrder, type SpClaim } from '../../services/supabaseService';
 import { Badge } from '../shared/UI';
+import PathyChat from '../shared/PathyChat';
 
 interface Props {
   currentUser: any;
@@ -119,6 +120,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <PortalHero onAction={navigate} lang={lang} />
 
               {/* Quick actions */}
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 px-1 -mb-2">
+                {t('Quick Actions', 'Aksi Cepat')}
+              </p>
               <div className="grid grid-cols-4 gap-3">
                 {[
                   { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10',    ring: 'group-hover:ring-blue-500/20' },
@@ -144,7 +148,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Latest policy card */}
               {latestPolicy && (
-                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
+                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
                   <div className="absolute -top-10 -left-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
                   <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 text-emerald-600 group-hover:rotate-0 transition-transform duration-1000 motion-reduce:transition-none">
                     {latestPolicy.type === 'CAR' ? <Car size={130} /> : <Plane size={130} />}
@@ -267,7 +271,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="text-slate-400 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
                     <button
                       onClick={() => navigate('products')}
-                      className="px-5 py-2 bg-primary-500 text-white rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg shadow-orange-500/20 active:scale-95 transition-transform duration-200 motion-reduce:transition-none"
+                      className="px-5 py-2 bg-emerald-500 text-white rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform duration-200 motion-reduce:transition-none"
                     >
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
@@ -396,7 +400,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 shadow-[0_1px_20px_-12px_rgba(0,0,0,0.3)]">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/30 ring-1 ring-orange-500/20 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
                 <SurePathLogo className="w-8 h-8 object-contain" />
               </div>
               <div>
@@ -469,7 +473,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   onClick={() => navigate(id)}
                   className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
                     active
-                      ? 'bg-gradient-to-br from-primary-400 to-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
                       : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
                   }`}
                 >
@@ -483,6 +487,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           </div>
         </nav>
       )}
+
+      {/* Floating Pathy assistant */}
+      {!isFullscreen && <PathyChat lang={lang} />}
     </div>
   );
 };

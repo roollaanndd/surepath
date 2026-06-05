@@ -3,6 +3,9 @@ import { Car, Bike, Plane, Shield, Smartphone, Heart, ChevronRight, ArrowLeft } 
 import { Language } from '../../types';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
+import TravelInsuranceWizard from '../TravelInsuranceWizard';
+import PAInsuranceWizard from '../PAInsuranceWizard';
+import MPARInsuranceWizard from '../MPARInsuranceWizard';
 import { type SpClient } from '../../services/supabaseService';
 
 interface Props {
@@ -106,19 +109,33 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
     );
   }
 
-  if (selected === 'TRAVEL' || selected === 'PA' || selected === 'MPAR') {
-    // These wizards are launched via CarInsuranceWizard or direct — route through QuoteBuilder for now
-    // with buy mode
+  if (selected === 'TRAVEL') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 gap-4 font-sora">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-          {React.createElement(PRODUCTS.find(p => p.id === selected)!.icon, { size: 28, className: 'text-slate-500' })}
-        </div>
-        <p className="text-sm font-bold text-slate-400">Segera hadir — formulir pembelian {selected}</p>
-        <button onClick={() => setSelected(null)} className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-white/10 text-sm font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 transition-transform">
-          Kembali
-        </button>
-      </div>
+      <TravelInsuranceWizard
+        currentUser={agent}
+        lang={lang}
+        onComplete={() => setSelected(null)}
+      />
+    );
+  }
+
+  if (selected === 'PA') {
+    return (
+      <PAInsuranceWizard
+        currentUser={agent}
+        lang={lang}
+        onComplete={() => setSelected(null)}
+      />
+    );
+  }
+
+  if (selected === 'MPAR') {
+    return (
+      <MPARInsuranceWizard
+        currentUser={agent}
+        lang={lang}
+        onComplete={() => setSelected(null)}
+      />
     );
   }
 

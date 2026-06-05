@@ -106,7 +106,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     onClick={() => navigate('profile')}
                     className="relative cursor-pointer active:scale-[0.96] transition-transform duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded-[1.8rem]"
                   >
-                    <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden ring-1 ring-emerald-500/10">
+                    <div className="w-14 h-14 bg-white dark:bg-[#0d2618] rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-[#16a34a]/20 overflow-hidden ring-1 ring-emerald-500/10">
                       <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 flex items-center justify-center text-xl font-black text-white">
                         {currentUser?.name?.[0]}
                       </div>
@@ -138,10 +138,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {[
-                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#052e16', circleBg: '#DBEAFE' },
+                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#15803d', circleBg: '#D1FAE5' },
                     { id: 'claim',    label: t('Klaim', 'Klaim'),      icon: Zap,         iconColor: '#be123c', circleBg: '#FFE4E6' },
-                    { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#047857', circleBg: '#D1FAE5' },
-                    { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#92400e', circleBg: '#FEF3C7' },
+                    { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#047857', circleBg: '#DCFCE7' },
+                    { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#0f766e', circleBg: '#CCFBF1' },
                   ].map(action => (
                     <button
                       type="button"
@@ -216,7 +216,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               )}
 
               {/* Tip */}
-              <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+              <div className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 ring-1 ring-inset ring-amber-500/10">
                   <Lightbulb size={24} />
                 </div>
@@ -251,7 +251,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
+                    className={`group p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
                   >
                     <div className={`w-14 h-14 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
                       <p.icon size={26} strokeWidth={2.5} />
@@ -289,7 +289,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <div className="space-y-3">
                 <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={12} />{t('Active Policies', 'Polis Aktif')}</p>
                 {customerPolicies.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
+                  <div className="p-8 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-dashed border-slate-200 dark:border-[#16a34a]/20 flex flex-col items-center text-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
                       <FileText size={22} />
                     </div>
@@ -302,7 +302,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </button>
                   </div>
                 ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-primary-500/10 ring-1 ring-inset ring-primary-500/10 flex items-center justify-center">
                         {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
@@ -342,14 +342,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <div className="space-y-3">
                 <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><AlertCircle size={12} />{t('My Claims', 'Klaim Saya')}</p>
                 {customerClaims.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
+                  <div className="p-8 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-dashed border-slate-200 dark:border-[#16a34a]/20 flex flex-col items-center text-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
                       <AlertCircle size={22} />
                     </div>
                     <p className="text-slate-400 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
                 ) : customerClaims.map((c, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-rose-500/10 ring-1 ring-inset ring-rose-500/10 flex items-center justify-center">
                         <AlertCircle size={20} className="text-rose-500" />
@@ -468,7 +468,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       onClick={() => setShowNotifications(false)}
                       className="fixed inset-0 z-40 cursor-default"
                     />
-                    <div role="menu" className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#1a2b4a] rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl p-2">
+                    <div role="menu" className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#0d2618] rounded-2xl border border-slate-100 dark:border-[#16a34a]/20 shadow-2xl p-2">
                       <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                         {t('Notifications', 'Notifikasi')}
                       </div>

@@ -104,7 +104,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Stat Cards — white cards with colored icon circles */}
       <div className="grid grid-cols-2 gap-3">
         {/* GWP This Month */}
-        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#D1FAE5] flex items-center justify-center mb-3">
             <TrendingUp size={18} style={{ color: '#047857' }} />
           </div>
@@ -118,9 +118,9 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Total Clients */}
-        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
-            <Users size={18} style={{ color: '#1d4ed8' }} />
+        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center mb-3">
+            <Users size={18} style={{ color: '#15803d' }} />
           </div>
           <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             {t('Clients', 'Klien')}
@@ -132,7 +132,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Active Policies */}
-        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#CCFBF1] flex items-center justify-center mb-3">
             <Shield size={18} style={{ color: '#0f766e' }} />
           </div>
@@ -146,9 +146,9 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Earned This Month */}
-        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center mb-3">
-            <Wallet size={18} style={{ color: '#7c3aed' }} />
+        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#FEF9C3] flex items-center justify-center mb-3">
+            <Wallet size={18} style={{ color: '#a16207' }} />
           </div>
           <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
             {t('Earned', 'Komisi')}
@@ -166,7 +166,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </div>
 
       {/* Monthly Target Progress */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-5">
+      <div className="bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 shadow-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">
@@ -181,7 +181,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             {Math.round(progress)}%
           </span>
         </div>
-        <div className="h-3 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+        <div className="h-3 bg-slate-100 dark:bg-[#16a34a]/15 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700 motion-reduce:transition-none"
             style={{
@@ -205,7 +205,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </div>
 
       {/* Commission Forecast Slider */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-5">
+      <div className="bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 shadow-xl p-5">
         <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold mb-3">
           {t('Commission Forecast', 'Proyeksi Komisi')}
         </p>
@@ -242,14 +242,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { tab: 'quotes',       label: t('Penawaran', 'Penawaran'), icon: FileText,    circleBg: '#DBEAFE', iconColor: '#1d4ed8' },
-            { tab: 'clients',      label: t('Klien', 'Klien'),         icon: Users,       circleBg: '#D1FAE5', iconColor: '#047857' },
+            { tab: 'quotes',       label: t('Penawaran', 'Penawaran'), icon: FileText,    circleBg: '#D1FAE5', iconColor: '#15803d' },
+            { tab: 'clients',      label: t('Klien', 'Klien'),         icon: Users,       circleBg: '#DCFCE7', iconColor: '#047857' },
             { tab: 'claims',       label: t('Klaim', 'Klaim'),         icon: ClipboardList, circleBg: '#FFE4E6', iconColor: '#be123c' },
             { tab: 'policy',       label: t('Polis', 'Polis'),         icon: Shield,      circleBg: '#CCFBF1', iconColor: '#0f766e' },
-            { tab: 'leaderboard',  label: t('Ranking', 'Ranking'),     icon: Trophy,      circleBg: '#FEF3C7', iconColor: '#92400e' },
-            { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#EDE9FE', iconColor: '#6d28d9' },
-            { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#CFFAFE', iconColor: '#0e7490' },
-            { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#E0E7FF', iconColor: '#3730a3' },
+            { tab: 'leaderboard',  label: t('Ranking', 'Ranking'),     icon: Trophy,      circleBg: '#FEF9C3', iconColor: '#a16207' },
+            { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#DCFCE7', iconColor: '#047857' },
+            { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#D1FAE5', iconColor: '#065f46' },
+            { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#D9F99D', iconColor: '#4d7c0f' },
           ].map((action) => (
             <div
               key={`${action.tab}-${action.label}`}
@@ -271,7 +271,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </div>
 
       {/* Recent Commissions */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 shadow-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">
             {t('Recent Commissions', 'Komisi Terbaru')}
@@ -294,7 +294,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div className="divide-y divide-slate-50 dark:divide-white/5">
             {recentCommissions.map((c, i) => (
               <div key={c.id ?? i} className="flex items-center gap-3 px-5 py-3">
-                <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-[#16a34a]/10 flex items-center justify-center flex-shrink-0">
                   <span className="font-black text-xs text-slate-600 dark:text-slate-300">
                     {(c.client_name ?? 'C').charAt(0).toUpperCase()}
                   </span>

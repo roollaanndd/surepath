@@ -59,26 +59,26 @@ Owns: `App.tsx`, `components/ContactPage.tsx`, `components/customer/CustomerPort
 - ✅ LOW-1: Session written to `localStorage` on login; survives page reload.
 - ✅ LOW-2: Bell wired to `getNotifications`; red dot only shows when `unreadCount > 0`; click-away panel with empty state.
 - ✅ MED-1: ContactPage submit opens `mailto:` with prefilled subject/body; inline confirmation shown.
-- ⬜ LOW-3: `.env.example` contains real project URL + anon key → replace with placeholders (file read-protected in container; do manually).
-- ⬜ HIGH-6 (note): Health product routes to chatbot, no purchase wizard → set honest expectation now; full Health wizard = deferred feature (see G).
+- ✅ LOW-3: `.env.example` replaced with placeholders (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY / VITE_ADMIN_KEY).
+- ✅ HIGH-6: `buy-health-ind` in CustomerPortal now shows amber notice ("konsultasi, bukan pembelian") before HealthChat.
 
 ## F) HOUSEKEEPING / GUIDELINE
 
 - ⏭️ MED-7: Oversized files (`VehicleUnderwritingWizard.tsx` 1912, `supabaseService.ts` ~2432, `App.tsx` 1035) exceed 500-line CLAUDE.md guideline → refactor later (not a functional bug).
-- ⏭️ Consider removing the `HashRouter` dead-code wrapper in `index.tsx` (folds into G domain work).
+- ✅ Remove dead `HashRouter` wrapper in `index.tsx` (done in Batch 4).
 
 ## G) ARCHITECTURE — domain/folder separation (Opsi A)  ⏭️ Phase 2 (after fixes land)
 Path-based portals: `/app` (customer), `/agent`, `/admin`, `/b2b` on same domain.
 - ⬜ App.tsx: redirect to role path on auth success + session restore; add path+role guards in dispatch block.
-- ⬜ Remove dead `HashRouter` in `index.tsx`.
+- ✅ Remove dead `HashRouter` in `index.tsx` (Batch 4).
 - ⬜ Sync internal portal tab nav → URL sub-paths (CustomerPortal/AdminPortal/AgentPortal/B2BPortal).
-- ⬜ Add role guard to `/insurer-portal` (currently path-only, no auth check — App.tsx ~L842). ⚠️ security.
+- ✅ Add role guard to `/insurer-portal`: CUSTOMER/AGENT redirect to home; admins + unauthenticated (token-flow) allowed (Batch 4).
 - ✅ vercel.json SPA rewrite already supports it (no change needed).
 
 ## H) FEATURE BACKLOG (planner output) — Top 10 quick wins  ⏭️ after remediation
-1. WhatsApp floating CTA (marketing)  2. Policy PDF download (customer)  3. Motorcycle calculator tab
+1. ✅ WhatsApp floating CTA (SiteLayout.tsx — Batch 4)  2. Policy PDF download (customer)  3. Motorcycle calculator tab
 4. Live e-wallet payments (OVO/DANA/GoPay/QRIS)  5. Customer notification bell+panel
-6. Contextual AI coaching tip (AgentHome)  7. Commission forecast slider  8. Promo-code analytics (admin)
+6. Contextual AI coaching tip (AgentHome)  7. ✅ Commission forecast slider (AgentHome.tsx — Batch 4)  8. Promo-code analytics (admin)
 9. Agent activation funnel (admin)  10. FAQ + JSON-LD schema (SEO)
 (Full list incl. Agent Finder, blog CMS, renewal self-service, OJK regulatory export, real fraud detection
 replacing NeuralGuard simulation, audit-log viewer — retained in planner report.)
@@ -90,5 +90,6 @@ replacing NeuralGuard simulation, audit-log viewer — retained in planner repor
 - 4c3fec3 → main: Batch 2 = app-misc (E), custwiz (C CRIT-1/2 + LOW-4), security gateway (A ✅ frontend + gateway v3).
 - bcffd77 → main: Batch 3 = HIGH-3/4, MED-2/3/8, LOW-4/5 (all C-section items now done).
 - data-gateway v3 deployed to Supabase project uyjgeteelnswphyzkjwi (2026-06-05).
-- 🔒 NEXT (lead only): verify live buy flow on 4c3fec3 → DROP anon_all_policy_orders / anon_all_payments / sp_claims_open → re-run get_advisors.
+- ✅ RLS lockdown applied: anon_all_policy_orders / anon_all_payments / sp_claims_open DROPPED. get_advisors confirms no rls_policy_always_true on financial tables.
+- 111a296 → claude/insurtech-mobile-app-RvOFd: Batch 4 = insurer-portal guard (G), HashRouter removal (F/G), health notice (HIGH-6), .env.example (LOW-3), WhatsApp CTA (H#1), commission slider (H#7).
 - Stray worktree `agent-a67450ab71f875b29` discarded.

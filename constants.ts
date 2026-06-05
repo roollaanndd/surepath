@@ -1,63 +1,74 @@
 
 import { Provider, InsuranceType, CarModelData } from './types';
 
-// OJK Batas Bawah Rate Logic
+// OJK Batas Bawah (tarif bawah / MIN) Rate Logic — SEOJK No. 06/SEOJK.05/2017.
+//
+// SOURCE OF TRUTH: services/ojkRates.ts. These percentages are the `CAR_COMP_MIN`
+// and `CAR_TLO_MIN` tables from that module, expressed as percent (value * 100).
+// The customer wizard prices via getOJKRate() here; the agent flow prices via
+// ojkRates.ts. Keep the two in sync so the same car quotes identically in both.
+// Category boundaries mirror getVehicleCategory(): <=125M, <=200M, <=400M, <=800M, >800M.
 export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: InsuranceType): number => {
   if (type === InsuranceType.COMPREHENSIVE) {
     if (region === '1') {
       if (priceMillions <= 125) return 3.82;
       if (priceMillions <= 200) return 2.67;
       if (priceMillions <= 400) return 2.18;
-      if (priceMillions <= 800) return 1.20;
-      return 1.05;
+      if (priceMillions <= 800) return 1.80;
+      return 1.33;
     } else if (region === '2') {
       if (priceMillions <= 125) return 3.26;
       if (priceMillions <= 200) return 2.47;
       if (priceMillions <= 400) return 2.08;
-      if (priceMillions <= 800) return 1.20;
-      return 1.05;
+      if (priceMillions <= 800) return 1.71;
+      return 1.33;
     } else {
       if (priceMillions <= 125) return 2.53;
-      if (priceMillions <= 200) return 2.69;
+      if (priceMillions <= 200) return 2.08;
       if (priceMillions <= 400) return 1.79;
-      if (priceMillions <= 800) return 1.14;
-      return 1.05;
+      if (priceMillions <= 800) return 1.68;
+      return 1.33;
     }
   } else { // TLO
     if (region === '1') {
-      if (priceMillions <= 125) return 0.47;
-      if (priceMillions <= 200) return 0.63;
-      if (priceMillions <= 400) return 0.41;
-      if (priceMillions <= 800) return 0.25;
-      return 0.20;
+      if (priceMillions <= 125) return 0.53;
+      if (priceMillions <= 200) return 0.66;
+      if (priceMillions <= 400) return 0.94;
+      if (priceMillions <= 800) return 1.15;
+      return 1.26;
     } else if (region === '2') {
-      if (priceMillions <= 125) return 0.65;
-      if (priceMillions <= 200) return 0.44;
-      if (priceMillions <= 400) return 0.38;
-      if (priceMillions <= 800) return 0.25;
-      return 0.20;
+      if (priceMillions <= 125) return 0.42;
+      if (priceMillions <= 200) return 0.61;
+      if (priceMillions <= 400) return 0.91;
+      if (priceMillions <= 800) return 1.09;
+      return 1.20;
     } else {
-      if (priceMillions <= 125) return 0.51;
-      if (priceMillions <= 200) return 0.44;
-      if (priceMillions <= 400) return 0.29;
-      if (priceMillions <= 800) return 0.23;
-      return 0.20;
+      if (priceMillions <= 125) return 0.45;
+      if (priceMillions <= 200) return 0.60;
+      if (priceMillions <= 400) return 0.86;
+      if (priceMillions <= 800) return 1.05;
+      return 1.14;
     }
   }
 };
 
+// AUTHORIZED_WORKSHOP_RATE is the single canonical export below; EXPANSION_RATES
+// references it so there is exactly one source for the value.
+export const AUTHORIZED_WORKSHOP_RATE = 0.2;
+
 export const EXPANSION_RATES = {
-  FLOOD: 0.05,
-  EARTHQUAKE: 0.10,
+  // Flood & earthquake align to OJK minimums in services/ojkRates.ts
+  // (flood 0.15% / earthquake 0.12%). Source of truth: services/ojkRates.ts.
+  FLOOD: 0.15,
+  EARTHQUAKE: 0.12,
   SRCC: { COMPREHENSIVE: 0.05, TLO: 0.035 },
   TERRORISM: { COMPREHENSIVE: 0.05, TLO: 0.035 },
-  AUTHORIZED_WORKSHOP_RATE: 0.2,
-  PA_DRIVER: 0.5, 
+  AUTHORIZED_WORKSHOP_RATE,
+  PA_DRIVER: 0.5,
   PA_PASSENGER: 0.1
 };
-
-export const AUTHORIZED_WORKSHOP_RATE = 0.2;
 export const STAMP_DUTY = 10000;
+// TODO: confirm vs OJK commission cap (typ. 15–20%)
 export const BASE_COMMISSION_PERCENT = 25; // 25% Komisi untuk semua asuransi
 
 export const INSURANCE_PROVIDERS: Provider[] = [

@@ -65,98 +65,79 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   return (
     <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32 font-sora">
 
-      {/* Greeting Hero Banner */}
-      <div className="rounded-[2.5rem] overflow-hidden relative shadow-2xl shadow-[#16a34a]/10">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-[#15803d]" />
-        {/* Subtle grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.08]"
-          style={{
-            backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
-          }}
-        />
-        <div className="relative z-10 p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-white/60 text-[0.6rem] font-bold uppercase tracking-[0.2em] mb-2">
-                AGENT PORTAL
-              </p>
-              <p className="text-white/70 text-sm font-bold mb-0.5">
-                {greeting()},
-              </p>
-              <h1 className="text-white font-black tracking-tighter text-2xl leading-tight">
-                {(agent?.name ?? 'Agent').toUpperCase()} 👋
-              </h1>
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1.5 rounded-full bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#16a34a]/30">
-                  {agent?.agent_code ?? 'SP-AGT-001'}
+      {/* Greeting Hero Banner — navy/teal matching portal header */}
+      <div
+        className="rounded-[1.75rem] p-5 relative overflow-hidden shadow-xl"
+        style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 60%, #0E7490 100%)' }}
+      >
+        <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #5CE1E6, transparent)' }} />
+        <div className="relative z-10 flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">AGENT PORTAL</p>
+            <p className="text-white/70 text-sm font-bold">{greeting()},</p>
+            <h1 className="text-white font-black tracking-tighter text-2xl leading-tight">
+              {(agent?.name ?? 'Agent').toUpperCase()}
+            </h1>
+            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
+                {agent?.agent_code ?? 'SP-AGT-001'}
+              </span>
+              {agentTier && (
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  agentTier === 'ELITE'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                }`}>
+                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
                 </span>
-                {agentTier && (
-                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                    agentTier === 'ELITE'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  }`}>
-                    {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
-                  </span>
-                )}
-              </div>
+              )}
             </div>
-            {/* Trust Score badge */}
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
-              <Star size={16} className="text-amber-400 mb-0.5" fill="currentColor" />
-              <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
-              <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
-            </div>
+          </div>
+          <div className="flex flex-col items-center bg-white/10 border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
+            <Star size={16} className="text-amber-400 mb-0.5" fill="currentColor" />
+            <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
+            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
           </div>
         </div>
       </div>
 
-      {/* Stat Cards 2×2 */}
+      {/* Stat Cards — white cards with colored icon circles */}
       <div className="grid grid-cols-2 gap-3">
         {/* GWP This Month */}
-        <div className="bg-gradient-to-br from-[#16a34a]/10 to-[#16a34a]/5 dark:from-[#16a34a]/15 dark:to-[#16a34a]/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-[#16a34a]/20 rounded-xl flex items-center justify-center">
-              <TrendingUp size={14} className="text-[#16a34a]" />
-            </div>
-            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              {t('GWP / Month', 'GWP Bulan Ini')}
-            </span>
+        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#D1FAE5] flex items-center justify-center mb-3">
+            <TrendingUp size={18} style={{ color: '#047857' }} />
           </div>
-          <div className="font-black text-base tracking-tight leading-tight text-slate-900 dark:text-white">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            {t('GWP / Month', 'GWP Bulan Ini')}
+          </div>
+          <div className="font-black text-base tracking-tight text-slate-900 dark:text-white">
             {formatIDR(stats.totalCommissionMonth * 8)}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('estimated', 'estimasi')}</div>
         </div>
 
         {/* Total Clients */}
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/15 dark:to-blue-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <Users size={14} className="text-blue-500" />
-            </div>
-            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              {t('Clients', 'Klien')}
-            </span>
+        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
+            <Users size={18} style={{ color: '#1d4ed8' }} />
           </div>
-          <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            {t('Clients', 'Klien')}
+          </div>
+          <div className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white">
             {stats.clientsCount}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('total', 'total')}</div>
         </div>
 
         {/* Active Policies */}
-        <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/15 dark:to-emerald-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-              <Shield size={14} className="text-emerald-500" />
-            </div>
-            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              {t('Policies', 'Polis')}
-            </span>
+        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#CCFBF1] flex items-center justify-center mb-3">
+            <Shield size={18} style={{ color: '#0f766e' }} />
+          </div>
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            {t('Policies', 'Polis')}
           </div>
           <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
             {stats.policiesCount}
@@ -165,22 +146,20 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Earned This Month */}
-        <div className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 dark:from-violet-500/15 dark:to-violet-500/5 rounded-[1.5rem] shadow-lg p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-violet-500/20 rounded-xl flex items-center justify-center">
-              <Wallet size={14} className="text-violet-500" />
-            </div>
-            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              {t('Earned', 'Komisi')}
-            </span>
+        <div className="bg-white dark:bg-[#1a2b4a] rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+          <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center mb-3">
+            <Wallet size={18} style={{ color: '#7c3aed' }} />
           </div>
-          <div className="font-black text-2xl tracking-tighter leading-tight text-slate-900 dark:text-white">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+            {t('Earned', 'Komisi')}
+          </div>
+          <div className="font-black text-base tracking-tight text-slate-900 dark:text-white">
             {formatIDR(stats.totalCommissionMonth)}
           </div>
           <div className="text-[10px] text-slate-400 mt-0.5">{t('this month', 'bulan ini')}</div>
           {coinBalance > 0 && (
             <div className="text-[10px] text-amber-500 font-bold mt-1">
-              🪙 {coinBalance.toLocaleString('id-ID')} poin tersedia
+              🪙 {coinBalance.toLocaleString('id-ID')} poin
             </div>
           )}
         </div>
@@ -254,79 +233,41 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Renewal Alerts */}
       <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
-      {/* Quick Action Buttons — 4-col grid, 2 rows */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          {
-            tab: 'quotes',
-            label: t('New Quote', 'Penawaran'),
-            icon: FileText,
-            color: 'text-blue-500',
-            bg: 'bg-blue-500/10',
-          },
-          {
-            tab: 'clients',
-            label: t('Clients', 'Klien'),
-            icon: Users,
-            color: 'text-[#16a34a]',
-            bg: 'bg-[#16a34a]/10',
-          },
-          {
-            tab: 'claims',
-            label: t('Claims', 'Klaim'),
-            icon: ClipboardList,
-            color: 'text-rose-500',
-            bg: 'bg-rose-500/10',
-          },
-          {
-            tab: 'policy',
-            label: t('Policy', 'Polis'),
-            icon: Shield,
-            color: 'text-emerald-500',
-            bg: 'bg-emerald-500/10',
-          },
-          {
-            tab: 'leaderboard',
-            label: t('Ranking', 'Ranking'),
-            icon: Trophy,
-            color: 'text-amber-500',
-            bg: 'bg-amber-500/10',
-          },
-          {
-            tab: 'network',
-            label: t('Network', 'Jaringan'),
-            icon: Network,
-            color: 'text-violet-500',
-            bg: 'bg-violet-500/10',
-          },
-          {
-            tab: 'renewals',
-            label: t('Renewal', 'Renewal'),
-            icon: RefreshCw,
-            color: 'text-cyan-500',
-            bg: 'bg-cyan-500/10',
-          },
-          {
-            tab: 'endorsements',
-            label: t('Endorse', 'Endors'),
-            icon: FileEdit,
-            color: 'text-indigo-500',
-            bg: 'bg-indigo-500/10',
-          },
-        ].map((action) => (
-          <div
-            key={`${action.tab}-${action.label}`}
-            onClick={() => onNavigate(action.tab)}
-            className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-all"
-          >
-            <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300`}>
-              <action.icon size={24} strokeWidth={2.5} />
+      {/* Menu Utama — circular icon grid (myBCA Main Menu style) */}
+      <div>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">
+            {t('Main Menu', 'Menu Utama')}
+          </p>
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { tab: 'quotes',       label: t('Penawaran', 'Penawaran'), icon: FileText,    circleBg: '#DBEAFE', iconColor: '#1d4ed8' },
+            { tab: 'clients',      label: t('Klien', 'Klien'),         icon: Users,       circleBg: '#D1FAE5', iconColor: '#047857' },
+            { tab: 'claims',       label: t('Klaim', 'Klaim'),         icon: ClipboardList, circleBg: '#FFE4E6', iconColor: '#be123c' },
+            { tab: 'policy',       label: t('Polis', 'Polis'),         icon: Shield,      circleBg: '#CCFBF1', iconColor: '#0f766e' },
+            { tab: 'leaderboard',  label: t('Ranking', 'Ranking'),     icon: Trophy,      circleBg: '#FEF3C7', iconColor: '#92400e' },
+            { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#EDE9FE', iconColor: '#6d28d9' },
+            { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#CFFAFE', iconColor: '#0e7490' },
+            { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#E0E7FF', iconColor: '#3730a3' },
+          ].map((action) => (
+            <div
+              key={`${action.tab}-${action.label}`}
+              onClick={() => onNavigate(action.tab)}
+              className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform duration-150 motion-reduce:transition-none"
+            >
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-200 motion-reduce:transition-none"
+                style={{ background: action.circleBg }}
+              >
+                <action.icon size={22} strokeWidth={2} style={{ color: action.iconColor }} />
+              </div>
+              <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 text-center leading-tight">
+                {action.label}
+              </span>
             </div>
-            <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight">
-              {action.label}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Recent Commissions */}

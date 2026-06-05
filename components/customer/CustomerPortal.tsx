@@ -31,8 +31,8 @@ interface Props {
 
 const TABS = [
   { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: Home },
-  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: ShoppingBag },
   { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: Zap },
+  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: ShoppingBag },
   { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: History },
   { id: 'profile',  labelEn: 'Profile', labelId: 'Profil',  Icon: UserCircle },
 ];
@@ -129,60 +129,74 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               <PortalHero onAction={navigate} lang={lang} />
 
-              {/* Quick actions */}
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 px-1 -mb-2">
-                {t('Quick Actions', 'Aksi Cepat')}
-              </p>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10',    ring: 'group-hover:ring-blue-500/20' },
-                  { id: 'claim',    label: t('Claim', 'Klaim'),      icon: Zap,         color: 'text-rose-500',    bg: 'bg-rose-500/10',    ring: 'group-hover:ring-rose-500/20' },
-                  { id: 'history',  label: t('History', 'Riwayat'),  icon: History,     color: 'text-emerald-500', bg: 'bg-emerald-500/10', ring: 'group-hover:ring-emerald-500/20' },
-                  { id: 'bot',      label: 'Chat AI',                icon: Bot,         color: 'text-amber-500',   bg: 'bg-amber-500/10',   ring: 'group-hover:ring-amber-500/20' },
-                ].map(action => (
-                  <button
-                    type="button"
-                    key={action.id}
-                    onClick={() => navigate(action.id)}
-                    className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-transform duration-200 motion-reduce:transition-none focus:outline-none"
-                  >
-                    <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 ${action.ring} group-hover:scale-110 group-hover:-translate-y-0.5 group-active:shadow-inner transition-all duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      <action.icon size={26} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
+              {/* Layanan Kami — circular icon grid (myBCA Main Menu style) */}
+              <div>
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">
+                    {t('Our Services', 'Layanan Kami')}
+                  </p>
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[
+                    { id: 'products', label: t('Beli', 'Beli'),       icon: ShoppingBag, iconColor: '#0B2447', circleBg: '#DBEAFE' },
+                    { id: 'claim',    label: t('Klaim', 'Klaim'),      icon: Zap,         iconColor: '#be123c', circleBg: '#FFE4E6' },
+                    { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#047857', circleBg: '#D1FAE5' },
+                    { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#92400e', circleBg: '#FEF3C7' },
+                  ].map(action => (
+                    <button
+                      type="button"
+                      key={action.id}
+                      onClick={() => navigate(action.id)}
+                      className="flex flex-col items-center gap-2 group active:scale-90 transition-transform duration-150 motion-reduce:transition-none focus:outline-none"
+                    >
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-200 motion-reduce:transition-none"
+                        style={{ background: action.circleBg }}
+                      >
+                        <action.icon size={24} strokeWidth={2} style={{ color: action.iconColor }} />
+                      </div>
+                      <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 text-center leading-tight">
+                        {action.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Latest policy card */}
+              {/* Active policy card — teal gradient (myBCA account card style) */}
               {latestPolicy && (
-                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
-                  <div className="absolute -top-10 -left-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 text-emerald-600 group-hover:rotate-0 transition-transform duration-1000 motion-reduce:transition-none">
-                    {latestPolicy.type === 'CAR' ? <Car size={130} /> : <Plane size={130} />}
-                  </div>
-                  <div className="relative z-10 space-y-5">
-                    <div className="flex justify-between items-start">
+                <div
+                  className="rounded-[1.75rem] p-5 relative overflow-hidden shadow-xl"
+                  style={{ background: 'linear-gradient(135deg, #0E7490 0%, #0B2447 100%)' }}
+                >
+                  {/* decorative glow */}
+                  <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #5CE1E6, transparent)' }} />
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-[0.55rem] font-black text-primary-500 uppercase tracking-[0.4em]">
-                          {t('YOUR INSURANCE', 'ASURANSI KAMU')}
+                        <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em]">
+                          {t('POLIS AKTIF', 'POLIS AKTIF')}
                         </p>
-                        <h4 className="text-xl font-black uppercase tracking-tighter mt-0.5">
+                        <p className="text-white font-black text-lg tracking-tight mt-0.5">
                           {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
-                        </h4>
+                        </p>
                       </div>
-                      <div className="p-2.5 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 rounded-2xl border border-emerald-500/20 shadow-sm">
-                        <ShieldCheck size={20} className="text-emerald-500" />
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                        <ShieldCheck size={20} className="text-white" />
                       </div>
                     </div>
-                    <div className="flex justify-between items-end">
+                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">
+                      {t('No. Polis', 'No. Polis')}
+                    </p>
+                    <p className="text-white font-black text-base tracking-widest mb-5">
+                      {latestPolicy.order_number ?? '● ● ● ─ ● ● ● ─ ● ● ● ●'}
+                    </p>
+                    <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
                       <div>
-                        <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest">
-                          {t('EXPIRES ON', 'AKHIR POLIS')}
+                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">
+                          {t('BERLAKU HINGGA', 'BERLAKU HINGGA')}
                         </p>
-                        <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        <p className="text-white font-black text-sm mt-0.5">
                           {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
                             lang === Language.EN ? 'en-US' : 'id-ID',
                             { month: 'long', year: 'numeric' }
@@ -191,9 +205,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       </div>
                       <button
                         onClick={() => navigate('profile')}
-                        className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 motion-reduce:transition-none"
+                        className="px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-transform"
+                        style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
                       >
-                        {t('Details', 'Detail')}
+                        {t('Detail →', 'Detail →')}
                       </button>
                     </div>
                   </div>
@@ -414,63 +429,47 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-[#EEF4FB] dark:bg-[#0a1929] text-slate-900 dark:text-white transition-colors duration-300">
 
-      {/* Fixed header */}
+      {/* Fixed header — navy gradient (myBCA-style) */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 shadow-[0_1px_20px_-12px_rgba(0,0,0,0.3)]">
-          <div className="flex items-center justify-between px-5 py-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
-                <SurePathLogo className="w-8 h-8 object-contain" />
+        <header
+          className="fixed top-0 inset-x-0 z-40"
+          style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 65%, #0E7490 100%)' }}
+        >
+          {/* Top row: logo + action icons */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-1">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+                <SurePathLogo className="w-6 h-6 object-contain" />
               </div>
-              <div>
-                <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                  Sure<span className="text-primary-500">Path</span>
-                </div>
-                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
-                  {t('Customer Portal', 'Portal Nasabah')}
-                </div>
-              </div>
+              <span className="text-white font-black text-[15px] tracking-tight">
+                Sure<span style={{ color: '#5CE1E6' }}>Path</span>
+              </span>
             </div>
-
-            <div className="flex items-center gap-1">
-              <div className="text-right mr-2">
-                <div className="text-xs font-black tracking-tight leading-none">
-                  {currentUser?.name ?? 'Nasabah'}
-                </div>
-                <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
-                  {currentUser?.nodeId ?? 'SP-USER'}
-                </div>
-              </div>
-
+            <div className="flex items-center gap-1.5">
               <div className="relative">
                 <button
                   aria-label={t('Notifications', 'Notifikasi')}
                   aria-haspopup="true"
                   aria-expanded={showNotifications}
                   onClick={() => setShowNotifications(v => !v)}
-                  className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+                  className="relative w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
                 >
-                  <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+                  <Bell size={15} className="text-white" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#111]" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-400 ring-1 ring-white/20" />
                   )}
                 </button>
-
                 {showNotifications && (
                   <>
-                    {/* Click-away backdrop */}
                     <button
                       aria-label={t('Close notifications', 'Tutup notifikasi')}
                       onClick={() => setShowNotifications(false)}
                       className="fixed inset-0 z-40 cursor-default"
                     />
-                    <div
-                      role="menu"
-                      className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#161616] rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl p-2"
-                    >
-                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div role="menu" className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#1a2b4a] rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl p-2">
+                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                         {t('Notifications', 'Notifikasi')}
                       </div>
                       {notifications.length === 0 ? (
@@ -479,12 +478,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         </div>
                       ) : (
                         notifications.map(n => (
-                          <div
-                            key={n.id}
-                            className={`px-3 py-2.5 rounded-xl mb-1 last:mb-0 ${n.read ? 'opacity-60' : 'bg-slate-50 dark:bg-white/5'}`}
-                          >
+                          <div key={n.id} className={`px-3 py-2.5 rounded-xl mb-1 last:mb-0 ${n.read ? 'opacity-60' : 'bg-slate-50 dark:bg-white/5'}`}>
                             <div className="text-xs font-black text-slate-800 dark:text-white leading-tight">{n.title}</div>
-                            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{n.body}</div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{n.body}</div>
                           </div>
                         ))
                       )}
@@ -492,23 +488,31 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   </>
                 )}
               </div>
-
               <button
                 aria-label={t('Toggle theme', 'Ganti tema')}
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
               >
-                {darkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
+                {darkMode ? <Sun size={14} className="text-amber-300" /> : <Moon size={14} className="text-white" />}
               </button>
-
               <button
                 aria-label={t('Log out', 'Keluar')}
                 onClick={onLogout}
-                className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1 hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
               >
-                <LogOut size={13} className="text-rose-500" />
+                <LogOut size={13} className="text-white/80" />
               </button>
             </div>
+          </div>
+          {/* Greeting row */}
+          <div className="px-5 pt-1 pb-4">
+            <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.25em] leading-none">HALO,</p>
+            <p className="text-white font-black text-xl tracking-tight leading-tight mt-0.5">
+              {(currentUser?.name ?? 'Nasabah').toUpperCase()}
+            </p>
+            <p className="text-white/40 text-[10px] font-bold mt-0.5">
+              {currentUser?.nodeId ?? 'SP-USER'} &bull; {t('SECURE ACCOUNT', 'AKUN AMAN')}
+            </p>
           </div>
         </header>
       )}
@@ -516,33 +520,46 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       {/* Main content */}
       <main
         ref={scrollRef}
-        className={isFullscreen ? 'h-screen overflow-y-auto' : 'pt-16 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        className={isFullscreen ? 'h-screen overflow-y-auto' : 'pt-28 pb-24 px-5 min-h-screen overflow-y-auto no-scrollbar'}
       >
         {renderContent()}
       </main>
 
-      {/* Bottom tab navigation */}
+      {/* Bottom tab navigation — flat dark navy bar (myBCA-style) */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/85 dark:bg-[#111]/85 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5 ring-1 ring-black/5 dark:ring-white/5">
-          <div className="flex items-center justify-around px-1 py-2.5">
-            {TABS.map(({ id, labelEn, labelId, Icon }) => {
+        <nav
+          className="fixed bottom-0 inset-x-0 z-50"
+          style={{ background: '#0B2447', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
+        >
+          <div className="flex items-center justify-around px-2 pt-2 pb-3">
+            {TABS.map(({ id, labelEn, labelId, Icon }, index) => {
               const active = activeTab === id;
+              const isCenter = index === 2;
               return (
                 <button
                   key={id}
                   aria-label={lang === Language.EN ? labelEn : labelId}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => navigate(id)}
-                  className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
-                    active
-                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
-                  }`}
+                  className={`flex flex-col items-center gap-1 transition-all duration-200 active:scale-90 motion-reduce:transition-none ${isCenter ? '-mt-7' : ''}`}
                 >
-                  <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                  <span className={`text-[8px] font-black uppercase tracking-widest leading-none transition-all duration-300 motion-reduce:transition-none ${active ? 'opacity-100' : 'opacity-80'}`}>
-                    {lang === Language.EN ? labelEn : labelId}
-                  </span>
+                  {isCenter ? (
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
+                      style={{ background: 'linear-gradient(135deg, #0E7490, #1a3a6b)', boxShadow: '0 4px 20px rgba(14,116,144,0.5)' }}
+                    >
+                      <Icon size={22} strokeWidth={2.5} className="text-white" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${active ? 'bg-white/15' : ''}`}>
+                        <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }} />
+                      </div>
+                      <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }}>
+                        {lang === Language.EN ? labelEn : labelId}
+                      </span>
+                    </>
+                  )}
                 </button>
               );
             })}

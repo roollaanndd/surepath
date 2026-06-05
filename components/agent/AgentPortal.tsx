@@ -237,7 +237,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   return (
-    <div className={`min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300 font-sora`}>
+    <div className="min-h-screen bg-[#EEF4FB] dark:bg-[#0a1929] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }
@@ -247,70 +247,68 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           [data-sp-anim] { animation: none !important; }
         }
       `}</style>
-      {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
-        <div className="flex items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/30 ring-1 ring-orange-500/20 overflow-hidden">
-              <SurePathLogo className="w-8 h-8 object-contain" />
+      {/* Top Header — navy gradient (myBCA-style) */}
+      <header
+        className="fixed top-0 inset-x-0 z-40"
+        style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 65%, #0E7490 100%)' }}
+      >
+        {/* Top row */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+              <SurePathLogo className="w-6 h-6 object-contain" />
             </div>
-            <div>
-              <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                Sure<span className="text-[#16a34a]">Path</span>
-              </div>
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mt-0.5">
-                Agent Portal
-              </div>
-            </div>
+            <span className="text-white font-black text-[15px] tracking-tight">
+              Sure<span style={{ color: '#5CE1E6' }}>Path</span>
+            </span>
           </div>
-
-          <div className="flex items-center gap-1">
-            <div className="text-right mr-2">
-              <div className="text-xs font-black tracking-tight leading-none">{agent?.name ?? 'Agent'}</div>
-              <div className="text-[10px] font-bold text-[#16a34a] uppercase tracking-widest leading-none mt-0.5">
-                {agent?.agent_code ?? 'SP-AGT'}
-              </div>
-              {agentTier && (
-                <div className={`text-[8px] font-black uppercase tracking-widest ${
-                  agentTier === 'ELITE' ? 'text-purple-400' : 'text-amber-400'
-                }`}>
-                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
-                </div>
-              )}
-            </div>
-
-            {/* Notification bell */}
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setShowNotifications(true)}
-              className="relative w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
+              className="relative w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
             >
-              <Bell size={15} className="text-slate-600 dark:text-slate-300" />
+              <Bell size={15} className="text-white" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[#16a34a] text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-white dark:ring-[#111]">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-400 ring-1 ring-white/20" />
               )}
             </button>
-
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
+              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
             >
-              {darkMode ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-slate-600" />}
+              {darkMode ? <Sun size={14} className="text-amber-300" /> : <Moon size={14} className="text-white" />}
             </button>
-
             <button
               onClick={() => handleTabChange('profile')}
-              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center ml-1 active:scale-90 hover:bg-slate-200 dark:hover:bg-white/15 transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
+              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-colors"
             >
-              <UserCircle size={15} className="text-slate-600 dark:text-slate-300" />
+              <UserCircle size={14} className="text-white/80" />
             </button>
+          </div>
+        </div>
+        {/* Greeting row */}
+        <div className="px-5 pt-1 pb-4">
+          <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.25em] leading-none">HALO,</p>
+          <p className="text-white font-black text-xl tracking-tight leading-tight mt-0.5">
+            {(agent?.name ?? 'Agen').toUpperCase()}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-white/40 text-[10px] font-bold">{agent?.agent_code ?? 'SP-AGT'}</span>
+            {agentTier && (
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                agentTier === 'ELITE'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'bg-amber-500/30 text-amber-300'
+              }`}>
+                {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+              </span>
+            )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 pb-32 min-h-screen">
+      <main className="pt-28 pb-24 min-h-screen">
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
@@ -323,9 +321,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation — 5 tabs */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
-        <div className="flex items-center justify-around px-1 py-2.5">
+      {/* Bottom Tab Navigation — flat dark navy bar (myBCA-style) */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50"
+        style={{ background: '#0B2447', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
+      >
+        <div className="flex items-center justify-around px-2 pt-2 pb-3">
           {TABS.map(({ id, labelId, Icon }, index) => {
             const active = activeTab === id;
             const isCenter = index === 2;
@@ -333,31 +334,21 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-0.5 transition-all duration-200 motion-reduce:transition-none ${
-                  isCenter
-                    ? '-mt-5'
-                    : `px-2 py-1.5 rounded-2xl ${
-                        active
-                          ? 'bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white scale-110 shadow-lg shadow-[#16a34a]/30'
-                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                      }`
-                }`}
+                className={`flex flex-col items-center gap-1 transition-all duration-200 active:scale-90 motion-reduce:transition-none ${isCenter ? '-mt-7' : ''}`}
               >
                 {isCenter ? (
-                  <div className={`w-14 h-14 rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl transition-all active:scale-90 motion-reduce:active:scale-100 bg-gradient-to-br ${
-                    active
-                      ? 'from-[#15803d] to-[#166534] shadow-[#15803d]/50'
-                      : 'from-[#16a34a] to-[#15803d] shadow-[#16a34a]/40'
-                  }`}>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl"
+                    style={{ background: 'linear-gradient(135deg, #0E7490, #1a3a6b)', boxShadow: '0 4px 20px rgba(14,116,144,0.5)' }}
+                  >
                     <Icon size={22} strokeWidth={2.5} className="text-white" />
-                    <span className="text-[7px] font-black uppercase tracking-widest text-white/90 leading-none mt-0.5">
-                      {labelId}
-                    </span>
                   </div>
                 ) : (
                   <>
-                    <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${active ? 'bg-white/15' : ''}`}>
+                      <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }} />
+                    </div>
+                    <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }}>
                       {labelId}
                     </span>
                   </>

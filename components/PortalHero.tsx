@@ -161,7 +161,7 @@ const PortalHero: React.FC<PortalHeroProps> = ({
       {/* ── Rotating promo strip ── */}
       <button
         onClick={() => onAction(promos[promo].action)}
-        className="relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/15 shadow-sm active:scale-[0.99] transition-all duration-200 motion-reduce:transition-none text-left"
+        className="relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/15 shadow-[0_8px_24px_-12px_rgba(5,46,22,0.18)] active:scale-[0.99] transition-all duration-200 motion-reduce:transition-none text-left"
       >
         <span
           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"

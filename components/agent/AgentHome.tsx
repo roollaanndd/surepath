@@ -138,7 +138,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Stat Cards — white cards with colored icon circles */}
       <div className="grid grid-cols-2 gap-3">
         {/* GWP This Month */}
-        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-[0_8px_24px_-12px_rgba(5,46,22,0.20)] p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#D1FAE5] flex items-center justify-center mb-3">
             <TrendingUp size={18} style={{ color: '#047857' }} />
           </div>
@@ -152,7 +152,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Total Clients */}
-        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-[0_8px_24px_-12px_rgba(5,46,22,0.20)] p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center mb-3">
             <Users size={18} style={{ color: '#2563eb' }} />
           </div>
@@ -166,7 +166,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Active Policies */}
-        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-[0_8px_24px_-12px_rgba(5,46,22,0.20)] p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#CCFBF1] flex items-center justify-center mb-3">
             <Shield size={18} style={{ color: '#0f766e' }} />
           </div>
@@ -180,7 +180,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Earned This Month */}
-        <div className="bg-white dark:bg-[#0d2618] dark:border dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-sm p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
+        <div className="bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/20 rounded-[1.5rem] shadow-[0_8px_24px_-12px_rgba(5,46,22,0.20)] p-4 transition-transform active:scale-[0.98] motion-reduce:active:scale-100">
           <div className="w-10 h-10 rounded-full bg-[#FEF9C3] flex items-center justify-center mb-3">
             <Wallet size={18} style={{ color: '#a16207' }} />
           </div>

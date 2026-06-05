@@ -187,7 +187,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               )}
 
               {/* Tip */}
-              <div className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+              <div className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex gap-4 shadow-[0_8px_24px_-12px_rgba(5,46,22,0.18)] hover:shadow-[0_14px_32px_-14px_rgba(5,46,22,0.26)] transition-shadow duration-300 motion-reduce:transition-none">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 ring-1 ring-inset ring-amber-500/10">
                   <Lightbulb size={24} />
                 </div>
@@ -222,7 +222,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
+                    className={`group p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-[0_8px_24px_-12px_rgba(5,46,22,0.18)] hover:shadow-[0_18px_40px_-16px_rgba(5,46,22,0.30)] active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
                   >
                     <div className={`w-14 h-14 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
                       <p.icon size={26} strokeWidth={2.5} />
@@ -273,7 +273,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </button>
                   </div>
                 ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-[0_8px_24px_-12px_rgba(5,46,22,0.18)] hover:shadow-[0_14px_32px_-14px_rgba(5,46,22,0.26)] transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-primary-500/10 ring-1 ring-inset ring-primary-500/10 flex items-center justify-center">
                         {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
@@ -320,7 +320,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="text-slate-400 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
                 ) : customerClaims.map((c, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
+                  <div key={i} className="p-5 bg-white dark:bg-[#0d2618] rounded-[2rem] border border-slate-100 dark:border-[#16a34a]/15 flex items-center justify-between shadow-[0_8px_24px_-12px_rgba(5,46,22,0.18)] hover:shadow-[0_14px_32px_-14px_rgba(5,46,22,0.26)] transition-shadow duration-300 motion-reduce:transition-none">
                     <div className="flex items-center gap-4">
                       <div className="w-11 h-11 rounded-2xl bg-rose-500/10 ring-1 ring-inset ring-rose-500/10 flex items-center justify-center">
                         <AlertCircle size={20} className="text-rose-500" />
@@ -400,7 +400,15 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen text-slate-900 dark:text-white transition-colors duration-300 relative bg-[#f1faf5] dark:bg-[#071c10]">
+
+      {/* Ambient canvas — soft green glows + texture so white cards lift off the page */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 -right-20 w-80 h-80 rounded-full opacity-[0.13] dark:opacity-20" style={{ background: 'radial-gradient(circle, #16a34a, transparent 70%)' }} />
+        <div className="absolute top-1/3 -left-24 w-80 h-80 rounded-full opacity-[0.09] dark:opacity-[0.14]" style={{ background: 'radial-gradient(circle, #4ade80, transparent 70%)' }} />
+        <div className="absolute bottom-12 right-0 w-72 h-72 rounded-full opacity-[0.07] dark:opacity-[0.12]" style={{ background: 'radial-gradient(circle, #10b981, transparent 70%)' }} />
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#16a34a 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+      </div>
 
       {/* Fixed header — SurePath green gradient */}
       {!isFullscreen && (
@@ -491,7 +499,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       {/* Main content */}
       <main
         ref={scrollRef}
-        className={isFullscreen ? 'h-screen overflow-y-auto' : 'pt-28 pb-24 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-28 pb-24 px-5 min-h-screen overflow-y-auto no-scrollbar'}
       >
         {renderContent()}
       </main>

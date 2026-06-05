@@ -226,7 +226,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#071c10] text-slate-900 dark:text-white transition-colors duration-300 font-sora">
+    <div className="min-h-screen text-slate-900 dark:text-white transition-colors duration-300 font-sora relative bg-[#f1faf5] dark:bg-[#071c10]">
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }
@@ -236,6 +236,15 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           [data-sp-anim] { animation: none !important; }
         }
       `}</style>
+
+      {/* Ambient canvas — soft green glows + texture so white cards lift off the page */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 -right-20 w-80 h-80 rounded-full opacity-[0.13] dark:opacity-20" style={{ background: 'radial-gradient(circle, #16a34a, transparent 70%)' }} />
+        <div className="absolute top-1/3 -left-24 w-80 h-80 rounded-full opacity-[0.09] dark:opacity-[0.14]" style={{ background: 'radial-gradient(circle, #4ade80, transparent 70%)' }} />
+        <div className="absolute bottom-12 right-0 w-72 h-72 rounded-full opacity-[0.07] dark:opacity-[0.12]" style={{ background: 'radial-gradient(circle, #10b981, transparent 70%)' }} />
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#16a34a 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+      </div>
+
       {/* Top Header — SurePath green gradient */}
       <header
         className="fixed top-0 inset-x-0 z-40"
@@ -297,7 +306,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-28 pb-24 min-h-screen">
+      <main className="relative z-10 pt-28 pb-24 min-h-screen">
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />

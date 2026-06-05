@@ -28,10 +28,19 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
     selectedPlan: null
   });
 
+  // Local state for traveler KYC data, pre-filled from currentUser
+  const [travelerData, setTravelerData] = useState({
+    name: currentUser?.name || '',
+    nik: currentUser?.ktp || '',
+    email: currentUser?.email || '',
+    birthDate: ''
+  });
+
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const STEPS = ['Trip Detail', 'Select Plan', 'Traveler Data', 'Review & Pay'];
 
@@ -220,32 +229,39 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
        <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Nama Lengkap (Sesuai KTP/Passport)</label>
-            <input 
+            <input
               placeholder="Full Legal Name"
-              defaultValue={currentUser?.name || ''}
+              value={travelerData.name}
+              onChange={(e) => setTravelerData({...travelerData, name: e.target.value.toUpperCase()})}
               className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
              <div className="space-y-1.5">
                 <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">NIK / Passport</label>
-                <input 
-                  placeholder="ID Number" 
-                  defaultValue={currentUser?.ktp || ''}
+                <input
+                  placeholder="ID Number"
+                  value={travelerData.nik}
+                  onChange={(e) => setTravelerData({...travelerData, nik: e.target.value.toUpperCase()})}
                   className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
                 />
              </div>
              <div className="space-y-1.5">
                 <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Tgl Lahir</label>
-                <input type="date" className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"/>
+                <input
+                  type="date"
+                  value={travelerData.birthDate}
+                  onChange={(e) => setTravelerData({...travelerData, birthDate: e.target.value})}
+                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"/>
              </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Email Aktif</label>
-            <input 
+            <input
               type="email"
               placeholder="email@provider.com"
-              defaultValue={currentUser?.email || ''}
+              value={travelerData.email}
+              onChange={(e) => setTravelerData({...travelerData, email: e.target.value})}
               className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
             />
           </div>
@@ -308,6 +324,13 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
           </p>
        </div>
 
+       {error && (
+         <div className="bg-rose-500/10 p-5 rounded-[2rem] border border-rose-500/20 flex gap-4 items-center">
+            <AlertCircle className="text-rose-500 flex-shrink-0" size={24}/>
+            <p className="text-[0.65rem] font-bold text-rose-700 dark:text-rose-300 leading-relaxed uppercase tracking-wider">{error}</p>
+         </div>
+       )}
+
        <button
          onClick={handleActivate}
          disabled={isProcessing}
@@ -325,14 +348,15 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
   const handleActivate = async () => {
     if (isProcessing || !travel.selectedPlan) return;
     setIsProcessing(true);
+    setError(null);
     try {
       const premium = getPremium(travel.selectedPlan);
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
         client_id: currentUser?.id,
-        client_name: currentUser?.name ?? 'Nasabah',
+        client_name: travelerData.name || currentUser?.name || 'Nasabah',
         client_phone: currentUser?.phone,
-        client_ktp: currentUser?.ktp,
+        client_ktp: travelerData.nik || currentUser?.ktp,
         product_code: 'TRAVEL_INSURANCE',
         product_name: `Asuransi Perjalanan ${travel.selectedPlan.replace('_', ' ')} - ${travel.region}`,
         vehicle_type: undefined,
@@ -340,7 +364,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
         coverage_type: 'TRAVEL',
         zone: 1,
         vehicle_category: 0,
-        addons: { region: travel.region, plan: travel.selectedPlan, duration: currentDuration, participantType: travel.participantType },
+        addons: { region: travel.region, plan: travel.selectedPlan, duration: currentDuration, participantType: travel.participantType, travelerName: travelerData.name, travelerNik: travelerData.nik, travelerBirthDate: travelerData.birthDate, travelerEmail: travelerData.email },
         sum_insured: 0,
         base_premium: Math.round(premium),
         addon_premium: 0,
@@ -364,8 +388,8 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
       const invoice = await createXenditInvoice({
         order_id: order.id,
         order_number: order.order_number ?? order.id,
-        client_name: currentUser?.name ?? 'Nasabah',
-        client_email: currentUser?.email,
+        client_name: travelerData.name || currentUser?.name || 'Nasabah',
+        client_email: travelerData.email || currentUser?.email,
         client_phone: currentUser?.phone,
         product_name: order.product_name,
         total_premium: order.total_premium,
@@ -377,7 +401,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
       setIsSuccess(true);
     } catch (e) {
       console.error('handleActivate travel:', e);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      setError('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
     }

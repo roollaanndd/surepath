@@ -615,6 +615,101 @@ serve(async (req) => {
         return json({ data: result });
       }
 
+      // ── Customer/agent: create a policy order (owner derived server-side) ──
+      // SECURITY: the owner (agent_id) is ALWAYS the authenticated caller's
+      // SurePath id — never a client-supplied value. This is the column
+      // admin_list_orders / getAgentOrders filter on. For customer self-purchase
+      // the client also supplies client_id === their own id; we preserve it so
+      // the customer portal (get_my_orders, filtered on client_id) works.
+      case 'create_policy_order': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const p = params as Record<string, any>;
+
+        // Required fields.
+        if (!p.client_name || !p.product_code || !p.product_name || !p.coverage_type || !p.status) {
+          return json({ error: 'client_name, product_code, product_name, coverage_type, status required' }, 400);
+        }
+
+        // Server-side validation: core premium fields must be positive numbers.
+        const POSITIVE_NUM = ['base_premium', 'total_premium'];
+        for (const k of POSITIVE_NUM) {
+          const v = Number(p[k]);
+          if (!Number.isFinite(v) || v <= 0) {
+            return json({ error: `${k} must be a positive number` }, 400);
+          }
+        }
+        // Other numeric fields (when present) must be non-negative.
+        const NON_NEGATIVE_NUM = ['addon_premium', 'admin_fee', 'stamp_duty', 'sum_insured', 'discount_amount', 'commission_amount', 'coin_reward', 'net_premium'];
+        for (const k of NON_NEGATIVE_NUM) {
+          if (k in p && p[k] != null) {
+            const v = Number(p[k]);
+            if (!Number.isFinite(v) || v < 0) {
+              return json({ error: `${k} must be a non-negative number` }, 400);
+            }
+          }
+        }
+
+        // Build the insert from the client payload, then OVERRIDE the owner.
+        // Strip any client-supplied owner/identity fields that must be trusted.
+        const { id: _omitId, order_number: _omitOrderNumber, created_at: _omitCreated, updated_at: _omitUpdated, agent_id: _omitAgent, ...rest } = p;
+        const insertRow: Record<string, unknown> = {
+          ...rest,
+          agent_id: caller.spUser.id, // owner — never trust the client
+        };
+
+        const { data, error } = await db.from('sp_policy_orders').insert(insertRow).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Customer: my own policy orders (filtered by client_id = caller) ────
+      // Mirrors getCustomerOrders, which scopes the customer portal by client_id.
+      case 'get_my_orders': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { data, error } = await db
+          .from('sp_policy_orders')
+          .select('*')
+          .eq('client_id', caller.spUser.id)
+          .order('created_at', { ascending: false });
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Customer: my own claims (filtered by user_id = caller) ─────────────
+      // sp_claims links the customer via user_id (verified against the live
+      // schema; the table has user_id + agent_id, no client_id).
+      case 'get_my_claims': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { data, error } = await db
+          .from('sp_claims')
+          .select('*')
+          .eq('user_id', caller.spUser.id)
+          .order('created_at', { ascending: false });
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Customer: my own payments (scoped to the caller's own orders) ──────
+      // sp_payments has no direct owner column, so we scope by the caller's
+      // own policy orders (order_id) to avoid exposing other users' payments.
+      case 'get_my_payments': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { data: myOrders, error: ordErr } = await db
+          .from('sp_policy_orders')
+          .select('id')
+          .eq('client_id', caller.spUser.id);
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        const orderIds = (myOrders ?? []).map((o: any) => o.id);
+        if (orderIds.length === 0) return json({ data: [] });
+        const { data, error } = await db
+          .from('sp_payments')
+          .select('*')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: false });
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

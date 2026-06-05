@@ -673,13 +673,11 @@ export interface SpPolicyOrder {
 }
 
 export async function createPolicyOrder(data: Omit<SpPolicyOrder, 'id' | 'order_number' | 'created_at' | 'updated_at'>): Promise<SpPolicyOrder | null> {
-  const { data: result, error } = await supabase
-    .from('sp_policy_orders')
-    .insert(data)
-    .select()
-    .single();
+  // Route through the gateway: the owner (agent_id) is derived server-side from
+  // the authenticated caller, so any client-supplied agent_id is ignored.
+  const { data: result, error } = await callGateway('create_policy_order', data as unknown as Record<string, unknown>);
   if (error) { console.error('createPolicyOrder:', error); return null; }
-  return result as SpPolicyOrder;
+  return (result as SpPolicyOrder) ?? null;
 }
 
 export async function getAgentOrders(agentId: string): Promise<SpPolicyOrder[]> {
@@ -692,22 +690,20 @@ export async function getAgentOrders(agentId: string): Promise<SpPolicyOrder[]> 
   return (data ?? []) as SpPolicyOrder[];
 }
 
-export async function getCustomerOrders(clientId: string): Promise<SpPolicyOrder[]> {
-  const { data, error } = await supabase
-    .from('sp_policy_orders')
-    .select('*')
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false });
+export async function getCustomerOrders(_clientId: string): Promise<SpPolicyOrder[]> {
+  // Routed through the gateway, which scopes results to the authenticated
+  // caller's own orders (client_id = caller). The param is kept for signature
+  // stability but the server derives ownership; it is not trusted.
+  const { data, error } = await callGateway('get_my_orders');
   if (error) { console.error('getCustomerOrders:', error); return []; }
   return (data ?? []) as SpPolicyOrder[];
 }
 
-export async function getCustomerClaims(userId: string): Promise<SpClaim[]> {
-  const { data, error } = await supabase
-    .from('sp_claims')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+export async function getCustomerClaims(_userId: string): Promise<SpClaim[]> {
+  // Routed through the gateway, which scopes results to the authenticated
+  // caller's own claims (user_id = caller). The param is kept for signature
+  // stability but the server derives ownership; it is not trusted.
+  const { data, error } = await callGateway('get_my_claims');
   if (error) { console.error('getCustomerClaims:', error); return []; }
   return (data ?? []) as SpClaim[];
 }

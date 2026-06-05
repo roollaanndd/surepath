@@ -127,7 +127,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
               </div>
 
-              <PortalHero onAction={navigate} lang={lang} />
+              <PortalHero
+                onAction={navigate}
+                lang={lang}
+                userName={currentUser?.name ?? 'Nasabah'}
+                nodeId={currentUser?.nodeId ?? 'SP-USER'}
+                policyCount={customerPolicies.length}
+                trustScore={currentUser?.trustScore ?? 85}
+              />
 
               {/* Layanan Kami — circular icon grid (SurePath green Main Menu style) */}
               <div>
@@ -142,18 +149,19 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     { id: 'claim',    label: t('Klaim', 'Klaim'),      icon: Zap,         iconColor: '#be123c', circleBg: '#FFE4E6' },
                     { id: 'history',  label: t('Riwayat', 'Riwayat'), icon: History,     iconColor: '#d97706', circleBg: '#FEF3C7' },
                     { id: 'bot',      label: 'Chat AI',                icon: Bot,         iconColor: '#7c3aed', circleBg: '#EDE9FE' },
-                  ].map(action => (
+                  ].map((action, i) => (
                     <button
                       type="button"
                       key={action.id}
                       onClick={() => navigate(action.id)}
+                      style={{ animation: `spRise 0.45s cubic-bezier(.2,.7,.2,1) both`, animationDelay: `${i * 70}ms` }}
                       className="flex flex-col items-center gap-2 group active:scale-90 transition-transform duration-150 motion-reduce:transition-none focus:outline-none"
                     >
                       <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-200 motion-reduce:transition-none"
+                        className="w-16 h-16 rounded-[1.4rem] flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/[0.03] group-hover:shadow-lg group-hover:-translate-y-1 group-active:scale-90 transition-all duration-200 motion-reduce:transition-none"
                         style={{ background: action.circleBg }}
                       >
-                        <action.icon size={24} strokeWidth={2} style={{ color: action.iconColor }} />
+                        <action.icon size={24} strokeWidth={2.2} style={{ color: action.iconColor }} />
                       </div>
                       <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 text-center leading-tight">
                         {action.label}

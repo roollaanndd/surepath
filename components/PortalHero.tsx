@@ -1,164 +1,181 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Globe, Car, Zap, Sparkles, Plane, Activity, TrendingUp } from 'lucide-react';
+import {
+  ShieldCheck, FileText, Zap, ChevronRight,
+  Plane, Car, Sparkles, QrCode, Bot
+} from 'lucide-react';
 import { Language } from '../types';
 
-const SLIDES = (lang: Language) => [
+interface PortalHeroProps {
+  onAction: (id: string) => void;
+  lang?: Language;
+  userName?: string;
+  nodeId?: string;
+  policyCount?: number;
+  trustScore?: number;
+}
+
+// Rotating promo strip — recommended products / actions
+const PROMOS = (lang: Language) => [
   {
-    title: lang === Language.EN ? "Travel Protection" : "Proteksi Perjalanan",
-    highlight: lang === Language.EN ? "Global Network" : "Jaringan Global",
-    desc: lang === Language.EN
-      ? "Perlindungan perjalanan ke seluruh dunia. Instant activation with lightning-fast verification."
-      : "Perlindungan perjalanan instan ke seluruh dunia. Aktif instan dengan protokol verifikasi secepat kilat.",
-    image: null,
-    bgClass: "bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900",
-    highlightClass: "text-emerald-400",
-    iconClass: "text-emerald-500",
-    pattern: (
-      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}>
-        <Globe className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] text-white opacity-20" />
-      </div>
-    ),
     icon: Plane,
-    cta: lang === Language.EN ? "Check Plans" : "Cek Asuransi Travel",
-    actionId: "buy-travel",
+    label: lang === Language.EN ? 'Travel Safe — instant global cover' : 'Travel Safe — proteksi global instan',
+    action: 'buy-travel',
+    tint: '#0891b2',
+    bg: 'rgba(8,145,178,0.10)',
   },
   {
-    title: lang === Language.EN ? "Auto Matrix v4" : "Matriks Mobil v4",
-    highlight: lang === Language.EN ? "Visual Audit" : "Audit Visual AI",
-    desc: lang === Language.EN
-      ? "Protect your vehicle with visual AI audit. Forget manual forms, just snap for instant verification."
-      : "Proteksi kendaraan dengan audit visual AI. Lupakan formulir manual, cukup ambil foto untuk verifikasi instan.",
-    image: null,
-    bgClass: "bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-950",
-    highlightClass: "text-blue-400",
-    iconClass: "text-blue-500",
-    pattern: (
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 w-full h-full" style={{ backgroundImage: 'linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
-        <Car className="absolute bottom-10 right-10 w-[400px] h-[400px] text-white opacity-10 rotate-12" />
-      </div>
-    ),
     icon: Car,
-    cta: lang === Language.EN ? "Protect Your Car" : "Beli Asuransi Mobil",
-    actionId: "buy-car",
+    label: lang === Language.EN ? 'Auto AI — snap a photo, get covered' : 'Auto AI — foto HP, langsung terlindungi',
+    action: 'buy-car',
+    tint: '#2563eb',
+    bg: 'rgba(37,99,235,0.10)',
   },
   {
-    title: lang === Language.EN ? "Fast-Path Claims" : "Klaim Jalur Cepat",
-    highlight: lang === Language.EN ? "Autonomous" : "Otonom",
-    desc: lang === Language.EN
-      ? "Settle your claims in seconds. Cash paid directly to your node wallet without bureaucracy."
-      : "Selesaikan klaim Anda dalam hitungan detik. Dana cair langsung ke node dompet Anda tanpa drama birokrasi.",
-    image: null,
-    bgClass: "bg-gradient-to-br from-rose-700 via-orange-800 to-slate-950",
-    highlightClass: "text-rose-400",
-    iconClass: "text-rose-500",
-    pattern: (
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-white/10 rounded-full animate-ping opacity-20"></div>
-        <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] text-white opacity-10 animate-pulse" />
-      </div>
-    ),
     icon: Zap,
-    cta: lang === Language.EN ? "Start Claim" : "Lapor Klaim AI",
-    actionId: "claim",
-  }
+    label: lang === Language.EN ? 'Fast-Path Claims — paid in minutes' : 'Klaim Jalur Cepat — cair dalam menit',
+    action: 'claim',
+    tint: '#16a34a',
+    bg: 'rgba(22,163,74,0.10)',
+  },
 ];
 
-const QuickActions = ({ onAction, lang }: { onAction: (id: string) => void; lang: Language }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
-  const actions = [
-    { id: 'buy-travel', label: t('Travel', 'Travel'), icon: Plane, gradient: 'from-emerald-500 to-teal-600' },
-    { id: 'buy-car', label: t('Auto', 'Mobil'), icon: Car, gradient: 'from-blue-500 to-indigo-600' },
-    { id: 'claim', label: t('Claim', 'Klaim'), icon: Zap, gradient: 'from-rose-500 to-orange-600' },
-    { id: 'products', label: t('More', 'Lainnya'), icon: TrendingUp, gradient: 'from-violet-500 to-purple-600' },
-  ];
-  return (
-    <div className="grid grid-cols-4 gap-3 mt-4">
-      {actions.map(({ id, label, icon: Icon, gradient }) => (
-        <button
-          key={id}
-          onClick={() => onAction(id)}
-          className="group flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all duration-300 active:scale-95"
-        >
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-            <Icon size={18} className="text-white" />
-          </div>
-          <span className="text-[0.55rem] font-black text-gray-400 group-hover:text-white uppercase tracking-widest transition-colors">{label}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
-
-
-const PortalHero = ({ onAction, lang = Language.ID }: { onAction: (id: string) => void, lang?: Language }) => {
-  const [current, setCurrent] = useState(0);
-  const slides = SLIDES(lang);
+const PortalHero: React.FC<PortalHeroProps> = ({
+  onAction,
+  lang = Language.ID,
+  userName = 'Nasabah',
+  nodeId = 'SP-USER',
+  policyCount = 0,
+  trustScore = 85,
+}) => {
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
+  const [promo, setPromo] = useState(0);
+  const promos = PROMOS(lang);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
-    }, 8000);
+    const timer = setInterval(() => setPromo(p => (p + 1) % promos.length), 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [promos.length]);
+
+  const isProtected = policyCount > 0;
+  const Promo = promos[promo].icon;
 
   return (
-    <div className="space-y-0">
-      {/* Hero Carousel */}
-      <div className="relative h-[26rem] rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/10 transition-all duration-1000">
-        {slides.map((slide, i) => (
+    <div className="space-y-4" style={{ animation: 'spRise 0.5s cubic-bezier(.2,.7,.2,1) both' }}>
+      <style>{`
+        @keyframes spRise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes spShimmer { 0% { transform: translateX(-120%) skewX(-12deg); } 100% { transform: translateX(220%) skewX(-12deg); } }
+        @keyframes spPulseDot { 0%,100% { opacity:1; transform: scale(1);} 50% { opacity:.45; transform: scale(.82);} }
+        @media (prefers-reduced-motion: reduce){ [data-sp-shimmer]{ animation:none !important; } }
+      `}</style>
+
+      {/* ── Protection Card — gradient top + white bottom (myBCA-style split) ── */}
+      <div className="rounded-[1.9rem] overflow-hidden shadow-xl shadow-emerald-900/10 ring-1 ring-emerald-900/5 dark:ring-white/5">
+
+        {/* Top — SurePath green gradient */}
+        <div
+          className="relative px-5 pt-5 pb-6 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 58%, #16a34a 100%)' }}
+        >
+          {/* shimmer sweep */}
           <div
-            key={i}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${i === current ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} ${slide.bgClass}`}
-          >
-            {slide.pattern}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20"></div>
-            <div className="absolute inset-0 p-12 flex flex-col justify-end">
-              <div className={`space-y-6 transition-all duration-700 delay-300 ${i === current ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
-                <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-xl px-5 py-2 rounded-full border border-white/20 shadow-xl">
-                  <Sparkles size={16} className="text-amber-400 fill-amber-400 animate-pulse" />
-                  <span className="text-[0.65rem] font-black text-white uppercase tracking-[0.25em]">
-                    {lang === Language.EN ? 'Recommended For You' : 'Rekomendasi Untukmu'}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tighter uppercase">
-                    {slide.title}
-                  </h2>
-                  <h3 className={`text-4xl md:text-5xl font-black tracking-tighter uppercase ${slide.highlightClass}`}>
-                    {slide.highlight}
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-200 max-w-[320px] font-medium leading-relaxed opacity-90">
-                  {slide.desc}
-                </p>
-                <button
-                  onClick={() => onAction(slide.actionId)}
-                  className="mt-4 px-10 py-5 bg-white text-slate-950 rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.3em] w-fit shadow-2xl flex items-center gap-4 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-emerald-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500 opacity-10"></div>
-                  <slide.icon size={18} className={slide.iconClass} />
-                  <span className="relative z-10">{slide.cta}</span>
-                  <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform text-gray-400 relative z-10" />
-                </button>
-              </div>
+            data-sp-shimmer
+            className="absolute inset-y-0 w-1/3 pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)',
+              animation: 'spShimmer 4.5s ease-in-out 1s infinite',
+            }}
+          />
+          {/* decorative glow + dot matrix */}
+          <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-25 pointer-events-none" style={{ background: 'radial-gradient(circle, #4ade80, transparent 70%)' }} />
+          <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+
+          <div className="relative z-10 flex items-start justify-between">
+            <div className="inline-flex items-center gap-2 bg-white/12 border border-white/20 rounded-full pl-1.5 pr-3 py-1 backdrop-blur-sm">
+              <span className="w-6 h-6 rounded-full bg-white/15 flex items-center justify-center">
+                <QrCode size={13} className="text-white" />
+              </span>
+              <span className="text-white text-[11px] font-black tracking-wide">{nodeId}</span>
+              <ChevronRight size={13} className="text-white/60" />
+            </div>
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
+              style={{
+                background: isProtected ? 'rgba(74,222,128,0.18)' : 'rgba(255,255,255,0.10)',
+                borderColor: isProtected ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.2)',
+                color: isProtected ? '#bbf7d0' : 'rgba(255,255,255,0.7)',
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: isProtected ? '#4ade80' : 'rgba(255,255,255,0.6)', animation: isProtected ? 'spPulseDot 1.8s ease-in-out infinite' : 'none' }}
+              />
+              {isProtected ? t('Protected', 'Terlindungi') : t('Get Covered', 'Belum Aktif')}
+            </span>
+          </div>
+
+          <div className="relative z-10 mt-4">
+            <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em]">
+              {t('SurePath Protection', 'Proteksi SurePath')}
+            </p>
+            <div className="flex items-end gap-2 mt-1">
+              <h2 className="text-white font-black text-2xl tracking-tight leading-none">
+                {policyCount} <span className="text-white/70 text-base font-bold">{t('active policies', 'polis aktif')}</span>
+              </h2>
             </div>
           </div>
-        ))}
-        <div className="absolute bottom-12 right-12 flex gap-3 z-20">
-          {slides.map((_, i) => (
+        </div>
+
+        {/* Bottom — white quick-link tray */}
+        <div className="bg-white dark:bg-[#0d2618] px-2 py-2 grid grid-cols-3 divide-x divide-slate-100 dark:divide-white/5">
+          {[
+            { id: 'history',  icon: FileText,    label: t('My Policies', 'Polis Saya'), tint: '#16a34a' },
+            { id: 'claim',    icon: Zap,         label: t('Claim', 'Klaim'),            tint: '#d97706' },
+            { id: 'bot',      icon: Bot,         label: t('Ask AI', 'Tanya AI'),        tint: '#7c3aed' },
+          ].map(link => (
             <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`transition-all duration-700 rounded-full h-2.5 shadow-lg border border-white/20 ${i === current ? 'w-12 bg-white' : 'w-2.5 bg-white/30 hover:bg-white/50'}`}
-            />
+              key={link.id}
+              onClick={() => onAction(link.id)}
+              className="flex flex-col items-center justify-center gap-1.5 py-2.5 active:scale-95 transition-transform duration-150 motion-reduce:transition-none group"
+            >
+              <span
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-90 motion-reduce:transition-none"
+                style={{ background: `${link.tint}1a` }}
+              >
+                <link.icon size={17} strokeWidth={2.2} style={{ color: link.tint }} />
+              </span>
+              <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tracking-tight">{link.label}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Quick Action Buttons */}
-      <QuickActions onAction={onAction} lang={lang} />
+      {/* ── Rotating promo strip ── */}
+      <button
+        onClick={() => onAction(promos[promo].action)}
+        className="relative w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-[#0d2618] border border-slate-100 dark:border-[#16a34a]/15 shadow-sm active:scale-[0.99] transition-all duration-200 motion-reduce:transition-none text-left"
+      >
+        <span
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"
+          style={{ background: promos[promo].bg }}
+        >
+          <Promo size={19} strokeWidth={2.2} style={{ color: promos[promo].tint }} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[0.5rem] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <Sparkles size={9} className="fill-current" /> {t('Recommended', 'Rekomendasi')}
+          </p>
+          <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight mt-0.5 truncate">
+            {promos[promo].label}
+          </p>
+        </div>
+        <ChevronRight size={16} className="text-slate-300 dark:text-slate-500 flex-shrink-0" />
+        {/* progress dots */}
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+          {promos.map((_, i) => (
+            <span key={i} className={`h-1 rounded-full transition-all duration-500 ${i === promo ? 'w-4 bg-emerald-500' : 'w-1 bg-slate-200 dark:bg-white/15'}`} />
+          ))}
+        </div>
+      </button>
     </div>
   );
 };

@@ -64,40 +64,86 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   return (
     <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32 font-sora">
+      <style>{`
+        @keyframes spRise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes spShimmer { 0% { transform: translateX(-120%) skewX(-12deg); } 100% { transform: translateX(220%) skewX(-12deg); } }
+        @media (prefers-reduced-motion: reduce){ [data-sp-shimmer]{ animation:none !important; } }
+      `}</style>
 
-      {/* Greeting Hero Banner — SurePath green matching portal header */}
+      {/* Performance Card — gradient top + white bottom (split card, matches customer) */}
       <div
-        className="rounded-[1.75rem] p-5 relative overflow-hidden shadow-xl"
-        style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 60%, #16a34a 100%)' }}
+        className="rounded-[1.9rem] overflow-hidden shadow-xl shadow-emerald-900/10 ring-1 ring-emerald-900/5 dark:ring-white/5"
+        style={{ animation: 'spRise 0.5s cubic-bezier(.2,.7,.2,1) both' }}
       >
-        <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #4ade80, transparent)' }} />
-        <div className="relative z-10 flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">AGENT PORTAL</p>
-            <p className="text-white/70 text-sm font-bold">{greeting()},</p>
-            <h1 className="text-white font-black tracking-tighter text-2xl leading-tight">
-              {(agent?.name ?? 'Agent').toUpperCase()}
-            </h1>
-            <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
-                {agent?.agent_code ?? 'SP-AGT-001'}
-              </span>
-              {agentTier && (
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                  agentTier === 'ELITE'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                }`}>
-                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+        {/* Top — SurePath green gradient */}
+        <div
+          className="relative px-5 pt-5 pb-6 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 58%, #16a34a 100%)' }}
+        >
+          <div
+            data-sp-shimmer
+            className="absolute inset-y-0 w-1/3 pointer-events-none"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent)', animation: 'spShimmer 4.5s ease-in-out 1s infinite' }}
+          />
+          <div className="absolute -top-10 -right-8 w-44 h-44 rounded-full opacity-25 pointer-events-none" style={{ background: 'radial-gradient(circle, #4ade80, transparent 70%)' }} />
+          <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+
+          <div className="relative z-10 flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em] mb-1">{t('Agent Portal', 'Portal Agen')}</p>
+              <p className="text-white/70 text-sm font-bold">{greeting()},</p>
+              <h1 className="text-white font-black tracking-tight text-2xl leading-tight">
+                {(agent?.name ?? 'Agent').toUpperCase()}
+              </h1>
+              <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-full bg-white/12 text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
+                  {agent?.agent_code ?? 'SP-AGT-001'}
                 </span>
-              )}
+                {agentTier && (
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                    agentTier === 'ELITE'
+                      ? 'bg-amber-400/20 text-amber-200 border border-amber-300/30'
+                      : 'bg-white/12 text-white border border-white/20'
+                  }`}>
+                    {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col items-center bg-white/12 border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
+              <Star size={16} className="text-amber-300 mb-0.5" fill="currentColor" />
+              <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
+              <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
             </div>
           </div>
-          <div className="flex flex-col items-center bg-white/10 border border-white/20 rounded-2xl px-3 py-2.5 min-w-[56px]">
-            <Star size={16} className="text-amber-400 mb-0.5" fill="currentColor" />
-            <span className="font-black text-lg text-white leading-none">{agent?.trust_score ?? 85}</span>
-            <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest mt-0.5">Trust</span>
+
+          <div className="relative z-10 mt-4">
+            <p className="text-white/55 text-[10px] font-bold uppercase tracking-[0.22em]">{t('Commission This Month', 'Komisi Bulan Ini')}</p>
+            <h2 className="text-white font-black text-2xl tracking-tight leading-none mt-1">{formatIDR(stats.totalCommissionMonth)}</h2>
           </div>
+        </div>
+
+        {/* Bottom — white quick-link tray */}
+        <div className="bg-white dark:bg-[#0d2618] px-2 py-2 grid grid-cols-3 divide-x divide-slate-100 dark:divide-white/5">
+          {[
+            { tab: 'quotes',   icon: FileText, label: t('Quotes', 'Penawaran'), tint: '#2563eb' },
+            { tab: 'clients',  icon: Users,    label: t('Clients', 'Klien'),    tint: '#16a34a' },
+            { tab: 'commission', icon: Wallet, label: t('Earnings', 'Komisi'),  tint: '#d97706' },
+          ].map(link => (
+            <button
+              key={link.tab}
+              onClick={() => onNavigate(link.tab)}
+              className="flex flex-col items-center justify-center gap-1.5 py-2.5 active:scale-95 transition-transform duration-150 motion-reduce:transition-none group"
+            >
+              <span
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-90 motion-reduce:transition-none"
+                style={{ background: `${link.tint}1a` }}
+              >
+                <link.icon size={17} strokeWidth={2.2} style={{ color: link.tint }} />
+              </span>
+              <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tracking-tight">{link.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -250,17 +296,18 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             { tab: 'network',      label: t('Jaringan', 'Jaringan'),   icon: Network,     circleBg: '#EDE9FE', iconColor: '#7c3aed' },
             { tab: 'renewals',     label: t('Renewal', 'Renewal'),     icon: RefreshCw,   circleBg: '#CFFAFE', iconColor: '#0891b2' },
             { tab: 'endorsements', label: t('Endors', 'Endors'),       icon: FileEdit,    circleBg: '#FFEDD5', iconColor: '#ea580c' },
-          ].map((action) => (
+          ].map((action, i) => (
             <div
               key={`${action.tab}-${action.label}`}
               onClick={() => onNavigate(action.tab)}
+              style={{ animation: `spRise 0.45s cubic-bezier(.2,.7,.2,1) both`, animationDelay: `${i * 55}ms` }}
               className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform duration-150 motion-reduce:transition-none"
             >
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-200 motion-reduce:transition-none"
+                className="w-16 h-16 rounded-[1.4rem] flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/[0.03] group-hover:shadow-lg group-hover:-translate-y-1 group-active:scale-90 transition-all duration-200 motion-reduce:transition-none"
                 style={{ background: action.circleBg }}
               >
-                <action.icon size={22} strokeWidth={2} style={{ color: action.iconColor }} />
+                <action.icon size={22} strokeWidth={2.2} style={{ color: action.iconColor }} />
               </div>
               <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 text-center leading-tight">
                 {action.label}

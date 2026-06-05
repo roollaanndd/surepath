@@ -65,12 +65,12 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   return (
     <div className="px-5 py-6 space-y-7 max-w-lg mx-auto pb-32 font-sora">
 
-      {/* Greeting Hero Banner — navy/teal matching portal header */}
+      {/* Greeting Hero Banner — SurePath green matching portal header */}
       <div
         className="rounded-[1.75rem] p-5 relative overflow-hidden shadow-xl"
-        style={{ background: 'linear-gradient(135deg, #0B2447 0%, #1a3a6b 60%, #0E7490 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #052e16 0%, #14532d 60%, #16a34a 100%)' }}
       >
-        <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #5CE1E6, transparent)' }} />
+        <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #4ade80, transparent)' }} />
         <div className="relative z-10 flex items-start justify-between">
           <div className="flex-1">
             <p className="text-white/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">AGENT PORTAL</p>

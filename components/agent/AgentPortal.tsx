@@ -346,9 +346,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                 ) : (
                   <>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${active ? 'bg-white/15' : ''}`}>
-                      <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }} />
+                      <Icon size={17} strokeWidth={active ? 2.5 : 2} style={{ color: active ? '#4ade80' : 'rgba(255,255,255,0.35)' }} />
                     </div>
-                    <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#5CE1E6' : 'rgba(255,255,255,0.35)' }}>
+                    <span className="text-[8px] font-black uppercase tracking-widest leading-none" style={{ color: active ? '#4ade80' : 'rgba(255,255,255,0.35)' }}>
                       {labelId}
                     </span>
                   </>

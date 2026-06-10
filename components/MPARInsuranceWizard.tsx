@@ -235,33 +235,29 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   );
 
   const renderStep2 = () => (
-    <div className="space-y-6 animate-fade-in">
-       <div className="p-6 glass-card rounded-[2.5rem] border border-amber-500/20 bg-amber-500/5 space-y-4">
-          <p className="text-[0.55rem] font-black uppercase text-amber-500 tracking-[0.3em]">Protection Matrix</p>
-          <h4 className="text-2xl font-black uppercase tracking-tighter">Choose Your Period</h4>
-          <p className="text-[0.65rem] font-medium text-gray-500 dark:text-gray-400">Gadget protection available in short-term clusters.</p>
-       </div>
+    <div className="space-y-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Periode Perlindungan</p>
 
-       <div className="grid grid-cols-1 gap-4">
+       <div className="px-5 grid grid-cols-1 gap-3">
           {[
             { id: 12, label: '1 Year Full Coverage', desc: '12 Months standard matrix.' },
             ...(mpar.category === 'GADGET' ? [{ id: 6, label: '6 Months Cluster', desc: 'Flexible short-term shield.' }] : [])
           ].map(opt => (
-            <button 
+            <button
               key={opt.id}
               onClick={() => setMpar({...mpar, periodMonths: opt.id as any})}
-              className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all ${mpar.periodMonths === opt.id ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
+              className={mpar.periodMonths === opt.id ? 'rounded-xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer transition-all text-left flex items-center gap-4' : 'rounded-xl border border-gray-200 p-4 cursor-pointer transition-all active:bg-gray-50 text-left flex items-center gap-4'}
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-white/10 ${mpar.periodMonths === opt.id ? 'text-amber-500' : 'text-gray-400'}`}>
-                 <Zap size={28}/>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 ${mpar.periodMonths === opt.id ? 'text-emerald-500' : 'text-gray-400'}`}>
+                 <Zap size={24}/>
               </div>
               <div className="flex-1">
-                 <h4 className="font-black text-lg uppercase tracking-tighter">{opt.label}</h4>
-                 <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{opt.desc}</p>
+                 <h4 className="font-semibold text-sm text-gray-900">{opt.label}</h4>
+                 <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
               </div>
               <div className="text-right">
-                 <p className="text-lg font-black text-amber-500">
-                    {opt.id === 6 
+                 <p className="text-sm font-bold text-emerald-600 font-mono">
+                    {opt.id === 6
                       ? formatIDR(MPAR_PRICING.GADGET.MONTHS_6.find(t => mpar.itemPrice >= t.min && mpar.itemPrice <= t.max)?.premium || 0)
                       : formatIDR(currentPremium)
                     }

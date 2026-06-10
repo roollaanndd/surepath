@@ -454,7 +454,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="mx-5 mt-4 grid grid-cols-2 gap-3">
         {/* Joined date */}
         <div className="bg-white/5 rounded-2xl p-4">
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Bergabung</p>

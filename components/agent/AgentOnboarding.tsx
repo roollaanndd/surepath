@@ -143,7 +143,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                s <= step ? 'bg-[#16a34a]' : 'bg-slate-200 dark:bg-white/10'
+                s <= step ? 'bg-emerald-500' : 'bg-white/10'
               }`}
             />
           ))}
@@ -309,25 +309,25 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Address */}
               <div className="relative">
-                <MapPin size={18} className="absolute left-4 top-4 text-slate-300" />
+                <MapPin size={18} className="absolute left-4 top-4 text-gray-500" />
                 <textarea
                   rows={3}
                   placeholder={t('Address (optional)', 'Alamat (opsional)')}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm resize-none focus:border-[#16a34a]/60"
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all resize-none"
                 />
               </div>
 
               {/* Terms agreement */}
-              <label className="flex items-start gap-3 cursor-pointer p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+              <label className="flex items-start gap-3 cursor-pointer p-3 bg-white/5 rounded-xl border border-white/10">
                 <input
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-[#16a34a] flex-shrink-0"
                 />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span className="text-xs font-medium text-gray-400 leading-relaxed">
                   {t(
                     'By signing up you agree to SurePath agent terms and conditions.',
                     'Dengan mendaftar, Anda menyetujui syarat dan ketentuan agen SurePath.',
@@ -344,7 +344,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-[#16a34a]" />

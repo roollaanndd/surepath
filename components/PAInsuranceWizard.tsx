@@ -136,7 +136,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
       </div>
 
       <div className="space-y-4 pt-4">
-          <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1 tracking-widest">Periode Pertanggungan</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Periode Pertanggungan</label>
           <div className="grid grid-cols-2 gap-2">
              <button 
                onClick={() => setPeriod('1')}
@@ -419,7 +419,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
           </div>
        </div>
 
-       <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+       <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
           {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
@@ -427,24 +427,19 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
           {step === 4 && renderStep4()}
        </div>
 
-       <div className="px-8 py-6 bg-white dark:bg-[#111] border-t border-black/5 flex items-center justify-between gap-6 flex-shrink-0">
+       <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-gray-100 flex items-center justify-between gap-4 flex-shrink-0">
           <div className="flex-1">
-             <p className="text-[0.55rem] font-black uppercase text-gray-400 leading-none mb-1 tracking-widest">Net Premium</p>
-             <p className="text-2xl font-black tracking-tighter text-primary-500">{selectedPlanData ? formatIDR(selectedPlanData.premium) : 'Rp 0'}</p>
+             <p className="text-xs text-gray-500">Net Premium</p>
+             <p className="text-lg font-bold text-emerald-600 font-mono">{selectedPlanData ? formatIDR(selectedPlanData.premium) : 'Rp 0'}</p>
           </div>
-          <div className="flex gap-3">
-             {step > 0 && (
-               <button onClick={handleBack} className="p-4 bg-gray-100 dark:bg-white/10 rounded-2xl text-gray-500 hover:text-primary-500 transition-colors">
-                 <ChevronLeft size={24}/>
-               </button>
-             )}
+          <div className="flex gap-2">
              {step < STEPS.length - 1 && (
-                <button 
-                  onClick={handleNext} 
+                <button
+                  onClick={handleNext}
                   disabled={(step === 1 && !paData.planCode) || (step === 3 && !paData.beneficiaryName)}
-                  className="px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.2em] shadow-2xl transition-all active:scale-95 disabled:opacity-30 flex items-center gap-2"
+                  className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 px-8 flex items-center gap-2"
                 >
-                  Lanjut <ChevronRight size={18}/>
+                  Lanjut <ChevronRight size={16}/>
                 </button>
              )}
           </div>

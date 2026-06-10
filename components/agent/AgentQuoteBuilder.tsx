@@ -822,7 +822,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handleSaveQuote}
             disabled={saving || !!savedQuote}
-            className="w-full py-4 rounded-2xl border border-slate-200 dark:border-white/10 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+            className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
           >
             {saving ? <RefreshCw size={14} className="animate-spin" /> : <FileCheck size={14} />}
             {savedQuote ? 'Penawaran Tersimpan!' : 'Simpan Penawaran'}
@@ -832,7 +832,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             href={`https://wa.me/?text=${buildWAText()}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-emerald-500/30"
+            className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all w-full flex items-center justify-center gap-2"
           >
             <Send size={14} />
             Kirim via WhatsApp
@@ -883,7 +883,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handleSaveQuote}
             disabled={saving || !!savedQuote}
-            className="w-full py-4 rounded-2xl border border-slate-200 dark:border-white/10 font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+            className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
           >
             {saving ? <RefreshCw size={14} className="animate-spin" /> : <FileCheck size={14} />}
             {savedQuote ? t('Quote Saved!', 'Penawaran Tersimpan!') : t('Save Quote', 'Simpan Penawaran')}
@@ -904,7 +904,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             href={`https://wa.me/?text=${buildWAText()}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-emerald-500/30"
+            className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all w-full flex items-center justify-center gap-2"
           >
             <Send size={14} />
             {t('Share via WhatsApp', 'Kirim via WhatsApp')}
@@ -913,7 +913,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handleConvert}
             disabled={converting}
-            className="w-full py-4 rounded-2xl bg-[#16a34a] text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/30 disabled:opacity-50"
+            className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
           >
             {converting ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
             {t('Convert to Policy', 'Buat Polis')}

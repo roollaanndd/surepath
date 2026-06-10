@@ -246,7 +246,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Document Status */}
-      <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 overflow-hidden">
+      <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10">
           <span className="text-xs font-black uppercase tracking-widest text-slate-500">Status Dokumen</span>
         </div>
@@ -269,22 +269,23 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Quick Nav */}
       {onNavigate && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
           {[
-            { id: 'network', label: 'Jaringan Downline', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-            { id: 'renewals', label: 'Renewal Polis', icon: RefreshCw, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-            { id: 'endorsements', label: 'Endorsement', icon: FileEdit, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+            { id: 'network', label: 'Jaringan Downline', icon: Network },
+            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+            { id: 'renewals', label: 'Renewal Polis', icon: RefreshCw },
+            { id: 'endorsements', label: 'Endorsement', icon: FileEdit },
           ].map(item => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 active:scale-95 motion-reduce:active:scale-100 hover:border-[#16a34a]/30 transition-all"
+              className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors w-full"
             >
-              <div className={`w-9 h-9 ${item.bg} ${item.color} rounded-xl flex items-center justify-center`}>
+              <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
                 <item.icon size={16} />
               </div>
-              <span className="text-xs font-black text-slate-700 dark:text-slate-300 text-left leading-tight">{item.label}</span>
+              <span className="text-sm font-medium text-gray-900 flex-1 text-left">{item.label}</span>
+              <ChevronRight size={16} className="text-gray-300" />
             </button>
           ))}
         </div>

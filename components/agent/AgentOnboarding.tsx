@@ -228,7 +228,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Password */}
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type={showPass ? 'text' : 'password'}
@@ -240,7 +240,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -248,7 +248,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Confirm Password */}
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type={showConfirm ? 'text' : 'password'}
@@ -260,14 +260,14 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
 
               {error && (
-                <p className="text-rose-500 text-xs font-bold px-3 py-2 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
+                <p className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs mb-4">
                   {error}
                 </p>
               )}
@@ -336,7 +336,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               </label>
 
               {error && (
-                <p className="text-rose-500 text-xs font-bold px-3 py-2 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
+                <p className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs mb-4">
                   {error}
                 </p>
               )}

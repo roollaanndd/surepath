@@ -271,42 +271,26 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
 
   const renderStep3 = () => (
     <div className="space-y-6 animate-fade-in">
-       <div className="p-8 bg-white dark:bg-white/5 rounded-[3rem] border-2 border-black/5 space-y-6 shadow-xl relative overflow-hidden">
-          <div className="absolute right-0 top-0 p-8 opacity-5"><Plane size={120}/></div>
-          <div className="flex justify-between items-start relative z-10">
-             <div className="space-y-1">
-               <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-[0.3em]">Ringkasan Perjalanan</p>
-               <h4 className="text-2xl font-black uppercase tracking-tighter text-primary-500">{travel.selectedPlan?.replace('_', ' ')}</h4>
-             </div>
-             <div className="p-3 bg-primary-500/10 rounded-2xl text-primary-500"><ShieldCheck size={24}/></div>
+       <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-3">
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Paket</span>
+             <span className="text-sm font-semibold text-gray-900">{travel.selectedPlan?.replace('_', ' ')}</span>
           </div>
-          
-          <div className="grid grid-cols-1 gap-4 pt-6 border-t border-black/5 relative z-10">
-             <div className="flex justify-between items-center text-[0.65rem]">
-                <span className="text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> Tujuan</span>
-                <span className="font-black text-right uppercase">{travel.region}</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.65rem]">
-                <span className="text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><Calendar size={12}/> Durasi</span>
-                <span className="font-black text-right uppercase tracking-widest">{currentDuration} Hari ({travel.startDate})</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.65rem]">
-                <span className="text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><Users size={12}/> Peserta</span>
-                <span className="font-black text-right uppercase">{travel.participantType}</span>
-             </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Tujuan</span>
+             <span className="text-sm font-semibold text-gray-900">{travel.region}</span>
           </div>
-
-          <div className="pt-6 border-t border-black/5 relative z-10">
-              <div className="flex justify-between items-end">
-                 <div>
-                    <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Total Premi Net</p>
-                    <h3 className="text-3xl font-black tracking-tighter text-primary-500">{formatIDR(getPremium(travel.selectedPlan!))}</h3>
-                 </div>
-                 <div className="flex flex-col items-end gap-1">
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> All Fees Included</p>
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> Instant Payout Ready</p>
-                 </div>
-              </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Durasi</span>
+             <span className="text-sm font-semibold text-gray-900">{currentDuration} Hari ({travel.startDate})</span>
+          </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Peserta</span>
+             <span className="text-sm font-semibold text-gray-900">{travel.participantType}</span>
+          </div>
+          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+             <span className="text-sm font-bold text-gray-900">Total Premi Net</span>
+             <span className="text-base font-bold text-emerald-600 font-mono">{formatIDR(getPremium(travel.selectedPlan!))}</span>
           </div>
        </div>
 
@@ -327,12 +311,12 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
        <button
          onClick={handleActivate}
          disabled={isProcessing}
-         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+         className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
        >
          {isProcessing ? (
-           <><Loader2 size={24} className="animate-spin text-primary-500"/><span>Memproses...</span></>
+           <><Loader2 size={20} className="animate-spin"/><span>Memproses...</span></>
          ) : (
-           <><Wallet size={24} className="text-primary-500"/><span>BAYAR SEKARANG</span></>
+           <><Wallet size={20}/><span>Beli Sekarang</span></>
          )}
        </button>
     </div>

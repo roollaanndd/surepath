@@ -142,33 +142,28 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   };
 
   const renderStep0 = () => (
-    <div className="space-y-6 animate-fade-in">
-      <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 flex gap-4">
-         <Package className="text-amber-500 flex-shrink-0" size={24}/>
-         <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
-           Movable Property All Risk (MPAR). Protect your valuable assets from accidental damage, theft, and natural disasters.
-         </p>
-      </div>
+    <div className="space-y-4">
+      <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Kategori Barang</p>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3 px-5">
         {[
           { id: 'GADGET', label: 'Gadgets & Devices', desc: 'HP, Tablet, Laptop shield.', icon: Smartphone, sub: 'SMARTPHONE' },
           { id: 'ELECTRONIC', label: 'Electronic Appliances', desc: 'TV, Fridge, AC, and more.', icon: Laptop, sub: 'NON-TV' },
           { id: 'FURNITURE', label: 'Furniture & Decor', desc: 'Sofa, Bed, Premium items.', icon: House, sub: 'FURNITURE_CORE' }
         ].map(cat => (
-          <button 
+          <button
             key={cat.id}
             onClick={() => setMpar({...mpar, category: cat.id as any, subCategory: cat.sub as any})}
-            className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all tap-feedback ${mpar.category === cat.id ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
+            className={mpar.category === cat.id ? 'rounded-xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer transition-all text-left flex items-center gap-4' : 'rounded-xl border border-gray-200 p-4 cursor-pointer transition-all active:bg-gray-50 text-left flex items-center gap-4'}
           >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-white/10 ${mpar.category === cat.id ? 'text-amber-500' : 'text-gray-400'}`}>
-               <cat.icon size={28}/>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 ${mpar.category === cat.id ? 'text-emerald-500' : 'text-gray-400'}`}>
+               <cat.icon size={24}/>
             </div>
-            <div>
-               <h4 className="font-black text-lg uppercase tracking-tighter">{cat.label}</h4>
-               <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{cat.desc}</p>
+            <div className="flex-1">
+               <h4 className="font-semibold text-sm text-gray-900">{cat.label}</h4>
+               <p className="text-xs text-gray-500 mt-0.5">{cat.desc}</p>
             </div>
-            {mpar.category === cat.id && <Check className="ml-auto text-amber-500" size={24} strokeWidth={3}/>}
+            {mpar.category === cat.id && <Check className="text-emerald-500 flex-shrink-0" size={20} strokeWidth={2.5}/>}
           </button>
         ))}
       </div>
@@ -176,95 +171,93 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   );
 
   const renderStep1 = () => (
-    <div className="space-y-6 animate-fade-in">
-       <div className="space-y-4">
+    <div className="space-y-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Barang</p>
+
+       <div className="px-5 space-y-4">
           {mpar.category === 'ELECTRONIC' && (
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl border border-black/5">
-                <button 
+            <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+                <button
                   onClick={() => setMpar({...mpar, subCategory: 'TV'})}
-                  className={`flex-1 py-3 rounded-xl font-black text-[0.65rem] uppercase transition-all ${mpar.subCategory === 'TV' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-lg' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all ${mpar.subCategory === 'TV' ? 'bg-white text-emerald-500 shadow' : 'text-gray-400'}`}
                 >
                   TV Unit
                 </button>
-                <button 
+                <button
                   onClick={() => setMpar({...mpar, subCategory: 'NON-TV'})}
-                  className={`flex-1 py-3 rounded-xl font-black text-[0.65rem] uppercase transition-all ${mpar.subCategory === 'NON-TV' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-lg' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all ${mpar.subCategory === 'NON-TV' ? 'bg-white text-emerald-500 shadow' : 'text-gray-400'}`}
                 >
                   Non-TV Electronic
                 </button>
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Asset Name / Brand</label>
-            <input 
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Asset Name / Brand</label>
+            <input
               placeholder="e.g. Samsung S24 Ultra"
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm uppercase"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               value={mpar.itemName}
               onChange={(e) => setMpar({...mpar, itemName: e.target.value.toUpperCase()})}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Serial Number / IMEI</label>
-              <input 
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Serial Number / IMEI</label>
+              <input
                 placeholder="Unique ID"
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm uppercase"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 value={mpar.serialNumber}
                 onChange={(e) => setMpar({...mpar, serialNumber: e.target.value.toUpperCase()})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Asset Value (Rp)</label>
-              <input 
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Asset Value (Rp)</label>
+              <input
                 type="number"
                 placeholder="Market Price"
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 value={mpar.itemPrice || ''}
                 onChange={(e) => setMpar({...mpar, itemPrice: parseInt(e.target.value) || 0})}
               />
             </div>
           </div>
-       </div>
 
-       <div className="bg-emerald-500/10 p-5 rounded-[2rem] border border-emerald-500/20 flex gap-4">
-          <ShieldCheck className="text-emerald-500 flex-shrink-0" size={24}/>
-          <p className="text-[0.65rem] font-bold text-emerald-800 dark:text-emerald-200 leading-relaxed uppercase tracking-wider">
-             MPAR Protection covers: Accidental Damage, Fire, Riots, and Water Damage.
-          </p>
+          <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex gap-3">
+            <ShieldCheck className="text-emerald-500 flex-shrink-0" size={20}/>
+            <p className="text-xs text-emerald-700 leading-relaxed">
+               MPAR Protection covers: Accidental Damage, Fire, Riots, and Water Damage.
+            </p>
+          </div>
        </div>
     </div>
   );
 
   const renderStep2 = () => (
-    <div className="space-y-6 animate-fade-in">
-       <div className="p-6 glass-card rounded-[2.5rem] border border-amber-500/20 bg-amber-500/5 space-y-4">
-          <p className="text-[0.55rem] font-black uppercase text-amber-500 tracking-[0.3em]">Protection Matrix</p>
-          <h4 className="text-2xl font-black uppercase tracking-tighter">Choose Your Period</h4>
-          <p className="text-[0.65rem] font-medium text-gray-500 dark:text-gray-400">Gadget protection available in short-term clusters.</p>
-       </div>
+    <div className="space-y-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Periode Perlindungan</p>
 
-       <div className="grid grid-cols-1 gap-4">
+       <div className="px-5 grid grid-cols-1 gap-3">
           {[
             { id: 12, label: '1 Year Full Coverage', desc: '12 Months standard matrix.' },
             ...(mpar.category === 'GADGET' ? [{ id: 6, label: '6 Months Cluster', desc: 'Flexible short-term shield.' }] : [])
           ].map(opt => (
-            <button 
+            <button
               key={opt.id}
               onClick={() => setMpar({...mpar, periodMonths: opt.id as any})}
-              className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all ${mpar.periodMonths === opt.id ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
+              className={mpar.periodMonths === opt.id ? 'rounded-xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer transition-all text-left flex items-center gap-4' : 'rounded-xl border border-gray-200 p-4 cursor-pointer transition-all active:bg-gray-50 text-left flex items-center gap-4'}
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-white/10 ${mpar.periodMonths === opt.id ? 'text-amber-500' : 'text-gray-400'}`}>
-                 <Zap size={28}/>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 ${mpar.periodMonths === opt.id ? 'text-emerald-500' : 'text-gray-400'}`}>
+                 <Zap size={24}/>
               </div>
               <div className="flex-1">
-                 <h4 className="font-black text-lg uppercase tracking-tighter">{opt.label}</h4>
-                 <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{opt.desc}</p>
+                 <h4 className="font-semibold text-sm text-gray-900">{opt.label}</h4>
+                 <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
               </div>
               <div className="text-right">
-                 <p className="text-lg font-black text-amber-500">
-                    {opt.id === 6 
+                 <p className="text-sm font-bold text-emerald-600 font-mono">
+                    {opt.id === 6
                       ? formatIDR(MPAR_PRICING.GADGET.MONTHS_6.find(t => mpar.itemPrice >= t.min && mpar.itemPrice <= t.max)?.premium || 0)
                       : formatIDR(currentPremium)
                     }
@@ -277,190 +270,171 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   );
 
   const renderStep3 = () => (
-    <div className="space-y-6 animate-fade-in pb-4">
-       <div className="p-8 glass-card rounded-[3rem] border border-amber-500/20 text-center space-y-6">
-          <div className="relative inline-block">
-             <div className="w-24 h-24 bg-amber-500/10 rounded-[2rem] flex items-center justify-center text-amber-500 shadow-inner">
-                <Microscope size={48} className={loading ? 'animate-spin' : ''}/>
-             </div>
-             <div className="absolute -bottom-2 -right-2 bg-amber-500 text-white p-2 rounded-xl shadow-lg">
-                <Camera size={18} strokeWidth={3}/>
-             </div>
-          </div>
-          <div className="space-y-2">
-             <h4 className="text-2xl font-black uppercase tracking-tighter">Audit Item</h4>
-             <p className="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest">Scan your asset for condition verification.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4 pt-4">
-             {photos.front ? (
-                <div className="relative aspect-video rounded-3xl overflow-hidden group">
-                   <img src={photos.front} className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4">
-                      <button onClick={() => setPhotos({})} className="p-3 bg-white text-rose-500 rounded-2xl shadow-xl"><Trash2 size={24}/></button>
-                      <button onClick={runAiAudit} className="px-6 py-2.5 bg-amber-500 text-white rounded-xl font-black uppercase text-[0.6rem] tracking-widest">Retest Audit</button>
-                   </div>
-                   {aiScore && (
-                     <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1 rounded-lg font-black text-[0.6rem] uppercase shadow-2xl border border-white/20">
-                        Score: {aiScore}% Clean
-                     </div>
-                   )}
+    <div className="space-y-4 pb-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Audit Barang</p>
+
+       <div className="px-5 space-y-4">
+          <div className="rounded-xl border border-gray-200 p-4 text-center space-y-4">
+             <div className="relative inline-block">
+                <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 mx-auto">
+                   <Microscope size={40} className={loading ? 'animate-spin' : ''}/>
                 </div>
-             ) : (
-                <label className="aspect-video rounded-[2.5rem] border-2 border-dashed border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex flex-col items-center justify-center gap-3 cursor-pointer group hover:border-amber-500/50 transition-all">
-                   <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                      <div className="flex gap-1"><Camera size={24} className="text-gray-400 group-hover:text-amber-500"/><ImagePlus size={24} className="text-gray-400 group-hover:text-amber-500"/></div>
-                   </div>
-                   <p className="text-[0.55rem] font-black uppercase text-gray-400 tracking-widest">Upload Front View (Cam/Gallery)</p>
-                   <input 
-                     type="file" accept="image/*" className="hidden" 
-                     onChange={(e) => {
-                       const file = e.target.files?.[0];
-                       if (!file) return;
-                       const reader = new FileReader();
-                       reader.onload = () => setPhotos({...photos, front: reader.result as string});
-                       reader.readAsDataURL(file);
-                     }}
-                   />
-                </label>
-             )}
-          </div>
-       </div>
-
-       {photos.front && !aiScore && !loading && !aiError && (
-          <button onClick={runAiAudit} className="w-full py-5 bg-amber-500 text-white rounded-[2rem] font-black uppercase text-[0.7rem] tracking-[0.3em] shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
-             MULAI SCANNING
-          </button>
-       )}
-
-       {aiError && (
-         <div className="space-y-3">
-           <div className="bg-rose-500/10 p-5 rounded-[2rem] border border-rose-500/20 flex gap-4 items-start">
-             <AlertCircle className="text-rose-500 flex-shrink-0 mt-0.5" size={22}/>
-             <div>
-               <p className="text-[0.65rem] font-black text-rose-700 dark:text-rose-300 leading-relaxed uppercase tracking-wider">
-                 AI tidak dapat memverifikasi kondisi item. Coba foto ulang dengan pencahayaan lebih baik.
-               </p>
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-lg shadow">
+                   <Camera size={14} strokeWidth={2.5}/>
+                </div>
              </div>
-           </div>
-           <div className="grid grid-cols-2 gap-3">
-             <button
-               onClick={runAiAudit}
-               className="py-4 bg-amber-500 text-white rounded-[2rem] font-black uppercase text-[0.65rem] tracking-[0.2em] active:scale-95 transition-all"
-             >
-               Coba Lagi
+             <p className="text-xs text-gray-500">Foto barang untuk verifikasi kondisi</p>
+
+             <div className="grid grid-cols-1 gap-4">
+                {photos.front ? (
+                   <div className="relative aspect-video rounded-xl overflow-hidden group">
+                      <img src={photos.front} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4">
+                         <button onClick={() => setPhotos({})} className="p-3 bg-white text-rose-500 rounded-xl shadow-xl"><Trash2 size={20}/></button>
+                         <button onClick={runAiAudit} className="px-5 py-2 bg-emerald-500 text-white rounded-xl font-semibold text-xs">Retest Audit</button>
+                      </div>
+                      {aiScore && (
+                        <div className="absolute top-3 right-3 bg-emerald-500 text-white px-3 py-1 rounded-lg font-semibold text-xs shadow-lg">
+                           Score: {aiScore}% Clean
+                        </div>
+                      )}
+                   </div>
+                ) : (
+                   <label className="aspect-video rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-emerald-500/50 transition-all">
+                      <div className="flex gap-1 text-gray-400">
+                        <Camera size={22}/><ImagePlus size={22}/>
+                      </div>
+                      <p className="text-xs text-gray-400">Upload Front View (Cam/Gallery)</p>
+                      <input
+                        type="file" accept="image/*" className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => setPhotos({...photos, front: reader.result as string});
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                   </label>
+                )}
+             </div>
+          </div>
+
+          {photos.front && !aiScore && !loading && !aiError && (
+             <button onClick={runAiAudit} className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all">
+                Mulai Scanning
              </button>
-             <button
-               onClick={handleNext}
-               className="py-4 bg-white dark:bg-white/5 border-2 border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-300 rounded-[2rem] font-black uppercase text-[0.65rem] tracking-[0.2em] active:scale-95 transition-all"
-             >
-               Lanjut Tanpa Scan
-             </button>
-           </div>
-         </div>
-       )}
+          )}
+
+          {aiError && (
+            <div className="space-y-3">
+              <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 flex gap-3 items-start">
+                <p className="text-xs text-rose-700 leading-relaxed">
+                  AI tidak dapat memverifikasi kondisi item. Coba foto ulang dengan pencahayaan lebih baik.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={runAiAudit}
+                  className="h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all"
+                >
+                  Coba Lagi
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="h-12 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all"
+                >
+                  Lanjut Tanpa Scan
+                </button>
+              </div>
+            </div>
+          )}
+       </div>
     </div>
   );
 
   const renderStep4 = () => (
-    <div className="space-y-6 animate-fade-in">
-       <div className="p-8 bg-white dark:bg-white/5 rounded-[3rem] border-2 border-black/5 space-y-8 shadow-xl relative overflow-hidden">
-          <div className="absolute right-0 top-0 p-10 opacity-[0.03] dark:opacity-[0.06] -rotate-12 translate-x-12 -translate-y-12"><ShieldCheck size={200}/></div>
-          <div className="flex justify-between items-start relative z-10">
-             <div>
-               <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-[0.4em] mb-1.5 opacity-80">Policy Config</p>
-               <h4 className="text-3xl font-black uppercase tracking-tighter text-amber-500">MPAR Matrix</h4>
-             </div>
-             <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 shadow-inner"><Package size={24}/></div>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-5 pt-6 border-t border-black/5 dark:border-white/5 relative z-10">
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Laptop size={16} className="text-amber-500"/> Item</span>
-                <span className="font-black text-right uppercase">{mpar.itemName}</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Smartphone size={16} className="text-amber-500"/> S/N</span>
-                <span className="font-black text-right uppercase font-mono">{mpar.serialNumber}</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Zap size={16} className="text-amber-500"/> Duration</span>
-                <span className="font-black text-right uppercase tracking-widest">{mpar.periodMonths} MONTHS</span>
-             </div>
-          </div>
+    <div className="space-y-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ringkasan & Pembayaran</p>
 
-          <div className="pt-8 border-t border-black/5 dark:border-white/5 relative z-10">
-              <div className="flex justify-between items-end">
-                 <div>
-                    <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Total Premi Net</p>
-                    <h3 className="text-4xl font-black tracking-tighter text-amber-500">{formatIDR(currentPremium)}</h3>
-                 </div>
-                 <div className="flex flex-col items-end gap-1">
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> All Risk Grade</p>
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> Instant Issue</p>
-                 </div>
-              </div>
+       <div className="mx-5 rounded-2xl bg-gray-50 border border-gray-100 p-4">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Item</span>
+            <span className="text-sm font-semibold text-gray-900">{mpar.itemName}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">S/N</span>
+            <span className="text-sm font-semibold text-gray-900 font-mono">{mpar.serialNumber}</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Durasi</span>
+            <span className="text-sm font-semibold text-gray-900">{mpar.periodMonths} Bulan</span>
+          </div>
+          <div className="flex justify-between py-2">
+            <span className="text-sm font-bold text-gray-900">Total Premi Net</span>
+            <span className="text-base font-bold text-emerald-600 font-mono">{formatIDR(currentPremium)}</span>
           </div>
        </div>
 
        {submitError && (
-         <div className="bg-rose-500/10 p-5 rounded-[2rem] border border-rose-500/20 flex gap-4 items-center">
-           <AlertCircle className="text-rose-500 flex-shrink-0" size={22}/>
-           <p className="text-[0.65rem] font-black text-rose-700 dark:text-rose-300 leading-relaxed uppercase tracking-wider">{submitError}</p>
+         <div className="mx-5 bg-rose-50 p-4 rounded-xl border border-rose-200 flex gap-3 items-center">
+           <p className="text-xs text-rose-700 leading-relaxed">{submitError}</p>
          </div>
        )}
 
-       <button
-         onClick={handleActivate}
-         disabled={isProcessing}
-         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
-       >
-         {isProcessing ? (
-           <><Loader2 size={24} className="animate-spin text-amber-500"/><span>Memproses...</span></>
-         ) : (
-           <><Wallet size={24} className="text-amber-500"/><span>ACTIVATE ASSET SHIELD</span></>
-         )}
-       </button>
+       <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-white border-t border-gray-100">
+         <button
+           onClick={handleActivate}
+           disabled={isProcessing}
+           className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
+         >
+           {isProcessing ? (
+             <><Loader2 size={18} className="animate-spin"/><span>Memproses...</span></>
+           ) : (
+             <><Wallet size={18}/><span>Bayar Sekarang</span></>
+           )}
+         </button>
+       </div>
     </div>
   );
 
   if (isSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
-        <div className="w-24 h-24 bg-amber-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8">
+      <div className="bg-white min-h-screen pb-28 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+        <div className="w-24 h-24 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
           <ShieldCheck size={56} strokeWidth={2.5}/>
         </div>
         <div className="space-y-4 mb-12">
-          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-            Pesanan <span className="text-amber-500">Diterima</span>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Pesanan <span className="text-emerald-500">Diterima</span>
           </h2>
-          <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
             Proteksi barang berhasil didaftarkan. Polis aktif setelah pembayaran dikonfirmasi.
           </p>
         </div>
-        <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>No. Pesanan</span>
-            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+        <div className="mx-5 rounded-2xl bg-gray-50 border border-gray-100 p-4 w-full max-w-sm mb-10">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">No. Pesanan</span>
+            <span className="text-sm font-semibold text-gray-900 font-mono">{orderNumber ?? '—'}</span>
           </div>
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>Item</span>
-            <span className="font-black uppercase">{mpar.itemName}</span>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Item</span>
+            <span className="text-sm font-semibold text-gray-900">{mpar.itemName}</span>
           </div>
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>Status</span>
-            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[0.55rem] font-black uppercase tracking-widest">Diproses</span>
+          <div className="flex justify-between py-2">
+            <span className="text-sm text-gray-500">Status</span>
+            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-xs font-semibold">Diproses</span>
           </div>
         </div>
         <div className="w-full max-w-sm space-y-4">
           {invoiceUrl && (
             <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
-              className="w-full py-5 bg-amber-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+              className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-3">
               Buka Halaman Pembayaran <ExternalLink size={18}/>
             </a>
           )}
           <button onClick={onComplete}
-            className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+            className="w-full h-12 rounded-xl bg-gray-900 text-white font-semibold text-sm active:bg-gray-800 transition-all flex items-center justify-center gap-3">
             Kembali ke Beranda <ArrowRight size={18}/>
           </button>
         </div>
@@ -469,28 +443,30 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">
-       <div className="px-8 pt-8 pb-4 bg-white dark:bg-white/5 border-b border-black/5 flex flex-col gap-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-amber-500/20 group"><Package size={24} className="group-hover:rotate-12 transition-transform"/></div>
-               <div>
-                  <p className="text-[0.45rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1">Matrix Property</p>
-                  <h3 className="text-lg font-black uppercase tracking-tighter">MPAR All-Risk</h3>
-               </div>
-            </div>
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-               <div className="px-3 py-1 text-[0.6rem] font-black text-amber-500 uppercase tracking-widest">{STEPS[step]}</div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-             {STEPS.map((_s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : i < step ? 'bg-amber-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
-             ))}
-          </div>
+    <div className="bg-white min-h-screen pb-28">
+       <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100 flex items-center gap-3">
+          <button onClick={step > 0 ? handleBack : onComplete} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
+            <ChevronLeft size={20}/>
+          </button>
+          <h3 className="text-base font-semibold text-gray-900">{STEPS[step]}</h3>
        </div>
 
-       <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+       <div className="px-5 py-4 flex items-center gap-2">
+         {STEPS.map((_s, i) => (
+           <React.Fragment key={i}>
+             {i > 0 && <div className={`flex-1 h-0.5 ${i <= step ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>}
+             {i < step ? (
+               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center"><Check size={12}/></div>
+             ) : i === step ? (
+               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">{i + 1}</div>
+             ) : (
+               <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{i + 1}</div>
+             )}
+           </React.Fragment>
+         ))}
+       </div>
+
+       <div className="px-5 py-4">
           {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
@@ -498,26 +474,28 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
           {step === 4 && renderStep4()}
        </div>
 
-       <div className="px-8 py-6 bg-white dark:bg-[#111] border-t border-black/5 flex items-center justify-between gap-6 flex-shrink-0">
-          <div className="flex-1">
-             <p className="text-[0.55rem] font-black uppercase text-gray-400 leading-none mb-1 tracking-widest">Net Premium</p>
-             <p className="text-2xl font-black tracking-tighter text-amber-500">{formatIDR(currentPremium)}</p>
-          </div>
-          <div className="flex gap-3">
-             {step > 0 && (
-               <button onClick={handleBack} className="p-4 bg-gray-100 dark:bg-white/10 rounded-2xl text-gray-500 hover:text-amber-500 transition-colors">
-                 <ChevronLeft size={24}/>
-               </button>
-             )}
-             {step < STEPS.length - 1 && (
-                <button 
-                  onClick={handleNext} 
-                  disabled={(step === 1 && (!mpar.itemName || !mpar.itemPrice)) || (step === 3 && !aiScore)}
-                  className="px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.2em] shadow-2xl transition-all active:scale-95 disabled:opacity-30 flex items-center gap-2"
-                >
-                  Lanjut <ChevronRight size={18}/>
-                </button>
-             )}
+       <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-white border-t border-gray-100">
+          <div className="flex items-center justify-between gap-4 mb-3">
+             <div>
+               <p className="text-xs text-gray-500">Net Premium</p>
+               <p className="text-base font-bold text-emerald-600 font-mono">{formatIDR(currentPremium)}</p>
+             </div>
+             <div className="flex gap-3">
+               {step > 0 && (
+                 <button onClick={handleBack} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
+                   <ChevronLeft size={20}/>
+                 </button>
+               )}
+               {step < STEPS.length - 1 && (
+                  <button
+                    onClick={handleNext}
+                    disabled={(step === 1 && (!mpar.itemName || !mpar.itemPrice)) || (step === 3 && !aiScore)}
+                    className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2 px-6"
+                  >
+                    Lanjut <ChevronRight size={18}/>
+                  </button>
+               )}
+             </div>
           </div>
        </div>
     </div>

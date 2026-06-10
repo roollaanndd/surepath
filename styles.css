@@ -255,3 +255,35 @@ body {
   100% { transform: translate(0px, 0px) scale(1); }
 }
 .animate-blob { animation: blob 7s infinite; }
+
+/* ── SurePath App Design System v2 ── */
+@layer utilities {
+  .sp-card {
+    @apply rounded-2xl bg-white border border-gray-100 shadow-sm;
+  }
+  .sp-card-dark {
+    @apply rounded-2xl bg-gray-900 border border-white/5;
+  }
+  .sp-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: sp-shimmer-v2 1.4s ease infinite;
+    border-radius: 8px;
+  }
+  .sp-enter {
+    animation: sp-slide-up-v2 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .sp-enter-d1 { animation-delay: 0.05s; }
+  .sp-enter-d2 { animation-delay: 0.10s; }
+  .sp-enter-d3 { animation-delay: 0.15s; }
+  .sp-enter-d4 { animation-delay: 0.20s; }
+}
+
+@keyframes sp-slide-up-v2 {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sp-shimmer-v2 {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
+}

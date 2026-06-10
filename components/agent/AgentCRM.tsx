@@ -148,10 +148,10 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
   const avatarColor = (name: string) => avatarColors[name.charCodeAt(0) % avatarColors.length];
 
   return (
-    <div className="relative min-h-screen pb-32 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28">
 
       {/* Header */}
-      <div className="px-4 pt-6 pb-3 space-y-3">
+      <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100">
         {/* Search */}
         <div className="relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -160,7 +160,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
             placeholder={t('Search clients…', 'Cari klien…')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl pl-10 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/40 shadow-lg"
+            className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
           />
         </div>
 
@@ -183,7 +183,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
 
         {/* Count + Refresh */}
         <div className="flex items-center justify-between">
-          <p className="text-slate-400 text-xs font-bold">
+          <p className="text-sm text-gray-500 mt-0.5">
             {filtered.length} {t('clients', 'klien')}
           </p>
           <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-[#16a34a] transition-colors">
@@ -194,16 +194,18 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
       </div>
 
       {/* Client List */}
-      <div className="px-4 space-y-3">
+      <div className="">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 p-4 animate-pulse h-20" />
           ))
         ) : filtered.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 p-8 text-center shadow-lg">
-            <User size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-            <p className="font-black text-slate-400">{t('No clients found', 'Klien tidak ditemukan')}</p>
-            <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">{t('Try adjusting your search or add a new client.', 'Coba ubah pencarian atau tambah klien baru.')}</p>
+          <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4 mx-auto">
+              <User size={28} className="text-gray-400" />
+            </div>
+            <p className="text-base font-semibold text-gray-900 mb-1">{t('No clients found', 'Klien tidak ditemukan')}</p>
+            <p className="text-sm text-gray-400">{t('Try adjusting your search or add a new client.', 'Coba ubah pencarian atau tambah klien baru.')}</p>
           </div>
         ) : (
           filtered.map(client => {
@@ -213,19 +215,19 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
               <div
                 key={client.id}
                 onClick={() => { setSelectedClient(client); onSelectClient?.(client); }}
-                className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all hover:border-[#16a34a]/30"
+                className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
               >
-                <div className={`w-11 h-11 rounded-2xl ${avatarColor(client.name)} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-white font-black text-sm">{initials(client.name)}</span>
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm flex-shrink-0">
+                  {initials(client.name)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-black text-sm truncate">{client.name}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{client.name}</p>
                     <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${statusColors[client.status]}`}>
                       {client.status}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 font-medium">{client.phone}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{client.phone}</p>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-[10px] text-slate-400 font-bold">{pols.length} {t('pols', 'polis')}</span>
                     {total > 0 && <span className="text-[10px] text-emerald-500 font-bold">{formatIDR(total)}</span>}
@@ -249,7 +251,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-28 right-6 w-14 h-14 bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-full shadow-[0_8px_30px_rgba(22,163,74,0.5)] flex items-center justify-center z-30 active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg active:bg-emerald-600 transition-all z-30"
       >
         <Plus size={24} className="text-white" strokeWidth={3} />
       </button>

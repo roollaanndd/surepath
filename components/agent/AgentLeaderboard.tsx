@@ -154,13 +154,14 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
   const myRank = myEntry ? leaderboard.indexOf(myEntry) + 1 : null;
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28">
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-black tracking-tight text-2xl">{t('Leaderboard', 'Papan Peringkat')}</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('This Month', 'Bulan Ini')}</p>
+          <h1 className="text-xl font-bold text-gray-900">{t('Leaderboard', 'Papan Peringkat')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('This Month', 'Bulan Ini')}</p>
         </div>
         <button
           onClick={loadData}
@@ -168,7 +169,10 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         >
           <RefreshCw size={15} className={loading ? 'animate-spin motion-reduce:animate-none text-[#16a34a]' : 'text-slate-500'} />
         </button>
+        </div>
       </div>
+
+      <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
 
       {/* Monthly Target Card with circular progress */}
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-5">
@@ -309,27 +313,23 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
               return (
                 <div
                   key={entry.agent_id}
-                  className={`flex items-center gap-3 px-5 py-3.5 transition-colors ${
-                    isMe ? 'bg-[#16a34a]/5 dark:bg-[#16a34a]/10' : ''
+                  className={`flex items-center gap-3 px-5 py-3 bg-white border-b border-gray-50 ${
+                    isMe ? 'bg-emerald-50' : ''
                   }`}
                 >
                   {/* Rank badge */}
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black ${
-                    rank <= 3
-                      ? 'bg-transparent'
-                      : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                  }`}>
+                  <div className="w-6 text-center text-xs font-bold text-gray-500">
                     {medal ?? rank}
                   </div>
 
                   {/* Avatar */}
-                  <div className={`w-9 h-9 rounded-xl ${avatarColor(entry.agent_name)} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-white font-black text-xs">{initials(entry.agent_name)}</span>
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs flex-shrink-0">
+                    {initials(entry.agent_name)}
                   </div>
 
                   {/* Name & code */}
                   <div className="flex-1 min-w-0">
-                    <p className={`font-black text-sm truncate ${isMe ? 'text-[#16a34a]' : ''}`}>
+                    <p className={`text-sm font-semibold text-gray-900 truncate ${isMe ? 'text-[#16a34a]' : ''}`}>
                       {entry.agent_name}
                       {isMe && (
                         <span className="ml-1 text-[10px] font-bold opacity-70">
@@ -347,7 +347,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
 
                   {/* Commission */}
                   <div className="text-right flex-shrink-0">
-                    <p className={`font-black text-sm ${isMe ? 'text-[#16a34a]' : 'text-emerald-500'}`}>
+                    <p className="text-sm font-bold text-emerald-600 font-mono">
                       {formatIDR(entry.total_commission)}
                     </p>
                     <p className="text-[9px] text-slate-400 font-bold">{t('commission', 'komisi')}</p>
@@ -360,6 +360,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
       </div>
 
       <div className="h-4" />
+      </div>
     </div>
   );
 };

@@ -35,7 +35,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const [agreed, setAgreed] = useState(false);
 
   const inputClass =
-    'w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm focus:border-[#16a34a]/60';
+    'w-full h-12 pl-12 pr-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all';
 
   const canProceedStep1 =
     name.trim() && email.trim() && phone.trim() && password.length >= 6 && password === confirmPassword;
@@ -116,24 +116,22 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#16a34a]/8 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="w-full max-w-md flex flex-col gap-6 relative z-10">
+    <div className="min-h-screen bg-gray-950 flex flex-col px-6 py-12 overflow-y-auto">
+      <div className="w-full max-w-md flex flex-col gap-6">
 
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
             onClick={step === 1 ? onBack : () => setStep(1)}
-            className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 shadow flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 mb-6"
           >
             <ChevronLeft size={18} />
           </button>
           <div>
-            <h1 className="font-black tracking-tighter text-xl">
+            <h1 className="text-2xl font-bold text-white mb-1">
               {t('Agent Registration', 'Daftar Agen')}
             </h1>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-sm text-gray-400 mb-8">
               {t(`Step ${step} of 2`, `Langkah ${step} dari 2`)}
             </p>
           </div>
@@ -145,32 +143,32 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                s <= step ? 'bg-[#16a34a]' : 'bg-slate-200 dark:bg-white/10'
+                s <= step ? 'bg-emerald-500' : 'bg-white/10'
               }`}
             />
           ))}
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-8">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-8">
 
           {/* ─── Email confirmation required ─── */}
           {checkEmail && (
             <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#16a34a]/10 border border-[#16a34a]/30 flex items-center justify-center mx-auto">
-                <ShieldCheck size={26} className="text-[#16a34a]" />
+              <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 flex items-center justify-center mb-6 mx-auto">
+                <ShieldCheck size={26} className="text-emerald-400" />
               </div>
-              <p className="font-black tracking-tighter text-lg">
+              <p className="text-xl font-bold text-white mb-2">
                 {t('Check Your Email', 'Cek Email Kamu')}
               </p>
-              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+              <p className="text-sm text-gray-400 leading-relaxed mb-8">
                 {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
-                <span className="text-[#16a34a] font-bold">{email}</span>
+                <span className="text-emerald-400 font-bold">{email}</span>
                 {t('. Click it, then sign in to activate your agent account.', '. Klik link tersebut, lalu masuk untuk mengaktifkan akun agen Anda.')}
               </p>
               <button
                 onClick={onBack}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm"
               >
                 {t('Back to Login', 'Kembali ke Login')}
               </button>
@@ -181,17 +179,17 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           {!checkEmail && step === 1 && (
             <form onSubmit={handleStep1} className="space-y-4">
               <div>
-                <p className="font-black tracking-tighter text-lg mb-1">
+                <p className="text-2xl font-bold text-white mb-1">
                   {t('Personal Information', 'Informasi Pribadi')}
                 </p>
-                <p className="text-xs text-slate-400 font-medium">
+                <p className="text-sm text-gray-400 mb-8">
                   {t('Fill in your personal details to get started.', 'Isi data pribadi Anda untuk memulai.')}
                 </p>
               </div>
 
               {/* Name */}
               <div className="relative">
-                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="text"
@@ -204,7 +202,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Email */}
               <div className="relative">
-                <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="email"
@@ -217,7 +215,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Phone */}
               <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="tel"
@@ -230,7 +228,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Password */}
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type={showPass ? 'text' : 'password'}
@@ -242,7 +240,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -250,7 +248,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Confirm Password */}
               <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type={showConfirm ? 'text' : 'password'}
@@ -262,14 +260,14 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#16a34a] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
 
               {error && (
-                <p className="text-rose-500 text-xs font-bold px-3 py-2 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
+                <p className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs mb-4">
                   {error}
                 </p>
               )}
@@ -277,7 +275,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canProceedStep1}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {t('Next', 'Lanjut')} <ChevronRight size={16} />
               </button>
@@ -288,17 +286,17 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           {!checkEmail && step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <p className="font-black tracking-tighter text-lg mb-1">
+                <p className="text-2xl font-bold text-white mb-1">
                   {t('Professional Information', 'Informasi Profesional')}
                 </p>
-                <p className="text-xs text-slate-400 font-medium">
+                <p className="text-sm text-gray-400 mb-8">
                   {t('Optional details to complete your agent profile.', 'Detail opsional untuk melengkapi profil agen Anda.')}
                 </p>
               </div>
 
               {/* KTP */}
               <div className="relative">
-                <CreditCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <CreditCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   type="text"
                   maxLength={16}
@@ -311,25 +309,25 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Address */}
               <div className="relative">
-                <MapPin size={18} className="absolute left-4 top-4 text-slate-300" />
+                <MapPin size={18} className="absolute left-4 top-4 text-gray-500" />
                 <textarea
                   rows={3}
                   placeholder={t('Address (optional)', 'Alamat (opsional)')}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm resize-none focus:border-[#16a34a]/60"
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all resize-none"
                 />
               </div>
 
               {/* Terms agreement */}
-              <label className="flex items-start gap-3 cursor-pointer p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+              <label className="flex items-start gap-3 cursor-pointer p-3 bg-white/5 rounded-xl border border-white/10">
                 <input
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
                   className="mt-0.5 w-4 h-4 accent-[#16a34a] flex-shrink-0"
                 />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                <span className="text-xs font-medium text-gray-400 leading-relaxed">
                   {t(
                     'By signing up you agree to SurePath agent terms and conditions.',
                     'Dengan mendaftar, Anda menyetujui syarat dan ketentuan agen SurePath.',
@@ -338,7 +336,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               </label>
 
               {error && (
-                <p className="text-rose-500 text-xs font-bold px-3 py-2 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
+                <p className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs mb-4">
                   {error}
                 </p>
               )}
@@ -346,7 +344,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-[#16a34a]" />
@@ -361,7 +359,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           )}
         </div>
 
-        <p className="text-center text-[0.5rem] font-bold text-slate-400 uppercase tracking-widest">
+        <p className="text-center text-[0.5rem] font-bold text-gray-600 uppercase tracking-widest">
           {t('Secured by SurePath Smart Security', 'Diamankan oleh SurePath Smart Security')}
         </p>
       </div>

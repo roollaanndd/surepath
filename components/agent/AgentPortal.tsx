@@ -323,45 +323,26 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation — 5 tabs */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
-        <div className="flex items-center justify-around px-1 py-2.5">
-          {TABS.map(({ id, labelId, Icon }, index) => {
+      {/* Bottom Tab Navigation */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-gray-100" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+        <div className="flex items-center justify-around px-2 pt-2 pb-2">
+          {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
-            const isCenter = index === 2;
             return (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-0.5 transition-all duration-200 motion-reduce:transition-none ${
-                  isCenter
-                    ? '-mt-5'
-                    : `px-2 py-1.5 rounded-2xl ${
-                        active
-                          ? 'bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white scale-110 shadow-lg shadow-[#16a34a]/30'
-                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                      }`
-                }`}
+                className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors duration-150"
               >
-                {isCenter ? (
-                  <div className={`w-14 h-14 rounded-[1.5rem] flex flex-col items-center justify-center shadow-xl transition-all active:scale-90 motion-reduce:active:scale-100 bg-gradient-to-br ${
-                    active
-                      ? 'from-[#15803d] to-[#166534] shadow-[#15803d]/50'
-                      : 'from-[#16a34a] to-[#15803d] shadow-[#16a34a]/40'
-                  }`}>
-                    <Icon size={22} strokeWidth={2.5} className="text-white" />
-                    <span className="text-[7px] font-black uppercase tracking-widest text-white/90 leading-none mt-0.5">
-                      {labelId}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">
-                      {labelId}
-                    </span>
-                  </>
-                )}
+                <Icon
+                  size={22}
+                  strokeWidth={active ? 2.5 : 1.75}
+                  className={active ? 'text-emerald-500' : 'text-gray-400'}
+                />
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  {labelId}
+                </span>
+                {active && <span className="w-1 h-1 rounded-full bg-emerald-500 mt-0.5" />}
               </button>
             );
           })}

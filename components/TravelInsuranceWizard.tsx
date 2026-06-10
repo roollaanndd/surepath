@@ -160,48 +160,41 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
             const ben = TRAVEL_BENEFITS[p as keyof typeof TRAVEL_BENEFITS];
             const premium = getPremium(p);
             return (
-              <div 
+              <div
                 key={p}
                 onClick={() => setTravel({...travel, selectedPlan: p})}
-                className={`p-6 rounded-[2.5rem] border-2 cursor-pointer transition-all relative overflow-hidden group ${travel.selectedPlan === p ? 'border-primary-500 bg-primary-500/5 shadow-xl scale-[1.02]' : 'border-black/5 bg-white dark:bg-white/5 opacity-70'}`}
+                className={travel.selectedPlan === p ? "rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer" : "rounded-2xl border border-gray-200 p-4 cursor-pointer active:bg-gray-50 transition-all"}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="space-y-1">
-                    <p className="text-[0.5rem] font-black text-primary-500 uppercase tracking-widest">Paket</p>
-                    <h5 className="text-xl font-black uppercase tracking-tighter">{p.replace('_', ' ')}</h5>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{p.replace('_', ' ')}</p>
+                    <p className="text-lg font-bold text-emerald-600 font-mono mt-1">{formatIDR(premium)}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-black text-primary-500">{formatIDR(premium)}</p>
-                    <p className="text-[0.45rem] text-gray-400 uppercase font-bold tracking-widest">Total Premi</p>
-                  </div>
+                  {travel.selectedPlan === p && (
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                      <Check size={14} strokeWidth={4}/>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-5 border-t border-black/5 pt-4">
-                   <div className="space-y-1">
-                      <p className="text-[0.45rem] font-black uppercase text-gray-400">Accident Benefit</p>
+                <div className="grid grid-cols-2 gap-3 mb-3 border-t border-gray-100 pt-3">
+                   <div>
+                      <p className="text-xs text-gray-500">Accident Benefit</p>
                       {/* Fixed: Property 'death' changed to 'deathBenefit' based on constants.ts type */}
-                      <p className="text-xs font-black text-gray-900 dark:text-white tracking-tight">Rp {ben.deathBenefit}</p>
+                      <p className="text-xs font-semibold text-gray-900 mt-0.5">Rp {ben.deathBenefit}</p>
                    </div>
-                   <div className="space-y-1 text-right">
-                      <p className="text-[0.45rem] font-black uppercase text-gray-400">Medical Expense</p>
+                   <div className="text-right">
+                      <p className="text-xs text-gray-500">Medical Expense</p>
                       {/* Fixed: Property 'medical' changed to 'medicalBenefit' based on constants.ts type */}
-                      <p className="text-xs font-black text-gray-900 dark:text-white tracking-tight">Rp {ben.medicalBenefit}</p>
+                      <p className="text-xs font-semibold text-gray-900 mt-0.5">Rp {ben.medicalBenefit}</p>
                    </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                    {ben.features.map((f, i) => (
-                      <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-white/5 rounded-full text-[0.45rem] font-black uppercase text-gray-500 tracking-widest">{f}</span>
+                      <span key={i} className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">{f}</span>
                    ))}
                 </div>
-
-                {travel.selectedPlan === p && (
-                  <div className="absolute top-4 right-4">
-                     <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-lg animate-pop-in">
-                        <Check size={14} strokeWidth={4}/>
-                     </div>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -228,31 +221,31 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
 
        <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Nama Lengkap (Sesuai KTP/Passport)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Nama Lengkap (Sesuai KTP/Passport)</label>
             <input
               placeholder="Full Legal Name"
               value={travelerData.name}
               onChange={(e) => setTravelerData({...travelerData, name: e.target.value.toUpperCase()})}
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all uppercase"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
              <div className="space-y-1.5">
-                <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">NIK / Passport</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">NIK / Passport</label>
                 <input
                   placeholder="ID Number"
                   value={travelerData.nik}
                   onChange={(e) => setTravelerData({...travelerData, nik: e.target.value.toUpperCase()})}
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all uppercase"
                 />
              </div>
              <div className="space-y-1.5">
-                <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Tgl Lahir</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Tgl Lahir</label>
                 <input
                   type="date"
                   value={travelerData.birthDate}
                   onChange={(e) => setTravelerData({...travelerData, birthDate: e.target.value})}
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"/>
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"/>
              </div>
           </div>
           <div className="space-y-1.5">

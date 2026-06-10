@@ -469,28 +469,30 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">
-       <div className="px-8 pt-8 pb-4 bg-white dark:bg-white/5 border-b border-black/5 flex flex-col gap-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-amber-500/20 group"><Package size={24} className="group-hover:rotate-12 transition-transform"/></div>
-               <div>
-                  <p className="text-[0.45rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1">Matrix Property</p>
-                  <h3 className="text-lg font-black uppercase tracking-tighter">MPAR All-Risk</h3>
-               </div>
-            </div>
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-               <div className="px-3 py-1 text-[0.6rem] font-black text-amber-500 uppercase tracking-widest">{STEPS[step]}</div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-             {STEPS.map((_s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : i < step ? 'bg-amber-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
-             ))}
-          </div>
+    <div className="bg-white min-h-screen pb-28">
+       <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100 flex items-center gap-3">
+          <button onClick={step > 0 ? handleBack : onComplete} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
+            <ChevronLeft size={20}/>
+          </button>
+          <h3 className="text-base font-semibold text-gray-900">{STEPS[step]}</h3>
        </div>
 
-       <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+       <div className="px-5 py-4 flex items-center gap-2">
+         {STEPS.map((_s, i) => (
+           <React.Fragment key={i}>
+             {i > 0 && <div className={`flex-1 h-0.5 ${i <= step ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>}
+             {i < step ? (
+               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center"><Check size={12}/></div>
+             ) : i === step ? (
+               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">{i + 1}</div>
+             ) : (
+               <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{i + 1}</div>
+             )}
+           </React.Fragment>
+         ))}
+       </div>
+
+       <div className="px-5 py-4">
           {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
@@ -498,26 +500,28 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
           {step === 4 && renderStep4()}
        </div>
 
-       <div className="px-8 py-6 bg-white dark:bg-[#111] border-t border-black/5 flex items-center justify-between gap-6 flex-shrink-0">
-          <div className="flex-1">
-             <p className="text-[0.55rem] font-black uppercase text-gray-400 leading-none mb-1 tracking-widest">Net Premium</p>
-             <p className="text-2xl font-black tracking-tighter text-amber-500">{formatIDR(currentPremium)}</p>
-          </div>
-          <div className="flex gap-3">
-             {step > 0 && (
-               <button onClick={handleBack} className="p-4 bg-gray-100 dark:bg-white/10 rounded-2xl text-gray-500 hover:text-amber-500 transition-colors">
-                 <ChevronLeft size={24}/>
-               </button>
-             )}
-             {step < STEPS.length - 1 && (
-                <button 
-                  onClick={handleNext} 
-                  disabled={(step === 1 && (!mpar.itemName || !mpar.itemPrice)) || (step === 3 && !aiScore)}
-                  className="px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.2em] shadow-2xl transition-all active:scale-95 disabled:opacity-30 flex items-center gap-2"
-                >
-                  Lanjut <ChevronRight size={18}/>
-                </button>
-             )}
+       <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-white border-t border-gray-100">
+          <div className="flex items-center justify-between gap-4 mb-3">
+             <div>
+               <p className="text-xs text-gray-500">Net Premium</p>
+               <p className="text-base font-bold text-emerald-600 font-mono">{formatIDR(currentPremium)}</p>
+             </div>
+             <div className="flex gap-3">
+               {step > 0 && (
+                 <button onClick={handleBack} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
+                   <ChevronLeft size={20}/>
+                 </button>
+               )}
+               {step < STEPS.length - 1 && (
+                  <button
+                    onClick={handleNext}
+                    disabled={(step === 1 && (!mpar.itemName || !mpar.itemPrice)) || (step === 3 && !aiScore)}
+                    className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2 px-6"
+                  >
+                    Lanjut <ChevronRight size={18}/>
+                  </button>
+               )}
+             </div>
           </div>
        </div>
     </div>

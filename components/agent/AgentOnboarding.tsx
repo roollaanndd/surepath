@@ -35,7 +35,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const [agreed, setAgreed] = useState(false);
 
   const inputClass =
-    'w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-white/[0.03] border-2 border-slate-100 dark:border-white/5 rounded-2xl outline-none transition-all font-bold text-sm focus:border-[#16a34a]/60';
+    'w-full h-12 pl-12 pr-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all';
 
   const canProceedStep1 =
     name.trim() && email.trim() && phone.trim() && password.length >= 6 && password === confirmPassword;
@@ -128,10 +128,10 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
             <ChevronLeft size={18} />
           </button>
           <div>
-            <h1 className="font-black tracking-tighter text-xl">
+            <h1 className="text-2xl font-bold text-white mb-1">
               {t('Agent Registration', 'Daftar Agen')}
             </h1>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <p className="text-sm text-gray-400 mb-8">
               {t(`Step ${step} of 2`, `Langkah ${step} dari 2`)}
             </p>
           </div>
@@ -150,25 +150,25 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
         </div>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-8">
+        <div className="bg-white/5 rounded-2xl border border-white/10 p-8">
 
           {/* ─── Email confirmation required ─── */}
           {checkEmail && (
             <div className="text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#16a34a]/10 border border-[#16a34a]/30 flex items-center justify-center mx-auto">
-                <ShieldCheck size={26} className="text-[#16a34a]" />
+              <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 flex items-center justify-center mb-6 mx-auto">
+                <ShieldCheck size={26} className="text-emerald-400" />
               </div>
-              <p className="font-black tracking-tighter text-lg">
+              <p className="text-xl font-bold text-white mb-2">
                 {t('Check Your Email', 'Cek Email Kamu')}
               </p>
-              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+              <p className="text-sm text-gray-400 leading-relaxed mb-8">
                 {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
-                <span className="text-[#16a34a] font-bold">{email}</span>
+                <span className="text-emerald-400 font-bold">{email}</span>
                 {t('. Click it, then sign in to activate your agent account.', '. Klik link tersebut, lalu masuk untuk mengaktifkan akun agen Anda.')}
               </p>
               <button
                 onClick={onBack}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm"
               >
                 {t('Back to Login', 'Kembali ke Login')}
               </button>

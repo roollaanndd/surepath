@@ -233,7 +233,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         <div className="space-y-1.5">
           <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400">Jumlah Penarikan</label>
           <input
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-lg font-black outline-none focus:border-[#16a34a] font-mono"
+            className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all font-mono"
             placeholder="0"
             value={amount ? parseInt(amount.replace(/\D/g, '') || '0').toLocaleString('id-ID') : ''}
             onChange={e => setAmount(e.target.value.replace(/\D/g, ''))}
@@ -292,7 +292,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <button
             onClick={handleSubmitClick}
             disabled={loading || amt < 10000 || !bankCode || !accNum || !accName}
-            className="flex-2 flex-grow py-4 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-xs uppercase tracking-widest active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-2 flex-grow h-12 bg-emerald-500 text-white rounded-xl font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {loading ? <RefreshCw size={16} className="animate-spin motion-reduce:animate-none" /> : <ArrowUpRight size={16} />}
             {loading ? 'Memproses...' : 'Tarik Dana'}

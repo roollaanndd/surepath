@@ -322,10 +322,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           {t('Download Certificate (PDF)', 'Unduh Sertifikat (PDF)')}
         </button>
         <div className="flex gap-3 w-full">
-          <button onClick={reset} className="flex-1 py-3.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-black font-black text-xs uppercase tracking-widest">
+          <button onClick={reset} className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all">
             {t('New Quote', 'Penawaran Baru')}
           </button>
-          <button onClick={onBack} className="flex-1 py-3.5 rounded-2xl border border-slate-200 dark:border-white/10 font-black text-xs uppercase tracking-widest">
+          <button onClick={onBack} className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all">
             {t('Back to Home', 'Kembali')}
           </button>
         </div>

@@ -1,9 +1,12 @@
 # SurePath — Product Requirements Document
 
-**Version:** 2.0  
-**Date:** June 2026  
+**Version:** 2.1  
+**Date:** 10 June 2026  
 **Owner:** Product & Engineering Team  
 **Status:** Active
+
+> v2.1 changelog: auth/registration overhaul (self-service `ensure_profile` via data-gateway,
+> agent self-registration fixed, native-app CORS), feature inventory & tech stack corrections.
 
 ---
 
@@ -82,6 +85,8 @@ SurePath is Indonesia's AI-powered insurance distribution platform targeting the
 | Claims submission | Live | Photo upload, status tracking |
 | Payment via Xendit | Live | VA, QRIS, e-wallet |
 | Google OAuth login | Live | PKCE flow, custom domain |
+| Email+password registration & login | Live | Auto profile creation via gateway `ensure_profile` (fixed 10 Jun 2026) |
+| Email OTP / magic link login | Live | `signInWithOtp`, no user enumeration |
 | Push notifications | Partial | In-app only, no native push yet |
 
 ### 5.2 Agent Portal
@@ -98,7 +103,8 @@ SurePath is Indonesia's AI-powered insurance distribution platform targeting the
 | Policy renewals tracking | Live | getExpiringOrders() |
 | Endorsements | Live | Mid-term policy changes |
 | Life insurance applications | Live | Full application form |
-| Capacitor Android app | Live (beta) | com.myinsurepath.os |
+| Agent self-registration | Live | Fixed 10 Jun 2026 — real signUp + `ensure_profile`; agents start unverified pending admin approval |
+| Capacitor Android app | Live (beta) | com.myinsurepath.os — gateway CORS for `https://localhost` fixed 10 Jun 2026 |
 
 ### 5.3 B2B Portal
 | Feature | Status | Notes |
@@ -234,7 +240,9 @@ SurePath is Indonesia's AI-powered insurance distribution platform targeting the
 
 See `docs/SECURITY_POLICY.md` for full detail. Summary:
 
-- All customer PII stored in Supabase with RLS — no row accessible without ownership proof
+- Sensitive tables (`sp_users`, orders, payments, claims, commissions) accessed exclusively through the **data-gateway** edge function: JWT verified server-side, queries run as service_role with per-row authorization in code (see `docs/DATA_GATEWAY.md`)
+- User profiles created server-side from the verified JWT identity (`ensure_profile`) — id/email never client-supplied; agent role starts unverified
+- All customer PII stored in Supabase with RLS — no row accessible without ownership proof (note: live RLS state diverges from repo migrations; see `docs/DATABASE_STATE.md`)
 - Admin routes protected by VITE_ADMIN_KEY (env-only, never in source)
 - Xendit webhook: fail-closed token validation (500 if unconfigured, 401 on mismatch)
 - AI/LLM calls proxied server-side (ai-proxy edge function) — no API keys in browser bundle
@@ -251,11 +259,12 @@ See `docs/TECHNICAL_SPEC.md` for full detail.
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19 + TypeScript + Vite 6 + TailwindCSS |
-| Mobile | Capacitor 6 (Android) |
-| Backend | Supabase (PostgreSQL 15 + RLS + Realtime) |
-| Edge Functions | Deno (TypeScript) |
-| Auth | Supabase GoTrue (Google OAuth PKCE + email OTP) |
+| Frontend | React 19 + TypeScript + Vite + TailwindCSS |
+| Mobile | Capacitor 8 (Android, `com.myinsurepath.os`) |
+| Backend | Supabase (PostgreSQL 17 + RLS + Realtime) |
+| Secure data access | data-gateway edge function (JWT-verified, service_role) |
+| Edge Functions | Deno (TypeScript) — deployed manually, not via git |
+| Auth | Supabase GoTrue (email+password, Google OAuth PKCE, email OTP) |
 | Payments | Xendit (VA, QRIS, e-wallet) |
 | Email | Resend API |
 | AI/LLM | OpenRouter (proxied via ai-proxy edge function) |

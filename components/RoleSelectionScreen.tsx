@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SurePathLogo } from './Navbar';
 import { UserRole } from '../types';
-import { registerAgent, createCustomerProfile, createB2BClientProfile, applyReferralCode } from '../services/supabaseService';
+import { ensureProfile, createB2BClientProfile, applyReferralCode } from '../services/supabaseService';
 
 type Role = 'CUSTOMER' | 'AGENT' | 'B2B_CLIENT';
 
@@ -88,17 +88,16 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       let profile = null;
 
       if (selected === 'CUSTOMER') {
-        profile = await createCustomerProfile({
-          id: oauthUser.id,
+        profile = await ensureProfile({
           name: oauthUser.name,
-          email: oauthUser.email,
           phone: phone.trim(),
+          role: 'CUSTOMER',
         });
       } else if (selected === 'AGENT') {
-        profile = await registerAgent({
+        profile = await ensureProfile({
           name: oauthUser.name,
-          email: oauthUser.email,
           phone: phone.trim(),
+          role: 'AGENT',
         });
         // Link to upline if a referral code was stored from the landing URL
         if (profile && refCode) {

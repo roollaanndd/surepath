@@ -4,7 +4,7 @@ import {
   User, Globe, Phone, Lock, MapPin, CreditCard, ShieldCheck
 } from 'lucide-react';
 import { Language } from '../../types';
-import { registerAgent } from '../../services/supabaseService';
+import { supabase, ensureProfile } from '../../services/supabaseService';
 
 interface Props {
   onSuccess: (agent: any) => void;
@@ -16,6 +16,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [step, setStep] = useState(1);
+  const [checkEmail, setCheckEmail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPass, setShowPass] = useState(false);
@@ -61,18 +62,54 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
     setLoading(true);
     setError(null);
 
-    const result = await registerAgent({ name, email, phone, ktp: ktp || undefined, address: address || undefined });
+    // 1) Create the Supabase Auth account. Role/profile data travels in the
+    // user metadata so the gateway can build the profile even when the user
+    // only returns after clicking the email-confirmation link.
+    const { data, error: authErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          phone,
+          role: 'AGENT',
+          ktp: ktp || null,
+          address: address || null,
+        },
+      },
+    });
 
-    if (!result) {
+    if (authErr || !data.user) {
+      const msg = authErr?.message ?? '';
+      setError(
+        msg.includes('already registered') || msg.includes('already been registered')
+          ? t('This email is already registered. Try signing in.', 'Email ini sudah terdaftar. Coba masuk.')
+          : msg || t('Registration failed. Please try again.', 'Pendaftaran gagal. Silakan coba lagi.'),
+      );
+      setLoading(false);
+      return;
+    }
+
+    // 2) Email confirmation required — profile will be created by
+    // ensure_profile (from the metadata above) on their first login.
+    if (!data.session) {
+      setCheckEmail(true);
+      setLoading(false);
+      return;
+    }
+
+    // 3) Immediate session — create the agent profile via the gateway.
+    const profile = await ensureProfile({ name, phone, role: 'AGENT', ktp: ktp || null, address: address || null });
+    if (!profile) {
       setError(t('Registration failed. Please try again.', 'Pendaftaran gagal. Silakan coba lagi.'));
       setLoading(false);
       return;
     }
 
     const session = {
-      ...result,
+      ...profile,
       role: 'AGENT',
-      supabaseId: result.id,
+      supabaseId: profile.id,
     };
     localStorage.setItem('SUREPATH_SESSION', JSON.stringify(session));
     onSuccess(session);
@@ -117,8 +154,31 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
         {/* Card */}
         <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl p-8">
 
+          {/* ─── Email confirmation required ─── */}
+          {checkEmail && (
+            <div className="text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#16a34a]/10 border border-[#16a34a]/30 flex items-center justify-center mx-auto">
+                <ShieldCheck size={26} className="text-[#16a34a]" />
+              </div>
+              <p className="font-black tracking-tighter text-lg">
+                {t('Check Your Email', 'Cek Email Kamu')}
+              </p>
+              <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
+                <span className="text-[#16a34a] font-bold">{email}</span>
+                {t('. Click it, then sign in to activate your agent account.', '. Klik link tersebut, lalu masuk untuk mengaktifkan akun agen Anda.')}
+              </p>
+              <button
+                onClick={onBack}
+                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+              >
+                {t('Back to Login', 'Kembali ke Login')}
+              </button>
+            </div>
+          )}
+
           {/* ─── STEP 1: Personal Info ─── */}
-          {step === 1 && (
+          {!checkEmail && step === 1 && (
             <form onSubmit={handleStep1} className="space-y-4">
               <div>
                 <p className="font-black tracking-tighter text-lg mb-1">
@@ -225,7 +285,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           )}
 
           {/* ─── STEP 2: Professional Info ─── */}
-          {step === 2 && (
+          {!checkEmail && step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <p className="font-black tracking-tighter text-lg mb-1">

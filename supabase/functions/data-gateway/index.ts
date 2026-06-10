@@ -30,7 +30,10 @@ const ALLOWED_ORIGINS = [
   'https://www.myinsurepath.com',
 ];
 const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
-const LOCAL_RE = /^http:\/\/localhost(:\d+)?$/i;
+// http(s)://localhost covers dev servers AND the Capacitor Android/iOS WebView
+// (origin is https://localhost by default); capacitor://localhost covers iOS
+// custom-scheme builds. Without these the native apps can't reach the gateway.
+const LOCAL_RE = /^(https?|capacitor):\/\/localhost(:\d+)?$/i;
 function corsHeaders(origin: string | null): Record<string, string> {
   const allow =
     origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_RE.test(origin) || LOCAL_RE.test(origin))
@@ -109,6 +112,40 @@ serve(async (req) => {
       case 'get_my_profile': {
         if (!caller.spUser) return json({ error: 'No SurePath profile linked to this account' }, 404);
         return json({ data: caller.spUser });
+      }
+
+      // Self-service profile creation: returns the caller's profile, creating it
+      // from their verified JWT identity if missing. Used right after signup
+      // (customer or agent) and as a self-heal at login. The row id is ALWAYS
+      // the caller's auth id and the email is ALWAYS the verified token email —
+      // never client-supplied. Role is restricted to CUSTOMER/AGENT; agents
+      // start unverified until an admin approves them.
+      case 'ensure_profile': {
+        if (caller.spUser) return json({ data: caller.spUser });
+        const meta = (userData.user.user_metadata ?? {}) as Record<string, unknown>;
+        const reqRole = String(params.role ?? meta.role ?? 'CUSTOMER').toUpperCase();
+        const role = reqRole === 'AGENT' ? 'AGENT' : 'CUSTOMER';
+        const insertRow: Record<string, unknown> = {
+          id: authId,
+          email,
+          name: String(params.name ?? meta.name ?? email.split('@')[0]),
+          phone: String(params.phone ?? meta.phone ?? ''),
+          ktp: params.ktp ?? meta.ktp ?? null,
+          address: params.address ?? meta.address ?? null,
+          role,
+          trust_score: role === 'AGENT' ? 80 : 85,
+          verified: role !== 'AGENT',
+          agent_code: role === 'AGENT'
+            ? 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000))
+            : 'SP-' + String(Math.floor(Math.random() * 99999)).padStart(5, '0'),
+        };
+        if (role === 'AGENT') {
+          insertRow.commission_rate = 0.1;
+          insertRow.monthly_target = 50000000;
+        }
+        const { data, error } = await db.from('sp_users').insert(insertRow).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
       }
 
       // An agent's own clients only. Admins may pass an explicit agent_id.

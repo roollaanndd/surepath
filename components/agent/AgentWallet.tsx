@@ -208,9 +208,9 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
               <option value="">Pilih Bank</option>
               {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
             </select>
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-mono outline-none focus:border-[#16a34a]" placeholder="Nomor Rekening" value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))} />
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm font-bold outline-none focus:border-[#16a34a]" placeholder="Nama Pemegang (sesuai buku tabungan)" value={accName} onChange={e => setAccName(e.target.value)} />
-            <input className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-sm outline-none focus:border-[#16a34a] text-gray-300" placeholder='Label (opsional, cth: "Rekening Utama")' value={accLabel} onChange={e => setAccLabel(e.target.value)} />
+            <input className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all font-mono" placeholder="Nomor Rekening" value={accNum} onChange={e => setAccNum(e.target.value.replace(/\D/g, ''))} />
+            <input className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all" placeholder="Nama Pemegang (sesuai buku tabungan)" value={accName} onChange={e => setAccName(e.target.value)} />
+            <input className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all" placeholder='Label (opsional, cth: "Rekening Utama")' value={accLabel} onChange={e => setAccLabel(e.target.value)} />
             {accName && profileName && accName.toUpperCase() !== profileName.toUpperCase() && (
               <p className="text-[10px] text-amber-400 flex items-center gap-1"><AlertCircle size={10} />Nama tidak cocok dengan nama terdaftar: {profileName}</p>
             )}
@@ -221,7 +221,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
                   onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
                   setBankCode(''); setAccNum(''); setAccName(''); setAccLabel(''); setAddingNew(false);
                 }}
-                className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="w-full h-12 mt-4 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-2"
               >
                 <CheckCircle2 size={14} />
                 Simpan Rekening
@@ -401,15 +401,15 @@ const AgentWalletView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in motion-reduce:animate-none pb-24 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28">
       {/* Balance card */}
-      <div className="relative bg-gradient-to-br from-[#15803d] via-emerald-800 to-slate-900 rounded-[3rem] p-8 overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        <div className="relative z-10 space-y-6">
+      <div className="mx-5 mt-5 rounded-2xl p-5 bg-gray-900 text-white sp-enter">
+        <div className="space-y-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[0.55rem] font-black uppercase tracking-widest text-white/50">Saldo Dompet</p>
-              <h2 className="text-4xl font-black text-white tracking-tighter mt-1">{IDR(wallet?.balance ?? 0)}</h2>
+              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-1">Saldo Tersedia</p>
+              <h2 className="text-3xl font-bold font-mono text-white">{IDR(wallet?.balance ?? 0)}</h2>
+              <p className="text-gray-500 text-xs mt-1">Saldo Dompet</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
               <Wallet size={22} className="text-white" />
@@ -439,7 +439,7 @@ const AgentWalletView: React.FC = () => {
           <button
             onClick={() => setShowWithdrawForm(true)}
             disabled={(wallet?.balance ?? 0) < 10000}
-            className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.25em] flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-40 shadow-lg"
+            className="w-full h-12 mt-4 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all"
           >
             <ArrowUpRight size={18} />
             TARIK DANA
@@ -486,23 +486,21 @@ const AgentWalletView: React.FC = () => {
 
       {/* Ledger */}
       {tab === 'ledger' && (
-        <div className="space-y-3">
+        <div className="bg-white rounded-2xl mx-5 mt-4 overflow-hidden border border-gray-100">
           {txns.length === 0 && (
             <div className="text-center py-12 text-gray-500 text-sm">Belum ada transaksi</div>
           )}
           {txns.map(tx => (
-            <div key={tx.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.amount > 0 ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
-                  {tx.amount > 0 ? <ArrowDownLeft size={18} className="text-emerald-400" /> : <ArrowUpRight size={18} className="text-amber-400" />}
-                </div>
-                <div>
-                  <p className="text-xs font-black text-white">{tx.description ?? tx.type}</p>
-                  <p className="text-[0.5rem] text-gray-500 mt-0.5">{new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
+            <div key={tx.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 bg-white">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                {tx.amount > 0 ? <ArrowDownLeft size={18} className="text-emerald-400" /> : <ArrowUpRight size={18} className="text-amber-400" />}
               </div>
-              <div className="text-right">
-                <p className={`text-sm font-black ${tx.amount > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 flex-1 truncate">{tx.description ?? tx.type}</p>
+                <p className="text-xs text-gray-400">{new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className={`text-sm font-semibold text-emerald-600 font-mono ${tx.amount > 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {tx.amount > 0 ? '+' : ''}{IDR(tx.amount)}
                 </p>
                 <p className="text-[0.45rem] text-gray-600">{IDR(tx.balance_after)}</p>
@@ -520,17 +518,22 @@ const AgentWalletView: React.FC = () => {
           )}
           {withdrawals.map(wd => {
             const { cls, label } = statusBadge(wd.status);
+            const isPending = wd.status?.startsWith('PENDING');
             return (
-              <div key={wd.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
+              <div key={wd.id} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50">
+                <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-3">
                     <Building2 size={16} className="text-gray-400" />
                     <div>
-                      <p className="text-xs font-black text-white">{wd.bank_code} · {wd.account_number}</p>
-                      <p className="text-[0.5rem] text-gray-500">{wd.account_holder_name}</p>
+                      <p className="text-sm font-medium text-gray-900">{wd.bank_code} · {wd.account_number}</p>
+                      <p className="text-xs text-gray-400">{wd.account_holder_name}</p>
                     </div>
                   </div>
-                  <span className={`text-[0.45rem] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${cls}`}>{label}</span>
+                  {isPending ? (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{label}</span>
+                  ) : (
+                    <span className={`text-[0.45rem] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${cls}`}>{label}</span>
+                  )}
                 </div>
                 <div className="flex justify-between items-end pt-1 border-t border-white/5">
                   <div>

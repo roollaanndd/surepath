@@ -114,7 +114,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   ];
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28">
 
       {/* Toast */}
       {toastVisible && (
@@ -127,12 +127,12 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
       )}
 
       {/* Balance Cards */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-5 text-white shadow-2xl space-y-4">
+      <div className="mx-5 mt-5 rounded-2xl p-5 bg-gray-900 text-white sp-enter" style={{boxShadow: '0 8px 32px rgba(0,0,0,0.15)'}}>
         <div className="flex items-center justify-between">
-          <p className="text-slate-400 text-xs font-black uppercase tracking-widest">{t('Total Earned', 'Total Komisi')}</p>
+          <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-1">{t('Total Earned', 'Total Komisi')}</p>
           <Wallet size={18} className="text-slate-400" />
         </div>
-        <p className="font-black text-3xl tracking-tighter">{formatIDR(totalEarned)}</p>
+        <p className="text-3xl font-bold font-mono text-white">{formatIDR(totalEarned)}</p>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/10 rounded-2xl px-4 py-3">
@@ -290,7 +290,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* List View */}
       {activeTab !== 'byproduct' && activeTab !== 'coins' && (
-        <div className="space-y-3">
+        <div className="bg-white rounded-2xl mx-5 mt-4 overflow-hidden border border-gray-100">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 p-4 animate-pulse h-16" />
@@ -308,26 +308,36 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
               const Icon = productIcons[c.product_type] ?? Shield;
               const colorClass = productColors[c.product_type] ?? 'bg-slate-100 text-slate-500';
               return (
-                <div key={c.id ?? i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
+                <div key={c.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 bg-white">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-black text-sm truncate">{c.client_name}</p>
+                    <p className="text-sm font-medium text-gray-900 flex-1 truncate">{c.client_name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] text-slate-400 font-bold uppercase">{c.product_type}</span>
                       <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                      <span className="text-[10px] text-slate-400 font-bold">{formatDate(c.created_at)}</span>
+                      <span className="text-xs text-gray-400">{formatDate(c.created_at)}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                       {t('Premium:', 'Premi:')} {formatIDR(c.premium_amount)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-black text-sm text-emerald-500">+{formatIDR(c.commission_amount)}</p>
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
-                      {c.status}
-                    </span>
+                    <p className="text-sm font-semibold text-emerald-600 font-mono">+{formatIDR(c.commission_amount)}</p>
+                    {c.status === 'PAID' ? (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 mt-1 inline-block">
+                        {c.status}
+                      </span>
+                    ) : c.status === 'PENDING' ? (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 mt-1 inline-block">
+                        {c.status}
+                      </span>
+                    ) : (
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
+                        {c.status}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

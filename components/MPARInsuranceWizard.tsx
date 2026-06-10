@@ -426,41 +426,41 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
 
   if (isSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
-        <div className="w-24 h-24 bg-amber-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8">
+      <div className="bg-white min-h-screen pb-28 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+        <div className="w-24 h-24 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
           <ShieldCheck size={56} strokeWidth={2.5}/>
         </div>
         <div className="space-y-4 mb-12">
-          <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-            Pesanan <span className="text-amber-500">Diterima</span>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Pesanan <span className="text-emerald-500">Diterima</span>
           </h2>
-          <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
             Proteksi barang berhasil didaftarkan. Polis aktif setelah pembayaran dikonfirmasi.
           </p>
         </div>
-        <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>No. Pesanan</span>
-            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+        <div className="mx-5 rounded-2xl bg-gray-50 border border-gray-100 p-4 w-full max-w-sm mb-10">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">No. Pesanan</span>
+            <span className="text-sm font-semibold text-gray-900 font-mono">{orderNumber ?? '—'}</span>
           </div>
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>Item</span>
-            <span className="font-black uppercase">{mpar.itemName}</span>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-500">Item</span>
+            <span className="text-sm font-semibold text-gray-900">{mpar.itemName}</span>
           </div>
-          <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-            <span>Status</span>
-            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[0.55rem] font-black uppercase tracking-widest">Diproses</span>
+          <div className="flex justify-between py-2">
+            <span className="text-sm text-gray-500">Status</span>
+            <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 text-xs font-semibold">Diproses</span>
           </div>
         </div>
         <div className="w-full max-w-sm space-y-4">
           {invoiceUrl && (
             <a href={invoiceUrl} target="_blank" rel="noopener noreferrer"
-              className="w-full py-5 bg-amber-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+              className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-3">
               Buka Halaman Pembayaran <ExternalLink size={18}/>
             </a>
           )}
           <button onClick={onComplete}
-            className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">
+            className="w-full h-12 rounded-xl bg-gray-900 text-white font-semibold text-sm active:bg-gray-800 transition-all flex items-center justify-center gap-3">
             Kembali ke Beranda <ArrowRight size={18}/>
           </button>
         </div>

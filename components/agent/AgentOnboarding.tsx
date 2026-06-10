@@ -116,16 +116,14 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[#16a34a]/8 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="w-full max-w-md flex flex-col gap-6 relative z-10">
+    <div className="min-h-screen bg-gray-950 flex flex-col px-6 py-12 overflow-y-auto">
+      <div className="w-full max-w-md flex flex-col gap-6">
 
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
             onClick={step === 1 ? onBack : () => setStep(1)}
-            className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 shadow flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 mb-6"
           >
             <ChevronLeft size={18} />
           </button>

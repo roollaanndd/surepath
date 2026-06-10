@@ -79,7 +79,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1 tracking-widest">Region Tujuan</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Region Tujuan</label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'INTERNATIONAL', label: 'International', icon: Globe },
@@ -99,19 +99,19 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Tgl Berangkat</label>
-            <input 
-              type="date" 
-              className="w-full p-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Tgl Berangkat</label>
+            <input
+              type="date"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               value={travel.startDate}
               onChange={(e) => setTravel({...travel, startDate: e.target.value})}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Tgl Pulang</label>
-            <input 
-              type="date" 
-              className="w-full p-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Tgl Pulang</label>
+            <input
+              type="date"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               value={travel.endDate}
               onChange={(e) => setTravel({...travel, endDate: e.target.value})}
             />
@@ -119,7 +119,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
         </div>
 
         <div className="space-y-2">
-          <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1 tracking-widest">Tipe Trip</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Tipe Trip</label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'INDIVIDUAL', label: 'Individu', icon: User },
@@ -458,52 +458,53 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">
-       <div className="px-8 pt-8 pb-4 bg-white dark:bg-white/5 border-b border-black/5 flex flex-col gap-6 flex-shrink-0">
+    <div className="bg-white min-h-screen pb-28">
+       <div className="px-4 pt-4 pb-3 bg-white border-b border-gray-100 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary-500/20 group"><Plane size={24} className="group-hover:rotate-12 transition-transform"/></div>
-               <div>
-                  <p className="text-[0.45rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1">Matrix Travel</p>
-                  <h3 className="text-lg font-black uppercase tracking-tighter">Beli Asuransi Travel</h3>
-               </div>
+            <div className="flex items-center gap-3">
+               <button onClick={handleBack} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors">
+                 <ChevronLeft size={20}/>
+               </button>
+               <span className="text-base font-semibold text-gray-900">Beli Asuransi Travel</span>
             </div>
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-               <div className="px-3 py-1 text-[0.6rem] font-black text-primary-500 uppercase tracking-widest">{STEPS[step]}</div>
-            </div>
+            <span className="text-xs text-gray-400">{step + 1}/{STEPS.length}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1.5">
              {STEPS.map((_s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
+               <React.Fragment key={i}>
+                 {i > 0 && <div className={i <= step ? "flex-1 h-0.5 bg-emerald-500" : "flex-1 h-0.5 bg-gray-200"}></div>}
+                 {i === step ? (
+                   <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">{i + 1}</div>
+                 ) : i < step ? (
+                   <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Check size={12} strokeWidth={3}/></div>
+                 ) : (
+                   <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{i + 1}</div>
+                 )}
+               </React.Fragment>
              ))}
           </div>
        </div>
 
-       <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+       <div className="flex-1 overflow-y-auto px-4 py-4 no-scrollbar">
           {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
        </div>
 
-       <div className="px-8 py-6 bg-white dark:bg-[#111] border-t border-black/5 flex items-center justify-between gap-6 flex-shrink-0">
+       <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-gray-100 flex items-center justify-between gap-4 flex-shrink-0">
           <div className="flex-1">
-             <p className="text-[0.55rem] font-black uppercase text-gray-400 leading-none mb-1 tracking-widest">Trip Premi</p>
-             <p className="text-2xl font-black tracking-tighter text-primary-500">{travel.selectedPlan ? formatIDR(getPremium(travel.selectedPlan)) : 'Rp 0'}</p>
+             <p className="text-xs text-gray-500">Trip Premi</p>
+             <p className="text-lg font-bold text-emerald-600 font-mono">{travel.selectedPlan ? formatIDR(getPremium(travel.selectedPlan)) : 'Rp 0'}</p>
           </div>
-          <div className="flex gap-3">
-             {step > 0 && (
-               <button onClick={handleBack} className="p-4 bg-gray-100 dark:bg-white/10 rounded-2xl text-gray-500 hover:text-primary-500 transition-colors">
-                 <ChevronLeft size={24}/>
-               </button>
-             )}
+          <div className="flex gap-2">
              {step < STEPS.length - 1 && (
-                <button 
-                  onClick={handleNext} 
+                <button
+                  onClick={handleNext}
                   disabled={!canContinue}
-                  className="px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[0.7rem] tracking-[0.2em] shadow-2xl transition-all active:scale-95 disabled:opacity-30 flex items-center gap-2"
+                  className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 px-8 flex items-center gap-2"
                 >
-                  Lanjut <ChevronRight size={18}/>
+                  Lanjut <ChevronRight size={16}/>
                 </button>
              )}
           </div>

@@ -69,36 +69,24 @@ const AgentNotifications: React.FC<Props> = ({ agentId, lang, onClose, onNavigat
   return (
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
       <div
-        className="bg-white dark:bg-[#111] rounded-b-[2.5rem] shadow-2xl max-h-[80dvh] flex flex-col font-sora"
+        className="bg-white rounded-b-[2.5rem] shadow-2xl max-h-[80dvh] flex flex-col font-sora"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100 dark:border-white/5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#16a34a]/10 rounded-2xl flex items-center justify-center">
-              <Bell size={16} className="text-[#16a34a]" />
-            </div>
-            <div>
-              <p className="font-black text-sm tracking-tight">{t('Notifications', 'Notifikasi')}</p>
-              {unread > 0 && (
-                <p className="text-[10px] font-bold text-[#16a34a] uppercase tracking-widest leading-none mt-0.5">
-                  {unread} {t('unread', 'belum dibaca')}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100 flex items-center justify-between">
+          <p className="text-xl font-bold text-gray-900">{t('Notifications', 'Notifikasi')}</p>
+          <div className="flex items-center gap-3">
             {unread > 0 && (
               <button
                 onClick={handleMarkAll}
-                className="text-[10px] font-black uppercase tracking-widest text-[#16a34a] px-3 py-1.5 rounded-full bg-[#16a34a]/10"
+                className="text-xs font-medium text-emerald-600"
               >
                 {t('Mark all read', 'Tandai semua')}
               </button>
             )}
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
             >
               <X size={15} />
             </button>
@@ -106,19 +94,20 @@ const AgentNotifications: React.FC<Props> = ({ agentId, lang, onClose, onNavigat
         </div>
 
         {/* List */}
-        <div className="overflow-y-auto flex-1 divide-y divide-slate-50 dark:divide-white/5">
+        <div className="overflow-y-auto flex-1">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
+              <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin motion-reduce:animate-none" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center py-14 text-center px-6">
-              <div className="w-14 h-14 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-4">
-                <Bell size={24} className="text-slate-300" />
+            <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3 mx-auto text-gray-400">
+                <Bell size={22} />
               </div>
-              <p className="font-black text-sm text-slate-400 uppercase tracking-widest">
+              <p className="text-sm font-semibold text-gray-900 mb-1">
                 {t('No notifications', 'Tidak ada notifikasi')}
               </p>
+              <p className="text-xs text-gray-400">{t('You\'re all caught up', 'Semua sudah terbaca')}</p>
             </div>
           ) : (
             notifications.map(n => {
@@ -127,31 +116,27 @@ const AgentNotifications: React.FC<Props> = ({ agentId, lang, onClose, onNavigat
                 <button
                   key={n.id}
                   onClick={() => handleRead(n)}
-                  className={`w-full flex items-start gap-3 px-5 py-4 text-left transition-colors ${
-                    n.read ? 'opacity-60' : 'bg-[#16a34a]/[0.03]'
-                  } hover:bg-slate-50 dark:hover:bg-white/5`}
+                  className="flex items-start gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors w-full text-left"
                 >
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 ${meta.bg}`}>
+                  {!n.read && (
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />
+                  )}
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <meta.Icon size={15} className={meta.color} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-black leading-tight ${n.read ? '' : 'text-slate-900 dark:text-white'}`}>
-                        {n.title}
-                      </p>
-                      <span className="text-[9px] font-bold text-slate-400 flex-shrink-0 mt-0.5">
-                        {timeAgo(n.created_at)}
-                      </span>
-                    </div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                    <p className="text-sm font-semibold text-gray-900 leading-tight">
+                      {n.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
                       {n.body}
                     </p>
+                    <span className="text-[10px] text-gray-400 mt-1 block">
+                      {timeAgo(n.created_at)}
+                    </span>
                   </div>
-                  {!n.read && (
-                    <div className="w-2 h-2 rounded-full bg-[#16a34a] flex-shrink-0 mt-1.5" />
-                  )}
                   {n.metadata?.link && (
-                    <ChevronRight size={14} className="text-slate-400 flex-shrink-0 mt-0.5" />
+                    <ChevronRight size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                   )}
                 </button>
               );

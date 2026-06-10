@@ -373,30 +373,30 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
           </div>
        ) : (
           policies.map(p => (
-            <div 
-               key={p.id} 
+            <div
+               key={p.id}
                onClick={() => setSelectedPolicy(p)}
-               className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm flex items-center justify-between group cursor-pointer hover:border-primary-500/30 transition-all active:scale-[0.98] relative overflow-hidden"
+               className="mx-5 mt-3 rounded-2xl bg-white border border-gray-100 overflow-hidden sp-enter cursor-pointer active:scale-[0.98] transition-all"
             >
-               <div className="flex items-center gap-5 relative z-10">
-                  <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center shadow-inner ${p.type === 'CAR' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                     {p.type === 'CAR' ? <Car size={28}/> : <Plane size={28}/>}
-                  </div>
-                  <div>
-                     <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">{p.coverageDetails?.vehicle?.brand || 'SurePath'} Unit</p>
-                     <p className="text-lg font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">{p.policyNumber}</p>
-                     <div className="flex items-center gap-2 mt-2">
-                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${p.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-                        <span className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">{p.status === 'ACTIVE' ? t('ACTIVE', 'AKTIF') : p.status}</span>
+               <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        {p.type === 'CAR' ? <Car size={20} className="text-blue-500"/> : <Plane size={20} className="text-blue-500"/>}
+                     </div>
+                     <div>
+                        <p className="text-sm font-semibold text-gray-900">{p.policyNumber}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{p.coverageDetails?.vehicle?.brand || 'SurePath'}</p>
                      </div>
                   </div>
-               </div>
-               <div className="relative z-10 flex flex-col items-end gap-1">
-                  <p className="text-sm font-black text-slate-900 dark:text-white">{formatIDR(p.premium)}</p>
-                  <ChevronRight size={20} className="text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all"/>
-               </div>
-               <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-                  <Package size={120}/>
+                  <div className="flex flex-col items-end gap-1">
+                     {p.status === 'ACTIVE' && (
+                       <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">{t('ACTIVE', 'AKTIF')}</span>
+                     )}
+                     {p.status !== 'ACTIVE' && (
+                       <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{p.status}</span>
+                     )}
+                     <p className="text-sm font-semibold text-gray-900">{formatIDR(p.premium)}</p>
+                  </div>
                </div>
             </div>
           ))
@@ -459,26 +459,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
        <div className="space-y-3">
           <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest ml-2">{t('Node Security & Sync', 'Keamanan & Akun')}</p>
           {[
-              { id: 'biometric', label: t('Login Biometrik', 'Login Biometrik'), icon: Fingerprint, color: 'text-blue-500', sub: 'Status: ' + t('Encrypted', 'Terenkripsi'), action: t('Update', 'Update') },
-              { id: 'bank', label: t('Ledger Registry', 'Data Rekening'), icon: Landmark, color: 'text-emerald-500', sub: t('Withdrawal Sync', 'Sinkronisasi Dana'), action: t('Manage', 'Kelola') },
-              { id: 'password', label: t('Protocol Keys', 'Password & Keamanan'), icon: Lock, color: 'text-rose-500', sub: t('Update regularly', 'Perbarui berkala'), action: t('Change', 'Ganti') },
-              { id: 'comms', label: t('Communication Hub', 'Pusat Notifikasi'), icon: Bell, color: 'text-amber-500', sub: t('Email & Push', 'Email & Notif'), action: t('Config', 'Atur') },
+              { id: 'biometric', label: t('Login Biometrik', 'Login Biometrik'), icon: Fingerprint, sub: 'Status: ' + t('Encrypted', 'Terenkripsi'), action: t('Update', 'Update') },
+              { id: 'bank', label: t('Ledger Registry', 'Data Rekening'), icon: Landmark, sub: t('Withdrawal Sync', 'Sinkronisasi Dana'), action: t('Manage', 'Kelola') },
+              { id: 'password', label: t('Protocol Keys', 'Password & Keamanan'), icon: Lock, sub: t('Update regularly', 'Perbarui berkala'), action: t('Change', 'Ganti') },
+              { id: 'comms', label: t('Communication Hub', 'Pusat Notifikasi'), icon: Bell, sub: t('Email & Push', 'Email & Notif'), action: t('Config', 'Atur') },
           ].map((item, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 onClick={() => item.id === 'password' && setIsResetModalOpen(true)}
-                className="p-5 bg-white dark:bg-white/5 rounded-[2.2rem] border border-black/5 flex items-center justify-between group cursor-pointer hover:border-primary-500/20 transition-all active:scale-[0.98]"
+                className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-5">
-                    <div className={`w-12 h-12 bg-gray-50 dark:bg-white/5 rounded-2xl flex items-center justify-center ${item.color} shadow-inner group-hover:scale-110 transition-transform`}>
-                      <item.icon size={22}/>
-                    </div>
-                    <div>
-                      <p className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">{item.label}</p>
-                      <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{item.sub}</p>
-                    </div>
+                <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+                  <item.icon size={16}/>
                 </div>
-                <button className="text-[0.45rem] font-black uppercase bg-gray-100 dark:bg-white/10 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">{item.action}</button>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 flex-1">{item.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
+                </div>
+                <ChevronRight size={16} className="text-gray-300"/>
               </div>
           ))}
        </div>
@@ -486,32 +484,20 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   );
 
   return (
-    <div className="space-y-8 animate-fade-in pb-32">
+    <div className="bg-gray-50 min-h-screen pb-28">
       {selectedPolicy && <PolicyDetailModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />}
       {isResetModalOpen && <PasswordResetModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
 
       {/* Profile Hub Header */}
-      <div className="p-10 bg-white dark:bg-[#0f172a] rounded-[3.5rem] shadow-xl border border-slate-100 dark:border-white/5 text-center space-y-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 to-emerald-500 opacity-30"></div>
-        
-        <div className="relative inline-block">
-          <div className="w-32 h-32 bg-slate-50 dark:bg-slate-800 rounded-[3rem] flex items-center justify-center border-4 border-white dark:border-[#1e293b] shadow-2xl overflow-hidden group">
-            <div className="w-full h-full bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-4xl font-black text-slate-500 dark:text-slate-400 group-hover:scale-110 transition-transform">
-               {currentUser?.name?.[0] || 'M'}
-            </div>
-          </div>
-          <div className="absolute bottom-1 right-1 w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white border-4 border-white dark:border-[#0f172a] shadow-lg animate-pulse">
-            <BadgeCheck size={20} strokeWidth={3}/>
-          </div>
+      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100">
+        <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
+          {currentUser?.name?.[0] || 'M'}
         </div>
-        
-        <div className="space-y-1">
-          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">{currentUser?.name || t('Standard Member', 'User SurePath')}</h3>
-          <p className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-[0.4em]">{t('Node ID', 'ID Node')}: {currentUser?.nodeId || 'SP-GENESIS'}</p>
-        </div>
+        <h3 className="text-lg font-bold text-gray-900 text-center">{currentUser?.name || t('Standard Member', 'User SurePath')}</h3>
+        <p className="text-sm text-gray-500 text-center mt-0.5">{t('Node ID', 'ID Node')}: {currentUser?.nodeId || 'SP-GENESIS'}</p>
 
         {/* Trust Score Meter */}
-        <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-black/5 space-y-4 shadow-inner">
+        <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-black/5 space-y-4 shadow-inner mt-5">
            <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                  <Cpu size={14} className="text-primary-500"/>
@@ -520,8 +506,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
               <span className="text-xl font-black text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">{currentUser?.trustScore || 85}%</span>
            </div>
            <div className="h-2.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
-              <div 
-                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-[2000ms] shadow-[0_0_15px_#10b981]" 
+              <div
+                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-[2000ms] shadow-[0_0_15px_#10b981]"
                  style={{ width: `${currentUser?.trustScore || 85}%` }}
               ></div>
            </div>
@@ -531,27 +517,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
         </div>
       </div>
 
-      {/* Modern Glass Tab Control */}
-      <div className="flex bg-gray-100 dark:bg-white/5 p-1.5 rounded-[2.2rem] border border-black/5 dark:border-white/10 mx-2 shadow-inner">
+      {/* Tabs */}
+      <div className="flex bg-white border-b border-gray-100 px-5">
          {[
            { id: 'OVERVIEW', label: t('Matrix', 'Ringkasan'), icon: LayoutGrid },
            { id: 'POLICIES', label: t('Nodes', 'Polis'), icon: ShieldCheck },
            { id: 'CLAIMS', label: t('Activity', 'Histori'), icon: Activity },
            { id: 'SETTINGS', label: t('Secure', 'Akun'), icon: Settings },
          ].map(tab => (
-            <button 
+            <button
                key={tab.id}
                onClick={() => setActiveTab(tab.id as TabType)}
-               className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-[1.8rem] transition-all duration-300 active:scale-95 ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 shadow-xl text-primary-500 scale-105' : 'text-gray-400'}`}
+               className={activeTab === tab.id ? 'py-3 px-4 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-500' : 'py-3 px-4 text-sm font-medium text-gray-400'}
             >
-               <tab.icon size={18} strokeWidth={activeTab === tab.id ? 3 : 2}/>
-               <span className="text-[0.5rem] font-black uppercase tracking-[0.2em]">{tab.label}</span>
+               {tab.label}
             </button>
          ))}
       </div>
 
       {/* Tab Content Area */}
-      <div className="px-2 pb-10 min-h-[400px]">
+      <div className="px-2 pb-10 min-h-[400px] pt-3">
          {activeTab === 'OVERVIEW' && renderOverview()}
          {activeTab === 'POLICIES' && renderPolicies()}
          {activeTab === 'CLAIMS' && renderClaims()}
@@ -559,13 +544,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
       </div>
 
       {/* Footer Actions */}
-      <div className="px-6 space-y-4">
+      <div className="px-5 space-y-4">
         <div className="flex items-center justify-center gap-2 opacity-30">
            <ShieldCheck size={12}/>
            <span className="text-[0.5rem] font-black uppercase tracking-widest">End-to-End Encrypted Registry Access</span>
         </div>
-        <button onClick={onLogout} className="w-full py-6 bg-rose-500/10 text-rose-500 rounded-[2.5rem] border border-rose-500/20 font-black uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-3 active:scale-95 transition-all group hover:bg-rose-500 hover:text-white">
-           <LogOut size={18} className="group-hover:-translate-x-1 transition-transform"/> {t('Sign Out from Matrix', 'Keluar dari Jaringan')}
+        <button onClick={onLogout} className="mx-5 mt-4 w-full h-12 rounded-xl border border-red-100 bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-all">
+           <LogOut size={18} className="inline mr-2"/> {t('Sign Out from Matrix', 'Keluar dari Jaringan')}
         </button>
       </div>
     </div>

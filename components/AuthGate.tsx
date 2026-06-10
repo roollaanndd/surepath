@@ -316,10 +316,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
     color: '#fff',
     boxShadow: '0 12px 32px -10px rgba(22,163,74,0.65)',
   };
-  const inputCls = 'w-full pl-11 pr-4 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/25 transition-all duration-200 focus:border-green-500/50 focus:bg-green-600/[0.05] focus:shadow-[0_0_0_3px_rgba(22,163,74,0.08),inset_0_0_0_1px_rgba(22,163,74,0.12)]';
+  const inputCls = 'w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all duration-150';
 
   return (
-    <div className="min-h-screen text-white flex items-center justify-center p-5 relative overflow-hidden" style={{ background: '#07070f', fontFamily: "'Sora', sans-serif" }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gray-950" style={{ fontFamily: "'Sora', sans-serif" }}>
 
       <AuroraBackground />
 
@@ -334,7 +334,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
       {/* Center vignette for focus */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 45%, transparent 30%, rgba(7,7,15,0.75) 100%)' }} />
 
-      <div className="w-full max-w-sm relative z-10 flex flex-col items-center gap-6">
+      <div className="relative z-10 w-full max-w-sm mx-auto px-6 flex flex-col items-center gap-6">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
@@ -367,8 +367,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <CheckCircle2 size={32} className="text-green-400" />
             </div>
             <div>
-              <h3 className="text-xl font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-white/55 text-sm mt-2 leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-sm text-gray-400 mb-6">
                 {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
                 <span className="text-green-400 font-bold">{formData.email}</span>.
                 {t(' Click it to activate your account.', ' Klik untuk mengaktifkan akunmu.')}
@@ -385,7 +385,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             </button>
             <button
               onClick={() => setMode('LOGIN')}
-              className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+              className="w-full h-10 rounded-xl text-gray-400 font-medium text-sm hover:text-white transition-colors"
             >
               {t('Back to Login', 'Kembali ke Login')}
             </button>
@@ -395,8 +395,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
         {/* Forgot password — enter email */}
         {mode === 'FORGOT_PASSWORD' && (
           <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
-            <h3 className="text-lg font-bold tracking-tight text-center">{t('Reset Password', 'Reset Password')}</h3>
-            <p className="text-white/50 text-xs text-center leading-relaxed">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
+            <h3 className="text-2xl font-bold text-white mb-1 text-center">{t('Reset Password', 'Reset Password')}</h3>
+            <p className="text-sm text-gray-400 mb-6 text-center">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
@@ -405,11 +405,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   className={inputCls} />
               </div>
               {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
+              <button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2">
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send Reset Link', 'Kirim Link Reset')}<ArrowRight size={14} /></>}
               </button>
             </form>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back', 'Kembali')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-gray-400 font-medium text-sm hover:text-white transition-colors">{t('Back', 'Kembali')}</button>
           </div>
         )}
 
@@ -418,10 +418,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
           <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl text-center space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
             <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.3)' }}><CheckCircle2 size={32} className="text-green-400" /></div>
             <div>
-              <h3 className="text-xl font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-white/55 text-sm mt-2 leading-relaxed">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-green-400 font-bold">{formData.email}</span>.</p>
+              <h3 className="text-2xl font-bold text-white mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-sm text-gray-400 mb-6">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-green-400 font-bold">{formData.email}</span>.</p>
             </div>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full py-3.5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-gray-400 font-medium text-sm hover:text-white transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
@@ -432,8 +432,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <Mail size={26} className="text-green-400" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold tracking-tight">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-white/50 text-xs mt-1 leading-relaxed">
+              <h3 className="text-2xl font-bold text-white mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
+              <p className="text-sm text-gray-400 mb-6">
                 {t('Enter the 6-digit code sent to ', 'Masukkan kode 6 digit yang dikirim ke ')}
                 <span className="text-green-400 font-bold">{formData.email}</span>.<br/>
                 {t('Or click the link in the email.', 'Atau klik link di email.')}
@@ -444,7 +444,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                 className="w-full text-center py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] text-white placeholder:text-white/20 focus:border-green-500/60 transition-all" />
               {error && <p className="text-rose-400 text-xs font-bold text-center">{error}</p>}
-              <button type="submit" disabled={loading || otpCode.length < 6} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
+              <button type="submit" disabled={loading || otpCode.length < 6} className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2">
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Sign In', 'Verifikasi & Masuk')}<ArrowRight size={14} /></>}
               </button>
             </form>
@@ -453,26 +453,26 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {t('Resend Code', 'Kirim Ulang Kode')}
             </button>
-            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full py-2 text-white/40 hover:text-white/70 font-bold text-[0.55rem] uppercase tracking-widest transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full h-10 rounded-xl text-gray-400 font-medium text-sm hover:text-white transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
         {/* Reset password (from email link) */}
         {mode === 'RESET_PASSWORD' && (
           <div className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[2.25rem] p-8 backdrop-blur-2xl space-y-5" style={{ boxShadow: '0 30px 80px -30px rgba(0,0,0,0.8)' }}>
-            <h3 className="text-lg font-bold tracking-tight text-center">{t('New Password', 'Password Baru')}</h3>
+            <h3 className="text-2xl font-bold text-white mb-1 text-center">{t('New Password', 'Password Baru')}</h3>
             <form onSubmit={handleResetPassword} className="space-y-3">
               <div className="relative">
                 <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
                 <input required type={showNewPass ? 'text' : 'password'} placeholder={t('New password (min 6 chars)', 'Password baru (min 6 karakter)')} minLength={6} value={newPassword}
                   onChange={e => setNewPass(e.target.value)}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-green-500/60 transition-all" />
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all duration-150" />
                 <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-green-400 transition-colors">
                   {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
-              <button type="submit" disabled={loading} className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50" style={primaryBtn}>
+              <button type="submit" disabled={loading} className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2">
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Save Password', 'Simpan Password')}<ArrowRight size={14} /></>}
               </button>
             </form>
@@ -565,7 +565,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   autoComplete={mode === 'LOGIN' ? 'current-password' : 'new-password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
-                  className="w-full pl-11 pr-12 py-4 bg-white/[0.035] border border-white/10 rounded-2xl outline-none text-sm font-semibold text-white placeholder:text-white/30 focus:border-green-500/60 focus:bg-white/[0.05] transition-all"
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all duration-150"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
@@ -593,7 +593,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               )}
 
               {error && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-bold flex items-center gap-2">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                   <AlertCircle size={14} className="flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -602,8 +602,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={primaryBtn}
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -628,7 +627,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
                 <button onClick={handleGoogleSignIn} disabled={loading}
-                  className="w-full py-3.5 bg-white/[0.05] border border-white/10 rounded-2xl flex items-center justify-center gap-2.5 hover:bg-white/10 transition-all active:scale-[0.98] disabled:opacity-50">
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 text-white font-medium text-sm flex items-center justify-center gap-3 active:bg-white/10 transition-all duration-150 disabled:opacity-40">
                   <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

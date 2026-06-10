@@ -236,6 +236,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
       {/* Quick Action Buttons — 4-col grid, 2 rows */}
+      <div className="px-5 mt-4">
       <div className="grid grid-cols-4 gap-3">
         {[
           {
@@ -309,67 +310,50 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           </div>
         ))}
       </div>
-
-      {/* Recent Commissions */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest font-bold">
-            {t('Recent Commissions', 'Komisi Terbaru')}
-          </p>
-          <button
-            onClick={() => onNavigate('commission')}
-            className="flex items-center gap-1 text-[#16a34a] text-xs font-black uppercase tracking-widest active:scale-95 transition-transform motion-reduce:active:scale-100"
-          >
-            {t('See all', 'Lihat semua')} <ChevronRight size={14} />
-          </button>
-        </div>
-
-        {recentCommissions.length === 0 ? (
-          <div className="px-5 pb-5 text-center">
-            <p className="text-slate-400 text-sm font-bold py-4">
-              {t('No commissions yet. Start selling!', 'Belum ada komisi. Yuk mulai jualan!')}
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-50 dark:divide-white/5">
-            {recentCommissions.map((c, i) => (
-              <div key={c.id ?? i} className="flex items-center gap-3 px-5 py-3">
-                <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center flex-shrink-0">
-                  <span className="font-black text-xs text-slate-600 dark:text-slate-300">
-                    {(c.client_name ?? 'C').charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-black text-sm leading-tight truncate">{c.client_name}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    {productLabel[c.product_type] ?? c.product_type}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-black text-sm text-emerald-500">+{formatIDR(c.commission_amount)}</p>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
-                    {c.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Did You Know Tip */}
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 rounded-[2rem] border border-amber-200/60 dark:border-amber-500/20 p-5">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 bg-amber-400/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-            <Lightbulb size={18} className="text-amber-500" />
-          </div>
-          <div>
-            <p className="text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-widest mb-1">
-              {t('Did You Know?', 'Tahukah Kamu?')}
-            </p>
-            <p className="text-slate-700 dark:text-slate-300 text-sm font-medium leading-relaxed">
-              {tip}
-            </p>
+      {/* Recent Commissions */}
+      <div className="px-5 mt-4 sp-enter sp-enter-d4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
+          <button onClick={() => onNavigate('commission')} className="text-xs font-medium text-emerald-600">{t('All', 'Semua')}</button>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          {recentCommissions.length === 0 ? (
+            <div className="p-5 text-center">
+              <p className="text-sm text-gray-400">{t('No commissions yet', 'Belum ada komisi')}</p>
+            </div>
+          ) : (
+            recentCommissions.slice(0, 3).map((c, i) => (
+              <div key={c.id} className={`flex items-center gap-3 px-4 py-3 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-gray-50' : ''}`}>
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp size={16} className="text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{productLabel[c.product_type] ?? c.product_type}</p>
+                  <p className="text-xs text-gray-400">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-emerald-600">+{formatIDR(c.amount)}</p>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-gray-100 text-gray-600'}`}>{c.status}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* AI Tips */}
+      <div className="px-5 mt-4 sp-enter sp-enter-d3">
+        <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-900 to-blue-950 border border-blue-800/30">
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <Lightbulb size={16} className="text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-blue-300 mb-1">SurePath AI</p>
+              <p className="text-sm text-gray-300 leading-relaxed">{tip}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -229,7 +229,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       )}
 
       {/* Referral Link */}
-      <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4">
+      <div className="mx-5 mt-4 bg-white rounded-2xl border border-gray-100 p-4">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Link Rekrutmen Agen</p>
         <div className="flex items-center gap-2 bg-slate-50 dark:bg-black/20 rounded-xl p-3">
           <p className="text-xs font-mono text-slate-600 dark:text-slate-300 flex-1 truncate">
@@ -292,7 +292,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       )}
 
       {/* Profile Info */}
-      <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 overflow-hidden">
+      <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/10">
           <span className="text-xs font-black uppercase tracking-widest text-slate-500">
             {t('Personal Info', 'Informasi Pribadi')}
@@ -572,7 +572,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {/* Logout */}
       <button
         onClick={onLogout}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-rose-200 dark:border-rose-500/20 text-rose-500 font-black text-sm uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/10 transition"
+        className="mx-5 mt-4 w-full h-12 rounded-xl border border-red-100 bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-all flex items-center justify-center gap-2"
       >
         <LogOut className="w-4 h-4" />
         {t('Sign Out', 'Keluar')}

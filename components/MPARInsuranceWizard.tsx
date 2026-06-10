@@ -171,63 +171,65 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   );
 
   const renderStep1 = () => (
-    <div className="space-y-6 animate-fade-in">
-       <div className="space-y-4">
+    <div className="space-y-4">
+       <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Barang</p>
+
+       <div className="px-5 space-y-4">
           {mpar.category === 'ELECTRONIC' && (
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl border border-black/5">
-                <button 
+            <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+                <button
                   onClick={() => setMpar({...mpar, subCategory: 'TV'})}
-                  className={`flex-1 py-3 rounded-xl font-black text-[0.65rem] uppercase transition-all ${mpar.subCategory === 'TV' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-lg' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all ${mpar.subCategory === 'TV' ? 'bg-white text-emerald-500 shadow' : 'text-gray-400'}`}
                 >
                   TV Unit
                 </button>
-                <button 
+                <button
                   onClick={() => setMpar({...mpar, subCategory: 'NON-TV'})}
-                  className={`flex-1 py-3 rounded-xl font-black text-[0.65rem] uppercase transition-all ${mpar.subCategory === 'NON-TV' ? 'bg-white dark:bg-gray-800 text-amber-500 shadow-lg' : 'text-gray-400'}`}
+                  className={`flex-1 py-2.5 rounded-lg font-semibold text-xs transition-all ${mpar.subCategory === 'NON-TV' ? 'bg-white text-emerald-500 shadow' : 'text-gray-400'}`}
                 >
                   Non-TV Electronic
                 </button>
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Asset Name / Brand</label>
-            <input 
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Asset Name / Brand</label>
+            <input
               placeholder="e.g. Samsung S24 Ultra"
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm uppercase"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               value={mpar.itemName}
               onChange={(e) => setMpar({...mpar, itemName: e.target.value.toUpperCase()})}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Serial Number / IMEI</label>
-              <input 
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Serial Number / IMEI</label>
+              <input
                 placeholder="Unique ID"
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm uppercase"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 value={mpar.serialNumber}
                 onChange={(e) => setMpar({...mpar, serialNumber: e.target.value.toUpperCase()})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[0.6rem] font-black uppercase text-gray-500 ml-1">Asset Value (Rp)</label>
-              <input 
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Asset Value (Rp)</label>
+              <input
                 type="number"
                 placeholder="Market Price"
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-amber-500 font-black text-sm"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 value={mpar.itemPrice || ''}
                 onChange={(e) => setMpar({...mpar, itemPrice: parseInt(e.target.value) || 0})}
               />
             </div>
           </div>
-       </div>
 
-       <div className="bg-emerald-500/10 p-5 rounded-[2rem] border border-emerald-500/20 flex gap-4">
-          <ShieldCheck className="text-emerald-500 flex-shrink-0" size={24}/>
-          <p className="text-[0.65rem] font-bold text-emerald-800 dark:text-emerald-200 leading-relaxed uppercase tracking-wider">
-             MPAR Protection covers: Accidental Damage, Fire, Riots, and Water Damage.
-          </p>
+          <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex gap-3">
+            <ShieldCheck className="text-emerald-500 flex-shrink-0" size={20}/>
+            <p className="text-xs text-emerald-700 leading-relaxed">
+               MPAR Protection covers: Accidental Damage, Fire, Riots, and Water Damage.
+            </p>
+          </div>
        </div>
     </div>
   );

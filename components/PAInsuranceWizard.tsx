@@ -392,23 +392,29 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-dark-bg text-gray-900 dark:text-white rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl relative">
-       <div className="px-8 pt-8 pb-4 bg-white dark:bg-white/5 border-b border-black/5 flex flex-col gap-6 flex-shrink-0">
+    <div className="bg-white min-h-screen pb-28">
+       <div className="px-4 pt-4 pb-3 bg-white border-b border-gray-100 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-rose-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-rose-500/20 group"><ShieldAlert size={24}/></div>
-               <div>
-                  <p className="text-[0.45rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1">Matrix Accident</p>
-                  <h3 className="text-lg font-black uppercase tracking-tighter">Personal Accident</h3>
-               </div>
+            <div className="flex items-center gap-3">
+               <button onClick={handleBack} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors">
+                 <ChevronLeft size={20}/>
+               </button>
+               <span className="text-base font-semibold text-gray-900">Personal Accident</span>
             </div>
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-               <div className="px-3 py-1 text-[0.6rem] font-black text-primary-500 uppercase tracking-widest">{STEPS[step]}</div>
-            </div>
+            <span className="text-xs text-gray-400">{step + 1}/{STEPS.length}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1.5">
              {STEPS.map((_s, i) => (
-               <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-500 ${i === step ? 'bg-primary-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>
+               <React.Fragment key={i}>
+                 {i > 0 && <div className={i <= step ? "flex-1 h-0.5 bg-emerald-500" : "flex-1 h-0.5 bg-gray-200"}></div>}
+                 {i === step ? (
+                   <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">{i + 1}</div>
+                 ) : i < step ? (
+                   <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center"><Check size={12} strokeWidth={3}/></div>
+                 ) : (
+                   <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{i + 1}</div>
+                 )}
+               </React.Fragment>
              ))}
           </div>
        </div>

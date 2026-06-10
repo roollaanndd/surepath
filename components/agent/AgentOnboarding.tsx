@@ -275,7 +275,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canProceedStep1}
-                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
+                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {t('Next', 'Lanjut')} <ChevronRight size={16} />
               </button>
@@ -286,17 +286,17 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           {!checkEmail && step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <p className="font-black tracking-tighter text-lg mb-1">
+                <p className="text-2xl font-bold text-white mb-1">
                   {t('Professional Information', 'Informasi Profesional')}
                 </p>
-                <p className="text-xs text-slate-400 font-medium">
+                <p className="text-sm text-gray-400 mb-8">
                   {t('Optional details to complete your agent profile.', 'Detail opsional untuk melengkapi profil agen Anda.')}
                 </p>
               </div>
 
               {/* KTP */}
               <div className="relative">
-                <CreditCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <CreditCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   type="text"
                   maxLength={16}

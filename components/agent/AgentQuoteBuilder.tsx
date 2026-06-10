@@ -279,13 +279,13 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     step === 'quote_summary' ? 'inputs' : step
   );
 
-  const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]/30";
-  const labelClass = "text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block";
+  const inputClass = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/60 transition-all";
+  const labelClass = "block text-xs font-medium text-gray-500 mb-1.5";
 
   // ─── SUCCESS SCREEN ───
   if (step === 'success') {
     return (
-      <div className="px-4 py-6 max-w-lg mx-auto flex flex-col items-center text-center gap-6 min-h-[70vh] justify-center font-sora">
+      <div className="bg-gray-50 min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto flex flex-col items-center text-center gap-6 min-h-[70vh] justify-center font-sora">
         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
           <FileCheck size={40} className="text-emerald-500" />
         </div>
@@ -334,13 +334,13 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   }
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
       {/* Tab switcher */}
-      <div className="flex gap-2 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
+      <div className="flex gap-2 bg-white border border-gray-100 rounded-2xl p-1">
         <button
           onClick={() => setQuoteTab('new')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            quoteTab === 'new' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400'
+            quoteTab === 'new' ? 'bg-gray-100 shadow-sm text-gray-900' : 'text-gray-400'
           }`}
         >
           <RefreshCw size={12} /> {t('New Quote', 'Penawaran Baru')}
@@ -348,7 +348,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         <button
           onClick={() => setQuoteTab('orders')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-            quoteTab === 'orders' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400'
+            quoteTab === 'orders' ? 'bg-gray-100 shadow-sm text-gray-900' : 'text-gray-400'
           }`}
         >
           <ClipboardList size={12} /> {t('My Orders', 'Order Saya')}
@@ -368,21 +368,21 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           else if (step === 'inputs') { setStep('product'); setQuoteMode(null); }
           else if (step === 'quote_summary') setStep('inputs');
           else if (step === 'summary') setStep('inputs');
-        }} className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+        }} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
           <ChevronLeft size={18} />
         </button>
         <div>
-          <h1 className="font-black tracking-tight text-xl">{t('Quote Builder', 'Buat Penawaran')}</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+          <h1 className="text-base font-semibold text-gray-900">{t('Quote Builder', 'Buat Penawaran')}</h1>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
             {t(`Step ${stepIndex + 1} of 4`, `Langkah ${stepIndex + 1} dari 4`)}
           </p>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#16a34a] rounded-full transition-all duration-500"
+          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
           style={{ width: `${((stepIndex + 1) / 4) * 100}%` }}
         />
       </div>
@@ -393,20 +393,20 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setClientMode('select')}
-              className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 clientMode === 'select'
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 text-slate-500'
+                  ? 'bg-emerald-500 text-white shadow-lg'
+                  : 'bg-white border border-gray-200 text-gray-500'
               }`}
             >
               <Users size={14} />{t('My Clients', 'Klien Saya')}
             </button>
             <button
               onClick={() => setClientMode('onetime')}
-              className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                 clientMode === 'onetime'
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 text-slate-500'
+                  ? 'bg-emerald-500 text-white shadow-lg'
+                  : 'bg-white border border-gray-200 text-gray-500'
               }`}
             >
               <User size={14} />{t('One-time', 'Satu Kali')}
@@ -424,18 +424,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   onClick={() => setSelectedClientId(c.id)}
                   className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
                     selectedClientId === c.id
-                      ? 'border-[#16a34a] bg-[#16a34a]/5'
-                      : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-gray-100 bg-white'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">
                     <span className="font-black text-sm">{c.name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div>
-                    <p className="font-black text-sm">{c.name}</p>
-                    <p className="text-xs text-slate-400">{c.phone}</p>
+                    <p className="font-semibold text-sm text-gray-900">{c.name}</p>
+                    <p className="text-xs text-gray-400">{c.phone}</p>
                   </div>
-                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-[#16a34a] ml-auto" />}
+                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-emerald-500 ml-auto" />}
                 </button>
               ))}
             </div>
@@ -455,7 +455,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             disabled={!canProceedClient}
             onClick={() => setStep('product')}
-            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>
@@ -465,8 +465,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* ─── STEP 2: SELECT PRODUCT ─── */}
       {step === 'product' && (
         <div className="space-y-4">
-          <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-500">
-            {t('Quote for:', 'Penawaran untuk:')} <span className="text-slate-900 dark:text-white">{clientName}</span>
+          <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 p-4 text-sm font-medium text-gray-500">
+            {t('Quote for:', 'Penawaran untuk:')} <span className="text-gray-900 font-semibold">{clientName}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {PRODUCTS.map(p => {
@@ -476,10 +476,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <button
                   key={p.type}
                   onClick={() => { setProduct(p.type); setActiveProduct(null); }}
-                  className={`p-5 rounded-[1.5rem] border text-left transition-all active:scale-95 ${
+                  className={`p-5 rounded-xl border text-left transition-all active:scale-95 ${
                     active
-                      ? 'border-[#16a34a] bg-[#16a34a]/5 shadow-lg'
-                      : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
+                      ? 'border-2 border-emerald-500 bg-emerald-50'
+                      : 'border border-gray-200 bg-white'
                   }`}
                 >
                   <div className={`w-12 h-12 ${p.bgColor} rounded-2xl flex items-center justify-center mb-3`}>
@@ -501,10 +501,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             {/* Life Insurance card */}
             <button
               onClick={() => { setProduct(null); setActiveProduct('life'); }}
-              className={`p-5 rounded-[1.5rem] border text-left transition-all active:scale-95 ${
+              className={`p-5 rounded-xl border text-left transition-all active:scale-95 ${
                 activeProduct === 'life'
-                  ? 'border-emerald-500 bg-emerald-500/5 shadow-lg'
-                  : 'border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900'
+                  ? 'border-2 border-emerald-500 bg-emerald-50'
+                  : 'border border-gray-200 bg-white'
               }`}
             >
               <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3">
@@ -562,7 +562,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           {product && product !== 'CAR' && product !== 'MOTORCYCLE' && (
             <button
               onClick={() => setStep('inputs')}
-              className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-2"
             >
               {t('Next', 'Lanjut')} <ChevronRight size={16} />
             </button>
@@ -571,7 +571,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           {activeProduct === 'life' && (
             <button
               onClick={() => setActiveProduct('life')}
-              className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-2"
             >
               {t('Start Life Application', 'Mulai Aplikasi Jiwa')} <ChevronRight size={16} />
             </button>
@@ -660,7 +660,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-2 gap-2">
                   {(['COMPREHENSIVE', 'TLO'] as const).map(c => (
                     <button key={c} onClick={() => setCarInputs(v => ({ ...v, coverage: c }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${carInputs.coverage === c ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${carInputs.coverage === c ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {c}
                     </button>
                   ))}
@@ -687,7 +687,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-2 gap-2">
                   {(['GOLD', 'PLATINUM'] as const).map(p => (
                     <button key={p} onClick={() => setTravelInputs(v => ({ ...v, plan: p }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${travelInputs.plan === p ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${travelInputs.plan === p ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {p}
                     </button>
                   ))}
@@ -704,7 +704,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-2 gap-2">
                   {(['GENERAL', 'STUDENT'] as const).map(c => (
                     <button key={c} onClick={() => setPAInputs(v => ({ ...v, category: c }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${paInputs.category === c ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${paInputs.category === c ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {c === 'GENERAL' ? t('General', 'Umum') : t('Student', 'Pelajar')}
                     </button>
                   ))}
@@ -715,7 +715,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-3 gap-2">
                   {(['BASIC', 'PREMIUM', 'ELITE'] as const).map(p => (
                     <button key={p} onClick={() => setPAInputs(v => ({ ...v, plan: p }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${paInputs.plan === p ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${paInputs.plan === p ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {p}
                     </button>
                   ))}
@@ -739,7 +739,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-2 gap-2">
                   {(['ELECTRONIC', 'GADGET'] as const).map(c => (
                     <button key={c} onClick={() => setMPARInputs(v => ({ ...v, category: c }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${mparInputs.category === c ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${mparInputs.category === c ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {c === 'ELECTRONIC' ? t('Electronic', 'Elektronik') : t('Gadget', 'Gadget')}
                     </button>
                   ))}
@@ -754,7 +754,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <div className="grid grid-cols-2 gap-2">
                   {([6, 12] as const).map(p => (
                     <button key={p} onClick={() => setMPARInputs(v => ({ ...v, period: p }))}
-                      className={`py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${mparInputs.period === p ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                      className={`py-3 rounded-xl text-xs font-semibold transition-all ${mparInputs.period === p ? 'bg-emerald-500 text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500'}`}>
                       {p} {t('Months', 'Bulan')}
                     </button>
                   ))}
@@ -772,7 +772,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 setStep('summary');
               }
             }}
-            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl disabled:opacity-40 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {t('See Quote', 'Lihat Penawaran')} <ChevronRight size={16} />
           </button>
@@ -867,7 +867,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           </div>
 
           {/* Details */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-lg p-5 space-y-2">
+          <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 p-4 space-y-2">
             <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-3">{t('Details', 'Detail')}</p>
             {Object.entries(currentInputs()).map(([k, v]) => (
               v !== '' && v !== 0 ? (

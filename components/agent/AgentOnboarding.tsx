@@ -359,7 +359,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           )}
         </div>
 
-        <p className="text-center text-[0.5rem] font-bold text-slate-400 uppercase tracking-widest">
+        <p className="text-center text-[0.5rem] font-bold text-gray-600 uppercase tracking-widest">
           {t('Secured by SurePath Smart Security', 'Diamankan oleh SurePath Smart Security')}
         </p>
       </div>

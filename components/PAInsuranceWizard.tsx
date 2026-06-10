@@ -164,31 +164,33 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
 
        <div className="grid grid-cols-1 gap-3">
           {plans.map(p => (
-            <div 
+            <div
               key={p.code}
               onClick={() => setPaData({...paData, planCode: p.code})}
-              className={`p-5 rounded-[2.2rem] border-2 cursor-pointer transition-all relative overflow-hidden flex items-center justify-between group ${paData.planCode === p.code ? 'border-primary-500 bg-primary-500/5 shadow-xl' : 'border-black/5 bg-white dark:bg-white/5'}`}
+              className={paData.planCode === p.code ? "rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer" : "rounded-2xl border border-gray-200 p-4 cursor-pointer active:bg-gray-50 transition-all"}
             >
-               <div className="flex items-center gap-5">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${paData.planCode === p.code ? 'bg-primary-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
-                    {p.code}
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${paData.planCode === p.code ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                       {p.code}
+                     </div>
+                     <div>
+                       <p className="text-xs text-gray-500">Santunan Meninggal</p>
+                       <p className="text-sm font-semibold text-gray-900 mt-0.5">Rp {p.benefit}</p>
+                     </div>
                   </div>
-                  <div>
-                    <p className="text-[0.5rem] font-black text-primary-500 uppercase tracking-widest">Santunan Meninggal</p>
-                    <h5 className="text-lg font-black uppercase tracking-tight">Rp {p.benefit}</h5>
+                  <div className="text-right">
+                     <p className="text-lg font-bold text-emerald-600 font-mono mt-1">{formatIDR(p.premium)}</p>
+                     <p className="text-xs text-gray-500">Premi Tahunan</p>
+                     {paData.planCode === p.code && (
+                       <div className="flex justify-end mt-1">
+                          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                             <Check size={12} strokeWidth={4}/>
+                          </div>
+                       </div>
+                     )}
                   </div>
                </div>
-               <div className="text-right">
-                  <p className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">{formatIDR(p.premium)}</p>
-                  <p className="text-[0.45rem] font-bold text-gray-400 uppercase">Premi Tahunan</p>
-               </div>
-               {paData.planCode === p.code && (
-                 <div className="absolute top-0 right-0 p-3">
-                    <div className="w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-lg animate-pop-in">
-                       <Check size={12} strokeWidth={4}/>
-                    </div>
-                 </div>
-               )}
             </div>
           ))}
        </div>
@@ -212,41 +214,41 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
 
        <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Nama Lengkap (KTP)</label>
-            <input 
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Nama Lengkap (KTP)</label>
+            <input
               placeholder="Sesuai Kartu Identitas"
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all uppercase"
               value={insuredData.name}
               onChange={(e) => setInsuredData({...insuredData, name: e.target.value.toUpperCase()})}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
              <div className="space-y-1.5">
-                <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">NIK (16 Digit)</label>
-                <input 
-                  maxLength={16} 
-                  placeholder="3271xxxxxxxx" 
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">NIK (16 Digit)</label>
+                <input
+                  maxLength={16}
+                  placeholder="3271xxxxxxxx"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                   value={insuredData.ktp}
                   onChange={(e) => setInsuredData({...insuredData, ktp: e.target.value.replace(/\D/g, '')})}
                 />
              </div>
              <div className="space-y-1.5">
-                <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Tgl Lahir</label>
-                <input 
-                  type="date" 
-                  className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">Tgl Lahir</label>
+                <input
+                  type="date"
+                  className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                   value={insuredData.birthDate}
                   onChange={(e) => setInsuredData({...insuredData, birthDate: e.target.value})}
                 />
              </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Alamat Email</label>
-            <input 
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Alamat Email</label>
+            <input
               type="email"
               placeholder="member@surepath.ai"
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
               value={insuredData.email}
               onChange={(e) => setInsuredData({...insuredData, email: e.target.value})}
             />
@@ -266,16 +268,16 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
 
        <div className="space-y-5">
           <div className="space-y-1.5">
-             <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Nama Ahli Waris</label>
-             <input 
+             <label className="block text-xs font-medium text-gray-600 mb-1.5">Nama Ahli Waris</label>
+             <input
                 placeholder="Nama Lengkap"
-                className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm uppercase"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all uppercase"
                 value={paData.beneficiaryName}
                 onChange={(e) => setPaData({...paData, beneficiaryName: e.target.value.toUpperCase()})}
              />
           </div>
           <div className="space-y-1.5">
-             <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Hubungan</label>
+             <label className="block text-xs font-medium text-gray-600 mb-1.5">Hubungan</label>
              <div className="grid grid-cols-2 gap-2">
                 {['ORANG TUA', 'SUAMI / ISTRI', 'ANAK', 'LAINNYA'].map(rel => (
                   <button 
@@ -294,54 +296,38 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
 
   const renderStep4 = () => (
     <div className="space-y-6 animate-fade-in">
-       <div className="p-8 bg-white dark:bg-white/5 rounded-[3rem] border-2 border-black/5 space-y-8 shadow-xl relative overflow-hidden">
-          <div className="absolute right-0 top-0 p-10 opacity-[0.03] dark:opacity-[0.06] -rotate-12 translate-x-12 -translate-y-12"><ShieldCheck size={200}/></div>
-          <div className="flex justify-between items-start relative z-10">
-             <div>
-               <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-[0.4em] mb-1.5 opacity-80">Policy Config</p>
-               <h4 className="text-3xl font-black uppercase tracking-tighter text-primary-500">PA Plan {paData.planCode}</h4>
-             </div>
-             <div className="p-4 bg-primary-500/10 rounded-2xl text-primary-500 shadow-inner"><Cpu size={24}/></div>
+       <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-3">
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Plan</span>
+             <span className="text-sm font-semibold text-gray-900">PA Plan {paData.planCode}</span>
           </div>
-          
-          <div className="grid grid-cols-1 gap-5 pt-6 border-t border-black/5 dark:border-white/5 relative z-10">
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><ShieldAlert size={16} className="text-primary-500"/> Kategori</span>
-                <span className="font-black text-right uppercase">{paData.category}</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Users size={16} className="text-primary-500"/> Ahli Waris</span>
-                <span className="font-black text-right uppercase">{paData.beneficiaryName}</span>
-             </div>
-             <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Zap size={16} className="text-primary-500"/> Santunan</span>
-                <span className="font-black text-right text-primary-500 tracking-widest">Rp {selectedPlanData?.benefit}</span>
-             </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Kategori</span>
+             <span className="text-sm font-semibold text-gray-900">{paData.category}</span>
           </div>
-
-          <div className="pt-8 border-t border-black/5 dark:border-white/5 relative z-10">
-              <div className="flex justify-between items-end">
-                 <div>
-                    <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Total Premi Net</p>
-                    <h3 className="text-4xl font-black tracking-tighter text-primary-500">{formatIDR(selectedPlanData?.premium || 0)}</h3>
-                 </div>
-                 <div className="flex flex-col items-end gap-1">
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> OJK Approved</p>
-                    <p className="text-[0.45rem] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1"><Check size={10}/> Instant Issue</p>
-                 </div>
-              </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Ahli Waris</span>
+             <span className="text-sm font-semibold text-gray-900">{paData.beneficiaryName}</span>
+          </div>
+          <div className="flex justify-between items-center">
+             <span className="text-sm text-gray-500">Santunan</span>
+             <span className="text-sm font-semibold text-gray-900">Rp {selectedPlanData?.benefit}</span>
+          </div>
+          <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+             <span className="text-sm font-bold text-gray-900">Total Premi Net</span>
+             <span className="text-base font-bold text-emerald-600 font-mono">{formatIDR(selectedPlanData?.premium || 0)}</span>
           </div>
        </div>
 
        <button
          onClick={handleActivate}
          disabled={isProcessing}
-         className="w-full py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-base tracking-[0.25em] shadow-2xl flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+         className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
        >
          {isProcessing ? (
-           <><Loader2 size={24} className="animate-spin text-primary-500"/><span>Memproses...</span></>
+           <><Loader2 size={20} className="animate-spin"/><span>Memproses...</span></>
          ) : (
-           <><Wallet size={24} className="text-primary-500"/><span>ACTIVATE POLICY</span></>
+           <><Wallet size={20}/><span>Beli Sekarang</span></>
          )}
        </button>
     </div>

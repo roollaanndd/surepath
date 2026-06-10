@@ -263,48 +263,48 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
   if (isSuccess) {
      return (
-        <div className="flex flex-col items-center justify-center h-full min-h-screen p-8 text-center bg-[#f0faf7] dark:bg-[#050505] animate-fade-in">
+        <div className="bg-white min-h-screen pb-28 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
            {isPayLater ? (
-              <div className="w-24 h-24 bg-amber-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8 animate-pop-in">
+              <div className="w-24 h-24 bg-amber-400 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
                  <Clock size={56} strokeWidth={2.5}/>
               </div>
            ) : (
-              <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl mb-8 animate-pop-in">
+              <div className="w-24 h-24 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
                  <ShieldCheck size={56} strokeWidth={2.5}/>
               </div>
            )}
 
            <div className="space-y-4 mb-12">
-              <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-gray-900">
                  Pesanan <span className={isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPayLater ? "Tersimpan" : "Diterima"}</span>
               </h2>
-              <p className="text-[0.7rem] font-bold text-gray-500 uppercase tracking-widest max-w-sm mx-auto leading-relaxed">
+              <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
                  {isPayLater
                    ? "Pesanan tersimpan. Selesaikan pembayaran di menu Pesanan Saya untuk mengaktifkan perlindungan."
                    : "Pesanan berhasil dikirim ke penanggung. Tim kami akan memproses polis Anda setelah pembayaran dikonfirmasi."}
               </p>
            </div>
 
-           <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-[3rem] p-8 space-y-6 shadow-xl mb-10">
-              <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-                 <span>No. Pesanan</span>
-                 <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+           <div className="mx-5 rounded-2xl bg-gray-50 border border-gray-100 p-4 w-full max-w-sm mb-10">
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                 <span className="text-sm text-gray-500">No. Pesanan</span>
+                 <span className="text-sm font-semibold text-gray-900 font-mono">{orderNumber ?? '—'}</span>
               </div>
-              <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
-                 <span>Status</span>
-                 <span className={`px-3 py-1 rounded-lg border text-[0.55rem] font-black uppercase tracking-widest ${isPayLater ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                 <span className="text-sm text-gray-500">Status</span>
+                 <span className={`px-3 py-1 rounded-lg border text-xs font-semibold ${isPayLater ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
                     {isPayLater ? 'Menunggu Pembayaran' : 'Diproses'}
                  </span>
               </div>
-              <div className="pt-6 border-t border-black/5 flex justify-between items-center">
+              <div className="flex justify-between py-2">
                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500"><Car size={20}/></div>
+                    <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500"><Car size={16}/></div>
                     <div className="text-left">
-                       <p className="text-xs font-black uppercase text-slate-900 dark:text-white">{vehicle.brand} {vehicle.model}</p>
-                       <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">{vehicle.plate}</p>
+                       <p className="text-sm font-semibold text-gray-900">{vehicle.brand} {vehicle.model}</p>
+                       <p className="text-xs text-gray-400">{vehicle.plate}</p>
                     </div>
                  </div>
-                 {isPayLater ? <AlertTriangle size={20} className="text-amber-500"/> : <CheckCircle2 size={20} className="text-emerald-500"/>}
+                 {isPayLater ? <AlertTriangle size={18} className="text-amber-500"/> : <CheckCircle2 size={18} className="text-emerald-500"/>}
               </div>
            </div>
 
@@ -314,14 +314,14 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                    href={invoiceUrl}
                    target="_blank"
                    rel="noopener noreferrer"
-                   className="w-full py-5 bg-emerald-500 text-white rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                   className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all flex items-center justify-center gap-3"
                  >
                    Buka Halaman Pembayaran <ExternalLink size={18}/>
                  </a>
               )}
               <button
                 onClick={onComplete}
-                className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                className="w-full h-12 rounded-xl bg-gray-900 text-white font-semibold text-sm active:bg-gray-800 transition-all flex items-center justify-center gap-3"
               >
                 Kembali ke Beranda <ArrowRight size={18}/>
               </button>

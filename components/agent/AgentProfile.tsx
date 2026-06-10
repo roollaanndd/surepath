@@ -3,7 +3,7 @@ import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, Wallet,
   FileText, Trophy, Loader2, Network, RefreshCw, FileEdit,
-  AlertCircle, Camera, Building2,
+  AlertCircle, Camera, Building2, ChevronRight,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -487,7 +487,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Performance Summary */}
-      <div>
+      <div className="mx-5 mt-4">
         <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Performa</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/5 rounded-2xl p-4 text-center">
@@ -514,7 +514,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Bank Account */}
-      <div>
+      <div className="mx-5 mt-4">
         <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Rekening Bank</p>
         {savedAccount ? (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">

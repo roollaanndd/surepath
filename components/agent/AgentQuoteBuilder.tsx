@@ -316,7 +316,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               coverageDetails: createdPolicy?.coverage_details,
             });
           }}
-          className="w-full py-3.5 rounded-2xl bg-[#16a34a] text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/20"
+          className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all w-full flex items-center justify-center gap-2"
         >
           <Download size={14} />
           {t('Download Certificate (PDF)', 'Unduh Sertifikat (PDF)')}
@@ -813,7 +813,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handlePrintQuote}
             disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-            className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-blue-500/20 disabled:opacity-50"
+            className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
           >
             {printingQuote ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
             Cetak Penawaran PDF
@@ -840,7 +840,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
           <button
             onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
-            className="w-full py-4 rounded-2xl bg-[#16a34a] text-white font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[#16a34a]/30"
+            className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all w-full flex items-center justify-center gap-2"
           >
             <ChevronRight size={14} />
             Lanjut ke Pembelian
@@ -893,7 +893,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             <button
               onClick={handlePrintQuote}
               disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-              className="w-full py-4 rounded-2xl border border-[#16a34a]/40 dark:border-[#16a34a]/30 text-[#16a34a] font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95 motion-reduce:active:scale-100 transition-transform disabled:opacity-50 bg-[#16a34a]/5 dark:bg-[#16a34a]/10"
+              className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
             >
               {printingQuote ? <RefreshCw size={14} className="animate-spin motion-reduce:animate-none" /> : <FileText size={14} />}
               {t('Print Quote PDF', 'Cetak Penawaran PDF')}

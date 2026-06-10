@@ -179,17 +179,17 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           {!checkEmail && step === 1 && (
             <form onSubmit={handleStep1} className="space-y-4">
               <div>
-                <p className="font-black tracking-tighter text-lg mb-1">
+                <p className="text-2xl font-bold text-white mb-1">
                   {t('Personal Information', 'Informasi Pribadi')}
                 </p>
-                <p className="text-xs text-slate-400 font-medium">
+                <p className="text-sm text-gray-400 mb-8">
                   {t('Fill in your personal details to get started.', 'Isi data pribadi Anda untuk memulai.')}
                 </p>
               </div>
 
               {/* Name */}
               <div className="relative">
-                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="text"
@@ -202,7 +202,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Email */}
               <div className="relative">
-                <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Globe size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="email"
@@ -215,7 +215,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
               {/* Phone */}
               <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input
                   required
                   type="tel"

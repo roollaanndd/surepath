@@ -138,91 +138,50 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
   const needsExtra = selected === 'AGENT' || selected === 'B2B_CLIENT';
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#060a09',
-        fontFamily: "'Sora', sans-serif",
-        padding: '24px 16px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 py-12 font-sora">
       {/* Logo */}
-      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(6,224,0,0.08)', border: '1px solid rgba(6,224,0,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex items-center gap-2.5 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
           <SurePathLogo className="w-6 h-6" />
         </div>
-        <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>
-          Sure<span style={{ color: '#06e000' }}>Path</span>
+        <span className="text-2xl font-bold text-white text-center mb-2" style={{ letterSpacing: '-0.03em' }}>
+          Sure<span className="text-emerald-400">Path</span>
         </span>
       </div>
 
-      {/* Card */}
-      <div style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 24 }}>
-        <h2 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, margin: '0 0 4px' }}>
-          Daftar sebagai
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', margin: '0 0 20px' }}>
-          Pilih tipe akun kamu. Tidak bisa diubah setelah pendaftaran.
-        </p>
+      {/* Title */}
+      <p className="text-sm text-gray-400 text-center mb-8">
+        Pilih tipe akun kamu. Tidak bisa diubah setelah pendaftaran.
+      </p>
 
+      {/* Card */}
+      <div className="w-full max-w-sm">
         {/* Role cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        <div className="flex flex-col">
           {ROLE_CARDS.map(card => (
             <button
               key={card.role}
               onClick={() => { setSelected(card.role); setError(''); }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                padding: '14px 16px',
-                borderRadius: 14,
-                border: `1.5px solid ${selected === card.role ? card.border : 'rgba(255,255,255,0.08)'}`,
-                background: selected === card.role ? card.bg : 'transparent',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s',
-                outline: 'none',
-              }}
+              className={
+                selected === card.role
+                  ? 'w-full rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 p-5 cursor-pointer transition-all text-left mb-3'
+                  : 'w-full rounded-2xl border border-white/10 bg-white/5 p-5 cursor-pointer active:bg-white/10 transition-all text-left mb-3'
+              }
             >
-              <div style={{ color: card.color, flexShrink: 0 }}>{card.icon}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ color: '#fff', fontSize: '0.875rem', fontWeight: 600 }}>
-                  {card.title}
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400, marginLeft: 6, fontSize: '0.75rem' }}>
-                    · {card.subtitle}
-                  </span>
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.7rem', marginTop: 2 }}>
-                  {card.description}
-                </div>
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-3 text-emerald-400">
+                {card.icon}
               </div>
-              {/* Radio indicator */}
-              <div style={{
-                width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                border: `2px solid ${selected === card.role ? card.color : 'rgba(255,255,255,0.20)'}`,
-                background: selected === card.role ? card.color : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s',
-              }}>
-                {selected === card.role && (
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#000' }} />
-                )}
-              </div>
+              <p className="text-base font-bold text-white">{card.title}</p>
+              <p className="text-sm text-gray-400 mt-1">{card.description}</p>
             </button>
           ))}
         </div>
 
         {/* Extra fields when role is selected */}
         {selected && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          <div className="flex flex-col gap-2.5 mb-4">
             <div>
-              <label style={{ display: 'block', color: 'rgba(255,255,255,0.55)', fontSize: '0.7rem', marginBottom: 6 }}>
+              <label className="block text-[0.7rem] text-white/55 mb-1.5">
                 Nomor HP
               </label>
               <input
@@ -230,18 +189,13 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
                 placeholder="08xx xxxx xxxx"
                 value={phone}
                 onChange={e => { setPhone(e.target.value); setError(''); }}
-                style={{
-                  width: '100%', padding: '10px 14px', borderRadius: 10,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                  color: '#fff', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
-                  fontFamily: "'Sora', sans-serif",
-                }}
+                className="w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all mt-3"
               />
             </div>
 
             {selected === 'B2B_CLIENT' && (
               <div>
-                <label style={{ display: 'block', color: 'rgba(255,255,255,0.55)', fontSize: '0.7rem', marginBottom: 6 }}>
+                <label className="block text-[0.7rem] text-white/55 mb-1.5">
                   Nama Perusahaan
                 </label>
                 <input
@@ -249,28 +203,23 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
                   placeholder="PT. Contoh Perusahaan"
                   value={companyName}
                   onChange={e => { setCompanyName(e.target.value); setError(''); }}
-                  style={{
-                    width: '100%', padding: '10px 14px', borderRadius: 10,
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                    color: '#fff', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box',
-                    fontFamily: "'Sora', sans-serif",
-                  }}
+                  className="w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all mt-3"
                 />
               </div>
             )}
 
             {selected === 'AGENT' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="flex flex-col gap-2">
                 {refCode && (
-                  <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.20)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: '1rem' }}>🔗</span>
-                    <p style={{ color: 'rgba(147,197,253,0.9)', fontSize: '0.68rem', margin: 0 }}>
+                  <div className="px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-2">
+                    <span className="text-base">🔗</span>
+                    <p className="text-blue-300/90 text-[0.68rem] m-0">
                       Referral dari agen <strong>{refCode}</strong> akan otomatis terhubung.
                     </p>
                   </div>
                 )}
-                <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(6,224,0,0.06)', border: '1px solid rgba(6,224,0,0.15)' }}>
-                  <p style={{ color: 'rgba(6,224,0,0.8)', fontSize: '0.68rem', margin: 0, lineHeight: 1.5 }}>
+                <div className="px-3 py-2 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15">
+                  <p className="text-emerald-400/80 text-[0.68rem] m-0 leading-relaxed">
                     Akun agen perlu diverifikasi admin sebelum bisa digunakan.
                   </p>
                 </div>
@@ -280,7 +229,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         )}
 
         {error && (
-          <p style={{ color: '#f87171', fontSize: '0.72rem', margin: '0 0 12px', textAlign: 'center' }}>
+          <p className="text-red-400 text-[0.72rem] mb-3 text-center">
             {error}
           </p>
         )}
@@ -288,32 +237,20 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         <button
           onClick={handleConfirm}
           disabled={!selected || loading}
-          style={{
-            width: '100%', padding: '13px', borderRadius: 12,
-            background: selected ? 'hsl(119,99%,46%)' : 'rgba(255,255,255,0.08)',
-            color: selected ? '#000' : 'rgba(255,255,255,0.25)',
-            fontWeight: 700, fontSize: '0.875rem', cursor: selected ? 'pointer' : 'not-allowed',
-            border: 'none', fontFamily: "'Sora', sans-serif",
-            transition: 'all 0.15s',
-          }}
+          className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all mt-4 disabled:opacity-40"
         >
           {loading ? 'Memproses…' : 'Daftar Sekarang'}
         </button>
 
         <button
           onClick={onCancel}
-          style={{
-            width: '100%', marginTop: 10, padding: '11px', borderRadius: 12,
-            background: 'transparent', color: 'rgba(255,255,255,0.35)',
-            fontWeight: 500, fontSize: '0.8rem', cursor: 'pointer',
-            border: '1px solid rgba(255,255,255,0.08)', fontFamily: "'Sora', sans-serif",
-          }}
+          className="w-full mt-2.5 py-2.5 rounded-xl bg-transparent text-white/35 font-medium text-sm border border-white/10 transition-all"
         >
           Batal
         </button>
       </div>
 
-      <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.6rem', marginTop: 20, textAlign: 'center' }}>
+      <p className="text-white/15 text-[0.6rem] mt-5 text-center">
         Masuk sebagai: {oauthUser.email}
       </p>
     </div>

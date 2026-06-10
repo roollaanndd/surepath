@@ -154,93 +154,76 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     .toUpperCase();
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5 pb-32 font-sora">
+    <div className="bg-gray-50 min-h-screen pb-28 font-sora">
       {/* Avatar + Name */}
-      <div className="flex flex-col items-center gap-3 pt-2 pb-4">
-        <div className="relative w-20 h-20 mx-auto mb-2">
+      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100 text-center">
+        <div className="relative w-16 h-16 mx-auto mb-3">
           <button
             onClick={() => avatarInputRef.current?.click()}
-            className="w-20 h-20 rounded-full overflow-hidden bg-[#16a34a]/15 flex items-center justify-center relative"
+            className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3 overflow-hidden relative"
           >
             {(profile as any)?.profile_photo_url
               ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
-              : <span className="text-2xl font-black text-[#16a34a]">{initials}</span>
+              : <span>{initials}</span>
             }
             {avatarUploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin motion-reduce:animate-none" />
               </div>
             )}
-            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#16a34a] flex items-center justify-center">
-              <Camera size={10} className="text-white" />
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-700 flex items-center justify-center">
+              <Camera size={9} className="text-white" />
             </div>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
         </div>
-        <div className="text-center">
-          <h2 className="font-black text-xl text-slate-800 dark:text-white leading-tight">
-            {profile?.name ?? agent?.name}
-          </h2>
-          <div className="flex items-center justify-center gap-2 mt-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              {profile?.agent_code ?? agent?.agent_code}
-            </span>
-            <button onClick={copyCode} className="text-slate-400 hover:text-[#16a34a] transition">
-              {copied
-                ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-          {profile?.verified && (
-            <div className="flex items-center justify-center gap-1 mt-1.5">
-              <BadgeCheck className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-bold text-blue-500">
-                {t('Verified Agent', 'Agen Terverifikasi')}
-              </span>
-            </div>
-          )}
-          {(() => {
-            const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
-            return tier ? (
-              <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
-                tier === 'ELITE' ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-400'
-              }`}>
-                {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
-              </div>
-            ) : null;
-          })()}
+        <h2 className="text-lg font-bold text-gray-900">
+          {profile?.name ?? agent?.name}
+        </h2>
+        <div className="flex items-center justify-center gap-2 mt-1">
+          <span className="inline-flex px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mt-1">
+            {profile?.agent_code ?? agent?.agent_code}
+          </span>
+          <button onClick={copyCode} className="text-slate-400 hover:text-emerald-600 transition mt-1">
+            {copied
+              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              : <Copy className="w-3.5 h-3.5" />}
+          </button>
         </div>
+        {profile?.verified && (
+          <div className="flex items-center justify-center gap-1 mt-1">
+            <BadgeCheck className="w-4 h-4 text-blue-500" />
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium mt-1 ml-1">
+              {t('Verified Agent', 'Agen Terverifikasi')}
+            </span>
+          </div>
+        )}
+        {(() => {
+          const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+          return tier ? (
+            <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
+              tier === 'ELITE' ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-400'
+            }`}>
+              {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
+            </div>
+          ) : null;
+        })()}
       </div>
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-3 text-center">
-            <FileText className="w-5 h-5 text-[#16a34a] mx-auto mb-1" />
-            <p className="font-black text-lg text-slate-800 dark:text-white leading-none">
-              {stats.policiesCount}
-            </p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">
-              {t('Policies', 'Polis')}
-            </p>
+        <div className="flex gap-4 bg-white px-5 py-4 border-b border-gray-100">
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-gray-900 font-mono">{stats.policiesCount}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('Policies', 'Polis')}</p>
           </div>
-          <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-3 text-center">
-            <Wallet className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
-            <p className="font-black text-sm text-slate-800 dark:text-white leading-none">
-              {formatIDR(stats.totalCommissionAllTime)}
-            </p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">
-              {t('Total Earned', 'Total Komisi')}
-            </p>
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-gray-900 font-mono">{formatIDR(stats.totalCommissionAllTime)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('Total Earned', 'Total Komisi')}</p>
           </div>
-          <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-3 text-center">
-            <Trophy className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-            <p className="font-black text-lg text-slate-800 dark:text-white leading-none">
-              {stats.clientsCount}
-            </p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mt-0.5">
-              {t('Clients', 'Klien')}
-            </p>
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-gray-900 font-mono">{stats.clientsCount}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('Clients', 'Klien')}</p>
           </div>
         </div>
       )}

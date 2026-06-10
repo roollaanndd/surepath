@@ -249,13 +249,13 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
              </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[0.5rem] font-black uppercase text-gray-400 ml-1">Email Aktif</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Email Aktif</label>
             <input
               type="email"
               placeholder="email@provider.com"
               value={travelerData.email}
               onChange={(e) => setTravelerData({...travelerData, email: e.target.value})}
-              className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm"
+              className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
             />
           </div>
        </div>

@@ -142,33 +142,28 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: ()
   };
 
   const renderStep0 = () => (
-    <div className="space-y-6 animate-fade-in">
-      <div className="p-4 bg-amber-500/10 rounded-3xl border border-amber-500/20 flex gap-4">
-         <Package className="text-amber-500 flex-shrink-0" size={24}/>
-         <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
-           Movable Property All Risk (MPAR). Protect your valuable assets from accidental damage, theft, and natural disasters.
-         </p>
-      </div>
+    <div className="space-y-4">
+      <p className="px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pilih Kategori Barang</p>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3 px-5">
         {[
           { id: 'GADGET', label: 'Gadgets & Devices', desc: 'HP, Tablet, Laptop shield.', icon: Smartphone, sub: 'SMARTPHONE' },
           { id: 'ELECTRONIC', label: 'Electronic Appliances', desc: 'TV, Fridge, AC, and more.', icon: Laptop, sub: 'NON-TV' },
           { id: 'FURNITURE', label: 'Furniture & Decor', desc: 'Sofa, Bed, Premium items.', icon: House, sub: 'FURNITURE_CORE' }
         ].map(cat => (
-          <button 
+          <button
             key={cat.id}
             onClick={() => setMpar({...mpar, category: cat.id as any, subCategory: cat.sub as any})}
-            className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all tap-feedback ${mpar.category === cat.id ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
+            className={mpar.category === cat.id ? 'rounded-xl border-2 border-emerald-500 bg-emerald-50 p-4 cursor-pointer transition-all text-left flex items-center gap-4' : 'rounded-xl border border-gray-200 p-4 cursor-pointer transition-all active:bg-gray-50 text-left flex items-center gap-4'}
           >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-white/10 ${mpar.category === cat.id ? 'text-amber-500' : 'text-gray-400'}`}>
-               <cat.icon size={28}/>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gray-100 ${mpar.category === cat.id ? 'text-emerald-500' : 'text-gray-400'}`}>
+               <cat.icon size={24}/>
             </div>
-            <div>
-               <h4 className="font-black text-lg uppercase tracking-tighter">{cat.label}</h4>
-               <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{cat.desc}</p>
+            <div className="flex-1">
+               <h4 className="font-semibold text-sm text-gray-900">{cat.label}</h4>
+               <p className="text-xs text-gray-500 mt-0.5">{cat.desc}</p>
             </div>
-            {mpar.category === cat.id && <Check className="ml-auto text-amber-500" size={24} strokeWidth={3}/>}
+            {mpar.category === cat.id && <Check className="text-emerald-500 flex-shrink-0" size={20} strokeWidth={2.5}/>}
           </button>
         ))}
       </div>

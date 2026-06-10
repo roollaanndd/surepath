@@ -7,7 +7,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
-import { supabase, getAgentProfile, getAgentByEmail } from '../services/supabaseService';
+import { supabase, ensureProfile } from '../services/supabaseService';
 import AgentOnboarding from './agent/AgentOnboarding';
 
 interface AuthGateProps {
@@ -100,13 +100,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   // ── Build user object from Supabase user ──────────────────────────────────
   const buildUserObj = async (user: any) => {
-    const [byId, byEmail] = await Promise.allSettled([
-      getAgentProfile(user.id),
-      getAgentByEmail(user.email!),
-    ]);
-    const profile =
-      (byId.status === 'fulfilled' ? byId.value : null) ??
-      (byEmail.status === 'fulfilled' ? byEmail.value : null);
+    // Fetch the caller's profile via the gateway, creating it from the signup
+    // metadata if missing (e.g. email-confirmation flow where the profile
+    // couldn't be created at registration time).
+    const profile = await ensureProfile().catch(() => null);
 
     return profile
       ? {
@@ -207,7 +204,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     const { data, error: authErr } = await supabase.auth.signUp({
       email:    formData.email,
       password: formData.password,
-      options:  { data: { name: formData.name } },
+      options:  { data: { name: formData.name, role: UserRole.CUSTOMER } },
     });
 
     if (authErr || !data.user) {
@@ -221,18 +218,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
       setLoading(false);
       return;
     }
-
-    // Upsert profile — errors here are non-fatal (user can still log in via auth)
-    const { error: upsertErr } = await supabase.from('sp_users').upsert({
-      id:          data.user.id,
-      name:        formData.name,
-      email:       formData.email,
-      phone:       '',
-      role:        UserRole.CUSTOMER,
-      agent_code:  `SP-${Math.floor(Math.random() * 99999).toString().padStart(5, '0')}`,
-      trust_score: 85,
-    });
-    if (upsertErr) console.warn('sp_users upsert failed:', upsertErr.message);
 
     if (!data.session) {
       // Email confirmation required

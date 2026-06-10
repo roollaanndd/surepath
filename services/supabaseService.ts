@@ -125,6 +125,20 @@ export async function getAgentByEmail(_email: string): Promise<SpUser | null> {
   return data as SpUser;
 }
 
+// Returns the current user's profile, creating it server-side (from the
+// verified JWT identity) if it doesn't exist yet. Safe to call repeatedly.
+export async function ensureProfile(params?: {
+  name?: string;
+  phone?: string;
+  role?: 'CUSTOMER' | 'AGENT';
+  ktp?: string | null;
+  address?: string | null;
+}): Promise<SpUser | null> {
+  const { data, error } = await callGateway('ensure_profile', params);
+  if (error || !data) return null;
+  return data as SpUser;
+}
+
 export async function getUserByEmail(_email: string): Promise<SpUser | null> {
   // Same as above — always fetches the current authenticated user's own profile.
   const { data, error } = await callGateway('get_my_profile');

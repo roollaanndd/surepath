@@ -44,10 +44,12 @@ const HomePage: React.FC<SitePageProps> = (props) => {
 
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden" style={{ background: 'hsl(0 0% 4%)' }}>
-        {/* Video — right 70% on desktop, full-bleed on mobile */}
-        <div className="absolute inset-0 lg:left-auto lg:right-0 lg:w-[72%] pointer-events-none overflow-hidden"><HeroVideo /></div>
-        {/* Desktop: fade from hero bg on the left into the video on the right */}
-        <div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: 'linear-gradient(90deg, hsl(0 0% 4%) 18%, hsl(0 0% 4% / 0.9) 34%, hsl(0 0% 4% / 0.45) 52%, transparent 70%)', zIndex: 1 }} />
+        {/* Video full-bleed; object-position pushes the subject right on desktop so the
+            left side is still video content — no seam, colors always blend */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden lg:block"><HeroVideo position="78% center" /></div>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden lg:hidden"><HeroVideo /></div>
+        {/* Desktop: subtle left scrim for copy legibility — translucent so video shows through */}
+        <div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 30%, rgba(0,0,0,0.08) 52%, transparent 68%)', zIndex: 1 }} />
         {/* Light bottom gradient for legibility — much thinner than before */}
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.10) 55%, rgba(0,0,0,0.42) 100%)', zIndex: 1 }} />
         <div className="relative w-full max-w-[90%] sm:max-w-md lg:max-w-2xl px-6 md:px-10 pb-12 md:pb-16 pt-32 pointer-events-none" style={{ zIndex: 2 }}>

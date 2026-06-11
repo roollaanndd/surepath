@@ -141,6 +141,14 @@ button:focus-visible, a:focus-visible { outline: 2px solid rgba(22,163,74,0.6); 
   .spx-sheen::after { display: none; }
   * { transition-duration: 0.01ms !important; }
 }
+/* ── 3D Reveal ── */
+@keyframes float-z { 0%,100% { transform: translateY(0px) translateZ(0px); } 50% { transform: translateY(-10px) translateZ(16px); } }
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+.animate-float-z    { animation: float-z 5s ease-in-out infinite; }
+.animate-spin-slow  { animation: spin-slow 18s linear infinite; }
+.animate-spin-rev   { animation: spin-reverse 12s linear infinite; }
+.card-3d { transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), box-shadow 0.35s ease; transform-style: preserve-3d; will-change: transform; }
 `;
 
 export const SectionBackground: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
@@ -436,3 +444,41 @@ export const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; ha
 // ─── Chrome context — exposes the PWA install handler to nested sections ───────
 export const SiteChromeContext = createContext<{ onInstall: () => void }>({ onInstall: () => {} });
 export const useSiteChrome = () => useContext(SiteChromeContext);
+
+// ─── 3D tilt hook — attach to any card for mouse-tracking perspective ─────────
+export const use3DTilt = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const onMove = useCallback((e: React.MouseEvent) => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+    el.style.transform = `perspective(900px) rotateY(${x * 14}deg) rotateX(${-y * 10}deg) scale(1.025)`;
+  }, []);
+  const onLeave = useCallback(() => {
+    if (ref.current) ref.current.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) scale(1)';
+  }, []);
+  return { ref, onMove, onLeave };
+};
+
+// ─── 3D scroll reveal — cards "come toward you" as they enter viewport ─────────
+export const Reveal3D: React.FC<{ children: React.ReactNode; delay?: number; className?: string; from?: 'bottom'|'left'|'right' }> = ({
+  children, delay = 0, className = '', from = 'bottom',
+}) => {
+  const { ref, visible } = useReveal(0.1);
+  const hiddenTransform = from === 'left'
+    ? 'perspective(1000px) rotateY(-20deg) translateX(-40px)'
+    : from === 'right'
+    ? 'perspective(1000px) rotateY(20deg) translateX(40px)'
+    : 'perspective(1000px) rotateX(18deg) translateY(40px)';
+  return (
+    <div ref={ref} className={className} style={{
+      transitionDelay: `${delay}ms`,
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'perspective(1000px) rotateX(0deg) translateY(0px) translateX(0px)' : hiddenTransform,
+      transition: 'opacity 0.85s cubic-bezier(0.22,1,0.36,1), transform 0.85s cubic-bezier(0.22,1,0.36,1)',
+    }}>
+      {children}
+    </div>
+  );
+};

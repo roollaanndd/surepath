@@ -229,12 +229,25 @@ export const AnimatedCounter: React.FC<{ target: number; suffix: string; duratio
 };
 
 // ─── Hero video ───────────────────────────────────────────────────────────────
-export const HeroVideo: React.FC<{ position?: string }> = ({ position }) => (
-  <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover"
-    style={position ? { objectPosition: position } : undefined}>
-    <source src="/hero.mp4" type="video/mp4" />
-  </video>
-);
+export const HeroVideo: React.FC<{ position?: string }> = ({ position }) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = ref.current; if (!v) return;
+    // Some browsers silently block autoplay even with muted. Retry once on visibility.
+    const tryPlay = () => { v.play().catch(() => {}); };
+    tryPlay();
+    document.addEventListener('visibilitychange', tryPlay);
+    return () => document.removeEventListener('visibilitychange', tryPlay);
+  }, []);
+  return (
+    <video ref={ref} autoPlay muted loop playsInline preload="metadata"
+      poster="/promo-poster.jpg"
+      className="absolute inset-0 w-full h-full object-cover"
+      style={position ? { objectPosition: position } : undefined}>
+      <source src="/hero.mp4" type="video/mp4" />
+    </video>
+  );
+};
 
 // ─── Section label pill ───────────────────────────────────────────────────────
 export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: boolean }> = ({ children, darkMode }) => (

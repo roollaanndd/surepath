@@ -59,8 +59,8 @@ Owns: `App.tsx`, `components/ContactPage.tsx`, `components/customer/CustomerPort
 - ✅ LOW-1: Session written to `localStorage` on login; survives page reload.
 - ✅ LOW-2: Bell wired to `getNotifications`; red dot only shows when `unreadCount > 0`; click-away panel with empty state.
 - ✅ MED-1: ContactPage submit opens `mailto:` with prefilled subject/body; inline confirmation shown.
-- ⬜ LOW-3: `.env.example` contains real project URL + anon key → replace with placeholders (file read-protected in container; do manually).
-- ⬜ HIGH-6 (note): Health product routes to chatbot, no purchase wizard → set honest expectation now; full Health wizard = deferred feature (see G).
+- ✅ LOW-3: `.env.example` — real Supabase URL + anon key replaced with `your-project-id` / `your-supabase-anon-key` placeholders.
+- ✅ HIGH-6: Health product tile now shows `AI Chat` badge + copy "Konsultasi gratis… pembelian polis segera hadir" — sets honest expectation; full Health wizard deferred (see G).
 
 ## F) HOUSEKEEPING / GUIDELINE
 

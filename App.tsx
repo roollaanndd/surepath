@@ -576,8 +576,8 @@ const INITIAL_PRODUCTS = [
     bg: 'bg-pink-50',
     active: true,
     cat: 'Retail',
-    tech: 'Health Assistant',
-    desc: 'Asuransi kesehatan individu dengan asisten medis AI yang selalu siaga.'
+    tech: 'AI Chat',
+    desc: 'Konsultasi gratis dengan asisten medis AI SurePath — pembelian polis kesehatan segera hadir.'
   }
 ];
 

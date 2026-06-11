@@ -30,3 +30,4 @@ dist-ssr
 *.jks.b64
 *.keystore
 .gstack/
+.planning/

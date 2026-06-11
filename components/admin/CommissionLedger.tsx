@@ -33,9 +33,9 @@ function fmtDate(iso?: string): string {
 }
 
 const STATUS_BADGE: Record<CommissionStatus, string> = {
-  PENDING:   'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  PAID:      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  CANCELLED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  PENDING:   'bg-amber-50 text-amber-700',
+  PAID:      'bg-emerald-50 text-emerald-700',
+  CANCELLED: 'bg-red-50 text-red-700',
 };
 
 const STATUS_LABEL: Record<CommissionStatus, string> = {
@@ -165,24 +165,24 @@ const CommissionLedger: React.FC = () => {
   const TABS: FilterTab[] = ['ALL', 'PENDING', 'PAID', 'CANCELLED'];
 
   return (
-    <div className="space-y-6 animate-fade-in text-white">
+    <div className="space-y-6 animate-fade-in bg-gray-50 text-gray-900">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tighter">
-            Komisi <span className="text-primary-500">Ledger</span>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+            Komisi <span className="text-emerald-600">Ledger</span>
           </h2>
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">
+          <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mt-1">
             Manajemen komisi agen
           </p>
         </div>
         <button
           onClick={payAllPending}
           disabled={bulkSaving || pendingCount === 0}
-          className={`px-6 py-3 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${
+          className={`h-10 px-4 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
             pendingCount === 0
-              ? 'bg-white/5 text-slate-600 cursor-not-allowed'
-              : 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-emerald-500 text-white hover:bg-emerald-600'
           }`}
         >
           {bulkSaving ? 'Memproses…' : `Bayar Semua PENDING (${pendingCount})`}
@@ -191,7 +191,7 @@ const CommissionLedger: React.FC = () => {
 
       {/* ── Filter tabs + search ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex gap-1 bg-white/5 p-1 rounded-2xl border border-white/5 flex-wrap">
+        <div className="flex gap-1 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm flex-wrap">
           {TABS.map(tab => {
             const count = tab === 'ALL'
               ? rows.length
@@ -200,10 +200,10 @@ const CommissionLedger: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
-                className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   filter === tab
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'text-slate-500 hover:text-white'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : 'text-gray-500 hover:bg-gray-50'
                 }`}
               >
                 {tab === 'ALL' ? 'Semua' : STATUS_LABEL[tab as CommissionStatus]}{' '}
@@ -213,37 +213,37 @@ const CommissionLedger: React.FC = () => {
           })}
         </div>
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Cari agen / klien…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-primary-500 transition-colors font-mono placeholder:text-slate-600"
+            className="w-full h-10 pl-9 pr-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-gray-400"
           />
         </div>
       </div>
 
       {/* ── Summary bar ── */}
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
           Menampilkan{' '}
-          <span className="text-white font-black">{filtered.length}</span>{' '}
+          <span className="text-gray-900 font-bold">{filtered.length}</span>{' '}
           dari {rows.length} komisi
         </p>
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
           Total:{' '}
-          <span className="text-amber-400 font-black">{formatIDR(totalAmount)}</span>
+          <span className="text-emerald-600 font-bold font-mono">{formatIDR(totalAmount)}</span>
         </p>
       </div>
 
       {/* ── Content ── */}
       {loading ? (
         <div className="flex justify-center py-24">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] text-center py-16 text-slate-600 font-bold text-sm">
+        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl text-center py-16 text-gray-400 font-medium text-sm">
           Tidak ada data komisi.
         </div>
       ) : (
@@ -253,15 +253,15 @@ const CommissionLedger: React.FC = () => {
             return (
               <div
                 key={row.id}
-                className="bg-white/[0.03] border border-white/5 rounded-[1.5rem] px-6 py-4 hover:bg-white/[0.05] transition-colors"
+                className="bg-white border border-gray-100 shadow-sm rounded-2xl px-6 py-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                   {/* ── Left: identity ── */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-xs font-black text-white">{row.agentName}</p>
+                      <p className="text-sm font-bold text-gray-900">{row.agentName}</p>
                       <span
-                        className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${STATUS_BADGE[row.status]}`}
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[row.status]}`}
                       >
                         {STATUS_LABEL[row.status]}
                       </span>

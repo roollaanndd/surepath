@@ -19,6 +19,30 @@
       "Read"
     ]
   },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": { "source": "github", "repo": "JuliusBrussee/caveman" }
+    },
+    "superpowers-dev": {
+      "source": { "source": "github", "repo": "obra/superpowers" }
+    },
+    "thedotmack": {
+      "source": { "source": "github", "repo": "thedotmack/claude-mem" }
+    },
+    "gsd-plugin": {
+      "source": { "source": "github", "repo": "jnuyens/gsd-plugin" }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": { "source": "github", "repo": "nextlevelbuilder/ui-ux-pro-max-skill" }
+    }
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "superpowers@superpowers-dev": true,
+    "claude-mem@thedotmack": true,
+    "gsd@gsd-plugin": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+  },
   "hooks": {
     "SessionStart": [
       {

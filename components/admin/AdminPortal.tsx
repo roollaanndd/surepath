@@ -128,7 +128,7 @@ const AdminPortal = ({
   const [isMobile, setIsMobile]       = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileOpen] = useState(false);
   const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
-  const [darkMode, setDarkMode]       = useState(true);
+  const [darkMode, setDarkMode]       = useState(false);
   const [logoUrl, setLogoUrl]         = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
@@ -209,13 +209,13 @@ const AdminPortal = ({
       {/* Back to website */}
       <button
         onClick={onLogout}
-        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${th(darkMode, 'text-gray-600 hover:text-gray-300', 'text-slate-400 hover:text-slate-700')}`}
+        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${th(darkMode, 'text-gray-600 hover:text-gray-300', 'text-gray-400 hover:text-gray-700')}`}
       >
         <ArrowLeft size={13} /> Kembali ke Website
       </button>
 
       {/* Logo */}
-      <div className={`mb-6 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-slate-200')}`}>
+      <div className={`mb-6 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-gray-100')}`}>
         <div className="flex items-center gap-3">
           <div className="relative group flex-shrink-0">
             <input
@@ -243,12 +243,12 @@ const AdminPortal = ({
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+            <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
               Sure<span className="text-emerald-500">Path</span>
             </h1>
             <button
               onClick={() => logoInputRef.current?.click()}
-              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${th(darkMode, 'text-gray-600 hover:text-emerald-400', 'text-slate-400 hover:text-emerald-600')}`}
+              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${th(darkMode, 'text-gray-600 hover:text-emerald-400', 'text-gray-400 hover:text-emerald-600')}`}
             >
               {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
             </button>
@@ -262,7 +262,7 @@ const AdminPortal = ({
           if (item.isSeparator) {
             return (
               <div key={item.id} className="mt-4 mb-1 px-2">
-                <p className="text-[0.45rem] font-black uppercase tracking-[0.35em] text-gray-600">{(item as any).groupLabel}</p>
+                <p className={`text-[0.45rem] font-black uppercase tracking-[0.35em] ${th(darkMode, 'text-gray-600', 'text-gray-300')}`}>{(item as any).groupLabel}</p>
               </div>
             );
           }
@@ -274,10 +274,12 @@ const AdminPortal = ({
               onClick={() => { setActiveTab(navItem.id); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
                 activeTab === navItem.id
-                  ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                  ? th(darkMode,
+                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
+                      'bg-emerald-50 text-emerald-700 border border-emerald-100')
                   : th(darkMode,
                       'text-gray-500 hover:text-white hover:bg-white/5',
-                      'text-slate-500 hover:text-slate-900 hover:bg-slate-100')
+                      'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
               }`}
             >
               <Icon size={17} className="flex-shrink-0" />
@@ -288,19 +290,19 @@ const AdminPortal = ({
       </nav>
 
       {/* User footer — always visible */}
-      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${th(darkMode, 'bg-white/5 border-white/10', 'bg-slate-100 border-slate-200')}`}>
+      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${th(darkMode, 'bg-white/5 border-white/10', 'bg-gray-50 border-gray-100')}`}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs text-white flex-shrink-0">
             {(currentUser?.name ?? userRole)[0].toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-xs font-black truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{formatRole(userRole)}</p>
-            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{currentUser?.email ?? 'Admin'}</p>
+            <p className={`text-xs font-black truncate ${th(darkMode, 'text-white', 'text-gray-900')}`}>{formatRole(userRole)}</p>
+            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{currentUser?.email ?? 'Admin'}</p>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className="w-full py-2.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2"
+          className={`w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 ${th(darkMode, 'bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white', 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white')}`}
         >
           <LogOut size={13} /> Keluar
         </button>
@@ -309,7 +311,7 @@ const AdminPortal = ({
   );
 
   // ── Sidebar widths ─────────────────────────────────────────────────────────
-  const sidebarBg = th(darkMode, 'bg-black/40 border-white/5', 'bg-white border-slate-200');
+  const sidebarBg = th(darkMode, 'bg-black/40 border-white/5', 'bg-white border-gray-100 shadow-sm');
 
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
@@ -319,7 +321,7 @@ const AdminPortal = ({
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500`}>Sistem aktif</p>
         </div>
-        <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+        <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
           Dashboard
         </h2>
       </div>
@@ -331,19 +333,19 @@ const AdminPortal = ({
           { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle,color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
           { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
         ].map(card => (
-          <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+          <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-200')}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
               <card.icon size={20} />
             </div>
-            <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-slate-900')}`}>{card.value}</p>
-            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
+            <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
+            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
           </div>
         ))}
       </div>
 
       {/* Transaksi Overview + Online Users */}
       <div>
-        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>Transaksi Overview</p>
+        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>Transaksi Overview</p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
@@ -351,12 +353,12 @@ const AdminPortal = ({
             { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
             { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           ].map(card => (
-            <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+            <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-200')}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
                 <card.icon size={20} />
               </div>
-              <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-slate-900')}`}>{card.value}</p>
-              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{card.label}</p>
+              <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
+              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
             </div>
           ))}
           {/* Online Users Card */}
@@ -518,8 +520,8 @@ const AdminPortal = ({
   };
 
   // ── Layout vars ────────────────────────────────────────────────────────────
-  const rootBg   = th(darkMode, 'bg-[#050505] text-white',           'bg-slate-50 text-slate-900');
-  const headerBg = th(darkMode, 'bg-black/20 border-white/5',        'bg-white border-slate-200');
+  const rootBg   = th(darkMode, 'bg-[#050505] text-white',           'bg-gray-50 text-gray-900');
+  const headerBg = th(darkMode, 'bg-black/20 border-white/5',        'bg-white border-gray-100 shadow-sm');
   const inputBg  = th(darkMode, 'bg-white/5 border-white/10 text-white placeholder-gray-600', 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400');
 
   return (
@@ -545,7 +547,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a0a0a]', 'bg-white')}`}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a0a0a]', 'bg-white shadow-sm')}`}>
             <SidebarContent />
           </aside>
         </div>
@@ -618,7 +620,7 @@ const AdminPortal = ({
         </header>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar">
+        <div className={`flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar ${th(darkMode, '', 'bg-gray-50')}`}>
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>

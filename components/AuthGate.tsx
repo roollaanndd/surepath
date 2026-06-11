@@ -190,6 +190,23 @@ const AuthGate: React.FC<AuthGateProps> = ({
     await resolveAndLogin(data.user);
   };
 
+  // ── Demo login (read-only showcase accounts) ────────────────────────────────
+  const handleDemoLogin = async (role: 'CUSTOMER' | 'AGENT') => {
+    setLoading(true);
+    setError(null);
+    resolvedRef.current = false;
+    const { data, error: authErr } = await supabase.auth.signInWithPassword({
+      email:    role === 'AGENT' ? 'demo.agent@myinsurepath.com' : 'demo.customer@myinsurepath.com',
+      password: 'SurePathDemo2026',
+    });
+    if (authErr || !data.user) {
+      setError(t('Demo login unavailable. Please try again later.', 'Login demo tidak tersedia. Coba lagi nanti.'));
+      setLoading(false);
+      return;
+    }
+    await resolveAndLogin(data.user);
+  };
+
   // ── Supabase register ────────────────────────────────────────────────────────
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -642,6 +659,18 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   <Mail size={16} />
                   <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => handleDemoLogin('CUSTOMER')} disabled={loading}
+                    className="h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-center gap-2 active:bg-emerald-500/20 transition-all duration-150 disabled:opacity-40">
+                    <Smartphone size={14} />
+                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Demo Customer', 'Demo Nasabah')}</span>
+                  </button>
+                  <button onClick={() => handleDemoLogin('AGENT')} disabled={loading}
+                    className="h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-center gap-2 active:bg-emerald-500/20 transition-all duration-150 disabled:opacity-40">
+                    <Briefcase size={14} />
+                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Demo Agent', 'Demo Agen')}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

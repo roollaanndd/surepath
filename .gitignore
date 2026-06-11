@@ -23,7 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.claude/
+.claude/*
 !.claude/settings.json
 
 # Android keystores and credentials — never commit

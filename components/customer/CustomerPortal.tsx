@@ -232,14 +232,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </h2>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                {products.map(p => (
+                {(products ?? []).filter(p => p?.id).map(p => (
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
                     className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
                   >
-                    <div className={`w-14 h-14 ${p.bg} dark:bg-white/5 ${p.color} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      <p.icon size={26} strokeWidth={2.5} />
+                    <div className={`w-14 h-14 ${p.bg ?? 'bg-slate-100'} dark:bg-white/5 ${p.color ?? 'text-slate-500'} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
+                      {typeof p.icon === 'function' && <p.icon size={26} strokeWidth={2.5} />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">

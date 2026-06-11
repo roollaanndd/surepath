@@ -43,7 +43,8 @@ const HomePage: React.FC<SitePageProps> = (props) => {
     <SiteLayout {...props} active="home" bgVideo="/promo.mp4">
 
       {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden" style={{ background: 'hsl(0 0% 4%)' }}>
+      <section className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, hsl(130 60% 4%) 0%, hsl(0 0% 5%) 50%, hsl(220 30% 6%) 100%)' }}>
         {/* Video full-bleed; object-position pushes the subject right on desktop so the
             left side is still video content — no seam, colors always blend */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden hidden lg:block"><HeroVideo position="78% center" /></div>

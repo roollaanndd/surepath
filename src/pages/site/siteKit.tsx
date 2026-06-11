@@ -229,8 +229,9 @@ export const AnimatedCounter: React.FC<{ target: number; suffix: string; duratio
 };
 
 // ─── Hero video ───────────────────────────────────────────────────────────────
-export const HeroVideo: React.FC = () => (
-  <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover">
+export const HeroVideo: React.FC<{ position?: string }> = ({ position }) => (
+  <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover"
+    style={position ? { objectPosition: position } : undefined}>
     <source src="/hero.mp4" type="video/mp4" />
   </video>
 );

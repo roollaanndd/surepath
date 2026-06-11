@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '--- SurePath Session Start ---' && echo 'Branch: '$(git -C \"$PWD\" branch --show-current 2>/dev/null || echo 'unknown') && echo '' && echo 'Last 3 commits:' && git -C \"$PWD\" log --oneline -3 2>/dev/null && echo '' && if [ -f \"$PWD/.memory/CONTEXT.md\" ]; then echo '--- Last Context ---' && cat \"$PWD/.memory/CONTEXT.md\"; fi",
+            "command": "echo '--- SurePath Session Start ---' && echo 'Branch: '$(git -C \"$PWD\" branch --show-current 2>/dev/null || echo 'unknown') && echo '' && echo 'Last 3 commits:' && git -C \"$PWD\" log --oneline -3 2>/dev/null && echo '' && if [ -f \"$PWD/.memory/CONTEXT.md\" ]; then echo '--- Last Context ---' && cat \"$PWD/.memory/CONTEXT.md\"; fi && echo '' && echo '--- Design Systems ---' && echo '74 brand DESIGN.md files at ~/.claude/design-md/design-md/<brand>/DESIGN.md' && ls ~/.claude/design-md/design-md/ 2>/dev/null | tr '\\n' ' ' && echo ''",
             "timeout": 15
           }
         ]

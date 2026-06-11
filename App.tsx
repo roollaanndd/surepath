@@ -8,6 +8,12 @@ import TermsModal from './components/TermsModal';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 
+const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
+
+// Dedicated app URL per role — /admin, /agapps (agent), /custapp (customer/B2B)
+const rolePath = (role: UserRole) =>
+  ADMIN_ROLES.includes(role) ? '/admin' : role === UserRole.AGENT ? '/agapps' : '/custapp';
+
 // ─── Error boundary — catches portal render crashes so a white blank page never shows ─
 class PortalErrorBoundary extends Component<
   { children: React.ReactNode; onReset: () => void },
@@ -652,6 +658,11 @@ const App = () => {
     return () => clearInterval(id);
   }, []);
 
+  const navigate = useCallback((path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  }, []);
+
   const handleAuthSuccess = useCallback(async (user: any) => {
     let enrichedUser = user;
     if (user.role === UserRole.AGENT && !user.supabaseId) {
@@ -666,8 +677,9 @@ const App = () => {
       // was written only to sessionStorage, so a reload logged the user out.
       localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
       setAppMode(true);
+      navigate(rolePath(enrichedUser.role));
     }, 1400);
-  }, []);
+  }, [navigate]);
 
   // Capture referral code from ?ref= URL param (persists across OAuth redirect)
   useEffect(() => {
@@ -777,11 +789,6 @@ const App = () => {
     return () => window.removeEventListener('popstate', fn);
   }, []);
 
-  const navigate = useCallback((path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
-  }, []);
-
   // ── Heartbeat: record user session every 2 minutes while logged in ──────────
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
@@ -817,7 +824,8 @@ const App = () => {
     localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
     setAppMode(false);
-  }, []);
+    navigate('/');
+  }, [navigate]);
 
   if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
   if (oauthLoading && !currentUser) return <PortalLoader />;
@@ -877,7 +885,7 @@ const App = () => {
           productId={productMatch[1]}
           lang={lang}
           onBack={() => navigate('/')}
-          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          onSignIn={() => navigate('/login')}
         />
       </Suspense>
     );
@@ -890,7 +898,7 @@ const App = () => {
         <PremiumCalculatorPage
           lang={lang}
           onBack={() => navigate('/')}
-          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          onSignIn={() => navigate('/login')}
         />
       </Suspense>
     );
@@ -907,7 +915,7 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <MarketingPage
-          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          onSignIn={() => navigate('/login')}
           navigate={navigate}
           lang={lang}
           setLang={setLang}
@@ -926,7 +934,7 @@ const App = () => {
         <BlogPage
           slug={blogSlugMatch ? blogSlugMatch[1] : undefined}
           onBack={() => navigate('/')}
-          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          onSignIn={() => navigate('/login')}
         />
       </Suspense>
     );
@@ -944,13 +952,23 @@ const App = () => {
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           navigate={navigate}
-          onSignIn={() => { navigate('/'); setAppMode(true); }}
+          onSignIn={() => navigate('/login')}
         />
       </Suspense>
     );
   }
 
-  const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
+  // Dedicated app entry routes — /login, /custapp (customer), /agapps (agent).
+  // Logged-out visitors get the auth screen here (deep links work: after login
+  // they land in their role's portal). Logged-in users fall through to the
+  // role-based portal rendering below.
+  if (['/login', '/custapp', '/agapps'].includes(pathname) && !currentUser) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} />
+      </Suspense>
+    );
+  }
 
   // Dedicated /admin login page — show AdminLogin whenever the current user is not an admin,
   // even if they're logged in as a customer/agent (prevents the app from falling through
@@ -1028,7 +1046,7 @@ const App = () => {
       <div className={darkMode ? 'dark' : ''}>
         <Suspense fallback={<PortalLoader />}>
           <HomePage
-            onSignIn={() => setAppMode(true)}
+            onSignIn={() => navigate('/login')}
             navigate={navigate}
             lang={lang}
             setLang={setLang}

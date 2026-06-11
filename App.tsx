@@ -940,7 +940,10 @@ const App = () => {
         <StaticInfoPage
           pageId={staticPageId}
           lang={lang}
-          onBack={() => navigate('/')}
+          setLang={setLang}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          navigate={navigate}
           onSignIn={() => { navigate('/'); setAppMode(true); }}
         />
       </Suspense>

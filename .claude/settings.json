@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npm run build *)",
+      "Bash(npm test)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Read"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": { "source": "github", "repo": "JuliusBrussee/caveman" }
+    },
+    "superpowers-dev": {
+      "source": { "source": "github", "repo": "obra/superpowers" }
+    },
+    "thedotmack": {
+      "source": { "source": "github", "repo": "thedotmack/claude-mem" }
+    },
+    "gsd-plugin": {
+      "source": { "source": "github", "repo": "jnuyens/gsd-plugin" }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": { "source": "github", "repo": "nextlevelbuilder/ui-ux-pro-max-skill" }
+    }
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "superpowers@superpowers-dev": true,
+    "claude-mem@thedotmack": true,
+    "gsd@gsd-plugin": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '--- SurePath Session Start ---' && echo 'Branch: '$(git -C \"$PWD\" branch --show-current 2>/dev/null || echo 'unknown') && echo '' && echo 'Last 3 commits:' && git -C \"$PWD\" log --oneline -3 2>/dev/null && echo '' && if [ -f \"$PWD/.memory/CONTEXT.md\" ]; then echo '--- Last Context ---' && cat \"$PWD/.memory/CONTEXT.md\"; fi && echo '' && echo '--- Design Systems ---' && echo '74 brand DESIGN.md files at ~/.claude/design-md/design-md/<brand>/DESIGN.md' && ls ~/.claude/design-md/design-md/ 2>/dev/null | tr '\\n' ' ' && echo ''",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

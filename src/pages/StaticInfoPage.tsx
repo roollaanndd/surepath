@@ -133,9 +133,11 @@ const StaticInfoPage: React.FC<Props> = ({ pageId, lang, onBack, onSignIn }) => 
                 <span className="w-1.5 h-5 rounded-full flex-shrink-0" style={{ background: color }} />
                 <h2 className="text-base font-black" style={{ color }}>{L(s.heading)}</h2>
               </div>
-              {Array.isArray(s.body) ? (
+              {/* Loc is itself a tuple (array), so check the first element to tell
+                  a list of Locs apart from a single paragraph Loc. */}
+              {Array.isArray(s.body[0]) ? (
                 <ul className="space-y-2 pl-1">
-                  {s.body.map((item, j) => (
+                  {(s.body as Loc[]).map((item, j) => (
                     <li key={j} className="flex items-start gap-2.5 text-sm leading-relaxed" style={{ color: textMuted }}>
                       <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
                       {L(item)}
@@ -143,7 +145,7 @@ const StaticInfoPage: React.FC<Props> = ({ pageId, lang, onBack, onSignIn }) => 
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{L(s.body)}</p>
+                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{L(s.body as Loc)}</p>
               )}
             </div>
           ))}

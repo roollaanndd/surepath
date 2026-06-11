@@ -496,52 +496,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        {/* Try Demo section — only on LOGIN screen */}
-        {mode === 'LOGIN' && (
-          <div className="w-full space-y-3">
-            {/* Badge chip */}
-            <div className="flex items-center justify-center">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.55rem] font-black uppercase tracking-[0.25em] text-emerald-400 border border-emerald-500/25"
-                style={{ background: 'rgba(16,185,129,0.08)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Coba Tanpa Daftar / Try Without Registering
-              </span>
-            </div>
-            {/* 3-col demo cards */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { icon: '🛒', role: 'Nasabah', sub: 'Customer', email: 'demo.customer@myinsurepath.com', password: 'Demo1234!' },
-                { icon: '🤝', role: 'Agen',    sub: 'Agent',    email: 'demo.agent@myinsurepath.com',    password: 'Demo1234!' },
-                { icon: '⚙️', role: 'Admin',   sub: 'Admin',    email: 'demo.admin@myinsurepath.com',    password: 'Demo1234!' },
-              ].map(({ icon, role, sub, email, password }) => (
-                <button
-                  key={sub}
-                  type="button"
-                  disabled={loading}
-                  onClick={async () => {
-                    setFormData({ ...formData, email, password });
-                    setLoading(true);
-                    setError(null);
-                    resolvedRef.current = false;
-                    const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
-                    if (authErr || !data.user) {
-                      setError(authErr?.message ?? 'Demo login failed.');
-                      setLoading(false);
-                      return;
-                    }
-                    await resolveAndLogin(data.user);
-                  }}
-                  className="group relative flex flex-col items-center gap-1.5 p-3 rounded-2xl border border-white/[0.07] text-center transition-all duration-200 hover:border-emerald-500/40 hover:shadow-[0_0_18px_-4px_rgba(16,185,129,0.35)] active:scale-[0.97] disabled:opacity-40"
-                  style={{ background: 'rgba(255,255,255,0.03)' }}
-                >
-                  <span className="text-xl leading-none">{icon}</span>
-                  <span className="text-[0.62rem] font-black text-white group-hover:text-emerald-300 transition-colors leading-tight">{role}</span>
-                  <span className="text-[0.45rem] font-medium text-gray-600 group-hover:text-emerald-500/70 transition-colors leading-tight break-all">{email.split('@')[0]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Main form */}
         {(mode === 'LOGIN' || mode === 'REGISTER') && (
@@ -706,18 +660,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   <Mail size={16} />
                   <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => handleDemoLogin('CUSTOMER')} disabled={loading}
-                    className="h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-center gap-2 active:bg-emerald-500/20 transition-all duration-150 disabled:opacity-40">
-                    <Smartphone size={14} />
-                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Demo Customer', 'Demo Nasabah')}</span>
-                  </button>
-                  <button onClick={() => handleDemoLogin('AGENT')} disabled={loading}
-                    className="h-11 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-center gap-2 active:bg-emerald-500/20 transition-all duration-150 disabled:opacity-40">
-                    <Briefcase size={14} />
-                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Demo Agent', 'Demo Agen')}</span>
-                  </button>
-                </div>
               </div>
             )}
           </div>

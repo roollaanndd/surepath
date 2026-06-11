@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search } from 'lucide-react';
-import { callGateway } from '../../services/supabaseService';
+import { callGateway, supabase } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ const CommissionLedger: React.FC = () => {
                   <div className="flex items-center gap-6 text-right flex-shrink-0">
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Premi</p>
-                      <p className="text-xs font-mono text-white">{formatIDR(row.premium_amount)}</p>
+                      <p className="text-xs font-mono text-gray-900">{formatIDR(row.premium_amount)}</p>
                     </div>
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Komisi</p>

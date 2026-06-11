@@ -197,7 +197,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     resolvedRef.current = false;
     const { data, error: authErr } = await supabase.auth.signInWithPassword({
       email:    role === 'AGENT' ? 'demo.agent@myinsurepath.com' : 'demo.customer@myinsurepath.com',
-      password: 'SurePathDemo2026',
+      password: 'Demo1234!',
     });
     if (authErr || !data.user) {
       setError(t('Demo login unavailable. Please try again later.', 'Login demo tidak tersedia. Coba lagi nanti.'));

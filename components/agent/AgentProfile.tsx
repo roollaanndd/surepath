@@ -24,7 +24,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#16a34a] transition';
+  'w-full rounded-xl border border-ds-border bg-ds-card2 px-4 py-3 text-ds-ink text-sm focus:outline-none focus:ring-2 focus:ring-ds-green transition';
 
 const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -140,8 +140,8 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="w-10 h-10 text-[#16a34a] animate-spin motion-reduce:animate-none" />
-        <p className="text-slate-400 text-sm">{t('Loading profile…', 'Memuat profil…')}</p>
+        <Loader2 className="w-10 h-10 text-ds-green animate-spin motion-reduce:animate-none" />
+        <p className="text-ds-ink3 text-sm">{t('Loading profile…', 'Memuat profil…')}</p>
       </div>
     );
   }
@@ -153,14 +153,17 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     .join('')
     .toUpperCase();
 
+  const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+
   return (
-    <div className="bg-gray-50 min-h-screen pb-28 font-sora">
-      {/* Avatar + Name */}
-      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100 text-center">
+    <div className="bg-ds-bg min-h-screen pb-28 font-sora">
+
+      {/* Avatar + Name hero */}
+      <div className="bg-ds-card border-b border-ds-border px-5 pt-12 pb-6 text-center">
         <div className="relative w-16 h-16 mx-auto mb-3">
           <button
             onClick={() => avatarInputRef.current?.click()}
-            className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3 overflow-hidden relative"
+            className="w-16 h-16 rounded-full bg-ds-green flex items-center justify-center text-white font-bold text-xl mx-auto overflow-hidden relative"
           >
             {(profile as any)?.profile_photo_url
               ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -171,86 +174,83 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                 <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin motion-reduce:animate-none" />
               </div>
             )}
-            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-700 flex items-center justify-center">
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-ds-green-dk flex items-center justify-center">
               <Camera size={9} className="text-white" />
             </div>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
         </div>
-        <h2 className="text-lg font-bold text-gray-900">
-          {profile?.name ?? agent?.name}
-        </h2>
+
+        <h2 className="text-lg font-black text-ds-ink">{profile?.name ?? agent?.name}</h2>
+
         <div className="flex items-center justify-center gap-2 mt-1">
-          <span className="inline-flex px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mt-1">
+          <span className="inline-flex px-3 py-1 rounded-full bg-ds-card2 border border-ds-border text-ds-ink2 text-xs font-medium">
             {profile?.agent_code ?? agent?.agent_code}
           </span>
-          <button onClick={copyCode} className="text-slate-400 hover:text-emerald-600 transition mt-1">
+          <button onClick={copyCode} className="text-ds-ink3 hover:text-ds-green transition">
             {copied
-              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              ? <CheckCircle className="w-3.5 h-3.5 text-ds-green" />
               : <Copy className="w-3.5 h-3.5" />}
           </button>
         </div>
+
         {profile?.verified && (
-          <div className="flex items-center justify-center gap-1 mt-1">
-            <BadgeCheck className="w-4 h-4 text-blue-500" />
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium mt-1 ml-1">
+          <div className="flex items-center justify-center gap-1 mt-2">
+            <BadgeCheck className="w-4 h-4 text-ds-blue" />
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-ds-blue text-xs font-bold">
               {t('Verified Agent', 'Agen Terverifikasi')}
             </span>
           </div>
         )}
-        {(() => {
-          const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
-          return tier ? (
-            <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
-              tier === 'ELITE' ? 'bg-purple-500/20 text-purple-400' : 'bg-amber-500/20 text-amber-400'
-            }`}>
-              {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
-            </div>
-          ) : null;
-        })()}
+
+        {tier && (
+          <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
+            tier === 'ELITE' ? 'bg-ds-purple-lt text-ds-purple' : 'bg-amber-50 text-ds-amber'
+          }`}>
+            {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
+          </div>
+        )}
       </div>
 
-      {/* Stats */}
+      {/* Stats strip */}
       {stats && (
-        <div className="flex gap-4 bg-white px-5 py-4 border-b border-gray-100">
-          <div className="flex-1 text-center">
-            <p className="text-lg font-bold text-gray-900 font-mono">{stats.policiesCount}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('Policies', 'Polis')}</p>
-          </div>
-          <div className="flex-1 text-center">
-            <p className="text-lg font-bold text-gray-900 font-mono">{formatIDR(stats.totalCommissionAllTime)}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('Total Earned', 'Total Komisi')}</p>
-          </div>
-          <div className="flex-1 text-center">
-            <p className="text-lg font-bold text-gray-900 font-mono">{stats.clientsCount}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('Clients', 'Klien')}</p>
-          </div>
+        <div className="flex bg-ds-card border-b border-ds-border">
+          {[
+            { value: stats.policiesCount, label: t('Policies', 'Polis') },
+            { value: formatIDR(stats.totalCommissionAllTime), label: t('Total Earned', 'Total Komisi') },
+            { value: stats.clientsCount, label: t('Clients', 'Klien') },
+          ].map((item, i) => (
+            <div key={i} className="flex-1 text-center px-2 py-4 border-r last:border-r-0 border-ds-border">
+              <p className="text-sm font-black text-ds-ink font-mono">{item.value}</p>
+              <p className="text-[10px] text-ds-ink3 font-bold mt-0.5 uppercase tracking-widest">{item.label}</p>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Referral Link */}
-      <div className="mx-5 mt-4 bg-white rounded-2xl border border-gray-100 p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Link Rekrutmen Agen</p>
-        <div className="flex items-center gap-2 bg-slate-50 dark:bg-black/20 rounded-xl p-3">
-          <p className="text-xs font-mono text-slate-600 dark:text-slate-300 flex-1 truncate">
+      <div className="mx-5 mt-4 bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-2">Link Rekrutmen Agen</p>
+        <div className="flex items-center gap-2 bg-ds-card2 rounded-xl p-3">
+          <p className="text-xs font-mono text-ds-ink2 flex-1 truncate">
             https://myinsurepath.com?ref={profile?.agent_code}
           </p>
           <button
             onClick={() => { navigator.clipboard.writeText(`https://myinsurepath.com?ref=${profile?.agent_code}`); }}
-            className="text-[#16a34a] hover:text-[#15803d] transition"
+            className="text-ds-green hover:text-ds-green-dk transition"
           >
             <Copy className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-[9px] text-slate-400 mt-2">Bagikan link ini untuk merekrut agen baru di bawah kamu.</p>
+        <p className="text-[9px] text-ds-ink3 mt-2">Bagikan link ini untuk merekrut agen baru di bawah kamu.</p>
       </div>
 
       {/* Document Status */}
-      <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-white/10">
-          <span className="text-xs font-black uppercase tracking-widest text-slate-500">Status Dokumen</span>
+      <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-ds-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">Status Dokumen</span>
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
+        <div className="divide-y divide-ds-border">
           {[
             { label: 'KTP', done: !!profile?.ktp },
             { label: 'Foto Profil', done: false },
@@ -258,10 +258,10 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             { label: 'Verifikasi Admin', done: !!profile?.verified },
           ].map(doc => (
             <div key={doc.label} className="flex items-center justify-between px-5 py-3">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{doc.label}</span>
+              <span className="text-sm font-semibold text-ds-ink">{doc.label}</span>
               {doc.done
-                ? <span className="flex items-center gap-1 text-xs font-black text-emerald-500"><CheckCircle className="w-4 h-4" /> Lengkap</span>
-                : <span className="flex items-center gap-1 text-xs font-black text-amber-500"><AlertCircle className="w-4 h-4" /> Belum</span>}
+                ? <span className="flex items-center gap-1 text-xs font-black text-ds-green bg-ds-green-tint px-2.5 py-1 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> Lengkap</span>
+                : <span className="flex items-center gap-1 text-xs font-black text-ds-amber bg-amber-50 px-2.5 py-1 rounded-full"><AlertCircle className="w-3.5 h-3.5" /> Belum</span>}
             </div>
           ))}
         </div>
@@ -269,7 +269,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Quick Nav */}
       {onNavigate && (
-        <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
+        <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
           {[
             { id: 'network', label: 'Jaringan Downline', icon: Network },
             { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -279,28 +279,28 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors w-full"
+              className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full"
             >
-              <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0">
                 <item.icon size={16} />
               </div>
-              <span className="text-sm font-medium text-gray-900 flex-1 text-left">{item.label}</span>
-              <ChevronRight size={16} className="text-gray-300" />
+              <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
+              <ChevronRight size={16} className="text-ds-ink3" />
             </button>
           ))}
         </div>
       )}
 
       {/* Profile Info */}
-      <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-white/10">
-          <span className="text-xs font-black uppercase tracking-widest text-slate-500">
+      <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-ds-border">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">
             {t('Personal Info', 'Informasi Pribadi')}
           </span>
           {!editing ? (
             <button
               onClick={() => setEditing(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#16a34a] hover:text-[#15803d] transition"
+              className="flex items-center gap-1.5 text-xs font-bold text-ds-green hover:text-ds-green-dk transition"
             >
               <Edit2 className="w-3.5 h-3.5" />
               {t('Edit', 'Ubah')}
@@ -309,14 +309,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCancel}
-                className="p-1.5 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 hover:text-slate-700 transition"
+                className="p-1.5 rounded-xl bg-ds-card2 border border-ds-border text-ds-ink2 hover:text-ds-ink transition"
               >
                 <X className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white text-xs font-bold disabled:opacity-50 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ds-green text-white text-xs font-bold shadow-ds-green disabled:opacity-50 hover:bg-ds-green-dk transition active:scale-95"
               >
                 {saving
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -327,12 +327,12 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           )}
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
+        <div className="divide-y divide-ds-border">
           {/* Name */}
           <div className="flex items-start gap-3 px-5 py-4">
-            <User className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <User className="w-4 h-4 text-ds-ink3 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">
                 {t('Full Name', 'Nama Lengkap')}
               </p>
               {editing ? (
@@ -343,21 +343,19 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                   className={inputCls}
                 />
               ) : (
-                <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
-                  {profile?.name}
-                </p>
+                <p className="text-sm font-semibold text-ds-ink truncate">{profile?.name}</p>
               )}
             </div>
           </div>
 
           {/* Email — read-only */}
           <div className="flex items-start gap-3 px-5 py-4">
-            <Mail className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <Mail className="w-4 h-4 text-ds-ink3 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">
                 {t('Email', 'Email')}
               </p>
-              <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+              <p className="text-sm font-semibold text-ds-ink truncate">
                 {profile?.email ?? agent?.email}
               </p>
             </div>
@@ -365,9 +363,9 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
           {/* Phone */}
           <div className="flex items-start gap-3 px-5 py-4">
-            <Phone className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <Phone className="w-4 h-4 text-ds-ink3 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">
                 {t('Phone', 'Nomor HP')}
               </p>
               {editing ? (
@@ -378,18 +376,16 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                   className={inputCls}
                 />
               ) : (
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {profile?.phone}
-                </p>
+                <p className="text-sm font-semibold text-ds-ink">{profile?.phone}</p>
               )}
             </div>
           </div>
 
           {/* Address */}
           <div className="flex items-start gap-3 px-5 py-4">
-            <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <MapPin className="w-4 h-4 text-ds-ink3 mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">
                 {t('Address', 'Alamat')}
               </p>
               {editing ? (
@@ -401,8 +397,8 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                   placeholder={t('Your address…', 'Alamat Anda…')}
                 />
               ) : (
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {profile?.address || <span className="text-slate-400 font-normal italic">{t('Not set', 'Belum diisi')}</span>}
+                <p className="text-sm font-semibold text-ds-ink">
+                  {profile?.address || <span className="text-ds-ink3 font-normal italic">{t('Not set', 'Belum diisi')}</span>}
                 </p>
               )}
             </div>
@@ -411,12 +407,12 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           {/* KTP — read-only */}
           {profile?.ktp && (
             <div className="flex items-start gap-3 px-5 py-4">
-              <ShieldCheck className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-ds-ink3 mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">
                   {t('ID Number (KTP)', 'Nomor KTP')}
                 </p>
-                <p className="text-sm font-semibold text-slate-800 dark:text-white font-mono tracking-widest">
+                <p className="text-sm font-semibold text-ds-ink font-mono tracking-widest">
                   {profile.ktp.replace(/(.{4})/g, '$1 ').trim()}
                 </p>
               </div>
@@ -424,25 +420,25 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           )}
 
           {/* KTP Document Upload */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-white/5">
+          <div className="flex items-center justify-between px-5 py-3">
             <div>
-              <p className="text-xs font-black text-slate-800 dark:text-white">Foto KTP</p>
-              <p className="text-[10px] text-slate-500 font-bold">
+              <p className="text-xs font-black text-ds-ink">Foto KTP</p>
+              <p className="text-[10px] text-ds-ink3 font-bold">
                 {(profile as any)?.ktp_document_url ? '✓ Dokumen terupload' : '⚠ Belum diupload — Wajib'}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {(profile as any)?.ktp_document_url && (
                 <a href={(profile as any).ktp_document_url} target="_blank" rel="noreferrer"
-                   className="text-[10px] font-black text-blue-400 underline">Lihat</a>
+                   className="text-[10px] font-black text-ds-blue underline">Lihat</a>
               )}
               <button
                 onClick={() => ktpInputRef.current?.click()}
                 disabled={ktpUploading}
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   (profile as any)?.ktp_document_url
-                    ? 'bg-white/5 text-slate-400 border border-white/10'
-                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                    ? 'bg-ds-card2 border border-ds-border text-ds-ink3'
+                    : 'bg-rose-50 text-ds-red border border-rose-200'
                 }`}
               >
                 {ktpUploading ? '...' : (profile as any)?.ktp_document_url ? 'Ganti' : 'Upload'}
@@ -455,58 +451,54 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Info Grid */}
       <div className="mx-5 mt-4 grid grid-cols-2 gap-3">
-        {/* Joined date */}
-        <div className="bg-white/5 rounded-2xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Bergabung</p>
-          <p className="text-sm font-black text-slate-800 dark:text-white">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Bergabung</p>
+          <p className="text-sm font-black text-ds-ink">
             {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '—'}
           </p>
         </div>
-        {/* Status */}
-        <div className="bg-white/5 rounded-2xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</p>
-          <span className={`text-xs font-black px-2 py-0.5 rounded-full ${(profile as any)?.verified ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Status</p>
+          <span className={`text-xs font-black px-2.5 py-1 rounded-full ${(profile as any)?.verified ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-ds-amber'}`}>
             {(profile as any)?.verified ? 'Terverifikasi' : 'Pending'}
           </span>
         </div>
-        {/* Referral code */}
-        <div className="bg-white/5 rounded-2xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Kode Referral</p>
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Kode Referral</p>
           <button
             onClick={() => { navigator.clipboard.writeText(agent?.agent_code ?? profile?.agent_code ?? ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-            className="text-xs font-black text-[#22c55e] flex items-center gap-1"
+            className="text-xs font-black text-ds-green flex items-center gap-1"
           >
             {agent?.agent_code ?? profile?.agent_code ?? '—'} {copied ? '✓' : <Copy size={10} />}
           </button>
         </div>
-        {/* Downline */}
-        <div className="bg-white/5 rounded-2xl p-4">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Downline</p>
-          <p className="text-sm font-black text-slate-800 dark:text-white">{(profile as any)?.downline_count ?? 0}</p>
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Downline</p>
+          <p className="text-sm font-black text-ds-ink">{(profile as any)?.downline_count ?? 0}</p>
         </div>
       </div>
 
       {/* Performance Summary */}
       <div className="mx-5 mt-4">
-        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Performa</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Performa</p>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Komisi Bulan Ini</p>
-            <p className="text-base font-black text-emerald-400">
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Komisi Bulan Ini</p>
+            <p className="text-base font-black text-ds-green">
               {stats ? `Rp ${(stats.totalCommissionMonth/1000000).toFixed(1)}jt` : '—'}
             </p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Total Klien</p>
-            <p className="text-base font-black text-slate-800 dark:text-white">{stats?.clientsCount ?? '—'}</p>
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Total Klien</p>
+            <p className="text-base font-black text-ds-ink">{stats?.clientsCount ?? '—'}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Polis Aktif</p>
-            <p className="text-base font-black text-slate-800 dark:text-white">{stats?.policiesCount ?? '—'}</p>
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Polis Aktif</p>
+            <p className="text-base font-black text-ds-ink">{stats?.policiesCount ?? '—'}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Total Komisi</p>
-            <p className="text-base font-black text-blue-400">
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Total Komisi</p>
+            <p className="text-base font-black text-ds-blue">
               {stats ? `Rp ${(stats.totalCommissionAllTime/1000000).toFixed(1)}jt` : '—'}
             </p>
           </div>
@@ -515,21 +507,21 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Bank Account */}
       <div className="mx-5 mt-4">
-        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-3">Rekening Bank</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Rekening Bank</p>
         {savedAccount ? (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-ds-card border border-ds-border shadow-ds-sm rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Building2 className="w-5 h-5 text-blue-400" />
+              <Building2 className="w-5 h-5 text-ds-blue" />
               <div>
-                <p className="text-xs font-black text-white">{savedAccount.bank_code} — {savedAccount.account_number}</p>
-                <p className="text-[10px] text-slate-400 font-bold">{savedAccount.account_holder_name}</p>
+                <p className="text-xs font-black text-ds-ink">{savedAccount.bank_code} — {savedAccount.account_number}</p>
+                <p className="text-[10px] text-ds-ink3 font-bold">{savedAccount.account_holder_name}</p>
               </div>
             </div>
-            <button onClick={deleteBankAccount} className="text-rose-400 text-[10px] font-black">Hapus</button>
+            <button onClick={deleteBankAccount} className="text-ds-red text-[10px] font-black">Hapus</button>
           </div>
         ) : (
           <button onClick={() => setShowBankForm(true)}
-            className="w-full py-3 rounded-2xl border border-dashed border-white/20 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-[#16a34a]/50 hover:text-[#22c55e] transition-all">
+            className="w-full py-3 rounded-2xl border border-dashed border-ds-border bg-ds-card text-[10px] font-black uppercase tracking-widest text-ds-ink3 hover:border-ds-green hover:text-ds-green transition-all">
             + Tambah Rekening Bank
           </button>
         )}
@@ -538,30 +530,32 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {/* Bank Form Modal */}
       {showBankForm && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowBankForm(false)}>
-          <div className="bg-[#111] rounded-t-[2rem] w-full max-w-lg p-6 pb-10 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-ds-card rounded-t-[2rem] w-full max-w-lg p-6 pb-10 space-y-4 border-t border-ds-border shadow-ds-lg" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-black text-white">Tambah Rekening Bank</p>
-              <button onClick={() => setShowBankForm(false)}><X className="w-5 h-5 text-slate-400" /></button>
+              <p className="text-sm font-black text-ds-ink">Tambah Rekening Bank</p>
+              <button onClick={() => setShowBankForm(false)}>
+                <X className="w-5 h-5 text-ds-ink3" />
+              </button>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Bank</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 block mb-1">Bank</label>
               <select value={bankForm.bank_code} onChange={e => setBankForm(p => ({ ...p, bank_code: e.target.value }))} className={inputCls}>
                 <option value="">— Pilih Bank —</option>
                 {INDONESIAN_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nomor Rekening</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 block mb-1">Nomor Rekening</label>
               <input type="text" value={bankForm.account_number} onChange={e => setBankForm(p => ({ ...p, account_number: e.target.value }))} className={inputCls} placeholder="1234567890" />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nama Pemilik Rekening</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 block mb-1">Nama Pemilik Rekening</label>
               <input type="text" value={bankForm.account_holder_name} onChange={e => setBankForm(p => ({ ...p, account_holder_name: e.target.value }))} className={inputCls} placeholder="Nama sesuai buku tabungan" />
             </div>
             <button
               onClick={saveBankAccount}
               disabled={!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 transition"
+              className="w-full py-3.5 rounded-xl bg-ds-green text-white font-black text-xs uppercase tracking-widest shadow-ds-green disabled:opacity-40 hover:bg-ds-green-dk transition active:scale-95"
             >
               Simpan Rekening
             </button>
@@ -572,7 +566,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {/* Logout */}
       <button
         onClick={onLogout}
-        className="mx-5 mt-4 w-full h-12 rounded-xl border border-red-100 bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-all flex items-center justify-center gap-2"
+        className="mx-5 mt-4 w-full h-12 rounded-xl border border-rose-200 bg-rose-50 text-ds-red font-semibold text-sm active:bg-rose-100 transition-all flex items-center justify-center gap-2"
       >
         <LogOut className="w-4 h-4" />
         {t('Sign Out', 'Keluar')}

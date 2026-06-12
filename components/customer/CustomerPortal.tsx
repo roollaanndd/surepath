@@ -223,32 +223,45 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'products':
         return (
           <PageTransition>
-            <div className="space-y-7 pb-32 pt-2">
-              <div className="space-y-3 text-center">
-                <Badge variant="brand">{t('Simple Protection', 'Pusat Proteksi')}</Badge>
-                <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">
-                  {t('Choose Plan', 'Pilih Paket')} <span className="text-primary-500">SurePath</span>
+            <div className="space-y-6 pb-32 pt-2">
+              {/* Section header */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Simple Protection', 'Pusat Proteksi')}</p>
+                <h2 className="text-2xl font-black tracking-tight text-ds-ink">
+                  {t('Choose a Plan', 'Pilih Paket')} <span className="text-ds-green">SurePath</span>
                 </h2>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+
+              {/* Product cards */}
+              <div className="grid grid-cols-1 gap-3">
                 {(products ?? []).filter(p => p?.id).map(p => (
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
+                    className={`group bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
-                    <div className={`w-14 h-14 ${p.bg ?? 'bg-slate-100'} dark:bg-white/5 ${p.color ?? 'text-slate-500'} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      {typeof p.icon === 'function' && <p.icon size={26} strokeWidth={2.5} />}
+                    {/* Icon */}
+                    <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                      {typeof p.icon === 'function' && <p.icon size={24} strokeWidth={2} />}
                     </div>
+
+                    {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-black text-sm uppercase tracking-tighter text-slate-900 dark:text-white">{p.title}</h4>
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <h4 className="font-black text-sm text-ds-ink tracking-tight">{p.title}</h4>
                         {p.tech && (
-                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.45rem] font-black uppercase tracking-widest text-slate-400 flex-shrink-0 ml-2">{p.tech}</span>
+                          <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3 flex-shrink-0">{p.tech}</span>
                         )}
                       </div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{p.desc}</p>
+                      <p className="text-xs text-ds-ink2 leading-relaxed">{p.desc}</p>
                     </div>
+
+                    {/* CTA arrow for active products */}
+                    {p.active && (
+                      <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                        <span className="text-ds-green text-sm font-black">→</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -266,56 +279,62 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'history':
         return (
           <PageTransition>
-            <div className="space-y-6 pb-32 pt-2">
-              <h2 className="text-3xl font-black uppercase tracking-tighter">{t('My History', 'Riwayat Saya')}</h2>
+            <div className="space-y-5 pb-32 pt-2">
+              <div>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Your Activity', 'Aktivitas Anda')}</p>
+                <h2 className="text-2xl font-black text-ds-ink tracking-tight">{t('My History', 'Riwayat Saya')}</h2>
+              </div>
 
               {/* Policies */}
               <div className="space-y-3">
-                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={12} />{t('Active Policies', 'Polis Aktif')}</p>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                  <FileText size={11} className="text-ds-green" />
+                  {t('Active Policies', 'Polis Aktif')}
+                </p>
                 {customerPolicies.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
-                      <FileText size={22} />
+                  <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
+                      <FileText size={22} className="text-ds-green" />
                     </div>
-                    <p className="text-slate-400 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
+                    <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
                     <button
                       onClick={() => navigate('products')}
-                      className="px-5 py-2 bg-emerald-500 text-white rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform duration-200 motion-reduce:transition-none"
+                      className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform"
                     >
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
                   </div>
                 ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-primary-500/10 ring-1 ring-inset ring-primary-500/10 flex items-center justify-center">
-                        {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
+                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                        {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
-                        <p className="text-xs text-slate-400 font-medium">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
+                        <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
+                        <p className="text-xs text-ds-ink3">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
                         {(() => {
                           const desc: Record<string,string> = {
                             SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
                             APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
                             REJECTED:'Pengajuan ditolak oleh penanggung',
                           };
-                          return desc[p.status] ? <p className="text-[10px] text-slate-400 mt-0.5">{desc[p.status]}</p> : null;
+                          return desc[p.status] ? <p className="text-[10px] text-ds-ink3 mt-0.5">{desc[p.status]}</p> : null;
                         })()}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-emerald-500">{formatIDR(p.total_premium)}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-black text-ds-green">{formatIDR(p.total_premium)}</p>
                       {(() => {
                         const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Menunggu Review',         cls: 'bg-amber-500/10 text-amber-600' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',           cls: 'bg-blue-500/10 text-blue-600' },
-                          APPROVED:     { label: 'Disetujui',               cls: 'bg-indigo-500/10 text-indigo-600' },
-                          ISSUED:       { label: 'Polis Aktif',             cls: 'bg-emerald-500/10 text-emerald-600' },
-                          REJECTED:     { label: 'Ditolak',                 cls: 'bg-rose-500/10 text-rose-600' },
+                          SUBMITTED:    { label: 'Menunggu Review', cls: 'bg-amber-50 text-ds-amber' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',   cls: 'bg-blue-50 text-ds-blue' },
+                          APPROVED:     { label: 'Disetujui',       cls: 'bg-blue-50 text-ds-blue' },
+                          ISSUED:       { label: 'Polis Aktif',     cls: 'bg-ds-green-tint text-ds-green' },
+                          REJECTED:     { label: 'Ditolak',         cls: 'bg-rose-50 text-ds-red' },
                         };
-                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-slate-100 text-slate-400' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
                       })()}
                     </div>
                   </div>
@@ -324,37 +343,40 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Claims */}
               <div className="space-y-3">
-                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><AlertCircle size={12} />{t('My Claims', 'Klaim Saya')}</p>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                  <AlertCircle size={11} className="text-ds-red" />
+                  {t('My Claims', 'Klaim Saya')}
+                </p>
                 {customerClaims.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                      <AlertCircle size={22} />
+                  <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center">
+                      <AlertCircle size={22} className="text-ds-red" />
                     </div>
-                    <p className="text-slate-400 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
+                    <p className="text-ds-ink2 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
                 ) : customerClaims.map((c, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-rose-500/10 ring-1 ring-inset ring-rose-500/10 flex items-center justify-center">
-                        <AlertCircle size={20} className="text-rose-500" />
+                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                        <AlertCircle size={18} className="text-ds-red" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
-                        <p className="text-xs text-slate-400 font-medium">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                        <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
+                        <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-rose-500">{formatIDR(c.amount_estimated ?? 0)}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
                       {(() => {
                         const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Diajukan',       cls: 'bg-amber-500/10 text-amber-600' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',  cls: 'bg-blue-500/10 text-blue-600' },
-                          APPROVED:     { label: 'Disetujui',      cls: 'bg-emerald-500/10 text-emerald-600' },
-                          REJECTED:     { label: 'Ditolak',        cls: 'bg-rose-500/10 text-rose-600' },
-                          PAID:         { label: 'Dibayarkan',     cls: 'bg-violet-500/10 text-violet-600' },
+                          SUBMITTED:    { label: 'Diajukan',     cls: 'bg-amber-50 text-ds-amber' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',cls: 'bg-blue-50 text-ds-blue' },
+                          APPROVED:     { label: 'Disetujui',    cls: 'bg-ds-green-tint text-ds-green' },
+                          REJECTED:     { label: 'Ditolak',      cls: 'bg-rose-50 text-ds-red' },
+                          PAID:         { label: 'Dibayarkan',   cls: 'bg-ds-purple-lt text-ds-purple' },
                         };
-                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-slate-100 text-slate-400' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink3' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
                       })()}
                     </div>
                   </div>

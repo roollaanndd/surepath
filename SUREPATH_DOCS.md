@@ -116,9 +116,12 @@ Browser / Mobile (PWA)
 | `MASTER_ADMIN` | AdminPortal | Full system access, all views |
 | `ADMIN` | AdminPortal | Policy, customers, products |
 | `FINANCE` | AdminPortal | Financial reports, ledger |
+| `FINANCE_MANAGER` | AdminPortal | Financial reports, ledger |
+| `FINANCE_DIRECTOR` | AdminPortal | Financial reports, ledger |
 | `INSURANCE_ADMIN` | AdminPortal | Insurer management |
 | `AGENT` | AgentPortal | CRM, quotes, commissions |
-| Customer | CustomerPortal | Buy products, file claims |
+| `CUSTOMER` | CustomerPortal | Buy products, file claims |
+| `B2B_CLIENT` | CustomerPortal | Buy products, file claims |
 | Public | PlatformLanding | Info pages, sign-up/login |
 
 **Admin credentials** are stored in Dexie (IndexedDB), seeded via `seedDatabase()`.  
@@ -151,16 +154,25 @@ Password is hashed with **PBKDF2-HMAC-SHA256**. Set via `VITE_ADMIN_KEY` env var
 - Onboarding flow for new agents
 
 ### Admin Portal
+- **Dark mode default** — all 27 views wired
+- **Notification Bell** — in-app alerts via `sp_admin_notifications` table
 - **Dashboard** — overall KPIs
 - **Policy Orders** — view, manage, download all orders
 - **Products** — configure insurance products, pricing
-- **Customers** — customer list and details
+- **Customers** — customer list and details; `UserDetailModal` for agents + customers
 - **Financial Reports** — P&L, transaction ledger, yearly summaries
 - **Insurer Management** — partner insurer list
 - **AI Views** — AI-powered financial analysis
 - **Website Editor** — edit landing page content (hero, sections, splash)
 - **Vehicle Pricelist** — manage 2025 vehicle prices (40+ brands, 2000+ models)
 - **Commission Ledger** — agent commission tracking
+
+**Demo accounts (password `Demo1234!` for all):**
+| Email | Role |
+|-------|------|
+| `demo.customer@myinsurepath.com` | CUSTOMER |
+| `demo.agent@myinsurepath.com` | AGENT |
+| `demo.admin@myinsurepath.com` | ADMIN |
 
 ---
 
@@ -223,6 +235,34 @@ All AI calls go through **OpenRouter** (`https://openrouter.ai/api/v1`) using th
 
 ---
 
+## Push Notifications
+
+Notifications fire **inline from the `data-gateway` Edge Function** (v8) — no separate worker needed.
+
+### Triggers
+| Event | Channels |
+|-------|---------|
+| New customer registration | Telegram + Resend email |
+| New policy order (`sp_policy_orders`) | Telegram + Resend email |
+
+### Channels
+| Channel | Secret | Notes |
+|---------|--------|-------|
+| Telegram | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` | Bot posts to admin group |
+| Email | `RESEND_API_KEY` | HTML emails via Resend |
+
+### Edge Functions (Supabase)
+| Function | Version | Purpose |
+|----------|---------|---------|
+| `data-gateway` | v8 | Primary API gateway; fires Telegram + Resend inline |
+| `notify-admin` | current | Watches `sp_policy_orders` inserts (not `sp_policies`) |
+| `send-insurer-email` | current | Admin-triggered HTML emails to insurers via Resend |
+
+All secrets are stored as **Supabase Edge Function Secrets** (not in `.env`):
+`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, `RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
+
+---
+
 ## Database (Dexie / IndexedDB)
 
 Defined in `db.ts`. Stores local data client-side.
@@ -260,11 +300,14 @@ Defined in `db.ts`. Stores local data client-side.
 | Table | Purpose |
 |-------|---------|
 | `sp_users` | Customer and agent Supabase profiles |
+| `sp_policy_orders` | Policy purchase orders |
+| `sp_insurers` | Partner insurer records (`admin_email`, `admin_name`, `pic_name`, `pic_phone`; `pic_email` migration pending) |
+| `sp_admin_notifications` | In-app notification records for admin users |
 | (auth.users) | Supabase built-in auth (email + password) |
 
-### RLS Policy
-- `sp_users_open` — fully open policy (`qual = true`) for development
-- **TODO:** Tighten RLS before production hardening
+### RLS
+- 17 scoped policies in production
+- `is_admin()` SECURITY DEFINER helper function gates admin-only access
 
 ### Storage
 - `website-assets` bucket — logo images, section background images uploaded via admin
@@ -288,7 +331,7 @@ Defined in `db.ts`. Stores local data client-side.
 ### Admin Login
 1. Navigate to `/admin` → `AdminLogin` renders
 2. Email + password submitted → Dexie lookup
-3. Role checked against `[MASTER_ADMIN, ADMIN, FINANCE, INSURANCE_ADMIN]`
+3. Role checked against `[MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR, INSURANCE_ADMIN]`
 4. Password verified with PBKDF2
 5. Session token created via `createSessionToken()`
 
@@ -485,7 +528,7 @@ VITE_OPENROUTER_KEY    = <openrouter api key>
 - [ ] **Blog content** — `/blog` page shows categories but no real articles yet
 - [ ] **Real social media links** — Instagram/LinkedIn/Twitter URLs are placeholders
 - [ ] **Payment gateway integration** — `paymentService.ts` needs live gateway credentials
-- [ ] **Push notifications** — `pushNotificationService.ts` exists but not fully wired
+- [x] **Push notifications** — Telegram + Resend fire inline from `data-gateway` v8
 - [ ] **Agent onboarding email flow** — currently manual
 - [ ] **Supabase claims table** — verify schema matches `ClaimManager` component
 
@@ -557,4 +600,4 @@ surepath/
 
 ---
 
-*Last updated: May 2026 · SurePath Engineering*
+*Last updated: June 2026 · SurePath Engineering*

@@ -12,9 +12,9 @@ interface Props {
 type TabId = 'all' | 'pending' | 'paid' | 'byproduct' | 'coins';
 
 const statusColors: Record<string, string> = {
-  PAID: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-  PENDING: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-  CANCELLED: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
+  PAID: 'bg-ds-green-tint text-ds-green',
+  PENDING: 'bg-amber-100 text-amber-700',
+  CANCELLED: 'bg-rose-50 text-ds-red',
 };
 
 const productIcons: Record<string, React.ElementType> = {
@@ -22,10 +22,10 @@ const productIcons: Record<string, React.ElementType> = {
 };
 
 const productColors: Record<string, string> = {
-  CAR: 'bg-blue-500/10 text-blue-500',
-  TRAVEL: 'bg-emerald-500/10 text-emerald-500',
-  PA: 'bg-violet-500/10 text-violet-500',
-  MPAR: 'bg-amber-500/10 text-amber-500',
+  CAR: 'bg-blue-50 text-ds-blue',
+  TRAVEL: 'bg-ds-green-tint text-ds-green',
+  PA: 'bg-ds-purple-lt text-ds-purple',
+  MPAR: 'bg-amber-50 text-ds-amber',
 };
 
 const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
@@ -114,44 +114,44 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   ];
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-28">
+    <div className="bg-ds-bg min-h-screen pb-28">
 
       {/* Toast */}
       {toastVisible && (
         <div className="fixed top-20 inset-x-4 z-50 flex justify-center">
-          <div className="bg-emerald-500 text-white rounded-2xl px-5 py-3 font-black text-sm shadow-2xl shadow-emerald-500/30 flex items-center gap-2">
+          <div className="bg-ds-green text-white rounded-2xl px-5 py-3 font-black text-sm shadow-ds-md flex items-center gap-2">
             <CheckCircle2 size={16} />
             {t('Withdrawal request submitted!', 'Permintaan penarikan dikirim!')}
           </div>
         </div>
       )}
 
-      {/* Balance Cards */}
-      <div className="mx-5 mt-5 rounded-2xl p-5 bg-gray-900 text-white sp-enter" style={{boxShadow: '0 8px 32px rgba(0,0,0,0.15)'}}>
+      {/* Balance Hero Card */}
+      <div className="mx-4 mt-5 rounded-[1.5rem] p-5 bg-ds-navy text-white shadow-ds-navy space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-1">{t('Total Earned', 'Total Komisi')}</p>
-          <Wallet size={18} className="text-slate-400" />
+          <p className="text-white/60 text-xs font-medium uppercase tracking-wide">{t('Total Earned', 'Total Komisi')}</p>
+          <Wallet size={18} className="text-white/40" />
         </div>
         <p className="text-3xl font-bold font-mono text-white">{formatIDR(totalEarned)}</p>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/10 rounded-2xl px-4 py-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Clock size={12} className="text-amber-400" />
-              <p className="text-amber-400 text-[10px] font-black uppercase tracking-widest">{t('Pending', 'Pending')}</p>
+              <Clock size={12} className="text-ds-amber" />
+              <p className="text-ds-amber text-[10px] font-black uppercase tracking-widest">{t('Pending', 'Pending')}</p>
             </div>
-            <p className="font-black text-sm">{formatIDR(totalPending)}</p>
+            <p className="font-black text-sm text-white">{formatIDR(totalPending)}</p>
           </div>
           <div className="bg-white/10 rounded-2xl px-4 py-3">
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{t('Withdrawn', 'Dicairkan')}</p>
-            <p className="font-black text-sm">Rp 0</p>
+            <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">{t('Withdrawn', 'Dicairkan')}</p>
+            <p className="font-black text-sm text-white">Rp 0</p>
           </div>
         </div>
 
         <button
           onClick={handleWithdraw}
           disabled={totalPending === 0}
-          className="w-full py-3.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-[#16a34a]/30 active:scale-[0.97] hover:brightness-105 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 disabled:opacity-40"
+          className="w-full py-3.5 bg-ds-green rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-ds-sm active:brightness-90 hover:brightness-105 transition-all motion-reduce:transition-none disabled:opacity-40"
         >
           <ArrowDownToLine size={14} />
           {t('Request Withdrawal', 'Minta Pencairan')}
@@ -159,42 +159,42 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
       </div>
 
       {/* Coins Balance Card */}
-      <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 rounded-[2rem] p-5 text-white shadow-xl">
+      <div className="mx-4 mt-3 bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/40">
-              <Coins size={16} className="text-white" />
+            <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center">
+              <Coins size={16} className="text-ds-amber" />
             </div>
-            <p className="text-amber-400 text-xs font-black uppercase tracking-widest">{t('SurePath Coins', 'Koin SurePath')}</p>
+            <p className="text-ds-ink2 text-xs font-black uppercase tracking-widest">{t('SurePath Coins', 'Koin SurePath')}</p>
           </div>
-          <button onClick={() => setActiveTab('coins')} className="text-[10px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest">
+          <button onClick={() => setActiveTab('coins')} className="text-[10px] font-black text-ds-blue hover:text-ds-green uppercase tracking-widest transition-colors">
             {t('History', 'Riwayat')} →
           </button>
         </div>
         <div className="flex items-end gap-3">
           <div>
-            <p className="font-black text-4xl tracking-tighter text-amber-400">{coinBalance.toLocaleString('id-ID')}</p>
-            <p className="text-amber-400/60 text-[10px] font-bold mt-0.5">{t('coins', 'koin')} · {formatIDR(coinBalance * 1000)} {t('value', 'nilai')}</p>
+            <p className="font-black text-4xl tracking-tighter text-ds-amber">{coinBalance.toLocaleString('id-ID')}</p>
+            <p className="text-ds-ink3 text-[10px] font-bold mt-0.5">{t('coins', 'koin')} · {formatIDR(coinBalance * 1000)} {t('value', 'nilai')}</p>
           </div>
         </div>
       </div>
 
       {/* Month Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{t('This Month', 'Bulan Ini')}</p>
-          <p className="font-black text-lg tracking-tight">{formatIDR(thisMonth)}</p>
+      <div className="grid grid-cols-2 gap-3 mx-4 mt-3">
+        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('This Month', 'Bulan Ini')}</p>
+          <p className="font-black text-lg tracking-tight text-ds-ink">{formatIDR(thisMonth)}</p>
           {monthGrowth !== 0 && (
-            <div className={`flex items-center gap-1 mt-1 text-[10px] font-black ${monthGrowth > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+            <div className={`flex items-center gap-1 mt-1 text-[10px] font-black ${monthGrowth > 0 ? 'text-ds-green' : 'text-ds-red'}`}>
               <TrendingUp size={10} />
               {monthGrowth > 0 ? '+' : ''}{monthGrowth}% {t('vs last month', 'vs bulan lalu')}
             </div>
           )}
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4">
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{t('Last Month', 'Bulan Lalu')}</p>
-          <p className="font-black text-lg tracking-tight">{formatIDR(lastMonth)}</p>
-          <p className="text-[10px] text-slate-400 font-bold mt-1">{paid.filter(c => {
+        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-4">
+          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Last Month', 'Bulan Lalu')}</p>
+          <p className="font-black text-lg tracking-tight text-ds-ink">{formatIDR(lastMonth)}</p>
+          <p className="text-[10px] text-ds-ink3 font-bold mt-1">{paid.filter(c => {
             const d = new Date(c.created_at ?? 0);
             return d >= startOfLastMonth && d <= endOfLastMonth;
           }).length} {t('transactions', 'transaksi')}</p>
@@ -202,15 +202,15 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 px-4 mt-4">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 motion-reduce:active:scale-100 ${
               activeTab === tab.id
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-black shadow-lg'
-                : 'bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-400'
+                ? 'bg-ds-navy text-white shadow-ds-navy'
+                : 'bg-ds-card border border-ds-border text-ds-ink3'
             }`}
           >
             {lang === Language.EN ? tab.enLabel : tab.idLabel}
@@ -219,8 +219,8 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
       </div>
 
       {/* Refresh */}
-      <div className="flex justify-end">
-        <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-[#16a34a] transition-colors">
+      <div className="flex justify-end px-4 mt-2 mb-1">
+        <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-ds-ink3 hover:text-ds-green transition-colors">
           <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
           {t('Refresh', 'Perbarui')}
         </button>
@@ -228,22 +228,22 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* By Product View */}
       {activeTab === 'byproduct' && (
-        <div className="space-y-3">
+        <div className="space-y-2 px-4 mt-2">
           {byProduct.map(({ type, count, total, pending: pend }) => {
             const Icon = productIcons[type] ?? Shield;
-            const colorClass = productColors[type] ?? 'bg-slate-100 text-slate-500';
+            const colorClass = productColors[type] ?? 'bg-ds-card2 text-ds-ink3';
             return (
-              <div key={type} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-4">
+              <div key={type} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4">
                 <div className={`w-11 h-11 rounded-2xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-sm">{type}</p>
-                  <p className="text-[10px] text-slate-400 font-bold">{count} {t('transactions', 'transaksi')}</p>
+                  <p className="font-black text-sm text-ds-ink">{type}</p>
+                  <p className="text-[10px] text-ds-ink3 font-bold">{count} {t('transactions', 'transaksi')}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-black text-sm text-emerald-500">{formatIDR(total)}</p>
-                  {pend > 0 && <p className="text-[10px] text-amber-500 font-bold">{formatIDR(pend)} {t('pending', 'pending')}</p>}
+                  <p className="font-black text-sm text-ds-green">{formatIDR(total)}</p>
+                  {pend > 0 && <p className="text-[10px] text-ds-amber font-bold">{formatIDR(pend)} {t('pending', 'pending')}</p>}
                 </div>
               </div>
             );
@@ -253,12 +253,12 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* Coin Ledger View */}
       {activeTab === 'coins' && (
-        <div className="space-y-3">
+        <div className="space-y-2 px-4 mt-2">
           {coinLedger.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 p-8 text-center shadow-lg">
-              <Coins size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-              <p className="font-black text-slate-400">{t('No coin history yet', 'Belum ada riwayat koin')}</p>
-              <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">
+            <div className="bg-ds-card2 rounded-2xl border border-ds-border p-8 text-center">
+              <Coins size={40} className="text-ds-ink3 mx-auto mb-3" />
+              <p className="font-black text-ds-ink2">{t('No coin history yet', 'Belum ada riwayat koin')}</p>
+              <p className="text-ds-ink3 text-sm mt-1">
                 {t('Earn coins when policies are issued.', 'Dapatkan koin saat polis diterbitkan.')}
               </p>
             </div>
@@ -267,19 +267,19 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
               const isEarned = entry.type === 'EARNED';
               const isRedeemed = entry.type === 'REDEEMED';
               return (
-                <div key={entry.id ?? i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-lg p-4 flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${isEarned ? 'bg-amber-500/10 text-amber-500' : isRedeemed ? 'bg-rose-500/10 text-rose-500' : 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-400'}`}>
+                <div key={entry.id ?? i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${isEarned ? 'bg-amber-50 text-ds-amber' : isRedeemed ? 'bg-rose-50 text-ds-red' : 'bg-ds-card2 text-ds-ink3'}`}>
                     <Coins size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-black text-sm truncate">{entry.description ?? (isEarned ? t('Coins Earned', 'Koin Diperoleh') : t('Coins Redeemed', 'Koin Digunakan'))}</p>
-                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">{entry.created_at ? new Date(entry.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</p>
+                    <p className="font-black text-sm text-ds-ink truncate">{entry.description ?? (isEarned ? t('Coins Earned', 'Koin Diperoleh') : t('Coins Redeemed', 'Koin Digunakan'))}</p>
+                    <p className="text-[10px] text-ds-ink3 font-bold mt-0.5">{entry.created_at ? new Date(entry.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className={`font-black text-sm ${isEarned ? 'text-amber-500' : 'text-rose-500'}`}>
+                    <p className={`font-black text-sm ${isEarned ? 'text-ds-amber' : 'text-ds-red'}`}>
                       {isEarned ? '+' : '-'}{entry.coins.toLocaleString('id-ID')} koin
                     </p>
-                    <p className="text-[10px] text-slate-400 font-bold">{formatIDR(entry.rp_value)}</p>
+                    <p className="text-[10px] text-ds-ink3 font-bold">{formatIDR(entry.rp_value)}</p>
                   </div>
                 </div>
               );
@@ -290,51 +290,51 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* List View */}
       {activeTab !== 'byproduct' && activeTab !== 'coins' && (
-        <div className="bg-white rounded-2xl mx-5 mt-4 overflow-hidden border border-gray-100">
+        <div className="space-y-2 px-4 mt-2">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-white/5 p-4 animate-pulse h-16" />
+              <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 animate-pulse h-16" />
             ))
           ) : getFilteredCommissions().length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 p-8 text-center shadow-lg">
-              <Wallet size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-              <p className="font-black text-slate-400">{t('No commissions found', 'Belum ada komisi')}</p>
-              <p className="text-slate-300 dark:text-slate-600 text-sm mt-1">
+            <div className="bg-ds-card2 rounded-2xl border border-ds-border p-8 text-center">
+              <Wallet size={40} className="text-ds-ink3 mx-auto mb-3" />
+              <p className="font-black text-ds-ink2">{t('No commissions found', 'Belum ada komisi')}</p>
+              <p className="text-ds-ink3 text-sm mt-1">
                 {t('Create a quote and convert it to a policy to earn commissions.', 'Buat penawaran dan konversikan ke polis untuk mendapatkan komisi.')}
               </p>
             </div>
           ) : (
             getFilteredCommissions().map((c, i) => {
               const Icon = productIcons[c.product_type] ?? Shield;
-              const colorClass = productColors[c.product_type] ?? 'bg-slate-100 text-slate-500';
+              const colorClass = productColors[c.product_type] ?? 'bg-ds-card2 text-ds-ink3';
               return (
-                <div key={c.id ?? i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 bg-white">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <div key={c.id ?? i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
                     <Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 flex-1 truncate">{c.client_name}</p>
+                    <p className="text-sm font-semibold text-ds-ink truncate">{c.client_name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">{c.product_type}</span>
-                      <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                      <span className="text-xs text-gray-400">{formatDate(c.created_at)}</span>
+                      <span className="text-[10px] text-ds-ink3 font-bold uppercase">{c.product_type}</span>
+                      <span className="text-[10px] text-ds-ink3">·</span>
+                      <span className="text-xs text-ds-ink3">{formatDate(c.created_at)}</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    <p className="text-[10px] text-ds-ink3 font-medium mt-0.5">
                       {t('Premium:', 'Premi:')} {formatIDR(c.premium_amount)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-emerald-600 font-mono">+{formatIDR(c.commission_amount)}</p>
+                    <p className="text-sm font-semibold text-ds-green font-mono">+{formatIDR(c.commission_amount)}</p>
                     {c.status === 'PAID' ? (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 mt-1 inline-block">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-ds-green-tint text-ds-green mt-1 inline-block">
                         {c.status}
                       </span>
                     ) : c.status === 'PENDING' ? (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 mt-1 inline-block">
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 mt-1 inline-block">
                         {c.status}
                       </span>
                     ) : (
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[c.status] ?? 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block ${statusColors[c.status] ?? 'bg-ds-card2 text-ds-ink3'}`}>
                         {c.status}
                       </span>
                     )}

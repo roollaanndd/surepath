@@ -27,7 +27,7 @@ import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
 import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
-import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
@@ -141,6 +141,8 @@ const AdminPortal = ({
   } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersResult | null>(null);
   const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
+  const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -159,6 +161,11 @@ const AdminPortal = ({
     // Traffic stats
     getTrafficStats().then(setTrafficStats).catch(() => {});
 
+    // Notifications — load on mount, refresh every 60s
+    const loadNotifs = () => getAdminNotifications().then(setNotifications).catch(() => {});
+    loadNotifs();
+    const notifInterval = setInterval(loadNotifs, 60000);
+
     // Auto daily backup — runs silently on admin portal open if >23h since last
     if (shouldAutoBackup()) {
       setBackupStatus('running');
@@ -171,6 +178,7 @@ const AdminPortal = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       clearInterval(onlineInterval);
+      clearInterval(notifInterval);
     };
   }, []);
 
@@ -608,10 +616,72 @@ const AdminPortal = ({
               </div>
             )}
             {/* Notifications */}
-            <button className={`relative p-2 rounded-xl border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}>
-              <Bell size={17} />
-              <span className={`absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full border ${th(darkMode, 'border-[#050505]', 'border-white')}`} />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(v => !v)}
+                className={`relative p-2 rounded-xl border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}
+              >
+                <Bell size={17} />
+                {notifications.some(n => !n.read) && (
+                  <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 ${th(darkMode, 'border-[#050505]', 'border-white')}`}>
+                    <span className="sr-only">{notifications.filter(n => !n.read).length} notifikasi baru</span>
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div
+                  className={`absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden ${th(darkMode, 'bg-[#111] border-white/10', 'bg-white border-gray-200 shadow-xl')}`}
+                  onMouseLeave={() => setShowNotifications(false)}
+                >
+                  <div className={`px-4 py-3 border-b flex items-center justify-between ${th(darkMode, 'border-white/5', 'border-gray-100')}`}>
+                    <p className={`text-[0.6rem] font-black uppercase tracking-widest ${th(darkMode, 'text-gray-400', 'text-gray-500')}`}>Notifikasi</p>
+                    {notifications.some(n => !n.read) && (
+                      <button
+                        onClick={async () => {
+                          await Promise.all(notifications.filter(n => !n.read).map(n => markAdminNotificationRead(n.id)));
+                          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                        }}
+                        className="text-[0.55rem] font-bold text-emerald-500 hover:text-emerald-400"
+                      >
+                        Tandai semua dibaca
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto no-scrollbar">
+                    {notifications.length === 0 ? (
+                      <p className={`text-center py-8 text-xs font-bold ${th(darkMode, 'text-gray-600', 'text-gray-400')}`}>Tidak ada notifikasi</p>
+                    ) : notifications.slice(0, 20).map(n => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={async () => {
+                          if (!n.read) {
+                            await markAdminNotificationRead(n.id);
+                            setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+                          }
+                          // Navigate to relevant tab if type matches
+                          if (n.type === 'NEW_AGENT') setActiveTab('agents');
+                          else if (n.type === 'NEW_CUSTOMER') setActiveTab('users');
+                          setShowNotifications(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 border-b transition-colors ${th(darkMode, 'border-white/5 hover:bg-white/5', 'border-gray-50 hover:bg-gray-50')} ${!n.read ? th(darkMode, 'bg-emerald-500/5', 'bg-emerald-50/50') : ''}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />}
+                          <div className={!n.read ? '' : 'pl-3.5'}>
+                            <p className={`text-xs font-black leading-tight ${th(darkMode, 'text-white', 'text-gray-900')}`}>{n.title}</p>
+                            <p className={`text-[0.6rem] font-medium mt-0.5 ${th(darkMode, 'text-gray-500', 'text-gray-500')}`}>{n.body}</p>
+                            <p className={`text-[0.5rem] font-bold mt-1 ${th(darkMode, 'text-gray-700', 'text-gray-300')}`}>
+                              {new Date(n.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Mobile close */}
             {isMobile && (
               <button

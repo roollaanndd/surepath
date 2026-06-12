@@ -22,9 +22,13 @@ export interface SpUser {
   verified?: boolean;
   commission_rate?: number;
   upline_id?: string;
+  referral_code?: string | null;
   tier?: 'STAR' | 'ELITE' | null;
   tier_assigned_by?: string | null;
   tier_assigned_at?: string | null;
+  profile_photo_url?: string | null;
+  ktp_document_url?: string | null;
+  is_suspended?: boolean;
 }
 
 export interface DownlineNode extends SpUser {
@@ -558,6 +562,12 @@ export async function getAllAgents(): Promise<SpUser[]> {
   const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 500 });
   if (error) { console.error('getAllAgents:', error); return []; }
   return (data ?? []) as SpUser[];
+}
+
+export async function getAdminUser(userId: string): Promise<SpUser | null> {
+  const { data, error } = await callGateway('admin_get_user', { user_id: userId });
+  if (error) { console.error('getAdminUser:', error); return null; }
+  return data as SpUser ?? null;
 }
 
 export async function updateAgentVerification(agentId: string, verified: boolean): Promise<boolean> {

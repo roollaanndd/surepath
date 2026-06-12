@@ -158,6 +158,15 @@ serve(async (req) => {
         }
         const { data, error } = await db.from('sp_users').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
+        // Auto-notify admins of new registration (non-blocking, best-effort)
+        const roleLabel = role === 'AGENT' ? 'Agen' : 'Customer';
+        db.from('sp_admin_notifications').insert({
+          type: `NEW_${role}`,
+          title: `${roleLabel} Baru Mendaftar`,
+          body: `${String(insertRow.name)} (${email}) baru saja mendaftar sebagai ${roleLabel.toLowerCase()}.`,
+          read: false,
+          metadata: { user_id: (data as any).id, role, email },
+        }).catch(() => {});
         return json({ data });
       }
 
@@ -198,11 +207,20 @@ serve(async (req) => {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db
           .from('sp_users')
-          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, is_suspended, tc_accepted, tc_accepted_at, created_at')
+          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, is_suspended, tc_accepted, tc_accepted_at, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
         if (params.role) q = q.eq('role', params.role);
         const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // Admin: get full profile of a single user
+      case 'admin_get_user': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.user_id) return json({ error: 'user_id required' }, 400);
+        const { data, error } = await db.from('sp_users').select('*').eq('id', String(params.user_id)).maybeSingle();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
       }
@@ -266,16 +284,6 @@ serve(async (req) => {
           db.from('sp_policies').select('id', { count: 'exact', head: true }).eq('agent_id', agentId).eq('status', 'ACTIVE'),
         ]);
         return json({ data: { commissions: commRes.data ?? [], clientCount: clientRes.count ?? 0, activePolicies: policyRes.count ?? 0 } });
-      }
-
-      // ── Admin: single user with full PII ─────────────────────────────────
-      case 'admin_get_user': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        if (!params.user_id) return json({ error: 'Missing user_id' }, 400);
-        const { data, error } = await db.from('sp_users').select('*').eq('id', params.user_id).maybeSingle();
-        if (error) return json({ error: error.message }, 400);
-        if (!data) return json({ error: 'User not found' }, 404);
-        return json({ data });
       }
 
       // ── Admin: update user fields (role, verified, tier, etc.) ──────────

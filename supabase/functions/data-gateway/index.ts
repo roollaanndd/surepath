@@ -143,9 +143,45 @@ serve(async (req) => {
           insertRow.commission_rate = 0.1;
           insertRow.monthly_target = 50000000;
         }
+        // Referral linkage — code travels in signup metadata (survives the
+        // email-confirmation flow, even on another device) or explicit param.
+        // Matches the upline's agent_code OR referral_code.
+        const refCode = String(params.referral_code ?? meta.referral_code ?? '').trim();
+        if (refCode) {
+          const { data: upline } = await db
+            .from('sp_users')
+            .select('id')
+            .or(`agent_code.eq.${refCode},referral_code.eq.${refCode}`)
+            .neq('id', authId)
+            .maybeSingle();
+          if (upline) insertRow.upline_id = upline.id;
+        }
         const { data, error } = await db.from('sp_users').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+      // ── Apply a referral code to the caller's own profile (post-signup) ────
+      // Sets upline_id once; matches agent_code OR referral_code; never self.
+      case 'apply_referral': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const code = String(params.code ?? '').trim();
+        if (!code) return json({ error: 'Missing code' }, 400);
+        if (caller.spUser.upline_id) return json({ data: { upline_id: caller.spUser.upline_id, already_set: true } });
+        const { data: upline, error: lookupErr } = await db
+          .from('sp_users')
+          .select('id')
+          .or(`agent_code.eq.${code},referral_code.eq.${code}`)
+          .neq('id', caller.spUser.id)
+          .maybeSingle();
+        if (lookupErr) return json({ error: lookupErr.message }, 400);
+        if (!upline) return json({ error: 'Invalid referral code' }, 404);
+        const { error } = await db
+          .from('sp_users')
+          .update({ upline_id: upline.id, updated_at: new Date().toISOString() })
+          .eq('id', caller.spUser.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: { upline_id: upline.id } });
       }
 
       // An agent's own clients only. Admins may pass an explicit agent_id.

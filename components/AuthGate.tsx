@@ -218,10 +218,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setError(null);
     resolvedRef.current = false;
 
+    // Referral code from a shared ?ref= link — travels in the signup metadata
+    // so the gateway links the upline even after email confirmation.
+    const refCode = localStorage.getItem('SUREPATH_REF') || undefined;
     const { data, error: authErr } = await supabase.auth.signUp({
       email:    formData.email,
       password: formData.password,
-      options:  { data: { name: formData.name, role: UserRole.CUSTOMER } },
+      options:  { data: { name: formData.name, role: UserRole.CUSTOMER, referral_code: refCode } },
     });
 
     if (authErr || !data.user) {

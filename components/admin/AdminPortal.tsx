@@ -328,18 +328,20 @@ const AdminPortal = ({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
-          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
-          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle,color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
-          { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
+          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
+          { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
         ].map(card => (
-          <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-200')}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
+          <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
+            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
               <card.icon size={20} />
             </div>
             <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
             <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
-          </div>
+            <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+          </button>
         ))}
       </div>
 
@@ -348,21 +350,24 @@ const AdminPortal = ({
         <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>Transaksi Overview</p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
-            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
-            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
-            { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
+            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
+            { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           ].map(card => (
-            <div key={card.label} className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-200')}`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${card.color}`}>
+            <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
+              className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
                 <card.icon size={20} />
               </div>
               <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
               <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
-            </div>
+              <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+            </button>
           ))}
           {/* Online Users Card */}
-          <div className={`p-6 rounded-3xl border transition-all ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/20', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm')}`}>
+          <button type="button" onClick={() => setActiveTab('security')}
+            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm hover:shadow-md')}`}>
             <div className="flex items-center gap-2 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${th(darkMode, 'bg-green-500/10 text-green-400', 'bg-green-50 text-green-600')}`}>
                 <Users size={20} />
@@ -378,7 +383,8 @@ const AdminPortal = ({
                 {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
               </p>
             )}
-          </div>
+            <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+          </button>
         </div>
       </div>
 

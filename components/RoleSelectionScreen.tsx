@@ -88,20 +88,25 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       let profile = null;
 
       if (selected === 'CUSTOMER') {
+        // referral_code links this user to the upline who shared the ?ref= link
         profile = await ensureProfile({
           name: oauthUser.name,
           phone: phone.trim(),
           role: 'CUSTOMER',
+          referral_code: refCode || null,
         });
+        if (profile && refCode) localStorage.removeItem('SUREPATH_REF');
       } else if (selected === 'AGENT') {
         profile = await ensureProfile({
           name: oauthUser.name,
           phone: phone.trim(),
           role: 'AGENT',
+          referral_code: refCode || null,
         });
-        // Link to upline if a referral code was stored from the landing URL
+        // Fallback: if the profile already existed (ensure_profile no-op),
+        // apply the referral via the gateway so the upline still links.
         if (profile && refCode) {
-          await applyReferralCode(profile.id, refCode);
+          if (!(profile as any).upline_id) await applyReferralCode(profile.id, refCode);
           localStorage.removeItem('SUREPATH_REF');
         }
       } else {

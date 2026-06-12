@@ -133,6 +133,7 @@ export async function ensureProfile(params?: {
   role?: 'CUSTOMER' | 'AGENT';
   ktp?: string | null;
   address?: string | null;
+  referral_code?: string | null;
 }): Promise<SpUser | null> {
   const { data, error } = await callGateway('ensure_profile', params);
   if (error || !data) return null;
@@ -1778,18 +1779,11 @@ export async function getAgentReferralCode(agentId: string): Promise<string | nu
   return (data as any)?.referral_code ?? null;
 }
 
-export async function applyReferralCode(newAgentId: string, referralCode: string): Promise<boolean> {
-  const { data: uplineData, error: lookupErr } = await supabase
-    .from('sp_users')
-    .select('id')
-    .eq('referral_code', referralCode)
-    .maybeSingle();
-  if (lookupErr || !uplineData) { console.error('applyReferralCode lookup:', lookupErr); return false; }
-  const { error } = await supabase
-    .from('sp_users')
-    .update({ upline_id: uplineData.id, updated_at: new Date().toISOString() })
-    .eq('id', newAgentId);
-  if (error) { console.error('applyReferralCode update:', error); return false; }
+// Sets the caller's own upline via the gateway (server resolves the code
+// against agent_code OR referral_code; RLS-safe; never self-referral).
+export async function applyReferralCode(_newAgentId: string, referralCode: string): Promise<boolean> {
+  const { error } = await callGateway('apply_referral', { code: referralCode });
+  if (error) { console.error('applyReferralCode:', error); return false; }
   return true;
 }
 

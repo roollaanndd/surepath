@@ -65,6 +65,9 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
     // 1) Create the Supabase Auth account. Role/profile data travels in the
     // user metadata so the gateway can build the profile even when the user
     // only returns after clicking the email-confirmation link.
+    // Referral code from a shared ?ref= link — travels in the signup metadata
+    // so the gateway links the upline even after email confirmation.
+    const refCode = localStorage.getItem('SUREPATH_REF') || undefined;
     const { data, error: authErr } = await supabase.auth.signUp({
       email,
       password,
@@ -75,6 +78,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           role: 'AGENT',
           ktp: ktp || null,
           address: address || null,
+          referral_code: refCode,
         },
       },
     });
@@ -99,7 +103,8 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
     }
 
     // 3) Immediate session — create the agent profile via the gateway.
-    const profile = await ensureProfile({ name, phone, role: 'AGENT', ktp: ktp || null, address: address || null });
+    const profile = await ensureProfile({ name, phone, role: 'AGENT', ktp: ktp || null, address: address || null, referral_code: refCode ?? null });
+    if (profile) localStorage.removeItem('SUREPATH_REF');
     if (!profile) {
       setError(t('Registration failed. Please try again.', 'Pendaftaran gagal. Silakan coba lagi.'));
       setLoading(false);

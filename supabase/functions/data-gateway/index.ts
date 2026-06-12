@@ -72,6 +72,76 @@ serve(async (req) => {
     const ANON_KEY             = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
     if (!SUPABASE_URL || !SERVICE_KEY) return json({ error: 'Server misconfiguration' }, 500);
 
+    // ── Push notification helpers (best-effort, fire-and-forget) ──────────────
+    const TELEGRAM_TOKEN   = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? '';
+    const TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_ADMIN_CHAT_ID') ?? '';
+    const RESEND_KEY       = Deno.env.get('RESEND_API_KEY') ?? '';
+
+    const sendTelegram = (text: string): void => {
+      if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
+      fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      }).catch(() => {});
+    };
+
+    const sendInsurerEmail = (
+      to: string, insurerName: string, orderNumber: string,
+      clientName: string, productName: string, totalPremium: number, orderId: string,
+    ): void => {
+      if (!RESEND_KEY) return;
+      const esc = (s: string) => s.replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c)
+      );
+      const reviewUrl  = `https://myinsurepath.com/insurer/orders/${orderId}`;
+      const dashUrl    = `https://myinsurepath.com/insurer/dashboard`;
+      const premiumFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPremium);
+      const subject    = `Pengajuan Polis Baru: ${orderNumber} – ${clientName}`;
+      const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"/><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<tr><td style="background:#0f172a;padding:28px 32px;"><table width="100%"><tr>
+  <td><span style="font-size:20px;font-weight:900;color:#fff;">Sure<span style="color:#f97316;">Path</span></span>
+      <span style="display:block;font-size:10px;font-weight:700;color:#64748b;letter-spacing:3px;text-transform:uppercase;margin-top:2px;">Insurer Portal</span></td>
+  <td align="right"><span style="background:#f97316;color:#fff;font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border-radius:20px;">Pengajuan Baru</span></td>
+</tr></table></td></tr>
+<tr><td style="padding:32px;">
+  <p style="font-size:14px;color:#64748b;margin:0 0 8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Kepada Tim ${esc(insurerName)}</p>
+  <h1 style="font-size:26px;font-weight:900;color:#0f172a;margin:0 0 24px;letter-spacing:-1px;line-height:1.2;">Terdapat pengajuan polis<br/>baru yang perlu ditinjau</h1>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">No. Order</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:800;color:#f97316;font-family:monospace;">${esc(orderNumber)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Nasabah</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(clientName)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Produk</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(productName)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;border-top:1px solid #e2e8f0;">Total Premi</td>
+          <td align="right" style="padding:6px 0;font-size:16px;font-weight:900;color:#f97316;border-top:1px solid #e2e8f0;">${premiumFmt}</td></tr>
+    </table>
+  </td></tr></table>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;"><tr>
+    <td width="48%" align="center"><a href="${reviewUrl}" style="display:block;background:#0f172a;color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:16px 20px;border-radius:12px;text-align:center;">Review Order Ini</a></td>
+    <td width="4%"></td>
+    <td width="48%" align="center"><a href="${dashUrl}" style="display:block;background:#f97316;color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:16px 20px;border-radius:12px;text-align:center;">Dashboard Saya</a></td>
+  </tr></table>
+  <p style="font-size:12px;color:#94a3b8;margin:0;line-height:1.6;">Link review berlaku 7 hari. Jangan teruskan email ini ke pihak lain.</p>
+</td></tr>
+<tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;"><table width="100%"><tr>
+  <td style="font-size:11px;color:#94a3b8;font-weight:600;">SurePath Insurance Platform</td>
+  <td align="right" style="font-size:11px;color:#94a3b8;">myinsurepath.com</td>
+</tr></table></td></tr>
+</table></td></tr></table>
+</body></html>`;
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: 'SurePath <noreply@myinsurepath.com>', to: [to], subject, html }),
+      }).catch(() => {});
+    };
+
     // ── 1) Authenticate the caller via their Supabase JWT ──────────────────────
     const authHeader = req.headers.get('authorization') ?? '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
@@ -167,6 +237,16 @@ serve(async (req) => {
           read: false,
           metadata: { user_id: (data as any).id, role, email },
         }).catch(() => {});
+        // Telegram push to admin team
+        const tgTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        sendTelegram(
+          `🆕 <b>${roleLabel} Baru – SurePath</b>\n\n` +
+          `👤 <b>Nama:</b> ${String(insertRow.name)}\n` +
+          `📧 <b>Email:</b> ${email}\n` +
+          `📱 <b>HP:</b> ${String(insertRow.phone) || '-'}\n` +
+          `🕐 <b>Waktu:</b> ${tgTime} WIB\n\n` +
+          `🔗 <a href="https://myinsurepath.com/admin">Buka Admin Panel</a>`
+        );
         return json({ data });
       }
 
@@ -740,6 +820,43 @@ serve(async (req) => {
 
         const { data, error } = await db.from('sp_policy_orders').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
+
+        // Admin Telegram + insurer email alerts (non-blocking)
+        const order     = data as Record<string, any>;
+        const orderTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        const premiumStr = order.total_premium
+          ? `Rp ${Number(order.total_premium).toLocaleString('id-ID')}`
+          : '-';
+        sendTelegram(
+          `📋 <b>Order Polis Baru – SurePath</b>\n\n` +
+          `🔢 <b>No. Order:</b> ${order.order_number ?? order.id}\n` +
+          `👤 <b>Nasabah:</b> ${order.client_name ?? '-'}\n` +
+          `📦 <b>Produk:</b> ${order.product_name ?? '-'}\n` +
+          `💰 <b>Premi:</b> ${premiumStr}\n` +
+          `📊 <b>Status:</b> ${order.status ?? '-'}\n` +
+          `🕐 <b>Waktu:</b> ${orderTime} WIB\n\n` +
+          `🔗 <a href="https://myinsurepath.com/admin">Buka Admin Panel</a>`
+        );
+        // Email the insurer's PIC if an insurer is attached to this order
+        if (order.insurer_id) {
+          const { data: ins } = await db
+            .from('sp_insurers')
+            .select('admin_email, name')
+            .eq('id', order.insurer_id)
+            .maybeSingle();
+          if (ins?.admin_email) {
+            sendInsurerEmail(
+              String(ins.admin_email),
+              String(ins.name ?? 'Penanggung'),
+              String(order.order_number ?? order.id),
+              String(order.client_name ?? '-'),
+              String(order.product_name ?? '-'),
+              Number(order.total_premium ?? 0),
+              String(order.id),
+            );
+          }
+        }
+
         return json({ data });
       }
 

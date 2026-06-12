@@ -62,6 +62,119 @@ const Card: React.FC<{ children?: React.ReactNode, className?: string }> = ({ ch
   </div>
 );
 
+// ── User/Agent detail modal ──────────────────────────────────────────────────
+import { getAdminUser } from '../../services/supabaseService';
+
+const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ userId, onClose }) => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    getAdminUser(userId).then(d => { setUser(d); setLoading(false); });
+  }, [userId]);
+
+  const Field: React.FC<{ label: string; value?: string | number | null }> = ({ label, value }) => (
+    <div className="space-y-0.5">
+      <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">{label}</p>
+      <p className="text-xs font-bold text-white break-all">{value || <span className="text-gray-600">—</span>}</p>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+      <div
+        className="relative z-10 w-full max-w-2xl bg-[#0e0e0e] border border-white/10 rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+          <h2 className="font-black text-sm uppercase tracking-widest text-white">Detail Pengguna</h2>
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+          </div>
+        ) : !user ? (
+          <div className="text-center py-12 text-gray-500 text-sm font-bold">Data tidak ditemukan.</div>
+        ) : (
+          <div className="p-6 space-y-6">
+            {/* Photos */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Profile photo */}
+              <div className="space-y-2">
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Foto Profil</p>
+                {user.profile_photo_url && !imgError['profile'] ? (
+                  <img
+                    src={user.profile_photo_url}
+                    alt="Foto profil"
+                    className="w-full h-36 object-cover rounded-2xl border border-white/10"
+                    onError={() => setImgError(p => ({ ...p, profile: true }))}
+                  />
+                ) : (
+                  <div className="w-full h-36 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-2xl">
+                      {user.name?.charAt(0)?.toUpperCase() ?? '?'}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* KTP document */}
+              <div className="space-y-2">
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Dokumen KTP</p>
+                {user.ktp_document_url && !imgError['ktp'] ? (
+                  <a href={user.ktp_document_url} target="_blank" rel="noreferrer">
+                    <img
+                      src={user.ktp_document_url}
+                      alt="KTP"
+                      className="w-full h-36 object-cover rounded-2xl border border-white/10 hover:opacity-80 transition-opacity cursor-pointer"
+                      onError={() => setImgError(p => ({ ...p, ktp: true }))}
+                    />
+                  </a>
+                ) : (
+                  <div className="w-full h-36 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center justify-center text-gray-600 text-xs font-bold">
+                    Belum ada dokumen
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Personal data */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <Field label="Nama Lengkap" value={user.name} />
+              <Field label="Email" value={user.email} />
+              <Field label="No. Telepon" value={user.phone} />
+              <Field label="Role" value={user.role} />
+              <Field label="No. KTP" value={user.ktp} />
+              <Field label="Alamat" value={user.address} />
+              <Field label="Tanggal Daftar" value={user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null} />
+              <Field label="Status" value={user.is_suspended ? 'Suspended' : user.verified ? 'Aktif ✓' : 'Pending Verifikasi'} />
+            </div>
+
+            {/* Agent-specific */}
+            {user.role === 'AGENT' && (
+              <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-x-6 gap-y-4">
+                <Field label="Kode Agen" value={user.agent_code} />
+                <Field label="Kode Referral" value={user.referral_code} />
+                <Field label="Tier" value={user.tier ?? 'Standard'} />
+                <Field label="Komisi Rate" value={user.commission_rate != null ? `${(user.commission_rate * 100).toFixed(0)}%` : null} />
+                <Field label="Target Bulanan" value={user.monthly_target ? `Rp ${Number(user.monthly_target).toLocaleString('id-ID')}` : null} />
+                <Field label="Trust Score" value={user.trust_score != null ? String(user.trust_score) : null} />
+                {user.upline_id && <Field label="Upline ID" value={user.upline_id} />}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
     primary: "bg-primary-500/10 text-primary-500 border-primary-500/20",
@@ -1394,6 +1507,7 @@ export const AgentManagementView = () => {
   const [editRate, setEditRate] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const adminId: string = (() => {
     try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.supabaseId ?? ''; }
@@ -1467,10 +1581,18 @@ export const AgentManagementView = () => {
     return (
       <Card key={a.id} className="py-5">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {/* Avatar + info */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center font-black text-sm flex-shrink-0">
-              {a.name.charAt(0).toUpperCase()}
+          {/* Avatar + info — click to view full profile */}
+          <button
+            type="button"
+            onClick={() => setSelectedAgentId(a.id)}
+            className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
+              {a.profile_photo_url ? (
+                <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
+              ) : (
+                a.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1478,9 +1600,9 @@ export const AgentManagementView = () => {
                 <TierBadge tier={agentTier} />
               </div>
               <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest truncate">{a.email}</p>
-              <p className="text-[0.6rem] font-bold text-primary-500 uppercase tracking-widest">{(a as any).agent_code ?? '-'}</p>
+              <p className="text-[0.6rem] font-bold text-primary-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
             </div>
-          </div>
+          </button>
 
           {/* Tier selector — business manager only */}
           {canAssignTier && (
@@ -1570,6 +1692,7 @@ export const AgentManagementView = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {selectedAgentId && <UserDetailModal userId={selectedAgentId} onClose={() => setSelectedAgentId(null)} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
 
       {/* Header actions */}
@@ -1761,6 +1884,7 @@ export const UserManagementView = () => {
   const [addError, setAddError] = useState<string | null>(null);
   const [addLoading, setAddLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const load = async () => {
     setLoadError(null);
@@ -1830,6 +1954,7 @@ export const UserManagementView = () => {
 
   return (
     <div className="space-y-6 animate-fade-in text-white">
+      {selectedUserId && <UserDetailModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
       {loadError && (
         <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 font-bold">{loadError}</div>
       )}
@@ -1896,12 +2021,18 @@ export const UserManagementView = () => {
                 return (
                   <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
                     <td className="py-3.5 pl-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0">
-                          {u.name[0].toUpperCase()}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUserId(u.id)}
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
+                          {(u as any).profile_photo_url ? (
+                            <img src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
+                          ) : u.name[0].toUpperCase()}
                         </div>
                         <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="py-3.5 font-mono text-[0.65rem] text-gray-400">{u.email}</td>
                     <td className="py-3.5">

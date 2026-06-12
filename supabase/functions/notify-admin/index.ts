@@ -56,20 +56,22 @@ serve(async (req) => {
       )
     }
 
-    // New policy order
-    if (table === 'sp_policies' && type === 'INSERT') {
-      const policyNo = record.policy_number ?? record.id ?? '-'
-      const type_    = record.type ?? '-'
-      const premium  = record.premium
-        ? `Rp ${Number(record.premium).toLocaleString('id-ID')}`
+    // New policy order (sp_policy_orders is the active orders table)
+    if (table === 'sp_policy_orders' && type === 'INSERT') {
+      const orderNo  = record.order_number ?? record.id ?? '-'
+      const client   = record.client_name ?? '-'
+      const product  = record.product_name ?? '-'
+      const premium  = record.total_premium
+        ? `Rp ${Number(record.total_premium).toLocaleString('id-ID')}`
         : '-'
       const status   = record.status ?? 'PENDING'
       const time     = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
 
       await sendTelegram(
         `📋 <b>Order Polis Baru – SurePath</b>\n\n` +
-        `🔢 <b>No. Polis:</b> ${policyNo}\n` +
-        `📦 <b>Jenis:</b> ${type_}\n` +
+        `🔢 <b>No. Order:</b> ${orderNo}\n` +
+        `👤 <b>Nasabah:</b> ${client}\n` +
+        `📦 <b>Produk:</b> ${product}\n` +
         `💰 <b>Premi:</b> ${premium}\n` +
         `📊 <b>Status:</b> ${status}\n` +
         `🕐 <b>Waktu:</b> ${time} WIB\n\n` +

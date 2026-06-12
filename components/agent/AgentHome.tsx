@@ -33,9 +33,9 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   const progress = Math.min((stats.totalCommissionMonth / monthlyTarget) * 100, 100);
 
   const statusColor: Record<string, string> = {
-    PAID: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-    PENDING: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-    CANCELLED: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',
+    PAID: 'bg-emerald-100 text-emerald-700',
+    PENDING: 'bg-amber-100 text-amber-700',
+    CANCELLED: 'bg-rose-100 text-rose-700',
   };
 
   const productLabel: Record<string, string> = {
@@ -62,31 +62,31 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-28">
+    <div className="bg-ds-bg min-h-screen pb-28">
 
       {/* Header */}
-      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-ds-card px-5 pt-12 pb-5 border-b border-ds-border">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-sm shadow-ds-green">
               {(agent?.name ?? 'A')[0].toUpperCase()}
             </div>
             <div>
-              <p className="text-xs text-gray-500">{greeting()}, </p>
-              <h2 className="text-base font-semibold text-gray-900">{agent?.name?.split(' ')[0] ?? 'Agen'}</h2>
+              <p className="text-xs text-ds-ink3">{greeting()}</p>
+              <h2 className="text-base font-black text-ds-ink">{agent?.name?.split(' ')[0] ?? 'Agen'}</h2>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {agentTier && (
               <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 agentTier === 'ELITE'
-                  ? 'bg-purple-100 text-purple-700'
+                  ? 'bg-ds-purple-lt text-ds-purple'
                   : 'bg-amber-100 text-amber-700'
               }`}>
                 {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
               </span>
             )}
-            <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold">
+            <span className="px-2.5 py-1 rounded-full bg-ds-card2 border border-ds-border text-ds-ink2 text-[10px] font-bold">
               {agent?.agent_code ?? 'SP-AGT'}
             </span>
           </div>
@@ -95,139 +95,106 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
       {/* Commission Hero Card */}
       <div className="px-5 pt-4">
-        <div className="rounded-2xl p-5 bg-gray-900 text-white sp-enter" style={{boxShadow: '0 8px 32px rgba(0,0,0,0.15)'}}>
-          <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-1">{t('Commission This Month', 'Komisi Bulan Ini')}</p>
-          <div className="flex items-end gap-2">
-            <span className="text-gray-400 text-sm font-medium">Rp</span>
-            <span className="text-3xl font-bold font-mono text-white">{(stats.totalCommissionMonth / 1000000).toFixed(1)}jt</span>
-            <span className="ml-1 mb-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">+18%</span>
-          </div>
-          <div className="mt-4 pt-4 border-t border-white/10 flex gap-5">
-            <div>
-              <p className="text-gray-500 text-xs">{t('Coins', 'Koin')}</p>
-              <p className="text-white text-sm font-semibold">{coinBalance.toLocaleString()}</p>
+        <div className="rounded-3xl p-5 bg-ds-navy text-white relative overflow-hidden shadow-ds-navy">
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.12)' }} />
+          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.06)' }} />
+          <div className="relative z-10">
+            <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-1">
+              {t('Commission This Month', 'Komisi Bulan Ini')}
+            </p>
+            <div className="flex items-end gap-2 mb-4">
+              <span className="text-white/50 text-sm font-medium">Rp</span>
+              <span className="text-3xl font-black text-white font-mono">
+                {(stats.totalCommissionMonth / 1000000).toFixed(1)}jt
+              </span>
+              <span className="mb-1 px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: 'rgba(0,200,150,0.2)', color: '#00C896' }}>+18%</span>
             </div>
-            <div>
-              <p className="text-gray-500 text-xs">{t('Clients', 'Klien')}</p>
-              <p className="text-white text-sm font-semibold">{stats.clientsCount}</p>
+
+            {/* Progress bar */}
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-white/40 text-[10px] font-medium">
+                  {formatIDR(stats.totalCommissionMonth)} / {formatIDR(monthlyTarget)}
+                </span>
+                <span className="text-[10px] font-black" style={{ color: '#00C896' }}>{Math.round(progress)}%</span>
+              </div>
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700 motion-reduce:transition-none"
+                  style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #00C896, #009E78)' }}
+                />
+              </div>
+              {progress >= 100 && (
+                <p className="text-[10px] font-bold mt-1" style={{ color: '#00C896' }}>
+                  {t('Target Achieved! 🎉', 'Target Tercapai! 🎉')}
+                </p>
+              )}
             </div>
-            <div>
-              <p className="text-gray-500 text-xs">{t('Policies', 'Polis')}</p>
-              <p className="text-white text-sm font-semibold">{stats.totalPolicies}</p>
+
+            <div className="flex gap-5 pt-3 border-t border-white/10">
+              <div>
+                <p className="text-white/40 text-[10px]">{t('Coins', 'Koin')}</p>
+                <p className="text-white text-sm font-bold">{coinBalance.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-[10px]">{t('Clients', 'Klien')}</p>
+                <p className="text-white text-sm font-bold">{stats.clientsCount}</p>
+              </div>
+              <div>
+                <p className="text-white/40 text-[10px]">{t('Policies', 'Polis')}</p>
+                <p className="text-white text-sm font-bold">{stats.totalPolicies}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Stat Cards 2×2 */}
-      <div className="px-5 mt-4 grid grid-cols-2 gap-3 sp-enter sp-enter-d1">
-        {/* GWP This Month */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 active:scale-[0.98] transition-transform">
+      <div className="px-5 mt-4 grid grid-cols-2 gap-3">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-[#16a34a]/20 rounded-xl flex items-center justify-center">
-              <TrendingUp size={14} className="text-[#16a34a]" />
+            <div className="w-7 h-7 bg-ds-green-tint rounded-xl flex items-center justify-center">
+              <TrendingUp size={14} className="text-ds-green" />
             </div>
-            <span className="text-xs text-gray-500 font-medium">
-              {t('GWP / Month', 'GWP Bulan Ini')}
-            </span>
+            <span className="text-[10px] text-ds-ink3 font-medium">{t('GWP / Month', 'GWP Bulan Ini')}</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 font-mono">
-            {formatIDR(stats.totalCommissionMonth * 8)}
-          </div>
-          <div className="text-xs text-gray-400 mt-0.5">{t('estimated', 'estimasi')}</div>
+          <div className="text-xl font-black text-ds-ink font-mono">{formatIDR(stats.totalCommissionMonth * 8)}</div>
+          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('estimated', 'estimasi')}</div>
         </div>
 
-        {/* Total Clients */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 active:scale-[0.98] transition-transform">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <Users size={14} className="text-blue-500" />
+            <div className="w-7 h-7 bg-blue-50 rounded-xl flex items-center justify-center">
+              <Users size={14} className="text-ds-blue" />
             </div>
-            <span className="text-xs text-gray-500 font-medium">
-              {t('Clients', 'Klien')}
-            </span>
+            <span className="text-[10px] text-ds-ink3 font-medium">{t('Clients', 'Klien')}</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 font-mono">
-            {stats.clientsCount}
-          </div>
-          <div className="text-xs text-gray-400 mt-0.5">{t('total', 'total')}</div>
+          <div className="text-xl font-black text-ds-ink font-mono">{stats.clientsCount}</div>
+          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('total', 'total')}</div>
         </div>
 
-        {/* Active Policies */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 active:scale-[0.98] transition-transform">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-              <Shield size={14} className="text-emerald-500" />
+            <div className="w-7 h-7 bg-ds-green-tint rounded-xl flex items-center justify-center">
+              <Shield size={14} className="text-ds-green" />
             </div>
-            <span className="text-xs text-gray-500 font-medium">
-              {t('Policies', 'Polis')}
-            </span>
+            <span className="text-[10px] text-ds-ink3 font-medium">{t('Policies', 'Polis')}</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 font-mono">
-            {stats.policiesCount}
-          </div>
-          <div className="text-xs text-gray-400 mt-0.5">{t('active', 'aktif')}</div>
+          <div className="text-xl font-black text-ds-ink font-mono">{stats.policiesCount}</div>
+          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('active', 'aktif')}</div>
         </div>
 
-        {/* Earned This Month */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 active:scale-[0.98] transition-transform">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-violet-500/20 rounded-xl flex items-center justify-center">
-              <Wallet size={14} className="text-violet-500" />
+            <div className="w-7 h-7 bg-ds-purple-lt rounded-xl flex items-center justify-center">
+              <Wallet size={14} className="text-ds-purple" />
             </div>
-            <span className="text-xs text-gray-500 font-medium">
-              {t('Earned', 'Komisi')}
-            </span>
+            <span className="text-[10px] text-ds-ink3 font-medium">{t('Earned', 'Komisi')}</span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 font-mono">
-            {formatIDR(stats.totalCommissionMonth)}
-          </div>
-          <div className="text-xs text-gray-400 mt-0.5">{t('this month', 'bulan ini')}</div>
+          <div className="text-xl font-black text-ds-ink font-mono">{formatIDR(stats.totalCommissionMonth)}</div>
+          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('this month', 'bulan ini')}</div>
           {coinBalance > 0 && (
-            <div className="text-[10px] text-amber-500 font-bold mt-1">
-              🪙 {coinBalance.toLocaleString('id-ID')} poin tersedia
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Monthly Target Progress */}
-      <div className="px-5 mt-4 sp-enter sp-enter-d2">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="text-xs text-gray-500 font-medium">
-                {t('Monthly Target', 'Target Bulan Ini')}
-              </p>
-              <p className="font-bold text-lg text-gray-900">
-                {formatIDR(stats.totalCommissionMonth)}
-                <span className="text-gray-400 font-medium text-sm"> / {formatIDR(monthlyTarget)}</span>
-              </p>
-            </div>
-            <span className={`text-lg font-bold ${progress >= 100 ? 'text-emerald-500' : 'text-[#16a34a]'}`}>
-              {Math.round(progress)}%
-            </span>
-          </div>
-          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700 motion-reduce:transition-none"
-              style={{
-                width: `${progress}%`,
-                background: progress >= 100
-                  ? 'linear-gradient(90deg, #10b981, #34d399)'
-                  : 'linear-gradient(90deg, #16a34a, #4ade80)',
-              }}
-            />
-          </div>
-          {progress >= 100 && (
-            <p className="text-emerald-500 text-xs font-semibold mt-2">
-              {t('Target Achieved! Keep going!', 'Target Tercapai! Terus semangat!')}
-            </p>
-          )}
-          {progress < 100 && (
-            <p className="text-gray-400 text-xs font-medium mt-2">
-              {formatIDR(monthlyTarget - stats.totalCommissionMonth)} {t('more to reach your target', 'lagi untuk capai target')}
-            </p>
+            <div className="text-[10px] text-ds-amber font-bold mt-1">🪙 {coinBalance.toLocaleString('id-ID')} poin</div>
           )}
         </div>
       </div>
@@ -235,107 +202,61 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       {/* Renewal Alerts */}
       <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
 
-      {/* Quick Action Buttons — 4-col grid, 2 rows */}
+      {/* Quick Actions */}
       <div className="px-5 mt-4">
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          {
-            tab: 'quotes',
-            label: t('New Quote', 'Penawaran'),
-            icon: FileText,
-            color: 'text-blue-500',
-            bg: 'bg-blue-500/10',
-          },
-          {
-            tab: 'clients',
-            label: t('Clients', 'Klien'),
-            icon: Users,
-            color: 'text-[#16a34a]',
-            bg: 'bg-[#16a34a]/10',
-          },
-          {
-            tab: 'claims',
-            label: t('Claims', 'Klaim'),
-            icon: ClipboardList,
-            color: 'text-rose-500',
-            bg: 'bg-rose-500/10',
-          },
-          {
-            tab: 'policy',
-            label: t('Policy', 'Polis'),
-            icon: Shield,
-            color: 'text-emerald-500',
-            bg: 'bg-emerald-500/10',
-          },
-          {
-            tab: 'leaderboard',
-            label: t('Ranking', 'Ranking'),
-            icon: Trophy,
-            color: 'text-amber-500',
-            bg: 'bg-amber-500/10',
-          },
-          {
-            tab: 'network',
-            label: t('Network', 'Jaringan'),
-            icon: Network,
-            color: 'text-violet-500',
-            bg: 'bg-violet-500/10',
-          },
-          {
-            tab: 'renewals',
-            label: t('Renewal', 'Renewal'),
-            icon: RefreshCw,
-            color: 'text-cyan-500',
-            bg: 'bg-cyan-500/10',
-          },
-          {
-            tab: 'endorsements',
-            label: t('Endorse', 'Endors'),
-            icon: FileEdit,
-            color: 'text-indigo-500',
-            bg: 'bg-indigo-500/10',
-          },
-        ].map((action) => (
-          <div
-            key={`${action.tab}-${action.label}`}
-            onClick={() => onNavigate(action.tab)}
-            className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-all"
-          >
-            <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300`}>
-              <action.icon size={24} strokeWidth={2.5} />
+        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { tab: 'quotes',       label: t('Quote', 'Penawaran'),  icon: FileText,      color: 'text-ds-blue',   bg: 'bg-blue-50'       },
+            { tab: 'clients',      label: t('Clients', 'Klien'),    icon: Users,         color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+            { tab: 'claims',       label: t('Claims', 'Klaim'),     icon: ClipboardList, color: 'text-rose-500',  bg: 'bg-rose-50'       },
+            { tab: 'policy',       label: t('Policy', 'Polis'),     icon: Shield,        color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+            { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     icon: Trophy,        color: 'text-ds-amber',  bg: 'bg-amber-50'      },
+            { tab: 'network',      label: t('Network', 'Jaringan'), icon: Network,       color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
+            { tab: 'renewals',     label: t('Renewal', 'Renewal'),  icon: RefreshCw,     color: 'text-ds-blue',   bg: 'bg-blue-50'       },
+            { tab: 'endorsements', label: t('Endorse', 'Endors'),   icon: FileEdit,      color: 'text-ds-ink2',   bg: 'bg-ds-card2'      },
+          ].map((action) => (
+            <div
+              key={`${action.tab}-${action.label}`}
+              onClick={() => onNavigate(action.tab)}
+              className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
+            >
+              <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                <action.icon size={22} strokeWidth={2} />
+              </div>
+              <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
             </div>
-            <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight">
-              {action.label}
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
       </div>
 
       {/* Recent Commissions */}
-      <div className="px-5 mt-4 sp-enter sp-enter-d4">
+      <div className="px-5 mt-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
-          <button onClick={() => onNavigate('commission')} className="text-xs font-medium text-emerald-600">{t('All', 'Semua')}</button>
+          <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
+          <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('All', 'Semua')}</button>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm overflow-hidden">
           {recentCommissions.length === 0 ? (
             <div className="p-5 text-center">
-              <p className="text-sm text-gray-400">{t('No commissions yet', 'Belum ada komisi')}</p>
+              <p className="text-sm text-ds-ink3">{t('No commissions yet', 'Belum ada komisi')}</p>
             </div>
           ) : (
             recentCommissions.slice(0, 3).map((c, i) => (
-              <div key={c.id} className={`flex items-center gap-3 px-4 py-3 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-gray-50' : ''}`}>
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp size={16} className="text-emerald-600" />
+              <div
+                key={c.id}
+                className={`flex items-center gap-3 px-4 py-3 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
+              >
+                <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                  <TrendingUp size={16} className="text-ds-green" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{productLabel[c.product_type] ?? c.product_type}</p>
-                  <p className="text-xs text-gray-400">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                  <p className="text-sm font-bold text-ds-ink truncate">{productLabel[c.product_type] ?? c.product_type}</p>
+                  <p className="text-[10px] text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-emerald-600">+{formatIDR(c.amount)}</p>
-                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-gray-100 text-gray-600'}`}>{c.status}</span>
+                  <p className="text-sm font-black text-ds-green">+{formatIDR(c.amount)}</p>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
                 </div>
               </div>
             ))
@@ -344,15 +265,15 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </div>
 
       {/* AI Tips */}
-      <div className="px-5 mt-4 sp-enter sp-enter-d3">
-        <div className="rounded-2xl p-4 bg-gradient-to-br from-slate-900 to-blue-950 border border-blue-800/30">
+      <div className="px-5 mt-4 pb-4">
+        <div className="rounded-2xl p-4 bg-ds-purple-lt border border-purple-100">
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <Lightbulb size={16} className="text-blue-400" />
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-ds-sm">
+              <Lightbulb size={16} className="text-ds-purple" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-blue-300 mb-1">SurePath AI</p>
-              <p className="text-sm text-gray-300 leading-relaxed">{tip}</p>
+              <p className="text-[10px] font-black text-ds-purple uppercase tracking-wider mb-1">SurePath AI</p>
+              <p className="text-sm text-ds-ink leading-relaxed">{tip}</p>
             </div>
           </div>
         </div>

@@ -97,122 +97,121 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'home':
         return (
           <PageTransition>
-            <div className="space-y-7 pb-32">
+            <div className="space-y-5 pb-32">
               {/* Greeting */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => navigate('profile')}
-                    className="relative cursor-pointer active:scale-[0.96] transition-transform duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded-[1.8rem]"
+                    className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
                   >
-                    <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden ring-1 ring-emerald-500/10">
-                      <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 flex items-center justify-center text-xl font-black text-white">
-                        {currentUser?.name?.[0]}
-                      </div>
+                    <div className="w-12 h-12 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-ds-green">
+                      {currentUser?.name?.[0]}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full border-4 border-[#fafaf9] dark:border-[#0a0a0a] flex items-center justify-center text-[0.55rem] text-white font-black shadow-lg shadow-emerald-500/40">
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full border-2 border-ds-bg flex items-center justify-center text-[8px] text-ds-green font-black shadow-sm">
                       {currentUser?.trustScore || 85}
                     </div>
                   </button>
                   <div>
-                    <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                      {timeGreeting}, {currentUser?.name?.split(' ')[0]}!
+                    <p className="text-xs text-ds-ink3">{timeGreeting}</p>
+                    <h3 className="text-base font-black text-ds-ink tracking-tight">
+                      {currentUser?.name?.split(' ')[0]}!
                     </h3>
-                    <p className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-1 mt-1.5">
-                      <ShieldCheck size={11} className="animate-pulse motion-reduce:animate-none" />
-                      {t('SECURE ACCOUNT', 'AKUN AMAN')}
-                    </p>
                   </div>
+                </div>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-green-tint rounded-full text-[10px] font-bold text-ds-green">
+                  <ShieldCheck size={10} />
+                  {t('Protected', 'Terlindungi')}
+                </span>
+              </div>
+
+              {/* Hero protection card */}
+              <div className="rounded-3xl p-5 bg-ds-navy text-white relative overflow-hidden shadow-ds-navy">
+                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.12)' }} />
+                <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.06)' }} />
+                <div className="relative z-10">
+                  <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">
+                    {t('Protection Status', 'Status Proteksi')}
+                  </p>
+                  {latestPolicy ? (
+                    <>
+                      <h4 className="text-xl font-black text-white">
+                        {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
+                      </h4>
+                      <p className="text-xs text-white/50 mt-0.5">
+                        {t('Active until', 'Aktif hingga')}{' '}
+                        {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
+                          lang === Language.EN ? 'en-US' : 'id-ID',
+                          { month: 'long', year: 'numeric' }
+                        )}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
+                          <span className="text-xs text-ds-green font-bold">{t('Active', 'Aktif')}</span>
+                        </div>
+                        <button
+                          onClick={() => navigate('profile')}
+                          className="px-4 py-1.5 bg-white/10 border border-white/10 rounded-xl text-xs text-white font-bold hover:bg-white/15 transition-all active:scale-95"
+                        >
+                          {t('Details', 'Detail')} →
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="text-xl font-black text-white mt-1">{t('No active policy', 'Belum ada polis')}</h4>
+                      <p className="text-xs text-white/50 mt-0.5">{t('Start protecting yourself today', 'Mulai lindungi dirimu sekarang')}</p>
+                      <button
+                        onClick={() => navigate('products')}
+                        className="mt-4 px-4 py-2 bg-ds-green rounded-xl text-xs text-white font-black tracking-wide shadow-ds-green active:scale-95 transition-transform"
+                      >
+                        {t('Buy Insurance', 'Beli Asuransi')} →
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick actions */}
+              <div>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { id: 'products', label: t('Buy', 'Beli'),       icon: ShoppingBag, color: 'text-blue-500',  bg: 'bg-blue-50'       },
+                    { id: 'claim',    label: t('Claim', 'Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50'       },
+                    { id: 'history',  label: t('History', 'Riwayat'), icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+                    { id: 'bot',      label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
+                  ].map(action => (
+                    <button
+                      type="button"
+                      key={action.id}
+                      onClick={() => navigate(action.id)}
+                      className="flex flex-col items-center gap-2 group active:scale-90 transition-transform focus:outline-none"
+                    >
+                      <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                        <action.icon size={24} strokeWidth={2} />
+                      </div>
+                      <span className="text-[10px] font-bold text-ds-ink2 text-center">{action.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <PortalHero onAction={navigate} lang={lang} />
 
-              {/* Quick actions */}
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 px-1 -mb-2">
-                {t('Quick Actions', 'Aksi Cepat')}
-              </p>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10',    ring: 'group-hover:ring-blue-500/20' },
-                  { id: 'claim',    label: t('Claim', 'Klaim'),      icon: Zap,         color: 'text-rose-500',    bg: 'bg-rose-500/10',    ring: 'group-hover:ring-rose-500/20' },
-                  { id: 'history',  label: t('History', 'Riwayat'),  icon: History,     color: 'text-emerald-500', bg: 'bg-emerald-500/10', ring: 'group-hover:ring-emerald-500/20' },
-                  { id: 'bot',      label: 'Chat AI',                icon: Bot,         color: 'text-amber-500',   bg: 'bg-amber-500/10',   ring: 'group-hover:ring-amber-500/20' },
-                ].map(action => (
-                  <button
-                    type="button"
-                    key={action.id}
-                    onClick={() => navigate(action.id)}
-                    className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-transform duration-200 motion-reduce:transition-none focus:outline-none"
-                  >
-                    <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 ${action.ring} group-hover:scale-110 group-hover:-translate-y-0.5 group-active:shadow-inner transition-all duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      <action.icon size={26} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Latest policy card */}
-              {latestPolicy && (
-                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
-                  <div className="absolute -top-10 -left-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 text-emerald-600 group-hover:rotate-0 transition-transform duration-1000 motion-reduce:transition-none">
-                    {latestPolicy.type === 'CAR' ? <Car size={130} /> : <Plane size={130} />}
-                  </div>
-                  <div className="relative z-10 space-y-5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-[0.55rem] font-black text-primary-500 uppercase tracking-[0.4em]">
-                          {t('YOUR INSURANCE', 'ASURANSI KAMU')}
-                        </p>
-                        <h4 className="text-xl font-black uppercase tracking-tighter mt-0.5">
-                          {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
-                        </h4>
-                      </div>
-                      <div className="p-2.5 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 rounded-2xl border border-emerald-500/20 shadow-sm">
-                        <ShieldCheck size={20} className="text-emerald-500" />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest">
-                          {t('EXPIRES ON', 'AKHIR POLIS')}
-                        </p>
-                        <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
-                            lang === Language.EN ? 'en-US' : 'id-ID',
-                            { month: 'long', year: 'numeric' }
-                          )}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => navigate('profile')}
-                        className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 motion-reduce:transition-none"
-                      >
-                        {t('Details', 'Detail')}
-                      </button>
-                    </div>
-                  </div>
+              {/* AI insight card */}
+              <div className="rounded-3xl p-4 bg-ds-purple-lt border border-purple-100 flex gap-3 items-start">
+                <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-ds-sm">
+                  <Lightbulb size={20} className="text-ds-purple" />
                 </div>
-              )}
-
-              {/* Tip */}
-              <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 ring-1 ring-inset ring-amber-500/10">
-                  <Lightbulb size={24} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[0.55rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">
-                    {t('DID YOU KNOW?', 'TAHUKAH KAMU?')}
-                  </p>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-black text-ds-purple uppercase tracking-wider">SurePath AI</p>
+                  <p className="text-sm text-ds-ink leading-relaxed">
                     {t(
-                      'You can file a claim by just taking a photo. Our AI processes it in minutes.',
-                      'Kamu bisa lapor klaim cuma lewat foto HP. AI kami memprosesnya dalam hitungan menit.'
+                      'File a claim by just taking a photo. Our AI processes it in minutes.',
+                      'Lapor klaim cukup dengan foto HP. AI kami memprosesnya dalam hitungan menit.'
                     )}
                   </p>
                 </div>
@@ -403,11 +402,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-white transition-colors duration-300">
 
       {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 shadow-[0_1px_20px_-12px_rgba(0,0,0,0.3)]">
+        <header className="fixed top-0 inset-x-0 z-40 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-xl border-b border-ds-border dark:border-ds-dk-bd shadow-ds-sm">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
@@ -415,9 +414,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </div>
               <div>
                 <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                  Sure<span className="text-primary-500">Path</span>
+                  Sure<span className="text-ds-green">Path</span>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none">
                   {t('Customer Portal', 'Portal Nasabah')}
                 </div>
               </div>
@@ -428,7 +427,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <div className="text-xs font-black tracking-tight leading-none">
                   {currentUser?.name ?? 'Nasabah'}
                 </div>
-                <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
+                <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5">
                   {currentUser?.nodeId ?? 'SP-USER'}
                 </div>
               </div>
@@ -512,7 +511,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/85 dark:bg-[#111]/85 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5 ring-1 ring-black/5 dark:ring-white/5">
+        <nav className="fixed bottom-6 inset-x-3 z-50 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
           <div className="flex items-center justify-around px-1 py-2.5">
             {TABS.map(({ id, labelEn, labelId, Icon }) => {
               const active = activeTab === id;
@@ -524,8 +523,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   onClick={() => navigate(id)}
                   className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
                     active
-                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
+                      ? 'bg-ds-green text-white scale-110 shadow-ds-green'
+                      : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
                   }`}
                 >
                   <Icon size={16} strokeWidth={active ? 2.5 : 2} />

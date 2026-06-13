@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp, Users, Shield, Wallet, ChevronRight,
+  TrendingUp, Users, Shield, ChevronRight,
   FileText, ClipboardList,
-  Trophy, Network, RefreshCw, FileEdit, Target, Zap
+  Trophy, Network, RefreshCw, FileEdit, Target,
+  Gem, Star, Coins,
 } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
-import { PathyMascot, PipelineStat, SectionLabel } from '../shared/cards';
+import { PathyMascot } from '../shared/cards';
 
 interface Props {
   agent: any;
@@ -23,6 +25,7 @@ interface Props {
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [coinBalance, setCoinBalance] = useState(0);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (agentId) {
@@ -32,6 +35,17 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   const monthlyTarget = agent?.monthly_target ?? 10000000;
   const progress = Math.min((stats.totalCommissionMonth / monthlyTarget) * 100, 100);
+  const conversion = stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0;
+
+  // Subtle staggered entrance — collapses to static under reduced motion.
+  const reveal = (i: number) =>
+    reduce
+      ? {}
+      : {
+          initial: { opacity: 0, y: 18 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] as const },
+        };
 
   const statusColor: Record<string, string> = {
     PAID: 'bg-emerald-100 text-emerald-700',
@@ -63,26 +77,38 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
     return t('Good Night', 'Selamat Malam');
   };
 
+  const quickActions = [
+    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  icon: FileText,      color: 'text-ds-blue',   bg: 'bg-blue-50'       },
+    { tab: 'clients',      label: t('Clients', 'Klien'),    icon: Users,         color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+    { tab: 'claims',       label: t('Claims', 'Klaim'),     icon: ClipboardList, color: 'text-rose-500',  bg: 'bg-rose-50'       },
+    { tab: 'policy',       label: t('Policy', 'Polis'),     icon: Shield,        color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     icon: Trophy,        color: 'text-ds-amber',  bg: 'bg-amber-50'      },
+    { tab: 'network',      label: t('Network', 'Jaringan'), icon: Network,       color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
+    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  icon: RefreshCw,     color: 'text-ds-blue',   bg: 'bg-blue-50'       },
+    { tab: 'endorsements', label: t('Endorse', 'Endors'),   icon: FileEdit,      color: 'text-ds-ink2',   bg: 'bg-ds-card2'      },
+  ];
+
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
 
-      {/* Inline header — greeting */}
-      <div className="px-5 pt-12 pb-2">
+      {/* Greeting */}
+      <motion.div className="px-5 pt-12 pb-1" {...reveal(0)}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-ds-ink3 font-medium">{greeting()},</p>
-            <h2 className="text-xl font-black text-ds-ink tracking-tight">
+            <h2 className="text-2xl font-black text-ds-ink tracking-tight">
               {agent?.name?.split(' ')[0] ?? 'Agen'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
             {agentTier && (
-              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 agentTier === 'ELITE'
                   ? 'bg-ds-purple-lt text-ds-purple'
                   : 'bg-amber-100 text-amber-700'
               }`}>
-                {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Top Agent'}
+                {agentTier === 'ELITE' ? <Gem size={11} /> : <Star size={11} />}
+                {agentTier === 'ELITE' ? t('Elite', 'Elite') : t('Top Agent', 'Agen Top')}
               </span>
             )}
             <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-sm shadow-ds-green">
@@ -90,184 +116,126 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Commission Hero Card */}
-      <div className="px-5 pt-3">
-        <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 8px 32px rgba(0,59,47,0.5)' }}>
-          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.15)' }} />
+      {/* Commission Hero — the single focal point of the screen */}
+      <motion.div className="px-5 pt-4" {...reveal(1)}>
+        <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 12px 40px rgba(0,59,47,0.45)' }}>
+          <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
           <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.07)' }} />
-          <div className="relative z-10 flex items-center gap-4">
-            {/* Commission amount + stats */}
-            <div className="flex-1">
-              <p className="text-white/50 text-[9px] font-black uppercase tracking-widest mb-1.5">
-                {t('My Commission', 'Komisi Saya')}
+
+          <div className="relative z-10 flex items-center gap-5">
+            <div className="flex-1 min-w-0">
+              <p className="text-white/50 text-[9px] font-black uppercase tracking-[0.18em] mb-2">
+                {t('Commission this month', 'Komisi Bulan Ini')}
               </p>
-              <div className="flex items-baseline gap-1.5 mb-3">
-                <span className="text-white/40 text-sm font-medium">Rp</span>
-                <span className="text-3xl font-black text-white font-mono leading-none">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-white/40 text-base font-medium">Rp</span>
+                <span className="text-4xl font-black text-white font-mono leading-none tracking-tight">
                   {stats.totalCommissionMonth >= 1000000
                     ? `${(stats.totalCommissionMonth / 1000000).toFixed(1)}jt`
                     : stats.totalCommissionMonth.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex gap-4 pt-3 border-t border-white/10">
-                <div>
-                  <p className="text-white/35 text-[9px] font-medium">{t('Coins', 'Koin')}</p>
-                  <p className="text-white text-sm font-black">{coinBalance.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-white/35 text-[9px] font-medium">{t('Clients', 'Klien')}</p>
-                  <p className="text-white text-sm font-black">{stats.clientsCount}</p>
-                </div>
-                <div>
-                  <p className="text-white/35 text-[9px] font-medium">{t('Policies', 'Polis')}</p>
-                  <p className="text-white text-sm font-black">{stats.policiesCount}</p>
-                </div>
-              </div>
             </div>
-            {/* SVG Progress Ring */}
+
+            {/* Progress ring toward monthly target */}
             <div className="flex-shrink-0 flex flex-col items-center gap-1">
               <div className="relative">
-                <svg width="76" height="76" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
+                <svg width="78" height="78" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
                   <circle
-                    cx="50" cy="50" r="38"
-                    fill="none"
-                    stroke="#00C16A"
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray="238.76"
-                    strokeDashoffset={238.76 * (1 - progress / 100)}
+                    cx="50" cy="50" r="38" fill="none" stroke="#00C16A" strokeWidth="8" strokeLinecap="round"
+                    strokeDasharray="238.76" strokeDashoffset={238.76 * (1 - progress / 100)}
                     transform="rotate(-90 50 50)"
+                    style={{ transition: reduce ? undefined : 'stroke-dashoffset 1s cubic-bezier(0.16,1,0.3,1)' }}
                   />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-lg font-black text-white leading-none">{Math.round(progress)}%</span>
                 </div>
               </div>
-              <p className="text-[8px] text-white/35 font-bold text-center uppercase tracking-wider leading-tight">
-                {t('of target', 'dr target')}
-              </p>
+              <p className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t('of target', 'dr target')}</p>
             </div>
           </div>
-          {/* Target label below */}
-          <div className="relative z-10 mt-3 pt-3 border-t border-white/8">
-            <p className="text-white/30 text-[9px] font-medium">
-              {t('Target this month', 'Target bulan ini')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Sales Coach Card */}
-      <div className="px-5 mt-3">
-        <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #00C16A, #009E52)' }}>
-          <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center p-1 animate-float">
-                <PathyMascot size={26} />
+          {/* Inline micro-stats — the only place coins/clients/policies live */}
+          <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex">
+            {[
+              { label: t('Coins', 'Koin'), value: coinBalance.toLocaleString('id-ID') },
+              { label: t('Clients', 'Klien'), value: String(stats.clientsCount) },
+              { label: t('Policies', 'Polis'), value: String(stats.policiesCount) },
+            ].map((s, i) => (
+              <div key={s.label} className={`flex-1 ${i > 0 ? 'pl-4 border-l border-white/10' : ''}`}>
+                <p className="text-white/40 text-[9px] font-medium uppercase tracking-wider mb-0.5">{s.label}</p>
+                <p className="text-white text-base font-black font-mono">{s.value}</p>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
+            ))}
+          </div>
+
+          <p className="relative z-10 mt-4 text-white/35 text-[10px] font-medium">
+            {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Secondary performance — metrics NOT shown in the hero (no duplication) */}
+      <motion.div className="px-5 mt-5" {...reveal(2)}>
+        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5 flex items-center">
+          <div className="flex-1 pr-5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <TrendingUp size={13} className="text-ds-green" />
+              <p className="text-[10px] text-ds-ink3 font-medium uppercase tracking-wider">{t('GWP / Month', 'GWP Bulan Ini')}</p>
             </div>
-            <p className="text-sm font-bold text-white leading-snug mb-3">{dailyTip}</p>
-            <div className="flex items-center gap-4 pt-3 border-t border-white/20">
-              <div className="flex items-center gap-1.5">
-                <Target size={12} className="text-white/70" />
-                <div>
-                  <p className="text-[9px] text-white/60 font-medium">{t('Daily Goal', 'Target Harian')}</p>
-                  <p className="text-xs font-black text-white">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
-                </div>
-              </div>
-              <div className="w-px h-8 bg-white/20" />
-              <div>
-                <p className="text-[9px] text-white/60 font-medium">{t('Monthly Target', 'Target Bulan')}</p>
-                <p className="text-xs font-black text-white">{formatIDR(monthlyTarget)}</p>
-              </div>
+            <p className="text-xl font-black text-ds-ink font-mono leading-none">{formatIDR(stats.totalCommissionMonth * 8)}</p>
+            <p className="text-[10px] text-ds-ink3 mt-1">{t('estimated', 'estimasi')}</p>
+          </div>
+          <div className="flex-1 pl-5 border-l border-ds-border">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Target size={13} className="text-ds-amber" />
+              <p className="text-[10px] text-ds-ink3 font-medium uppercase tracking-wider">{t('Conversion', 'Konversi')}</p>
+            </div>
+            <p className="text-xl font-black text-ds-ink font-mono leading-none">{conversion}%</p>
+            <p className="text-[10px] text-ds-ink3 mt-1">{t('clients to policies', 'klien → polis')}</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Sales Coach — calm card, deliberately quieter than the hero */}
+      <motion.div className="px-5 mt-5" {...reveal(3)}>
+        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center p-1 flex-shrink-0 animate-float">
+              <PathyMascot size={30} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest text-ds-green mb-1.5">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
+              <p className="text-sm font-bold text-ds-ink leading-snug">{dailyTip}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
+            <div className="w-7 h-7 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+              <Target size={13} className="text-ds-green" />
+            </div>
+            <div>
+              <p className="text-[9px] text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
+              <p className="text-xs font-black text-ds-ink">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Sales Pipeline */}
-      <div className="px-5 mt-3">
-        <SectionLabel>{t('Sales Pipeline', 'Pipeline Penjualan')}</SectionLabel>
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center divide-x divide-ds-border">
-          <PipelineStat label={t('Clients', 'Klien')} value={stats.clientsCount} accent="#4D7CFE" />
-          <PipelineStat label={t('Policies', 'Polis')} value={stats.policiesCount} accent="#00C16A" />
-          <PipelineStat label={t('Conversion', 'Konversi')} value={`${stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0}%`} accent="#F5B942" />
-        </div>
-      </div>
-
-      {/* Stat Cards 2×2 */}
-      <div className="px-5 mt-3 grid grid-cols-2 gap-3">
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-ds-green-tint rounded-xl flex items-center justify-center">
-              <TrendingUp size={14} className="text-ds-green" />
-            </div>
-            <span className="text-[10px] text-ds-ink3 font-medium">{t('GWP / Month', 'GWP Bulan Ini')}</span>
-          </div>
-          <div className="text-xl font-black text-ds-ink font-mono">{formatIDR(stats.totalCommissionMonth * 8)}</div>
-          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('estimated', 'estimasi')}</div>
-        </div>
-
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-blue-50 rounded-xl flex items-center justify-center">
-              <Users size={14} className="text-ds-blue" />
-            </div>
-            <span className="text-[10px] text-ds-ink3 font-medium">{t('Clients', 'Klien')}</span>
-          </div>
-          <div className="text-xl font-black text-ds-ink font-mono">{stats.clientsCount}</div>
-          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('total active', 'total aktif')}</div>
-        </div>
-
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-ds-green-tint rounded-xl flex items-center justify-center">
-              <Shield size={14} className="text-ds-green" />
-            </div>
-            <span className="text-[10px] text-ds-ink3 font-medium">{t('Policies', 'Polis')}</span>
-          </div>
-          <div className="text-xl font-black text-ds-ink font-mono">{stats.policiesCount}</div>
-          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('active', 'aktif')}</div>
-        </div>
-
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 bg-ds-purple-lt rounded-xl flex items-center justify-center">
-              <Wallet size={14} className="text-ds-purple" />
-            </div>
-            <span className="text-[10px] text-ds-ink3 font-medium">{t('Commission', 'Komisi')}</span>
-          </div>
-          <div className="text-xl font-black text-ds-ink font-mono">{formatIDR(stats.totalCommissionMonth)}</div>
-          <div className="text-[10px] text-ds-ink3 mt-0.5">{t('this month', 'bulan ini')}</div>
-          {coinBalance > 0 && (
-            <div className="text-[10px] text-ds-amber font-bold mt-1">🪙 {coinBalance.toLocaleString('id-ID')} poin</div>
-          )}
-        </div>
-      </div>
+      </motion.div>
 
       {/* Renewal Alerts */}
-      <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
+      <motion.div {...reveal(4)}>
+        <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
+      </motion.div>
 
       {/* Quick Actions */}
-      <div className="px-5 mt-4">
-        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
-        <div className="grid grid-cols-4 gap-3">
-          {[
-            { tab: 'quotes',       label: t('Quote', 'Penawaran'),  icon: FileText,      color: 'text-ds-blue',   bg: 'bg-blue-50'       },
-            { tab: 'clients',      label: t('Clients', 'Klien'),    icon: Users,         color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-            { tab: 'claims',       label: t('Claims', 'Klaim'),     icon: ClipboardList, color: 'text-rose-500',  bg: 'bg-rose-50'       },
-            { tab: 'policy',       label: t('Policy', 'Polis'),     icon: Shield,        color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-            { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     icon: Trophy,        color: 'text-ds-amber',  bg: 'bg-amber-50'      },
-            { tab: 'network',      label: t('Network', 'Jaringan'), icon: Network,       color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
-            { tab: 'renewals',     label: t('Renewal', 'Renewal'),  icon: RefreshCw,     color: 'text-ds-blue',   bg: 'bg-blue-50'       },
-            { tab: 'endorsements', label: t('Endorse', 'Endors'),   icon: FileEdit,      color: 'text-ds-ink2',   bg: 'bg-ds-card2'      },
-          ].map((action) => (
-            <div
+      <motion.div className="px-5 mt-7" {...reveal(5)}>
+        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
+        <div className="grid grid-cols-4 gap-y-5 gap-x-3">
+          {quickActions.map((action) => (
+            <button
               key={`${action.tab}-${action.label}`}
               onClick={() => onNavigate(action.tab)}
               className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
@@ -276,27 +244,31 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                 <action.icon size={22} strokeWidth={2} />
               </div>
               <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
-            </div>
+            </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Recent Commissions */}
-      <div className="px-5 mt-4">
+      <motion.div className="px-5 mt-7" {...reveal(6)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
           <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('View All', 'Semua')}</button>
         </div>
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm overflow-hidden">
           {recentCommissions.length === 0 ? (
-            <div className="p-5 text-center">
-              <p className="text-sm text-ds-ink3">{t('No commissions yet', 'Belum ada komisi')}</p>
+            <div className="p-8 flex flex-col items-center text-center gap-2">
+              <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
+                <Coins size={20} className="text-ds-green" />
+              </div>
+              <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
+              <p className="text-xs text-ds-ink3 max-w-[14rem]">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>
             </div>
           ) : (
             recentCommissions.slice(0, 3).map((c, i) => (
               <div
                 key={c.id}
-                className={`flex items-center gap-3 px-4 py-3 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
+                className={`flex items-center gap-3 px-4 py-3.5 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
               >
                 <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
                   <TrendingUp size={16} className="text-ds-green" />
@@ -313,13 +285,13 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             ))
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Leaderboard Teaser */}
-      <div className="px-5 mt-4 pb-4">
+      <motion.div className="px-5 mt-5 pb-4" {...reveal(7)}>
         <button
           onClick={() => onNavigate('leaderboard')}
-          className="w-full rounded-2xl border border-ds-border bg-ds-card shadow-ds-sm p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          className="w-full rounded-[1.5rem] border border-ds-border bg-ds-card shadow-ds-sm p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
             <Trophy size={20} className="text-ds-amber" />
@@ -330,7 +302,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           </div>
           <ChevronRight size={16} className="text-ds-ink3 flex-shrink-0" />
         </button>
-      </div>
+      </motion.div>
 
     </div>
   );

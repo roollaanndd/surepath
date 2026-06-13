@@ -66,7 +66,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       doc.rect(0, 0, pageWidth, 45, 'F');
       
       // Accent line
-      doc.setFillColor(249, 115, 22); // orange-500
+      doc.setFillColor(0, 193, 106); 
       doc.rect(0, 45, pageWidth, 2, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -90,7 +90,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
 
       // --- Helper for Section Titles ---
       const addSectionTitle = (title: string, y: number) => {
-        doc.setFillColor(249, 115, 22); // orange-500
+        doc.setFillColor(0, 193, 106); 
         doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(12);

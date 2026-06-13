@@ -284,7 +284,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
       <button
         disabled={submitting}
         onClick={handleSubmit}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-white py-4 font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-white py-4 font-black text-sm shadow-lg shadow-emerald-500/25 disabled:opacity-60"
       >
         {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
         {t('Submit Submission', 'Kirim Pengajuan')}
@@ -328,7 +328,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
           <button
             disabled={!canNext[step]}
             onClick={handleNext}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-black disabled:opacity-40 shadow-lg shadow-orange-500/20"
+            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-black disabled:opacity-40 shadow-lg shadow-emerald-500/20"
           >
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>

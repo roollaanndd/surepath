@@ -40,7 +40,7 @@ const ContactPage = ({ lang }: { lang: Language }) => {
          {[
            { label: t("Email Protocol", "Protokol Email"), value: "support@surepath.ai", icon: Mail, color: "text-blue-500", bg: "bg-blue-50" },
            { label: t("Voice Link", "Jalur Suara"), value: "1500-SURE (7873)", icon: Phone, color: "text-emerald-500", bg: "bg-emerald-50" },
-           { label: t("AI Live Chat", "Chat AI Langsung"), value: "Open Pulse Chat", icon: MessageSquare, color: "text-emerald-500", bg: "bg-orange-50" },
+           { label: t("AI Live Chat", "Chat AI Langsung"), value: "Open Pulse Chat", icon: MessageSquare, color: "text-emerald-500", bg: "bg-emerald-50" },
          ].map((item, i) => (
            <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl hover:border-emerald-500/20 transition-all group">
               <div className={`w-16 h-16 ${item.bg} dark:bg-white/5 ${item.color} rounded-[1.8rem] flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform`}>

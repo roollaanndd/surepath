@@ -106,7 +106,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <ShieldCheck size={16} className="text-white" strokeWidth={3} />
             </div>
             <div>
@@ -170,7 +170,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
                 onClick={() => setActiveTab(id)}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
                   active
-                    ? 'bg-emerald-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                    ? 'bg-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >

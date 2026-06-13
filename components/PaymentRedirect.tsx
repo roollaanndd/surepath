@@ -120,7 +120,7 @@ const PaymentRedirect: React.FC<Props> = ({ status }) => {
           onClick={() => { window.location.href = '/'; }}
           className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-transform active:scale-95 ${
             isSuccess
-              ? 'bg-emerald-500 text-white shadow-lg shadow-orange-500/20'
+              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
               : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200'
           }`}
         >

@@ -105,7 +105,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
          </div>
          <div className="space-y-2">
             <div className="h-3 bg-gray-50 dark:bg-white/5 rounded-full overflow-hidden shadow-inner border border-black/5 dark:border-white/5">
-               <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 w-[65%] rounded-full shadow-[0_0_10px_#fb923c]"></div>
+               <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 w-[65%] rounded-full shadow-[0_0_10px_#00C16A]"></div>
             </div>
             <div className="flex justify-between text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">
                <span>{t('Silver', 'Perak')}</span>

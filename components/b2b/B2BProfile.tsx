@@ -72,7 +72,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 py-2">
-        <div className="w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-orange-500/25">
+        <div className="w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-emerald-500/25">
           {initials}
         </div>
         <div className="text-center">
@@ -136,7 +136,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm shadow-lg shadow-emerald-500/25 disabled:opacity-60"
       >
         {saving
           ? <Loader2 size={16} className="animate-spin" />

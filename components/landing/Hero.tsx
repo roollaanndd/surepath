@@ -73,7 +73,7 @@ const Hero = ({ onAction, onAdminAction, lang = "ID" }: HeroProps) => {
               </span>
             </div>
 
-            <h1 className="text-7xl md:text-[112px] font-semibold text-white leading-[0.88] tracking-[-0.02em]">
+            <h1 className="font-sora text-7xl md:text-[112px] font-semibold text-white leading-[0.88] tracking-[-0.02em]">
               {lang === "EN" ? "Protection" : "Proteksi"} <br />
               <span className="text-emerald-500 italic font-light">
                 {lang === "EN" ? "Made easy." : "Lebih mudah."}

@@ -2,6 +2,8 @@ import React from "react";
 import Hero from "./landing/Hero";
 import Features from "./landing/Features";
 import ProductModules from "./landing/ProductModules";
+import SocialProof from "./landing/SocialProof";
+import HowItWorks from "./landing/HowItWorks";
 import { Language } from "../types";
 import { Section } from "./shared/UI";
 import {
@@ -44,6 +46,15 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({
         onAdminAction={() => onEnterPortal("ADMIN_LOGIN")}
       />
 
+      {/* Social Proof Strip */}
+      <SocialProof lang={currentLang === Language.EN ? "EN" : "ID"} />
+
+      {/* How It Works */}
+      <HowItWorks
+        lang={currentLang === Language.EN ? "EN" : "ID"}
+        onAction={() => onEnterPortal("REGISTER")}
+      />
+
       {/* Features & Ecosystem Section */}
       <Features lang={currentLang === Language.EN ? "EN" : "ID"} />
 
@@ -69,7 +80,7 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({
                 <div className="inline-flex items-center gap-4 p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl text-emerald-500 shadow-sm border border-emerald-500/20 animate-float mx-auto lg:mx-0">
                   <Zap size={32} strokeWidth={1.5} />
                 </div>
-                <h2 className="text-5xl md:text-7xl font-semibold tracking-[-0.02em] leading-[0.9] text-slate-900 dark:text-white">
+                <h2 className="font-sora text-5xl md:text-7xl font-semibold tracking-[-0.02em] leading-[0.9] text-slate-900 dark:text-white">
                   {t("Ready to step onto", "Siap melangkah ke")} <br />
                   <span className="text-emerald-500 italic font-light">
                     {t("SurePath?", "SurePath?")}

@@ -14,10 +14,11 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
     <div className="space-y-6 animate-fade-in">
        <div className="p-1.5 bg-gray-100 dark:bg-white/[0.03] rounded-[1.8rem] flex gap-1.5 border border-black/5 dark:border-white/5">
           {([InsuranceType.COMPREHENSIVE, InsuranceType.TLO]).map(t => (
-            <button 
+            <button
               key={t}
               onClick={() => setCoverage({...coverage, type: t})}
-              className={`flex-1 py-4.5 rounded-[1.5rem] text-[0.75rem] font-black uppercase tracking-widest transition-all ${coverage.type === t ? 'bg-white dark:bg-gray-800 text-emerald-500 shadow-xl scale-100' : 'text-gray-400 opacity-60 scale-95 hover:opacity-100'}`}
+              className={`flex-1 py-4.5 rounded-[1.5rem] text-[0.75rem] font-black uppercase tracking-widest transition-all duration-300 ${coverage.type === t ? 'text-white shadow-xl scale-100 shadow-emerald-500/25' : 'text-gray-400 opacity-60 scale-95 hover:opacity-100'}`}
+              style={coverage.type === t ? { background: 'linear-gradient(135deg, #00C16A 0%, #009E52 100%)' } : {}}
             >
               {t === InsuranceType.COMPREHENSIVE ? 'Lengkap (All Risk)' : 'Hanya Hilang (TLO)'}
             </button>

@@ -34,6 +34,7 @@ const TABS = [
   { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: ShoppingBag },
   { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: Zap },
   { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: History },
+  { id: 'ai',       labelEn: 'AI',      labelId: 'AI',      Icon: Bot },
   { id: 'profile',  labelEn: 'Profile', labelId: 'Profil',  Icon: UserCircle },
 ];
 
@@ -88,9 +89,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   const activeTab = TABS.find(t => t.id === activePage)?.id
-    ?? (activePage.startsWith('buy-') ? 'products' : activePage === 'bot' ? 'home' : activePage);
+    ?? (activePage.startsWith('buy-') ? 'products' : activePage === 'bot' ? 'ai' : activePage);
 
-  const isFullscreen = activePage.startsWith('buy-') || activePage === 'bot';
+  const isFullscreen = activePage.startsWith('buy-') || activePage === 'bot' || activePage === 'ai';
 
   const renderContent = () => {
     switch (activePage) {
@@ -217,7 +218,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     { id: 'products', label: t('Buy', 'Beli'),       icon: ShoppingBag, color: 'text-blue-500',  bg: 'bg-blue-50'       },
                     { id: 'claim',    label: t('Claim', 'Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50'       },
                     { id: 'history',  label: t('History', 'Riwayat'), icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-                    { id: 'bot',      label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
+                    { id: 'ai',       label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
                   ].map(action => (
                     <button
                       type="button"
@@ -255,7 +256,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                           )
                       }
                     </p>
-                    <button onClick={() => navigate('bot')} className="text-[10px] font-black uppercase tracking-widest pt-1 inline-block" style={{ color: '#00C16A' }}>
+                    <button onClick={() => navigate('ai')} className="text-[10px] font-black uppercase tracking-widest pt-1 inline-block" style={{ color: '#00C16A' }}>
                       {t('Chat with AI →', 'Chat dengan AI →')}
                     </button>
                   </div>
@@ -481,6 +482,18 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           <PageTransition>
             <ContactPage lang={lang} />
           </PageTransition>
+        );
+
+      case 'ai':
+        return (
+          <div className="h-screen flex flex-col">
+            <PathyChat
+              lang={lang}
+              currentUser={{ name: currentUser.name, id: currentUser.id, role: currentUser.role }}
+              embedded
+              onBack={() => navigate('home')}
+            />
+          </div>
         );
 
       case 'bot':

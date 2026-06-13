@@ -2436,6 +2436,12 @@ export async function callGateway(
   }
 }
 
+export async function pathyChat(message: string): Promise<string> {
+  const { data, error } = await callGateway('pathy_chat', { message });
+  if (error) throw new Error(error);
+  return (data as { reply: string }).reply;
+}
+
 // ─── Website CMS Config (sp_website_config) ──────────────────────────────────
 
 export interface SpWebsiteConfig {

@@ -644,7 +644,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       )}
 
       {/* Floating Pathy assistant */}
-      {!isFullscreen && <PathyChat lang={lang} />}
+      {!isFullscreen && <PathyChat lang={lang} currentUser={{ name: currentUser.name, id: currentUser.id, role: currentUser.role }} />}
     </div>
   );
 };

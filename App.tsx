@@ -591,6 +591,29 @@ const INITIAL_PRODUCTS = [
 ];
 
 const SESSION_KEY = 'SUREPATH_SESSION';
+// localStorage key that caches TC acceptance locally so a Supabase query failure
+// doesn't re-prompt on every refresh after a user has already accepted.
+const TC_ACCEPTED_KEY = 'sp_tc_accepted_ids';
+
+function isTcCachedLocally(userId: string): boolean {
+  try {
+    const raw = localStorage.getItem(TC_ACCEPTED_KEY);
+    if (!raw) return false;
+    const ids: string[] = JSON.parse(raw);
+    return ids.includes(userId);
+  } catch { return false; }
+}
+
+function cacheTcLocally(userId: string): void {
+  try {
+    const raw = localStorage.getItem(TC_ACCEPTED_KEY);
+    const ids: string[] = raw ? JSON.parse(raw) : [];
+    if (!ids.includes(userId)) {
+      ids.push(userId);
+      localStorage.setItem(TC_ACCEPTED_KEY, JSON.stringify(ids));
+    }
+  } catch {}
+}
 
 
 const App = () => {
@@ -705,10 +728,13 @@ const App = () => {
         // path below. Without this, a user who never accepted the T&C could skip
         // the gate simply by having a session persisted in storage.
         const restoredId = user?.supabaseId ?? user?.id;
-        if (restoredId) {
+        if (restoredId && !isTcCachedLocally(restoredId)) {
           getUserTcStatus(restoredId)
-            .then((tcAccepted) => { if (!tcAccepted) setShowTc(true); })
-            .catch(() => {});
+            .then((tcAccepted) => {
+              if (tcAccepted) { cacheTcLocally(restoredId); }
+              else { setShowTc(true); }
+            })
+            .catch(() => {}); // on network error, don't re-prompt
         }
       } catch {
         localStorage.removeItem(SESSION_KEY);
@@ -737,8 +763,10 @@ const App = () => {
           (byEmail.status === 'fulfilled' ? byEmail.value : null);
         setOauthLoading(false);
         if (profile) {
-          const tcAccepted = await getUserTcStatus(profile.id).catch(() => true);
-          if (!tcAccepted) setShowTc(true);
+          const tcAccepted = isTcCachedLocally(profile.id)
+            || await getUserTcStatus(profile.id).catch(() => true);
+          if (tcAccepted) { cacheTcLocally(profile.id); }
+          else { setShowTc(true); }
           handleAuthSuccess({
             id:         profile.id,
             name:       profile.name,
@@ -845,7 +873,10 @@ const App = () => {
     return (
       <TermsModal
         onAccept={async () => {
-          return await recordTcAcceptance(currentUser.id ?? currentUser.supabaseId);
+          const userId = currentUser.id ?? currentUser.supabaseId;
+          const ref = await recordTcAcceptance(userId);
+          cacheTcLocally(userId);
+          return ref;
         }}
         onDone={() => setShowTc(false)}
       />

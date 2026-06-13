@@ -172,6 +172,33 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* glass-card — used by LoginModal and other legacy components.
+   Light mode: frosted white; dark mode: frosted dark surface. */
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Standalone/installed PWA — disable pull-to-refresh and overscroll bounce.
+   Scoped to display-mode:standalone so normal browser experience is unaffected. */
+@media (display-mode: standalone) {
+  html, body {
+    overscroll-behavior-y: none;
+  }
+  #root {
+    overscroll-behavior: none;
+    touch-action: pan-x pan-y;
+  }
+}
+
 /* Titan frame styles */
 .titan-finish {
   background: linear-gradient(135deg, #023129 0%, #01241d 100%);

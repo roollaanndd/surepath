@@ -325,7 +325,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                   sublabel="AI SurePath sedang mengecek kecocokan data dan kondisi mobil kamu secara otomatis."
                  />
               </div>
-            ) : survey.score > 0 || survey.verdict === 'REJECTED' ? (
+            ) : (survey.score > 0 || survey.verdict === 'REJECTED' || (survey.verdict !== '' && survey.verdict === 'MANUAL_REQUIRED') || survey.verdict === 'REVIEW_REQUIRED') ? (
               <div className="space-y-6 animate-pop-in">
                  <div className={`p-8 rounded-[3rem] border-2 shadow-2xl relative overflow-hidden bg-white dark:bg-[#0a0a0a] ${survey.verdict === 'REJECTED' ? 'border-rose-500/30 shadow-rose-500/5' : survey.verdict === 'MANUAL_REQUIRED' ? 'border-amber-500/30 shadow-amber-500/5' : 'border-emerald-500/30 shadow-emerald-500/5'}`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-8 relative z-10">
@@ -434,7 +434,29 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                     </div>
                  </div>
 
-                 {survey.verdict === 'MANUAL_REQUIRED' && survey.manualRequestStatus === 'NONE' && (
+                 {/* AI can't score notification */}
+                 {survey.verdict === 'MANUAL_REQUIRED' && survey.score === 0 && (
+                    <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-[2.5rem] border border-amber-200 dark:border-amber-800/40 space-y-4">
+                       <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0"><AlertTriangle size={20}/></div>
+                          <div>
+                             <h4 className="text-sm font-black uppercase text-amber-700 dark:text-amber-400 tracking-wide">Perlu Pemeriksaan Manual</h4>
+                             <p className="text-[0.55rem] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest">Analisa AI tidak dapat memberikan skor</p>
+                          </div>
+                       </div>
+                       <p className="text-[0.65rem] text-gray-700 dark:text-amber-100/70 font-medium leading-relaxed">
+                          Analisa AI tidak dapat memberikan skor saat ini. Pesanan kamu akan ditinjau manual oleh tim/pihak asuransi. Polis belum tentu langsung disetujui. Silakan pantau status melalui email atau aplikasi.
+                       </p>
+                       <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-300/50 dark:border-amber-700/30">
+                          <p className="text-[0.6rem] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1">Langkah Selanjutnya</p>
+                          <p className="text-[0.6rem] text-amber-700/80 dark:text-amber-300/70 font-medium leading-relaxed">
+                             Kamu tetap bisa lanjut ke langkah berikutnya, tetapi halaman pembayaran baru terbuka setelah foto disetujui oleh admin atau pihak asuransi.
+                          </p>
+                       </div>
+                    </div>
+                 )}
+
+                 {survey.verdict === 'MANUAL_REQUIRED' && survey.score > 0 && survey.manualRequestStatus === 'NONE' && (
                     <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-[2.5rem] border border-amber-200 dark:border-amber-900/30 space-y-6">
                        <div className="flex items-center gap-4">
                           <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg"><ManualAuditIcon size={20}/></div>

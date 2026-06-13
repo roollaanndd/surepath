@@ -82,7 +82,10 @@ export const INSURANCE_PROVIDERS: Provider[] = [
     advantages: ['Premi sangat kompetitif', 'Proses persetujuan cepat', 'Jaringan bengkel luas'],
     disadvantages: ['Fasilitas derek terbatas', 'Belum ada aplikasi mobile klaim'],
     extraCoinsPercent: 15, // Poin 15%
-    features: ['Competitive Rates', 'Fast Approval', 'National Network']
+    features: ['Competitive Rates', 'Fast Approval', 'National Network'],
+    authorizedGarage: false,
+    claimSpeed: '2–5 hari kerja',
+    benefits: ['Premi OJK terendah', 'Persetujuan cepat tanpa survei fisik', 'Jaringan 500+ bengkel rekanan', 'Cashback koin tertinggi 15%']
   },
   {
     id: 'zurich',
@@ -94,7 +97,10 @@ export const INSURANCE_PROVIDERS: Provider[] = [
     advantages: ['Layanan 24/7 Roadside Assistance', 'Bengkel authorized premium', 'Penggantian mobil (Loss of Use)'],
     disadvantages: ['Admin fee lebih tinggi', 'Proses survei lebih detail'],
     extraCoinsPercent: 10, // Poin 10%
-    features: ['Authorized Workshops', '24/7 Towing', 'Free Pickup']
+    features: ['Authorized Workshops', '24/7 Towing', 'Free Pickup'],
+    authorizedGarage: true,
+    claimSpeed: '1–3 hari kerja',
+    benefits: ['Bengkel resmi/authorized dealer', 'Roadside assistance 24/7', 'Penggantian mobil sementara (Loss of Use)', 'Standar internasional Zurich Group']
   },
   {
     id: 'tugu',
@@ -106,7 +112,10 @@ export const INSURANCE_PROVIDERS: Provider[] = [
     advantages: ['Aplikasi mobile klaim canggih', 'BUMN Group (Kredibel)', 'Layanan derek gratis'],
     disadvantages: ['Respon CS jam sibuk agak lambat', 'Jaringan bengkel di pelosok terbatas'],
     extraCoinsPercent: 10, // Poin 10%
-    features: ['Mobile Claim App', 'Emergency Roadside', 'Replacement Car']
+    features: ['Mobile Claim App', 'Emergency Roadside', 'Replacement Car'],
+    authorizedGarage: true,
+    claimSpeed: '1–2 hari kerja',
+    benefits: ['Aplikasi klaim mobile canggih', 'Bagian BUMN Group — terpercaya', 'Derek gratis 24/7', 'Klaim diproses 1–2 hari kerja']
   }
 ];
 

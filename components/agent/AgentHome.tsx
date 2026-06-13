@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, Users, Shield, Wallet, ChevronRight,
-  FileText, Star, ClipboardList,
+  FileText, ClipboardList,
   Trophy, Network, RefreshCw, FileEdit, Target, Zap
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
+import { PathyMascot, PipelineStat, SectionLabel } from '../shared/cards';
 
 interface Props {
   agent: any;
@@ -165,10 +166,10 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
-                <Star size={12} className="text-white" />
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center p-1 animate-float">
+                <PathyMascot size={26} />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Sales Coach</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
             </div>
             <p className="text-sm font-bold text-white leading-snug mb-3">{dailyTip}</p>
             <div className="flex items-center gap-4 pt-3 border-t border-white/20">
@@ -186,6 +187,16 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Sales Pipeline */}
+      <div className="px-5 mt-3">
+        <SectionLabel>{t('Sales Pipeline', 'Pipeline Penjualan')}</SectionLabel>
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center divide-x divide-ds-border">
+          <PipelineStat label={t('Clients', 'Klien')} value={stats.clientsCount} accent="#4D7CFE" />
+          <PipelineStat label={t('Policies', 'Polis')} value={stats.policiesCount} accent="#00C16A" />
+          <PipelineStat label={t('Conversion', 'Konversi')} value={`${stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0}%`} accent="#F5B942" />
         </div>
       </div>
 

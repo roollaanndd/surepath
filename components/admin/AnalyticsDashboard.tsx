@@ -57,7 +57,7 @@ const ChartTip = ({ active, payload, label }: any) => {
     <div className="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs">
       {label && <p className="text-gray-400 mb-1">{label}</p>}
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color ?? '#f97316' }} className="font-bold">
+        <p key={p.name} style={{ color: p.color ?? '#00C16A' }} className="font-bold">
           {p.name}: {typeof p.value === 'number' && p.value > 1_000 ? formatIDR(p.value) : p.value}
         </p>
       ))}
@@ -170,7 +170,7 @@ const AnalyticsDashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-orange-500 mb-1">Analytics</p>
+        <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500 mb-1">Analytics</p>
         <h2 className="text-3xl font-black tracking-tight text-white">Dashboard Analitik</h2>
       </div>
 
@@ -197,14 +197,14 @@ const AnalyticsDashboard = () => {
                 <AreaChart data={gwpTrend}>
                   <defs>
                     <linearGradient id="gwpGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#00C16A" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#00C16A" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}Jt`} />
                   <Tooltip content={<ChartTip />} />
-                  <Area type="monotone" dataKey="gwp" name="GWP" stroke="#f97316" strokeWidth={2} fill="url(#gwpGrad)" dot={{ fill: '#f97316', r: 3 }} />
+                  <Area type="monotone" dataKey="gwp" name="GWP" stroke="#00C16A" strokeWidth={2} fill="url(#gwpGrad)" dot={{ fill: '#00C16A', r: 3 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </Section>
@@ -245,7 +245,7 @@ const AnalyticsDashboard = () => {
                     <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => formatM(v)} />
                     <YAxis type="category" dataKey="name" tick={{ fill: '#d1d5db', fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
                     <Tooltip content={<ChartTip />} />
-                    <Bar dataKey="gwp" name="GWP" fill="#f97316" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="gwp" name="GWP" fill="#00C16A" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

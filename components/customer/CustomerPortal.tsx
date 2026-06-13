@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Home, ShoppingBag, Zap, History, UserCircle,
   Sun, Moon, LogOut, ShieldCheck, Bell,
-  Car, Plane, Lightbulb, Bot, FileText, AlertCircle
+  Car, Plane, Bot, FileText, AlertCircle, ArrowRight
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
-import PortalHero from '../PortalHero';
 import ClaimManager from '../ClaimManager';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -19,7 +18,7 @@ import HealthChat from '../HealthChat';
 import ContactPage from '../ContactPage';
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
-import { Badge } from '../shared/UI';
+import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
 
 interface Props {
@@ -94,7 +93,20 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   const renderContent = () => {
     switch (activePage) {
-      case 'home':
+      case 'home': {
+        const coverageLabels = Array.from(new Set(customerPolicies.map(p => {
+          const code = (p.product_code ?? '').toUpperCase();
+          if (p.vehicle_type === 'CAR' || code.includes('CAR') || code.includes('AUTO')) return t('Vehicle Protection', 'Proteksi Kendaraan');
+          if (code.includes('TRAVEL')) return t('Travel Protection', 'Proteksi Perjalanan');
+          if (code.includes('PA')) return t('Personal Accident', 'Kecelakaan Diri');
+          if (code.includes('MPAR') || code.includes('GADGET')) return t('Property & Gadget', 'Properti & Gadget');
+          if (code.includes('HEALTH')) return t('Health Protection', 'Proteksi Kesehatan');
+          return p.product_name || t('Active Protection', 'Proteksi Aktif');
+        }))).slice(0, 3);
+        const totalPremium = customerPolicies.reduce((s, p) => s + (p.total_premium ?? 0), 0);
+        const homeDaysLeft = latestPolicy?.end_date
+          ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : 0;
         return (
           <PageTransition>
             <div className="space-y-4 pb-32">
@@ -124,10 +136,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </div>
 
               {/* Protection Score Hero */}
-              <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 8px 32px rgba(0,59,47,0.5)' }}>
-                <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
-                <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.08)' }} />
-                <div className="relative z-10 flex items-center gap-5">
+              <HeroCard>
+                <div className="flex items-center gap-5">
                   {/* SVG Protection Score Ring */}
                   <div className="relative flex-shrink-0">
                     <svg width="86" height="86" viewBox="0 0 100 100">
@@ -156,14 +166,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </div>
                     {latestPolicy ? (
                       <>
-                        <h4 className="text-lg font-black text-white leading-tight">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
-                        <p className="text-[11px] text-white/50 mt-1 leading-snug">
-                          {latestPolicy.product_name} · {t('Until', 'Hingga')}{' '}
-                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
-                            lang === Language.EN ? 'en-US' : 'id-ID',
-                            { month: 'short', year: 'numeric' }
-                          )}
-                        </p>
+                        <h4 className="text-lg font-black text-white leading-tight mb-2">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
+                        <div className="space-y-1.5">
+                          {coverageLabels.map(label => <CoverageRow key={label} label={label} />)}
+                        </div>
                         <button onClick={() => navigate('history')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white border border-white/15 bg-white/10 active:scale-95 transition-transform inline-block">
                           {t('View Policy', 'Lihat Polis')} →
                         </button>
@@ -179,87 +185,58 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     )}
                   </div>
                 </div>
-              </div>
+              </HeroCard>
 
-              {/* My Protection Stats */}
-              {latestPolicy && (() => {
-                const daysLeft = latestPolicy.end_date
-                  ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-                  : 0;
-                return (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
-                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Days Left', 'Sisa Hari')}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-ds-ink">{daysLeft}</span>
-                        <span className="text-xs text-ds-ink3">{t('days', 'hari')}</span>
-                      </div>
-                      <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (daysLeft / 365) * 100)}%`, background: '#00C896' }} />
-                      </div>
-                    </div>
-                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
-                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Total Premium', 'Total Premi')}</p>
-                      <div className="text-2xl font-black text-ds-ink leading-tight">
-                        {formatIDR(latestPolicy.total_premium ?? 0)}
-                      </div>
-                      <p className="text-[10px] text-ds-ink3 mt-0.5">{latestPolicy.product_name}</p>
-                    </div>
+              {/* My Protection — 3 metrics */}
+              {latestPolicy && (
+                <div>
+                  <SectionLabel>{t('My Protection', 'Proteksi Saya')}</SectionLabel>
+                  <div className="grid grid-cols-3 gap-3">
+                    <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDR(totalPremium)} sub={t('all policies', 'semua polis')} />
+                    <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
+                    <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={t('to renewal', 'ke perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
                   </div>
-                );
-              })()}
+                </div>
+              )}
 
               {/* Quick actions */}
               <div>
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    { id: 'products', label: t('Buy', 'Beli'),       icon: ShoppingBag, color: 'text-blue-500',  bg: 'bg-blue-50'       },
-                    { id: 'claim',    label: t('Claim', 'Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50'       },
-                    { id: 'history',  label: t('History', 'Riwayat'), icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-                    { id: 'bot',      label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
-                  ].map(action => (
-                    <button
-                      type="button"
-                      key={action.id}
-                      onClick={() => navigate(action.id)}
-                      className="flex flex-col items-center gap-2 group active:scale-90 transition-transform focus:outline-none"
-                    >
-                      <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
-                        <action.icon size={24} strokeWidth={2} />
-                      </div>
-                      <span className="text-[10px] font-bold text-ds-ink2 text-center">{action.label}</span>
-                    </button>
-                  ))}
-                </div>
+                <SectionLabel>{t('Quick Actions', 'Aksi Cepat')}</SectionLabel>
+                <ActionGrid
+                  actions={[
+                    { id: 'products', label: t('Buy Protection', 'Beli Proteksi'), icon: ShoppingBag, color: 'text-ds-blue',   bg: 'bg-blue-50',       onClick: () => navigate('products') },
+                    { id: 'claim',    label: t('Submit Claim', 'Lapor Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50',       onClick: () => navigate('claim') },
+                    { id: 'history',  label: t('My Policies', 'Polis Saya'),        icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint', onClick: () => navigate('history') },
+                    { id: 'bot',      label: t('AI Advisor', 'Penasihat AI'),       icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt',  onClick: () => navigate('bot') },
+                  ]}
+                />
               </div>
 
-              <PortalHero onAction={navigate} lang={lang} />
+              {/* Pathy AI card */}
+              <AICard
+                message={latestPolicy
+                  ? t(
+                      `Hi ${currentUser?.name?.split(' ')[0]}! Your ${latestPolicy.product_name} is active. File a claim anytime by snapping a photo.`,
+                      `Halo ${currentUser?.name?.split(' ')[0]}! Polis ${latestPolicy.product_name} kamu aktif. Lapor klaim kapan saja cukup dengan foto.`
+                    )
+                  : t(
+                      'Get insured in minutes. Our AI makes claims fast and effortless.',
+                      'Dapatkan asuransi dalam hitungan menit. AI kami membuat klaim jadi cepat & mudah.'
+                    )}
+                suggestion={latestPolicy ? { label: t('Add baggage delay coverage', 'Tambah proteksi bagasi'), onClick: () => navigate('buy-travel') } : undefined}
+                cta={{ label: t('Chat with Pathy', 'Chat dengan Pathy'), onClick: () => navigate('bot') }}
+              />
 
-              {/* SurePath AI card */}
-              <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F, #00512E)' }}>
-                <div className="absolute -top-3 -right-3 w-16 h-16 rounded-full pointer-events-none" style={{ background: 'rgba(0,193,106,0.15)' }} />
-                <div className="relative z-10 flex gap-3 items-start">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl" style={{ background: 'rgba(0,193,106,0.2)' }}>🤖</div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#00C16A' }}>SurePath AI</p>
-                    <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                      {latestPolicy
-                        ? t(
-                            `Hi ${currentUser?.name?.split(' ')[0]}! Your ${latestPolicy.product_name} is active. File a claim anytime by taking a photo.`,
-                            `Halo ${currentUser?.name?.split(' ')[0]}! Polis ${latestPolicy.product_name} kamu aktif. Lapor klaim kapan saja cukup dengan foto.`
-                          )
-                        : t(
-                            'Get insured in minutes. Our AI makes claims processing fast and easy.',
-                            'Dapatkan asuransi dalam hitungan menit. AI kami membuat proses klaim jadi cepat & mudah.'
-                          )
-                      }
-                    </p>
-                    <button onClick={() => navigate('bot')} className="text-[10px] font-black uppercase tracking-widest pt-1 inline-block" style={{ color: '#00C16A' }}>
-                      {t('Chat with AI →', 'Chat dengan AI →')}
-                    </button>
-                  </div>
-                </div>
+              {/* Featured for you */}
+              <div>
+                <SectionLabel>{t('Featured for You', 'Pilihan Untukmu')}</SectionLabel>
+                <FeaturedCard
+                  eyebrow={t('Travel', 'Perjalanan')}
+                  title={t('Travel Protected Everywhere', 'Terlindungi di Mana Saja')}
+                  subtitle={t('Global coverage from Rp 45k/trip', 'Proteksi global mulai Rp 45rb/trip')}
+                  cta={{ label: t('Get Covered', 'Lindungi Sekarang'), onClick: () => navigate('buy-travel') }}
+                  illustration={<Plane size={120} className="text-white/15 rotate-12" strokeWidth={1.2} />}
+                />
               </div>
 
               {/* Recent Activity */}
@@ -302,17 +279,27 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
             </div>
           </PageTransition>
         );
+      }
 
       case 'products':
         return (
           <PageTransition>
-            <div className="space-y-6 pb-32 pt-2">
-              {/* Section header */}
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Simple Protection', 'Pusat Proteksi')}</p>
+            <div className="space-y-5 pb-32 pt-2">
+              {/* Header */}
+              <div>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Protection Centre', 'Pusat Proteksi')}</p>
                 <h2 className="text-2xl font-black tracking-tight text-ds-ink">
-                  {t('Choose a Plan', 'Pilih Paket')} <span className="text-ds-green">SurePath</span>
+                  {t('Choose Your', 'Pilih')} <span className="text-ds-green">{t('Protection', 'Proteksi')}</span>
                 </h2>
+              </div>
+
+              {/* AI recommendation strip */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-ds-green-tint border border-green-100">
+                <Bot size={16} className="text-ds-green flex-shrink-0" />
+                <p className="text-xs font-bold text-ds-green flex-1">{t('Pathy recommends: add Travel protection — fits your profile', 'Pathy rekomendasikan: tambah proteksi Travel — sesuai profilmu')}</p>
+                <button onClick={() => navigate('buy-travel')} className="flex-shrink-0">
+                  <ArrowRight size={14} className="text-ds-green" />
+                </button>
               </div>
 
               {/* Product cards */}
@@ -323,26 +310,19 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
                     className={`group bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
-                    {/* Icon */}
                     <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
                       {typeof p.icon === 'function' && <p.icon size={24} strokeWidth={2} />}
                     </div>
-
-                    {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="font-black text-sm text-ds-ink tracking-tight">{p.title}</h4>
-                        {p.tech && (
-                          <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3 flex-shrink-0">{p.tech}</span>
-                        )}
+                        {p.tech && <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3">{p.tech}</span>}
                       </div>
                       <p className="text-xs text-ds-ink2 leading-relaxed">{p.desc}</p>
                     </div>
-
-                    {/* CTA arrow for active products */}
                     {p.active && (
-                      <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                        <span className="text-ds-green text-sm font-black">→</span>
+                      <div className="w-8 h-8 rounded-xl bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 transition-transform">
+                        <ArrowRight size={14} />
                       </div>
                     )}
                   </div>
@@ -355,73 +335,104 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'claim':
         return (
           <PageTransition>
-            <ClaimManager onComplete={() => navigate('home')} lang={lang} currentUser={currentUser} />
+            <div className="pb-32">
+              {/* Pre-claim hero */}
+              <div className="mb-4 rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #7C5CFC 0%, #4D7CFE 100%)', boxShadow: '0 8px 32px rgba(124,92,252,0.3)' }}>
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(255,255,255,0.12)' }} />
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">{t('Claim Assistant', 'Asisten Klaim')}</p>
+                <h3 className="text-lg font-black text-white mb-1">{t('File a Claim', 'Lapor Klaim')}</h3>
+                <p className="text-[12px] text-white/70 leading-snug">{t('Photo + AI = instant processing. Most claims settled in 24h.', 'Foto + AI = proses instan. Sebagian besar klaim selesai dalam 24 jam.')}</p>
+              </div>
+              <ClaimManager onComplete={() => navigate('home')} lang={lang} currentUser={currentUser} />
+            </div>
           </PageTransition>
         );
 
-      case 'history':
+      case 'history': {
+        const totalValue = customerPolicies.reduce((s, p) => s + (p.total_premium ?? 0), 0);
+        const activePolicies = customerPolicies.filter(p => p.status === 'ISSUED');
+        const pendingClaims = customerClaims.filter(c => c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW');
+        const policyStatusMap: Record<string,{label:string;cls:string}> = {
+          SUBMITTED:    { label: t('Pending Review','Menunggu Review'), cls: 'bg-amber-50 text-ds-amber' },
+          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),    cls: 'bg-blue-50 text-ds-blue' },
+          APPROVED:     { label: t('Approved','Disetujui'),             cls: 'bg-blue-50 text-ds-blue' },
+          ISSUED:       { label: t('Active','Polis Aktif'),             cls: 'bg-ds-green-tint text-ds-green' },
+          REJECTED:     { label: t('Rejected','Ditolak'),               cls: 'bg-rose-50 text-ds-red' },
+        };
+        const claimStatusMap: Record<string,{label:string;cls:string}> = {
+          SUBMITTED:    { label: t('Submitted','Diajukan'),       cls: 'bg-amber-50 text-ds-amber' },
+          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),cls: 'bg-blue-50 text-ds-blue' },
+          APPROVED:     { label: t('Approved','Disetujui'),       cls: 'bg-ds-green-tint text-ds-green' },
+          REJECTED:     { label: t('Rejected','Ditolak'),         cls: 'bg-rose-50 text-ds-red' },
+          PAID:         { label: t('Paid','Dibayarkan'),          cls: 'bg-ds-purple-lt text-ds-purple' },
+        };
         return (
           <PageTransition>
             <div className="space-y-5 pb-32 pt-2">
-              <div>
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Your Activity', 'Aktivitas Anda')}</p>
-                <h2 className="text-2xl font-black text-ds-ink tracking-tight">{t('My History', 'Riwayat Saya')}</h2>
+              {/* Summary hero */}
+              <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 100%)', boxShadow: '0 8px 24px rgba(0,59,47,0.4)' }}>
+                <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.2)' }} />
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-3">{t('My Protection Wallet', 'Dompet Proteksi Saya')}</p>
+                <div className="flex gap-6">
+                  <div>
+                    <p className="text-[10px] text-white/40">{t('Total Premium', 'Total Premi')}</p>
+                    <p className="text-xl font-black text-white">{formatIDR(totalValue)}</p>
+                  </div>
+                  <div className="w-px bg-white/10" />
+                  <div>
+                    <p className="text-[10px] text-white/40">{t('Active', 'Aktif')}</p>
+                    <p className="text-xl font-black text-ds-green">{activePolicies.length}</p>
+                  </div>
+                  <div className="w-px bg-white/10" />
+                  <div>
+                    <p className="text-[10px] text-white/40">{t('Pending', 'Proses')}</p>
+                    <p className="text-xl font-black" style={{ color: '#F5B942' }}>{pendingClaims.length}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Policies */}
               <div className="space-y-3">
                 <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
                   <FileText size={11} className="text-ds-green" />
-                  {t('Active Policies', 'Polis Aktif')}
+                  {t('My Policies', 'Polis Saya')}
                 </p>
                 {customerPolicies.length === 0 ? (
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
                       <FileText size={22} className="text-ds-green" />
                     </div>
-                    <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
-                    <button
-                      onClick={() => navigate('products')}
-                      className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform"
-                    >
+                    <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet.', 'Belum ada polis.')}</p>
+                    <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform">
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
                   </div>
-                ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                        {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
+                ) : customerPolicies.map((p, i) => {
+                  const pDesc: Record<string,string> = {
+                    SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
+                    APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
+                    REJECTED:'Pengajuan ditolak oleh penanggung',
+                  };
+                  const meta = policyStatusMap[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
+                  return (
+                    <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                          {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
+                          <p className="text-xs text-ds-ink3">{p.product_code}{p.end_date ? ` · ${t('Exp','Exp')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
+                          {pDesc[p.status] && <p className="text-[10px] text-ds-ink3 mt-0.5">{pDesc[p.status]}</p>}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
-                        <p className="text-xs text-ds-ink3">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
-                        {(() => {
-                          const desc: Record<string,string> = {
-                            SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
-                            APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
-                            REJECTED:'Pengajuan ditolak oleh penanggung',
-                          };
-                          return desc[p.status] ? <p className="text-[10px] text-ds-ink3 mt-0.5">{desc[p.status]}</p> : null;
-                        })()}
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-black text-ds-green">{formatIDR(p.total_premium)}</p>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-black text-ds-green">{formatIDR(p.total_premium)}</p>
-                      {(() => {
-                        const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Menunggu Review', cls: 'bg-amber-50 text-ds-amber' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',   cls: 'bg-blue-50 text-ds-blue' },
-                          APPROVED:     { label: 'Disetujui',       cls: 'bg-blue-50 text-ds-blue' },
-                          ISSUED:       { label: 'Polis Aktif',     cls: 'bg-ds-green-tint text-ds-green' },
-                          REJECTED:     { label: 'Ditolak',         cls: 'bg-rose-50 text-ds-red' },
-                        };
-                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
-                      })()}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Claims */}
@@ -437,37 +448,31 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </div>
                     <p className="text-ds-ink2 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
-                ) : customerClaims.map((c, i) => (
-                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                        <AlertCircle size={18} className="text-ds-red" />
+                ) : customerClaims.map((c, i) => {
+                  const cmeta = claimStatusMap[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink2' };
+                  return (
+                    <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                          <AlertCircle size={18} className="text-ds-red" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim','Klaim')}</p>
+                          <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
-                        <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${cmeta.cls}`}>{cmeta.label}</span>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
-                      {(() => {
-                        const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Diajukan',     cls: 'bg-amber-50 text-ds-amber' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',cls: 'bg-blue-50 text-ds-blue' },
-                          APPROVED:     { label: 'Disetujui',    cls: 'bg-ds-green-tint text-ds-green' },
-                          REJECTED:     { label: 'Ditolak',      cls: 'bg-rose-50 text-ds-red' },
-                          PAID:         { label: 'Dibayarkan',   cls: 'bg-ds-purple-lt text-ds-purple' },
-                        };
-                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink3' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
-                      })()}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </PageTransition>
         );
+      }
 
       case 'profile':
         return (

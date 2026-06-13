@@ -66,7 +66,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       doc.rect(0, 0, pageWidth, 45, 'F');
       
       // Accent line
-      doc.setFillColor(249, 115, 22); // orange-500
+      doc.setFillColor(0, 193, 106); 
       doc.rect(0, 45, pageWidth, 2, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -90,7 +90,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
 
       // --- Helper for Section Titles ---
       const addSectionTitle = (title: string, y: number) => {
-        doc.setFillColor(249, 115, 22); // orange-500
+        doc.setFillColor(0, 193, 106); 
         doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(12);
@@ -238,7 +238,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       {!extractedStnk && !showManualForm && (
         <div className="space-y-6">
             <div className="text-center space-y-2 mb-8">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Data <span className="text-primary-500">Mobil</span></h2>
+                <h2 className="text-3xl font-black uppercase tracking-tighter">Data <span className="text-emerald-500">Mobil</span></h2>
                 <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-8">Foto STNK agar data terisi otomatis</p>
             </div>
 
@@ -260,7 +260,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
 
             <button 
                 onClick={() => setShowManualForm(true)}
-                className="w-full py-4 text-[0.6rem] font-black uppercase text-gray-400 hover:text-primary-500 transition-all tracking-[0.3em]"
+                className="w-full py-4 text-[0.6rem] font-black uppercase text-gray-400 hover:text-emerald-500 transition-all tracking-[0.3em]"
             >
                 Atau Isi Data Secara Manual
             </button>
@@ -287,8 +287,8 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
            )}
 
            <div className="flex bg-gray-100 dark:bg-white/[0.03] p-1.5 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner">
-                <button onClick={() => setEntryMode('DATABASE')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'DATABASE' ? 'bg-white dark:bg-gray-800 shadow-xl text-primary-500 scale-100' : 'text-gray-400 scale-95'}`}><Database size={16} className="inline mr-2"/> Pilih Merk</button>
-                <button onClick={() => setEntryMode('MANUAL')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'MANUAL' ? 'bg-white dark:bg-gray-800 shadow-xl text-primary-500 scale-100' : 'text-gray-400 scale-95'}`}><Edit3 size={16} className="inline mr-2"/> Ketik Manual</button>
+                <button onClick={() => setEntryMode('DATABASE')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'DATABASE' ? 'bg-white dark:bg-gray-800 shadow-xl text-emerald-500 scale-100' : 'text-gray-400 scale-95'}`}><Database size={16} className="inline mr-2"/> Pilih Merk</button>
+                <button onClick={() => setEntryMode('MANUAL')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'MANUAL' ? 'bg-white dark:bg-gray-800 shadow-xl text-emerald-500 scale-100' : 'text-gray-400 scale-95'}`}><Edit3 size={16} className="inline mr-2"/> Ketik Manual</button>
            </div>
 
            <div className="space-y-5">
@@ -298,7 +298,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                     <div className="relative group">
                         {entryMode === 'DATABASE' ? (
                             <select
-                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm appearance-none transition-all text-primary-500 uppercase"
+                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm appearance-none transition-all text-emerald-500 uppercase"
                                 value={vehicle.brand}
                                 onChange={(e) => setVehicle({...vehicle, brand: e.target.value, model: ''})}
                             >
@@ -306,7 +306,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                                 {Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort().map(b => <option key={b} value={b}>{b}</option>)}
                             </select>
                         ) : (
-                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.brand} onChange={e => setVehicle({...vehicle, brand: e.target.value.toUpperCase()})} />
+                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm text-emerald-500 uppercase" value={vehicle.brand} onChange={e => setVehicle({...vehicle, brand: e.target.value.toUpperCase()})} />
                         )}
                         {entryMode === 'DATABASE' && <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>}
                     </div>
@@ -316,7 +316,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                     <div className="relative group">
                         {entryMode === 'DATABASE' && vehicle.brand ? (
                             <select
-                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm appearance-none transition-all text-primary-500 uppercase"
+                                className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm appearance-none transition-all text-emerald-500 uppercase"
                                 value={vehicle.model}
                                 onChange={(e) => {
                                     const selected = availableModels.find(c => c.modelName === e.target.value);
@@ -332,7 +332,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                                 {availableModels.map(c => <option key={c.modelName} value={c.modelName}>{c.modelName}</option>)}
                             </select>
                         ) : (
-                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
+                            <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm text-emerald-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
                         )}
                         {entryMode === 'DATABASE' && vehicle.brand && <ChevronDown size={20} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>}
                     </div>
@@ -343,7 +343,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                  <div className="space-y-2">
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Tahun</label>
                     <div className="relative">
-                        <select className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-primary-500 font-black text-sm appearance-none" value={vehicle.year} onChange={e => setVehicle({...vehicle, year: parseInt(e.target.value)})}>
+                        <select className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-emerald-500 font-black text-sm appearance-none" value={vehicle.year} onChange={e => setVehicle({...vehicle, year: parseInt(e.target.value)})}>
                             {Array.from({ length: 11 }, (_, i) => 2025 - i).map(y => (<option key={y} value={y}>{y}</option>))}
                         </select>
                         <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
@@ -353,7 +353,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Harga Mobil (Rp)</label>
                     <div className="relative">
                         <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-gray-400 text-sm">Rp</span>
-                        <input className="w-full pl-12 pr-5 py-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 focus:border-primary-500 outline-none font-black text-lg text-primary-500 shadow-inner" value={formatInputCurrency(vehicle.price.toString())} onChange={e => setVehicle({...vehicle, price: parseInt(e.target.value.replace(/\D/g, "") || "0"), manualPrice: true})} />
+                        <input className="w-full pl-12 pr-5 py-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 focus:border-emerald-500 outline-none font-black text-lg text-emerald-500 shadow-inner" value={formatInputCurrency(vehicle.price.toString())} onChange={e => setVehicle({...vehicle, price: parseInt(e.target.value.replace(/\D/g, "") || "0"), manualPrice: true})} />
                     </div>
                     {marketPriceEntry && (
                         <p className="text-[0.5rem] font-bold text-emerald-500 ml-2 mt-1">
@@ -374,13 +374,13 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                  <div className="space-y-2">
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Nomor Rangka (VIN)</label>
                     <div className="relative">
-                        <input maxLength={17} placeholder="Cek di STNK" className={`w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 outline-none focus:border-primary-500 font-mono font-bold text-sm uppercase transition-all ${vehicle.vin.length > 0 ? (isVinValid ? 'border-emerald-500/20 text-emerald-500' : 'border-rose-500/20 text-rose-500') : 'border-black/5'}`} value={vehicle.vin} onChange={e => setVehicle({...vehicle, vin: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")})} />
+                        <input maxLength={17} placeholder="Cek di STNK" className={`w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 outline-none focus:border-emerald-500 font-mono font-bold text-sm uppercase transition-all ${vehicle.vin.length > 0 ? (isVinValid ? 'border-emerald-500/20 text-emerald-500' : 'border-rose-500/20 text-rose-500') : 'border-black/5'}`} value={vehicle.vin} onChange={e => setVehicle({...vehicle, vin: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")})} />
                         {isVinValid && <CheckCircle2 size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-500 animate-pop-in"/>}
                     </div>
                  </div>
                  <div className="space-y-2">
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Nomor Mesin</label>
-                    <input placeholder="Cek di STNK" className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-primary-500 font-mono font-bold text-sm uppercase transition-all" value={vehicle.engine} onChange={e => setVehicle({...vehicle, engine: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "")})} />
+                    <input placeholder="Cek di STNK" className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-emerald-500 font-mono font-bold text-sm uppercase transition-all" value={vehicle.engine} onChange={e => setVehicle({...vehicle, engine: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "")})} />
                  </div>
               </div>
            </div>

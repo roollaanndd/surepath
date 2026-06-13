@@ -187,11 +187,11 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
         {showBack && (
-          <button onClick={onBack} className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl hover:text-primary-500 transition-colors border border-black/5">
+          <button onClick={onBack} className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl hover:text-emerald-500 transition-colors border border-black/5">
             <ChevronRight className="rotate-180" size={20}/>
           </button>
         )}
-        <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner">
+        <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-inner">
           <ShieldCheck size={24}/>
         </div>
         <h3 className="text-xl font-black uppercase tracking-tight">{title}</h3>
@@ -217,13 +217,13 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
 
         <div className="text-center space-y-4">
            <Badge variant="brand">{t('Simplified Claims', 'Lapor Klaim Mudah')}</Badge>
-           <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">{t('Submit', 'Laporkan')} <span className="text-primary-500">{t('Your Case', 'Masalahmu')}</span></h2>
+           <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">{t('Submit', 'Laporkan')} <span className="text-emerald-500">{t('Your Case', 'Masalahmu')}</span></h2>
            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest max-w-xs mx-auto opacity-60">{t('Fast process, no complicated forms.', 'Proses cepat, tanpa formulir ribet.')}</p>
         </div>
         <div className="grid gap-5">
            <button 
              onClick={() => { setClaimType('AUTO'); setStep('upload'); }}
-             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-primary-500 transition-all active:scale-95"
+             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-emerald-500 transition-all active:scale-95"
            >
               <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-inner"><Car size={40}/></div>
               <div className="text-left">
@@ -233,7 +233,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
            </button>
            <button 
              onClick={() => { setClaimType('HEALTH'); setStep('upload'); }}
-             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-primary-500 transition-all active:scale-95"
+             className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-emerald-500 transition-all active:scale-95"
            >
               <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform shadow-inner"><HeartPulse size={40}/></div>
               <div className="text-left">
@@ -250,11 +250,11 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     return (
       <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center">
         <Header title={claimType === 'AUTO' ? t("Vehicle Audit", "Cek Kendaraan") : t("Medical Audit", "Cek Kuitansi")} />
-        <div className="aspect-square relative rounded-[3rem] overflow-hidden bg-gray-50 dark:bg-white/5 border-2 border-dashed border-primary-500/20 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
-          <div className="w-24 h-24 bg-primary-500/10 rounded-[2rem] flex items-center justify-center text-primary-500 mb-6 group-hover:scale-110 transition-transform shadow-xl">
+        <div className="aspect-square relative rounded-[3rem] overflow-hidden bg-gray-50 dark:bg-white/5 border-2 border-dashed border-emerald-500/20 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center text-emerald-500 mb-6 group-hover:scale-110 transition-transform shadow-xl">
             <Camera size={48} />
           </div>
-          <p className="text-2xl font-black uppercase text-gray-400 group-hover:text-primary-500 transition-colors tracking-tight">
+          <p className="text-2xl font-black uppercase text-gray-400 group-hover:text-emerald-500 transition-colors tracking-tight">
             {claimType === 'AUTO' ? t("Take Photo", "Ambil Foto") : t("Upload Image", "Upload Foto")}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 font-bold uppercase tracking-widest text-center px-12 opacity-60">
@@ -291,7 +291,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             </div>
             <div className="relative z-10 space-y-5">
                <div className="flex justify-between items-center">
-                  <p className="text-[0.6rem] font-black uppercase text-primary-400 tracking-[0.4em]">{t('Audit Payout Est.', 'Estimasi Pencairan')}</p>
+                  <p className="text-[0.6rem] font-black uppercase text-emerald-400 tracking-[0.4em]">{t('Audit Payout Est.', 'Estimasi Pencairan')}</p>
                   <div className={`px-3 py-1 rounded-lg font-black text-[0.5rem] uppercase tracking-widest border border-white/20 ${isAuto && claimResult?.severity === 'Ringan' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                      {isAuto ? `${claimResult?.severity} Severity` : 'Medical Node'}
                   </div>
@@ -314,7 +314,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                <button 
                  key={tab.id}
                  onClick={() => setActiveTab(tab.id as any)}
-                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-primary-500 shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-md scale-105' : 'text-gray-400 hover:text-gray-600'}`}
                >
                  <tab.icon size={14}/> {tab.label}
                </button>
@@ -327,9 +327,9 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                 <div className="space-y-3 animate-fade-in">
                    {isAuto ? (
                       claimResult?.rincianPart.map((p, i) => (
-                         <div key={i} className="p-5 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 flex items-center justify-between group hover:border-primary-500/30 transition-all shadow-sm">
+                         <div key={i} className="p-5 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 flex items-center justify-between group hover:border-emerald-500/30 transition-all shadow-sm">
                             <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
+                               <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-colors">
                                   <Activity size={20}/>
                                </div>
                                <div>
@@ -340,7 +340,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                                   </div>
                                </div>
                             </div>
-                            <p className="text-sm font-black text-primary-500">{formatIDR(p.estimasiBiaya)}</p>
+                            <p className="text-sm font-black text-emerald-500">{formatIDR(p.estimasiBiaya)}</p>
                          </div>
                       ))
                    ) : (
@@ -362,8 +362,8 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
 
              {activeTab === 'reasoning' && (
                 <div className="space-y-6 animate-fade-in">
-                   <div className="p-8 bg-primary-500/5 rounded-[2.5rem] border border-primary-500/10 space-y-4">
-                      <div className="flex items-center gap-3 text-primary-500">
+                   <div className="p-8 bg-emerald-500/5 rounded-[2.5rem] border border-emerald-500/10 space-y-4">
+                      <div className="flex items-center gap-3 text-emerald-500">
                          <BrainCircuit size={20}/>
                          <span className="text-[0.65rem] font-black uppercase tracking-widest">{t('AI Structural Analysis', 'Analisa Struktural AI')}</span>
                       </div>
@@ -419,10 +419,10 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           <div className="space-y-1.5">
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Policy Number', 'Nomor Polis')}</label>
             <div className="relative">
-              <FileText size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
+              <FileText size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
               <input 
                 type="text" required placeholder={t("e.g. POL-12345", "Contoh: POL-12345")}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-emerald-500 font-bold" 
                 value={reportForm.policyNumber}
                 onChange={(e) => setReportForm({...reportForm, policyNumber: e.target.value})}
               />
@@ -432,10 +432,10 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           <div className="space-y-1.5">
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Contact Info', 'Info Kontak')}</label>
             <div className="relative">
-              <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
+              <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
               <input 
                 type="text" required placeholder={t("Phone / Email", "No. HP / Email")}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-emerald-500 font-bold" 
                 value={reportForm.contactInfo}
                 onChange={(e) => setReportForm({...reportForm, contactInfo: e.target.value})}
               />
@@ -445,10 +445,10 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           <div className="space-y-1.5">
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Where it happened?', 'Lokasi Kejadian')}</label>
             <div className="relative">
-              <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
+              <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
               <input 
                 type="text" required placeholder={t("Address or location...", "Alamat atau lokasi...")}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 font-bold" 
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-emerald-500 font-bold" 
                 value={reportForm.location}
                 onChange={(e) => setReportForm({...reportForm, location: e.target.value})}
               />
@@ -459,21 +459,21 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Describe Event', 'Ceritakan Kejadiannya')}</label>
             <textarea 
               required rows={4} placeholder={t("Explain how it happened...", "Ceritakan detail kejadiannya...")}
-              className="w-full px-6 py-4 rounded-[2rem] bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-primary-500 resize-none font-medium leading-relaxed shadow-inner" 
+              className="w-full px-6 py-4 rounded-[2rem] bg-white dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 text-sm outline-none focus:border-emerald-500 resize-none font-medium leading-relaxed shadow-inner" 
               value={reportForm.chronology}
               onChange={(e) => setReportForm({...reportForm, chronology: e.target.value})}
             />
           </div>
 
           <div className="pt-2">
-            <label className={`flex items-center gap-5 p-6 bg-white dark:bg-white/5 border-2 rounded-[2.5rem] cursor-pointer transition-all shadow-sm ${reportForm.thirdPartyInvolved ? 'border-primary-500/50 bg-primary-500/5' : 'border-slate-50'}`}>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+            <label className={`flex items-center gap-5 p-6 bg-white dark:bg-white/5 border-2 rounded-[2.5rem] cursor-pointer transition-all shadow-sm ${reportForm.thirdPartyInvolved ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-50'}`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                 <Users size={28}/>
               </div>
               <div className="flex-1">
                 <p className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">{t('Others involved?', 'Ada orang lain terlibat?')}</p>
               </div>
-              <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-primary-500 border-primary-500 shadow-lg' : 'border-slate-200'}`}>
+              <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all ${reportForm.thirdPartyInvolved ? 'bg-emerald-500 border-emerald-500 shadow-lg' : 'border-slate-200'}`}>
                 {reportForm.thirdPartyInvolved && <Check size={18} className="text-white" strokeWidth={3}/>}
               </div>
               <input 

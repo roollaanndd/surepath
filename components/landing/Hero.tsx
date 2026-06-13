@@ -89,7 +89,8 @@ const Hero = ({ onAction, onAdminAction, lang = "ID" }: HeroProps) => {
             <div className="flex flex-col sm:flex-row gap-6 pt-8">
               <button
                 onClick={onAction}
-                className="h-16 px-10 bg-primary-500 text-white rounded-full font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+                className="h-16 px-10 text-white rounded-full font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all"
+                style={{ background: '#00C16A', boxShadow: '0 0 40px rgba(0,193,106,0.35)' }}
               >
                 {lang === "EN" ? "Get Covered" : "Mulai Proteksi"}
                 <ArrowRight size={18} />

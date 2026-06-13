@@ -60,7 +60,7 @@ const Toast: React.FC<{ msg: string; onDone: () => void }> = ({ msg, onDone }) =
 
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
 
-const INPUT = 'w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400';
+const INPUT = 'w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400';
 const TEXTAREA = INPUT + ' resize-none';
 
 const Badge: React.FC<{ cls: string; label: string }> = ({ cls, label }) => (
@@ -139,7 +139,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ submissionId, clientId, onSaved, 
       <div>
         <div className="flex items-center justify-between mb-1">
           <label className="text-xs font-semibold text-slate-500">Coverage Details</label>
-          <button onClick={addRow} className="text-xs text-primary-500 font-semibold flex items-center gap-1"><Plus size={12} />Add Row</button>
+          <button onClick={addRow} className="text-xs text-emerald-500 font-semibold flex items-center gap-1"><Plus size={12} />Add Row</button>
         </div>
         <div className="space-y-2">
           {rows.map((row, i) => (
@@ -157,7 +157,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ submissionId, clientId, onSaved, 
       </div>
       <button
         onClick={save} disabled={saving}
-        className="w-full py-2.5 rounded-xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+        className="w-full py-2.5 rounded-xl bg-emerald-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
       >
         {saving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
         Save Quote
@@ -212,7 +212,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
           <select
             value={status}
             onChange={e => changeStatus(e.target.value)}
-            className="w-full appearance-none px-3 py-2 pr-8 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full appearance-none px-3 py-2 pr-8 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-400"
           >
             {B2B_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -250,7 +250,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
       {/* Add Quote Button */}
       <button
         onClick={() => setShowQuoteForm(v => !v)}
-        className="flex items-center gap-2 text-xs font-semibold text-primary-500 hover:underline"
+        className="flex items-center gap-2 text-xs font-semibold text-emerald-500 hover:underline"
       >
         {showQuoteForm ? <ChevronUp size={14} /> : <Plus size={14} />}
         {showQuoteForm ? 'Close Quote Form' : 'Add Quote'}
@@ -365,7 +365,7 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
 
       <button
         onClick={handleUpdate} disabled={saving}
-        className="w-full py-2.5 rounded-xl bg-primary-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+        className="w-full py-2.5 rounded-xl bg-emerald-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
       >
         {saving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
         Update
@@ -458,7 +458,7 @@ const TabBtn: React.FC<{ active: boolean; onClick: () => void; icon: React.React
   <button
     onClick={onClick}
     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-      active ? 'bg-primary-500 text-white shadow-sm' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
+      active ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
     }`}
   >
     {icon}{label}
@@ -469,7 +469,7 @@ const FilterPill: React.FC<{ label: string; active: boolean; onClick: () => void
   <button
     onClick={onClick}
     className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-      active ? 'bg-primary-500 text-white' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
+      active ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'
     }`}
   >
     {label}

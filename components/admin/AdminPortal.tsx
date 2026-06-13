@@ -338,7 +338,7 @@ const AdminPortal = ({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
           { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
           { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
@@ -361,7 +361,7 @@ const AdminPortal = ({
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
-            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-orange-500/10 text-orange-400', 'bg-orange-50 text-orange-500') },
+            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
             { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
             { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           ].map(card => (
@@ -443,7 +443,7 @@ const AdminPortal = ({
                       <p className={`text-xs font-bold truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{a.name}</p>
                       <p className={`text-[9px] ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{a.orders} pesanan</p>
                     </div>
-                    <span className="text-[10px] font-black text-orange-500">{formatIDR(a.premium)}</span>
+                    <span className="text-[10px] font-black text-emerald-500">{formatIDR(a.premium)}</span>
                   </div>
                 ))
             : <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>

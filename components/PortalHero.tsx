@@ -50,7 +50,7 @@ const SLIDES = (lang: Language) => [
       ? "Settle your claims in seconds. Cash paid directly to your node wallet without bureaucracy."
       : "Selesaikan klaim Anda dalam hitungan detik. Dana cair langsung ke node dompet Anda tanpa drama birokrasi.",
     image: null,
-    bgClass: "bg-gradient-to-br from-rose-700 via-orange-800 to-slate-950",
+    bgClass: "bg-gradient-to-br from-rose-700 via-rose-900 to-slate-950",
     highlightClass: "text-rose-400",
     iconClass: "text-rose-500",
     pattern: (
@@ -70,7 +70,7 @@ const QuickActions = ({ onAction, lang }: { onAction: (id: string) => void; lang
   const actions = [
     { id: 'buy-travel', label: t('Travel', 'Travel'), icon: Plane, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'buy-car', label: t('Auto', 'Mobil'), icon: Car, gradient: 'from-blue-500 to-indigo-600' },
-    { id: 'claim', label: t('Claim', 'Klaim'), icon: Zap, gradient: 'from-rose-500 to-orange-600' },
+    { id: 'claim', label: t('Claim', 'Klaim'), icon: Zap, gradient: 'from-rose-500 to-rose-700' },
     { id: 'products', label: t('More', 'Lainnya'), icon: TrendingUp, gradient: 'from-violet-500 to-purple-600' },
   ];
   return (

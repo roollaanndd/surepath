@@ -877,7 +877,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <p className="text-[10px] text-slate-400 font-bold mt-1">
                   {PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.region}
                   {' · '}
-                  <span className="text-primary-500">OJK Zone {getZone(PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.province ?? '')}</span>
+                  <span className="text-emerald-500">OJK Zone {getZone(PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.province ?? '')}</span>
                 </p>
               )}
               {vehicleDetails.plate && (
@@ -1283,7 +1283,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     preview
                       ? isInvalid
                         ? 'border-rose-400 border-solid'
-                        : 'border-primary-400 border-solid bg-primary-500/5'
+                        : 'border-emerald-400 border-solid bg-emerald-500/5'
                       : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02]'
                   }`}
                 >
@@ -1322,8 +1322,8 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     </>
                   ) : (
                     <label className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 cursor-pointer">
-                      <Upload className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-400 transition-colors" />
-                      <span className="text-[0.6rem] font-black uppercase text-slate-400 group-hover:text-primary-500 transition-colors">{slot.label}</span>
+                      <Upload className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-emerald-400 transition-colors" />
+                      <span className="text-[0.6rem] font-black uppercase text-slate-400 group-hover:text-emerald-500 transition-colors">{slot.label}</span>
                       <span className="text-[0.5rem] text-slate-300 dark:text-slate-600">{slot.desc}</span>
                       <input
                         type="file"
@@ -1347,7 +1347,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <div className="mt-4">
               {aiScoring ? (
                 <div className="flex flex-col items-center gap-2 py-4">
-                  <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menganalisis foto kendaraan…</p>
                 </div>
               ) : (
@@ -1384,7 +1384,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
             {aiResult.underwritingReport && (
               <div className="mb-4 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10">
-                <p className="text-[0.55rem] font-black uppercase text-primary-500 tracking-widest mb-1">Laporan Surveyor AI</p>
+                <p className="text-[0.55rem] font-black uppercase text-emerald-500 tracking-widest mb-1">Laporan Surveyor AI</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{aiResult.underwritingReport}</p>
               </div>
             )}

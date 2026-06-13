@@ -260,14 +260,14 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
   };
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-[#f0faf7] dark:bg-dark-bg text-gray-900 dark:text-white overflow-hidden relative selection:bg-primary-100">
+    <div className="flex flex-col h-full min-h-screen bg-[#f0faf7] dark:bg-dark-bg text-gray-900 dark:text-white overflow-hidden relative selection:bg-emerald-100">
        <div className="px-8 pt-8 pb-4 bg-white dark:bg-white/5 border-b border-black/5 flex flex-col gap-6 flex-shrink-0 relative z-[100] shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
-               <div className="w-14 h-14 bg-midnight rounded-[1.8rem] flex items-center justify-center text-white shadow-2xl group border border-white/10"><Car size={28} className="group-hover:rotate-12 transition-transform text-primary-500"/></div>
+               <div className="w-14 h-14 bg-midnight rounded-[1.8rem] flex items-center justify-center text-white shadow-2xl group border border-white/10"><Car size={28} className="group-hover:rotate-12 transition-transform text-emerald-500"/></div>
                <div>
                   <p className="text-[0.55rem] font-black text-gray-400 uppercase tracking-[0.4em] leading-none mb-1.5">Modul Otomatis</p>
-                  <h3 className="text-xl font-black uppercase tracking-tighter leading-none">Sure<span className="text-primary-500">Path</span> Registry</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tighter leading-none">Sure<span className="text-emerald-500">Path</span> Registry</h3>
                </div>
             </div>
             <div className="flex items-center gap-3">
@@ -285,13 +285,13 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
           
           <div className="flex items-center justify-between">
              <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl border border-black/5">
-                <div className="px-4 py-1.5 text-[0.65rem] font-black text-primary-600 uppercase tracking-widest">{STEPS[step].label}</div>
+                <div className="px-4 py-1.5 text-[0.65rem] font-black text-emerald-600 uppercase tracking-widest">{STEPS[step].label}</div>
              </div>
              <p className="text-[0.6rem] font-black text-gray-400 uppercase tracking-[0.2em]">Step {step + 1} of {STEPS.length}</p>
           </div>
 
           <div className="flex gap-2.5">
-             {STEPS.map((_s, i) => (<div key={i} className={`h-2 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-primary-500 shadow-[0_0_15px_#10b981]' : i < step ? 'bg-primary-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>))}
+             {STEPS.map((_s, i) => (<div key={i} className={`h-2 rounded-full flex-1 transition-all duration-700 ${i === step ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : i < step ? 'bg-emerald-500/30' : 'bg-gray-200 dark:bg-white/10'}`}></div>))}
           </div>
        </div>
 
@@ -359,10 +359,10 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang = Language.ID }: { o
        <div className="px-8 py-8 bg-white dark:bg-[#111] border-t border-black/5 flex items-center justify-between gap-8 flex-shrink-0 sticky bottom-0 z-[100] shadow-[0_-20px_50px_rgba(0,0,0,0.05)]">
           <div className="flex-1">
              <p className="text-[0.6rem] font-black uppercase text-gray-400 leading-none mb-1.5 tracking-[0.2em]">Matrix Premium Est.</p>
-             <p className="text-3xl font-black tracking-tighter text-primary-500 leading-none">{premiumBreakdown ? formatIDR(premiumBreakdown.totalPayable) : 'Rp 0'}</p>
+             <p className="text-3xl font-black tracking-tighter text-emerald-500 leading-none">{premiumBreakdown ? formatIDR(premiumBreakdown.totalPayable) : 'Rp 0'}</p>
           </div>
           <div className="flex gap-4">
-             {step > 0 && (<button onClick={handleBack} className="p-5 bg-gray-50 dark:bg-white/5 rounded-3xl text-gray-400 hover:text-primary-500 transition-all shadow-sm border border-black/5 active:scale-95"><ChevronLeft size={28}/></button>)}
+             {step > 0 && (<button onClick={handleBack} className="p-5 bg-gray-50 dark:bg-white/5 rounded-3xl text-gray-400 hover:text-emerald-500 transition-all shadow-sm border border-black/5 active:scale-95"><ChevronLeft size={28}/></button>)}
              {step < STEPS.length - 1 && (
                 <button 
                   onClick={handleNext} 

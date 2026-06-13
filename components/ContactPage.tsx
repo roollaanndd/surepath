@@ -28,7 +28,7 @@ const ContactPage = ({ lang }: { lang: Language }) => {
       <div className="text-center space-y-6 max-w-2xl mx-auto">
          <Badge>{t("Direct Access", "Akses Langsung")}</Badge>
          <h2 className="text-5xl font-black tracking-tighter uppercase text-slate-900 dark:text-white leading-none">
-           {t("Contact", "Hubungi")} <span className="text-primary-500">{t("Our Nodes", "Simpul Kami")}</span>
+           {t("Contact", "Hubungi")} <span className="text-emerald-500">{t("Our Nodes", "Simpul Kami")}</span>
          </h2>
          <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
            {t("Need help with your policy or claim? Our tim support is available 24/7 through multiple protocols.", 
@@ -40,9 +40,9 @@ const ContactPage = ({ lang }: { lang: Language }) => {
          {[
            { label: t("Email Protocol", "Protokol Email"), value: "support@surepath.ai", icon: Mail, color: "text-blue-500", bg: "bg-blue-50" },
            { label: t("Voice Link", "Jalur Suara"), value: "1500-SURE (7873)", icon: Phone, color: "text-emerald-500", bg: "bg-emerald-50" },
-           { label: t("AI Live Chat", "Chat AI Langsung"), value: "Open Pulse Chat", icon: MessageSquare, color: "text-primary-500", bg: "bg-orange-50" },
+           { label: t("AI Live Chat", "Chat AI Langsung"), value: "Open Pulse Chat", icon: MessageSquare, color: "text-emerald-500", bg: "bg-emerald-50" },
          ].map((item, i) => (
-           <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl hover:border-primary-500/20 transition-all group">
+           <div key={i} className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl hover:border-emerald-500/20 transition-all group">
               <div className={`w-16 h-16 ${item.bg} dark:bg-white/5 ${item.color} rounded-[1.8rem] flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform`}>
                  <item.icon size={32}/>
               </div>
@@ -69,7 +69,7 @@ const ContactPage = ({ lang }: { lang: Language }) => {
                
                <div className="space-y-6">
                   <div className="flex gap-6 items-start">
-                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-primary-500 border border-white/10">
+                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-white/10">
                         <MapPin size={24}/>
                      </div>
                      <div>
@@ -105,7 +105,7 @@ const ContactPage = ({ lang }: { lang: Language }) => {
                      <input
                         value={subject}
                         onChange={(e) => { setSubject(e.target.value); setSent(false); }}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-primary-500 transition-all"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:border-emerald-500 transition-all"
                         placeholder={t("Policy Inquiry / Claim Status", "Pertanyaan Polis / Status Klaim")}
                      />
                   </div>
@@ -115,7 +115,7 @@ const ContactPage = ({ lang }: { lang: Language }) => {
                         rows={4}
                         value={message}
                         onChange={(e) => { setMessage(e.target.value); setSent(false); }}
-                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-3xl py-4 px-6 text-sm font-medium outline-none focus:border-primary-500 transition-all resize-none"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-black/5 dark:border-white/5 rounded-3xl py-4 px-6 text-sm font-medium outline-none focus:border-emerald-500 transition-all resize-none"
                         placeholder={t("Type your message here...", "Ketik pesan Anda di sini...")}
                      ></textarea>
                   </div>

@@ -17,7 +17,7 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
             <button 
               key={t}
               onClick={() => setCoverage({...coverage, type: t})}
-              className={`flex-1 py-4.5 rounded-[1.5rem] text-[0.75rem] font-black uppercase tracking-widest transition-all ${coverage.type === t ? 'bg-white dark:bg-gray-800 text-primary-500 shadow-xl scale-100' : 'text-gray-400 opacity-60 scale-95 hover:opacity-100'}`}
+              className={`flex-1 py-4.5 rounded-[1.5rem] text-[0.75rem] font-black uppercase tracking-widest transition-all ${coverage.type === t ? 'bg-white dark:bg-gray-800 text-emerald-500 shadow-xl scale-100' : 'text-gray-400 opacity-60 scale-95 hover:opacity-100'}`}
             >
               {t === InsuranceType.COMPREHENSIVE ? 'Lengkap (All Risk)' : 'Hanya Hilang (TLO)'}
             </button>
@@ -31,14 +31,14 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
                 <button 
                    key={val}
                    onClick={() => setCoverage({...coverage, tpl: val})}
-                   className={`p-4 rounded-[1.5rem] border-2 transition-all flex flex-col items-center gap-1 tap-feedback ${coverage.tpl === val ? 'border-primary-500 bg-primary-500/5 text-primary-600 shadow-lg' : 'border-black/5 bg-white dark:bg-white/[0.03] text-gray-400 opacity-70'}`}
+                   className={`p-4 rounded-[1.5rem] border-2 transition-all flex flex-col items-center gap-1 tap-feedback ${coverage.tpl === val ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600 shadow-lg' : 'border-black/5 bg-white dark:bg-white/[0.03] text-gray-400 opacity-70'}`}
                 >
                    <span className="font-black text-[0.7rem]">{val === 0 ? 'TIDAK ADA' : `${val/1000000}JT`}</span>
                    <span className="text-[0.45rem] font-bold opacity-60">Limit Ganti Rugi</span>
                 </button>
              ))}
           </div>
-          <p className="text-[0.55rem] font-bold text-gray-400 ml-2 italic flex items-center gap-1.5"><Info size={10} className="text-primary-500"/> Manfaat biaya ganti rugi jika kamu menabrak orang/kendaraan lain.</p>
+          <p className="text-[0.55rem] font-bold text-gray-400 ml-2 italic flex items-center gap-1.5"><Info size={10} className="text-emerald-500"/> Manfaat biaya ganti rugi jika kamu menabrak orang/kendaraan lain.</p>
        </div>
 
        <div className="grid grid-cols-2 gap-4">
@@ -52,9 +52,9 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
             <button 
               key={opt.id}
               onClick={() => setCoverage({...coverage, [opt.id]: !coverage[opt.id as keyof typeof coverage]})}
-              className={`p-5 rounded-[2rem] border-2 text-left flex flex-col gap-2.5 transition-all tap-feedback ${coverage[opt.id as keyof typeof coverage] ? 'border-primary-500 bg-primary-500/5 shadow-lg ring-1 ring-primary-500/20' : 'border-black/5 bg-white dark:bg-white/[0.03] opacity-60 hover:opacity-100'}`}
+              className={`p-5 rounded-[2rem] border-2 text-left flex flex-col gap-2.5 transition-all tap-feedback ${coverage[opt.id as keyof typeof coverage] ? 'border-emerald-500 bg-emerald-500/5 shadow-lg ring-1 ring-emerald-500/20' : 'border-black/5 bg-white dark:bg-white/[0.03] opacity-60 hover:opacity-100'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${coverage[opt.id as keyof typeof coverage] ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${coverage[opt.id as keyof typeof coverage] ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                  <opt.icon size={20}/>
               </div>
               <div>

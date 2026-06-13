@@ -59,9 +59,9 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, onAction }) => {
       </div>
 
       {/* Premium */}
-      <div className="rounded-xl bg-primary-500/5 border border-primary-500/20 px-4 py-3">
-        <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
-        <div className="text-xl font-black text-primary-500 mt-0.5">{formatIDR(quote.premium_amount)}</div>
+      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
+        <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
+        <div className="text-xl font-black text-emerald-500 mt-0.5">{formatIDR(quote.premium_amount)}</div>
       </div>
 
       {/* Coverage details */}
@@ -164,7 +164,7 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang }) => {
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${
               filter === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -175,7 +175,7 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang }) => {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-primary-500" />
+          <Loader2 size={28} className="animate-spin text-emerald-500" />
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">

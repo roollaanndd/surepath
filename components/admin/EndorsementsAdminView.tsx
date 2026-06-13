@@ -19,7 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
 const TYPE_COLOR: Record<string, string> = {
   ADDRESS:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
   PLATE:       'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  SUM_INSURED: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  SUM_INSURED: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   ADDON:       'bg-teal-500/10 text-teal-400 border-teal-500/20',
   DRIVER:      'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
   OTHER:       'bg-gray-500/10 text-gray-400 border-gray-500/20',

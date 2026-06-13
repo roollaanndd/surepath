@@ -53,7 +53,7 @@ const SearchableSelect: React.FC<Props> = ({
         type="button"
         disabled={disabled}
         onClick={() => { if (!disabled) setOpen(prev => !prev); }}
-        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm transition text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>
           {value || placeholder}
@@ -75,7 +75,7 @@ const SearchableSelect: React.FC<Props> = ({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Cari..."
-              className="w-full bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 pl-8 pr-8 py-2 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 placeholder:text-slate-400"
+              className="w-full bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 pl-8 pr-8 py-2 text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400"
             />
             {search && (
               <button
@@ -95,7 +95,7 @@ const SearchableSelect: React.FC<Props> = ({
                 <button
                   type="button"
                   onMouseDown={e => { e.preventDefault(); onChange(search.trim()); setOpen(false); }}
-                  className="w-full text-left px-4 py-3 text-sm text-primary-600 dark:text-primary-400 font-bold hover:bg-primary-500/10 transition-colors"
+                  className="w-full text-left px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/10 transition-colors"
                 >
                   ✎ Masukkan manual: "{search.trim()}"
                 </button>
@@ -111,7 +111,7 @@ const SearchableSelect: React.FC<Props> = ({
                     onMouseDown={e => { e.preventDefault(); onChange(opt); setOpen(false); }}
                     className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                       opt === value
-                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
                     }`}
                   >

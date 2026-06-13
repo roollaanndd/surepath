@@ -77,7 +77,7 @@ const TierConfigTab: React.FC = () => {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="w-8 h-8 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+      <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
     </div>
   );
 
@@ -242,7 +242,7 @@ const PromoCodesTab: React.FC = () => {
         </div>
         <button
           onClick={() => setShowForm(f => !f)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all"
         >
           {showForm ? <X size={12} /> : <Plus size={12} />}
           {showForm ? 'Batal' : 'Buat Kode'}
@@ -261,7 +261,7 @@ const PromoCodesTab: React.FC = () => {
                 type="text" placeholder="PROMO10"
                 value={form.code}
                 onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
@@ -269,7 +269,7 @@ const PromoCodesTab: React.FC = () => {
               <select
                 value={form.discount_type}
                 onChange={e => setForm(p => ({ ...p, discount_type: e.target.value as 'PERCENT' | 'FLAT' }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               >
                 <option value="PERCENT">Persen (%)</option>
                 <option value="FLAT">Nominal (IDR)</option>
@@ -286,7 +286,7 @@ const PromoCodesTab: React.FC = () => {
                 type="number" min={0}
                 value={form.discount_value}
                 onChange={e => setForm(p => ({ ...p, discount_value: parseFloat(e.target.value) }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
@@ -295,7 +295,7 @@ const PromoCodesTab: React.FC = () => {
                 type="number" min={1}
                 value={form.usage_limit}
                 onChange={e => setForm(p => ({ ...p, usage_limit: parseInt(e.target.value) }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
@@ -306,7 +306,7 @@ const PromoCodesTab: React.FC = () => {
               <input
                 type="date" value={form.valid_from}
                 onChange={e => setForm(p => ({ ...p, valid_from: e.target.value }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
@@ -314,7 +314,7 @@ const PromoCodesTab: React.FC = () => {
               <input
                 type="date" value={form.valid_to}
                 onChange={e => setForm(p => ({ ...p, valid_to: e.target.value }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500/40"
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
@@ -328,7 +328,7 @@ const PromoCodesTab: React.FC = () => {
                   onClick={() => toggleProduct(p)}
                   className="px-2.5 py-1 rounded-lg text-[0.6rem] font-black uppercase tracking-widest transition-all"
                   style={{
-                    background: form.applicable_products.includes(p) ? '#f97316' : 'rgba(255,255,255,0.05)',
+                    background: form.applicable_products.includes(p) ? '#00C16A' : 'rgba(255,255,255,0.05)',
                     color: form.applicable_products.includes(p) ? '#000' : 'rgba(255,255,255,0.4)',
                   }}
                 >
@@ -344,7 +344,7 @@ const PromoCodesTab: React.FC = () => {
               type="text" placeholder="Promo Lebaran 2026"
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500/40"
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
             />
           </div>
 
@@ -353,7 +353,7 @@ const PromoCodesTab: React.FC = () => {
           <button
             onClick={handleCreate}
             disabled={saving}
-            className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-all disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all disabled:opacity-50"
           >
             {saving ? 'Menyimpan…' : 'Buat Kode Promo'}
           </button>
@@ -363,7 +363,7 @@ const PromoCodesTab: React.FC = () => {
       {/* Code list */}
       {loading ? (
         <div className="flex justify-center py-10">
-          <div className="w-8 h-8 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : codes.length === 0 ? (
         <div className="text-center py-12 text-slate-500 text-sm">
@@ -382,7 +382,7 @@ const PromoCodesTab: React.FC = () => {
                 }`}
                 style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
               >
-                <Tag size={14} className="text-primary-500 flex-shrink-0" />
+                <Tag size={14} className="text-emerald-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-black text-sm text-white font-mono">{c.code}</p>
@@ -440,7 +440,7 @@ const TierPromoConfigAdmin: React.FC = () => {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 py-2.5 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all ${
-              tab === t.id ? 'bg-primary-500 text-white' : 'text-slate-500 hover:text-slate-300'
+              tab === t.id ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'
             }`}
           >
             {t.label}

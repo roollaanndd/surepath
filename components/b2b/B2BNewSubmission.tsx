@@ -16,7 +16,7 @@ interface Props {
 
 type ProductType = 'FLEET_MV' | 'BONDING' | 'GROUP_HEALTH';
 
-const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40';
+const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 const LABEL = 'block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider';
 
 const DOC_REQS: Record<ProductType, Array<{ key: string; label: string }>> = {
@@ -156,11 +156,11 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
           onClick={() => setProductType(type)}
           className={`w-full flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all ${
             productType === type
-              ? 'border-primary-500 bg-primary-500/5'
+              ? 'border-emerald-500 bg-emerald-500/5'
               : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5'
           }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
             <Icon size={20} />
           </div>
           <div>
@@ -246,7 +246,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
             <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
               uploadedDocs[key]
                 ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                : 'bg-primary-500 text-white'
+                : 'bg-emerald-500 text-white'
             }`}>
               {uploadingKey === key
                 ? <Loader2 size={13} className="animate-spin" />
@@ -284,7 +284,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
       <button
         disabled={submitting}
         onClick={handleSubmit}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary-500 text-white py-4 font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-white py-4 font-black text-sm shadow-lg shadow-emerald-500/25 disabled:opacity-60"
       >
         {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
         {t('Submit Submission', 'Kirim Pengajuan')}
@@ -302,7 +302,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
         {STEPS.map((label, i) => (
           <React.Fragment key={label}>
             <div className={`flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-xs font-black transition-colors ${
-              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-primary-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
             }`}>
               {i < step ? '✓' : i + 1}
             </div>
@@ -328,7 +328,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
           <button
             disabled={!canNext[step]}
             onClick={handleNext}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-2xl bg-primary-500 text-white text-sm font-black disabled:opacity-40 shadow-lg shadow-orange-500/20"
+            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-black disabled:opacity-40 shadow-lg shadow-emerald-500/20"
           >
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>

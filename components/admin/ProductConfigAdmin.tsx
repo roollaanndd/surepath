@@ -91,7 +91,7 @@ interface RateSliderProps {
   accent?: string;
 }
 
-const RateSlider: React.FC<RateSliderProps> = ({ label, value, min, max, onChange, accent = 'accent-orange-500' }) => {
+const RateSlider: React.FC<RateSliderProps> = ({ label, value, min, max, onChange, accent = 'accent-emerald-500' }) => {
   const pctDisplay = pct(value);
 
   const handleSlider = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +117,7 @@ const RateSlider: React.FC<RateSliderProps> = ({ label, value, min, max, onChang
             step={0.1}
             value={(value * 100).toFixed(1)}
             onChange={handleInput}
-            className="w-14 bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs font-black text-white text-right focus:outline-none focus:border-orange-500/50"
+            className="w-14 bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs font-black text-white text-right focus:outline-none focus:border-emerald-500/50"
           />
           <span className="text-[10px] font-black text-slate-400">%</span>
         </div>
@@ -133,7 +133,7 @@ const RateSlider: React.FC<RateSliderProps> = ({ label, value, min, max, onChang
       />
       <div className="flex justify-between text-[9px] text-slate-600 font-bold">
         <span>{pct(min)}</span>
-        <span className="text-orange-400 font-black">{pctDisplay}</span>
+        <span className="text-emerald-400 font-black">{pctDisplay}</span>
         <span>{pct(max)}</span>
       </div>
     </div>
@@ -315,14 +315,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
       </div>
 
       {/* Preview calculation */}
-      <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl px-4 py-3">
-        <p className="text-[9px] font-black uppercase tracking-widest text-orange-400/70 mb-1.5">
+      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl px-4 py-3">
+        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400/70 mb-1.5">
           Preview — Premi {formatIDR(PREVIEW_PREMIUM)}
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <span className="text-[10px] font-black">
-            <Percent size={9} className="inline text-orange-400 mr-0.5" />
-            Komisi <span className="text-orange-400">{formatIDR(commission)}</span>
+            <Percent size={9} className="inline text-emerald-400 mr-0.5" />
+            Komisi <span className="text-emerald-400">{formatIDR(commission)}</span>
           </span>
           <span className="text-[10px] font-black">
             <Coins size={9} className="inline text-amber-400 mr-0.5" />
@@ -340,7 +340,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
           onChange={e => setDraft(prev => ({ ...prev, notes: e.target.value }))}
           rows={2}
           placeholder="Catatan untuk konfigurasi ini…"
-          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500/40 resize-none"
+          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500/40 resize-none"
         />
       </div>
 
@@ -352,7 +352,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
           saved
             ? 'bg-emerald-500 text-white'
             : isDirty
-            ? 'bg-primary-500 text-white hover:bg-primary-600'
+            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
             : 'bg-white/5 text-slate-600 cursor-not-allowed'
         }`}
       >
@@ -443,7 +443,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
                 value={form.product_code}
                 onChange={e => set('product_code', e.target.value.toUpperCase())}
                 placeholder="MRKB4-COMP"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm font-black text-white focus:outline-none focus:border-orange-500/40 font-mono"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm font-black text-white focus:outline-none focus:border-emerald-500/40 font-mono"
               />
             </div>
             <div>
@@ -451,7 +451,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
               <select
                 value={form.vehicle_type}
                 onChange={e => set('vehicle_type', e.target.value as SpProductConfig['vehicle_type'])}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/40 appearance-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/40 appearance-none"
               >
                 <option value="CAR">Mobil (CAR)</option>
                 <option value="MOTORCYCLE">Motor (MOTORCYCLE)</option>
@@ -468,7 +468,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
                 value={form.product_name}
                 onChange={e => set('product_name', e.target.value)}
                 placeholder="Asuransi Mobil Komprehensif"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/40"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
@@ -476,7 +476,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
               <select
                 value={form.coverage_type}
                 onChange={e => set('coverage_type', e.target.value as SpProductConfig['coverage_type'])}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500/40 appearance-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/40 appearance-none"
               >
                 <option value="COMPREHENSIVE">Komprehensif</option>
                 <option value="TLO">TLO</option>
@@ -493,13 +493,13 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
           </div>
 
           {/* Preview */}
-          <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl px-4 py-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-orange-400/70 mb-1.5">
+          <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl px-4 py-3">
+            <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400/70 mb-1.5">
               Preview — Premi {formatIDR(PREVIEW_PREMIUM)}
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <span className="text-[10px] font-black">
-                Komisi <span className="text-orange-400">{formatIDR(commission)}</span>
+                Komisi <span className="text-emerald-400">{formatIDR(commission)}</span>
               </span>
               <span className="text-[10px] font-black">
                 <span className="text-amber-400">{coins.toLocaleString('id-ID')} koin</span>
@@ -516,7 +516,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
               onChange={e => set('notes', e.target.value)}
               rows={2}
               placeholder="Catatan untuk produk ini…"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500/40 resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500/40 resize-none"
             />
           </div>
 
@@ -550,7 +550,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-60"
             >
               <Plus size={12} />
               {saving ? 'Menyimpan…' : 'Buat Produk'}
@@ -617,7 +617,7 @@ const ProductConfigAdmin: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 bg-primary-500 text-white rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-colors"
+            className="flex items-center gap-2 bg-emerald-500 text-white rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors"
           >
             <Plus size={12} />
             Tambah Produk
@@ -633,7 +633,7 @@ const ProductConfigAdmin: React.FC = () => {
             onClick={() => setFilterActive(f)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filterActive === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-white/5 text-slate-400 hover:bg-white/10'
             }`}
           >
@@ -645,7 +645,7 @@ const ProductConfigAdmin: React.FC = () => {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-24">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-24">

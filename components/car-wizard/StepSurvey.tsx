@@ -206,7 +206,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       {!survey.stnk ? (
           <div className="p-6 bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 rounded-[2.5rem] space-y-6 shadow-xl relative overflow-hidden">
               <div className="flex items-center gap-4 mb-2">
-                  <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner"><FileText size={20}/></div>
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-inner"><FileText size={20}/></div>
                   <div>
                       <div className="flex items-center gap-2">
                           <h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em]">Foto STNK</h4>
@@ -221,12 +221,12 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                   <p className="text-[0.6rem] font-bold text-rose-500">{stnkError}</p>
                 </div>
               )}
-              <label className="group relative aspect-[3/1] rounded-[2rem] border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-500/50 transition-all bg-gray-50 dark:bg-white/[0.02]">
+              <label className="group relative aspect-[3/1] rounded-[2rem] border-2 border-dashed border-gray-300 dark:border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-emerald-500/50 transition-all bg-gray-50 dark:bg-white/[0.02]">
                   {loading && loadingType === 'STNK' ? <ScannerOverlay label="Membaca STNK..." /> : (
                   <>
                       <div className="flex gap-3">
-                        <FileSearch size={32} className="text-gray-300 group-hover:text-primary-500 transition-colors"/>
-                        <ImagePlus size={32} className="text-gray-300 group-hover:text-primary-500 transition-colors"/>
+                        <FileSearch size={32} className="text-gray-300 group-hover:text-emerald-500 transition-colors"/>
+                        <ImagePlus size={32} className="text-gray-300 group-hover:text-emerald-500 transition-colors"/>
                       </div>
                       <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-gray-500">Scan / Unggah STNK</p>
                       <input type="file" accept="image/*" className="hidden" onChange={handleStnkUpload} />
@@ -247,10 +247,10 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
            <div className="flex items-center gap-3">
-              <Camera size={16} className="text-primary-500"/>
+              <Camera size={16} className="text-emerald-500"/>
               <h4 className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-gray-500">Foto Kondisi Mobil</h4>
            </div>
-           <div className="px-3 py-1 bg-primary-500/10 rounded-full text-[0.5rem] font-black text-primary-500 uppercase">{capturedCount}/5 Selesai</div>
+           <div className="px-3 py-1 bg-emerald-500/10 rounded-full text-[0.5rem] font-black text-emerald-500 uppercase">{capturedCount}/5 Selesai</div>
         </div>
         
         <p className="text-[0.55rem] font-bold text-gray-400 px-2 -mt-1">
@@ -266,7 +266,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
               const isLastSlot = slotIndex === photoSlots.length - 1;
 
               return (
-              <div key={slot.id} className={`group relative rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center gap-2 overflow-hidden shadow-sm ${isLastSlot ? 'col-span-2 aspect-[3/1]' : 'aspect-video'} ${survey.photos[slot.id] ? (isInvalid ? 'border-rose-500 bg-rose-500/[0.03]' : 'border-primary-500 bg-primary-500/[0.03] border-solid') : 'border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03]'}`}>
+              <div key={slot.id} className={`group relative rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center gap-2 overflow-hidden shadow-sm ${isLastSlot ? 'col-span-2 aspect-[3/1]' : 'aspect-video'} ${survey.photos[slot.id] ? (isInvalid ? 'border-rose-500 bg-rose-500/[0.03]' : 'border-emerald-500 bg-emerald-500/[0.03] border-solid') : 'border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03]'}`}>
                  {survey.photos[slot.id] ? (
                    <>
                       <img src={survey.photos[slot.id]} className="absolute inset-0 w-full h-full object-cover rounded-[1.8rem]" alt={slot.label} />
@@ -276,8 +276,8 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                          {isLoading && (
                             <div className="flex flex-col items-center gap-3 animate-fade-in w-full px-4">
                                <div className="relative">
-                                  <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full"></div>
-                                  <Loader2 size={32} className="text-primary-500 animate-spin relative z-10"/>
+                                  <div className="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full"></div>
+                                  <Loader2 size={32} className="text-emerald-500 animate-spin relative z-10"/>
                                </div>
                                <div className="space-y-2 text-center w-full">
                                   <span className="text-[0.5rem] font-black text-white uppercase tracking-widest drop-shadow-md">Mengecek...</span>
@@ -301,8 +301,8 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                  ) : (
                    <>
                       <div className="flex gap-2">
-                        <Camera size={20} className="text-gray-300 group-hover:text-primary-500 transition-colors"/>
-                        <ImagePlus size={20} className="text-gray-300 group-hover:text-primary-500 transition-colors"/>
+                        <Camera size={20} className="text-gray-300 group-hover:text-emerald-500 transition-colors"/>
+                        <ImagePlus size={20} className="text-gray-300 group-hover:text-emerald-500 transition-colors"/>
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-[0.6rem] font-black uppercase text-gray-500">{slot.label}</p>
@@ -394,8 +394,8 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
                     <div className="p-6 bg-gray-50 dark:bg-white/[0.02] rounded-[2rem] border border-black/5 dark:border-white/5 relative z-10 space-y-4">
                        <div className="flex items-center gap-3">
-                          <FileText size={14} className="text-primary-500"/>
-                          <span className="text-[0.55rem] font-black uppercase text-primary-500 tracking-widest">Laporan Hasil Surveyor AI</span>
+                          <FileText size={14} className="text-emerald-500"/>
+                          <span className="text-[0.55rem] font-black uppercase text-emerald-500 tracking-widest">Laporan Hasil Surveyor AI</span>
                        </div>
                        <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed">
                           {survey.underwritingReport || "Laporan kondisi mobil berdasarkan foto yang diunggah."}
@@ -425,7 +425,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                              <p className="text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">Rekomendasi</p>
                              {survey.recommendations.map((rec: string, idx: number) => (
                                 <div key={idx} className="flex items-start gap-2 text-[0.6rem]">
-                                   <span className="text-primary-500 font-black mt-0.5">→</span>
+                                   <span className="text-emerald-500 font-black mt-0.5">→</span>
                                    <span className="font-medium text-gray-600 dark:text-gray-300">{rec}</span>
                                 </div>
                              ))}
@@ -495,7 +495,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                     <div className="flex flex-col items-center gap-4 pt-2">
                       <button 
                          onClick={() => { setSurvey({...survey, score: 0, verdict: '', detailedIssues: [], photoFlags: [], underwritingReport: '', rejectionReason: ''}); }}
-                         className="px-8 py-3 bg-gray-100 dark:bg-white/5 rounded-full text-[0.6rem] font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest hover:text-primary-500 hover:bg-primary-500/5 transition-all flex items-center gap-3 active:scale-95 shadow-sm border border-black/5"
+                         className="px-8 py-3 bg-gray-100 dark:bg-white/5 rounded-full text-[0.6rem] font-black uppercase text-gray-500 dark:text-gray-400 tracking-widest hover:text-emerald-500 hover:bg-emerald-500/5 transition-all flex items-center gap-3 active:scale-95 shadow-sm border border-black/5"
                       >
                          <RefreshCw size={14} className="animate-spin-slow"/> Cek Ulang Kondisi Mobil
                       </button>
@@ -510,7 +510,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
               <button
                 onClick={runSurveyAI}
                 disabled={analyzing}
-                className="w-full py-4 rounded-2xl bg-primary-500 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {analyzing ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" /> Menganalisa...</>

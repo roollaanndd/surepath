@@ -34,13 +34,13 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
     { id: 'terrorism', label: 'Terorisme & Sabotase', active: coverage.terrorism },
   ].filter(e => e.active);
 
-  const InfoRow = ({ label, value, icon: Icon, color = "text-primary-500", mono = false }: any) => (
+  const InfoRow = ({ label, value, icon: Icon, color = "text-emerald-500", mono = false }: any) => (
     <div className="flex justify-between items-center py-3.5 border-b border-black/5 dark:border-white/5 last:border-0">
       <div className="flex items-center gap-3">
         <Icon size={14} className={`${color} opacity-70`} />
         <span className="text-[0.65rem] font-bold uppercase text-gray-400 tracking-wider">{label}</span>
       </div>
-      <span className={`text-[0.75rem] font-black uppercase text-slate-900 dark:text-gray-200 ${mono ? 'font-mono text-primary-500' : ''}`}>
+      <span className={`text-[0.75rem] font-black uppercase text-slate-900 dark:text-gray-200 ${mono ? 'font-mono text-emerald-500' : ''}`}>
         {value || '-'}
       </span>
     </div>
@@ -67,7 +67,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
       doc.rect(0, 0, pageWidth, 45, 'F');
       
       // Accent line
-      doc.setFillColor(249, 115, 22); // orange-500
+      doc.setFillColor(0, 193, 106); 
       doc.rect(0, 45, pageWidth, 2, 'F');
       
       doc.setTextColor(255, 255, 255);
@@ -92,7 +92,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
 
       // --- Helper for Section Titles ---
       const addSectionTitle = (title: string, y: number) => {
-        doc.setFillColor(249, 115, 22); // orange-500
+        doc.setFillColor(0, 193, 106); 
         doc.roundedRect(20, y - 4, 4, 14, 1, 1, 'F');
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(12);
@@ -213,7 +213,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text("TOTAL PREMI", 25, currentY);
-      doc.setTextColor(249, 115, 22); // orange-500
+      doc.setTextColor(0, 193, 106); 
       doc.setFontSize(14);
       doc.text(formatIDR(premiumBreakdown?.totalPayable || 0), pageWidth - 25, currentY, { align: 'right' });
 
@@ -239,14 +239,14 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
     <div className="space-y-6 animate-fade-in pb-10">
        <div className="px-2 flex justify-between items-end">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tighter">Cek <span className="text-primary-500">Pesananmu</span></h2>
+            <h2 className="text-2xl font-black uppercase tracking-tighter">Cek <span className="text-emerald-500">Pesananmu</span></h2>
             <p className="text-xs text-gray-500 font-medium mt-1">Pastikan data sudah sesuai sebelum kita lanjut.</p>
           </div>
           
           <button 
             onClick={generatePDF}
             disabled={isGeneratingPdf}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-black/5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest hover:bg-primary-50 transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-black/5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest hover:bg-emerald-50 transition-colors shadow-sm disabled:opacity-50"
           >
             {isGeneratingPdf ? <Loader2 size={14} className="animate-spin"/> : <FileDown size={14}/>}
             {isGeneratingPdf ? 'Memproses...' : 'Simpan PDF'}
@@ -294,19 +294,19 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
        {/* KELOMPOK 3: PILIHAN PROTEKSI */}
        <div className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 shadow-inner">
+             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-inner">
                 <Shield size={20}/>
              </div>
              <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Paket Proteksi</h4>
           </div>
 
           <div className="space-y-4">
-             <div className="flex justify-between items-center p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">
+             <div className="flex justify-between items-center p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
                 <div>
-                   <p className="text-[0.5rem] font-black uppercase text-primary-500">Tipe Asuransi</p>
-                   <p className="text-base font-black text-primary-600 dark:text-primary-400 uppercase">{coverage.type === 'COMPREHENSIVE' ? 'All Risk (Lengkap)' : 'TLO (Hanya Kehilangan)'}</p>
+                   <p className="text-[0.5rem] font-black uppercase text-emerald-500">Tipe Asuransi</p>
+                   <p className="text-base font-black text-emerald-600 dark:text-emerald-400 uppercase">{coverage.type === 'COMPREHENSIVE' ? 'All Risk (Lengkap)' : 'TLO (Hanya Kehilangan)'}</p>
                 </div>
-                <Zap size={20} className="text-primary-500"/>
+                <Zap size={20} className="text-emerald-500"/>
              </div>
 
              <div className="space-y-2">
@@ -336,15 +336,15 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
 
        {/* KELOMPOK 4: RINCIAN BIAYA */}
        <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 via-emerald-500 to-primary-500"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-500"></div>
           
           <div className="flex justify-between items-start mb-10">
              <div>
-                <p className="text-[0.6rem] font-black text-primary-400 uppercase tracking-widest mb-1">Total Pembayaran</p>
+                <p className="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Pembayaran</p>
                 <h4 className="text-2xl font-black uppercase tracking-tighter">Rincian Premi</h4>
              </div>
              <div className="p-3 bg-white/10 rounded-xl">
-                <Wallet size={20} className="text-primary-400"/>
+                <Wallet size={20} className="text-emerald-400"/>
              </div>
           </div>
 
@@ -356,7 +356,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
              
              {(premiumBreakdown?.expansions.length > 0 || premiumBreakdown?.tplPremium > 0) && (
                 <div className="space-y-2.5 pb-4 border-b border-white/10">
-                   <p className="text-[0.5rem] font-black uppercase text-primary-500 tracking-widest">Tambahan Proteksi</p>
+                   <p className="text-[0.5rem] font-black uppercase text-emerald-500 tracking-widest">Tambahan Proteksi</p>
                    {premiumBreakdown.expansions.map((exp: any, i: number) => (
                       <div key={i} className="flex justify-between text-[0.65rem] opacity-60">
                          <span>• {exp.name}</span>
@@ -396,7 +396,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
              <div className="pt-6 border-t border-white/20">
                 <div className="flex justify-between items-end">
                    <div>
-                      <p className="text-[0.7rem] font-black uppercase text-primary-500 mb-1">Total Bayar</p>
+                      <p className="text-[0.7rem] font-black uppercase text-emerald-500 mb-1">Total Bayar</p>
                       <h3 className="text-4xl font-black tracking-tighter leading-none text-glow-primary">{formatIDR(premiumBreakdown?.totalPayable || 0)}</h3>
                    </div>
                    <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[0.45rem] font-black uppercase text-white/60">

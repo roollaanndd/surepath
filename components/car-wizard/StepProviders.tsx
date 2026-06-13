@@ -40,7 +40,7 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                 {comparisonData.map((p: any) => {
                    const price = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
                    return (
-                     <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-primary-500/30 transition-all text-slate-900 dark:text-white">
+                     <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/30 transition-all text-slate-900 dark:text-white">
                         <div className="text-center space-y-3 relative z-10">
                            <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-white/10 rounded-2xl flex items-center justify-center shadow-sm text-2xl font-black text-gray-500 dark:text-gray-300">
                                <ProviderIcon name={p.logo} size={32}/>
@@ -61,7 +61,7 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                            </div>
                            <div className="flex justify-between items-center pt-2 border-t border-black/5 dark:border-white/5">
                               <span className="text-[0.55rem] font-black uppercase text-gray-400">Total Akhir</span>
-                              <span className="text-sm font-black text-primary-500">{formatIDR(price)}</span>
+                              <span className="text-sm font-black text-emerald-500">{formatIDR(price)}</span>
                            </div>
                         </div>
 
@@ -147,19 +147,19 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
        <div className="flex items-center justify-between px-2 bg-gray-100 dark:bg-white/[0.03] p-3 rounded-[1.5rem] border border-black/5 dark:border-white/5">
           <div className="flex items-center gap-3 text-gray-500 ml-2">
-            <Filter size={16} className="text-primary-500"/>
+            <Filter size={16} className="text-emerald-500"/>
             <span className="text-[0.6rem] font-black uppercase tracking-[0.2em]">Urutkan Data:</span>
           </div>
           <div className="flex bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm">
              <button 
                 onClick={() => setSortBy('RATING')}
-                className={`px-5 py-2 rounded-lg text-[0.6rem] font-black uppercase transition-all flex items-center gap-2 ${sortBy === 'RATING' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-5 py-2 rounded-lg text-[0.6rem] font-black uppercase transition-all flex items-center gap-2 ${sortBy === 'RATING' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
              >
                 <Star size={12} className={sortBy === 'RATING' ? 'fill-white' : ''}/> Rating
              </button>
              <button 
                 onClick={() => setSortBy('PRICE')}
-                className={`px-5 py-2 rounded-lg text-[0.6rem] font-black uppercase transition-all flex items-center gap-2 ${sortBy === 'PRICE' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`px-5 py-2 rounded-lg text-[0.6rem] font-black uppercase transition-all flex items-center gap-2 ${sortBy === 'PRICE' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
              >
                 <Coins size={12}/> Harga
              </button>
@@ -176,7 +176,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
              <div 
                key={p.id} 
                onClick={() => setSelectedProviderId(p.id)}
-               className={`p-6 rounded-[2.8rem] border-2 cursor-pointer transition-all relative overflow-hidden group tap-feedback bg-white dark:bg-white/[0.03] ${isSelected ? 'border-primary-500 shadow-2xl scale-[1.01] ring-2 ring-primary-500/10' : 'border-black/5 hover:border-black/10'}`}
+               className={`p-6 rounded-[2.8rem] border-2 cursor-pointer transition-all relative overflow-hidden group tap-feedback bg-white dark:bg-white/[0.03] ${isSelected ? 'border-emerald-500 shadow-2xl scale-[1.01] ring-2 ring-emerald-500/10' : 'border-black/5 hover:border-black/10'}`}
              >
                 <button 
                   onClick={(e) => toggleCompare(e, p.id)}
@@ -188,7 +188,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
                   <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center font-black text-2xl shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${isSelected ? 'bg-primary-500 text-white shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
+                    <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center font-black text-2xl shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
                       <ProviderIcon name={p.logo} size={32}/>
                     </div>
                     <div>
@@ -203,7 +203,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                   </div>
 
                   <div className="w-full sm:w-auto text-left sm:text-right pt-3 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5 flex flex-col justify-center">
-                    <p className={`text-2xl font-black tracking-tighter leading-none transition-colors ${isSelected ? 'text-primary-500' : 'text-gray-900 dark:text-white'}`}>{formatIDR(finalPremi)}</p>
+                    <p className={`text-2xl font-black tracking-tighter leading-none transition-colors ${isSelected ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>{formatIDR(finalPremi)}</p>
                     <p className="text-[0.5rem] text-gray-400 uppercase font-black mt-2 tracking-[0.2em] opacity-80">Total Premi Bersih</p>
                   </div>
                </div>
@@ -253,7 +253,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                  <div className="mt-6 pt-5 border-t border-black/5 dark:border-white/5">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setShowProviderBreakdown(!showProviderBreakdown); }}
-                      className="w-full py-4 px-6 bg-primary-500/10 text-primary-500 rounded-2xl text-[0.65rem] font-black uppercase flex items-center justify-center gap-3 hover:bg-primary-500 hover:text-white transition-all shadow-sm active:scale-95"
+                      className="w-full py-4 px-6 bg-emerald-500/10 text-emerald-500 rounded-2xl text-[0.65rem] font-black uppercase flex items-center justify-center gap-3 hover:bg-emerald-500 hover:text-white transition-all shadow-sm active:scale-95"
                     >
                       <ReceiptText size={18}/>
                       {showProviderBreakdown ? 'Sembunyikan Rincian' : 'Audit Rincian Biaya'}
@@ -280,7 +280,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
                {isSelected && (
                   <div className="absolute top-0 right-0 p-6 pointer-events-none">
-                     <div className="w-10 h-10 bg-primary-500 text-white rounded-2xl flex items-center justify-center shadow-2xl animate-pop-in border-4 border-white dark:border-gray-900">
+                     <div className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-2xl animate-pop-in border-4 border-white dark:border-gray-900">
                         <Check size={22} strokeWidth={4}/>
                      </div>
                   </div>

@@ -17,7 +17,7 @@ const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: strin
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
   UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-400',     Icon: Eye },
   APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { label: 'Issued',       color: 'bg-primary-500/10 text-primary-500', Icon: FileText },
+  ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-emerald-500', Icon: FileText },
   REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400',     Icon: XCircle },
 };
 
@@ -284,7 +284,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               ))}
               <div className="border-t border-white/10 pt-2 flex justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-slate-300">Total Premi</span>
-                <span className="font-black text-primary-500">{formatIDR(order.total_premium)}</span>
+                <span className="font-black text-emerald-500">{formatIDR(order.total_premium)}</span>
               </div>
             </div>
           </div>
@@ -326,7 +326,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 onChange={e => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Catatan persetujuan atau alasan penolakan…"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 resize-none"
               />
             </div>
           )}
@@ -412,7 +412,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 <button
                   disabled={uploading}
                   onClick={() => fileRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                 >
                   <Upload size={14} />
                   {uploading ? 'Mengupload…' : 'Upload Polis PDF → Terbitkan'}
@@ -559,7 +559,7 @@ const PolicyOrdersAdmin: React.FC = () => {
               key={f}
               onClick={() => setFilter(f)}
               className={`p-4 rounded-[1.5rem] border cursor-pointer transition-all ${
-                filter === f ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/5 bg-white/[0.02] hover:border-white/10'
+                filter === f ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/5 bg-white/[0.02] hover:border-white/10'
               }`}
             >
               <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-400' : 'text-white'}`}>{counts[f]}</p>
@@ -577,7 +577,7 @@ const PolicyOrdersAdmin: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari order, klien, KTP, plat, produk…"
-            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-emerald-500"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -586,7 +586,7 @@ const PolicyOrdersAdmin: React.FC = () => {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
               }`}
             >
               {f === 'ALL' ? 'Semua' : STATUS_META[f as SpPolicyOrder['status']].label}
@@ -602,7 +602,7 @@ const PolicyOrdersAdmin: React.FC = () => {
       {/* Order list */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-20 text-slate-500 text-sm font-bold">Tidak ada order ditemukan.</div>
@@ -634,7 +634,7 @@ const PolicyOrdersAdmin: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-[10px] font-bold text-primary-500">{formatIDR(order.total_premium)}/tahun</span>
+                      <span className="text-[10px] font-bold text-emerald-500">{formatIDR(order.total_premium)}/tahun</span>
                       {order.ai_score !== undefined && order.ai_score !== null && (
                         <span className={`text-[9px] font-black uppercase tracking-widest ${AI_SCORE_COLOR(order.ai_score)}`}>
                           AI Score: {order.ai_score}

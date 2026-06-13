@@ -25,7 +25,7 @@ type TabType = 'OVERVIEW' | 'POLICIES' | 'CLAIMS' | 'SETTINGS';
 
 const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
-    primary: "bg-primary-500/10 text-primary-500 border-primary-500/20",
+    primary: "bg-ds-green-tint text-ds-green border-green-200",
     emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     blue: "bg-blue-500/10 text-blue-500 border-blue-200",
     amber: "bg-amber-500/10 text-amber-600 border-amber-200",
@@ -58,7 +58,7 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
 
         {step === 'confirm' && (
           <div className="space-y-6 animate-pop-in">
-            <div className="w-20 h-20 bg-primary-500/10 rounded-[2rem] flex items-center justify-center text-primary-500 mx-auto shadow-inner">
+            <div className="w-20 h-20 bg-ds-green-tint rounded-[2rem] flex items-center justify-center text-ds-green mx-auto shadow-inner">
               <Lock size={40} />
             </div>
             <div className="space-y-2">
@@ -68,13 +68,13 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
               <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
                 {t('We will send a secure link reset to your registered email address:', 'Kami akan mengirimkan tautan link reset aman ke alamat email terdaftar Anda:')}
               </p>
-              <p className="text-sm font-black text-primary-500 bg-primary-500/5 py-2 rounded-xl border border-primary-500/10 mt-2">
+              <p className="text-sm font-black text-ds-green bg-ds-green-tint py-2 rounded-xl border border-green-100 mt-2">
                 {email}
               </p>
             </div>
             <button 
               onClick={handleRequestReset}
-              className="w-full py-5 bg-primary-500 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+              className="w-full py-5 bg-ds-green text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-ds-green active:scale-95 transition-all flex items-center justify-center gap-3"
             >
               <Send size={18} /> {t('Send Reset Link', 'Kirim Link Reset')}
             </button>
@@ -84,11 +84,11 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
         {step === 'loading' && (
           <div className="py-12 space-y-6 animate-pulse">
             <div className="relative w-20 h-20 mx-auto">
-               <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-xl"></div>
-               <Loader2 size={80} className="text-primary-500 animate-spin relative z-10" />
+               <div className="absolute inset-0 bg-ds-green-tint rounded-full blur-xl"></div>
+               <Loader2 size={80} className="text-ds-green animate-spin relative z-10" />
             </div>
             <div className="space-y-2">
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-primary-500">{t('Proses Sinkronisasi Link', 'Proses Sinkronisasi Link')}</p>
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-ds-green">{t('Proses Sinkronisasi Link', 'Proses Sinkronisasi Link')}</p>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Encrypting protocols...', 'Mengenkripsi protokol...')}</p>
             </div>
           </div>
@@ -129,11 +129,11 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
        <div className="bg-white dark:bg-[#0f172a] w-full max-w-3xl max-h-[90vh] rounded-[3.5rem] shadow-2xl flex flex-col relative overflow-hidden border border-white/10">
           <div className="p-8 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                <div className="w-14 h-14 bg-ds-green rounded-2xl flex items-center justify-center text-white shadow-ds-green">
                    {policy.type === 'CAR' ? <Car size={28}/> : <Plane size={28}/>}
                 </div>
                 <div>
-                   <p className="text-[0.6rem] font-black text-primary-500 uppercase tracking-[0.3em]">Policy Matrix Node</p>
+                   <p className="text-[0.6rem] font-black text-ds-green uppercase tracking-[0.3em]">Policy Matrix Node</p>
                    <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none mt-1">{policy.policyNumber}</h3>
                 </div>
              </div>
@@ -144,7 +144,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
              {/* Section 1: Core Registry */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <section className="space-y-4">
-                   <div className="flex items-center gap-3 text-primary-500">
+                   <div className="flex items-center gap-3 text-ds-green">
                       <Car size={18}/>
                       <span className="text-[0.7rem] font-black uppercase tracking-widest">Hardware Node</span>
                    </div>
@@ -156,7 +156,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
                       <div className="grid grid-cols-2 gap-4">
                          <div>
                             <p className="text-[0.5rem] font-black text-gray-400 uppercase mb-1">Plate Number</p>
-                            <p className="text-xs font-black uppercase tracking-widest text-primary-500 bg-primary-500/5 px-2 py-1 rounded w-fit">{details.vehicle.plate}</p>
+                            <p className="text-xs font-black uppercase tracking-widest text-ds-green bg-ds-green-tint px-2 py-1 rounded w-fit">{details.vehicle.plate}</p>
                          </div>
                          <div>
                             <p className="text-[0.5rem] font-black text-gray-400 uppercase mb-1">Status</p>
@@ -264,7 +264,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
              <button className="flex-1 py-5 bg-white dark:bg-white/10 border border-black/5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:shadow-lg transition-all">
                 <FileCheck size={18}/> E-Policy PDF
              </button>
-             <button className="flex-1 py-5 bg-primary-500 text-white rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+             <button className="flex-1 py-5 bg-ds-green text-white rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-ds-green hover:scale-[1.02] active:scale-95 transition-all">
                 <ShieldAlert size={18}/> START CLAIM AI
              </button>
           </div>

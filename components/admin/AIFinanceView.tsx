@@ -152,7 +152,7 @@ const AIFinanceView: React.FC = () => {
               <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${HEALTH_COLOR(analysis.health_score)}`}>{HEALTH_LABEL(analysis.health_score)}</p>
             </div>
             {s && [
-              { label: 'Total GWP', value: formatIDR(s.total_gwp), icon: TrendingUp, color: 'text-orange-400' },
+              { label: 'Total GWP', value: formatIDR(s.total_gwp), icon: TrendingUp, color: 'text-emerald-400' },
               { label: 'Total Komisi', value: formatIDR(s.total_commissions), icon: DollarSign, color: 'text-blue-400' },
               { label: 'Pendapatan Bersih', value: formatIDR(s.net_revenue ?? (s.total_gwp - s.total_commissions - (s.total_claims ?? 0))), icon: CheckCircle, color: 'text-emerald-400' },
             ].map(metric => (

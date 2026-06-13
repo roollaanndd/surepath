@@ -14,7 +14,7 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
 );
 
 const Header = ({ title, subtitle }: { title: string, subtitle: string }) => (
-  <div className="pt-20 pb-12 px-8 text-center bg-gradient-to-b from-primary-500/10 to-transparent dark:from-primary-900/20">
+  <div className="pt-20 pb-12 px-8 text-center bg-gradient-to-b from-emerald-500/10 to-transparent dark:from-emerald-900/20">
     <h2 className="text-4xl text-slate-900 dark:text-white font-black tracking-tighter uppercase">{title}</h2>
     <p className="mt-4 text-xs font-bold text-gray-500 uppercase tracking-widest">{subtitle}</p>
   </div>
@@ -133,7 +133,7 @@ export default function CustomInsuranceWizard({
         <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>No. Pesanan</span>
-            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+            <span className="text-emerald-500 font-mono">{orderNumber ?? '—'}</span>
           </div>
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>Produk</span>

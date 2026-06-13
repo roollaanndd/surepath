@@ -106,13 +106,13 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <ShieldCheck size={16} className="text-white" strokeWidth={3} />
             </div>
             <div>
               <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                Sure<span className="text-primary-500">Path</span>{' '}
-                <span className="text-primary-500">B2B</span>
+                Sure<span className="text-emerald-500">Path</span>{' '}
+                <span className="text-emerald-500">B2B</span>
               </div>
               <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
                 {t('Client Portal', 'Portal Klien')}
@@ -125,7 +125,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
               <div className="text-xs font-black tracking-tight leading-none truncate max-w-[120px]">
                 {client?.company_name ?? 'Company'}
               </div>
-              <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
+              <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none mt-0.5">
                 {t('B2B Client', 'Klien B2B')}
               </div>
             </div>
@@ -146,7 +146,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center ml-1 text-white text-[10px] font-black"
+              className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center ml-1 text-white text-[10px] font-black"
             >
               {companyInitials}
             </button>
@@ -170,7 +170,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
                 onClick={() => setActiveTab(id)}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
                   active
-                    ? 'bg-primary-500 text-white scale-110 shadow-lg shadow-orange-500/30'
+                    ? 'bg-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >

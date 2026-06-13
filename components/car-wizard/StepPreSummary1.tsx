@@ -21,23 +21,23 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
           <div className="flex justify-between items-start relative z-10">
              <div>
                <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-[0.4em] mb-1.5 opacity-80">Preliminary Policy Quote</p>
-               <h4 className="text-3xl font-black uppercase tracking-tighter text-primary-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">{vehicle.brand} {vehicle.model}</h4>
+               <h4 className="text-3xl font-black uppercase tracking-tighter text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">{vehicle.brand} {vehicle.model}</h4>
              </div>
-             <div className="p-4 bg-primary-500/10 rounded-2xl text-primary-500 shadow-inner"><Info size={24}/></div>
+             <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-500 shadow-inner"><Info size={24}/></div>
           </div>
           
           <div className="grid grid-cols-1 gap-5 pt-6 border-t border-black/5 dark:border-white/5 relative z-10">
              <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Car size={16} className="text-primary-500"/> Unit Kendaraan</span>
+                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Car size={16} className="text-emerald-500"/> Unit Kendaraan</span>
                 <span className="font-black text-right uppercase">{vehicle.brand} {vehicle.model} ({vehicle.year})</span>
              </div>
              <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Smartphone size={16} className="text-primary-500"/> Nomor Polisi</span>
+                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Smartphone size={16} className="text-emerald-500"/> Nomor Polisi</span>
                 <span className="font-black text-right tracking-[0.15em] bg-gray-900 dark:bg-white text-white dark:text-black px-3 py-1 rounded-lg text-sm">{vehicle.plate}</span>
              </div>
              <div className="flex justify-between items-center text-[0.75rem]">
-                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Shield size={16} className="text-primary-500"/> Tipe Proteksi</span>
-                <span className="font-black text-right text-primary-500 tracking-widest">{coverage.type}</span>
+                <span className="text-gray-400 font-black uppercase tracking-widest flex items-center gap-3 opacity-80"><Shield size={16} className="text-emerald-500"/> Tipe Proteksi</span>
+                <span className="font-black text-right text-emerald-500 tracking-widest">{coverage.type}</span>
              </div>
 
              <div className="mt-6 overflow-hidden border border-black/5 dark:border-white/5 rounded-[2rem] transition-all duration-500 bg-gray-50/50 dark:bg-white/[0.01] shadow-inner">
@@ -46,12 +46,12 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
                     className="w-full p-6 flex justify-between items-center text-[0.75rem] font-black uppercase tracking-widest group"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary-500/10 rounded-xl flex items-center justify-center"><ClipboardList size={16} className="text-primary-500"/></div>
+                        <div className="w-8 h-8 bg-emerald-500/10 rounded-xl flex items-center justify-center"><ClipboardList size={16} className="text-emerald-500"/></div>
                         Total Premi Net
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-primary-500 text-2xl tracking-tighter">{formatIDR(premiumBreakdown?.totalPayable || 0)}</span>
-                        <div className={`p-2 rounded-full bg-gray-100 dark:bg-white/5 transition-transform duration-500 ${showBreakdown ? 'rotate-180 bg-primary-500 text-white shadow-lg' : ''}`}>
+                        <span className="text-emerald-500 text-2xl tracking-tighter">{formatIDR(premiumBreakdown?.totalPayable || 0)}</span>
+                        <div className={`p-2 rounded-full bg-gray-100 dark:bg-white/5 transition-transform duration-500 ${showBreakdown ? 'rotate-180 bg-emerald-500 text-white shadow-lg' : ''}`}>
                             <ChevronDown size={20}/>
                         </div>
                     </div>

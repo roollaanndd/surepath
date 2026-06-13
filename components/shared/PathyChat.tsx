@@ -167,8 +167,12 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
     try {
       const reply = await pathyChat(msg);
       pushMessage('bot', reply);
-    } catch {
-      pushMessage('bot', t('Maaf, ada gangguan sementara. Silakan coba lagi.', 'Sorry, a temporary issue occurred. Please try again.'));
+    } catch (e: any) {
+      const notConfigured = String(e?.message ?? '').toLowerCase().includes('not configured');
+      pushMessage('bot', notConfigured
+        ? t('Fitur AI Pathy akan segera hadir! Sementara itu, gunakan pilihan cepat di bawah.', 'Pathy AI is coming soon! For now, use the quick actions below.')
+        : t('Maaf, ada gangguan sementara. Silakan coba lagi.', 'Sorry, a temporary issue occurred. Please try again.')
+      );
     } finally {
       setLoading(false);
     }

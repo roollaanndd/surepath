@@ -363,7 +363,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       )}
 
       {/* Floating Pathy assistant */}
-      <PathyChat lang={lang} />
+      <PathyChat lang={lang} currentUser={{ name: agent.name, id: agent.id, role: agent.role }} />
     </div>
   );
 };

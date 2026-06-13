@@ -3,6 +3,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── DS v2 Design System — CSS custom properties for automatic dark mode ── */
+:root {
+  --ds-bg:         #F4F7FB;
+  --ds-card:       #FFFFFF;
+  --ds-card2:      #F8FAFC;
+  --ds-border:     #E2E8F0;
+  --ds-green:      #00C16A;
+  --ds-green-dk:   #009E52;
+  --ds-green-tint: #E6FAF0;
+  --ds-ink:        #111827;
+  --ds-ink2:       #4B5563;
+  --ds-ink3:       #9CA3AF;
+  --ds-blue:       #3B82F6;
+  --ds-amber:      #F59E0B;
+  --ds-red:        #EF4444;
+  --ds-purple:     #7C3AED;
+  --ds-purple-lt:  #EDE9FE;
+}
+
+.dark {
+  --ds-bg:         #080B12;
+  --ds-card:       #0F1829;
+  --ds-card2:      #162035;
+  --ds-border:     #1E2D3D;
+  --ds-green:      #00C16A;
+  --ds-green-dk:   #009E52;
+  --ds-green-tint: #052B1E;
+  --ds-ink:        #F1F5F9;
+  --ds-ink2:       #94A3B8;
+  --ds-ink3:       #475569;
+  --ds-blue:       #60A5FA;
+  --ds-amber:      #FCD34D;
+  --ds-red:        #F87171;
+  --ds-purple:     #A78BFA;
+  --ds-purple-lt:  #1E1040;
+}
+
 /* ── Landing page CSS custom properties ─────────────────────────────────── */
 :root {
   --background: 0 0% 10%;

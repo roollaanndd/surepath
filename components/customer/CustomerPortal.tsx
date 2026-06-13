@@ -97,82 +97,117 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'home':
         return (
           <PageTransition>
-            <div className="space-y-5 pb-32">
-              {/* Greeting */}
+            <div className="space-y-4 pb-32">
+              {/* Greeting row */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate('profile')}
-                    className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
-                  >
-                    <div className="w-12 h-12 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-ds-green">
-                      {currentUser?.name?.[0]}
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full border-2 border-ds-bg flex items-center justify-center text-[8px] text-ds-green font-black shadow-sm">
-                      {currentUser?.trustScore || 85}
-                    </div>
-                  </button>
-                  <div>
-                    <p className="text-xs text-ds-ink3">{timeGreeting}</p>
-                    <h3 className="text-base font-black text-ds-ink tracking-tight">
-                      {currentUser?.name?.split(' ')[0]}!
+                <div>
+                  <p className="text-xs text-ds-ink3 font-medium">{timeGreeting},</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <h3 className="text-xl font-black text-ds-ink tracking-tight">
+                      {currentUser?.name?.split(' ')[0]}
                     </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black text-white" style={{ background: '#00C896' }}>
+                      {currentUser?.trustScore || 85}
+                    </span>
                   </div>
                 </div>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-green-tint rounded-full text-[10px] font-bold text-ds-green">
-                  <ShieldCheck size={10} />
-                  {t('Protected', 'Terlindungi')}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => navigate('profile')}
+                  className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
+                >
+                  <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-base shadow-ds-green">
+                    {currentUser?.name?.[0]}
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-ds-bg" style={{ background: '#00C896' }} />
+                </button>
               </div>
 
-              {/* Hero protection card */}
-              <div className="rounded-3xl p-5 bg-ds-navy text-white relative overflow-hidden shadow-ds-navy">
-                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.12)' }} />
-                <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.06)' }} />
-                <div className="relative z-10">
-                  <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">
-                    {t('Protection Status', 'Status Proteksi')}
-                  </p>
-                  {latestPolicy ? (
-                    <>
-                      <h4 className="text-xl font-black text-white">
-                        {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
-                      </h4>
-                      <p className="text-xs text-white/50 mt-0.5">
-                        {t('Active until', 'Aktif hingga')}{' '}
-                        {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
-                          lang === Language.EN ? 'en-US' : 'id-ID',
-                          { month: 'long', year: 'numeric' }
-                        )}
-                      </p>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
-                          <span className="text-xs text-ds-green font-bold">{t('Active', 'Aktif')}</span>
-                        </div>
-                        <button
-                          onClick={() => navigate('profile')}
-                          className="px-4 py-1.5 bg-white/10 border border-white/10 rounded-xl text-xs text-white font-bold hover:bg-white/15 transition-all active:scale-95"
-                        >
-                          {t('Details', 'Detail')} →
+              {/* Protection Score Hero */}
+              <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 8px 32px rgba(0,59,47,0.5)' }}>
+                <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
+                <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.08)' }} />
+                <div className="relative z-10 flex items-center gap-5">
+                  {/* SVG Protection Score Ring */}
+                  <div className="relative flex-shrink-0">
+                    <svg width="86" height="86" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7"/>
+                      <circle
+                        cx="50" cy="50" r="38"
+                        fill="none"
+                        stroke="#00C16A"
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray="238.76"
+                        strokeDashoffset={238.76 * (1 - Math.min(100, currentUser?.trustScore ?? 85) / 100)}
+                        transform="rotate(-90 50 50)"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xl font-black text-white leading-none">{currentUser?.trustScore ?? 85}</span>
+                      <span className="text-[8px] text-white/40 font-bold">/100</span>
+                    </div>
+                  </div>
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00C16A' }} />
+                      <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">{t('Protection Score', 'Skor Proteksi')}</p>
+                    </div>
+                    {latestPolicy ? (
+                      <>
+                        <h4 className="text-lg font-black text-white leading-tight">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
+                        <p className="text-[11px] text-white/50 mt-1 leading-snug">
+                          {latestPolicy.product_name} · {t('Until', 'Hingga')}{' '}
+                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
+                            lang === Language.EN ? 'en-US' : 'id-ID',
+                            { month: 'short', year: 'numeric' }
+                          )}
+                        </p>
+                        <button onClick={() => navigate('history')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white border border-white/15 bg-white/10 active:scale-95 transition-transform inline-block">
+                          {t('View Policy', 'Lihat Polis')} →
                         </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <h4 className="text-xl font-black text-white mt-1">{t('No active policy', 'Belum ada polis')}</h4>
-                      <p className="text-xs text-white/50 mt-0.5">{t('Start protecting yourself today', 'Mulai lindungi dirimu sekarang')}</p>
-                      <button
-                        onClick={() => navigate('products')}
-                        className="mt-4 px-4 py-2 bg-ds-green rounded-xl text-xs text-white font-black tracking-wide shadow-ds-green active:scale-95 transition-transform"
-                      >
-                        {t('Buy Insurance', 'Beli Asuransi')} →
-                      </button>
-                    </>
-                  )}
+                      </>
+                    ) : (
+                      <>
+                        <h4 className="text-lg font-black text-white leading-tight">{t('Start Protecting', 'Mulai Lindungi')}</h4>
+                        <p className="text-[11px] text-white/50 mt-1">{t('Get covered in minutes', 'Terlindungi dalam hitungan menit')}</p>
+                        <button onClick={() => navigate('products')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white active:scale-95 transition-transform inline-block" style={{ background: '#00C16A' }}>
+                          {t('Get Protected', 'Mulai Sekarang')} →
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* My Protection Stats */}
+              {latestPolicy && (() => {
+                const daysLeft = latestPolicy.end_date
+                  ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                  : 0;
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
+                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Days Left', 'Sisa Hari')}</p>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-ds-ink">{daysLeft}</span>
+                        <span className="text-xs text-ds-ink3">{t('days', 'hari')}</span>
+                      </div>
+                      <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (daysLeft / 365) * 100)}%`, background: '#00C896' }} />
+                      </div>
+                    </div>
+                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
+                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Total Premium', 'Total Premi')}</p>
+                      <div className="text-2xl font-black text-ds-ink leading-tight">
+                        {formatIDR(latestPolicy.total_premium ?? 0)}
+                      </div>
+                      <p className="text-[10px] text-ds-ink3 mt-0.5">{latestPolicy.product_name}</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Quick actions */}
               <div>
@@ -201,21 +236,69 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               <PortalHero onAction={navigate} lang={lang} />
 
-              {/* AI insight card */}
-              <div className="rounded-3xl p-4 bg-ds-purple-lt border border-purple-100 flex gap-3 items-start">
-                <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-ds-sm">
-                  <Lightbulb size={20} className="text-ds-purple" />
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-black text-ds-purple uppercase tracking-wider">SurePath AI</p>
-                  <p className="text-sm text-ds-ink leading-relaxed">
-                    {t(
-                      'File a claim by just taking a photo. Our AI processes it in minutes.',
-                      'Lapor klaim cukup dengan foto HP. AI kami memprosesnya dalam hitungan menit.'
-                    )}
-                  </p>
+              {/* SurePath AI card */}
+              <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F, #00512E)' }}>
+                <div className="absolute -top-3 -right-3 w-16 h-16 rounded-full pointer-events-none" style={{ background: 'rgba(0,193,106,0.15)' }} />
+                <div className="relative z-10 flex gap-3 items-start">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl" style={{ background: 'rgba(0,193,106,0.2)' }}>🤖</div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#00C16A' }}>SurePath AI</p>
+                    <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                      {latestPolicy
+                        ? t(
+                            `Hi ${currentUser?.name?.split(' ')[0]}! Your ${latestPolicy.product_name} is active. File a claim anytime by taking a photo.`,
+                            `Halo ${currentUser?.name?.split(' ')[0]}! Polis ${latestPolicy.product_name} kamu aktif. Lapor klaim kapan saja cukup dengan foto.`
+                          )
+                        : t(
+                            'Get insured in minutes. Our AI makes claims processing fast and easy.',
+                            'Dapatkan asuransi dalam hitungan menit. AI kami membuat proses klaim jadi cepat & mudah.'
+                          )
+                      }
+                    </p>
+                    <button onClick={() => navigate('bot')} className="text-[10px] font-black uppercase tracking-widest pt-1 inline-block" style={{ color: '#00C16A' }}>
+                      {t('Chat with AI →', 'Chat dengan AI →')}
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* Recent Activity */}
+              {(customerPolicies.length > 0 || customerClaims.length > 0) && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Recent Activity', 'Aktivitas Terbaru')}</p>
+                    <button onClick={() => navigate('history')} className="text-xs font-bold text-ds-green">{t('All', 'Semua')}</button>
+                  </div>
+                  <div className="bg-ds-card border border-ds-border rounded-2xl shadow-ds-sm overflow-hidden">
+                    {customerPolicies.slice(0, 2).map((p, i) => (
+                      <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${i < customerPolicies.slice(0, 2).length - 1 || customerClaims.length > 0 ? 'border-b border-ds-border' : ''}`}>
+                        <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                          <ShieldCheck size={16} className="text-ds-green" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-ds-ink truncate">{p.product_name}</p>
+                          <p className="text-[10px] text-ds-ink3">{new Date(p.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-amber-700'}`}>
+                          {p.status}
+                        </span>
+                      </div>
+                    ))}
+                    {customerClaims.slice(0, 1).map((c, i) => (
+                      <div key={c.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                          <Zap size={16} className="text-rose-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-ds-ink truncate">{t('Claim', 'Klaim')} #{c.claim_number ?? c.id.slice(0, 8)}</p>
+                          <p className="text-[10px] text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600">{c.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </PageTransition>
         );

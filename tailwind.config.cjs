@@ -69,30 +69,35 @@ module.exports = {
           950: '#020617',
         },
         // ── SurePath Design System v2 ─────────────────────────────────────────
+        // Colors use CSS variables — dark mode switches automatically via .dark class
         // Backgrounds
-        'ds-bg':         '#F4F7FB',   // App shell background
-        'ds-card':       '#FFFFFF',   // Card / surface
-        'ds-card2':      '#F8FAFC',   // Subtle secondary surface
-        'ds-border':     '#E2E8F0',   // Border / divider
-        // Primary — vibrant emerald
-        'ds-green':      '#00C896',   // Primary CTA
-        'ds-green-dk':   '#009E78',   // Hover / active
-        'ds-green-tint': '#E0FBF3',   // Light tint bg
-        // Dark surfaces (hero sections, headers)
-        'ds-navy':       '#0B1120',   // Primary dark surface
-        'ds-navy2':      '#162032',   // Secondary dark surface
-        'ds-navy3':      '#1E2D3D',   // Subtle dark border
+        'ds-bg':         'var(--ds-bg)',
+        'ds-card':       'var(--ds-card)',
+        'ds-card2':      'var(--ds-card2)',
+        'ds-border':     'var(--ds-border)',
+        // Primary — vibrant emerald (same in light/dark)
+        'ds-green':      'var(--ds-green)',
+        'ds-green-dk':   'var(--ds-green-dk)',
+        'ds-green-tint': 'var(--ds-green-tint)',
+        // Dark surfaces (hero sections — always dark in both modes)
+        'ds-navy':       '#0B1120',
+        'ds-navy2':      '#162032',
+        'ds-navy3':      '#1E2D3D',
         // Text
-        'ds-ink':        '#111827',   // Primary text
-        'ds-ink2':       '#4B5563',   // Secondary text
-        'ds-ink3':       '#9CA3AF',   // Muted / placeholder
+        'ds-ink':        'var(--ds-ink)',
+        'ds-ink2':       'var(--ds-ink2)',
+        'ds-ink3':       'var(--ds-ink3)',
         // Semantic
-        'ds-blue':       '#3B82F6',   // Info / links
-        'ds-amber':      '#F59E0B',   // Warning / coins / rewards
-        'ds-red':        '#EF4444',   // Error / danger
-        'ds-purple':     '#7C3AED',   // AI features
-        'ds-purple-lt':  '#EDE9FE',   // AI light tint
-        // Dark mode variants
+        'ds-blue':       'var(--ds-blue)',
+        'ds-amber':      'var(--ds-amber)',
+        'ds-red':        'var(--ds-red)',
+        'ds-purple':     'var(--ds-purple)',
+        'ds-purple-lt':  'var(--ds-purple-lt)',
+        // SurePath brand — always-on values (not mode-switched)
+        'sp-green':      '#00C16A',
+        'sp-emerald':    '#003B2F',
+        'sp-graphite':   '#1A1A1A',
+        // Dark mode explicit aliases (for opacity-modifier usage in header/nav)
         'ds-dk-bg':      '#080B12',
         'ds-dk-s1':      '#0F1829',
         'ds-dk-s2':      '#162035',
@@ -161,7 +166,7 @@ module.exports = {
         'ds-sm':     '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
         'ds-md':     '0 4px 16px rgba(0,0,0,0.08)',
         'ds-lg':     '0 8px 32px rgba(0,0,0,0.10)',
-        'ds-green':  '0 4px 20px rgba(0,200,150,0.30)',
+        'ds-green':  '0 4px 20px rgba(0,193,106,0.30)',
         'ds-navy':   '0 8px 32px rgba(11,17,32,0.30)',
       },
     },

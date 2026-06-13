@@ -388,7 +388,7 @@ export const SecurityView = () => {
             label="Latensi Server"
             value="N/A"
             icon={Zap}
-            color="bg-orange-500/10 text-orange-500"
+            color="bg-emerald-500/10 text-emerald-500"
           />
           <StatCard
             label="Uptime Server"
@@ -737,7 +737,7 @@ export const AuditLogView = ({ compact }: { compact?: boolean }) => {
         <div className="space-y-4">
            {logs.map(log => (
               <div key={log.id} className="flex gap-4 items-start p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:bg-white/5 transition-all">
-                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#f97316]'}`}></div>
+                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#00C16A]'}`}></div>
                  <div className="min-w-0">
                     <p className="text-[0.65rem] font-bold text-gray-300 leading-tight"><span className="text-emerald-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
                     <div className="flex items-center gap-3 mt-1.5">

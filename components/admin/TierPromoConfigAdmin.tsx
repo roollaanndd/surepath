@@ -328,7 +328,7 @@ const PromoCodesTab: React.FC = () => {
                   onClick={() => toggleProduct(p)}
                   className="px-2.5 py-1 rounded-lg text-[0.6rem] font-black uppercase tracking-widest transition-all"
                   style={{
-                    background: form.applicable_products.includes(p) ? '#f97316' : 'rgba(255,255,255,0.05)',
+                    background: form.applicable_products.includes(p) ? '#00C16A' : 'rgba(255,255,255,0.05)',
                     color: form.applicable_products.includes(p) ? '#000' : 'rgba(255,255,255,0.4)',
                   }}
                 >

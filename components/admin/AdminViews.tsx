@@ -19,6 +19,7 @@ import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   updateAgentTier,
   supabase, callGateway,
+  getAllOrders, updateOrderStatus, type SpPolicyOrder,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
@@ -210,30 +211,38 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
 
 export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, section?: string }) => {
   const [users, setUsers] = useState<any[]>([]);
-  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [policies, setPolicies] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-        const allUsers = await db.users.toArray();
-        const allPolicies = await db.policies.toArray();
+        // Real data from Supabase via data-gateway (was reading empty local IndexedDB)
+        const [usersRes, polRes, commRes] = await Promise.all([
+          callGateway('admin_list_users', { limit: 500 }),
+          callGateway('admin_list_policies', { limit: 500 }),
+          callGateway('admin_list_commissions', { limit: 500 }),
+        ]);
+        const allUsers: any[] = (usersRes as any)?.data ?? [];
+        const allPolicies: any[] = (polRes as any)?.data ?? [];
         setPolicies(allPolicies);
 
         if (section === 'users') {
-           const allTx = await db.transactions.toArray();
-           const stats: any = {};
-           
-           allTx.forEach(tx => {
-               if (!stats[tx.userId]) stats[tx.userId] = { sales: 0, commission: 0 };
-               if (tx.type === 'PAYMENT') stats[tx.userId].sales += tx.amount;
-               if (tx.type === 'COMMISSION') stats[tx.userId].commission += tx.amount;
+           const commissions: any[] = (commRes as any)?.data ?? [];
+           const stats: Record<string, { sales: number; commission: number }> = {};
+
+           // Aggregate real GWP + commission per agent
+           commissions.forEach(c => {
+               const aid = c.agent_id;
+               if (!aid) return;
+               if (!stats[aid]) stats[aid] = { sales: 0, commission: 0 };
+               stats[aid].sales += c.premium_amount ?? 0;
+               stats[aid].commission += c.commission_amount ?? 0;
            });
-           
-           // Map stats to users and sort by sales descending
+
            const mappedUsers = allUsers.map(u => ({
               ...u,
-              totalSales: stats[u.id!]?.sales || 0,
-              totalCommission: stats[u.id!]?.commission || 0
+              totalSales: stats[u.id]?.sales || 0,
+              totalCommission: stats[u.id]?.commission || 0,
            })).sort((a, b) => b.totalSales - a.totalSales);
 
            setUsers(mappedUsers);
@@ -241,7 +250,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
            setUsers(allUsers);
         }
     };
-    fetchData();
+    fetchData().catch(() => {});
   }, [section]);
 
   if (section === 'transactions') {
@@ -270,7 +279,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
      )
   }
 
-  const filteredUsers = searchTerm ? users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())) : users;
+  const filteredUsers = searchTerm ? users.filter(u => (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) || (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())) : users;
 
   return (
   <div className="space-y-8 animate-fade-in">
@@ -316,9 +325,9 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                   <tr key={i} className="border-b border-white/[0.02] hover:bg-white/[0.01]">
                     <td className="py-4 pl-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{u.name[0]}</div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{(u.name ?? '?')[0]}</div>
                         <div>
-                          <p className="text-xs font-black uppercase text-white">{u.name}</p>
+                          <p className="text-xs font-black uppercase text-white">{u.name ?? '—'}</p>
                           <p className="text-[0.5rem] text-gray-500 tracking-widest">{u.email}</p>
                         </div>
                       </div>
@@ -484,11 +493,67 @@ export const SecurityView = () => {
   );
 };
 
+interface LedgerTx { id: string; date: string; type: string; amount: number; status: string; referenceId?: string; description: string; }
+
 export const LedgerView = () => {
-    const [txs, setTxs] = useState<Transaction[]>([]);
-    
+    const [txs, setTxs] = useState<LedgerTx[]>([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        db.transactions.toArray().then(res => setTxs(res.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())));
+        const load = async () => {
+            setLoading(true);
+            // Real ledger from Supabase (payments in, commissions + withdrawals out) — was empty local IndexedDB
+            const [payments, withdrawals, commRes] = await Promise.all([
+                getAdminPayments(200),
+                getAdminWithdrawals(200),
+                callGateway('admin_list_commissions', { limit: 200 }),
+            ]);
+            const commissions: any[] = (commRes as any)?.data ?? [];
+            const list: LedgerTx[] = [];
+
+            payments.forEach((p: any) => {
+                const amt = p.paid_amount ?? p.amount ?? 0;
+                if (!amt) return;
+                list.push({
+                    id: `pay-${p.id}`,
+                    date: p.paid_at ?? p.created_at ?? new Date().toISOString(),
+                    type: 'PAYMENT',
+                    amount: amt,
+                    status: p.status === 'PAID' ? 'SUCCESS' : p.status === 'PENDING' ? 'PENDING' : 'FAILED',
+                    referenceId: p.order_number ?? p.external_id,
+                    description: `Premi${p.client_name ? ' — ' + p.client_name : ''}${p.product_name ? ' (' + p.product_name + ')' : ''}`,
+                });
+            });
+
+            commissions.forEach((c: any) => {
+                list.push({
+                    id: `comm-${c.id}`,
+                    date: c.created_at ?? new Date().toISOString(),
+                    type: 'COMMISSION',
+                    amount: c.commission_amount ?? 0,
+                    status: (c.status === 'PAID' || c.status === 'APPROVED') ? 'SUCCESS' : c.status === 'REJECTED' ? 'FAILED' : 'PENDING',
+                    referenceId: c.order_number,
+                    description: `Komisi Agen${c.client_name ? ' — ' + c.client_name : ''}`,
+                });
+            });
+
+            withdrawals.forEach((w: any) => {
+                list.push({
+                    id: `wd-${w.id}`,
+                    date: w.created_at ?? new Date().toISOString(),
+                    type: 'WITHDRAWAL',
+                    amount: w.amount ?? 0,
+                    status: w.status === 'DISBURSED' ? 'SUCCESS' : (w.status === 'REJECTED' || w.status === 'FAILED') ? 'FAILED' : 'PENDING',
+                    referenceId: w.id,
+                    description: `Penarikan Dana${w.agent_name ? ' — ' + w.agent_name : ''}`,
+                });
+            });
+
+            list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setTxs(list);
+            setLoading(false);
+        };
+        load().catch(() => setLoading(false));
     }, []);
 
     const convert = (val: number) => {
@@ -535,7 +600,13 @@ export const LedgerView = () => {
                        </tr>
                     </thead>
                     <tbody className="text-[0.7rem] font-bold">
-                       {txs.slice(0, 100).map((t, i) => (
+                       {loading && (
+                          <tr><td colSpan={5} className="py-12 text-center text-gray-500">Memuat transaksi…</td></tr>
+                       )}
+                       {!loading && txs.length === 0 && (
+                          <tr><td colSpan={5} className="py-12 text-center text-gray-500 font-bold">Belum ada transaksi tercatat.</td></tr>
+                       )}
+                       {!loading && txs.slice(0, 100).map((t, i) => (
                           <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                              <td className="py-4 pl-4 text-gray-400">{new Date(t.date).toLocaleString('id-ID')}</td>
                              <td className="py-4 text-emerald-500 font-mono">{t.type}</td>
@@ -752,10 +823,30 @@ export const AuditLogView = ({ compact }: { compact?: boolean }) => {
 };
 
 export const ApprovalsView = () => {
-    const [policies, setPolicies] = useState<Policy[]>([]);
-    useEffect(() => {
-        db.policies.where('status').equals('PENDING').toArray().then(setPolicies);
-    }, []);
+    const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [acting, setActing] = useState<string | null>(null);
+    const [notes, setNotes] = useState<Record<string, string>>({});
+
+    const load = async () => {
+        setLoading(true);
+        // Real pending queue from Supabase (was empty local IndexedDB)
+        const all = await getAllOrders();
+        setOrders(all.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW'));
+        setLoading(false);
+    };
+    useEffect(() => { load(); }, []);
+
+    const act = async (id: string, status: SpPolicyOrder['status']) => {
+        if (status === 'REJECTED' && !(notes[id] ?? '').trim()) {
+            alert('Wajib isi catatan penolakan.');
+            return;
+        }
+        setActing(id);
+        await updateOrderStatus(id, status, { reviewer_notes: notes[id] });
+        setOrders(prev => prev.filter(o => o.id !== id));
+        setActing(null);
+    };
 
     return (
         <div className="space-y-8 animate-fade-in text-white">
@@ -763,35 +854,59 @@ export const ApprovalsView = () => {
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500"><ClipboardCheck size={22}/></div>
-                <h3 className="font-black uppercase tracking-widest text-sm">Policy Approval Queue</h3>
+                <div>
+                    <h3 className="font-black uppercase tracking-widest text-sm">Antrean Persetujuan Polis</h3>
+                    <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Pesanan menunggu review · untuk terbitkan polis buka menu Pesanan Polis</p>
                 </div>
-                <Badge color="yellow">{policies.length} Pending</Badge>
+                </div>
+                <Badge color="yellow">{orders.length} Pending</Badge>
             </div>
+
+            {loading ? (
+                <div className="flex justify-center py-16">
+                    <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+                </div>
+            ) : orders.length === 0 ? (
+                <p className="text-center py-12 text-gray-500 text-sm font-bold">Tidak ada pesanan menunggu persetujuan.</p>
+            ) : (
             <div className="space-y-4">
-                {policies.map(p => (
-                <div key={p.id} className="p-6 bg-white/[0.02] border border-white/5 rounded-[1.8rem] flex flex-col md:flex-row justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100/10 rounded-2xl flex items-center justify-center text-gray-400"><FileText size={24}/></div>
-                    <div>
-                        <p className="font-black text-sm uppercase">{p.policyNumber}</p>
-                        <p className="text-[0.55rem] text-gray-500 font-bold uppercase tracking-widest">Type: {p.type} • Value: {formatIDR(p.premium)}</p>
+                {orders.map(o => (
+                <div key={o.id} className="p-6 bg-white/[0.02] border border-white/5 rounded-[1.8rem] space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-12 h-12 bg-gray-100/10 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0"><FileText size={24}/></div>
+                        <div className="min-w-0">
+                            <p className="font-black text-sm uppercase truncate">{o.client_name} · {o.order_number}</p>
+                            <p className="text-[0.55rem] text-gray-500 font-bold uppercase tracking-widest">{o.product_name} • {formatIDR(o.total_premium)} • {o.status === 'UNDER_REVIEW' ? 'Sedang Ditinjau' : 'Baru Diajukan'}</p>
+                        </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            disabled={acting === o.id}
+                            onClick={() => act(o.id, 'REJECTED')}
+                            className="px-4 py-2.5 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-40"
+                        >
+                            <XCircle size={14}/> Tolak
+                        </button>
+                        <button
+                            disabled={acting === o.id}
+                            onClick={() => act(o.id, 'APPROVED')}
+                            className="px-4 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-40"
+                        >
+                            <CheckCircle size={14}/> {acting === o.id ? '…' : 'Setujui'}
+                        </button>
+                        </div>
                     </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                    <button className="p-3 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all"><XCircle size={18}/></button>
-                    <button 
-                        onClick={async () => {
-                            await db.policies.update(p.id!, { status: 'ACTIVE' });
-                            db.policies.where('status').equals('PENDING').toArray().then(setPolicies);
-                        }}
-                        className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl hover:bg-emerald-500 hover:text-white transition-all"
-                    >
-                        <CheckCircle size={18}/>
-                    </button>
-                    </div>
+                    <input
+                        value={notes[o.id] ?? ''}
+                        onChange={e => setNotes(prev => ({ ...prev, [o.id]: e.target.value }))}
+                        placeholder="Catatan reviewer (wajib untuk penolakan)…"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-all"
+                    />
                 </div>
                 ))}
             </div>
+            )}
             </Card>
         </div>
     );

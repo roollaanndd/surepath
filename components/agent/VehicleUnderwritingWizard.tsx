@@ -574,7 +574,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const canProceedStep4 = province && sumInsured > 0;
 
   const aiScore = aiResult?.score ?? 0;
-  const canProceedStep5 = aiResult !== null && aiScore >= 80;
+  const aiVerdict = aiResult?.auditVerdict ?? '';
+  // Allow proceeding if AI ran (verdict set) and not REJECTED
+  // CLEAN (>=80): normal flow → payment in step 7
+  // REVIEW_REQUIRED (score<80): proceed → order created with SUBMITTED, payment gated pending approval
+  const canProceedStep5 = aiResult !== null && aiVerdict !== 'REJECTED';
+  const isPendingApprovalAgent = aiResult !== null && aiScore < 80 && aiVerdict !== 'REJECTED';
 
   // ─── Render Steps ──────────────────────────────────────────────────────────
 
@@ -1411,11 +1416,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               </div>
             )}
 
-            {score < 80 && (
+            {aiVerdict === 'REJECTED' && (
               <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 p-4 flex flex-col gap-3 mb-4">
                 <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-black">
                   <XCircle className="w-5 h-5" />
-                  Kendaraan Tidak Memenuhi Syarat
+                  Kendaraan Tidak Memenuhi Syarat — Ditolak
                 </div>
                 {aiResult.rejectionReason && (
                   <p className="text-sm text-rose-700 dark:text-rose-300">{aiResult.rejectionReason}</p>
@@ -1426,9 +1431,21 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               </div>
             )}
 
+            {isPendingApprovalAgent && aiVerdict !== 'REJECTED' && (
+              <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 p-4 flex flex-col gap-3 mb-4">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black">
+                  <AlertTriangle className="w-5 h-5" />
+                  Perlu Pemeriksaan Manual
+                </div>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Skor AI di bawah 80 atau AI tidak dapat memberikan skor otomatis. Order akan dibuat dengan status SUBMITTED dan perlu persetujuan admin/penanggung sebelum pembayaran dapat diproses.
+                </p>
+              </div>
+            )}
+
             {canProceedStep5 && (
               <PrimaryBtn onClick={() => setStep(6)}>
-                Lanjutkan ke Perhitungan Premi <ChevronRight className="inline w-4 h-4 ml-1" />
+                {isPendingApprovalAgent ? 'Lanjut (Persetujuan Manual)' : 'Lanjutkan ke Perhitungan Premi'} <ChevronRight className="inline w-4 h-4 ml-1" />
               </PrimaryBtn>
             )}
           </SectionCard>
@@ -1788,7 +1805,17 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           )}
 
           {/* Payment section */}
-          {!invoiceUrl ? (
+          {isPendingApprovalAgent ? (
+            <div className="w-full mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl space-y-2">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm">
+                <AlertTriangle className="w-4 h-4" />
+                Menunggu Persetujuan
+              </div>
+              <p className="text-xs text-amber-700/80 dark:text-amber-300/70 leading-relaxed">
+                Order telah diajukan untuk ditinjau manual. Pembayaran akan dibuka setelah foto dan data kendaraan disetujui oleh admin atau penanggung. Pantau status via email/aplikasi.
+              </p>
+            </div>
+          ) : !invoiceUrl ? (
             <div className="flex flex-col gap-3 w-full mb-4">
               <PrimaryBtn onClick={handlePay} disabled={payLoading}>
                 {payLoading ? (

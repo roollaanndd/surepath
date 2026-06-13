@@ -304,16 +304,23 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Product cards */}
               <div className="grid grid-cols-1 gap-3">
-                {(products ?? []).filter(p => p?.id).map(p => (
+                {(products ?? []).filter(p => p?.id).map((p, pIdx) => (
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
+                    style={{ animationDelay: `${pIdx * 60}ms` }}
+                    className={`group relative bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 overflow-hidden animate-fade-in ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md hover:border-emerald-500/20 active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
-                    <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                    {/* Subtle background glow — product brand color at very low opacity */}
+                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.06) 0%, transparent 70%)' }} />
+                    </div>
+                    {/* Faint dot-grid pattern */}
+                    <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                    <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 relative z-10`}>
                       {typeof p.icon === 'function' && <p.icon size={24} strokeWidth={2} />}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 relative z-10">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h4 className="font-black text-sm text-ds-ink tracking-tight">{p.title}</h4>
                         {p.tech && <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3">{p.tech}</span>}
@@ -321,7 +328,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       <p className="text-xs text-ds-ink2 leading-relaxed">{p.desc}</p>
                     </div>
                     {p.active && (
-                      <div className="w-8 h-8 rounded-xl bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 rounded-xl bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 relative z-10">
                         <ArrowRight size={14} />
                       </div>
                     )}

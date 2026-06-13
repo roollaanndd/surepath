@@ -2072,9 +2072,16 @@ export const UserManagementView = () => {
                     </td>
                     <td className="py-3.5 text-center">
                       {(u as any).tc_accepted ? (
-                        <span className="text-emerald-400 font-black text-[0.6rem]" title={(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID') : 'Diterima'}>
-                          ✓ {(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : ''}
-                        </span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-emerald-400 font-black text-[0.6rem]">
+                            ✓ {(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : 'Diterima'}
+                          </span>
+                          {(u as any).tnc_ref_number && (
+                            <span className="text-[0.5rem] font-mono text-gray-500" title={(u as any).tnc_ref_number}>
+                              {(u as any).tnc_ref_number}
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-gray-600">–</span>
                       )}

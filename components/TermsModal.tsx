@@ -1,48 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SurePathLogo } from './Navbar';
+import { TNC_SECTIONS } from '../src/tnc-content';
 
 interface Props {
-  onAccept: () => Promise<void>;
+  onAccept: () => Promise<string>; // returns reference number
+  onDone: () => void;              // called when user dismisses success screen
 }
 
-const TC_SECTIONS = [
-  {
-    title: '1. Layanan SurePath',
-    body: `SurePath adalah platform digital asuransi yang menghubungkan pengguna dengan produk asuransi dari berbagai penanggung (insurer) berlisensi OJK. SurePath berperan sebagai marketplace/perantara dan bukan sebagai penanggung langsung. Semua produk yang tersedia telah mendapatkan persetujuan dari Otoritas Jasa Keuangan (OJK) Republik Indonesia.`,
-  },
-  {
-    title: '2. Syarat Penggunaan & Kelayakan',
-    body: `Untuk menggunakan layanan SurePath, Anda harus:\n• Berusia minimal 17 (tujuh belas) tahun;\n• Warga Negara Indonesia (WNI) atau badan hukum Indonesia;\n• Memiliki identitas resmi yang sah (KTP/SIM/Paspor);\n• Memiliki kapasitas hukum untuk membuat perjanjian yang mengikat;\n• Tidak sedang dalam status kebangkrutan atau pengampuan hukum.\n\nSurePath berhak menolak atau menghentikan akses pengguna yang tidak memenuhi syarat kelayakan di atas.`,
-  },
-  {
-    title: '3. Pengumpulan & Pengolahan Data Pribadi',
-    body: `Dalam rangka penyediaan layanan, SurePath mengumpulkan dan memproses data pribadi Anda, meliputi:\n• Nama lengkap, tanggal lahir, dan jenis kelamin;\n• Nomor Induk Kependudukan (NIK) dan data KTP;\n• Nomor kendaraan, data STNK, dan foto kendaraan;\n• Nomor telepon dan alamat e-mail;\n• Data lokasi dan informasi perangkat.\n\nData Anda diproses berdasarkan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP) dan peraturan OJK yang berlaku. Data tidak akan dijual kepada pihak ketiga tanpa persetujuan eksplisit Anda, kecuali untuk keperluan pemrosesan klaim dan penerbitan polis oleh penanggung mitra.`,
-  },
-  {
-    title: '4. Persetujuan Pemrosesan Klaim & Pembayaran Premi',
-    body: `Dengan menggunakan layanan SurePath, Anda menyetujui:\n• Pemrosesan pembayaran premi melalui gateway pembayaran yang telah bersertifikat PCI-DSS;\n• Penyampaian data yang diperlukan kepada penanggung mitra untuk keperluan akseptasi risiko dan penerbitan polis;\n• Proses verifikasi klaim yang dapat mencakup pemeriksaan foto, dokumen, dan kunjungan lapangan oleh surveyor;\n• Penyelesaian klaim sesuai dengan ketentuan polis yang berlaku dan jadwal pembayaran yang ditetapkan penanggung.`,
-  },
-  {
-    title: '5. Kewajiban Pengguna',
-    body: `Anda wajib:\n• Memberikan informasi yang akurat, lengkap, dan tidak menyesatkan pada seluruh formulir;\n• Tidak menyembunyikan fakta material yang relevan (material fact) yang dapat memengaruhi keputusan akseptasi risiko penanggung;\n• Segera memberitahukan SurePath apabila terjadi perubahan data yang memengaruhi risiko yang diasuransikan;\n• Tidak melakukan penipuan asuransi (insurance fraud) dalam bentuk apapun;\n• Menjaga kerahasiaan kredensial akun dan segera melapor apabila terjadi akses tidak sah.\n\nPelanggaran kewajiban ini dapat mengakibatkan pembatalan polis, penolakan klaim, dan/atau tindakan hukum sesuai peraturan yang berlaku.`,
-  },
-  {
-    title: '6. Penggunaan AI & Teknologi Computer Vision',
-    body: `SurePath menggunakan teknologi Kecerdasan Buatan (AI) dan Computer Vision untuk:\n• OCR (Optical Character Recognition) dokumen STNK dan KTP guna mempercepat proses pendaftaran;\n• Validasi foto kendaraan untuk mendeteksi kerusakan pra-asuransi;\n• Survei kendaraan berbasis foto untuk penilaian risiko underwriting;\n• Analisis kuitansi medis untuk klaim asuransi kesehatan.\n\nHasil analisis AI bersifat indikatif dan dapat ditinjau ulang oleh underwriter manusia. SurePath tidak bertanggung jawab atas keputusan yang diambil semata-mata berdasarkan output AI tanpa verifikasi lebih lanjut.`,
-  },
-  {
-    title: '7. Batasan Tanggung Jawab',
-    body: `SurePath sebagai platform marketplace:\n• Tidak bertanggung jawab atas kegagalan bayar klaim yang disebabkan oleh kondisi polis atau keputusan penanggung;\n• Tidak menjamin ketersediaan layanan tanpa gangguan 24/7, meskipun kami berupaya mempertahankan uptime tertinggi;\n• Tidak bertanggung jawab atas kerugian tidak langsung, konsekuensial, atau kehilangan keuntungan;\n• Tanggung jawab SurePath dalam satu kejadian dibatasi sebesar premi yang telah Anda bayarkan untuk polis terkait.\n\nPeranggung bertanggung jawab penuh atas penyelesaian klaim sesuai syarat dan ketentuan polis masing-masing.`,
-  },
-  {
-    title: '8. Hukum yang Berlaku & Penyelesaian Sengketa',
-    body: `Syarat dan Ketentuan ini tunduk pada dan ditafsirkan berdasarkan Hukum Negara Republik Indonesia, termasuk namun tidak terbatas pada:\n• Undang-Undang No. 40 Tahun 2014 tentang Perasuransian;\n• Peraturan OJK (POJK) terkait pemasaran digital produk asuransi;\n• Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi;\n• Undang-Undang No. 19 Tahun 2016 tentang Informasi dan Transaksi Elektronik.\n\nSengketa diselesaikan melalui musyawarah mufakat. Apabila tidak tercapai kesepakatan dalam 30 (tiga puluh) hari, sengketa diselesaikan melalui Lembaga Alternatif Penyelesaian Sengketa (LAPS) Sektor Jasa Keuangan atau Pengadilan Negeri Jakarta Selatan sesuai pilihan pengguna.`,
-  },
-];
+type ModalState = 'form' | 'loading' | 'success';
 
-const TermsModal: React.FC<Props> = ({ onAccept }) => {
+const TermsModal: React.FC<Props> = ({ onAccept, onDone }) => {
   const [checked, setChecked]   = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [state, setState]       = useState<ModalState>('form');
+  const [refNumber, setRefNumber] = useState('');
   const scrollRef               = useRef<HTMLDivElement>(null);
 
   // Prevent body scroll while modal is open
@@ -53,39 +23,118 @@ const TermsModal: React.FC<Props> = ({ onAccept }) => {
   }, []);
 
   const handleAccept = async () => {
-    if (!checked || loading) return;
-    setLoading(true);
+    if (!checked || state !== 'form') return;
+    setState('loading');
     try {
-      await onAccept();
-    } finally {
-      setLoading(false);
+      const ref = await onAccept();
+      setRefNumber(ref);
+      setState('success');
+    } catch {
+      setState('form');
     }
   };
 
+  const containerStyle: React.CSSProperties = {
+    position: 'fixed', inset: 0, zIndex: 9999,
+    background: 'rgba(0,0,0,0.85)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontFamily: "'Sora', sans-serif",
+    padding: '16px',
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: '#0d1210',
+    border: '1px solid rgba(6,224,0,0.18)',
+    borderRadius: '20px',
+    width: '100%',
+    maxWidth: '520px',
+    maxHeight: '90dvh',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 0 80px rgba(6,224,0,0.08)',
+  };
+
+  // ── Success state ────────────────────────────────────────────────────────────
+  if (state === 'success') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...cardStyle, maxHeight: 'none', padding: '40px 28px', alignItems: 'center', gap: '20px', textAlign: 'center' }}>
+          {/* Checkmark */}
+          <div style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: 'rgba(6,224,0,0.10)',
+            border: '2px solid rgba(6,224,0,0.30)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M6 16L13 23L26 9" stroke="hsl(119,99%,46%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          <div>
+            <h2 style={{ margin: '0 0 6px', fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+              Persetujuan Dikonfirmasi
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+              Syarat &amp; Ketentuan SurePath telah Anda setujui.
+            </p>
+          </div>
+
+          {/* Reference number card */}
+          <div style={{
+            width: '100%',
+            background: 'rgba(6,224,0,0.05)',
+            border: '1px solid rgba(6,224,0,0.20)',
+            borderRadius: '14px',
+            padding: '16px 20px',
+          }}>
+            <p style={{ margin: '0 0 6px', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Nomor Referensi Konfirmasi
+            </p>
+            <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'hsl(119,99%,46%)', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
+              {refNumber}
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: '0.6rem', color: 'rgba(255,255,255,0.30)', lineHeight: 1.5 }}>
+              Catat nomor ini sebagai bukti persetujuan Anda. Nomor ini juga tersimpan di profil akun Anda.
+            </p>
+          </div>
+
+          <div style={{ width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px 14px' }}>
+            <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.30)' }}>
+              Tanggal: <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </p>
+          </div>
+
+          <button
+            onClick={onDone}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: '12px',
+              border: 'none',
+              background: 'hsl(119,99%,46%)',
+              color: '#000',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              fontFamily: "'Sora', sans-serif",
+              cursor: 'pointer',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Mulai Gunakan SurePath
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Form state ───────────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.85)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Sora', sans-serif",
-        padding: '16px',
-      }}
-    >
-      <div
-        style={{
-          background: '#0d1210',
-          border: '1px solid rgba(6,224,0,0.18)',
-          borderRadius: '20px',
-          width: '100%',
-          maxWidth: '520px',
-          maxHeight: '90dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 0 80px rgba(6,224,0,0.08)',
-        }}
-      >
+    <div style={containerStyle}>
+      <div style={cardStyle}>
         {/* Header */}
         <div
           style={{
@@ -133,7 +182,7 @@ const TermsModal: React.FC<Props> = ({ onAccept }) => {
             gap: '20px',
           }}
         >
-          {TC_SECTIONS.map(section => (
+          {TNC_SECTIONS.map(section => (
             <div key={section.title}>
               <h3
                 style={{
@@ -159,8 +208,6 @@ const TermsModal: React.FC<Props> = ({ onAccept }) => {
               </p>
             </div>
           ))}
-
-          {/* Bottom padding so last section isn't obscured by footer */}
           <div style={{ height: 8 }} />
         </div>
 
@@ -177,14 +224,7 @@ const TermsModal: React.FC<Props> = ({ onAccept }) => {
           }}
         >
           {/* Checkbox */}
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px',
-              cursor: 'pointer',
-            }}
-          >
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
             <div
               onClick={() => setChecked(c => !c)}
               style={{
@@ -218,25 +258,25 @@ const TermsModal: React.FC<Props> = ({ onAccept }) => {
           {/* CTA button */}
           <button
             onClick={handleAccept}
-            disabled={!checked || loading}
+            disabled={!checked || state === 'loading'}
             style={{
               width: '100%',
               padding: '13px',
               borderRadius: '12px',
               border: 'none',
-              background: checked && !loading
+              background: checked && state !== 'loading'
                 ? 'hsl(119,99%,46%)'
                 : 'rgba(255,255,255,0.07)',
-              color: checked && !loading ? '#000' : 'rgba(255,255,255,0.25)',
+              color: checked && state !== 'loading' ? '#000' : 'rgba(255,255,255,0.25)',
               fontSize: '0.78rem',
               fontWeight: 700,
               fontFamily: "'Sora', sans-serif",
-              cursor: checked && !loading ? 'pointer' : 'not-allowed',
+              cursor: checked && state !== 'loading' ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s',
               letterSpacing: '-0.01em',
             }}
           >
-            {loading ? 'Memproses…' : 'Setuju & Lanjutkan'}
+            {state === 'loading' ? 'Memproses…' : 'Setuju & Lanjutkan'}
           </button>
         </div>
       </div>

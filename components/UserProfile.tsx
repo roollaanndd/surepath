@@ -12,6 +12,7 @@ import {
 import { db, Policy, Claim, Transaction } from '../db';
 import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
+import { getTncRecord, type TncRecord } from '../services/supabaseService';
 
 interface UserProfileProps {
   currentUser: any;
@@ -279,6 +280,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [tncRecord, setTncRecord] = useState<TncRecord | null>(null);
 
   const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
 
@@ -287,6 +289,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
       db.policies.where('userId').equals(currentUser.id).toArray().then(res => setPolicies(res.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())));
       db.claims.where('userId').equals(currentUser.id).toArray().then(setClaims);
       db.transactions.where('userId').equals(currentUser.id).toArray().then(setTransactions);
+      getTncRecord(currentUser.supabaseId ?? currentUser.id).then(setTncRecord).catch(() => {});
     }
   }, [currentUser]);
 
@@ -472,6 +475,43 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
               </div>
           ))}
        </div>
+
+       {/* T&C Acceptance Record */}
+       <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest pt-1">{t('Terms & Conditions', 'Syarat & Ketentuan')}</p>
+       {tncRecord ? (
+         <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 space-y-3">
+           <div className="flex items-center gap-2">
+             <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+               <FileCheck size={15} className="text-ds-green" />
+             </div>
+             <div className="flex-1">
+               <p className="text-sm font-bold text-ds-ink">{t('Terms Accepted', 'S&K Telah Disetujui')}</p>
+               <p className="text-xs text-ds-ink3">
+                 {new Date(tncRecord.accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                 {' · '}{tncRecord.tnc_version}
+               </p>
+             </div>
+             <span className="text-[10px] font-black text-ds-green bg-ds-green-tint px-2 py-0.5 rounded-full">✓ Sah</span>
+           </div>
+           <div className="bg-ds-card2 rounded-xl px-3 py-2.5">
+             <p className="text-[9px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Reference Number', 'Nomor Referensi')}</p>
+             <p className="text-sm font-black text-ds-ink font-mono tracking-wide">{tncRecord.reference_number}</p>
+           </div>
+           <p className="text-[9px] text-ds-ink3 leading-relaxed">
+             {t(
+               'This reference number is your legal proof of acceptance. Keep it for dispute resolution.',
+               'Nomor referensi ini adalah bukti hukum persetujuan Anda. Simpan untuk keperluan sengketa.',
+             )}
+           </p>
+         </div>
+       ) : (
+         <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3">
+           <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 flex-shrink-0">
+             <FileCheck size={15} />
+           </div>
+           <p className="text-sm text-ds-ink3">{t('No acceptance record found', 'Belum ada rekaman persetujuan')}</p>
+         </div>
+       )}
     </div>
   );
 

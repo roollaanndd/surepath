@@ -2203,16 +2203,60 @@ export async function validatePromoCode(
 
 // ─── Terms & Conditions ───────────────────────────────────────────────────────
 
-export async function recordTcAcceptance(userId: string): Promise<void> {
-  await supabase.from('sp_users').update({
-    tc_accepted: true,
-    tc_accepted_at: new Date().toISOString(),
-  }).eq('id', userId);
+import { TNC_VERSION, buildTncText } from '../src/tnc-content';
+
+function generateTncRef(): string {
+  const d = new Date();
+  const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const rand = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `SP-TNC-${date}-${rand}`;
+}
+
+export async function recordTcAcceptance(userId: string): Promise<string> {
+  const refNumber = generateTncRef();
+  const now = new Date().toISOString();
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+
+  await Promise.all([
+    supabase.from('sp_tnc_records').insert({
+      user_id: userId,
+      reference_number: refNumber,
+      tnc_version: TNC_VERSION,
+      tnc_content: buildTncText(),
+      accepted_at: now,
+      user_agent: userAgent,
+    }),
+    supabase.from('sp_users').update({
+      tc_accepted: true,
+      tc_accepted_at: now,
+      tnc_ref_number: refNumber,
+    }).eq('id', userId),
+  ]);
+
+  return refNumber;
 }
 
 export async function getUserTcStatus(userId: string): Promise<boolean> {
   const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
   return data?.tc_accepted === true;
+}
+
+export interface TncRecord {
+  reference_number: string;
+  tnc_version: string;
+  accepted_at: string;
+}
+
+export async function getTncRecord(userId: string): Promise<TncRecord | null> {
+  const { data } = await supabase
+    .from('sp_tnc_records')
+    .select('reference_number, tnc_version, accepted_at')
+    .eq('user_id', userId)
+    .order('accepted_at', { ascending: false })
+    .limit(1)
+    .single();
+  return data ?? null;
 }
 
 // ─── Online Users / Heartbeat (Task 2) ───────────────────────────────────────

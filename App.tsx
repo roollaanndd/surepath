@@ -844,9 +844,9 @@ const App = () => {
     return (
       <TermsModal
         onAccept={async () => {
-          await recordTcAcceptance(currentUser.id ?? currentUser.supabaseId);
-          setShowTc(false);
+          return await recordTcAcceptance(currentUser.id ?? currentUser.supabaseId);
         }}
+        onDone={() => setShowTc(false)}
       />
     );
   }

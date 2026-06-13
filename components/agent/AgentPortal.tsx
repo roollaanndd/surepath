@@ -26,6 +26,7 @@ import AgentNetwork from './AgentNetwork';
 import AgentEndorsements from './AgentEndorsements';
 import AgentOrderStatus from './AgentOrderStatus';
 import PathyChat from '../shared/PathyChat';
+import { SectionLabel } from '../shared/cards';
 
 interface Props {
   agent: any;
@@ -59,18 +60,11 @@ const PolicyAndQuotes: React.FC<{
     );
   }
   return (
-    <div className="space-y-4 pb-8 font-sora">
-      <div className="px-5 pt-5 flex items-center justify-between">
-        <div>
-          <h2 className="font-black text-xl tracking-tight text-ds-ink">Polis & Penawaran</h2>
-          <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-widest">Order aktif & riwayat</p>
-        </div>
-        <button
-          onClick={() => setShowQuoteBuilder(true)}
-          className="px-4 py-2.5 rounded-xl bg-ds-green text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-ds-green active:scale-[0.97] hover:bg-ds-green-dk transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
-        >
-          📄 Buat Penawaran
-        </button>
+    <div className="space-y-4 pb-8">
+      <div className="px-5 pt-5">
+        <SectionLabel action={{ label: '+ Buat Penawaran', onClick: () => setShowQuoteBuilder(true) }}>
+          Polis &amp; Penawaran
+        </SectionLabel>
       </div>
       <AgentOrderStatus agentId={agentId} lang={lang} />
     </div>
@@ -326,26 +320,23 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Bottom Tab Navigation */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 bg-ds-card border-t border-ds-border" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
-        <div className="flex items-center justify-around px-2 pt-2 pb-2">
+      {/* Floating bottom tab nav */}
+      <nav className="fixed bottom-6 inset-x-3 z-50 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
+        <div className="flex items-center justify-around px-1 py-2.5">
           {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors duration-150"
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 ${
+                  active ? 'bg-ds-green text-white scale-110 shadow-ds-green' : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5'
+                }`}
               >
-                <Icon
-                  size={22}
-                  strokeWidth={active ? 2.5 : 1.75}
-                  className={active ? 'text-ds-green' : 'text-ds-ink3'}
-                />
-                <span className={`text-[10px] font-medium leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
+                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
+                <span className={`text-[8px] font-black uppercase tracking-widest leading-none ${active ? 'opacity-100' : 'opacity-80'}`}>
                   {labelId}
                 </span>
-                {active && <span className="w-1 h-1 rounded-full bg-ds-green mt-0.5" />}
               </button>
             );
           })}

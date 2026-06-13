@@ -2,6 +2,7 @@ import React from 'react';
 import { FilePlus, ChevronRight } from 'lucide-react';
 import { Language } from '../../types';
 import { type SpB2BSubmission, type SpB2BQuote } from '../../services/supabaseService';
+import { HeroCard, StatCard } from '../shared/cards';
 
 interface Props {
   client: any;
@@ -46,21 +47,21 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
-      {/* Welcome card */}
-      <div className="rounded-3xl bg-gradient-to-br from-primary-500 to-orange-600 p-5 text-white shadow-xl shadow-orange-500/20">
+      {/* Welcome hero */}
+      <HeroCard>
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-lg font-black">
+          <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center text-lg font-black text-white">
             {initials}
           </div>
           <div>
-            <p className="text-xs font-bold opacity-80">{t('Welcome,', 'Selamat datang,')}</p>
-            <p className="font-black text-base leading-tight">{companyName}</p>
+            <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">{t('B2B Portal', 'Portal B2B')}</p>
+            <p className="font-black text-base leading-tight text-white">{companyName}</p>
           </div>
         </div>
-        <p className="text-xs opacity-70">
+        <p className="text-xs text-white/60 leading-snug">
           {t('Manage your B2B insurance submissions and quotes here.', 'Kelola pengajuan dan penawaran asuransi B2B Anda di sini.')}
         </p>
-      </div>
+      </HeroCard>
 
       {/* Stat pills */}
       <div className="grid grid-cols-3 gap-3">
@@ -79,7 +80,8 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
       {/* CTA */}
       <button
         onClick={() => onNavigate('new')}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary-500 text-white py-4 font-black text-sm shadow-lg shadow-orange-500/25 active:scale-95 transition-transform"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-4 font-black text-sm active:scale-95 transition-transform shadow-ds-green"
+        style={{ background: '#00C16A' }}
       >
         <FilePlus size={18} />
         {t('New Submission', 'Pengajuan Baru')}
@@ -94,7 +96,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
             </h3>
             <button
               onClick={() => onNavigate('submissions')}
-              className="text-primary-500 text-xs font-bold flex items-center gap-0.5"
+              className="text-ds-green text-xs font-bold flex items-center gap-0.5"
             >
               {t('See all', 'Lihat semua')} <ChevronRight size={12} />
             </button>

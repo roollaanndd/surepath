@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
-import PortalHero from '../PortalHero';
 import ClaimManager from '../ClaimManager';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -19,7 +18,7 @@ import HealthChat from '../HealthChat';
 import ContactPage from '../ContactPage';
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
-import { Badge } from '../shared/UI';
+import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
 
 interface Props {
@@ -94,7 +93,20 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   const renderContent = () => {
     switch (activePage) {
-      case 'home':
+      case 'home': {
+        const coverageLabels = Array.from(new Set(customerPolicies.map(p => {
+          const code = (p.product_code ?? '').toUpperCase();
+          if (p.vehicle_type === 'CAR' || code.includes('CAR') || code.includes('AUTO')) return t('Vehicle Protection', 'Proteksi Kendaraan');
+          if (code.includes('TRAVEL')) return t('Travel Protection', 'Proteksi Perjalanan');
+          if (code.includes('PA')) return t('Personal Accident', 'Kecelakaan Diri');
+          if (code.includes('MPAR') || code.includes('GADGET')) return t('Property & Gadget', 'Properti & Gadget');
+          if (code.includes('HEALTH')) return t('Health Protection', 'Proteksi Kesehatan');
+          return p.product_name || t('Active Protection', 'Proteksi Aktif');
+        }))).slice(0, 3);
+        const totalPremium = customerPolicies.reduce((s, p) => s + (p.total_premium ?? 0), 0);
+        const homeDaysLeft = latestPolicy?.end_date
+          ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : 0;
         return (
           <PageTransition>
             <div className="space-y-4 pb-32">
@@ -124,10 +136,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </div>
 
               {/* Protection Score Hero */}
-              <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 8px 32px rgba(0,59,47,0.5)' }}>
-                <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
-                <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.08)' }} />
-                <div className="relative z-10 flex items-center gap-5">
+              <HeroCard>
+                <div className="flex items-center gap-5">
                   {/* SVG Protection Score Ring */}
                   <div className="relative flex-shrink-0">
                     <svg width="86" height="86" viewBox="0 0 100 100">
@@ -156,14 +166,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </div>
                     {latestPolicy ? (
                       <>
-                        <h4 className="text-lg font-black text-white leading-tight">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
-                        <p className="text-[11px] text-white/50 mt-1 leading-snug">
-                          {latestPolicy.product_name} · {t('Until', 'Hingga')}{' '}
-                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
-                            lang === Language.EN ? 'en-US' : 'id-ID',
-                            { month: 'short', year: 'numeric' }
-                          )}
-                        </p>
+                        <h4 className="text-lg font-black text-white leading-tight mb-2">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
+                        <div className="space-y-1.5">
+                          {coverageLabels.map(label => <CoverageRow key={label} label={label} />)}
+                        </div>
                         <button onClick={() => navigate('history')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white border border-white/15 bg-white/10 active:scale-95 transition-transform inline-block">
                           {t('View Policy', 'Lihat Polis')} →
                         </button>
@@ -179,87 +185,58 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     )}
                   </div>
                 </div>
-              </div>
+              </HeroCard>
 
-              {/* My Protection Stats */}
-              {latestPolicy && (() => {
-                const daysLeft = latestPolicy.end_date
-                  ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-                  : 0;
-                return (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
-                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Days Left', 'Sisa Hari')}</p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-ds-ink">{daysLeft}</span>
-                        <span className="text-xs text-ds-ink3">{t('days', 'hari')}</span>
-                      </div>
-                      <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, (daysLeft / 365) * 100)}%`, background: '#00C896' }} />
-                      </div>
-                    </div>
-                    <div className="bg-ds-card border border-ds-border rounded-2xl p-3 shadow-ds-sm">
-                      <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider mb-1">{t('Total Premium', 'Total Premi')}</p>
-                      <div className="text-2xl font-black text-ds-ink leading-tight">
-                        {formatIDR(latestPolicy.total_premium ?? 0)}
-                      </div>
-                      <p className="text-[10px] text-ds-ink3 mt-0.5">{latestPolicy.product_name}</p>
-                    </div>
+              {/* My Protection — 3 metrics */}
+              {latestPolicy && (
+                <div>
+                  <SectionLabel>{t('My Protection', 'Proteksi Saya')}</SectionLabel>
+                  <div className="grid grid-cols-3 gap-3">
+                    <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDR(totalPremium)} sub={t('all policies', 'semua polis')} />
+                    <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
+                    <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={t('to renewal', 'ke perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
                   </div>
-                );
-              })()}
+                </div>
+              )}
 
               {/* Quick actions */}
               <div>
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
-                <div className="grid grid-cols-4 gap-3">
-                  {[
-                    { id: 'products', label: t('Buy', 'Beli'),       icon: ShoppingBag, color: 'text-blue-500',  bg: 'bg-blue-50'       },
-                    { id: 'claim',    label: t('Claim', 'Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50'       },
-                    { id: 'history',  label: t('History', 'Riwayat'), icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-                    { id: 'bot',      label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
-                  ].map(action => (
-                    <button
-                      type="button"
-                      key={action.id}
-                      onClick={() => navigate(action.id)}
-                      className="flex flex-col items-center gap-2 group active:scale-90 transition-transform focus:outline-none"
-                    >
-                      <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
-                        <action.icon size={24} strokeWidth={2} />
-                      </div>
-                      <span className="text-[10px] font-bold text-ds-ink2 text-center">{action.label}</span>
-                    </button>
-                  ))}
-                </div>
+                <SectionLabel>{t('Quick Actions', 'Aksi Cepat')}</SectionLabel>
+                <ActionGrid
+                  actions={[
+                    { id: 'products', label: t('Buy Protection', 'Beli Proteksi'), icon: ShoppingBag, color: 'text-ds-blue',   bg: 'bg-blue-50',       onClick: () => navigate('products') },
+                    { id: 'claim',    label: t('Submit Claim', 'Lapor Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50',       onClick: () => navigate('claim') },
+                    { id: 'history',  label: t('My Policies', 'Polis Saya'),        icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint', onClick: () => navigate('history') },
+                    { id: 'bot',      label: t('AI Advisor', 'Penasihat AI'),       icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt',  onClick: () => navigate('bot') },
+                  ]}
+                />
               </div>
 
-              <PortalHero onAction={navigate} lang={lang} />
+              {/* Pathy AI card */}
+              <AICard
+                message={latestPolicy
+                  ? t(
+                      `Hi ${currentUser?.name?.split(' ')[0]}! Your ${latestPolicy.product_name} is active. File a claim anytime by snapping a photo.`,
+                      `Halo ${currentUser?.name?.split(' ')[0]}! Polis ${latestPolicy.product_name} kamu aktif. Lapor klaim kapan saja cukup dengan foto.`
+                    )
+                  : t(
+                      'Get insured in minutes. Our AI makes claims fast and effortless.',
+                      'Dapatkan asuransi dalam hitungan menit. AI kami membuat klaim jadi cepat & mudah.'
+                    )}
+                suggestion={latestPolicy ? { label: t('Add baggage delay coverage', 'Tambah proteksi bagasi'), onClick: () => navigate('buy-travel') } : undefined}
+                cta={{ label: t('Chat with Pathy', 'Chat dengan Pathy'), onClick: () => navigate('bot') }}
+              />
 
-              {/* SurePath AI card */}
-              <div className="rounded-2xl p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F, #00512E)' }}>
-                <div className="absolute -top-3 -right-3 w-16 h-16 rounded-full pointer-events-none" style={{ background: 'rgba(0,193,106,0.15)' }} />
-                <div className="relative z-10 flex gap-3 items-start">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl" style={{ background: 'rgba(0,193,106,0.2)' }}>🤖</div>
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#00C16A' }}>SurePath AI</p>
-                    <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.88)' }}>
-                      {latestPolicy
-                        ? t(
-                            `Hi ${currentUser?.name?.split(' ')[0]}! Your ${latestPolicy.product_name} is active. File a claim anytime by taking a photo.`,
-                            `Halo ${currentUser?.name?.split(' ')[0]}! Polis ${latestPolicy.product_name} kamu aktif. Lapor klaim kapan saja cukup dengan foto.`
-                          )
-                        : t(
-                            'Get insured in minutes. Our AI makes claims processing fast and easy.',
-                            'Dapatkan asuransi dalam hitungan menit. AI kami membuat proses klaim jadi cepat & mudah.'
-                          )
-                      }
-                    </p>
-                    <button onClick={() => navigate('bot')} className="text-[10px] font-black uppercase tracking-widest pt-1 inline-block" style={{ color: '#00C16A' }}>
-                      {t('Chat with AI →', 'Chat dengan AI →')}
-                    </button>
-                  </div>
-                </div>
+              {/* Featured for you */}
+              <div>
+                <SectionLabel>{t('Featured for You', 'Pilihan Untukmu')}</SectionLabel>
+                <FeaturedCard
+                  eyebrow={t('Travel', 'Perjalanan')}
+                  title={t('Travel Protected Everywhere', 'Terlindungi di Mana Saja')}
+                  subtitle={t('Global coverage from Rp 45k/trip', 'Proteksi global mulai Rp 45rb/trip')}
+                  cta={{ label: t('Get Covered', 'Lindungi Sekarang'), onClick: () => navigate('buy-travel') }}
+                  illustration={<Plane size={120} className="text-white/15 rotate-12" strokeWidth={1.2} />}
+                />
               </div>
 
               {/* Recent Activity */}
@@ -302,6 +279,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
             </div>
           </PageTransition>
         );
+      }
 
       case 'products':
         return (

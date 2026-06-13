@@ -2,6 +2,7 @@ import React from 'react';
 import { Info, Building, CloudRain, Zap, AlertCircle, AlertTriangle, Percent, ArrowDown } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 import { InsuranceType } from '../../types';
+import { BASE_COMMISSION_PERCENT } from '../../constants';
 
 interface StepCoverageProps {
   coverage: any;
@@ -71,7 +72,7 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
                 <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center"><Percent size={20}/></div>
                 <div>
                    <p className="text-[0.6rem] font-black uppercase tracking-widest text-gray-500">Punya Kode Diskon?</p>
-                   <p className="text-[0.5rem] font-bold text-amber-500 uppercase tracking-widest opacity-80">Maks. 25% Dari Harga Premi</p>
+                   <p className="text-[0.5rem] font-bold text-amber-500 uppercase tracking-widest opacity-80">Maks. diskon = maks. komisi ({BASE_COMMISSION_PERCENT}%)</p>
                 </div>
              </div>
              <div className="text-right">
@@ -80,22 +81,22 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
           </div>
 
           <div className="relative h-2 bg-gray-100 dark:bg-white/10 rounded-full">
-             <div 
-               className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all" 
-               style={{ width: `${(coverage.discount / 25) * 100}%` }}
+             <div
+               className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all"
+               style={{ width: `${(coverage.discount / BASE_COMMISSION_PERCENT) * 100}%` }}
              ></div>
-             <input 
-               type="range" 
-               min="0" 
-               max="25" 
+             <input
+               type="range"
+               min="0"
+               max={BASE_COMMISSION_PERCENT}
                step="1"
-               value={coverage.discount} 
+               value={coverage.discount}
                onChange={(e) => setCoverage({...coverage, discount: parseInt(e.target.value)})}
                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
              />
-             <div 
+             <div
                 className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-amber-500 rounded-full shadow-lg pointer-events-none transition-all"
-                style={{ left: `${(coverage.discount / 25) * 100}%`, transform: 'translate(-50%, -50%)' }}
+                style={{ left: `${(coverage.discount / BASE_COMMISSION_PERCENT) * 100}%`, transform: 'translate(-50%, -50%)' }}
              ></div>
           </div>
 

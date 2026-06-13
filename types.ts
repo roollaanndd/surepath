@@ -92,6 +92,10 @@ export interface Provider {
   disadvantages?: string[];
   extraCoinsPercent?: number;
   features?: string[];
+  // Comparison display fields (marketing/display-only)
+  authorizedGarage?: boolean;
+  claimSpeed?: string; // e.g. "1–3 hari kerja"
+  benefits?: string[]; // key benefit bullets
 }
 
 export interface VehicleState {

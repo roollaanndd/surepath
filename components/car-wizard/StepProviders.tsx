@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight } from 'lucide-react';
+import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight, ShieldCheck, Zap, Clock } from 'lucide-react';
 import { STAMP_DUTY } from '../../constants';
 import { formatIDR } from './WizardUI';
 import { db, DBProvider } from '../../db';
@@ -167,16 +167,17 @@ const StepProviders: React.FC<StepProvidersProps> = ({
        </div>
 
        <div className="space-y-5">
-         {sortedList.map(p => {
+         {sortedList.map((p, cardIdx) => {
            const finalPremi = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
            const isSelected = selectedProviderId === p.id;
            const isComparing = compareList.includes(p.id);
-           
+
            return (
-             <div 
-               key={p.id} 
+             <div
+               key={p.id}
                onClick={() => setSelectedProviderId(p.id)}
-               className={`p-6 rounded-[2.8rem] border-2 cursor-pointer transition-all relative overflow-hidden group tap-feedback bg-white dark:bg-white/[0.03] ${isSelected ? 'border-emerald-500 shadow-2xl scale-[1.01] ring-2 ring-emerald-500/10' : 'border-black/5 hover:border-black/10'}`}
+               style={{ animationDelay: `${cardIdx * 80}ms` }}
+               className={`p-6 rounded-[2.8rem] border-2 cursor-pointer transition-all duration-300 relative overflow-hidden group tap-feedback bg-white dark:bg-white/[0.03] animate-fade-in ${isSelected ? 'border-emerald-500 shadow-2xl scale-[1.01] ring-4 ring-emerald-500/15' : 'border-black/5 hover:border-emerald-500/30 hover:shadow-lg hover:scale-[1.005]'}`}
              >
                 <button 
                   onClick={(e) => toggleCompare(e, p.id)}
@@ -208,44 +209,71 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                   </div>
                </div>
 
-               {/* Added Details Section for Mobile/Desktop Visibility */}
-               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-black/5 dark:border-white/5 pt-6 mb-2">
-                   {/* Points Badge */}
-                   <div className="col-span-1 sm:col-span-2">
-                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
-                           <Coins size={14} className="fill-amber-600 dark:fill-amber-400" />
-                           <span className="text-xs font-bold">Extra Poin: {p.extraCoinsPercent}% Cashback</span>
+               {/* Details Section */}
+               <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-5 space-y-5 mb-2">
+                   {/* Quick stats row */}
+                   <div className="flex flex-wrap gap-2">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+                           <Coins size={13} className="fill-amber-600 dark:fill-amber-400" />
+                           <span className="text-[0.6rem] font-black uppercase tracking-wider">+{p.extraCoinsPercent}% Cashback Koin</span>
                        </div>
+                       {(p as any).authorizedGarage && (
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                               <ShieldCheck size={13} />
+                               <span className="text-[0.6rem] font-black uppercase tracking-wider">Bengkel Resmi</span>
+                           </div>
+                       )}
+                       {(p as any).claimSpeed && (
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/30">
+                               <Clock size={13} />
+                               <span className="text-[0.6rem] font-black uppercase tracking-wider">Klaim {(p as any).claimSpeed}</span>
+                           </div>
+                       )}
                    </div>
 
-                   {/* Pros */}
-                   <div className="space-y-3">
-                       <p className="text-[0.55rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
-                           <CheckCircle2 size={12} /> Kelebihan
-                       </p>
-                       <ul className="space-y-2">
-                           {p.advantages?.map((adv: string, i: number) => (
-                               <li key={i} className="flex items-start gap-2">
-                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{adv}</span>
-                               </li>
-                           ))}
-                       </ul>
-                   </div>
+                   {/* Benefits */}
+                   {(p as any).benefits && (p as any).benefits.length > 0 && (
+                       <div className="space-y-2">
+                           <p className="text-[0.55rem] font-black uppercase text-gray-400 tracking-widest flex items-center gap-1.5"><Zap size={11} className="text-emerald-500"/> Keunggulan Utama</p>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                               {(p as any).benefits.map((b: string, i: number) => (
+                                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-black/5">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                       <span className="text-[0.6rem] font-medium text-gray-600 dark:text-gray-300 leading-tight">{b}</span>
+                                   </div>
+                               ))}
+                           </div>
+                       </div>
+                   )}
 
-                   {/* Cons */}
-                   <div className="space-y-3">
-                       <p className="text-[0.55rem] font-black uppercase text-rose-500 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
-                           <MinusCircle size={12} /> Kekurangan
-                       </p>
-                       <ul className="space-y-2">
-                           {p.disadvantages?.map((dis: string, i: number) => (
-                               <li key={i} className="flex items-start gap-2">
-                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                                   <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{dis}</span>
-                               </li>
-                           ))}
-                       </ul>
+                   {/* Pros / Cons */}
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                           <p className="text-[0.55rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
+                               <CheckCircle2 size={12} /> Kelebihan
+                           </p>
+                           <ul className="space-y-1.5">
+                               {p.advantages?.map((adv: string, i: number) => (
+                                   <li key={i} className="flex items-start gap-2">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{adv}</span>
+                                   </li>
+                               ))}
+                           </ul>
+                       </div>
+                       <div className="space-y-2">
+                           <p className="text-[0.55rem] font-black uppercase text-rose-500 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
+                               <MinusCircle size={12} /> Kekurangan
+                           </p>
+                           <ul className="space-y-1.5">
+                               {p.disadvantages?.map((dis: string, i: number) => (
+                                   <li key={i} className="flex items-start gap-2">
+                                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{dis}</span>
+                                   </li>
+                               ))}
+                           </ul>
+                       </div>
                    </div>
                </div>
 

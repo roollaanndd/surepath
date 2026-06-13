@@ -38,6 +38,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [sortBy, setSortBy] = useState<'RATING' | 'PRICE'>('RATING');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isPayLater, setIsPayLater] = useState(false);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
@@ -137,7 +138,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     
     const discountAmount = coverage.discountType === 'NOMINAL'
       ? Math.min(Math.max(coverage.discount || 0, 0), grossPremium)
-      : grossPremium * (Math.min(coverage.discount || 0, 25) / 100);
+      : grossPremium * (Math.min(coverage.discount || 0, BASE_COMMISSION_PERCENT) / 100);
     const discountPercent = grossPremium > 0 ? (discountAmount / grossPremium) * 100 : 0;
     const netPremium = grossPremium - discountAmount;
 
@@ -153,6 +154,78 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => setStep(s => Math.max(s - 1, 0));
+
+  // Pending-approval checkout: create order with SUBMITTED status, skip Xendit invoice
+  const handlePendingApprovalCheckout = async () => {
+    if (!premiumBreakdown || !selectedProvider) return;
+    setLoading(true);
+    try {
+      const commissionAmount = Math.round((premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100);
+      const coinReward = Math.round((premiumBreakdown.grossPremium * (selectedProvider.extraCoinsPercent || 0)) / 100);
+      const order = await createPolicyOrder({
+        agent_id: currentUser?.id ?? '',
+        client_id: currentUser?.id,
+        client_name: kycData.name,
+        client_phone: kycData.phone,
+        client_ktp: kycData.ktp,
+        product_code: 'CAR_INSURANCE',
+        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProvider.name}`,
+        vehicle_type: 'CAR',
+        vehicle_details: {
+          make: vehicle.brand, model: vehicle.model, year: vehicle.year,
+          color: vehicle.color, plate: vehicle.plate, chassis: vehicle.vin,
+          engine: vehicle.engine, usage: vehicle.usage, province: vehicle.regionName,
+        },
+        coverage_type: coverage.type,
+        zone: parseInt(vehicle.region),
+        vehicle_category: 1,
+        addons: {
+          flood: coverage.flood, earthquake: coverage.earthquake, srcc: coverage.srcc,
+          terrorism: coverage.terrorism, authorized: coverage.authorized,
+          tpl: coverage.tpl, paDriver: coverage.paDriver, paPassenger: coverage.paPassenger,
+        },
+        sum_insured: vehicle.price,
+        base_premium: Math.round(premiumBreakdown.basicPremium),
+        addon_premium: Math.round(premiumBreakdown.expansionTotal),
+        admin_fee: premiumBreakdown.adminFee,
+        stamp_duty: premiumBreakdown.stampDuty,
+        total_premium: Math.round(premiumBreakdown.totalPayable),
+        ojk_rate: premiumBreakdown.baseRate,
+        discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
+        discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
+        net_premium: Math.round(premiumBreakdown.netPremium),
+        commission_rate: BASE_COMMISSION_PERCENT / 100,
+        commission_amount: commissionAmount,
+        coin_reward: coinReward,
+        ai_score: survey.score,
+        ai_verdict: survey.verdict || undefined,
+        ai_findings: survey.detailedIssues,
+        insurer_name: selectedProvider.name,
+        status: 'SUBMITTED',
+        start_date: new Date().toISOString(),
+        end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+      });
+      if (!order) throw new Error('Gagal membuat order di server');
+      setOrderNumber(order.order_number ?? order.id);
+      setInvoiceUrl(null);
+      setIsPendingApproval(true);
+      localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
+      setIsSuccess(true);
+    } catch (e) {
+      console.error('handlePendingApprovalCheckout:', e);
+      alert('Gagal memproses pesanan. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (survey.verdict === 'CLEAN') {
+      handleNext(); // go to payment step
+    } else {
+      handlePendingApprovalCheckout();
+    }
+  };
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputVal = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
@@ -262,28 +335,39 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   };
 
   if (isSuccess) {
+     const iconBg = isPendingApproval ? 'bg-amber-500' : isPayLater ? 'bg-amber-400' : 'bg-emerald-500';
+     const statusLabel = isPendingApproval ? 'Menunggu Persetujuan' : isPayLater ? 'Menunggu Pembayaran' : 'Diproses';
+     const statusBadgeCls = isPendingApproval ? 'bg-amber-50 text-amber-600 border-amber-200' : isPayLater ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-blue-600 border-blue-200';
      return (
         <div className="bg-white min-h-screen pb-28 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
-           {isPayLater ? (
-              <div className="w-24 h-24 bg-amber-400 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
-                 <Clock size={56} strokeWidth={2.5}/>
-              </div>
-           ) : (
-              <div className="w-24 h-24 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8">
-                 <ShieldCheck size={56} strokeWidth={2.5}/>
-              </div>
-           )}
+           <div className={`w-24 h-24 ${iconBg} rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8`}>
+              {isPendingApproval ? <Clock size={56} strokeWidth={2.5}/> : isPayLater ? <Clock size={56} strokeWidth={2.5}/> : <ShieldCheck size={56} strokeWidth={2.5}/>}
+           </div>
 
            <div className="space-y-4 mb-12">
               <h2 className="text-2xl font-bold text-gray-900">
-                 Pesanan <span className={isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPayLater ? "Tersimpan" : "Diterima"}</span>
+                 Pesanan <span className={isPendingApproval || isPayLater ? "text-amber-500" : "text-emerald-500"}>{isPendingApproval ? "Diajukan" : isPayLater ? "Tersimpan" : "Diterima"}</span>
               </h2>
               <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
-                 {isPayLater
+                 {isPendingApproval
+                   ? "Pesanan diajukan untuk ditinjau oleh admin/tim asuransi. Halaman pembayaran akan terbuka setelah foto disetujui. Pantau status melalui email atau aplikasi."
+                   : isPayLater
                    ? "Pesanan tersimpan. Selesaikan pembayaran di menu Pesanan Saya untuk mengaktifkan perlindungan."
                    : "Pesanan berhasil dikirim ke penanggung. Tim kami akan memproses polis Anda setelah pembayaran dikonfirmasi."}
               </p>
            </div>
+
+           {isPendingApproval && (
+              <div className="mx-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 w-full max-w-sm mb-6 text-left space-y-2">
+                 <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle size={16} className="text-amber-500 shrink-0"/>
+                    <span className="text-xs font-black text-amber-700 uppercase tracking-widest">Perlu Persetujuan Foto</span>
+                 </div>
+                 <p className="text-xs text-amber-700/80 leading-relaxed">
+                    Foto kendaraan kamu sedang dalam proses review manual. Setelah disetujui, kamu akan mendapat notifikasi dan dapat melanjutkan ke pembayaran.
+                 </p>
+              </div>
+           )}
 
            <div className="mx-5 rounded-2xl bg-gray-50 border border-gray-100 p-4 w-full max-w-sm mb-10">
               <div className="flex justify-between py-2 border-b border-gray-100">
@@ -292,8 +376,8 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
               </div>
               <div className="flex justify-between py-2 border-b border-gray-100">
                  <span className="text-sm text-gray-500">Status</span>
-                 <span className={`px-3 py-1 rounded-lg border text-xs font-semibold ${isPayLater ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
-                    {isPayLater ? 'Menunggu Pembayaran' : 'Diproses'}
+                 <span className={`px-3 py-1 rounded-lg border text-xs font-semibold ${statusBadgeCls}`}>
+                    {statusLabel}
                  </span>
               </div>
               <div className="flex justify-between py-2">
@@ -304,7 +388,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                        <p className="text-xs text-gray-400">{vehicle.plate}</p>
                     </div>
                  </div>
-                 {isPayLater ? <AlertTriangle size={18} className="text-amber-500"/> : <CheckCircle2 size={18} className="text-emerald-500"/>}
+                 {isPendingApproval ? <AlertTriangle size={18} className="text-amber-500"/> : isPayLater ? <AlertTriangle size={18} className="text-amber-500"/> : <CheckCircle2 size={18} className="text-emerald-500"/>}
               </div>
            </div>
 
@@ -340,20 +424,43 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
           <h3 className="text-base font-semibold text-gray-900">{STEPS[step].label}</h3>
        </div>
 
-       {/* STEP PROGRESS BAR */}
-       <div className="px-5 py-4 flex items-center gap-1">
-         {STEPS.map((_s, i) => (
-           <React.Fragment key={i}>
-             {i > 0 && <div className={`flex-1 h-0.5 ${i <= step ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>}
-             {i < step ? (
-               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center"><Check size={12}/></div>
-             ) : i === step ? (
-               <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">{i + 1}</div>
-             ) : (
-               <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 text-xs font-bold flex items-center justify-center">{i + 1}</div>
-             )}
-           </React.Fragment>
-         ))}
+       {/* STEP PROGRESS BAR — premium animated */}
+       <div className="px-5 pt-3 pb-4">
+         {/* Step name + count */}
+         <div className="flex items-center justify-between mb-2">
+           <div className="flex items-center gap-2">
+             <span className="text-[0.6rem] font-black uppercase tracking-[0.25em] text-emerald-500">{STEPS[step].label}</span>
+           </div>
+           <span className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">Langkah {step + 1} dari {STEPS.length}</span>
+         </div>
+         {/* Animated fill bar */}
+         <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
+           <div
+             className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(0,193,106,0.4)]"
+             style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+           />
+         </div>
+         {/* Dot indicators */}
+         <div className="flex items-center gap-1">
+           {STEPS.map((_s, i) => (
+             <React.Fragment key={i}>
+               {i > 0 && <div className={`flex-1 h-px transition-colors duration-300 ${i <= step ? 'bg-emerald-500/40' : 'bg-gray-100'}`} />}
+               {i < step ? (
+                 <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/30 transition-all duration-300">
+                   <Check size={10} strokeWidth={3}/>
+                 </div>
+               ) : i === step ? (
+                 <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/40 ring-2 ring-emerald-500/20 transition-all duration-300">
+                   <span className="text-[0.5rem] font-black">{i + 1}</span>
+                 </div>
+               ) : (
+                 <div className="w-5 h-5 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center shrink-0 transition-all duration-300">
+                   <span className="text-[0.5rem] font-bold">{i + 1}</span>
+                 </div>
+               )}
+             </React.Fragment>
+           ))}
+         </div>
        </div>
 
        {/* MAIN CONTENT AREA */}
@@ -391,12 +498,17 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                   )}
 
                   <button
-                     onClick={handleNext}
-                     disabled={(step === 5 && survey.score === 0) || (step === 6 && survey.verdict === 'REJECTED')}
+                     onClick={step === 6 ? handleCheckout : handleNext}
+                     disabled={
+                       (step === 5 && (survey.verdict === '' || survey.verdict === 'REJECTED' || (loading && loadingType === 'SURVEY'))) ||
+                       (step === 6 && survey.verdict === 'REJECTED')
+                     }
                      className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2 px-6"
                   >
                      {step === 6 ? (
-                        <>Checkout <ArrowRight size={16}/></>
+                        survey.verdict === 'CLEAN'
+                          ? <>Lanjut ke Pembayaran <ArrowRight size={16}/></>
+                          : <>Ajukan untuk Persetujuan <ArrowRight size={16}/></>
                      ) : (
                         <>Lanjut <ChevronRight size={16}/></>
                      )}

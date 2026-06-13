@@ -142,21 +142,21 @@ const StepKYC: React.FC<StepKYCProps> = ({
   return (
     <div className="space-y-8 animate-fade-in pb-4">
       <div className="p-8 bg-gradient-to-br from-slate-900 to-black rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-primary-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-3xl"></div>
+        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-3xl"></div>
         <div className="relative z-10 flex items-center gap-6">
-          <div className="w-16 h-16 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-primary-500/20 animate-float">
+          <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/20 animate-float">
             <UserCheck size={32}/>
           </div>
           <div>
             <h4 className="text-xl font-black text-white uppercase tracking-tighter">Data Pemilik</h4>
-            <p className="text-[0.55rem] font-black text-primary-400 uppercase tracking-[0.4em] mt-1.5 opacity-80">Identitas Aman Terproteksi</p>
+            <p className="text-[0.55rem] font-black text-emerald-400 uppercase tracking-[0.4em] mt-1.5 opacity-80">Identitas Aman Terproteksi</p>
           </div>
         </div>
         <ScanFace size={100} className="absolute -right-6 -bottom-6 opacity-[0.05] rotate-12 text-white group-hover:scale-110 transition-transform duration-1000"/>
       </div>
 
       <div className="space-y-6">
-        <div className="p-1 bg-gray-100 dark:bg-white/[0.03] rounded-[2.5rem] border-2 border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center gap-5 relative py-12 group cursor-pointer transition-all hover:bg-white dark:hover:bg-white/[0.05] hover:border-primary-500/50 overflow-hidden min-h-[220px] shadow-inner">
+        <div className="p-1 bg-gray-100 dark:bg-white/[0.03] rounded-[2.5rem] border-2 border-black/5 dark:border-white/5 flex flex-col items-center justify-center text-center gap-5 relative py-12 group cursor-pointer transition-all hover:bg-white dark:hover:bg-white/[0.05] hover:border-emerald-500/50 overflow-hidden min-h-[220px] shadow-inner">
           {loading && loadingType === 'KTP' ? (
             <ScannerOverlay label="Membaca KTP..." />
           ) : kycData.photo ? (
@@ -189,10 +189,10 @@ const StepKYC: React.FC<StepKYCProps> = ({
           ) : (
             <>
               <div className="relative">
-                <div className="w-20 h-20 bg-white dark:bg-white/0.03 rounded-[1.8rem] flex items-center justify-center text-gray-300 group-hover:text-primary-500 transition-colors shadow-xl group-hover:scale-110 duration-500">
+                <div className="w-20 h-20 bg-white dark:bg-white/0.03 rounded-[1.8rem] flex items-center justify-center text-gray-300 group-hover:text-emerald-500 transition-colors shadow-xl group-hover:scale-110 duration-500">
                     <ImageIcon size={44}/>
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-primary-500 text-white rounded-xl p-2.5 shadow-2xl animate-bounce">
+                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white rounded-xl p-2.5 shadow-2xl animate-bounce">
                   <Plus size={18} strokeWidth={4}/>
                 </div>
               </div>
@@ -238,10 +238,10 @@ const StepKYC: React.FC<StepKYCProps> = ({
         </div>
 
         <div className="grid gap-5">
-          <div className="p-8 bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 rounded-[3rem] space-y-6 shadow-xl relative overflow-hidden transition-all hover:border-primary-500/20">
+          <div className="p-8 bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 rounded-[3rem] space-y-6 shadow-xl relative overflow-hidden transition-all hover:border-emerald-500/20">
             <div className="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-4">
               <div className="flex items-center gap-4">
-                <UserCheck size={20} className="text-primary-500"/>
+                <UserCheck size={20} className="text-emerald-500"/>
                 <span className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-gray-400">Verifikasi Data</span>
               </div>
               {verifiedFields.size > 0 && (
@@ -258,7 +258,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
                 <div className="relative group">
                     <input 
                       placeholder="NAMA LENGKAP"
-                      className={`w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-primary-500 font-black text-sm text-primary-500 uppercase transition-all shadow-inner ${verifiedFields.has('name') ? 'border-emerald-500/30' : 'border-black/5 dark:border-white/5'}`}
+                      className={`w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-emerald-500 font-black text-sm text-emerald-500 uppercase transition-all shadow-inner ${verifiedFields.has('name') ? 'border-emerald-500/30' : 'border-black/5 dark:border-white/5'}`}
                       value={kycData.name}
                       onChange={(e) => setKycData({...kycData, name: e.target.value.toUpperCase()})}
                     />
@@ -273,7 +273,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
                         <input 
                         placeholder="3271XXXXXXXXXXXX"
                         maxLength={16}
-                        className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-primary-500 font-black text-sm transition-all tracking-[0.2em] shadow-inner ${kycData.ktp.length > 0 ? (isNikValid ? 'border-emerald-500/30 text-primary-500' : 'border-rose-500/30 text-rose-500') : 'border-black/5 dark:border-white/5 text-primary-500'}`}
+                        className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-emerald-500 font-black text-sm transition-all tracking-[0.2em] shadow-inner ${kycData.ktp.length > 0 ? (isNikValid ? 'border-emerald-500/30 text-emerald-500' : 'border-rose-500/30 text-rose-500') : 'border-black/5 dark:border-white/5 text-emerald-500'}`}
                         value={kycData.ktp}
                         onChange={(e) => setKycData({...kycData, ktp: e.target.value.replace(/\D/g, "")})}
                         />
@@ -286,7 +286,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
                     <div className="relative">
                         <input 
                         placeholder="08XXXXXXXXXX"
-                        className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-primary-500 font-black text-sm transition-all shadow-inner ${kycData.phone.length > 0 ? (isPhoneValid ? 'border-emerald-500/30 text-primary-500' : 'border-rose-500/30 text-rose-500') : 'border-black/5 dark:border-white/5 text-primary-500'}`}
+                        className={`w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-emerald-500 font-black text-sm transition-all shadow-inner ${kycData.phone.length > 0 ? (isPhoneValid ? 'border-emerald-500/30 text-emerald-500' : 'border-rose-500/30 text-rose-500') : 'border-black/5 dark:border-white/5 text-emerald-500'}`}
                         value={kycData.phone}
                         onChange={(e) => setKycData({...kycData, phone: e.target.value.replace(/\D/g, "")})}
                         />
@@ -299,7 +299,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
                 <label className="text-[0.55rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Alamat Email</label>
                 <input 
                   type="email" placeholder="email@kamu.com"
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 border-black/5 dark:border-white/5 outline-none focus:border-primary-500 font-black text-xs text-primary-500 transition-all shadow-inner"
+                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-xs text-emerald-500 transition-all shadow-inner"
                   value={kycData.email}
                   onChange={(e) => setKycData({...kycData, email: e.target.value})}
                 />
@@ -311,7 +311,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
                     <textarea 
                       placeholder="JALAN, KOTA, PROVINSI"
                       rows={3}
-                      className={`w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-primary-500 font-black text-[0.65rem] text-primary-500 uppercase transition-all resize-none shadow-inner leading-relaxed ${verifiedFields.has('address') ? 'border-emerald-500/30' : 'border-black/5 dark:border-white/5'}`}
+                      className={`w-full px-6 py-4 rounded-2xl bg-gray-50 dark:bg-black/40 border-2 outline-none focus:border-emerald-500 font-black text-[0.65rem] text-emerald-500 uppercase transition-all resize-none shadow-inner leading-relaxed ${verifiedFields.has('address') ? 'border-emerald-500/30' : 'border-black/5 dark:border-white/5'}`}
                       value={kycData.address}
                       onChange={(e) => setKycData({...kycData, address: e.target.value.toUpperCase()})}
                     />

@@ -53,11 +53,11 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
   return (
     <div className="space-y-6 animate-fade-in pb-24">
       <div className="bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 dark:border-white/5 p-8 shadow-xl relative overflow-hidden">
-         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-primary-500"></div>
+         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500"></div>
          <div className="flex justify-between items-start mb-8 relative z-10">
             <div className="space-y-1">
                <p className="text-[0.6rem] font-black text-gray-400 uppercase tracking-[0.2em]">Total Tagihan Premi</p>
-               <h3 className="text-4xl font-black text-primary-500 tracking-tighter drop-shadow-sm">{formatIDR(premiumBreakdown?.totalPayable || 0)}</h3>
+               <h3 className="text-4xl font-black text-emerald-500 tracking-tighter drop-shadow-sm">{formatIDR(premiumBreakdown?.totalPayable || 0)}</h3>
             </div>
             <div className="flex flex-col items-end">
                <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full mb-2 border border-blue-500/20">
@@ -71,14 +71,14 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
          <div className="grid grid-cols-2 gap-3 relative z-10">
             <button
                onClick={() => { setMethod('VA'); setSelectedSubMethod(null); }}
-               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'VA' ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'VA' ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
             >
                <Landmark size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Bank VA</span>
             </button>
             <button
                onClick={() => { setMethod('EWALLET'); setSelectedSubMethod(null); }}
-               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'EWALLET' ? 'border-primary-500 bg-primary-500/5 text-primary-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'EWALLET' ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
             >
                <Smartphone size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Dompet Digital</span>
@@ -94,13 +94,13 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                   <button 
                      key={bank.id}
                      onClick={() => setSelectedSubMethod(bank.name)}
-                     className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === bank.name ? 'border-primary-500 shadow-xl' : 'border-black/5'}`}
+                     className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === bank.name ? 'border-emerald-500 shadow-xl' : 'border-black/5'}`}
                   >
                      <div className="flex items-center gap-5">
                         <img src={bank.icon} className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all opacity-60 group-hover:opacity-100" alt={bank.name} />
                         <span className="text-sm font-black uppercase tracking-tight text-gray-700 dark:text-gray-200">{bank.name}</span>
                      </div>
-                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedSubMethod === bank.name ? 'bg-primary-500 border-primary-500 text-white' : 'border-black/10'}`}>
+                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedSubMethod === bank.name ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-black/10'}`}>
                         {selectedSubMethod === bank.name && <Check size={14} strokeWidth={4}/>}
                      </div>
                   </button>
@@ -116,13 +116,13 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                      <button 
                         key={wallet.id}
                         onClick={() => setSelectedSubMethod(wallet.name)}
-                        className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === wallet.name ? 'border-primary-500 shadow-xl' : 'border-black/5'}`}
+                        className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === wallet.name ? 'border-emerald-500 shadow-xl' : 'border-black/5'}`}
                      >
                         <div className="flex items-center gap-5">
                            <img src={wallet.icon} className="h-8 w-auto object-contain" alt={wallet.name} />
                            <span className="text-sm font-black uppercase tracking-tight text-gray-700 dark:text-gray-200">{wallet.name}</span>
                         </div>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedSubMethod === wallet.name ? 'bg-primary-500 border-primary-500 text-white' : 'border-black/10'}`}>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedSubMethod === wallet.name ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-black/10'}`}>
                            {selectedSubMethod === wallet.name && <Check size={14} strokeWidth={4}/>}
                         </div>
                      </button>
@@ -133,7 +133,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
 
          {!method && (
             <div className="flex flex-col items-center justify-center py-12 opacity-40 text-center space-y-4">
-               <Zap size={48} strokeWidth={1.5} className="text-primary-500 animate-pulse"/>
+               <Zap size={48} strokeWidth={1.5} className="text-emerald-500 animate-pulse"/>
                <p className="text-[0.65rem] font-black uppercase tracking-[0.3em] max-w-[220px]">Pilih metode pembayaran untuk mengaktifkan polis</p>
             </div>
          )}
@@ -147,12 +147,12 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
          >
             {isProcessing || loading ? (
                <>
-                  <Loader2 size={24} className="animate-spin text-primary-500"/>
+                  <Loader2 size={24} className="animate-spin text-emerald-500"/>
                   <span>Memproses...</span>
                </>
             ) : (
                <>
-                  <Zap size={24} className="text-primary-500 fill-primary-500"/>
+                  <Zap size={24} className="text-emerald-500 fill-emerald-500"/>
                   <span>LANJUT KE TAGIHAN</span>
                </>
             )}
@@ -161,9 +161,9 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
          {!isProcessing && (
            <button 
               onClick={handlePayLater}
-              className="w-full py-5 bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 rounded-[2.5rem] font-black uppercase text-[0.65rem] tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-3 group hover:border-primary-500 hover:text-primary-600"
+              className="w-full py-5 bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-400 rounded-[2.5rem] font-black uppercase text-[0.65rem] tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-3 group hover:border-emerald-500 hover:text-emerald-600"
            >
-              <CalendarClock size={18} className="group-hover:text-primary-500 transition-colors"/>
+              <CalendarClock size={18} className="group-hover:text-emerald-500 transition-colors"/>
               BAYAR NANTI (PROSES DULU)
            </button>
          )}

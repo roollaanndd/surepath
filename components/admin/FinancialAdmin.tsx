@@ -145,7 +145,7 @@ const FinancialAdmin: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black uppercase tracking-tighter">
-            Laporan <span className="text-primary-500">Keuangan</span>
+            Laporan <span className="text-emerald-500">Keuangan</span>
           </h2>
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">
             Data real-time dari Supabase
@@ -158,7 +158,7 @@ const FinancialAdmin: React.FC = () => {
               onClick={() => setRange(r)}
               className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
                 range === r
-                  ? 'bg-primary-500 text-white shadow-lg'
+                  ? 'bg-emerald-500 text-white shadow-lg'
                   : 'text-slate-500 hover:text-white'
               }`}
             >
@@ -170,7 +170,7 @@ const FinancialAdmin: React.FC = () => {
 
       {loading ? (
         <div className="flex justify-center py-24">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : (
         <>
@@ -233,7 +233,7 @@ const FinancialAdmin: React.FC = () => {
                         key={order.id}
                         className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors"
                       >
-                        <td className="px-6 py-3 font-mono text-primary-400 whitespace-nowrap">
+                        <td className="px-6 py-3 font-mono text-emerald-400 whitespace-nowrap">
                           {order.order_number ?? order.id.slice(0, 8)}
                         </td>
                         <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">

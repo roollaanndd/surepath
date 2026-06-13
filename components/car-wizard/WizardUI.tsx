@@ -36,7 +36,7 @@ export const SmartBot = ({ className = "w-24 h-24", mood = "scanning" }: { class
           </>
         )}
         {mood === 'thinking' && (
-             <g className="fill-orange-400">
+             <g className="fill-emerald-500">
                 <circle cx="75" cy="100" r="4" className="animate-bounce" />
                 <circle cx="100" cy="100" r="4" className="animate-bounce delay-100" />
                 <circle cx="125" cy="100" r="4" className="animate-bounce delay-200" />
@@ -45,7 +45,7 @@ export const SmartBot = ({ className = "w-24 h-24", mood = "scanning" }: { class
       </g>
 
       <line x1="100" y1="50" x2="100" y2="30" stroke="#cbd5e1" strokeWidth="4" />
-      <circle cx="100" cy="25" r="6" fill={mood === 'thinking' ? '#fb923c' : '#10b981'} className="animate-ping" />
+      <circle cx="100" cy="25" r="6" fill="#10b981" className="animate-ping" />
     </g>
     <style dangerouslySetInnerHTML={{ __html: `
       @keyframes blink {
@@ -63,17 +63,17 @@ export const SmartBot = ({ className = "w-24 h-24", mood = "scanning" }: { class
 export const SmartProcessingView = ({ label, sublabel }: { label: string, sublabel?: string }) => (
   <div className="flex flex-col items-center justify-center p-12 text-center animate-fade-in relative min-h-[400px]">
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 dark:opacity-40">
-       <div className="w-[300px] h-[300px] border border-primary-500 rounded-full animate-spin-slow"></div>
-       <div className="absolute w-[240px] h-[240px] border border-dashed border-brand-500 rounded-full animate-reverse-spin opacity-50"></div>
-       <div className="absolute w-[180px] h-[180px] border border-primary-300 rounded-full animate-pulse"></div>
+       <div className="w-[300px] h-[300px] border border-emerald-500 rounded-full animate-spin-slow"></div>
+       <div className="absolute w-[240px] h-[240px] border border-dashed border-emerald-400 rounded-full animate-reverse-spin opacity-50"></div>
+       <div className="absolute w-[180px] h-[180px] border border-emerald-300 rounded-full animate-pulse"></div>
     </div>
 
     <div className="relative mb-10 group">
-       <div className="absolute inset-0 bg-primary-500/20 blur-3xl rounded-full group-hover:bg-brand-500/30 transition-colors duration-1000"></div>
+       <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full group-hover:bg-emerald-400/30 transition-colors duration-1000"></div>
        <SmartBot className="w-40 h-40 relative z-10" mood="thinking" />
-       
-       <div className="absolute top-0 right-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float"><Cpu size={16} className="text-primary-500"/></div>
-       <div className="absolute bottom-4 left-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float animation-delay-2000"><Zap size={16} className="text-brand-500"/></div>
+
+       <div className="absolute top-0 right-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float"><Cpu size={16} className="text-emerald-500"/></div>
+       <div className="absolute bottom-4 left-0 p-2 bg-white dark:bg-white/10 rounded-xl shadow-lg border border-black/5 animate-float animation-delay-2000"><Zap size={16} className="text-emerald-500"/></div>
     </div>
 
     <div className="space-y-4 relative z-10">
@@ -86,7 +86,7 @@ export const SmartProcessingView = ({ label, sublabel }: { label: string, sublab
        </p>
        
        <div className="w-64 h-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mx-auto shadow-inner mt-4">
-          <div className="h-full bg-gradient-to-r from-primary-400 via-primary-500 to-brand-400 shadow-[0_0_15px_#f97316] animate-shimmer-fast w-[60%] rounded-full"></div>
+          <div className="h-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 shadow-[0_0_15px_#00C16A] animate-shimmer-fast w-[60%] rounded-full"></div>
        </div>
     </div>
     
@@ -114,24 +114,24 @@ export const ScannerOverlay = ({ label }: { label: string }) => (
 
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <div className="relative mb-8">
-         <div className="absolute inset-0 bg-primary-500/20 blur-3xl rounded-full"></div>
+         <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full"></div>
          <SmartBot className="w-32 h-32 relative z-10" mood="scanning" />
          
          <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-48 h-64 bg-gradient-to-b from-blue-400/30 to-transparent clip-path-beam animate-scan-beam z-0 pointer-events-none"></div>
       </div>
       
-      <div className="absolute top-8 left-8 w-10 h-10 border-t-2 border-l-2 border-primary-500/80 rounded-tl-xl drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
-      <div className="absolute top-8 right-8 w-10 h-10 border-t-2 border-r-2 border-primary-500/80 rounded-tr-xl drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
-      <div className="absolute bottom-8 left-8 w-10 h-10 border-b-2 border-l-2 border-primary-500/80 rounded-bl-xl drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
-      <div className="absolute bottom-8 right-8 w-10 h-10 border-b-2 border-r-2 border-primary-500/80 rounded-br-xl drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
+      <div className="absolute top-8 left-8 w-10 h-10 border-t-2 border-l-2 border-emerald-400/80 rounded-tl-xl drop-shadow-[0_0_10px_rgba(0,193,106,0.5)]"></div>
+      <div className="absolute top-8 right-8 w-10 h-10 border-t-2 border-r-2 border-emerald-400/80 rounded-tr-xl drop-shadow-[0_0_10px_rgba(0,193,106,0.5)]"></div>
+      <div className="absolute bottom-8 left-8 w-10 h-10 border-b-2 border-l-2 border-emerald-400/80 rounded-bl-xl drop-shadow-[0_0_10px_rgba(0,193,106,0.5)]"></div>
+      <div className="absolute bottom-8 right-8 w-10 h-10 border-b-2 border-r-2 border-emerald-400/80 rounded-br-xl drop-shadow-[0_0_10px_rgba(0,193,106,0.5)]"></div>
 
       <div className="relative z-30 flex flex-col items-center gap-3 text-center">
           <p className="text-[0.9rem] font-black uppercase text-white tracking-[0.5em] drop-shadow-xl animate-pulse">{label}</p>
           <div className="flex items-center justify-center gap-3">
              <div className="flex gap-1">
-                <div className="w-1 h-1 bg-primary-500 rounded-full animate-bounce"></div>
-                <div className="w-1 h-1 bg-primary-500 rounded-full animate-bounce delay-100"></div>
-                <div className="w-1 h-1 bg-primary-500 rounded-full animate-bounce delay-200"></div>
+                <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce"></div>
+                <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce delay-100"></div>
+                <div className="w-1 h-1 bg-emerald-400 rounded-full animate-bounce delay-200"></div>
              </div>
              <p className="text-[0.6rem] font-bold text-gray-300 uppercase tracking-widest">Syncing</p>
           </div>
@@ -155,7 +155,7 @@ export const ScannerOverlay = ({ label }: { label: string }) => (
 
 export const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
-    primary: "bg-primary-500/10 text-primary-500 border-primary-500/20",
+    primary: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
     blue: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     rose: "bg-rose-500/10 text-rose-500 border-rose-500/20",
     amber: "bg-amber-500/10 text-amber-600 border-amber-200",

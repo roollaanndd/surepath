@@ -41,7 +41,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, lang }) => 
         : "SurePath is more than insurance. We are your digital companion protecting your assets 24/7.",
       icon: SurePathLogoIcon,
       tech: "PROTECTION_INIT",
-      color: "text-primary-500"
+      color: "text-emerald-500"
     },
     {
       title: lang === 'ID' ? "Perlindungan Pintar" : "Smart Protection",
@@ -95,7 +95,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, lang }) => 
         <div className="p-8 border-b border-white/5 bg-white/5">
            <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-primary-500 animate-ping"></div>
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
                  <span className="text-[0.6rem] font-black text-gray-400 uppercase tracking-[0.4em]">Welcome Tour</span>
               </div>
               <button onClick={finish} className="text-[0.6rem] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-2">
@@ -104,13 +104,13 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, lang }) => 
            </div>
            <div className="flex gap-2">
               {steps.map((_, i) => (
-                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i <= currentStep ? 'bg-primary-500 shadow-[0_0_15px_#10b981]' : 'bg-white/10'}`}></div>
+                <div key={i} className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${i <= currentStep ? 'bg-emerald-500 shadow-[0_0_15px_#10b981]' : 'bg-white/10'}`}></div>
               ))}
            </div>
         </div>
 
         <div className="flex-1 p-12 space-y-10 relative">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none"></div>
           
           <div className="flex flex-col items-center text-center space-y-8 relative z-10">
              <div className={`w-28 h-28 bg-white/5 rounded-[2.5rem] flex items-center justify-center ${steps[currentStep].color} shadow-inner border border-white/10 animate-float`}>
@@ -123,7 +123,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, lang }) => 
           </div>
 
           <div className="flex items-center justify-center gap-4 py-4 bg-gray-50 rounded-[2rem] border border-black/5 shadow-inner px-8">
-             <BrainCircuit size={16} className="text-primary-500 animate-pulse"/>
+             <BrainCircuit size={16} className="text-emerald-500 animate-pulse"/>
              <p className="text-[0.6rem] font-mono text-gray-400 uppercase tracking-widest">
                 SYSTEM: {steps[currentStep].tech}
              </p>
@@ -140,10 +140,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete, lang }) => 
            
            <button 
              onClick={handleNext}
-             className="px-12 py-6 bg-midnight text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl flex items-center gap-6 transition-all hover:bg-primary-600 active:scale-95 group"
+             className="px-12 py-6 bg-midnight text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl flex items-center gap-6 transition-all hover:bg-emerald-600 active:scale-95 group"
            >
               {currentStep === steps.length - 1 ? (lang === 'ID' ? 'Mulai Sekarang' : 'Get Started') : (lang === 'ID' ? 'Lanjut' : 'Next')}
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform text-primary-400"/>
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform text-emerald-400"/>
            </button>
         </div>
       </div>

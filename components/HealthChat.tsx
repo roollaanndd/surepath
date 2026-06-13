@@ -77,7 +77,7 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
         {/* Chat Header */}
         <div className="px-6 pt-6 pb-4 bg-white/80 dark:bg-black/40 backdrop-blur-xl border-b border-gray-100 dark:border-white/5 flex items-center justify-between z-50">
           <div className="flex items-center gap-4">
-             <button onClick={onBack} className="p-2 bg-gray-50 dark:bg-white/5 rounded-xl text-gray-400 hover:text-primary-500 transition-colors">
+             <button onClick={onBack} className="p-2 bg-gray-50 dark:bg-white/5 rounded-xl text-gray-400 hover:text-emerald-500 transition-colors">
                 <ChevronLeft size={20}/>
              </button>
              <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
                    <HeartPulse size={22}/>
                 </div>
                 <div>
-                   <h3 className="text-lg font-black uppercase tracking-tighter leading-none text-slate-800 dark:text-white">Health <span className="text-primary-500">Bot</span></h3>
+                   <h3 className="text-lg font-black uppercase tracking-tighter leading-none text-slate-800 dark:text-white">Health <span className="text-emerald-500">Bot</span></h3>
                    <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-[0.3em] mt-1">Chat Aktif • Online</p>
                 </div>
              </div>
@@ -100,12 +100,12 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
               <div className={`flex gap-3 max-w-[85%] ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm ${m.role === 'user' ? 'bg-primary-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center shadow-sm ${m.role === 'user' ? 'bg-emerald-500 text-white' : 'bg-emerald-500 text-white'}`}>
                   {m.role === 'user' ? <User size={16}/> : <Bot size={16}/>}
                 </div>
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
                   m.role === 'user' 
-                  ? 'bg-primary-500 text-white rounded-tr-none' 
+                  ? 'bg-emerald-500 text-white rounded-tr-none' 
                   : 'bg-gray-50 dark:bg-emerald-950/20 text-slate-800 dark:text-gray-200 border border-emerald-50 dark:border-emerald-900/30 rounded-tl-none'
                 }`}>
                   {m.text}
@@ -116,7 +116,7 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
           {loading && (
             <div className="flex justify-start animate-pulse">
                <div className="flex gap-3 items-center bg-gray-50 dark:bg-emerald-950/20 p-4 rounded-2xl rounded-tl-none border border-emerald-50 dark:border-emerald-900/30">
-                  <Loader2 size={16} className="animate-spin text-primary-500"/>
+                  <Loader2 size={16} className="animate-spin text-emerald-500"/>
                   <span className="text-[0.6rem] font-black uppercase tracking-widest text-gray-400">{lang === Language.EN ? 'AI is typing...' : 'AI Sedang Mengetik...'}</span>
                </div>
             </div>
@@ -133,12 +133,12 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder={lang === Language.EN ? 'Ask about health or your policy...' : 'Tanya seputar kesehatan atau polis...'}
-                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-4 px-5 pr-14 text-sm font-medium outline-none focus:border-primary-500 transition-all shadow-inner"
+                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-4 px-5 pr-14 text-sm font-medium outline-none focus:border-emerald-500 transition-all shadow-inner"
               />
               <button 
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
-                className="absolute right-2 top-2 bottom-2 px-4 bg-primary-500 text-white rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-30"
+                className="absolute right-2 top-2 bottom-2 px-4 bg-emerald-500 text-white rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-30"
               >
                 <Send size={18}/>
               </button>

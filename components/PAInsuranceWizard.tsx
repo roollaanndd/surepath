@@ -106,8 +106,8 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
 
   const renderStep0 = () => (
     <div className="space-y-6 animate-fade-in">
-      <div className="p-4 bg-primary-500/10 rounded-3xl border border-primary-500/20 flex gap-4">
-         <ShieldAlert className="text-primary-500 flex-shrink-0" size={24}/>
+      <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex gap-4">
+         <ShieldAlert className="text-emerald-500 flex-shrink-0" size={24}/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
            Sistem Asuransi Kecelakaan Diri. Protect yourself or your students with PSAKDI grade coverage.
          </p>
@@ -121,7 +121,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
           <button 
             key={cat.id}
             onClick={() => setPaData({...paData, category: cat.id as any, planCode: ''})}
-            className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all tap-feedback ${paData.category === cat.id ? 'border-primary-500 bg-primary-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
+            className={`p-6 rounded-[2.5rem] border-2 text-left flex items-center gap-6 transition-all tap-feedback ${paData.category === cat.id ? 'border-emerald-500 bg-emerald-500/[0.03] shadow-xl' : 'border-black/5 bg-white dark:bg-white/5 opacity-60'}`}
           >
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100 dark:bg-white/10 ${paData.category === cat.id ? cat.color : 'text-gray-400'}`}>
                <cat.icon size={28}/>
@@ -130,7 +130,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
                <h4 className="font-black text-lg uppercase tracking-tighter">{cat.label}</h4>
                <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest mt-1">{cat.desc}</p>
             </div>
-            {paData.category === cat.id && <Check className="ml-auto text-primary-500" size={24} strokeWidth={3}/>}
+            {paData.category === cat.id && <Check className="ml-auto text-emerald-500" size={24} strokeWidth={3}/>}
           </button>
         ))}
       </div>
@@ -140,13 +140,13 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
           <div className="grid grid-cols-2 gap-2">
              <button 
                onClick={() => setPeriod('1')}
-               className={`py-4 rounded-2xl border-2 font-black text-sm transition-all ${period === '1' ? 'border-primary-500 text-primary-500 bg-primary-500/5' : 'border-black/5 text-gray-400'}`}
+               className={`py-4 rounded-2xl border-2 font-black text-sm transition-all ${period === '1' ? 'border-emerald-500 text-emerald-500 bg-emerald-500/5' : 'border-black/5 text-gray-400'}`}
              >
                1 BULAN
              </button>
              <button 
                onClick={() => setPeriod('12')}
-               className={`py-4 rounded-2xl border-2 font-black text-sm transition-all ${period === '12' ? 'border-primary-500 text-primary-500 bg-primary-500/5' : 'border-black/5 text-gray-400'}`}
+               className={`py-4 rounded-2xl border-2 font-black text-sm transition-all ${period === '12' ? 'border-emerald-500 text-emerald-500 bg-emerald-500/5' : 'border-black/5 text-gray-400'}`}
              >
                12 BULAN
              </button>
@@ -159,7 +159,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
     <div className="space-y-4 animate-fade-in">
        <div className="flex items-center justify-between px-2">
           <h4 className="text-[0.65rem] font-black uppercase text-gray-400 tracking-widest">Select Plan Code</h4>
-          <span className="text-[0.6rem] font-bold text-primary-500 uppercase">{paData.category} Core</span>
+          <span className="text-[0.6rem] font-bold text-emerald-500 uppercase">{paData.category} Core</span>
        </div>
 
        <div className="grid grid-cols-1 gap-3">
@@ -202,9 +202,9 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
        <div className="p-6 bg-gradient-to-br from-gray-900 to-black rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10 space-y-4">
              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg"><User size={20}/></div>
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg"><User size={20}/></div>
                 <div>
-                   <p className="text-[0.5rem] font-black uppercase text-primary-400">Identity Registry</p>
+                   <p className="text-[0.5rem] font-black uppercase text-emerald-400">Identity Registry</p>
                    <p className="text-lg font-black uppercase tracking-tight">Insured Member</p>
                 </div>
              </div>
@@ -283,7 +283,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
                   <button 
                     key={rel}
                     onClick={() => setPaData({...paData, beneficiaryRelation: rel})}
-                    className={`py-3 rounded-xl border-2 font-black text-[0.6rem] transition-all ${paData.beneficiaryRelation === rel ? 'border-primary-500 text-primary-500 bg-primary-500/5' : 'border-black/5 text-gray-400'}`}
+                    className={`py-3 rounded-xl border-2 font-black text-[0.6rem] transition-all ${paData.beneficiaryRelation === rel ? 'border-emerald-500 text-emerald-500 bg-emerald-500/5' : 'border-black/5 text-gray-400'}`}
                   >
                     {rel}
                   </button>
@@ -350,7 +350,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () =
         <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>No. Pesanan</span>
-            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+            <span className="text-emerald-500 font-mono">{orderNumber ?? '—'}</span>
           </div>
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>Plan</span>

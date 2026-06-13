@@ -56,7 +56,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
     <div className="space-y-8 animate-fade-in pb-32">
       <div className="px-2">
          <h2 className="text-4xl font-black uppercase tracking-tighter text-gray-900 dark:text-white">
-            {t('Smart', 'Dompet')} <span className="text-primary-500">{t('Wallet', 'Pintar')}</span>
+            {t('Smart', 'Dompet')} <span className="text-emerald-500">{t('Wallet', 'Pintar')}</span>
          </h2>
          <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-[0.3em] mt-2">Matriks Reward & Pencairan v4.2</p>
       </div>
@@ -68,16 +68,16 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
          <div className="relative z-10 space-y-10">
             <div className="flex justify-between items-start">
                <div className="space-y-1">
-                  <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-primary-400">{isAgent ? 'Saldo Komisi' : 'Saldo Cashback'}</p>
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-emerald-400">{isAgent ? 'Saldo Komisi' : 'Saldo Cashback'}</p>
                   <h3 className="text-5xl font-black tracking-tighter leading-none">{formatIDR(balance)}</h3>
                </div>
                <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
-                  <Wallet size={28} className="text-primary-400"/>
+                  <Wallet size={28} className="text-emerald-400"/>
                </div>
             </div>
 
             <div className="flex gap-3">
-               <button className="flex-1 py-4 bg-primary-500 text-white rounded-2xl font-black uppercase text-[0.65rem] tracking-widest shadow-xl shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+               <button className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.65rem] tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
                   <ArrowUpRight size={16}/> {isAgent ? 'Tarik Komisi' : 'Gunakan Saldo'}
                </button>
                <button className="px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[0.65rem] tracking-widest active:scale-95 transition-all">
@@ -109,7 +109,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
             </div>
             <div className="flex justify-between text-[0.5rem] font-black uppercase text-gray-400 tracking-widest">
                <span>{t('Silver', 'Perak')}</span>
-               <span className="text-primary-500">{t('Goal: Gold (10k Pts)', 'Target Emas (10k Pts)')}</span>
+               <span className="text-emerald-500">{t('Goal: Gold (10k Pts)', 'Target Emas (10k Pts)')}</span>
             </div>
          </div>
       </div>
@@ -124,7 +124,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
                   <button 
                      key={f}
                      onClick={() => setFilter(f)}
-                     className={`px-3 py-2 rounded-lg text-[0.45rem] font-black uppercase transition-all ${filter === f ? 'bg-white dark:bg-slate-800 text-primary-500 shadow-md scale-105' : 'text-gray-400'}`}
+                     className={`px-3 py-2 rounded-lg text-[0.45rem] font-black uppercase transition-all ${filter === f ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-md scale-105' : 'text-gray-400'}`}
                   >
                      {f === 'ALL' ? t('All', 'Semua') : f === 'INCOME' ? (isAgent ? t('Comm', 'Komisi') : t('In', 'Masuk')) : f === 'POINTS' ? t('Points', 'Poin') : t('Out', 'Tarik')}
                   </button>
@@ -134,7 +134,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
 
          <div className="space-y-3">
             {filteredTransactions.length > 0 ? filteredTransactions.map((tx, i) => (
-               <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-50 dark:border-slate-800 flex items-center justify-between group hover:border-primary-500/20 transition-all shadow-sm active:scale-[0.98]">
+               <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-50 dark:border-slate-800 flex items-center justify-between group hover:border-emerald-500/20 transition-all shadow-sm active:scale-[0.98]">
                   <div className="flex items-center gap-5">
                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${
                          tx.type === 'COMMISSION' ? 'bg-emerald-500/10 text-emerald-500' : 
@@ -172,7 +172,7 @@ const AgentsWallet = ({ lang }: { lang?: Language }) => {
             )}
          </div>
 
-         <button className="w-full py-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 text-[0.6rem] font-black uppercase text-gray-400 tracking-widest hover:border-primary-500/50 hover:text-primary-500 transition-all flex items-center justify-center gap-3">
+         <button className="w-full py-5 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 text-[0.6rem] font-black uppercase text-gray-400 tracking-widest hover:border-emerald-500/50 hover:text-emerald-500 transition-all flex items-center justify-center gap-3">
             <Download size={16}/> {t('Download Report', 'Unduh Laporan Dompet')}
          </button>
       </div>

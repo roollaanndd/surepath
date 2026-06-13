@@ -70,8 +70,8 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
 
   const renderStep0 = () => (
     <div className="space-y-6 animate-fade-in">
-      <div className="p-4 bg-primary-500/10 rounded-3xl border border-primary-500/20 flex gap-4">
-         <Globe className="text-primary-500 flex-shrink-0" size={24}/>
+      <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex gap-4">
+         <Globe className="text-emerald-500 flex-shrink-0" size={24}/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
            Sistem Asuransi Perjalanan Digital. Configure your itinerary for proses persetujuan instan.
          </p>
@@ -88,7 +88,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
               <button 
                 key={r.id}
                 onClick={() => setTravel({...travel, region: r.id as TravelRegion, selectedPlan: null})}
-                className={`p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${travel.region === r.id ? 'border-primary-500 bg-primary-500/5 text-primary-500' : 'border-black/5 bg-white dark:bg-white/5 text-gray-400'}`}
+                className={`p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${travel.region === r.id ? 'border-emerald-500 bg-emerald-500/5 text-emerald-500' : 'border-black/5 bg-white dark:bg-white/5 text-gray-400'}`}
               >
                 <r.icon size={18}/>
                 <span className="text-[0.65rem] font-black uppercase">{r.label}</span>
@@ -128,7 +128,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
               <button 
                 key={t.id}
                 onClick={() => setTravel({...travel, participantType: t.id as any, selectedPlan: null})}
-                className={`p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${travel.participantType === t.id ? 'border-primary-500 bg-primary-500/5 text-primary-500' : 'border-black/5 bg-white dark:bg-white/5 text-gray-400'}`}
+                className={`p-4 rounded-2xl border-2 flex items-center gap-3 transition-all ${travel.participantType === t.id ? 'border-emerald-500 bg-emerald-500/5 text-emerald-500' : 'border-black/5 bg-white dark:bg-white/5 text-gray-400'}`}
               >
                 <t.icon size={18}/>
                 <span className="text-[0.65rem] font-black uppercase">{t.label}</span>
@@ -152,7 +152,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
       <div className="space-y-4 animate-fade-in">
         <div className="flex items-center justify-between mb-2">
            <h4 className="text-[0.65rem] font-black uppercase text-gray-400 tracking-widest">Recommended Plan Matrix</h4>
-           <div className="px-3 py-1 bg-primary-500/10 rounded-full text-[0.55rem] font-black text-primary-500 uppercase">{currentDuration} Days trip</div>
+           <div className="px-3 py-1 bg-emerald-500/10 rounded-full text-[0.55rem] font-black text-emerald-500 uppercase">{currentDuration} Days trip</div>
         </div>
 
         <div className="space-y-3">
@@ -208,9 +208,9 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
        <div className="p-6 bg-gradient-to-br from-gray-900 to-black rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl">
           <div className="relative z-10 space-y-4">
              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg"><User size={20}/></div>
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg"><User size={20}/></div>
                 <div>
-                   <p className="text-[0.5rem] font-black uppercase text-primary-400">Identity Registry</p>
+                   <p className="text-[0.5rem] font-black uppercase text-emerald-400">Identity Registry</p>
                    <p className="text-lg font-black uppercase tracking-tight">Main Traveler</p>
                 </div>
              </div>
@@ -407,7 +407,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: 
         <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>No. Pesanan</span>
-            <span className="text-primary-500 font-mono">{orderNumber ?? '—'}</span>
+            <span className="text-emerald-500 font-mono">{orderNumber ?? '—'}</span>
           </div>
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>Paket</span>

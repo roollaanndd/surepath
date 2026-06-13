@@ -124,7 +124,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
             onClick={() => setFilter(f)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${
               filter === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -135,7 +135,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-primary-500" />
+          <Loader2 size={28} className="animate-spin text-emerald-500" />
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">

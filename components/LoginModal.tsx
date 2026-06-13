@@ -62,7 +62,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
                         onClick={() => { setMode(m as any); setError(''); }}
                         className={`flex-1 py-2 rounded-lg text-[0.55rem] font-black uppercase tracking-widest transition-all ${
                             mode === m 
-                            ? 'bg-white dark:bg-gray-700 shadow-md text-primary-500' 
+                            ? 'bg-white dark:bg-gray-700 shadow-md text-emerald-500' 
                             : 'text-gray-400'
                         }`}
                     >
@@ -84,7 +84,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
                         <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input 
                             type="text" placeholder="NAME"
-                            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-primary-500 font-bold text-xs"
+                            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-emerald-500 font-bold text-xs"
                             value={form.name} onChange={(e) => setForm({...form, name: e.target.value})}
                         />
                     </div>
@@ -95,7 +95,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
                     <input 
                         type={mode === 'login' ? "text" : "email"} 
                         placeholder={mode === 'login' ? "ID / EMAIL" : "EMAIL"}
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-primary-500 font-bold text-xs"
+                        className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-emerald-500 font-bold text-xs"
                         value={mode === 'login' ? form.id : form.email}
                         onChange={(e) => mode === 'login' ? setForm({...form, id: e.target.value}) : setForm({...form, email: e.target.value})}
                     />
@@ -105,14 +105,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
                     <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input 
                         type="password" placeholder="KEY"
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-primary-500 font-bold text-xs"
+                        className="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-black/5 outline-none focus:border-emerald-500 font-bold text-xs"
                         value={form.password} onChange={(e) => setForm({...form, password: e.target.value})}
                     />
                 </div>
 
                 <button 
                     type="submit" disabled={isLoading}
-                    className="w-full py-4 bg-primary-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                     {isLoading ? <Loader2 className="animate-spin" size={14}/> : <ChevronRight size={14}/>}
                     {mode === 'login' ? 'Decrypt Access' : 'Create Path'}
@@ -120,7 +120,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSuccess }) => {
             </form>
 
             <div className="text-center pt-1">
-                <button className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest hover:text-primary-500">
+                <button className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest hover:text-emerald-500">
                     Lost Credentials?
                 </button>
             </div>

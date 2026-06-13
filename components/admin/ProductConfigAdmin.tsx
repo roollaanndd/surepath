@@ -352,7 +352,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
           saved
             ? 'bg-emerald-500 text-white'
             : isDirty
-            ? 'bg-primary-500 text-white hover:bg-primary-600'
+            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
             : 'bg-white/5 text-slate-600 cursor-not-allowed'
         }`}
       >
@@ -550,7 +550,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-primary-500 text-white hover:bg-primary-600 transition-colors disabled:opacity-60"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-60"
             >
               <Plus size={12} />
               {saving ? 'Menyimpan…' : 'Buat Produk'}
@@ -617,7 +617,7 @@ const ProductConfigAdmin: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 bg-primary-500 text-white rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-colors"
+            className="flex items-center gap-2 bg-emerald-500 text-white rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors"
           >
             <Plus size={12} />
             Tambah Produk
@@ -633,7 +633,7 @@ const ProductConfigAdmin: React.FC = () => {
             onClick={() => setFilterActive(f)}
             className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filterActive === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-white/5 text-slate-400 hover:bg-white/10'
             }`}
           >
@@ -645,7 +645,7 @@ const ProductConfigAdmin: React.FC = () => {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-24">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-24">

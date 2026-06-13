@@ -32,7 +32,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
     <PageTransition>
       <div className="space-y-6 py-2 pb-24">
         <div className="px-2">
-           <h2 className="text-2xl font-black uppercase tracking-tighter">{t('Final', 'Ringkasan')} <span className="text-primary-500">{t('Summary', 'Akhir')}</span></h2>
+           <h2 className="text-2xl font-black uppercase tracking-tighter">{t('Final', 'Ringkasan')} <span className="text-emerald-500">{t('Summary', 'Akhir')}</span></h2>
            <p className="text-xs text-gray-500 font-medium mt-1">{t('One more step to get your protection.', 'Satu langkah lagi asuransi kamu aktif!')}</p>
         </div>
 
@@ -87,15 +87,15 @@ const StepFinal: React.FC<StepFinalProps> = ({
         </div>
 
         <div className="p-10 bg-slate-900 rounded-[4rem] text-white relative overflow-hidden shadow-2xl">
-           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 to-emerald-500 animate-mesh"></div>
+           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-emerald-500 animate-mesh"></div>
            
            <div className="flex justify-between items-start mb-10">
               <div>
-                 <p className="text-[0.65rem] font-black text-primary-400 uppercase tracking-[0.4em] mb-1.5">{t('PAYMENT SUMMARY', 'RINGKASAN BAYAR')}</p>
+                 <p className="text-[0.65rem] font-black text-emerald-400 uppercase tracking-[0.4em] mb-1.5">{t('PAYMENT SUMMARY', 'RINGKASAN BAYAR')}</p>
                  <h4 className="text-4xl font-black uppercase tracking-tighter">{t('Premi Audit', 'Rincian Premi')}</h4>
               </div>
               <div className="p-4 bg-white/10 rounded-2xl shadow-xl">
-                 <Wallet size={24} className="text-primary-400"/>
+                 <Wallet size={24} className="text-emerald-400"/>
               </div>
            </div>
 
@@ -118,7 +118,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
 
               <div className="pt-8 mt-4 border-t border-white/20 flex justify-between items-end">
                  <div>
-                    <p className="text-[0.75rem] font-black uppercase text-primary-500 mb-2 tracking-[0.3em]">{t('TOTAL PAYABLE', 'TOTAL HARUS DIBAYAR')}</p>
+                    <p className="text-[0.75rem] font-black uppercase text-emerald-500 mb-2 tracking-[0.3em]">{t('TOTAL PAYABLE', 'TOTAL HARUS DIBAYAR')}</p>
                     <h3 className="text-5xl font-black tracking-tighter leading-none text-glow-primary">{formatIDR(premiumBreakdown?.totalPayable || 0)}</h3>
                  </div>
                  <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-[0.55rem] font-black uppercase text-white/50 tracking-widest">
@@ -132,7 +132,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
            onClick={handleFinalPayment} 
            className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-base tracking-[0.4em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 group border border-white/5"
         >
-           <Wallet size={28} className="text-primary-500 group-hover:rotate-12 transition-transform"/> 
+           <Wallet size={28} className="text-emerald-500 group-hover:rotate-12 transition-transform"/> 
            {t('AUTHENTICATE & PAY', 'OTORISASI & BAYAR')}
         </button>
       </div>

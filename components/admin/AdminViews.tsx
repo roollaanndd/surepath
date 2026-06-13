@@ -57,7 +57,7 @@ const downloadCSV = (data: any[], filename: string) => {
 };
 
 const Card: React.FC<{ children?: React.ReactNode, className?: string }> = ({ children, className = "" }) => (
-  <div className={`p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-primary-500/30 transition-all duration-500 shadow-xl ${className}`}>
+  <div className={`p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
     {children}
   </div>
 );
@@ -177,7 +177,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
 
 export const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
-    primary: "bg-primary-500/10 text-primary-500 border-primary-500/20",
+    primary: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     blue: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     rose: "bg-rose-500/10 text-rose-500 border-rose-500/20",
     yellow: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -261,7 +261,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                              <p className="text-[0.5rem] text-gray-500 uppercase tracking-widest">{p.type} • {p.providerId}</p>
                           </div>
                        </div>
-                       <p className="text-sm font-black tracking-tighter text-primary-500">{formatIDR(p.premium)}</p>
+                       <p className="text-sm font-black tracking-tighter text-emerald-500">{formatIDR(p.premium)}</p>
                     </div>
                  ))}
               </div>
@@ -276,7 +276,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
   <div className="space-y-8 animate-fade-in">
     {isDashboard && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-primary-500/10 text-primary-500" />
+        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-emerald-500" />
         <StatCard label="Partner Nodes" value={users.length} trend="+12" icon={Users} color="bg-blue-500/10 text-blue-500" />
         <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-emerald-500" />
       </div>
@@ -293,7 +293,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                 <input 
                   type="text" 
                   placeholder="Cari user..." 
-                  className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                  className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -316,7 +316,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                   <tr key={i} className="border-b border-white/[0.02] hover:bg-white/[0.01]">
                     <td className="py-4 pl-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{u.name[0]}</div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{u.name[0]}</div>
                         <div>
                           <p className="text-xs font-black uppercase text-white">{u.name}</p>
                           <p className="text-[0.5rem] text-gray-500 tracking-widest">{u.email}</p>
@@ -376,7 +376,7 @@ export const SecurityView = () => {
             label="Login Gagal (24 jam)"
             value={loading ? '…' : (secStats?.failedLogins24h ?? 0).toString()}
             icon={ShieldAlert}
-            color="bg-primary-500/10 text-primary-500"
+            color="bg-emerald-500/10 text-emerald-500"
           />
           <StatCard
             label="Sesi Aktif (5 mnt)"
@@ -402,7 +402,7 @@ export const SecurityView = () => {
           <Card className="lg:col-span-2">
              <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><Terminal size={20}/></div>
+                   <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><Terminal size={20}/></div>
                    <div>
                       <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
                       <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
@@ -417,7 +417,7 @@ export const SecurityView = () => {
                       return (
                         <div
                           key={i}
-                          className="flex-1 bg-primary-500 transition-all duration-700 rounded-t-sm"
+                          className="flex-1 bg-emerald-500 transition-all duration-700 rounded-t-sm"
                           style={{
                             height: `${Math.max(pct, 2)}%`,
                             opacity: 0.15 + (i / 24) * 0.85,
@@ -452,7 +452,7 @@ export const SecurityView = () => {
              ) : secStats && secStats.blockedEntries.length > 0 ? (
                <div className="space-y-3">
                  {secStats.blockedEntries.slice(0, 5).map((entry, i) => (
-                   <div key={i} className={`p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-all ${i === 0 ? 'border-primary-500/40 bg-primary-500/5' : ''}`}>
+                   <div key={i} className={`p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-all ${i === 0 ? 'border-emerald-500/40 bg-emerald-500/5' : ''}`}>
                      <div className="space-y-1 overflow-hidden">
                        <div className="flex items-center gap-2">
                          <Badge color="rose">RATE LIMIT</Badge>
@@ -462,7 +462,7 @@ export const SecurityView = () => {
                          {entry.attempts} percobaan · {entry.until > Date.now() ? `Diblokir ${Math.ceil((entry.until - Date.now()) / 60000)} mnt` : 'Kadaluarsa'}
                        </p>
                      </div>
-                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-primary-500 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
                        <Check size={16} strokeWidth={3} />
                      </div>
                    </div>
@@ -538,7 +538,7 @@ export const LedgerView = () => {
                        {txs.slice(0, 100).map((t, i) => (
                           <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                              <td className="py-4 pl-4 text-gray-400">{new Date(t.date).toLocaleString('id-ID')}</td>
-                             <td className="py-4 text-primary-500 font-mono">{t.type}</td>
+                             <td className="py-4 text-emerald-500 font-mono">{t.type}</td>
                              <td className="py-4 text-white max-w-xs truncate" title={t.description}>{t.description}</td>
                              <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-emerald-500">+{convert(t.amount)}</span>}</td>
                              <td className="py-4 text-right pr-4">
@@ -625,7 +625,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
            {!compact && (
               <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
                  <div>
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-primary-500">Keuangan</span></h2>
+                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-emerald-500">Keuangan</span></h2>
                     <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
                  </div>
                  <div className="flex gap-4">
@@ -645,7 +645,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                           <button 
                             key={v} 
                             onClick={() => setViewType(v)}
-                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
                           >
                              {v === 'daily' ? 'Harian' : v === 'monthly' ? 'Bulanan' : 'Tahunan'}
                           </button>
@@ -672,7 +672,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                     </div>
                     
                     <div className="w-full overflow-x-auto">
-                       {loading && <div className="flex justify-center py-8"><div className="w-7 h-7 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" /></div>}
+                       {loading && <div className="flex justify-center py-8"><div className="w-7 h-7 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" /></div>}
                        <table className="w-full text-left min-w-[700px]">
                           <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-gray-500 font-black">
                              <tr>
@@ -689,7 +689,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                              {aggregatedData.map((row, i) => (
                                 <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                                    <td className="py-4 pl-4 uppercase text-white font-black">{row.period}</td>
-                                   <td className="py-4 text-primary-500 font-mono">{convert(row.gwp)}</td>
+                                   <td className="py-4 text-emerald-500 font-mono">{convert(row.gwp)}</td>
                                    <td className="py-4 text-blue-400 font-mono">{convert(row.commissions)}</td>
                                    <td className="py-4 text-emerald-400 font-mono">{convert(row.promo)}</td>
                                    <td className="py-4 text-indigo-400 font-mono">{convert(row.others)}</td>
@@ -708,9 +708,9 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
               </div>
 
               <div className="space-y-6">
-                 <Card className="bg-primary-500/5 border-primary-500/10">
+                 <Card className="bg-emerald-500/5 border-emerald-500/10">
                     <div className="flex items-center gap-4 mb-6">
-                       <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-lg"><Activity size={20}/></div>
+                       <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg"><Activity size={20}/></div>
                        <h3 className="text-sm font-black uppercase tracking-tight">Performa Bisnis</h3>
                     </div>
                     <div className="space-y-4">
@@ -737,9 +737,9 @@ export const AuditLogView = ({ compact }: { compact?: boolean }) => {
         <div className="space-y-4">
            {logs.map(log => (
               <div key={log.id} className="flex gap-4 items-start p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:bg-white/5 transition-all">
-                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-primary-500 shadow-[0_0_8px_#f97316]'}`}></div>
+                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#f97316]'}`}></div>
                  <div className="min-w-0">
-                    <p className="text-[0.65rem] font-bold text-gray-300 leading-tight"><span className="text-primary-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
+                    <p className="text-[0.65rem] font-bold text-gray-300 leading-tight"><span className="text-emerald-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
                     <div className="flex items-center gap-3 mt-1.5">
                        <Badge color={log.domain === 'SECURITY' ? 'rose' : 'blue'}>{log.domain}</Badge>
                        <span className="text-[0.5rem] font-mono text-gray-600 uppercase tracking-widest">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</span>
@@ -802,7 +802,7 @@ export const InventoryView = () => (
     <Card>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><HardDrive size={22}/></div>
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><HardDrive size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Active Matrix Inventory</h3>
         </div>
         <button className="p-2 text-gray-500 hover:text-white transition-all"><RefreshCw size={18}/></button>
@@ -923,7 +923,7 @@ const BackupView: React.FC = () => {
                 <tr key={b.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors text-xs">
                   <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.createdAt).toLocaleString('id-ID')}</td>
                   <td className="py-3 pr-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-primary-500/10 text-primary-400'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                       {b.backup_type}
                     </span>
                   </td>
@@ -1151,7 +1151,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   return (
     <div className="space-y-8 animate-fade-in text-white pb-32">
        <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500"><Settings size={22}/></div>
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><Settings size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Sistem</h3>
        </div>
 
@@ -1180,12 +1180,12 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <input 
                 type="text" 
                 placeholder="Nama Produk (Cth: Asuransi Gempa)" 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.name}
                 onChange={e => setNewProduct({...newProduct, name: e.target.value})}
               />
               <select 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono [&>option]:bg-slate-900"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono [&>option]:bg-slate-900"
                 value={newProduct.type}
                 onChange={e => setNewProduct({...newProduct, type: e.target.value})}
               >
@@ -1197,7 +1197,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                  <input 
                    type="number" 
                    placeholder="Basic Premium" 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.basePremium}
                    onChange={e => setNewProduct({...newProduct, basePremium: Number(e.target.value)})}
                  />
@@ -1208,7 +1208,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                    type="number" 
                    step="0.01"
                    placeholder="Multiplier Rate (e.g. 0.05)" 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.rate}
                    onChange={e => setNewProduct({...newProduct, rate: Number(e.target.value)})}
                  />
@@ -1216,7 +1216,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <input 
                 type="text" 
                 placeholder="Deskripsi Singkat" 
-                className="w-full md:col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 transition-all font-mono"
+                className="w-full md:col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.description}
                 onChange={e => setNewProduct({...newProduct, description: e.target.value})}
               />
@@ -1246,7 +1246,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                 </div>
                 <button 
                   onClick={() => toggleCustomProduct(p)}
-                  className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.isActive ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-primary-500 text-white shadow-primary-500/20'}`}
+                  className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.isActive ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
                 >
                   {p.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                 </button>
@@ -1268,7 +1268,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               </div>
               <button
                 onClick={() => toggleProduct(p.id)}
-                className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.active ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-primary-500 text-white shadow-primary-500/20'}`}
+                className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.active ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
               >
                 {p.active ? 'Shut Down' : 'Initialize'}
               </button>
@@ -1554,7 +1554,7 @@ export const AgentManagementView = () => {
 
   if (loading) return (
     <div className="flex justify-center py-20">
-      <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+      <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
     </div>
   );
 
@@ -1587,7 +1587,7 @@ export const AgentManagementView = () => {
             onClick={() => setSelectedAgentId(a.id)}
             className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 rounded-2xl bg-primary-500/10 text-primary-500 flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
               {a.profile_photo_url ? (
                 <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
               ) : (
@@ -1600,7 +1600,7 @@ export const AgentManagementView = () => {
                 <TierBadge tier={agentTier} />
               </div>
               <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest truncate">{a.email}</p>
-              <p className="text-[0.6rem] font-bold text-primary-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
+              <p className="text-[0.6rem] font-bold text-emerald-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
             </div>
           </button>
 
@@ -1644,7 +1644,7 @@ export const AgentManagementView = () => {
                   step="0.01" min="0" max="1"
                   value={editRate[a.id]}
                   onChange={e => setEditRate(prev => ({ ...prev, [a.id]: e.target.value }))}
-                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary-500"
+                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   disabled={saving === a.id}
@@ -1777,7 +1777,7 @@ export const ClaimsAdminView = () => {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all ${
-              filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
           >
             {f === 'ALL' ? 'All' : STATUS_LABEL[f] ?? f}
@@ -1788,7 +1788,7 @@ export const ClaimsAdminView = () => {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
         <Card className="text-center py-12 text-gray-500 text-sm font-bold">No claims found.</Card>
@@ -1811,7 +1811,7 @@ export const ClaimsAdminView = () => {
                     <p className="text-xs text-gray-400 mt-1 truncate">{claim.location}</p>
                   )}
                   {claim.amount_estimated && (
-                    <p className="text-xs font-bold text-primary-500 mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
+                    <p className="text-xs font-bold text-emerald-500 mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
                   )}
                 </div>
                 {/* Quick status actions */}
@@ -2220,7 +2220,7 @@ export const PaymentsAdminView = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-primary-500">Xendit</span></h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-emerald-500">Xendit</span></h2>
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Semua transaksi invoice dari gateway Xendit</p>
                 </div>
                 <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
@@ -2254,7 +2254,7 @@ export const PaymentsAdminView = () => {
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
-                            filter === f ? 'bg-primary-500 text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-white border border-white/10'
+                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-white border border-white/10'
                         }`}
                     >
                         {f === 'ALL' ? `Semua (${payments.length})` : `${f} (${payments.filter(p => p.status === f).length})`}
@@ -2266,7 +2266,7 @@ export const PaymentsAdminView = () => {
             <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center py-16">
-                        <div className="w-8 h-8 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
+                        <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -2294,7 +2294,7 @@ export const PaymentsAdminView = () => {
                                 ) : filtered.map(p => (
                                     <tr key={p.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
                                         <td className="px-6 py-3 text-slate-500 whitespace-nowrap text-[10px]">{fmtDate(p.created_at)}</td>
-                                        <td className="px-4 py-3 font-mono text-primary-400 whitespace-nowrap text-[10px]">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
+                                        <td className="px-4 py-3 font-mono text-emerald-400 whitespace-nowrap text-[10px]">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
                                         <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{p.client_name ?? '—'}</td>
                                         <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{p.product_name ?? '—'}</td>
                                         <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
@@ -2451,7 +2451,7 @@ export const WithdrawalsAdminView: React.FC = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
           >
             {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak'}
           </button>

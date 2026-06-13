@@ -299,7 +299,7 @@ const CommissionLedger: React.FC = () => {
                     {row.coin_reward !== undefined && row.coin_reward !== null && row.coin_reward > 0 && (
                       <div>
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Koin</p>
-                        <p className="text-xs font-mono text-primary-400">
+                        <p className="text-xs font-mono text-emerald-400">
                           {row.coin_reward.toLocaleString('id-ID')}
                         </p>
                       </div>

@@ -10,7 +10,7 @@ interface Props {
   onLogout: () => void;
 }
 
-const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40';
+const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 const LABEL = 'block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider';
 
 const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
@@ -63,7 +63,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 size={28} className="animate-spin text-primary-500" />
+        <Loader2 size={28} className="animate-spin text-emerald-500" />
       </div>
     );
   }
@@ -72,7 +72,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 py-2">
-        <div className="w-20 h-20 rounded-3xl bg-primary-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-orange-500/25">
+        <div className="w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-orange-500/25">
           {initials}
         </div>
         <div className="text-center">
@@ -136,7 +136,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm shadow-lg shadow-orange-500/25 disabled:opacity-60"
       >
         {saving
           ? <Loader2 size={16} className="animate-spin" />

@@ -99,7 +99,7 @@ const OCRScanner: React.FC<Props> = ({ docType, onResult, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <ScanLine size={16} className="text-primary-500" />
+            <ScanLine size={16} className="text-emerald-500" />
             <span className="font-black text-sm tracking-tight">Scan {docLabel}</span>
           </div>
           <button
@@ -114,7 +114,7 @@ const OCRScanner: React.FC<Props> = ({ docType, onResult, onClose }) => {
           {/* Image preview area */}
           <div
             className={`relative rounded-2xl overflow-hidden border-2 border-dashed transition-colors ${
-              preview ? 'border-white/10' : 'border-white/10 hover:border-primary-500/40'
+              preview ? 'border-white/10' : 'border-white/10 hover:border-emerald-500/40'
             }`}
             style={{ minHeight: '160px' }}
           >
@@ -174,7 +174,7 @@ const OCRScanner: React.FC<Props> = ({ docType, onResult, onClose }) => {
             <button
               disabled={scanning || !base64}
               onClick={handleScan}
-              className="w-full py-3.5 rounded-2xl bg-primary-500 text-white text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {scanning ? (
                 <>
@@ -224,7 +224,7 @@ const OCRScanner: React.FC<Props> = ({ docType, onResult, onClose }) => {
 
               <button
                 onClick={handleUseData}
-                className="w-full py-3.5 rounded-2xl bg-primary-500 text-white text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-colors"
+                className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors"
               >
                 Gunakan Data Ini
               </button>

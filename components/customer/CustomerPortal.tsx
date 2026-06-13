@@ -511,7 +511,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-xl border-b border-ds-border dark:border-ds-dk-bd shadow-ds-sm">
+        <header className="fixed top-0 inset-x-0 z-40 bg-white/95 dark:bg-ds-dk-s1/95 backdrop-blur-xl border-b border-ds-border dark:border-ds-dk-bd shadow-ds-sm">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
@@ -616,7 +616,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
+        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
           <div className="flex items-center justify-around px-1 py-2.5">
             {TABS.map(({ id, labelEn, labelId, Icon }) => {
               const active = activeTab === id;

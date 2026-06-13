@@ -68,6 +68,35 @@ module.exports = {
           900: '#0f172a',
           950: '#020617',
         },
+        // ── SurePath Design System v2 ─────────────────────────────────────────
+        // Backgrounds
+        'ds-bg':         '#F4F7FB',   // App shell background
+        'ds-card':       '#FFFFFF',   // Card / surface
+        'ds-card2':      '#F8FAFC',   // Subtle secondary surface
+        'ds-border':     '#E2E8F0',   // Border / divider
+        // Primary — vibrant emerald
+        'ds-green':      '#00C896',   // Primary CTA
+        'ds-green-dk':   '#009E78',   // Hover / active
+        'ds-green-tint': '#E0FBF3',   // Light tint bg
+        // Dark surfaces (hero sections, headers)
+        'ds-navy':       '#0B1120',   // Primary dark surface
+        'ds-navy2':      '#162032',   // Secondary dark surface
+        'ds-navy3':      '#1E2D3D',   // Subtle dark border
+        // Text
+        'ds-ink':        '#111827',   // Primary text
+        'ds-ink2':       '#4B5563',   // Secondary text
+        'ds-ink3':       '#9CA3AF',   // Muted / placeholder
+        // Semantic
+        'ds-blue':       '#3B82F6',   // Info / links
+        'ds-amber':      '#F59E0B',   // Warning / coins / rewards
+        'ds-red':        '#EF4444',   // Error / danger
+        'ds-purple':     '#7C3AED',   // AI features
+        'ds-purple-lt':  '#EDE9FE',   // AI light tint
+        // Dark mode variants
+        'ds-dk-bg':      '#080B12',
+        'ds-dk-s1':      '#0F1829',
+        'ds-dk-s2':      '#162035',
+        'ds-dk-bd':      '#1E2D3D',
       },
       animation: {
         'fade-up':       'fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -128,6 +157,12 @@ module.exports = {
         'sp-card':   '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
         'sp-hero':   '0 8px 32px rgba(16,185,129,0.20)',
         'sp-modal':  '0 25px 50px rgba(0,0,0,0.25)',
+        // DS v2 shadows
+        'ds-sm':     '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        'ds-md':     '0 4px 16px rgba(0,0,0,0.08)',
+        'ds-lg':     '0 8px 32px rgba(0,0,0,0.10)',
+        'ds-green':  '0 4px 20px rgba(0,200,150,0.30)',
+        'ds-navy':   '0 8px 32px rgba(11,17,32,0.30)',
       },
     },
   },

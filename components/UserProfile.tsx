@@ -291,64 +291,59 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   }, [currentUser]);
 
   const renderOverview = () => (
-    <div className="space-y-6 animate-fade-in">
-       {/* Identity Stats Grid */}
-       <div className="grid grid-cols-2 gap-4">
-          <div className="p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 dark:border-white/5 space-y-2 shadow-sm group hover:border-primary-500/30 transition-all">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 group-hover:scale-110 transition-transform"><ShieldCheck size={20}/></div>
-             <p className="text-[0.55rem] font-black text-gray-400 uppercase tracking-widest">{t('Active Nodes', 'Asuransi Aktif')}</p>
-             <p className="text-3xl font-black">{policies.filter(p => p.status === 'ACTIVE').length}</p>
+    <div className="space-y-4 animate-fade-in">
+       {/* Stats Grid */}
+       <div className="grid grid-cols-2 gap-3">
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 space-y-2">
+             <div className="w-9 h-9 bg-ds-green-tint rounded-xl flex items-center justify-center"><ShieldCheck size={18} className="text-ds-green"/></div>
+             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Active Policies', 'Asuransi Aktif')}</p>
+             <p className="text-3xl font-black text-ds-ink">{policies.filter(p => p.status === 'ACTIVE').length}</p>
           </div>
-          <div className="p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 dark:border-white/5 space-y-2 shadow-sm group hover:border-blue-500/30 transition-all">
-             <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform"><Zap size={20}/></div>
-             <p className="text-[0.55rem] font-black text-gray-400 uppercase tracking-widest">{t('Total Claims', 'Total Klaim')}</p>
-             <p className="text-3xl font-black">{claims.length}</p>
+          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 space-y-2">
+             <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center"><Zap size={18} className="text-ds-blue"/></div>
+             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Total Claims', 'Total Klaim')}</p>
+             <p className="text-3xl font-black text-ds-ink">{claims.length}</p>
           </div>
        </div>
 
-       {/* Financial Snapshot */}
-       <div className="p-8 bg-slate-900 rounded-[2.5rem] text-white relative overflow-hidden group border border-white/5">
-          <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
-             <TrendingUp size={160}/>
-          </div>
-          <div className="relative z-10 space-y-6">
-             <div className="flex justify-between items-center">
-                <p className="text-[0.6rem] font-black uppercase tracking-[0.3em] text-primary-400">{t('Total Coverage Value', 'Total Nilai Proteksi')}</p>
-                <BadgeCheck size={20} className="text-emerald-500"/>
-             </div>
-             <h3 className="text-4xl font-black tracking-tighter">{formatIDR(policies.reduce((acc, p) => acc + (p.coverageDetails?.vehicle?.price || 0), 0))}</h3>
-             <div className="flex items-center gap-3 py-3 border-t border-white/10">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></div>
-                <span className="text-[0.55rem] font-black text-gray-400 uppercase tracking-widest">{t('Node Financial synchronization active', 'Sinkronisasi data finansial aktif')}</span>
+       {/* Coverage hero */}
+       <div className="rounded-2xl p-5 bg-ds-navy text-white relative overflow-hidden shadow-ds-lg">
+          <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.12)' }} />
+          <div className="relative z-10">
+             <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">{t('Total Coverage Value', 'Total Nilai Proteksi')}</p>
+             <h3 className="text-2xl font-black tracking-tight">{formatIDR(policies.reduce((acc, p) => acc + (p.coverageDetails?.vehicle?.price || 0), 0))}</h3>
+             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                <div className="w-1.5 h-1.5 rounded-full bg-ds-green animate-pulse" />
+                <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">{t('Coverage active', 'Proteksi aktif')}</span>
              </div>
           </div>
        </div>
 
        {/* Recent Activity */}
-       <div className="space-y-4">
-          <div className="flex justify-between items-center px-2">
-            <h4 className="text-[0.65rem] font-black uppercase text-gray-400 tracking-widest">{t('Audit Ledger Feed', 'Log Audit Terkini')}</h4>
-            <button onClick={() => setActiveTab('CLAIMS')} className="text-[0.55rem] font-black text-primary-500 uppercase tracking-widest">{t('View All', 'Lihat Semua')}</button>
+       <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Recent Activity', 'Aktivitas Terkini')}</p>
+            <button onClick={() => setActiveTab('CLAIMS')} className="text-[10px] font-bold text-ds-green uppercase tracking-widest">{t('View All', 'Lihat Semua')}</button>
           </div>
           <div className="space-y-2">
              {transactions.slice(0, 3).map((tx, i) => (
-                <div key={i} className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-black/5 flex items-center justify-between group transition-all hover:border-primary-500/20 active:scale-[0.98]">
-                   <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'PAYMENT' ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                         <History size={18}/>
+                <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-3 flex items-center justify-between active:scale-[0.98] transition-transform">
+                   <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${tx.type === 'PAYMENT' ? 'bg-rose-50 text-ds-red' : 'bg-ds-green-tint text-ds-green'}`}>
+                         <History size={16}/>
                       </div>
                       <div>
-                         <p className="text-xs font-black uppercase">{tx.type}</p>
-                         <p className="text-[0.5rem] text-gray-400 uppercase font-bold">{new Date(tx.date).toLocaleDateString()}</p>
+                         <p className="text-xs font-black text-ds-ink uppercase">{tx.type}</p>
+                         <p className="text-[10px] text-ds-ink3 font-medium">{new Date(tx.date).toLocaleDateString()}</p>
                       </div>
                    </div>
-                   <p className={`text-sm font-black ${tx.type === 'PAYMENT' ? 'text-rose-500' : 'text-emerald-500'}`}>{tx.type === 'PAYMENT' ? '-' : '+'}{formatIDR(tx.amount)}</p>
+                   <p className={`text-sm font-black ${tx.type === 'PAYMENT' ? 'text-ds-red' : 'text-ds-green'}`}>{tx.type === 'PAYMENT' ? '-' : '+'}{formatIDR(tx.amount)}</p>
                 </div>
              ))}
              {transactions.length === 0 && (
-                <div className="py-12 text-center opacity-30 flex flex-col items-center gap-3 bg-gray-50 dark:bg-white/5 rounded-[2rem] border border-dashed border-gray-300">
-                   <LayoutGrid size={32}/>
-                   <p className="text-[0.6rem] font-black uppercase tracking-widest">{t('No Recent Activity', 'Belum Ada Aktivitas')}</p>
+                <div className="py-10 text-center flex flex-col items-center gap-3 bg-ds-card rounded-2xl border border-dashed border-ds-border">
+                   <LayoutGrid size={28} className="text-ds-ink3"/>
+                   <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('No Recent Activity', 'Belum Ada Aktivitas')}</p>
                 </div>
              )}
           </div>
@@ -357,18 +352,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   );
 
   const renderPolicies = () => (
-    <div className="space-y-4 animate-fade-in">
-       <div className="flex justify-between items-center px-2">
-          <h4 className="text-[0.65rem] font-black uppercase text-gray-400 tracking-widest">{t('Deployed Protection Nodes', 'Simpul Proteksi Terpasang')}</h4>
-          <span className="text-[0.6rem] font-bold text-primary-500 bg-primary-500/10 px-3 py-1 rounded-full">{policies.length} Nodes</span>
+    <div className="space-y-3 animate-fade-in">
+       <div className="flex justify-between items-center">
+          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('My Policies', 'Polis Saya')}</p>
+          <span className="text-[10px] font-bold text-ds-green bg-ds-green-tint px-2.5 py-1 rounded-full">{policies.length} {t('total', 'total')}</span>
        </div>
-       
        {policies.length === 0 ? (
-          <div className="py-20 text-center opacity-30 flex flex-col items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-[3rem] border-2 border-dashed border-gray-300">
-             <Package size={48}/>
+          <div className="py-16 text-center flex flex-col items-center gap-3 bg-ds-card rounded-2xl border border-dashed border-ds-border">
+             <div className="w-12 h-12 rounded-2xl bg-ds-card2 flex items-center justify-center"><Package size={24} className="text-ds-ink3"/></div>
              <div className="space-y-1">
-                <p className="text-xs font-black uppercase tracking-widest">{t('Zero Coverage Detected', 'Tidak Ada Proteksi')}</p>
-                <p className="text-[0.55rem] font-bold uppercase">{t('Initialize your matrix.', 'Mulai lindungi aset kamu.')}</p>
+                <p className="text-sm font-black text-ds-ink2">{t('No policies yet', 'Belum ada polis')}</p>
+                <p className="text-xs text-ds-ink3">{t('Start protecting yourself today', 'Mulai lindungi dirimu sekarang')}</p>
              </div>
           </div>
        ) : (
@@ -376,27 +370,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
             <div
                key={p.id}
                onClick={() => setSelectedPolicy(p)}
-               className="mx-5 mt-3 rounded-2xl bg-white border border-gray-100 overflow-hidden sp-enter cursor-pointer active:scale-[0.98] transition-all"
+               className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
             >
-               <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                        {p.type === 'CAR' ? <Car size={20} className="text-blue-500"/> : <Plane size={20} className="text-blue-500"/>}
-                     </div>
-                     <div>
-                        <p className="text-sm font-semibold text-gray-900">{p.policyNumber}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{p.coverageDetails?.vehicle?.brand || 'SurePath'}</p>
-                     </div>
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                     {p.type === 'CAR' ? <Car size={18} className="text-ds-blue"/> : <Plane size={18} className="text-ds-blue"/>}
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                     {p.status === 'ACTIVE' && (
-                       <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">{t('ACTIVE', 'AKTIF')}</span>
-                     )}
-                     {p.status !== 'ACTIVE' && (
-                       <span className="text-xs font-medium px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{p.status}</span>
-                     )}
-                     <p className="text-sm font-semibold text-gray-900">{formatIDR(p.premium)}</p>
+                  <div>
+                     <p className="text-sm font-black text-ds-ink">{p.policyNumber}</p>
+                     <p className="text-xs text-ds-ink3 mt-0.5">{p.coverageDetails?.vehicle?.brand || 'SurePath'}</p>
                   </div>
+               </div>
+               <div className="flex flex-col items-end gap-1">
+                  {p.status === 'ACTIVE' ? (
+                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-ds-green-tint text-ds-green">{t('ACTIVE', 'AKTIF')}</span>
+                  ) : (
+                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-50 text-ds-amber">{p.status}</span>
+                  )}
+                  <p className="text-sm font-black text-ds-ink">{formatIDR(p.premium)}</p>
                </div>
             </div>
           ))
@@ -405,48 +396,49 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   );
 
   const renderClaims = () => (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
        {claims.length === 0 ? (
-          <div className="py-20 text-center opacity-30 flex flex-col items-center gap-4 bg-gray-50 dark:bg-white/5 rounded-[3rem] border-2 border-dashed border-gray-300">
-             <ShieldAlert size={48}/>
-             <p className="text-xs font-black uppercase tracking-widest">{t('No Claims Submitted', 'Belum Ada Klaim')}</p>
+          <div className="py-16 text-center flex flex-col items-center gap-3 bg-ds-card rounded-2xl border border-dashed border-ds-border">
+             <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center"><ShieldAlert size={24} className="text-ds-red"/></div>
+             <p className="text-sm font-black text-ds-ink2">{t('No Claims Submitted', 'Belum Ada Klaim')}</p>
+             <p className="text-xs text-ds-ink3">{t('Your claims will appear here', 'Klaim Anda akan muncul di sini')}</p>
           </div>
        ) : (
           claims.map(c => (
-            <div key={c.id} className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 shadow-sm space-y-4 group">
+            <div key={c.id} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 space-y-3">
                <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 group-hover:rotate-12 transition-transform"><History size={20}/></div>
+                     <div className="w-9 h-9 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><History size={16} className="text-ds-red"/></div>
                      <div>
-                        <p className="text-xs font-black uppercase">{t('Case', 'Kasus')} #{c.id?.toString().slice(-4)}</p>
-                        <p className="text-[0.5rem] text-gray-400 font-bold uppercase tracking-widest">{c.date}</p>
+                        <p className="text-xs font-black text-ds-ink uppercase">{t('Case', 'Kasus')} #{c.id?.toString().slice(-4)}</p>
+                        <p className="text-[10px] text-ds-ink3 font-medium">{c.date}</p>
                      </div>
                   </div>
-                  <span className={`px-4 py-1 rounded-full text-[0.5rem] font-black uppercase tracking-[0.2em] ${c.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>{c.status}</span>
+                  <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full ${c.status === 'PAID' ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-ds-amber'}`}>{c.status}</span>
                </div>
-               <div className="p-4 bg-gray-50 dark:bg-black/20 rounded-2xl border border-black/5">
-                  <div className="flex justify-between mb-2 pb-2 border-b border-black/5">
+               <div className="p-3 bg-ds-card2 rounded-xl border border-ds-border">
+                  <div className="flex justify-between mb-2 pb-2 border-b border-ds-border">
                      <div>
-                        <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{t('Policy Number', 'Nomor Polis')}</p>
-                        <p className="text-[0.55rem] font-black uppercase">{c.policyNumber || '-'}</p>
+                        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-0.5">{t('Policy Number', 'Nomor Polis')}</p>
+                        <p className="text-xs font-black text-ds-ink uppercase">{c.policyNumber || '-'}</p>
                      </div>
                      <div className="text-right">
-                        <p className="text-[0.45rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{t('Contact', 'Kontak')}</p>
-                        <p className="text-[0.55rem] font-black uppercase">{c.contactInfo || '-'}</p>
+                        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-0.5">{t('Contact', 'Kontak')}</p>
+                        <p className="text-xs font-black text-ds-ink uppercase">{c.contactInfo || '-'}</p>
                      </div>
                   </div>
-                  <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest mb-1">{t('Event Chronology', 'Kronologi Kejadian')}</p>
-                  <p className="text-[0.65rem] font-medium line-clamp-2 italic">"{c.chronology}"</p>
+                  <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Chronology', 'Kronologi')}</p>
+                  <p className="text-xs text-ds-ink2 line-clamp-2 italic">"{c.chronology}"</p>
                </div>
-               <div className="flex justify-between items-center pt-2">
+               <div className="flex justify-between items-center">
                   <div className="flex -space-x-2">
                      {c.photos?.slice(0, 3).map((p, i) => (
-                        <div key={i} className="w-8 h-8 rounded-lg border-2 border-white dark:border-slate-900 bg-slate-200 overflow-hidden">
+                        <div key={i} className="w-8 h-8 rounded-lg border-2 border-ds-card bg-ds-card2 overflow-hidden">
                            <img src={p} className="w-full h-full object-cover" alt="claim" />
                         </div>
                      ))}
                   </div>
-                  <button className="text-[0.55rem] font-black uppercase text-primary-500 flex items-center gap-1">{t('Details', 'Detail')} <ChevronRight size={10}/></button>
+                  <button className="text-[10px] font-black text-ds-green flex items-center gap-1">{t('Details', 'Detail')} <ChevronRight size={10}/></button>
                </div>
             </div>
           ))
@@ -455,28 +447,28 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   );
 
   const renderSettings = () => (
-    <div className="space-y-4 animate-fade-in">
-       <div className="space-y-3">
-          <p className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest ml-2">{t('Node Security & Sync', 'Keamanan & Akun')}</p>
+    <div className="space-y-3 animate-fade-in">
+       <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Security & Account', 'Keamanan & Akun')}</p>
+       <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm overflow-hidden">
           {[
-              { id: 'biometric', label: t('Login Biometrik', 'Login Biometrik'), icon: Fingerprint, sub: 'Status: ' + t('Encrypted', 'Terenkripsi'), action: t('Update', 'Update') },
-              { id: 'bank', label: t('Ledger Registry', 'Data Rekening'), icon: Landmark, sub: t('Withdrawal Sync', 'Sinkronisasi Dana'), action: t('Manage', 'Kelola') },
-              { id: 'password', label: t('Protocol Keys', 'Password & Keamanan'), icon: Lock, sub: t('Update regularly', 'Perbarui berkala'), action: t('Change', 'Ganti') },
-              { id: 'comms', label: t('Communication Hub', 'Pusat Notifikasi'), icon: Bell, sub: t('Email & Push', 'Email & Notif'), action: t('Config', 'Atur') },
-          ].map((item, i) => (
+              { id: 'biometric', label: t('Biometric Login', 'Login Biometrik'), icon: Fingerprint, sub: t('Encrypted', 'Terenkripsi') },
+              { id: 'bank', label: t('Bank Account', 'Data Rekening'), icon: Landmark, sub: t('Withdrawal sync', 'Sinkronisasi dana') },
+              { id: 'password', label: t('Password & Security', 'Password & Keamanan'), icon: Lock, sub: t('Update regularly', 'Perbarui berkala') },
+              { id: 'comms', label: t('Notifications', 'Notifikasi'), icon: Bell, sub: t('Email & Push', 'Email & Notif') },
+          ].map((item, i, arr) => (
               <div
                 key={i}
                 onClick={() => item.id === 'password' && setIsResetModalOpen(true)}
-                className="flex items-center gap-3 px-5 py-4 bg-white border-b border-gray-50 active:bg-gray-50 transition-colors cursor-pointer"
+                className={`flex items-center gap-3 px-4 py-3.5 active:bg-ds-card2 transition-colors cursor-pointer ${i < arr.length - 1 ? 'border-b border-ds-border' : ''}`}
               >
-                <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0">
-                  <item.icon size={16}/>
+                <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 flex-shrink-0">
+                  <item.icon size={15}/>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 flex-1">{item.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
+                  <p className="text-sm font-bold text-ds-ink">{item.label}</p>
+                  <p className="text-xs text-ds-ink3 mt-0.5">{item.sub}</p>
                 </div>
-                <ChevronRight size={16} className="text-gray-300"/>
+                <ChevronRight size={15} className="text-ds-ink3"/>
               </div>
           ))}
        </div>
@@ -484,73 +476,76 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-28">
+    <div className="bg-ds-bg min-h-screen pb-28">
       {selectedPolicy && <PolicyDetailModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />}
       {isResetModalOpen && <PasswordResetModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
 
-      {/* Profile Hub Header */}
-      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100">
-        <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
-          {currentUser?.name?.[0] || 'M'}
+      {/* Profile Header */}
+      <div className="px-4 pt-4 pb-4 space-y-4">
+        {/* Avatar + Name */}
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-5 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-xl shadow-ds-green flex-shrink-0">
+            {currentUser?.name?.[0] || 'M'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-black text-ds-ink tracking-tight truncate">{currentUser?.name || t('SurePath Member', 'Nasabah SurePath')}</h3>
+            <p className="text-xs text-ds-ink3 mt-0.5">{currentUser?.email || ''}</p>
+            <p className="text-[10px] font-bold text-ds-green uppercase tracking-widest mt-0.5">{currentUser?.nodeId || 'SP-GENESIS'}</p>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Trust', 'Kepercayaan')}</p>
+            <p className="text-xl font-black text-ds-green">{currentUser?.trustScore || 85}%</p>
+          </div>
         </div>
-        <h3 className="text-lg font-bold text-gray-900 text-center">{currentUser?.name || t('Standard Member', 'User SurePath')}</h3>
-        <p className="text-sm text-gray-500 text-center mt-0.5">{t('Node ID', 'ID Node')}: {currentUser?.nodeId || 'SP-GENESIS'}</p>
 
-        {/* Trust Score Meter */}
-        <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-black/5 space-y-4 shadow-inner mt-5">
-           <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                 <Cpu size={14} className="text-primary-500"/>
-                 <span className="text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">{t('Tingkat Kepercayaan', 'Level Kepercayaan')}</span>
-              </div>
-              <span className="text-xl font-black text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">{currentUser?.trustScore || 85}%</span>
-           </div>
-           <div className="h-2.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden shadow-inner">
-              <div
-                 className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-[2000ms] shadow-[0_0_15px_#10b981]"
-                 style={{ width: `${currentUser?.trustScore || 85}%` }}
-              ></div>
-           </div>
-           <p className="text-[0.55rem] font-bold text-gray-500 uppercase leading-relaxed text-center tracking-widest opacity-70">
-              {t('High score enables instant payouts.', 'Skor tinggi mengaktifkan pencairan dana instan.')}
-           </p>
+        {/* Trust Score bar */}
+        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 space-y-2">
+          <div className="flex justify-between items-center">
+            <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Trust Score', 'Skor Kepercayaan')}</p>
+            <span className="text-[10px] font-bold text-ds-green">{t('High score = instant payouts', 'Skor tinggi = pencairan instan')}</span>
+          </div>
+          <div className="h-2 bg-ds-card2 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-ds-green rounded-full transition-all duration-[1500ms]"
+              style={{ width: `${currentUser?.trustScore || 85}%` }}
+            />
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-white border-b border-gray-100 px-5">
+      <div className="flex bg-ds-card border-b border-ds-border px-4 gap-1">
          {[
-           { id: 'OVERVIEW', label: t('Matrix', 'Ringkasan'), icon: LayoutGrid },
-           { id: 'POLICIES', label: t('Nodes', 'Polis'), icon: ShieldCheck },
-           { id: 'CLAIMS', label: t('Activity', 'Histori'), icon: Activity },
-           { id: 'SETTINGS', label: t('Secure', 'Akun'), icon: Settings },
+           { id: 'OVERVIEW', label: t('Overview', 'Ringkasan') },
+           { id: 'POLICIES', label: t('Policies', 'Polis') },
+           { id: 'CLAIMS', label: t('Claims', 'Klaim') },
+           { id: 'SETTINGS', label: t('Account', 'Akun') },
          ].map(tab => (
             <button
                key={tab.id}
                onClick={() => setActiveTab(tab.id as TabType)}
-               className={activeTab === tab.id ? 'py-3 px-4 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-500' : 'py-3 px-4 text-sm font-medium text-gray-400'}
+               className={`py-3 px-3 text-xs font-bold transition-colors border-b-2 ${activeTab === tab.id ? 'text-ds-green border-ds-green' : 'text-ds-ink3 border-transparent'}`}
             >
                {tab.label}
             </button>
          ))}
       </div>
 
-      {/* Tab Content Area */}
-      <div className="px-2 pb-10 min-h-[400px] pt-3">
+      {/* Tab Content */}
+      <div className="px-4 pt-4 pb-6 min-h-[400px]">
          {activeTab === 'OVERVIEW' && renderOverview()}
          {activeTab === 'POLICIES' && renderPolicies()}
          {activeTab === 'CLAIMS' && renderClaims()}
          {activeTab === 'SETTINGS' && renderSettings()}
       </div>
 
-      {/* Footer Actions */}
-      <div className="px-5 space-y-4">
-        <div className="flex items-center justify-center gap-2 opacity-30">
-           <ShieldCheck size={12}/>
-           <span className="text-[0.5rem] font-black uppercase tracking-widest">End-to-End Encrypted Registry Access</span>
-        </div>
-        <button onClick={onLogout} className="mx-5 mt-4 w-full h-12 rounded-xl border border-red-100 bg-red-50 text-red-600 font-semibold text-sm active:bg-red-100 transition-all">
-           <LogOut size={18} className="inline mr-2"/> {t('Sign Out from Matrix', 'Keluar dari Jaringan')}
+      {/* Logout */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={onLogout}
+          className="w-full h-12 rounded-2xl bg-rose-50 border border-rose-100 text-ds-red font-bold text-sm flex items-center justify-center gap-2 active:bg-rose-100 transition-colors"
+        >
+          <LogOut size={16}/> {t('Sign Out', 'Keluar')}
         </button>
       </div>
     </div>

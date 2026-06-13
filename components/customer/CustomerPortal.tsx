@@ -97,122 +97,121 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'home':
         return (
           <PageTransition>
-            <div className="space-y-7 pb-32">
+            <div className="space-y-5 pb-32">
               {/* Greeting */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => navigate('profile')}
-                    className="relative cursor-pointer active:scale-[0.96] transition-transform duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded-[1.8rem]"
+                    className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
                   >
-                    <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.8rem] shadow-lg shadow-emerald-500/20 flex items-center justify-center border border-slate-100 dark:border-white/5 overflow-hidden ring-1 ring-emerald-500/10">
-                      <div className="w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-500 flex items-center justify-center text-xl font-black text-white">
-                        {currentUser?.name?.[0]}
-                      </div>
+                    <div className="w-12 h-12 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-ds-green">
+                      {currentUser?.name?.[0]}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full border-4 border-[#fafaf9] dark:border-[#0a0a0a] flex items-center justify-center text-[0.55rem] text-white font-black shadow-lg shadow-emerald-500/40">
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full border-2 border-ds-bg flex items-center justify-center text-[8px] text-ds-green font-black shadow-sm">
                       {currentUser?.trustScore || 85}
                     </div>
                   </button>
                   <div>
-                    <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
-                      {timeGreeting}, {currentUser?.name?.split(' ')[0]}!
+                    <p className="text-xs text-ds-ink3">{timeGreeting}</p>
+                    <h3 className="text-base font-black text-ds-ink tracking-tight">
+                      {currentUser?.name?.split(' ')[0]}!
                     </h3>
-                    <p className="text-[0.6rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-1 mt-1.5">
-                      <ShieldCheck size={11} className="animate-pulse motion-reduce:animate-none" />
-                      {t('SECURE ACCOUNT', 'AKUN AMAN')}
-                    </p>
                   </div>
+                </div>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-ds-green-tint rounded-full text-[10px] font-bold text-ds-green">
+                  <ShieldCheck size={10} />
+                  {t('Protected', 'Terlindungi')}
+                </span>
+              </div>
+
+              {/* Hero protection card */}
+              <div className="rounded-3xl p-5 bg-ds-navy text-white relative overflow-hidden shadow-ds-navy">
+                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.12)' }} />
+                <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,200,150,0.06)' }} />
+                <div className="relative z-10">
+                  <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">
+                    {t('Protection Status', 'Status Proteksi')}
+                  </p>
+                  {latestPolicy ? (
+                    <>
+                      <h4 className="text-xl font-black text-white">
+                        {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
+                      </h4>
+                      <p className="text-xs text-white/50 mt-0.5">
+                        {t('Active until', 'Aktif hingga')}{' '}
+                        {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
+                          lang === Language.EN ? 'en-US' : 'id-ID',
+                          { month: 'long', year: 'numeric' }
+                        )}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-ds-green animate-pulse" />
+                          <span className="text-xs text-ds-green font-bold">{t('Active', 'Aktif')}</span>
+                        </div>
+                        <button
+                          onClick={() => navigate('profile')}
+                          className="px-4 py-1.5 bg-white/10 border border-white/10 rounded-xl text-xs text-white font-bold hover:bg-white/15 transition-all active:scale-95"
+                        >
+                          {t('Details', 'Detail')} →
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="text-xl font-black text-white mt-1">{t('No active policy', 'Belum ada polis')}</h4>
+                      <p className="text-xs text-white/50 mt-0.5">{t('Start protecting yourself today', 'Mulai lindungi dirimu sekarang')}</p>
+                      <button
+                        onClick={() => navigate('products')}
+                        className="mt-4 px-4 py-2 bg-ds-green rounded-xl text-xs text-white font-black tracking-wide shadow-ds-green active:scale-95 transition-transform"
+                      >
+                        {t('Buy Insurance', 'Beli Asuransi')} →
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick actions */}
+              <div>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">{t('Quick Actions', 'Aksi Cepat')}</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { id: 'products', label: t('Buy', 'Beli'),       icon: ShoppingBag, color: 'text-blue-500',  bg: 'bg-blue-50'       },
+                    { id: 'claim',    label: t('Claim', 'Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50'       },
+                    { id: 'history',  label: t('History', 'Riwayat'), icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
+                    { id: 'bot',      label: 'AI Chat',               icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
+                  ].map(action => (
+                    <button
+                      type="button"
+                      key={action.id}
+                      onClick={() => navigate(action.id)}
+                      className="flex flex-col items-center gap-2 group active:scale-90 transition-transform focus:outline-none"
+                    >
+                      <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                        <action.icon size={24} strokeWidth={2} />
+                      </div>
+                      <span className="text-[10px] font-bold text-ds-ink2 text-center">{action.label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <PortalHero onAction={navigate} lang={lang} />
 
-              {/* Quick actions */}
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 px-1 -mb-2">
-                {t('Quick Actions', 'Aksi Cepat')}
-              </p>
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { id: 'products', label: t('Buy', 'Beli'),        icon: ShoppingBag, color: 'text-blue-500',    bg: 'bg-blue-500/10',    ring: 'group-hover:ring-blue-500/20' },
-                  { id: 'claim',    label: t('Claim', 'Klaim'),      icon: Zap,         color: 'text-rose-500',    bg: 'bg-rose-500/10',    ring: 'group-hover:ring-rose-500/20' },
-                  { id: 'history',  label: t('History', 'Riwayat'),  icon: History,     color: 'text-emerald-500', bg: 'bg-emerald-500/10', ring: 'group-hover:ring-emerald-500/20' },
-                  { id: 'bot',      label: 'Chat AI',                icon: Bot,         color: 'text-amber-500',   bg: 'bg-amber-500/10',   ring: 'group-hover:ring-amber-500/20' },
-                ].map(action => (
-                  <button
-                    type="button"
-                    key={action.id}
-                    onClick={() => navigate(action.id)}
-                    className="flex flex-col items-center gap-2.5 cursor-pointer group active:scale-90 transition-transform duration-200 motion-reduce:transition-none focus:outline-none"
-                  >
-                    <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 ${action.ring} group-hover:scale-110 group-hover:-translate-y-0.5 group-active:shadow-inner transition-all duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      <action.icon size={26} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[0.6rem] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center leading-tight group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
-                      {action.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Latest policy card */}
-              {latestPolicy && (
-                <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 relative overflow-hidden shadow-[0_24px_48px_-20px_rgba(16,185,129,0.2)] ring-1 ring-emerald-500/5 group">
-                  <div className="absolute -top-10 -left-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] rotate-12 text-emerald-600 group-hover:rotate-0 transition-transform duration-1000 motion-reduce:transition-none">
-                    {latestPolicy.type === 'CAR' ? <Car size={130} /> : <Plane size={130} />}
-                  </div>
-                  <div className="relative z-10 space-y-5">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-[0.55rem] font-black text-primary-500 uppercase tracking-[0.4em]">
-                          {t('YOUR INSURANCE', 'ASURANSI KAMU')}
-                        </p>
-                        <h4 className="text-xl font-black uppercase tracking-tighter mt-0.5">
-                          {(latestPolicy.vehicle_details as any)?.make ?? latestPolicy.product_name}
-                        </h4>
-                      </div>
-                      <div className="p-2.5 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 rounded-2xl border border-emerald-500/20 shadow-sm">
-                        <ShieldCheck size={20} className="text-emerald-500" />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="text-[0.5rem] font-black text-slate-400 uppercase tracking-widest">
-                          {t('EXPIRES ON', 'AKHIR POLIS')}
-                        </p>
-                        <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                          {new Date(latestPolicy.end_date ?? '').toLocaleDateString(
-                            lang === Language.EN ? 'en-US' : 'id-ID',
-                            { month: 'long', year: 'numeric' }
-                          )}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => navigate('profile')}
-                        className="px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 motion-reduce:transition-none"
-                      >
-                        {t('Details', 'Detail')}
-                      </button>
-                    </div>
-                  </div>
+              {/* AI insight card */}
+              <div className="rounded-3xl p-4 bg-ds-purple-lt border border-purple-100 flex gap-3 items-start">
+                <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-ds-sm">
+                  <Lightbulb size={20} className="text-ds-purple" />
                 </div>
-              )}
-
-              {/* Tip */}
-              <div className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex gap-4 shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500/15 to-amber-500/5 rounded-2xl flex items-center justify-center text-amber-500 flex-shrink-0 ring-1 ring-inset ring-amber-500/10">
-                  <Lightbulb size={24} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[0.55rem] font-black uppercase text-amber-600 dark:text-amber-400 tracking-[0.2em]">
-                    {t('DID YOU KNOW?', 'TAHUKAH KAMU?')}
-                  </p>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-black text-ds-purple uppercase tracking-wider">SurePath AI</p>
+                  <p className="text-sm text-ds-ink leading-relaxed">
                     {t(
-                      'You can file a claim by just taking a photo. Our AI processes it in minutes.',
-                      'Kamu bisa lapor klaim cuma lewat foto HP. AI kami memprosesnya dalam hitungan menit.'
+                      'File a claim by just taking a photo. Our AI processes it in minutes.',
+                      'Lapor klaim cukup dengan foto HP. AI kami memprosesnya dalam hitungan menit.'
                     )}
                   </p>
                 </div>
@@ -224,32 +223,45 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'products':
         return (
           <PageTransition>
-            <div className="space-y-7 pb-32 pt-2">
-              <div className="space-y-3 text-center">
-                <Badge variant="brand">{t('Simple Protection', 'Pusat Proteksi')}</Badge>
-                <h2 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-tight">
-                  {t('Choose Plan', 'Pilih Paket')} <span className="text-primary-500">SurePath</span>
+            <div className="space-y-6 pb-32 pt-2">
+              {/* Section header */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Simple Protection', 'Pusat Proteksi')}</p>
+                <h2 className="text-2xl font-black tracking-tight text-ds-ink">
+                  {t('Choose a Plan', 'Pilih Paket')} <span className="text-ds-green">SurePath</span>
                 </h2>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+
+              {/* Product cards */}
+              <div className="grid grid-cols-1 gap-3">
                 {(products ?? []).filter(p => p?.id).map(p => (
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
-                    className={`group p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all duration-300 motion-reduce:transition-none ${p.active ? 'cursor-pointer hover:border-primary-500/30 hover:-translate-y-0.5 shadow-sm hover:shadow-xl active:scale-[0.98] active:shadow-md' : 'opacity-40 grayscale'}`}
+                    className={`group bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
-                    <div className={`w-14 h-14 ${p.bg ?? 'bg-slate-100'} dark:bg-white/5 ${p.color ?? 'text-slate-500'} rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-sm ring-1 ring-inset ring-black/5 dark:ring-white/5 group-hover:scale-110 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none`}>
-                      {typeof p.icon === 'function' && <p.icon size={26} strokeWidth={2.5} />}
+                    {/* Icon */}
+                    <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                      {typeof p.icon === 'function' && <p.icon size={24} strokeWidth={2} />}
                     </div>
+
+                    {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-black text-sm uppercase tracking-tighter text-slate-900 dark:text-white">{p.title}</h4>
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <h4 className="font-black text-sm text-ds-ink tracking-tight">{p.title}</h4>
                         {p.tech && (
-                          <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded-lg text-[0.45rem] font-black uppercase tracking-widest text-slate-400 flex-shrink-0 ml-2">{p.tech}</span>
+                          <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3 flex-shrink-0">{p.tech}</span>
                         )}
                       </div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{p.desc}</p>
+                      <p className="text-xs text-ds-ink2 leading-relaxed">{p.desc}</p>
                     </div>
+
+                    {/* CTA arrow for active products */}
+                    {p.active && (
+                      <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                        <span className="text-ds-green text-sm font-black">→</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -267,56 +279,62 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       case 'history':
         return (
           <PageTransition>
-            <div className="space-y-6 pb-32 pt-2">
-              <h2 className="text-3xl font-black uppercase tracking-tighter">{t('My History', 'Riwayat Saya')}</h2>
+            <div className="space-y-5 pb-32 pt-2">
+              <div>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Your Activity', 'Aktivitas Anda')}</p>
+                <h2 className="text-2xl font-black text-ds-ink tracking-tight">{t('My History', 'Riwayat Saya')}</h2>
+              </div>
 
               {/* Policies */}
               <div className="space-y-3">
-                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={12} />{t('Active Policies', 'Polis Aktif')}</p>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                  <FileText size={11} className="text-ds-green" />
+                  {t('Active Policies', 'Polis Aktif')}
+                </p>
                 {customerPolicies.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
-                      <FileText size={22} />
+                  <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
+                      <FileText size={22} className="text-ds-green" />
                     </div>
-                    <p className="text-slate-400 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
+                    <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet. Buy your first plan!', 'Belum ada polis. Beli paket pertamamu!')}</p>
                     <button
                       onClick={() => navigate('products')}
-                      className="px-5 py-2 bg-emerald-500 text-white rounded-xl font-black uppercase text-[0.55rem] tracking-widest shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform duration-200 motion-reduce:transition-none"
+                      className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform"
                     >
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
                   </div>
                 ) : customerPolicies.map((p, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-primary-500/10 ring-1 ring-inset ring-primary-500/10 flex items-center justify-center">
-                        {p.vehicle_type === 'CAR' ? <Car size={20} className="text-primary-500" /> : <ShieldCheck size={20} className="text-primary-500" />}
+                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                        {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
-                        <p className="text-xs text-slate-400 font-medium">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
+                        <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
+                        <p className="text-xs text-ds-ink3">{p.product_code}{p.end_date ? ` · ${t('Expires','Berakhir')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
                         {(() => {
                           const desc: Record<string,string> = {
                             SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
                             APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
                             REJECTED:'Pengajuan ditolak oleh penanggung',
                           };
-                          return desc[p.status] ? <p className="text-[10px] text-slate-400 mt-0.5">{desc[p.status]}</p> : null;
+                          return desc[p.status] ? <p className="text-[10px] text-ds-ink3 mt-0.5">{desc[p.status]}</p> : null;
                         })()}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-emerald-500">{formatIDR(p.total_premium)}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-black text-ds-green">{formatIDR(p.total_premium)}</p>
                       {(() => {
                         const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Menunggu Review',         cls: 'bg-amber-500/10 text-amber-600' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',           cls: 'bg-blue-500/10 text-blue-600' },
-                          APPROVED:     { label: 'Disetujui',               cls: 'bg-indigo-500/10 text-indigo-600' },
-                          ISSUED:       { label: 'Polis Aktif',             cls: 'bg-emerald-500/10 text-emerald-600' },
-                          REJECTED:     { label: 'Ditolak',                 cls: 'bg-rose-500/10 text-rose-600' },
+                          SUBMITTED:    { label: 'Menunggu Review', cls: 'bg-amber-50 text-ds-amber' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',   cls: 'bg-blue-50 text-ds-blue' },
+                          APPROVED:     { label: 'Disetujui',       cls: 'bg-blue-50 text-ds-blue' },
+                          ISSUED:       { label: 'Polis Aktif',     cls: 'bg-ds-green-tint text-ds-green' },
+                          REJECTED:     { label: 'Ditolak',         cls: 'bg-rose-50 text-ds-red' },
                         };
-                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-slate-100 text-slate-400' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                        const meta = s[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
                       })()}
                     </div>
                   </div>
@@ -325,37 +343,40 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Claims */}
               <div className="space-y-3">
-                <p className="text-[0.6rem] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><AlertCircle size={12} />{t('My Claims', 'Klaim Saya')}</p>
+                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                  <AlertCircle size={11} className="text-ds-red" />
+                  {t('My Claims', 'Klaim Saya')}
+                </p>
                 {customerClaims.length === 0 ? (
-                  <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                      <AlertCircle size={22} />
+                  <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center">
+                      <AlertCircle size={22} className="text-ds-red" />
                     </div>
-                    <p className="text-slate-400 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
+                    <p className="text-ds-ink2 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
                   </div>
                 ) : customerClaims.map((c, i) => (
-                  <div key={i} className="p-5 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-300 motion-reduce:transition-none">
-                    <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-rose-500/10 ring-1 ring-inset ring-rose-500/10 flex items-center justify-center">
-                        <AlertCircle size={20} className="text-rose-500" />
+                  <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                        <AlertCircle size={18} className="text-ds-red" />
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
-                        <p className="text-xs text-slate-400 font-medium">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                        <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim', 'Klaim')}</p>
+                        <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-black text-rose-500">{formatIDR(c.amount_estimated ?? 0)}</p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
                       {(() => {
                         const s: Record<string,{label:string;cls:string}> = {
-                          SUBMITTED:    { label: 'Diajukan',       cls: 'bg-amber-500/10 text-amber-600' },
-                          UNDER_REVIEW: { label: 'Sedang Dikaji',  cls: 'bg-blue-500/10 text-blue-600' },
-                          APPROVED:     { label: 'Disetujui',      cls: 'bg-emerald-500/10 text-emerald-600' },
-                          REJECTED:     { label: 'Ditolak',        cls: 'bg-rose-500/10 text-rose-600' },
-                          PAID:         { label: 'Dibayarkan',     cls: 'bg-violet-500/10 text-violet-600' },
+                          SUBMITTED:    { label: 'Diajukan',     cls: 'bg-amber-50 text-ds-amber' },
+                          UNDER_REVIEW: { label: 'Sedang Dikaji',cls: 'bg-blue-50 text-ds-blue' },
+                          APPROVED:     { label: 'Disetujui',    cls: 'bg-ds-green-tint text-ds-green' },
+                          REJECTED:     { label: 'Ditolak',      cls: 'bg-rose-50 text-ds-red' },
+                          PAID:         { label: 'Dibayarkan',   cls: 'bg-ds-purple-lt text-ds-purple' },
                         };
-                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-slate-100 text-slate-400' };
-                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${meta.cls}`}>{meta.label}</span>;
+                        const meta = s[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink3' };
+                        return <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>;
                       })()}
                     </div>
                   </div>
@@ -403,11 +424,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-white transition-colors duration-300">
 
       {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-white/80 dark:bg-[#111]/80 backdrop-blur-xl border-b border-slate-100 dark:border-white/5 shadow-[0_1px_20px_-12px_rgba(0,0,0,0.3)]">
+        <header className="fixed top-0 inset-x-0 z-40 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-xl border-b border-ds-border dark:border-ds-dk-bd shadow-ds-sm">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
@@ -415,9 +436,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </div>
               <div>
                 <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                  Sure<span className="text-primary-500">Path</span>
+                  Sure<span className="text-ds-green">Path</span>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none">
                   {t('Customer Portal', 'Portal Nasabah')}
                 </div>
               </div>
@@ -428,7 +449,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <div className="text-xs font-black tracking-tight leading-none">
                   {currentUser?.name ?? 'Nasabah'}
                 </div>
-                <div className="text-[10px] font-bold text-primary-500 uppercase tracking-widest leading-none mt-0.5">
+                <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5">
                   {currentUser?.nodeId ?? 'SP-USER'}
                 </div>
               </div>
@@ -512,7 +533,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/85 dark:bg-[#111]/85 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5 ring-1 ring-black/5 dark:ring-white/5">
+        <nav className="fixed bottom-6 inset-x-3 z-50 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
           <div className="flex items-center justify-around px-1 py-2.5">
             {TABS.map(({ id, labelEn, labelId, Icon }) => {
               const active = activeTab === id;
@@ -524,8 +545,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   onClick={() => navigate(id)}
                   className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
                     active
-                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
+                      ? 'bg-ds-green text-white scale-110 shadow-ds-green'
+                      : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
                   }`}
                 >
                   <Icon size={16} strokeWidth={active ? 2.5 : 2} />

@@ -103,7 +103,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
     // Fetch the caller's profile via the gateway, creating it from the signup
     // metadata if missing (e.g. email-confirmation flow where the profile
     // couldn't be created at registration time).
-    const profile = await ensureProfile().catch(() => null);
+    // Retry once after 1.5 s — on new email/password signups the Supabase
+    // database trigger that creates the sp_users row may not have committed yet.
+    let profile = await ensureProfile().catch(() => null);
+    if (!profile) {
+      await new Promise(r => setTimeout(r, 1500));
+      profile = await ensureProfile().catch(() => null);
+    }
 
     return profile
       ? {

@@ -2238,8 +2238,18 @@ export async function recordTcAcceptance(userId: string): Promise<string> {
 }
 
 export async function getUserTcStatus(userId: string): Promise<boolean> {
+  // Primary: sp_users flag
   const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
-  return data?.tc_accepted === true;
+  if (data?.tc_accepted === true) return true;
+  // Fallback: a row in sp_tnc_records means they accepted even if sp_users update
+  // failed silently due to RLS (common when policies restrict self-UPDATE).
+  const { data: rec } = await supabase
+    .from('sp_tnc_records')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+  return !!rec;
 }
 
 export interface TncRecord {

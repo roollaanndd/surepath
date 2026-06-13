@@ -110,7 +110,7 @@ const ProductModules = ({ lang }: { lang: Language }) => {
       <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-24 gap-12">
           <div className="space-y-6 max-w-3xl">
-            <h2 className="text-5xl md:text-7xl font-semibold text-slate-900 dark:text-white tracking-[-0.02em] leading-[0.9]">
+            <h2 className="font-sora text-5xl md:text-7xl font-semibold text-slate-900 dark:text-white tracking-[-0.02em] leading-[0.9]">
               Protection <br />
               <span className="text-emerald-500 italic font-light">
                 Modules.

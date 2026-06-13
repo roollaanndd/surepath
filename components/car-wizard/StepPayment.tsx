@@ -71,14 +71,16 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
          <div className="grid grid-cols-2 gap-3 relative z-10">
             <button
                onClick={() => { setMethod('VA'); setSelectedSubMethod(null); }}
-               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'VA' ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all duration-300 active:scale-95 ${method === 'VA' ? 'border-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               style={method === 'VA' ? { background: 'linear-gradient(135deg, #00C16A 0%, #009E52 100%)' } : {}}
             >
                <Landmark size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Bank VA</span>
             </button>
             <button
                onClick={() => { setMethod('EWALLET'); setSelectedSubMethod(null); }}
-               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all active:scale-95 ${method === 'EWALLET' ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all duration-300 active:scale-95 ${method === 'EWALLET' ? 'border-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               style={method === 'EWALLET' ? { background: 'linear-gradient(135deg, #00C16A 0%, #009E52 100%)' } : {}}
             >
                <Smartphone size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Dompet Digital</span>
@@ -94,7 +96,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                   <button 
                      key={bank.id}
                      onClick={() => setSelectedSubMethod(bank.name)}
-                     className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === bank.name ? 'border-emerald-500 shadow-xl' : 'border-black/5'}`}
+                     className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === bank.name ? 'border-emerald-500 shadow-xl shadow-emerald-500/15' : 'border-black/5'}`}
                   >
                      <div className="flex items-center gap-5">
                         <img src={bank.icon} className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all opacity-60 group-hover:opacity-100" alt={bank.name} />
@@ -116,7 +118,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                      <button 
                         key={wallet.id}
                         onClick={() => setSelectedSubMethod(wallet.name)}
-                        className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === wallet.name ? 'border-emerald-500 shadow-xl' : 'border-black/5'}`}
+                        className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === wallet.name ? 'border-emerald-500 shadow-xl shadow-emerald-500/15' : 'border-black/5'}`}
                      >
                         <div className="flex items-center gap-5">
                            <img src={wallet.icon} className="h-8 w-auto object-contain" alt={wallet.name} />

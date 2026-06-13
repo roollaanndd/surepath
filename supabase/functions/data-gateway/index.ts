@@ -908,6 +908,57 @@ serve(async (req) => {
         return json({ data });
       }
 
+      case 'pathy_chat': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
+        if (!ANTHROPIC_KEY) return json({ error: 'AI not configured' }, 503);
+        const message = (params?.message as string | undefined)?.trim() ?? '';
+        if (!message) return json({ error: 'No message provided' }, 400);
+        const [ordersRes, claimsRes] = await Promise.all([
+          db.from('sp_policy_orders').select('order_number,product_name,status,created_at').eq('client_id', caller.spUser.id).limit(10),
+          db.from('sp_claims').select('claim_number,status,created_at').eq('user_id', caller.spUser.id).limit(5),
+        ]);
+        const policySummary = (ordersRes.data ?? [])
+          .map((o: any) => `• ${o.order_number}: ${o.product_name} (${o.status})`)
+          .join('\n') || 'No active policies.';
+        const claimSummary = (claimsRes.data ?? [])
+          .map((c: any) => `• ${c.claim_number}: ${c.status}`)
+          .join('\n') || 'No claims.';
+        const systemPrompt = `You are Pathy, a friendly AI assistant for SurePath, an Indonesian InsurTech platform.
+You are speaking with ${caller.spUser.name ?? 'a user'} (role: ${caller.role ?? 'CUSTOMER'}).
+You have READ-ONLY access to their data. You CANNOT modify, create, or delete anything.
+
+User's policies:
+${policySummary}
+
+User's claims:
+${claimSummary}
+
+Guidelines:
+- Be warm, concise, helpful. Max 3 sentences unless detailed steps are needed.
+- Reply in the same language the user writes in (Bahasa Indonesia or English).
+- For billing changes, cancellations, or urgent matters, recommend contacting an agent via WhatsApp.
+- Never fabricate policy numbers, amounts, or dates not shown above.`;
+        const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 512,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: message }],
+          }),
+        });
+        if (!aiRes.ok) return json({ error: `AI service error: ${aiRes.status}` }, 502);
+        const aiJson = await aiRes.json();
+        const reply = aiJson.content?.[0]?.text ?? 'Maaf, tidak bisa memproses permintaan saat ini.';
+        return json({ data: { reply } });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

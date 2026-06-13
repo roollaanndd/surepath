@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Language } from '../../types';
+import { pathyChat } from '../../services/supabaseService';
 
-// TODO: Replace with the real SurePath agent WhatsApp number (international format, digits only).
 const WHATSAPP_NUMBER = '6280000000000'; // placeholder — do NOT treat as a real number
 
 type Lang = Language | 'EN' | 'ID';
 const isEN = (lang: Lang) => lang === Language.EN || lang === 'EN';
 
-// ─── Pathy mascot (self-contained, animated; mirrors App.tsx PathyMascot) ──────
+// ─── Pathy mascot (self-contained, animated) ──────────────────────────────────
 const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, animate = true }) => {
   const W = size, H = Math.round(size * 1.16);
   return (
@@ -23,24 +23,20 @@ const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, 
           fill="url(#pathychat-body)" stroke="rgba(255,255,255,0.45)" strokeWidth="1.6" strokeLinejoin="round" />
         <path d="M60 14 L100 30 V46 C84 36 70 33 60 33 C50 33 36 36 20 46 V30 Z" fill="rgba(255,255,255,0.16)" />
       </svg>
-      {/* Eyes (blink) */}
       {[W * 0.345, W * 0.525].map((lx, i) => (
         <div key={i} style={{ position: 'absolute', left: lx, top: H * 0.40, width: W * 0.13, height: W * 0.17, animation: animate ? `pathy-blink 4.2s ease-in-out ${i * 0.05}s infinite` : 'none', transformOrigin: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: '#0b3d24', borderRadius: '50%' }} />
           <div style={{ position: 'absolute', left: '52%', top: '18%', width: '34%', height: '30%', background: '#fff', borderRadius: '50%' }} />
         </div>
       ))}
-      {/* Smile */}
       <svg viewBox="0 0 40 20" width={W * 0.30} height={W * 0.15} style={{ position: 'absolute', left: '50%', top: H * 0.55, transform: 'translateX(-50%)' }}>
         <path d="M4 4 Q20 20 36 4" fill="none" stroke="#0b3d24" strokeWidth="3.5" strokeLinecap="round" />
       </svg>
-      {/* White check badge */}
       <div style={{ position: 'absolute', left: '50%', top: H * 0.70, transform: 'translateX(-50%)', width: W * 0.24, height: W * 0.24, borderRadius: '50%', background: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <svg viewBox="0 0 24 24" width={W * 0.14} height={W * 0.14} fill="none" stroke="#0E9D57" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      {/* Waving hand */}
       <div style={{ position: 'absolute', left: W * 0.80, top: H * 0.30, width: W * 0.20, height: W * 0.20, transformOrigin: '30% 80%', animation: animate ? 'pathy-wave 1.6s ease-in-out infinite' : 'none' }}>
         <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#2BE07A,#0E9D57)', borderRadius: '50% 50% 50% 20%', border: '1.5px solid rgba(255,255,255,0.45)', boxShadow: '0 2px 6px rgba(0,0,0,0.18)' }} />
       </div>
@@ -48,7 +44,6 @@ const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, 
   );
 };
 
-// Inject keyframes once (component is self-contained, no dependency on App.tsx styles)
 let keyframesInjected = false;
 function ensurePathyChatKeyframes() {
   if (keyframesInjected || typeof document === 'undefined') return;
@@ -60,9 +55,8 @@ function ensurePathyChatKeyframes() {
     @keyframes pathy-wave  { 0%,60%,100% { transform: rotate(8deg); } 70% { transform: rotate(34deg); } 80% { transform: rotate(2deg); } 90% { transform: rotate(30deg); } }
     @keyframes pathy-blink { 0%,90%,100% { transform: scaleY(1); } 94% { transform: scaleY(0.12); } }
     @keyframes pathychat-pop { 0% { opacity:0; transform: translateY(12px) scale(0.96); } 100% { opacity:1; transform: translateY(0) scale(1); } }
-    @media (prefers-reduced-motion: reduce) {
-      [data-pathychat-anim] { animation: none !important; }
-    }
+    @keyframes pathy-typing { 0%,80%,100% { transform: translateY(0); opacity:0.4; } 40% { transform: translateY(-5px); opacity:1; } }
+    @media (prefers-reduced-motion: reduce) { [data-pathychat-anim] { animation: none !important; } }
   `;
   document.head.appendChild(style);
 }
@@ -82,40 +76,16 @@ const QUICK_REPLIES: QuickReply[] = [
     answerId: 'Klaim itu mudah: buka tab Klaim, foto kerusakannya, isi formulir singkat, lalu kirim. AI kami akan meninjau dan kamu bisa pantau statusnya kapan saja di Riwayat.',
   },
   {
-    id: 'premium',
-    chipEn: 'Calculate premium', chipId: 'Hitung premi',
-    answerEn: 'To get an estimate, open the Buy tab and pick a product (car, travel, accident, etc.). The wizard calculates your premium based on your details in a few taps.',
-    answerId: 'Untuk estimasi, buka tab Beli lalu pilih produk (mobil, perjalanan, kecelakaan, dll.). Wizard akan menghitung premimu berdasarkan datamu dalam beberapa ketukan.',
-  },
-  {
-    id: 'types',
-    chipEn: 'Insurance types', chipId: 'Jenis asuransi',
-    answerEn: 'SurePath offers Car, Travel, Personal Accident, Property, and Health insurance. Browse them all under the Buy tab to compare coverage.',
-    answerId: 'SurePath menyediakan asuransi Mobil, Perjalanan, Kecelakaan Diri, Properti, dan Kesehatan. Lihat semuanya di tab Beli untuk membandingkan perlindungan.',
-  },
-  {
-    id: 'register',
-    chipEn: 'How to register', chipId: 'Cara daftar',
-    answerEn: 'Just sign up with your phone or email, verify with the OTP, and you are ready to buy a policy or file a claim. It takes under a minute.',
-    answerId: 'Cukup daftar dengan nomor HP atau email, verifikasi lewat OTP, dan kamu siap membeli polis atau mengajukan klaim. Kurang dari satu menit.',
-  },
-  {
     id: 'status',
     chipEn: 'Policy status', chipId: 'Status polis',
     answerEn: 'You can see all your active policies and their expiry dates in the History tab. Each policy shows whether it is active, under review, or issued.',
     answerId: 'Kamu bisa melihat semua polis aktif dan tanggal berakhirnya di tab Riwayat. Setiap polis menampilkan status: aktif, sedang dikaji, atau sudah terbit.',
   },
   {
-    id: 'payment',
-    chipEn: 'Payment methods', chipId: 'Cara bayar',
-    answerEn: 'We support bank transfer, virtual account, and popular e-wallets. The payment options appear at checkout when you buy a policy.',
-    answerId: 'Kami mendukung transfer bank, virtual account, dan e-wallet populer. Pilihan pembayaran muncul saat checkout ketika membeli polis.',
-  },
-  {
-    id: 'agent',
-    chipEn: 'Contact an agent', chipId: 'Hubungi agen',
-    answerEn: 'Prefer to talk to a human? Our licensed agents are happy to help. Tap "Chat WhatsApp agent" below to start a conversation.',
-    answerId: 'Mau bicara dengan orang? Agen berlisensi kami siap membantu. Ketuk "Chat WhatsApp agen" di bawah untuk mulai mengobrol.',
+    id: 'premium',
+    chipEn: 'Calculate premium', chipId: 'Hitung premi',
+    answerEn: 'To get an estimate, open the Buy tab and pick a product. The wizard calculates your premium based on your details in a few taps.',
+    answerId: 'Untuk estimasi, buka tab Beli lalu pilih produk. Wizard akan menghitung premimu berdasarkan datamu dalam beberapa ketukan.',
   },
   {
     id: 'whatsapp',
@@ -134,42 +104,45 @@ interface Message {
 
 interface PathyChatProps {
   lang: Lang;
+  currentUser?: { name?: string; id?: string; role?: string };
 }
 
-const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
+const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
   const en = isEN(lang);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
   const msgIdRef = useRef(0);
-  const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { ensurePathyChatKeyframes(); }, []);
 
   const t = (idText: string, enText: string) => (en ? enText : idText);
 
-  // Seed greeting when first opened
+  const greeting = currentUser?.name
+    ? t(
+        `Halo, ${currentUser.name}! Aku Pathy, asisten AI SurePath. Ketik pertanyaanmu atau pilih topik di bawah.`,
+        `Hi, ${currentUser.name}! I'm Pathy, SurePath's AI assistant. Type a question or pick a topic below.`,
+      )
+    : t(
+        'Halo! Aku Pathy, asisten SurePath. Ada yang bisa kubantu? Pilih salah satu di bawah ya.',
+        "Hi! I'm Pathy, your SurePath assistant. How can I help? Pick one of the options below.",
+      );
+
   useEffect(() => {
     if (open && messages.length === 0) {
       msgIdRef.current += 1;
-      setMessages([{
-        id: msgIdRef.current,
-        from: 'bot',
-        text: t(
-          'Halo! Aku Pathy, asisten SurePath. Ada yang bisa kubantu? Pilih salah satu di bawah ya.',
-          "Hi! I'm Pathy, your SurePath assistant. How can I help? Pick one of the options below.",
-        ),
-      }]);
+      setMessages([{ id: msgIdRef.current, from: 'bot', text: greeting }]);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-scroll to newest message
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
 
-  // Esc to close + focus management
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -185,10 +158,25 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
     setMessages(prev => [...prev, { id, from, text }]);
   }, []);
 
+  const handleSend = useCallback(async () => {
+    const msg = input.trim();
+    if (!msg || loading) return;
+    setInput('');
+    pushMessage('user', msg);
+    setLoading(true);
+    try {
+      const reply = await pathyChat(msg);
+      pushMessage('bot', reply);
+    } catch {
+      pushMessage('bot', t('Maaf, ada gangguan sementara. Silakan coba lagi.', 'Sorry, a temporary issue occurred. Please try again.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [input, loading, pushMessage, t]);
+
   const handleQuick = useCallback((qr: QuickReply) => {
     pushMessage('user', en ? qr.chipEn : qr.chipId);
     const answer = en ? qr.answerEn : qr.answerId;
-    // small delay to feel conversational
     window.setTimeout(() => {
       pushMessage('bot', answer);
       if (qr.action === 'whatsapp') {
@@ -199,6 +187,10 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
       }
     }, 350);
   }, [en, pushMessage]);
+
+  const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
 
   return (
     <>
@@ -222,7 +214,6 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
       {/* Chat panel */}
       {open && (
         <div
-          ref={panelRef}
           role="dialog"
           aria-modal="false"
           aria-label={t('Asisten Pathy', 'Pathy assistant')}
@@ -239,7 +230,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
               <p className="text-sm font-black tracking-tight leading-none">Pathy</p>
               <p className="text-[0.6rem] font-bold uppercase tracking-widest opacity-90 mt-1 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse motion-reduce:animate-none" />
-                {t('SurePath Asisten', 'SurePath Assistant')}
+                {t('AI Asisten · SurePath', 'AI Assistant · SurePath')}
               </p>
             </div>
             <button
@@ -252,6 +243,16 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
+          </div>
+
+          {/* AI disclaimer banner */}
+          <div className="flex-shrink-0 px-3 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200/60 dark:border-amber-700/30">
+            <p className="text-[0.58rem] text-amber-700 dark:text-amber-400 font-medium leading-snug text-center">
+              {t(
+                'Pathy dapat melihat data kamu tetapi tidak dapat mengubah apapun.',
+                'Pathy can view your data but cannot modify anything.',
+              )}
+            </p>
           </div>
 
           {/* Messages */}
@@ -269,10 +270,49 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm flex items-center gap-1.5">
+                  {[0, 0.2, 0.4].map((delay, i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                      style={{ animation: `pathy-typing 1.2s ease-in-out ${delay}s infinite` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Text input */}
+          <div className="flex-shrink-0 px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-2xl px-3 py-2 ring-1 ring-slate-200 dark:ring-white/10 focus-within:ring-emerald-500/50">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleInputKey}
+                disabled={loading}
+                placeholder={t('Tanya Pathy…', 'Ask Pathy…')}
+                className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+                className="w-7 h-7 rounded-full bg-emerald-500 disabled:bg-slate-200 dark:disabled:bg-slate-700 flex items-center justify-center active:scale-90 transition-all duration-150 flex-shrink-0"
+              >
+                <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Quick reply chips */}
-          <div className="flex-shrink-0 px-3 py-3 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
+          <div className="flex-shrink-0 px-3 pt-1 pb-3 bg-white dark:bg-slate-900">
             <p className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 px-1">
               {t('Pilihan Cepat', 'Quick Actions')}
             </p>
@@ -282,7 +322,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang }) => {
                   key={qr.id}
                   type="button"
                   onClick={() => handleQuick(qr)}
-                  className={`min-h-[44px] px-3.5 py-2 rounded-full text-[0.7rem] font-bold transition-all duration-200 motion-reduce:transition-none active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
+                  className={`min-h-[36px] px-3 py-1.5 rounded-full text-[0.68rem] font-bold transition-all duration-200 motion-reduce:transition-none active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
                     qr.action === 'whatsapp'
                       ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 hover:bg-emerald-600'
                       : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 ring-1 ring-inset ring-emerald-500/15'

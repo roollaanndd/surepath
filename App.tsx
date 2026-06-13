@@ -5,6 +5,7 @@ import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentProfile, getAgentByEmail, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView } from './services/supabaseService';
 import TermsModal from './components/TermsModal';
+import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 
@@ -1010,11 +1011,14 @@ const App = () => {
       ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
       : { ...currentUser, agent_code: currentUser.nodeId };
     return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
-        </Suspense>
-      </PortalErrorBoundary>
+      <>
+        <InstallPrompt lang={lang} />
+        <PortalErrorBoundary onReset={handleLogout}>
+          <Suspense fallback={<PortalLoader />}>
+            <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
+          </Suspense>
+        </PortalErrorBoundary>
+      </>
     );
   }
 
@@ -1030,16 +1034,19 @@ const App = () => {
 
   if (currentUser) {
     return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <CustomerPortal
-            currentUser={currentUser}
-            onLogout={handleLogout}
-            lang={lang}
-            products={products}
-          />
-        </Suspense>
-      </PortalErrorBoundary>
+      <>
+        <InstallPrompt lang={lang} />
+        <PortalErrorBoundary onReset={handleLogout}>
+          <Suspense fallback={<PortalLoader />}>
+            <CustomerPortal
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              lang={lang}
+              products={products}
+            />
+          </Suspense>
+        </PortalErrorBoundary>
+      </>
     );
   }
 

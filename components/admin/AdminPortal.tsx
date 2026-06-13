@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -25,6 +25,7 @@ import AIFinanceView from './AIFinanceView';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import EndorsementsAdminView from './EndorsementsAdminView';
 import B2BAdminView from './B2BAdminView';
+import DocumentsAdminView from './DocumentsAdminView';
 import TierPromoConfigAdmin from './TierPromoConfigAdmin';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
@@ -59,6 +60,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  { id: 'documents',        label: 'Dokumen',             icon: FileImage,       roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   // AGEN & KOMISI
   { id: '_sep4', isSeparator: true, groupLabel: 'Agen & Komisi',      roles: ALL_ROLES },
   { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -520,6 +522,7 @@ const AdminPortal = ({
       case 'payments':         return <PaymentsAdminView />;
       case 'withdrawals':      return <WithdrawalsAdminView />;
       case 'endorsements':     return <EndorsementsAdminView />;
+      case 'documents':        return <DocumentsAdminView />;
       case 'b2b':              return <B2BAdminView />;
       case 'product_config':   return <ProductConfigAdmin />;
       case 'tier_promo':       return <TierPromoConfigAdmin />;

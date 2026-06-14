@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Home, ShoppingBag, Zap, History, UserCircle,
   Sun, Moon, LogOut, ShieldCheck, Bell,
-  Car, Plane, Bot, FileText, AlertCircle, ArrowRight
+  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
@@ -20,6 +20,7 @@ import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
+import OrderDetailSheet from './OrderDetailSheet';
 
 interface Props {
   currentUser: any;
@@ -47,6 +48,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [customerClaims, setCustomerClaims] = useState<SpClaim[]>([]);
   const [notifications, setNotifications] = useState<SpNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<SpPolicyOrder | null>(null);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -54,20 +57,33 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
     localStorage.setItem('sp_dark_mode', String(darkMode));
   }, [darkMode]);
 
-  useEffect(() => {
-    if (currentUser?.id) {
-      getCustomerOrders(currentUser.id).then(orders => {
-        setCustomerPolicies(orders);
-        if (orders.length > 0) setLatestPolicy(orders[0]);
-      }).catch(() => {});
-      getCustomerClaims(currentUser.id).then(claims => {
-        setCustomerClaims(claims);
-      }).catch(() => {});
-      getNotifications(currentUser.id).then(notifs => {
-        setNotifications(notifs);
-      }).catch(() => {});
+  const loadCustomerData = useCallback(async () => {
+    if (!currentUser?.id) return;
+    setRefreshing(true);
+    try {
+      const [orders, claims, notifs] = await Promise.allSettled([
+        getCustomerOrders(currentUser.id),
+        getCustomerClaims(currentUser.id),
+        getNotifications(currentUser.id),
+      ]);
+      if (orders.status === 'fulfilled') {
+        setCustomerPolicies(orders.value);
+        if (orders.value.length > 0) setLatestPolicy(orders.value[0]);
+      }
+      if (claims.status === 'fulfilled') setCustomerClaims(claims.value);
+      if (notifs.status === 'fulfilled') setNotifications(notifs.value);
+    } finally {
+      setRefreshing(false);
     }
   }, [currentUser?.id]);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [loadCustomerData]);
+
+  useEffect(() => {
+    if (activePage === 'history') loadCustomerData();
+  }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const unreadCount = useMemo(
     () => notifications.filter(n => !n.read).length,
@@ -366,6 +382,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           APPROVED:     { label: t('Approved','Disetujui'),             cls: 'bg-blue-50 text-ds-blue' },
           ISSUED:       { label: t('Active','Polis Aktif'),             cls: 'bg-ds-green-tint text-ds-green' },
           REJECTED:     { label: t('Rejected','Ditolak'),               cls: 'bg-rose-50 text-ds-red' },
+          CANCELLED:    { label: t('Cancelled','Dibatalkan'),           cls: 'bg-gray-100 text-gray-500' },
         };
         const claimStatusMap: Record<string,{label:string;cls:string}> = {
           SUBMITTED:    { label: t('Submitted','Diajukan'),       cls: 'bg-amber-50 text-ds-amber' },
@@ -401,10 +418,19 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Policies */}
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
-                  <FileText size={11} className="text-ds-green" />
-                  {t('My Policies', 'Polis Saya')}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                    <FileText size={11} className="text-ds-green" />
+                    {t('My Policies', 'Polis Saya')}
+                  </p>
+                  <button
+                    onClick={() => loadCustomerData()}
+                    aria-label={t('Refresh', 'Muat Ulang')}
+                    className="w-7 h-7 rounded-full bg-ds-card2 flex items-center justify-center active:scale-90 transition-transform"
+                  >
+                    <RefreshCw size={12} className={`text-ds-ink3 ${refreshing ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
                 {customerPolicies.length === 0 ? (
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
@@ -419,11 +445,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   const pDesc: Record<string,string> = {
                     SUBMITTED:'Menunggu konfirmasi penanggung', UNDER_REVIEW:'Sedang dikaji oleh penanggung',
                     APPROVED:'Disetujui — menunggu penerbitan polis', ISSUED:'Polis aktif & berlaku',
-                    REJECTED:'Pengajuan ditolak oleh penanggung',
+                    REJECTED:'Pengajuan ditolak oleh penanggung', CANCELLED:'Pengajuan dibatalkan',
                   };
                   const meta = policyStatusMap[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
                   return (
-                    <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div key={i} onClick={() => setSelectedOrder(p)} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
                           {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
@@ -500,20 +526,20 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         return <HealthChat onBack={() => navigate('home')} lang={lang} />;
 
       case 'buy-car':
-        return <CarInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
+        return <CarInsuranceWizard onComplete={() => { loadCustomerData(); navigate('home'); }} currentUser={currentUser} lang={lang} />;
       case 'buy-travel':
-        return <TravelInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
+        return <TravelInsuranceWizard onComplete={() => { loadCustomerData(); navigate('home'); }} currentUser={currentUser} lang={lang} />;
       case 'buy-pa':
-        return <PAInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
+        return <PAInsuranceWizard onComplete={() => { loadCustomerData(); navigate('home'); }} currentUser={currentUser} lang={lang} />;
       case 'buy-mpar':
-        return <MPARInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} />;
+        return <MPARInsuranceWizard onComplete={() => { loadCustomerData(); navigate('home'); }} currentUser={currentUser} lang={lang} />;
       case 'buy-health-ind':
         return <HealthChat onBack={() => navigate('home')} lang={lang} />;
 
       default:
         if (activePage.startsWith('buy-custom_')) {
           const productId = activePage.replace('buy-', '');
-          return <CustomInsuranceWizard onComplete={() => navigate('home')} currentUser={currentUser} lang={lang} productId={productId} />;
+          return <CustomInsuranceWizard onComplete={() => { loadCustomerData(); navigate('home'); }} currentUser={currentUser} lang={lang} productId={productId} />;
         }
         return null;
     }
@@ -658,6 +684,17 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
       {/* Floating Pathy assistant */}
       {!isFullscreen && <PathyChat lang={lang} currentUser={{ name: currentUser.name, id: currentUser.id, role: currentUser.role }} />}
+
+      {/* Order detail sheet */}
+      {selectedOrder && (
+        <OrderDetailSheet
+          order={selectedOrder}
+          lang={lang}
+          onClose={() => setSelectedOrder(null)}
+          onCancelled={() => { setSelectedOrder(null); loadCustomerData(); }}
+          onResubmit={(page) => { setSelectedOrder(null); navigate(page); }}
+        />
+      )}
     </div>
   );
 };

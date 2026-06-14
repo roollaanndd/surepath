@@ -424,42 +424,27 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
           <h3 className="text-base font-semibold text-gray-900">{STEPS[step].label}</h3>
        </div>
 
-       {/* STEP PROGRESS BAR — premium animated */}
+       {/* STEP PROGRESS BAR — premium segmented track */}
        <div className="px-5 pt-3 pb-4">
-         {/* Step name + count */}
-         <div className="flex items-center justify-between mb-2">
-           <div className="flex items-center gap-2">
-             <span className="text-[0.6rem] font-black uppercase tracking-[0.25em] text-emerald-500">{STEPS[step].label}</span>
-           </div>
-           <span className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">Langkah {step + 1} dari {STEPS.length}</span>
-         </div>
-         {/* Animated fill bar */}
-         <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
-           <div
-             className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(0,193,106,0.4)]"
-             style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-           />
-         </div>
-         {/* Dot indicators */}
-         <div className="flex items-center gap-1">
+         {/* Segmented pill track */}
+         <div className="flex gap-1 mb-3">
            {STEPS.map((_s, i) => (
-             <React.Fragment key={i}>
-               {i > 0 && <div className={`flex-1 h-px transition-colors duration-300 ${i <= step ? 'bg-emerald-500/40' : 'bg-gray-100'}`} />}
-               {i < step ? (
-                 <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/30 transition-all duration-300">
-                   <Check size={10} strokeWidth={3}/>
-                 </div>
-               ) : i === step ? (
-                 <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/40 ring-2 ring-emerald-500/20 transition-all duration-300">
-                   <span className="text-[0.5rem] font-black">{i + 1}</span>
-                 </div>
-               ) : (
-                 <div className="w-5 h-5 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center shrink-0 transition-all duration-300">
-                   <span className="text-[0.5rem] font-bold">{i + 1}</span>
-                 </div>
-               )}
-             </React.Fragment>
+             <div
+               key={i}
+               className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${
+                 i < step
+                   ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                   : i === step
+                   ? 'bg-emerald-500 shadow-[0_0_8px_rgba(0,193,106,0.5)]'
+                   : 'bg-gray-100'
+               }`}
+             />
            ))}
+         </div>
+         {/* Step label + counter */}
+         <div className="flex items-baseline justify-between">
+           <span className="text-sm font-bold text-gray-900">{STEPS[step].label}</span>
+           <span className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest">Langkah {step + 1}/{STEPS.length}</span>
          </div>
        </div>
 

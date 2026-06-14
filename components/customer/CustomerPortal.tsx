@@ -41,7 +41,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [activePage, setActivePage] = useState('home');
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [latestPolicy, setLatestPolicy] = useState<SpPolicyOrder | null>(null);
   const [customerPolicies, setCustomerPolicies] = useState<SpPolicyOrder[]>([]);
   const [customerClaims, setCustomerClaims] = useState<SpClaim[]>([]);
@@ -51,6 +51,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
+    localStorage.setItem('sp_dark_mode', String(darkMode));
   }, [darkMode]);
 
   useEffect(() => {

@@ -13,6 +13,7 @@ import { db, Policy, Claim, Transaction } from '../db';
 import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 import { getTncRecord, type TncRecord } from '../services/supabaseService';
+import AccessibilitySettings from './customer/AccessibilitySettings';
 
 interface UserProfileProps {
   currentUser: any;
@@ -512,6 +513,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
            <p className="text-sm text-ds-ink3">{t('No acceptance record found', 'Belum ada rekaman persetujuan')}</p>
          </div>
        )}
+
+       {/* Accessibility — Display Size */}
+       <AccessibilitySettings lang={lang} />
     </div>
   );
 

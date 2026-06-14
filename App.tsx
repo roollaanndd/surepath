@@ -77,8 +77,7 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() => {
     if (typeof window === 'undefined') return false;
-    const hour = new Date().getHours();
-    return hour < 6 || hour >= 19;
+    return localStorage.getItem('sp_dark_mode') === 'true';
   });
   const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
@@ -95,6 +94,10 @@ const App = () => {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [pendingOAuthUser, setPendingOAuthUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [showTc, setShowTc] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sp_dark_mode', darkMode.toString());
+  }, [darkMode]);
 
   useEffect(() => {
     const loadCustomProducts = async () => {
@@ -119,13 +122,12 @@ const App = () => {
     loadCustomProducts();
   }, []);
 
+  // Apply saved UI scale on mount
   useEffect(() => {
-    const check = () => {
-      const hour = new Date().getHours();
-      setDarkMode(prev => { const auto = hour < 6 || hour >= 19; return prev !== auto ? auto : prev; });
-    };
-    const id = setInterval(check, 60_000);
-    return () => clearInterval(id);
+    const scale = parseFloat(localStorage.getItem('sp_ui_scale') ?? '1');
+    if (!isNaN(scale) && scale !== 1) {
+      document.documentElement.style.fontSize = `${scale * 16}px`;
+    }
   }, []);
 
   const navigate = useCallback((path: string) => {

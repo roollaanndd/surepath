@@ -77,8 +77,7 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() => {
     if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('sp_dark_mode');
-    return saved === 'true';
+    return localStorage.getItem('sp_dark_mode') === 'true';
   });
   const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
@@ -123,13 +122,12 @@ const App = () => {
     loadCustomProducts();
   }, []);
 
+  // Apply saved UI scale on mount
   useEffect(() => {
-    const check = () => {
-      const hour = new Date().getHours();
-      setDarkMode(prev => { const auto = hour < 6 || hour >= 19; return prev !== auto ? auto : prev; });
-    };
-    const id = setInterval(check, 60_000);
-    return () => clearInterval(id);
+    const scale = parseFloat(localStorage.getItem('sp_ui_scale') ?? '1');
+    if (!isNaN(scale) && scale !== 1) {
+      document.documentElement.style.fontSize = `${scale * 16}px`;
+    }
   }, []);
 
   const navigate = useCallback((path: string) => {

@@ -77,8 +77,8 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() => {
     if (typeof window === 'undefined') return false;
-    const hour = new Date().getHours();
-    return hour < 6 || hour >= 19;
+    const saved = localStorage.getItem('sp_dark_mode');
+    return saved === 'true';
   });
   const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
@@ -95,6 +95,10 @@ const App = () => {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [pendingOAuthUser, setPendingOAuthUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [showTc, setShowTc] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sp_dark_mode', darkMode.toString());
+  }, [darkMode]);
 
   useEffect(() => {
     const loadCustomProducts = async () => {

@@ -10,6 +10,7 @@ import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
 import { SplashScreen, AppEntryScreen, PortalLoader } from './src/routes/splash';
+import AppUpdateNotification from './components/AppUpdateNotification';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
@@ -369,6 +370,7 @@ const App = () => {
             <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
           </Suspense>
         </PortalErrorBoundary>
+        <AppUpdateNotification />
       </>
     );
   }
@@ -393,6 +395,7 @@ const App = () => {
             <CustomerPortal currentUser={currentUser} onLogout={handleLogout} lang={lang} products={products} />
           </Suspense>
         </PortalErrorBoundary>
+        <AppUpdateNotification />
       </>
     );
   }
@@ -403,11 +406,17 @@ const App = () => {
         <Suspense fallback={<PortalLoader />}>
           <HomePage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
         </Suspense>
+        <AppUpdateNotification />
       </div>
     );
   }
 
-  return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>;
+  return (
+    <>
+      <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>
+      <AppUpdateNotification />
+    </>
+  );
 };
 
 export default App;

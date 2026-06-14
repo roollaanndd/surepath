@@ -5,6 +5,7 @@ import {
   Trophy, Network, RefreshCw, FileEdit, Target,
   Gem, Star, Coins,
 } from 'lucide-react';
+import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -90,6 +91,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
+      <PromoBanner />
 
       {/* Greeting */}
       <motion.div className="px-5 pt-12 pb-1" {...reveal(0)}>

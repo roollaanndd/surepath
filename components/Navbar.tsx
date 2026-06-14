@@ -8,6 +8,7 @@ import {
   Share2
 } from "lucide-react";
 import { Language } from "../types";
+import { APP_VERSION } from "../src/version";
 
 interface NavbarProps {
   lang: Language;
@@ -146,6 +147,9 @@ const Navbar: React.FC<NavbarProps> = ({
             </span>
             <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold tracking-widest uppercase mt-1">
               Your Path to Protection
+            </span>
+            <span className="text-[9px] text-slate-400 dark:text-slate-600 opacity-60 mt-0.5">
+              v{APP_VERSION}
             </span>
           </div>
         </div>

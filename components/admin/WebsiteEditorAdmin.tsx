@@ -7,10 +7,12 @@ import {
   SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection,
   resetWebsiteSection, uploadSectionImage,
 } from '../../services/supabaseService';
+import PromoBannerAdmin from './PromoBannerAdmin';
 
-type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash';
+type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash' | 'promo_banner';
 
 const SECTIONS: { key: SectionKey; label: string; desc: string }[] = [
+  { key: 'promo_banner', label: 'Promo Banner', desc: 'Banner pengumuman di atas halaman' },
   { key: 'splash',       label: 'Splash Screen', desc: 'Loading / welcome screen awal' },
   { key: 'hero',         label: 'Hero',          desc: 'Headline utama & CTA pertama' },
   { key: 'marquee',      label: 'Ticker',        desc: 'Strip teks berjalan' },
@@ -139,6 +141,9 @@ const WebsiteEditorAdmin: React.FC = () => {
 
       {/* ── Right: editor ──────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
+        {activeKey === 'promo_banner' && <PromoBannerAdmin />}
+        {activeKey !== 'promo_banner' && (
+        <>
         {/* Header row */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -453,6 +458,8 @@ const WebsiteEditorAdmin: React.FC = () => {
         <p className="text-[10px] text-gray-700 mt-3 leading-relaxed">
           Perubahan disimpan ke Supabase dan langsung aktif di website setelah pengunjung refresh. Kosongkan field untuk kembali ke konten default.
         </p>
+        </>
+        )}
       </div>
     </div>
   );

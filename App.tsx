@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import PromoBanner from './components/PromoBanner';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
@@ -386,6 +387,7 @@ const App = () => {
     return (
       <>
         <InstallPrompt lang={lang} />
+        <PromoBanner />
         <PortalErrorBoundary onReset={handleLogout}>
           <Suspense fallback={<PortalLoader />}>
             <CustomerPortal currentUser={currentUser} onLogout={handleLogout} lang={lang} products={products} />

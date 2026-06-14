@@ -873,6 +873,39 @@ serve(async (req) => {
         return json({ data });
       }
 
+      // ── Customer: cancel my own order (only while still cancellable) ───────
+      // Scoped to the caller's own orders (client_id = caller). Allowed only
+      // before the insurer/admin acts, i.e. status SUBMITTED or UNDER_REVIEW.
+      case 'cancel_my_order': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        if (!params.order_id) return json({ error: 'order_id required' }, 400);
+        const { data: existing, error: findErr } = await db
+          .from('sp_policy_orders')
+          .select('id, status, client_id')
+          .eq('id', params.order_id)
+          .eq('client_id', caller.spUser.id)
+          .maybeSingle();
+        if (findErr) return json({ error: findErr.message }, 400);
+        if (!existing) return json({ error: 'Order not found' }, 404);
+        const CANCELLABLE = ['SUBMITTED', 'UNDER_REVIEW'];
+        if (!CANCELLABLE.includes(String((existing as Record<string, unknown>).status))) {
+          return json({ error: 'Order can no longer be cancelled' }, 409);
+        }
+        const { data, error } = await db
+          .from('sp_policy_orders')
+          .update({
+            status: 'CANCELLED',
+            reviewer_notes: 'Dibatalkan oleh nasabah',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', params.order_id)
+          .eq('client_id', caller.spUser.id)
+          .select()
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
       // ── Customer: my own claims (filtered by user_id = caller) ─────────────
       // sp_claims links the customer via user_id (verified against the live
       // schema; the table has user_id + agent_id, no client_id).

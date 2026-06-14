@@ -683,7 +683,7 @@ export interface SpPolicyOrder {
   coin_reward?: number;
   start_date?: string;
   end_date?: string;
-  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'ISSUED' | 'REJECTED';
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'ISSUED' | 'REJECTED' | 'CANCELLED';
   reviewer_id?: string;
   reviewer_notes?: string;
   reviewed_at?: string;
@@ -722,6 +722,14 @@ export async function getCustomerOrders(_clientId: string): Promise<SpPolicyOrde
   const { data, error } = await callGateway('get_my_orders');
   if (error) { console.error('getCustomerOrders:', error); return []; }
   return (data ?? []) as SpPolicyOrder[];
+}
+
+export async function cancelMyOrder(orderId: string): Promise<SpPolicyOrder | null> {
+  // Customer-scoped cancel; the gateway verifies ownership (client_id = caller)
+  // and that the order is still cancellable (SUBMITTED / UNDER_REVIEW).
+  const { data, error } = await callGateway('cancel_my_order', { order_id: orderId });
+  if (error) { console.error('cancelMyOrder:', error); return null; }
+  return (data as SpPolicyOrder) ?? null;
 }
 
 export async function getCustomerClaims(_userId: string): Promise<SpClaim[]> {

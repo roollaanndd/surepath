@@ -155,21 +155,18 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-2">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setPage(item.id)}
-              className={`text-xs font-semibold uppercase tracking-widest transition-all relative group ${
+              className={`text-xs font-semibold uppercase tracking-widest transition-all duration-200 px-4 py-2 rounded-full ${
                 currentPage === item.id
-                  ? "text-emerald-500"
-                  : "text-slate-500 dark:text-slate-400 hover:text-emerald-500"
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 scale-[1.08] -translate-y-0.5 shadow-sm"
+                  : "text-slate-400 dark:text-slate-500 hover:text-emerald-500 hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
               {item.label}
-              <span
-                className={`absolute -bottom-2 left-0 h-0.5 bg-emerald-500 transition-all duration-300 ${currentPage === item.id ? "w-full" : "w-0 group-hover:w-full"}`}
-              ></span>
             </button>
           ))}
         </div>
@@ -258,7 +255,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 setPage(item.id);
                 setIsOpen(false);
               }}
-              className={`w-full text-left py-4 px-6 rounded-xl text-sm font-semibold uppercase tracking-widest ${currentPage === item.id ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}
+              className={`w-full text-left py-3 px-5 rounded-full text-sm font-semibold uppercase tracking-widest transition-all duration-200 ${currentPage === item.id ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 scale-[1.02] shadow-sm" : "text-gray-400 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"}`}
             >
               {item.label}
             </button>

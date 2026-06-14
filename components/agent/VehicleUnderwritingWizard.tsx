@@ -1877,14 +1877,6 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col font-sora">
-      {/* Progress Bar */}
-      <div className="h-1 bg-slate-100 dark:bg-white/10 w-full">
-        <div
-          className="h-1 bg-gradient-to-r from-[#16a34a] to-[#22c55e] transition-all duration-500 motion-reduce:transition-none"
-          style={{ width: `${(step / 7) * 100}%` }}
-        />
-      </div>
-
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-white/10">
         <button
@@ -1898,34 +1890,34 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           <p className="font-black text-slate-800 dark:text-white text-sm">
             Underwriting Kendaraan
           </p>
-          <p className="text-xs text-slate-400">
-            Langkah {step} dari 7 — {stepLabels[step - 1]}
-          </p>
         </div>
       </div>
 
-      {/* Step Indicators */}
-      <div className="px-4 pt-4 flex gap-1.5 overflow-x-auto">
-        {stepLabels.map((label, i) => {
-          const n = i + 1;
-          const done = n < step;
-          const active = n === step;
-          return (
-            <div
-              key={n}
-              className={`flex items-center gap-1.5 flex-shrink-0 text-xs font-semibold rounded-full px-3 py-1 ${
-                active
-                  ? 'bg-[#16a34a] text-white'
-                  : done
-                  ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-                  : 'bg-slate-100 dark:bg-white/10 text-slate-400'
-              }`}
-            >
-              <span>{done ? '✓' : n}</span>
-              <span className="hidden sm:inline">{label}</span>
-            </div>
-          );
-        })}
+      {/* Step Progress — premium segmented track */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="flex gap-1 mb-2">
+          {stepLabels.map((_label, i) => {
+            const n = i + 1;
+            const done = n < step;
+            const active = n === step;
+            return (
+              <div
+                key={n}
+                className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${
+                  done
+                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                    : active
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(0,193,106,0.5)]'
+                    : 'bg-slate-100 dark:bg-white/10'
+                }`}
+              />
+            );
+          })}
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm font-bold text-slate-800 dark:text-white">{stepLabels[step - 1]}</span>
+          <span className="text-[0.6rem] font-bold text-slate-400 uppercase tracking-widest">Langkah {step}/7</span>
+        </div>
       </div>
 
       {/* Step Body */}

@@ -19,6 +19,7 @@ const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: strin
   APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-400', Icon: CheckCircle },
   ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-emerald-500', Icon: FileText },
   REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400',     Icon: XCircle },
+  CANCELLED:    { label: 'Cancelled',    color: 'bg-slate-500/10 text-slate-400',   Icon: XCircle },
 };
 
 const AI_SCORE_COLOR = (score?: number) => {
@@ -464,7 +465,7 @@ const PolicyOrdersAdmin: React.FC = () => {
     setSelected(prev => prev && prev.id === id ? { ...prev, status, ...extras } : prev);
   };
 
-  const FILTERS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED'];
+  const FILTERS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED', 'CANCELLED'];
 
   const visible = orders.filter(o => {
     if (filter !== 'ALL' && o.status !== filter) return false;

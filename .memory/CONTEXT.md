@@ -1,32 +1,38 @@
 # SurePath Session Context
-**Updated:** 2026-06-11
+**Updated:** 2026-06-15
 
-## What Was Done (last session)
+## Current State
+- **Branch:** `claude/gstack-status-yuyhyd` (PR #28 open, Vercel preview deployed)
+- **main:** v1.8.2 — last commit `487b173`
+- **Build:** passing ✅
+- **data-gateway:** v11 live (deployed this session)
 
-### Deployed to main (`75cc601`)
-- **Demo login cards** — AuthGate now has 3-tap demo accounts (Customer/Agent/Admin) with `Demo1234!` password
-- **Admin portal revamp** — Light mode default, `gray-*` design tokens, emerald accents, shadow-sm cards
-- **RLS hardening** — 17 scoped policies via `rls_clear_policies_and_demo_passwords` migration; `is_admin()` SECURITY DEFINER helper
-- **Key scrub** — `.env.example` now has placeholder values only (no real Supabase credentials)
-- **5 community skills installed globally** — `/caveman`, `/gsd`, `/ui-ux-pro-max`, `/superpowers`, `/claude-mem`
+## What Was Done (this session)
 
-### Demo Accounts (Supabase project `uyjgeteelnswphyzkjwi`)
+### Admin UX Bug Fixes (PR #28, branch `claude/gstack-status-yuyhyd`)
+- **Approvals for ADMIN role** — Added `ADMIN` to Antrean Polis menu roles
+- **CANCELLED status** — Added to `SpPolicyOrder['status']` type + `STATUS_META` + filter tabs in `PolicyOrdersAdmin`
+- **Dashboard stats refresh** — 2-minute auto-refresh interval + manual Refresh button
+- **User list refresh** — Refresh button added to `UserManagementView`
+
+### Previous session (v1.8.2 on main)
+- Customer portal: order history refetch, cancel order, OrderDetailSheet, accessibility font scale, manual dark mode, navbar pill UX, white status bar, animations
+- v1.8.0–v1.8.1: version badge, promo banner + image upload, App.tsx modularization, PWA update toast, PWA icon regeneration
+
+## Demo Accounts (Supabase project `uyjgeteelnswphyzkjwi`)
 | Role | Email | Password |
 |------|-------|----------|
 | Customer | demo.customer@myinsurepath.com | Demo1234! |
 | Agent | demo.agent@myinsurepath.com | Demo1234! |
 | Admin | demo.admin@myinsurepath.com | Demo1234! |
 
-### Auto-Hooks Configured (this session)
-- `SessionStart` hook: prints branch, last 3 commits, this file
-- Permissions: npm build/test, git add/commit/push pre-approved
-
-## Current State
-- Branch: `main`
-- Build: passing
-- All checklist items: ✅
+## Active PR
+- **PR #28** — `claude/gstack-status-yuyhyd` → `main` (draft)
+- Admin UX fixes: approvals, CANCELLED status, stats refresh, user list refresh
+- Vercel preview: surepath-git-claude-gstack-status-yuyhyd-roollaanndds-projects.vercel.app ✅
 
 ## Next / Backlog
-- [ ] Verify Vercel deployment reflects latest main push
-- [ ] Test all 3 demo logins end-to-end in production
+- [ ] Merge PR #28 to main
+- [ ] Test demo.admin login — verify Antrean Polis visible
+- [ ] Test customer order cancellation end-to-end
 - [ ] Agent portal feature completeness review

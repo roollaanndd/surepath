@@ -2079,12 +2079,20 @@ export const UserManagementView = () => {
           <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-emerald-500">User</span></h2>
           <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
-        >
-          <UserPlus size={16} /> Tambah Admin
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={load}
+            className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all active:scale-95"
+          >
+            <RefreshCw size={14} /> Refresh
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
+          >
+            <UserPlus size={16} /> Tambah Admin
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

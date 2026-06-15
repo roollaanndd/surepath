@@ -1,6 +1,6 @@
 # SurePath — Data Gateway (Edge Function)
 
-> Referensi `supabase/functions/data-gateway/index.ts`. Versi deploy saat ini: **v4** (10 Juni 2026).
+> Referensi `supabase/functions/data-gateway/index.ts`. Versi deploy saat ini: **v11** (15 Juni 2026).
 
 ## Konsep
 
@@ -38,6 +38,7 @@ Origin yang diizinkan:
 | `redeem_coins` | Tukar koin (cek saldo server-side) |
 | `create_policy_order` | Buat order — `agent_id` SELALU di-set dari caller, tidak pernah dari klien |
 | `get_my_orders` / `get_my_claims` / `get_my_payments` | Data customer sendiri (scoped client_id / user_id / order milik sendiri) |
+| `cancel_my_order` | Batalkan order sendiri (status SUBMITTED/UNDER_REVIEW); kepemilikan diverifikasi server-side via `client_id` |
 
 ### Admin-only (role di ADMIN_ROLES)
 `admin_list_users`, `admin_get_user`, `admin_update_user`, `admin_register_agent`,
@@ -63,3 +64,5 @@ atau lewat Supabase Dashboard → Edge Functions → data-gateway → paste & de
 ## Riwayat versi deploy
 - v3 (awal Juni 2026): set action awal.
 - v4 (10 Juni 2026): + `ensure_profile`, + CORS `https://localhost` & `capacitor://localhost`.
+- v8 (13 Juni 2026): + `admin_transaksi_overview`, `admin_financial_detail`, `admin_analytics_data`, `admin_list_commissions`, `admin_update_commission`, `admin_security_stats`, `admin_traffic_stats`.
+- v11 (15 Juni 2026): + `cancel_my_order` (customer self-service order cancellation, ownership enforced server-side).

@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -56,7 +56,7 @@ const MENU_ITEMS: MenuItem[] = [
   // POLIS & KLAIM
   { id: '_sep3', isSeparator: true, groupLabel: 'Polis & Klaim',      roles: ALL_ROLES },
   { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
@@ -149,12 +149,15 @@ const AdminPortal = ({
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
-    getAdminStats().then(setAdminStats).catch(() => {});
 
-    // Fetch Transaksi Overview stats
-    callGateway('admin_transaksi_overview', {}).then(({ data }) => {
-      if (data) setTransaksiStats(data as any);
-    }).catch(() => {});
+    const refreshStats = () => {
+      getAdminStats().then(setAdminStats).catch(() => {});
+      callGateway('admin_transaksi_overview', {}).then(({ data }) => {
+        if (data) setTransaksiStats(data as any);
+      }).catch(() => {});
+    };
+    refreshStats();
+    const statsInterval = setInterval(refreshStats, 120000);
 
     // Online users
     getOnlineUsers().then(setOnlineUsers).catch(() => {});
@@ -179,6 +182,7 @@ const AdminPortal = ({
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      clearInterval(statsInterval);
       clearInterval(onlineInterval);
       clearInterval(notifInterval);
     };
@@ -326,14 +330,26 @@ const AdminPortal = ({
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
     <div className="space-y-8">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500`}>Sistem aktif</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500`}>Sistem aktif</p>
+          </div>
+          <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
+            Dashboard
+          </h2>
         </div>
-        <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
-          Dashboard
-        </h2>
+        <button
+          onClick={() => {
+            getAdminStats().then(setAdminStats).catch(() => {});
+            callGateway('admin_transaksi_overview', {}).then(({ data }) => { if (data) setTransaksiStats(data as any); }).catch(() => {});
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${th(darkMode, 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white', 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700')}`}
+          title="Refresh data"
+        >
+          <RefreshCw size={13} /> Refresh
+        </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

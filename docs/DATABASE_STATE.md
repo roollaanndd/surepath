@@ -1,7 +1,7 @@
 # SurePath — Keadaan Database (Live vs Repo)
 
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
-> Snapshot per 10 Juni 2026, project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
+> Snapshot per 15 Juni 2026, project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
 ## Tabel inti (prefix `sp_`)
 
@@ -19,19 +19,15 @@
 | `sp_quotes`, `sp_product_configs`, `sp_website_config` | Quote publik, harga, CMS landing | publik/terbuka |
 | `sp_withdrawals`, `sp_wallet_transactions` | Penarikan & wallet agent | via gateway / RPC |
 
-## Status RLS live (per 10 Juni 2026) — BERBEDA dari migrasi repo
+## Status RLS live (per 15 Juni 2026)
 
-- Migrasi `20260603_tighten_*` dan `20260604_security_hardening.sql` ada di repo tapi
-  **belum diapply** ke sp_users/sp_clients/sp_commissions dll (policy `*_open` masih ada,
-  policy self-* pengganti BELUM dibuat di live DB).
-- Yang SUDAH di-drop manual di live: `anon_all_policy_orders`, `anon_all_payments`,
-  `sp_claims_open` → ketiga tabel itu deny-all (commit "Batch 4").
-- ⚠️ Jika nanti mengapply `20260604_security_hardening.sql`: pastikan dulu SEMUA
-  jalur klien ke tabel terkait sudah lewat gateway, dan **apply juga** migrasi
-  `tighten_*` pembuat policy pengganti — kalau tidak, fitur akan mati.
-- Ada error berulang `permission denied for table sp_page_views` di log Postgres —
-  role `anon` tampaknya kehilangan GRANT di beberapa tabel (grants ≠ RLS). Analytics
-  anonim kemungkinan tidak tercatat. Belum diperbaiki.
+- **17 scoped policies** applied via migration `rls_clear_policies_and_demo_passwords` (11 Juni 2026).
+- `is_admin()` SECURITY DEFINER helper — dipakai di policy yang gate admin-only rows.
+- `sp_policy_orders`, `sp_payments`, `sp_claims` → deny-all, hanya lewat data-gateway service_role.
+- `sp_agent_wallets`, `sp_wallet_transactions` → hanya via `credit_agent_wallet()` + `request_withdrawal_deduct()` SECURITY DEFINER RPC.
+- ~~`sp_users_open` / `sp_clients_open` / `sp_commissions_open`~~ → sudah diganti policy scoped.
+- `sp_user_sessions` → allow all (intentional, untuk heartbeat sesi).
+- Error `permission denied for table sp_page_views` → belum diperbaiki, analytics anonim mungkin tidak tercatat.
 
 ## Hal yang dimiliki aplikasi LAIN di project yang sama
 

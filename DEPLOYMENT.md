@@ -7,7 +7,7 @@
 
 Pushing to `main` triggers automatic production deployment.
 
-```
+```bash
 git push origin main
 ```
 
@@ -21,7 +21,7 @@ Set in Vercel Dashboard → Project Settings → Environment Variables.
 | Variable | Purpose | Required |
 |----------|---------|----------|
 | `VITE_ADMIN_KEY` | Master admin password seed | Yes |
-| `VITE_OPENROUTER_KEY` | OpenRouter API key (all AI features) | Yes |
+| `VITE_OPENROUTER_KEY` | OpenRouter API key (AI features) | Yes |
 | `VITE_SUPABASE_URL` | Supabase project URL | Yes |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
 
@@ -35,15 +35,22 @@ Set in Vercel Dashboard → Project Settings → Environment Variables.
 
 ### Edge Function Deploy
 
+Edge functions do NOT auto-deploy with Vercel — deploy manually after changes:
+
 ```bash
 supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi
 supabase functions deploy notify-admin --project-ref uyjgeteelnswphyzkjwi
 supabase functions deploy send-insurer-email --project-ref uyjgeteelnswphyzkjwi
 ```
 
+**Current live versions:**
+- `data-gateway` → v11
+- `notify-admin` → latest
+- `send-insurer-email` → latest
+
 ### Supabase Secrets Setup
 
-Secrets are stored in Supabase and injected into Edge Functions at runtime — **never put these in `.env` or Vercel**.
+Secrets are stored in Supabase Vault — **never put these in `.env` or Vercel**.
 
 Set via Supabase Dashboard → Edge Functions → Manage secrets, or via CLI:
 
@@ -69,20 +76,30 @@ supabase secrets set SUPABASE_ANON_KEY=<value> --project-ref uyjgeteelnswphyzkjw
 
 | Branch | Environment |
 |--------|-------------|
-| `main` | Production (`myinsurepath.com`) |
-| `claude/insurtech-mobile-app-RvOFd` | Feature development |
+| `main` | Production (`myinsurepath.com`) — Vercel auto-deploy |
+| `claude/gstack-status-yuyhyd` | Active feature branch → PR #28 |
 
 ---
 
-## Checklist Before Deploy
+## Demo Accounts (Supabase project)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Customer | demo.customer@myinsurepath.com | Demo1234! |
+| Agent | demo.agent@myinsurepath.com | Demo1234! |
+| Admin | demo.admin@myinsurepath.com | Demo1234! |
+
+---
+
+## Pre-Deploy Checklist
 
 - [ ] `VITE_ADMIN_KEY` set in Vercel
 - [ ] `VITE_OPENROUTER_KEY` set in Vercel
 - [ ] All 5 Supabase secrets set
-- [ ] Edge functions deployed (data-gateway v8, notify-admin, send-insurer-email)
+- [ ] Edge functions deployed (`data-gateway` v11+, `notify-admin`, `send-insurer-email`)
 - [ ] RLS policies verified (17 scoped policies + `is_admin()` helper)
 - [ ] `npm run build` passes locally
 
 ---
 
-*Last updated: June 2026 · SurePath Engineering*
+*Last updated: June 15, 2026 · SurePath Engineering*

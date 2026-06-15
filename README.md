@@ -30,17 +30,23 @@ SurePath is a full-stack insurtech platform for Indonesian markets. Agents sell 
 ### For Customers
 - Insurance purchase flow with Xendit invoice payment (VA, e-wallet, QRIS, credit card)
 - Claim submission with photo uploads
-- Policy status tracking
+- Policy status tracking with order detail sheet
+- Order cancellation (SUBMITTED/UNDER_REVIEW orders)
+- Accessibility font scale (0.85×–1.25×) + manual dark/light mode
+- PWA installable — update notification toast on new version
 
 ### For Admins
-- Policy order queue — review, approve, issue, reject
+- Policy order queue — review, approve, issue, reject (accessible to ADMIN + INSURANCE_ADMIN + MASTER_ADMIN)
 - Xendit payment ledger (PAID / PENDING / EXPIRED)
 - Agent commission ledger
 - Agent withdrawal queue with tiered approval
 - Financial reports (GWP, commissions, claims)
 - AI policy review and AI finance review agents
-- User / agent management
+- User / agent management with live refresh
 - Telegram alerts on new orders, payments, claims
+- Dashboard stats auto-refresh every 2 minutes + manual refresh button
+- Admin-managed promo banner (headline, image, visibility toggle)
+- Role-based menu permissions configurable per role (MASTER_ADMIN only)
 
 ---
 
@@ -185,6 +191,16 @@ npm run build        # Production build (TypeScript checked)
 
 ---
 
+## Demo Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Customer | demo.customer@myinsurepath.com | Demo1234! |
+| Agent | demo.agent@myinsurepath.com | Demo1234! |
+| Admin | demo.admin@myinsurepath.com | Demo1234! |
+
+---
+
 ## Security Notes
 
 - Wallet balances can only be mutated by `service_role` via SECURITY DEFINER SQL functions
@@ -192,5 +208,6 @@ npm run build        # Production build (TypeScript checked)
 - Withdrawals deduct balance atomically at request time, preventing overdraw
 - `xendit-disburse` marks PROCESSING before the API call to prevent double-trigger
 - Xendit webhook token verified via `x-callback-token` header
-- All financial tables have RLS enabled
-- Admin portal is auth-gated; no demo/bypass path
+- All financial tables have RLS enabled (17 scoped policies)
+- Order cancellation ownership enforced server-side via `client_id` match
+- Admin portal gated by Supabase Auth — role resolved from `sp_users`

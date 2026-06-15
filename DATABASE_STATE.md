@@ -1,25 +1,53 @@
 # SurePath — Database State Reference
 > Supabase project `uyjgeteelnswphyzkjwi` · ap-southeast-1 (Singapore)
+> Last updated: June 15, 2026
 
 ---
 
-## Supabase Tables
+## Supabase Tables (sp_*)
 
-| Table | Purpose | Notes |
-|-------|---------|-------|
-| `sp_users` | Customer and agent profiles | Linked to `auth.users` |
-| `sp_policy_orders` | Policy purchase orders | Watched by `notify-admin` edge function |
-| `sp_insurers` | Partner insurer records | Columns: `admin_email`, `admin_name`, `pic_name`, `pic_phone`; `pic_email` migration pending |
-| `sp_admin_notifications` | In-app notification records for admin users | Feeds notification bell in AdminPortal |
-| `auth.users` | Supabase built-in auth | Managed by Supabase Auth |
+| Table | Purpose | Access |
+|-------|---------|--------|
+| `sp_users` | All user profiles — customers, agents, admins, B2B | via data-gateway |
+| `sp_clients` | Clients owned by agents | via data-gateway |
+| `sp_policy_orders` | Insurance purchase orders (status: SUBMITTED→CANCELLED) | deny-all → gateway only |
+| `sp_payments` | Xendit invoice records | deny-all → gateway only |
+| `sp_commissions` | Per-order commission records | via gateway |
+| `sp_claims` | Claim submissions | deny-all → gateway only |
+| `sp_agent_wallets` | Agent IDR balance (one row per agent) | SECURITY DEFINER RPC only |
+| `sp_wallet_transactions` | Immutable wallet ledger — append-only | via gateway |
+| `sp_withdrawals` | Withdrawal requests + multi-level approval chain | via gateway |
+| `sp_notifications` | Agent in-app notifications | via gateway |
+| `sp_admin_notifications` | Admin notification inbox | via gateway |
+| `sp_review_tokens` | Insurer review links (7-day expiry) | via gateway |
+| `sp_coin_ledger` | Coin earn/redeem history | via gateway |
+| `sp_user_sessions` | Session heartbeats (security monitoring) | client write, admin read |
+| `sp_page_views` | Traffic analytics | anon insert, admin read |
+| `sp_quotes` | Public quote calculations | public |
+| `sp_product_configs` | Insurer product rate configs | public read, admin write |
+| `sp_website_config` | CMS config for landing page / promo banner | public read, admin write |
+| `sp_insurers` | Partner insurer records | via gateway |
+| `sp_bot_config` | Telegram bot token + chat ID | edge function only |
 
 ---
 
-## RLS (Row Level Security)
+## sp_policy_orders Status Flow
 
-- **17 scoped policies** across tables
-- `is_admin()` — SECURITY DEFINER helper function; used in policies that gate admin-only rows
-- Policies are per-table, per-operation (SELECT / INSERT / UPDATE / DELETE)
+```
+SUBMITTED → UNDER_REVIEW → APPROVED → ISSUED
+                         ↘ REJECTED
+SUBMITTED → CANCELLED (customer self-service)
+UNDER_REVIEW → CANCELLED (customer self-service)
+```
+
+---
+
+## RLS Status (post June 11, 2026)
+
+- **17 scoped policies** applied across tables
+- `is_admin()` — SECURITY DEFINER helper used in admin-gating policies
+- `sp_policy_orders`, `sp_payments`, `sp_claims` — deny-all; access only via data-gateway with service_role
+- `sp_agent_wallets`, `sp_wallet_transactions` — no direct client access; only mutated by `credit_agent_wallet()` and `request_withdrawal_deduct()` SECURITY DEFINER SQL functions
 
 ---
 
@@ -28,63 +56,39 @@
 Defined in `types.ts` and enforced via RLS + app-level checks:
 
 ```
-MASTER_ADMIN
-ADMIN
-FINANCE
-FINANCE_MANAGER
-FINANCE_DIRECTOR
-INSURANCE_ADMIN
-AGENT
-CUSTOMER
-B2B_CLIENT
+MASTER_ADMIN    — full access
+ADMIN           — orders, users, agents, commissions, payments, withdrawals, approvals
+FINANCE         — reports, transactions, commissions, payments, withdrawals (L1)
+FINANCE_MANAGER — finance + withdrawal L2 approval
+FINANCE_DIRECTOR— finance + withdrawal L3 approval
+INSURANCE_ADMIN — policy orders, claims queue
+AGENT           — own clients + orders + wallet
+CUSTOMER        — own orders + claims + payments
+B2B_CLIENT      — B2B portal
 ```
 
 ---
 
-## sp_insurers Columns
+## Key SQL Functions (SECURITY DEFINER)
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | uuid | PK |
-| `admin_email` | text | Primary contact email |
-| `admin_name` | text | Admin contact name |
-| `pic_name` | text | Person-in-charge name |
-| `pic_phone` | text | Person-in-charge phone |
-| `pic_email` | text | **Pending migration** — not yet in schema |
+| Function | Purpose |
+|----------|---------|
+| `is_admin()` | Returns true if caller's role is in ADMIN_ROLES — used in RLS policies |
+| `credit_agent_wallet(agent_id, amount)` | Credit wallet balance atomically; appends to `sp_wallet_transactions` |
+| `request_withdrawal_deduct(agent_id, amount)` | Deduct balance atomically at withdrawal request time |
+| `reverse_withdrawal(withdrawal_id)` | Restore balance if withdrawal rejected or Xendit fails |
 
 ---
 
-## sp_admin_notifications Columns
+## Dexie (IndexedDB) — Legacy / Local Only
 
-Stores in-app notifications surfaced by the AdminPortal notification bell.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | uuid | PK |
-| `created_at` | timestamptz | Auto-set |
-| `type` | text | Notification category |
-| `message` | text | Human-readable notification body |
-| `read` | boolean | False = unread |
-| `user_id` | uuid | Target admin user (nullable = all admins) |
-
----
-
-## Dexie (IndexedDB) Tables
-
-Local client-side storage — defined in `db.ts`.
+Used for `customProducts` (admin-created) and some local CMS config. Actively being replaced by Supabase tables.
 
 | Table | Contents |
 |-------|----------|
-| `users` | Admin/agent accounts with hashed passwords |
-| `policies` | Customer policies |
-| `claims` | Claim records |
-| `orders` | Purchase orders |
-| `agents` | Agent profiles |
-| `products` | Base insurance products |
-| `customProducts` | Admin-created custom products |
-| `websiteConfig` | CMS config for landing page sections |
-| `vehiclePricelist` | 2025 vehicle prices (Halalins MV4) |
+| `customProducts` | Admin-created custom insurance products |
+| `websiteConfig` | Local CMS config (some features still use this) |
 
 ---
 
-*Last updated: June 2026 · SurePath Engineering*
+*Last updated: June 15, 2026 · SurePath Engineering*

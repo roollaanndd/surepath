@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, CheckCircle2, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
+import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
 import { Language } from '../../types';
 import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -7,6 +7,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 interface Props {
   agentId: string;
   lang: Language;
+  onNavigate?: (tab: string) => void;
 }
 
 type TabId = 'all' | 'pending' | 'paid' | 'byproduct' | 'coins';
@@ -28,7 +29,7 @@ const productColors: Record<string, string> = {
   MPAR: 'bg-amber-50 text-ds-amber',
 };
 
-const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
+const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [commissions, setCommissions] = useState<SpCommission[]>([]);
@@ -36,7 +37,6 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   const [coinLedger, setCoinLedger] = useState<SpCoinLedger[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('all');
-  const [toastVisible, setToastVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!agentId) return;
@@ -96,8 +96,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
   };
 
   const handleWithdraw = () => {
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
+    onNavigate?.('wallet');
   };
 
   const formatDate = (dateStr?: string) => {
@@ -115,16 +114,6 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang }) => {
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
-
-      {/* Toast */}
-      {toastVisible && (
-        <div className="fixed top-20 inset-x-4 z-50 flex justify-center">
-          <div className="bg-ds-green text-white rounded-2xl px-5 py-3 font-black text-sm shadow-ds-md flex items-center gap-2">
-            <CheckCircle2 size={16} />
-            {t('Withdrawal request submitted!', 'Permintaan penarikan dikirim!')}
-          </div>
-        </div>
-      )}
 
       {/* Balance Hero Card */}
       <div className="mx-4 mt-5 rounded-[1.5rem] p-5 bg-ds-navy text-white shadow-ds-navy space-y-4">

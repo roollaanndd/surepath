@@ -17,11 +17,12 @@ interface Props {
 }
 
 const STATUS_META: Record<SpPolicyOrder['status'], { en: string; id: string; color: string; Icon: any }> = {
-  SUBMITTED:    { en: 'Submitted',    id: 'Diajukan',   color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',     Icon: Clock },
-  UNDER_REVIEW: { en: 'In Review',    id: 'Ditinjau',   color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',          Icon: Eye },
-  APPROVED:     { en: 'Approved',     id: 'Disetujui',  color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit',color:'bg-[#16a34a]/10 text-[#16a34a]',                                         Icon: FileText },
-  REJECTED:     { en: 'Rejected',     id: 'Ditolak',    color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',           Icon: XCircle },
+  SUBMITTED:    { en: 'Submitted',    id: 'Diajukan',    color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',       Icon: Clock },
+  UNDER_REVIEW: { en: 'In Review',    id: 'Ditinjau',    color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',            Icon: Eye },
+  APPROVED:     { en: 'Approved',     id: 'Disetujui',   color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
+  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit', color: 'bg-[#16a34a]/10 text-[#16a34a]',                                            Icon: FileText },
+  REJECTED:     { en: 'Rejected',     id: 'Ditolak',     color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',             Icon: XCircle },
+  CANCELLED:    { en: 'Cancelled',    id: 'Dibatalkan',  color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',         Icon: XCircle },
 };
 
 // ── Detail Sheet ─────────────────────────────────────────────────────────────
@@ -217,14 +218,15 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
     setPayingOrderId(null);
   };
 
-  useEffect(() => { load(); }, [agentId]);
+  useEffect(() => { load().catch(() => setLoading(false)); }, [agentId]);
 
   const FILTERS = [
-    { id: 'ALL',          en: 'All',      id_: 'Semua' },
-    { id: 'SUBMITTED',    en: 'Pending',  id_: 'Menunggu' },
-    { id: 'UNDER_REVIEW', en: 'Review',   id_: 'Review' },
-    { id: 'ISSUED',       en: 'Issued',   id_: 'Terbit' },
-    { id: 'REJECTED',     en: 'Rejected', id_: 'Ditolak' },
+    { id: 'ALL',          en: 'All',       id_: 'Semua' },
+    { id: 'SUBMITTED',    en: 'Pending',   id_: 'Menunggu' },
+    { id: 'UNDER_REVIEW', en: 'Review',    id_: 'Review' },
+    { id: 'ISSUED',       en: 'Issued',    id_: 'Terbit' },
+    { id: 'REJECTED',     en: 'Rejected',  id_: 'Ditolak' },
+    { id: 'CANCELLED',    en: 'Cancelled', id_: 'Dibatalkan' },
   ];
 
   const visible = filter === 'ALL' ? orders : orders.filter(o => o.status === filter);

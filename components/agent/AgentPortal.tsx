@@ -17,6 +17,7 @@ import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
 import AgentBuyMarketplace from './AgentBuyMarketplace';
 import AgentCommission from './AgentCommission';
+import AgentWalletView from './AgentWallet';
 import AgentLeaderboard from './AgentLeaderboard';
 import AgentClaims from './AgentClaims';
 import { AgentNotifications } from './AgentNotifications';
@@ -176,7 +177,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       case 'claims':
         return <AgentClaims agentId={agent?.id ?? ''} lang={lang} />;
       case 'commission':
-        return <AgentCommission agentId={agent?.id ?? ''} lang={lang} />;
+        return <AgentCommission agentId={agent?.id ?? ''} lang={lang} onNavigate={handleTabChange} />;
+      case 'wallet':
+        return <AgentWalletView />;
       case 'leaderboard':
         return (
           <AgentLeaderboard

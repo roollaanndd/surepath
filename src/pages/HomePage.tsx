@@ -35,7 +35,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   const WHY = [
     { color: '#2563eb', Icon: Search,    title: t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis'),   desc: t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu. Bukan yang paling menguntungkan komisi.', 'Before recommending any product, we deeply understand your life context — not just the most commission-profitable ones.') },
     { color: '#7c3aed', Icon: Users,     title: t('Agen Berlisensi', 'Licensed Agents'),                  desc: t('Semua agen udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our agents hold official certifications and continuously update their knowledge.') },
-    { color: '#d97706', Icon: BarChart2, title: t('Pilihan Terlengkap', 'Widest Selection'),               desc: t('40+ produk dari 18 insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', '40+ products from 18 trusted insurers in one platform.') },
+    { color: '#d97706', Icon: BarChart2, title: t('Pilihan Terlengkap', 'Widest Selection'),               desc: t('Berbagai produk dari insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', 'A wide range of products from trusted insurers in one platform.') },
     { color: accent,    Icon: Zap,       title: 'Digital-First, Human Touch',                              desc: t('Teknologi bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli dan siap bantu.', 'Technology makes everything easy, but behind it are real humans who care and are ready to help.') },
   ];
 
@@ -85,7 +85,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <span className="mx-1.5" style={{ color: 'rgba(1,235,2,0.4)' }}>·</span>
               Jakarta, Indonesia
               <span className="mx-1.5" style={{ color: 'rgba(1,235,2,0.4)' }}>·</span>
-              {t('12.400+ nasabah aktif', '12,400+ active clients')}
+              {t('Amanah & Terpercaya', 'Trusted & Reliable')}
             </p>
           </div>
         </div>
@@ -95,24 +95,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ═══════════════ STATS — giant numbers, no cards ═══════════════ */}
-      <section className="py-14 px-6" style={{ background: videoBg2, borderBottom: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto flex flex-wrap justify-between gap-10">
-          {STATS.map((stat, i) => (
-            <Reveal key={stat.label} delay={i * 80}>
-              <div>
-                <div style={{ fontSize: 'clamp(2.5rem,5.5vw,4rem)', fontWeight: 900, lineHeight: 1, color: textMain, letterSpacing: '-0.04em' }}>
-                  <AnimatedCounter target={stat.target} suffix={stat.suffix} />
-                </div>
-                <div style={{ width: 28, height: 3, background: accent, margin: '10px 0 8px', borderRadius: 99 }} />
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-                  {stat.label}
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      {/* STATS section temporarily hidden */}
 
       {/* ═══════════════ WHY — left-border cards, ordinal bg ═══════════════ */}
       <section className="py-24 px-6" style={{ background: videoBg3 }}>
@@ -232,7 +215,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <span style={{ color: accent }}>{t('perjalanan proteksimu?', 'your protection journey?')}</span>
             </h2>
             <p className="text-base max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: textMuted }}>
-              {t('Gabung bareng lebih dari 12.000 orang yang udah percayain ketenangan hidupnya ke SurePath.', 'Join over 12,000 clients who have entrusted their peace of mind to SurePath.')}
+              {t('Mulai lindungi yang paling berharga dalam hidupmu — transparan, manusiawi, dan nggak ribet.', 'Start protecting what matters most — transparent, human-centered, and hassle-free.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button onClick={onSignIn}

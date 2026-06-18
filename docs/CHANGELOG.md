@@ -2,6 +2,16 @@
 
 ---
 
+## v1.8.4 — 2026-06-15
+
+### Fixes (Agent Portal)
+- **AgentWallet wired** — `AgentWalletView` added as `wallet` case in `AgentPortal` renderTab; previously orphaned and unreachable
+- **Withdraw button fixed** — `handleWithdraw` in `AgentCommission` now navigates to wallet tab via `onNavigate` prop instead of showing a fake success toast
+- **CANCELLED status in order list** — Added `CANCELLED` to `STATUS_META` and filter tabs in `AgentOrderStatus`
+- **Order load error handling** — `useEffect` in `AgentOrderStatus` now catches errors; loading spinner no longer hangs on failure
+
+---
+
 ## v1.8.3 — 2026-06-15
 
 ### Fixes (Admin UX)

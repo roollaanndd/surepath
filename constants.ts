@@ -1,55 +1,21 @@
 
 import { Provider, InsuranceType, CarModelData } from './types';
+import { getBaseRateByBand, getVehicleCategory, OjkBand } from './services/ojkRates';
 
-// OJK Batas Bawah (tarif bawah / MIN) Rate Logic — SEOJK No. 06/SEOJK.05/2017.
-//
-// SOURCE OF TRUTH: services/ojkRates.ts. These percentages are the `CAR_COMP_MIN`
-// and `CAR_TLO_MIN` tables from that module, expressed as percent (value * 100).
-// The customer wizard prices via getOJKRate() here; the agent flow prices via
-// ojkRates.ts. Keep the two in sync so the same car quotes identically in both.
-// Category boundaries mirror getVehicleCategory(): <=125M, <=200M, <=400M, <=800M, >800M.
-export const getOJKRate = (priceMillions: number, region: '1'|'2'|'3', type: InsuranceType): number => {
-  if (type === InsuranceType.COMPREHENSIVE) {
-    if (region === '1') {
-      if (priceMillions <= 125) return 3.82;
-      if (priceMillions <= 200) return 2.67;
-      if (priceMillions <= 400) return 2.18;
-      if (priceMillions <= 800) return 1.80;
-      return 1.33;
-    } else if (region === '2') {
-      if (priceMillions <= 125) return 3.26;
-      if (priceMillions <= 200) return 2.47;
-      if (priceMillions <= 400) return 2.08;
-      if (priceMillions <= 800) return 1.71;
-      return 1.33;
-    } else {
-      if (priceMillions <= 125) return 2.53;
-      if (priceMillions <= 200) return 2.08;
-      if (priceMillions <= 400) return 1.79;
-      if (priceMillions <= 800) return 1.68;
-      return 1.33;
-    }
-  } else { // TLO
-    if (region === '1') {
-      if (priceMillions <= 125) return 0.53;
-      if (priceMillions <= 200) return 0.66;
-      if (priceMillions <= 400) return 0.94;
-      if (priceMillions <= 800) return 1.15;
-      return 1.26;
-    } else if (region === '2') {
-      if (priceMillions <= 125) return 0.42;
-      if (priceMillions <= 200) return 0.61;
-      if (priceMillions <= 400) return 0.91;
-      if (priceMillions <= 800) return 1.09;
-      return 1.20;
-    } else {
-      if (priceMillions <= 125) return 0.45;
-      if (priceMillions <= 200) return 0.60;
-      if (priceMillions <= 400) return 0.86;
-      if (priceMillions <= 800) return 1.05;
-      return 1.14;
-    }
-  }
+// Thin wrapper — source of truth is services/ojkRates.ts (CAR_COMP/TLO MIN/MID/MAX tables).
+// Returns rate as a percentage value (e.g. 3.82 means 3.82%).
+// Defaults to MIN (tarif batas bawah) for conservative customer-facing estimates.
+export const getOJKRate = (
+  priceMillions: number,
+  region: '1' | '2' | '3',
+  type: InsuranceType,
+  band: OjkBand = 'MIN',
+): number => {
+  const zone = parseInt(region) as 1 | 2 | 3;
+  const sumInsured = priceMillions * 1_000_000;
+  const category = getVehicleCategory(sumInsured);
+  const coverage = type === InsuranceType.COMPREHENSIVE ? 'COMPREHENSIVE' : 'TLO';
+  return getBaseRateByBand('CAR', coverage as 'COMPREHENSIVE' | 'TLO', zone, category, band) * 100;
 };
 
 // AUTHORIZED_WORKSHOP_RATE is the single canonical export below; EXPANSION_RATES

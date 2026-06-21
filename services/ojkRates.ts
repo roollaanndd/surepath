@@ -118,9 +118,10 @@ export function getBaseRate(
 export interface AddOns {
   flood: boolean;
   earthquake: boolean;
-  riot: boolean;
-  tplLimit: number;      // 0 | 10_000_000 | 25_000_000 | 50_000_000
-  paDriver: boolean;     // PA for driver
+  riot: boolean;          // SRCC — Huru-hara dan Kerusuhan (OJK IV.B No.3)
+  terrorism?: boolean;    // Terorisme dan Sabotase (OJK IV.B No.4)
+  tplLimit: number;       // 0 | 10_000_000 | 25_000_000 | 50_000_000
+  paDriver: boolean;      // PA for driver
   paPassengerSeats: number; // 0-7
 }
 
@@ -131,21 +132,28 @@ export const TPL_OPTIONS = [
   { value: 50_000_000, label: 'Rp 50 Juta' },
 ];
 
-const TPL_PREMIUM: Record<number, number> = {
-  0:          0,
-  10_000_000: 50_000,
-  25_000_000: 100_000,
-  50_000_000: 200_000,
-};
+// Progressive TPL (Tanggung Jawab Hukum Pihak Ketiga) per OJK IV.B No.5
+// Kendaraan Penumpang & Sepeda Motor: 1% (≤25M) / 0.5% (25M-50M) / 0.25% (50M-100M)
+function calcTplPremium(limit: number): number {
+  if (limit <= 0) return 0;
+  let p = 0;
+  p += Math.min(limit, 25_000_000) * 0.01;
+  if (limit > 25_000_000) p += Math.min(limit - 25_000_000, 25_000_000) * 0.005;
+  if (limit > 50_000_000) p += Math.min(limit - 50_000_000, 50_000_000) * 0.0025;
+  return Math.round(p);
+}
 
-export function calcAddonPremium(addons: AddOns, sumInsured: number): number {
+export function calcAddonPremium(addons: AddOns, sumInsured: number, coverage: CoverageType = 'COMPREHENSIVE'): number {
+  // SRCC & Terorisme: COMP 0.05%, TLO 0.035% (OJK IV.B No.3 & No.4)
+  const srccRate = coverage === 'COMPREHENSIVE' ? 0.0005 : 0.00035;
   let total = 0;
-  if (addons.flood)      total += sumInsured * 0.0015;   // 0.15%
-  if (addons.earthquake) total += sumInsured * 0.0012;   // 0.12%
-  if (addons.riot)       total += sumInsured * 0.0007;   // 0.07%
-  total += TPL_PREMIUM[addons.tplLimit] ?? 0;
-  if (addons.paDriver)   total += 50_000;                // Rp 50k/tahun
-  total += addons.paPassengerSeats * 25_000;             // Rp 25k/seat/tahun
+  if (addons.flood)            total += sumInsured * 0.0015;    // per Lampiran II Tabel II.B
+  if (addons.earthquake)       total += sumInsured * 0.0012;    // per Lampiran III Tabel III.E
+  if (addons.riot)             total += sumInsured * srccRate;  // SRCC OJK IV.B No.3
+  if (addons.terrorism)        total += sumInsured * srccRate;  // Terorisme OJK IV.B No.4
+  total += calcTplPremium(addons.tplLimit);                     // progressive OJK IV.B No.5
+  if (addons.paDriver)         total += 50_000;                 // 0.5% × Rp10M PA sum assured OJK IV.B No.6a
+  total += addons.paPassengerSeats * 25_000;                    // 0.1% × Rp25M PA sum assured/seat OJK IV.B No.6b
   return Math.round(total);
 }
 
@@ -248,6 +256,7 @@ export interface PremiumBreakdown {
     flood: number;
     earthquake: number;
     riot: number;
+    terrorism: number;
     tpl: number;
     paDriver: number;
     paPassenger: number;
@@ -266,12 +275,14 @@ export function calcPremium(
   const rate      = getBaseRateByBand(vehicleType, coverage, zone, category, band);
   const basePremium = Math.round(sumInsured * rate);
 
+  const srccRate = coverage === 'COMPREHENSIVE' ? 0.0005 : 0.00035;
   const addonDetail = {
-    flood:       addons.flood      ? Math.round(sumInsured * 0.0015) : 0,
-    earthquake:  addons.earthquake ? Math.round(sumInsured * 0.0012) : 0,
-    riot:        addons.riot       ? Math.round(sumInsured * 0.0007) : 0,
-    tpl:         TPL_PREMIUM[addons.tplLimit] ?? 0,
-    paDriver:    addons.paDriver ? 50_000 : 0,
+    flood:       addons.flood        ? Math.round(sumInsured * 0.0015)    : 0,
+    earthquake:  addons.earthquake   ? Math.round(sumInsured * 0.0012)    : 0,
+    riot:        addons.riot         ? Math.round(sumInsured * srccRate)  : 0,
+    terrorism:   addons.terrorism    ? Math.round(sumInsured * srccRate)  : 0,
+    tpl:         calcTplPremium(addons.tplLimit),
+    paDriver:    addons.paDriver     ? 50_000 : 0,
     paPassenger: addons.paPassengerSeats * 25_000,
   };
 

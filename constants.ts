@@ -23,15 +23,17 @@ export const getOJKRate = (
 export const AUTHORIZED_WORKSHOP_RATE = 0.2;
 
 export const EXPANSION_RATES = {
-  // Flood & earthquake align to OJK minimums in services/ojkRates.ts
-  // (flood 0.15% / earthquake 0.12%). Source of truth: services/ojkRates.ts.
-  FLOOD: 0.15,
-  EARTHQUAKE: 0.12,
+  // Flood & earthquake rates from Lampiran II Tabel II.B / Lampiran III Tabel III.E
+  // (separate OJK tables not included in Lampiran IV KBM).
+  FLOOD: 0.15,        // % per annum — per Lampiran II Tabel II.B
+  EARTHQUAKE: 0.12,   // % per annum — per Lampiran III Tabel III.E
+  // OJK Tabel IV.B No.3 & No.4 — COMP 0.05%, TLO 0.035% per annum
   SRCC: { COMPREHENSIVE: 0.05, TLO: 0.035 },
   TERRORISM: { COMPREHENSIVE: 0.05, TLO: 0.035 },
   AUTHORIZED_WORKSHOP_RATE,
-  PA_DRIVER: 0.5,
-  PA_PASSENGER: 0.1
+  // OJK Tabel IV.B No.6 — % of PA sum assured
+  PA_DRIVER: 0.5,     // 0.50% of PA sum assured (driver); assumes Rp10M SA → Rp50k premium
+  PA_PASSENGER: 0.1,  // 0.10% of PA sum assured per seat; assumes Rp25M SA → Rp25k premium
 };
 export const STAMP_DUTY = 10000;
 // TODO: confirm vs OJK commission cap (typ. 15–20%)

@@ -21,6 +21,7 @@ import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOr
 import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
 import OrderDetailSheet from './OrderDetailSheet';
+import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 
 interface Props {
   currentUser: any;
@@ -39,6 +40,7 @@ const TABS = [
 
 const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('CUSTOMER'));
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [activePage, setActivePage] = useState('home');
@@ -548,6 +550,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   return (
     <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-white transition-colors duration-300">
       <div aria-hidden className="sp-ambient" />
+      {showOnboarding && (
+        <OnboardingFlow role="CUSTOMER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
 
       {/* Fixed header */}
       {!isFullscreen && (

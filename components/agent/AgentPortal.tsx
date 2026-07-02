@@ -28,6 +28,7 @@ import AgentEndorsements from './AgentEndorsements';
 import AgentOrderStatus from './AgentOrderStatus';
 import PathyChat from '../shared/PathyChat';
 import { SectionLabel } from '../shared/cards';
+import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 
 interface Props {
   agent: any;
@@ -76,6 +77,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [activeTab, setActiveTab] = useState('home');
+  const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('AGENT'));
   const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -225,6 +227,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   return (
     <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
+      {showOnboarding && (
+        <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }

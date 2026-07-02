@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { BotShield, BotClaimCam, BotAgent, BotCoin, BotChart, BotCar, BotHeart, BotPlane, BotWallet } from './CustomIcons';
+import { fetchWebsiteSection } from '../services/supabaseService';
 
 /* ─── Gojek-style illustrated onboarding — fullscreen slides, role-aware ────
    Storage: SP_ONBOARDED_<role> so customer and agent each see their own tour. */
@@ -116,6 +117,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
   const slides = SLIDES[role];
   const [step, setStep] = useState(0);
   const [leaving, setLeaving] = useState(false);
+
+  // CMS kill-switch: admin can hide the tour via Website Editor > Onboarding Apps
+  useEffect(() => {
+    fetchWebsiteSection('onboarding')
+      .then(cfg => { if (cfg && cfg.is_visible === false) onComplete(); })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const isID = lang === 'ID';
   const last = step === slides.length - 1;
 

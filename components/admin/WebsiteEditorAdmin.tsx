@@ -9,11 +9,12 @@ import {
 } from '../../services/supabaseService';
 import PromoBannerAdmin from './PromoBannerAdmin';
 
-type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash' | 'promo_banner';
+type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash' | 'promo_banner' | 'onboarding';
 
 const SECTIONS: { key: SectionKey; label: string; desc: string }[] = [
   { key: 'promo_banner', label: 'Promo Banner', desc: 'Banner pengumuman di atas halaman' },
   { key: 'splash',       label: 'Splash Screen', desc: 'Loading / welcome screen awal' },
+  { key: 'onboarding',   label: 'Onboarding Apps', desc: 'Tur perkenalan aplikasi nasabah & agen' },
   { key: 'hero',         label: 'Hero',          desc: 'Headline utama & CTA pertama' },
   { key: 'marquee',      label: 'Ticker',        desc: 'Strip teks berjalan' },
   { key: 'products',     label: 'Produk',        desc: 'Grid kartu produk asuransi' },

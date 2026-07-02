@@ -377,3 +377,59 @@ body {
     animation: scale-in-anim 0.25s ease-out both;
   }
 }
+
+/* ── True glassmorphism — mobile app surfaces (customer + agent, v1.9.x) ──
+   Edge refraction via inset highlight; emerald-tinted shadow; light + dark. */
+.sp-glass {
+  background: linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,255,255,0.52));
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.80),
+    inset 0 0 0 0.5px rgba(255,255,255,0.35),
+    0 8px 24px -12px rgba(6,78,59,0.20);
+}
+.dark .sp-glass {
+  background: linear-gradient(145deg, rgba(23,33,52,0.60), rgba(15,24,41,0.50));
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    0 8px 24px -12px rgba(0,0,0,0.55);
+}
+
+/* Stronger blur for fixed chrome: headers + bottom navs */
+.sp-glass-strong {
+  background: linear-gradient(160deg, rgba(255,255,255,0.80), rgba(255,255,255,0.62));
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.70);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    0 12px 32px -16px rgba(6,78,59,0.25);
+}
+.dark .sp-glass-strong {
+  background: linear-gradient(160deg, rgba(17,26,44,0.72), rgba(13,20,35,0.62));
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 12px 32px -16px rgba(0,0,0,0.6);
+}
+
+/* Ambient emerald wash behind glass — gives backdrop-filter something to refract */
+.sp-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(420px 320px at 12% -5%,  rgba(16,185,129,0.14), transparent 65%),
+    radial-gradient(520px 380px at 108% 18%, rgba(16,185,129,0.08), transparent 70%),
+    radial-gradient(480px 420px at 50% 115%, rgba(5,150,105,0.10),  transparent 70%);
+}
+.dark .sp-ambient {
+  background:
+    radial-gradient(420px 320px at 12% -5%,  rgba(16,185,129,0.16), transparent 65%),
+    radial-gradient(520px 380px at 108% 18%, rgba(16,185,129,0.09), transparent 70%),
+    radial-gradient(480px 420px at 50% 115%, rgba(5,150,105,0.12),  transparent 70%);
+}

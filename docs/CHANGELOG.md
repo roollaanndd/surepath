@@ -2,6 +2,17 @@
 
 ---
 
+## v1.9.1 — 2026-07-02
+
+### Mobile App UI — Glassmorphism Refine
+- **True glass surfaces** — new `sp-glass` / `sp-glass-strong` utilities: backdrop blur + saturation, inset edge-refraction highlight, emerald-tinted shadows, full light/dark variants
+- **Uniform across portals** — identical glass treatment for Customer and Agent apps (cards, headers, bottom navs)
+- **Ambient emerald wash** — fixed radial gradient backdrop (`sp-ambient`) behind content so glass has depth to refract
+- **41 surfaces converted** — CustomerPortal, AgentHome, AgentPortal chrome, AgentWallet, AgentCommission, AgentProfile, AgentCRM, AgentNetwork, AgentLeaderboard, OrderDetailSheet (bottom sheet now frosted over dimmed backdrop)
+- Empty-state dashed cards intentionally kept flat for contrast
+
+---
+
 ## v1.9.0 — 2026-07-02
 
 ### OJK Rate Engine (SEOJK No. 6/SEOJK.05/2017 — 100% accuracy)

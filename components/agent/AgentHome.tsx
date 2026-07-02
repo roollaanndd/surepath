@@ -183,7 +183,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
       {/* Secondary performance — metrics NOT shown in the hero (no duplication) */}
       <motion.div className="px-5 mt-5" {...reveal(2)}>
-        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5 flex items-center">
+        <div className="sp-glass rounded-[1.5rem] p-5 flex items-center">
           <div className="flex-1 pr-5">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp size={13} className="text-ds-green" />
@@ -205,7 +205,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
       {/* Sales Coach — calm card, deliberately quieter than the hero */}
       <motion.div className="px-5 mt-5" {...reveal(3)}>
-        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5">
+        <div className="sp-glass rounded-[1.5rem] p-5">
           <div className="flex items-start gap-3">
             <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center p-1 flex-shrink-0 animate-float">
               <PathyMascot size={30} />
@@ -257,7 +257,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
           <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('View All', 'Semua')}</button>
         </div>
-        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="sp-glass rounded-[1.5rem] overflow-hidden">
           {recentCommissions.length === 0 ? (
             <div className="p-8 flex flex-col items-center text-center gap-2">
               <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
@@ -293,7 +293,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <motion.div className="px-5 mt-5 pb-4" {...reveal(7)}>
         <button
           onClick={() => onNavigate('leaderboard')}
-          className="w-full rounded-[1.5rem] border border-ds-border bg-ds-card shadow-ds-sm p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          className="w-full rounded-[1.5rem] sp-glass p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
           <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
             <Trophy size={20} className="text-ds-amber" />

@@ -148,7 +148,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
       </div>
 
       {/* Coins Balance Card */}
-      <div className="mx-4 mt-3 bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-5">
+      <div className="mx-4 mt-3 sp-glass rounded-[1.5rem] p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center">
@@ -170,7 +170,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
 
       {/* Month Stats */}
       <div className="grid grid-cols-2 gap-3 mx-4 mt-3">
-        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-[1.5rem] p-4">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('This Month', 'Bulan Ini')}</p>
           <p className="font-black text-lg tracking-tight text-ds-ink">{formatIDR(thisMonth)}</p>
           {monthGrowth !== 0 && (
@@ -180,7 +180,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
             </div>
           )}
         </div>
-        <div className="bg-ds-card rounded-[1.5rem] border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-[1.5rem] p-4">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Last Month', 'Bulan Lalu')}</p>
           <p className="font-black text-lg tracking-tight text-ds-ink">{formatIDR(lastMonth)}</p>
           <p className="text-[10px] text-ds-ink3 font-bold mt-1">{paid.filter(c => {
@@ -222,7 +222,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
             const Icon = productIcons[type] ?? Shield;
             const colorClass = productColors[type] ?? 'bg-ds-card2 text-ds-ink3';
             return (
-              <div key={type} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4">
+              <div key={type} className="sp-glass rounded-2xl p-4 flex items-center gap-4">
                 <div className={`w-11 h-11 rounded-2xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
                   <Icon size={20} />
                 </div>
@@ -256,7 +256,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
               const isEarned = entry.type === 'EARNED';
               const isRedeemed = entry.type === 'REDEEMED';
               return (
-                <div key={entry.id ?? i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3">
+                <div key={entry.id ?? i} className="sp-glass rounded-2xl p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${isEarned ? 'bg-amber-50 text-ds-amber' : isRedeemed ? 'bg-rose-50 text-ds-red' : 'bg-ds-card2 text-ds-ink3'}`}>
                     <Coins size={18} />
                   </div>
@@ -282,7 +282,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
         <div className="space-y-2 px-4 mt-2">
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 animate-pulse h-16" />
+              <div key={i} className="sp-glass rounded-2xl p-4 animate-pulse h-16" />
             ))
           ) : getFilteredCommissions().length === 0 ? (
             <div className="bg-ds-card2 rounded-2xl border border-ds-border p-8 text-center">
@@ -297,7 +297,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
               const Icon = productIcons[c.product_type] ?? Shield;
               const colorClass = productColors[c.product_type] ?? 'bg-ds-card2 text-ds-ink3';
               return (
-                <div key={c.id ?? i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3">
+                <div key={c.id ?? i} className="sp-glass rounded-2xl p-4 flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
                     <Icon size={18} />
                   </div>

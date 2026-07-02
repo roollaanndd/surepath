@@ -113,7 +113,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <button aria-label={t('Close', 'Tutup')} onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default" />
-      <div className="relative bg-ds-bg rounded-t-3xl shadow-2xl overflow-y-auto max-h-[88vh] no-scrollbar">
+      <div className="relative sp-glass-strong rounded-t-3xl overflow-y-auto max-h-[88vh] no-scrollbar">
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-ds-border" />
         </div>
@@ -132,7 +132,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
 
         <div className="px-5 py-4 space-y-4">
           {/* Status timeline */}
-          <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+          <div className="sp-glass rounded-2xl p-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">{t('Status', 'Status')}</p>
             {renderTimeline()}
             {order.reviewer_notes && (
@@ -142,7 +142,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
 
           {/* Kendaraan */}
           {order.vehicle_type && (
-            <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+            <div className="sp-glass rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Car size={14} className="text-ds-green" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{t('Vehicle', 'Kendaraan')}</p>
@@ -165,7 +165,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           )}
 
           {/* Perlindungan */}
-          <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+          <div className="sp-glass rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck size={14} className="text-ds-green" />
               <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{t('Coverage', 'Perlindungan')}</p>
@@ -187,7 +187,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           </div>
 
           {/* Rincian Premi */}
-          <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+          <div className="sp-glass rounded-2xl p-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">{t('Premium Breakdown', 'Rincian Premi')}</p>
             <div className="space-y-1.5">
               <div className="flex justify-between"><span className="text-xs text-ds-ink3">{t('Base Premium', 'Premi Dasar')}</span><span className="text-xs font-bold text-ds-ink">{formatIDR(order.base_premium ?? 0)}</span></div>
@@ -209,7 +209,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
 
           {/* Survei AI */}
           {((order.ai_score ?? 0) > 0 || order.ai_verdict) && (
-            <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+            <div className="sp-glass rounded-2xl p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">{t('AI Survey', 'Survei AI')}</p>
               <div className="space-y-1.5">
                 {(order.ai_score ?? 0) > 0 && (
@@ -223,7 +223,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           )}
 
           {/* Order Info */}
-          <div className="bg-ds-card rounded-2xl border border-ds-border p-4">
+          <div className="sp-glass rounded-2xl p-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">{t('Order Info', 'Info Pengajuan')}</p>
             <div className="space-y-1.5">
               <div className="flex justify-between">

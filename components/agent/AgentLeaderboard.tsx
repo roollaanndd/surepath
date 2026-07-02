@@ -173,7 +173,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
       <div className="px-4 py-5 max-w-lg mx-auto space-y-4">
 
         {/* Monthly Target Card with circular progress */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm p-5">
+        <div className="sp-glass rounded-[2rem] p-5">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">
             {t('My Monthly Target', 'Target Bulanan Saya')}
           </p>
@@ -237,7 +237,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         </div>
 
         {/* Tier legend */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm p-5">
+        <div className="sp-glass rounded-[2rem] p-5">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">
             {t('Tier Requirements', 'Syarat Tier')}
           </p>
@@ -269,7 +269,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         </div>
 
         {/* Top Agents Leaderboard List */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="sp-glass rounded-[2rem] overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">
               {t('Top Agents', 'Agen Terbaik')}

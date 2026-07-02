@@ -229,7 +229,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       )}
 
       {/* Referral Link */}
-      <div className="mx-5 mt-4 bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+      <div className="mx-5 mt-4 sp-glass rounded-2xl p-4">
         <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-2">Link Rekrutmen Agen</p>
         <div className="flex items-center gap-2 bg-ds-card2 rounded-xl p-3">
           <p className="text-xs font-mono text-ds-ink2 flex-1 truncate">
@@ -246,7 +246,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Document Status */}
-      <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
+      <div className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden">
         <div className="px-5 py-3 border-b border-ds-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">Status Dokumen</span>
         </div>
@@ -269,7 +269,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Quick Nav */}
       {onNavigate && (
-        <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden">
           {[
             { id: 'network', label: 'Jaringan Downline', icon: Network },
             { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -292,7 +292,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       )}
 
       {/* Profile Info */}
-      <div className="mx-5 mt-4 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
+      <div className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-ds-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">
             {t('Personal Info', 'Informasi Pribadi')}
@@ -451,19 +451,19 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Info Grid */}
       <div className="mx-5 mt-4 grid grid-cols-2 gap-3">
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Bergabung</p>
           <p className="text-sm font-black text-ds-ink">
             {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'}) : '—'}
           </p>
         </div>
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Status</p>
           <span className={`text-xs font-black px-2.5 py-1 rounded-full ${(profile as any)?.verified ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-ds-amber'}`}>
             {(profile as any)?.verified ? 'Terverifikasi' : 'Pending'}
           </span>
         </div>
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Kode Referral</p>
           <button
             onClick={() => { navigator.clipboard.writeText(agent?.agent_code ?? profile?.agent_code ?? ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
@@ -472,7 +472,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             {agent?.agent_code ?? profile?.agent_code ?? '—'} {copied ? '✓' : <Copy size={10} />}
           </button>
         </div>
-        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4">
+        <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Downline</p>
           <p className="text-sm font-black text-ds-ink">{(profile as any)?.downline_count ?? 0}</p>
         </div>
@@ -482,21 +482,21 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       <div className="mx-5 mt-4">
         <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Performa</p>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+          <div className="sp-glass rounded-2xl p-4 text-center">
             <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Komisi Bulan Ini</p>
             <p className="text-base font-black text-ds-green">
               {stats ? `Rp ${(stats.totalCommissionMonth/1000000).toFixed(1)}jt` : '—'}
             </p>
           </div>
-          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+          <div className="sp-glass rounded-2xl p-4 text-center">
             <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Total Klien</p>
             <p className="text-base font-black text-ds-ink">{stats?.clientsCount ?? '—'}</p>
           </div>
-          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+          <div className="sp-glass rounded-2xl p-4 text-center">
             <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Polis Aktif</p>
             <p className="text-base font-black text-ds-ink">{stats?.policiesCount ?? '—'}</p>
           </div>
-          <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 text-center">
+          <div className="sp-glass rounded-2xl p-4 text-center">
             <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Total Komisi</p>
             <p className="text-base font-black text-ds-blue">
               {stats ? `Rp ${(stats.totalCommissionAllTime/1000000).toFixed(1)}jt` : '—'}
@@ -509,7 +509,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       <div className="mx-5 mt-4">
         <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Rekening Bank</p>
         {savedAccount ? (
-          <div className="bg-ds-card border border-ds-border shadow-ds-sm rounded-2xl p-4 flex items-center justify-between">
+          <div className="sp-glass rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Building2 className="w-5 h-5 text-ds-blue" />
               <div>

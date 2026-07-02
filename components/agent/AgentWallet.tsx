@@ -452,7 +452,7 @@ const AgentWalletView: React.FC = () => {
         <div className="space-y-2 mx-5 mt-4">
           <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">Rekening Terdaftar</p>
           {savedAccounts.map((acc, idx) => (
-            <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-ds-card border border-ds-border shadow-ds-sm">
+            <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl sp-glass">
               <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center">
                 <Building2 size={14} className="text-ds-green" />
               </div>
@@ -486,7 +486,7 @@ const AgentWalletView: React.FC = () => {
 
       {/* Ledger */}
       {tab === 'ledger' && (
-        <div className="bg-ds-card rounded-2xl mx-5 mt-4 overflow-hidden border border-ds-border shadow-ds-sm">
+        <div className="sp-glass rounded-2xl mx-5 mt-4 overflow-hidden">
           {txns.length === 0 && (
             <div className="text-center py-12 text-ds-ink3 text-sm">Belum ada transaksi</div>
           )}
@@ -520,7 +520,7 @@ const AgentWalletView: React.FC = () => {
             const { cls, label } = statusBadge(wd.status);
             const isPending = wd.status?.startsWith('PENDING');
             return (
-              <div key={wd.id} className="bg-ds-card border border-ds-border shadow-ds-sm rounded-2xl px-4 py-3 space-y-2">
+              <div key={wd.id} className="sp-glass rounded-2xl px-4 py-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Building2 size={16} className="text-ds-ink3" />

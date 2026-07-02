@@ -169,7 +169,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
           </p>
         </div>
       ) : (
-        <div className="bg-ds-card border border-ds-border shadow-ds-sm rounded-[2rem] p-4 flex items-center gap-3">
+        <div className="sp-glass rounded-[2rem] p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-ds-card2 flex items-center justify-center text-ds-ink3 flex-shrink-0">
             <Users size={16} />
           </div>
@@ -254,7 +254,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
               return (
                 <div key={dl.id}>
                   {/* L1 row */}
-                  <div className="bg-ds-card border border-ds-border shadow-ds-sm rounded-2xl p-4">
+                  <div className="sp-glass rounded-2xl p-4">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center font-black text-ds-green text-sm flex-shrink-0">
@@ -355,7 +355,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
             {overrideTxns.slice(0, 15).map(tx => (
               <div
                 key={tx.id}
-                className="bg-ds-card border border-ds-border shadow-ds-sm rounded-2xl px-4 py-3 flex items-center justify-between"
+                className="sp-glass rounded-2xl px-4 py-3 flex items-center justify-between"
               >
                 <div>
                   <p className="text-xs font-bold text-ds-ink">
@@ -371,7 +371,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       </div>
 
       {/* ── How It Works ────────────────────────────────────────────────── */}
-      <div className="bg-ds-card border border-ds-border shadow-ds-sm rounded-[2rem] overflow-hidden">
+      <div className="sp-glass rounded-[2rem] overflow-hidden">
         <button
           onClick={() => setHowOpen(!howOpen)}
           className="w-full flex items-center justify-between px-5 py-4"

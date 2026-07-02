@@ -21,21 +21,73 @@ export const COPY = {
 } as const;
 
 export const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
-  <div className="fixed inset-0 flex flex-col items-center justify-center" style={{ background: 'hsl(0, 0%, 8%)' }}>
+  <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: '#07100c' }}>
+    {/* ambient emerald wash */}
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
+      background: 'radial-gradient(420px 320px at 50% 30%, rgba(16,185,129,0.14), transparent 65%), radial-gradient(520px 380px at 20% 100%, rgba(5,150,105,0.10), transparent 70%)' }} />
+    {/* top progress shimmer */}
     <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
       <div style={{
         position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
-        background: 'linear-gradient(90deg, transparent, hsl(119,99%,46%), transparent)',
+        background: 'linear-gradient(90deg, transparent, #10b981, transparent)',
         animation: 'portal-slide 1.4s cubic-bezier(.4,0,.2,1) infinite',
       }} />
     </div>
-    <style>{`@keyframes portal-slide { 0%{left:-60%} 100%{left:110%} }`}</style>
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
-        style={{ borderColor: 'rgba(255,255,255,0.08)', borderTopColor: 'hsl(119, 99%, 46%)' }} />
-      <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.65rem', fontWeight: 500, color: 'rgba(255,255,255,0.30)' }}>
-        {COPY[lang].loading}
-      </p>
+    <style>{`
+      @keyframes portal-slide { 0%{left:-60%} 100%{left:110%} }
+      @keyframes pl-pulse-ring { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(2.1); opacity: 0; } }
+      @keyframes pl-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+      @keyframes pl-orbit { from { transform: rotate(0deg) translateX(42px) rotate(0deg); } to { transform: rotate(360deg) translateX(42px) rotate(-360deg); } }
+      @keyframes pl-dots { 0%,80%,100% { opacity: .25; } 40% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .pl-anim, .pl-anim * { animation: none !important; } }
+    `}</style>
+    <div className="pl-anim relative flex flex-col items-center gap-7">
+      {/* mascot shield with pulse rings + orbiting dot */}
+      <div className="relative flex items-center justify-center" style={{ width: 108, height: 108 }}>
+        {[0, 0.9].map(d => (
+          <span key={d} style={{
+            position: 'absolute', inset: 14, borderRadius: '50%',
+            border: '1.5px solid rgba(16,185,129,0.55)',
+            animation: `pl-pulse-ring 1.8s ease-out ${d}s infinite`,
+          }} />
+        ))}
+        <span style={{
+          position: 'absolute', width: 7, height: 7, borderRadius: '50%',
+          background: '#34d399', boxShadow: '0 0 10px #34d399',
+          animation: 'pl-orbit 2.2s linear infinite',
+        }} />
+        <div style={{
+          width: 72, height: 72, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'linear-gradient(145deg, rgba(16,185,129,0.18), rgba(16,185,129,0.06))',
+          border: '1px solid rgba(16,185,129,0.35)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 34px -12px rgba(16,185,129,0.45)',
+          animation: 'pl-bob 2.4s ease-in-out infinite',
+        }}>
+          <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <circle cx="12" cy="11" r="3" strokeWidth="1.4" />
+            <circle cx="10.6" cy="11" r="0.55" fill="#34d399" />
+            <circle cx="13.4" cy="11" r="0.55" fill="#34d399" />
+          </svg>
+        </div>
+      </div>
+      {/* wordmark + loading dots */}
+      <div className="flex flex-col items-center gap-2.5">
+        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.95rem', fontWeight: 800, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.92)' }}>
+          SUREPATH
+        </p>
+        <div className="flex items-center gap-2">
+          <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.62rem', fontWeight: 500, color: 'rgba(255,255,255,0.35)' }}>
+            {COPY[lang].loading}
+          </p>
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{
+              width: 4, height: 4, borderRadius: '50%', background: '#34d399',
+              animation: `pl-dots 1.2s ease-in-out ${i * 0.18}s infinite`,
+            }} />
+          ))}
+        </div>
+      </div>
     </div>
   </div>
 );

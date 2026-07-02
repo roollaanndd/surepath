@@ -253,6 +253,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         adminFee: breakdown.adminFee,
         stampDuty: breakdown.stampDuty,
         totalPremium: breakdown.total,
+        ojkRate: breakdown.rate,
+        rateBand: 'MID',
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
       });

@@ -2,6 +2,29 @@
 
 ---
 
+## v1.9.0 — 2026-07-02
+
+### OJK Rate Engine (SEOJK No. 6/SEOJK.05/2017 — 100% accuracy)
+- **Base rates corrected** — all COMP/TLO MIN/MID/MAX tables in `services/ojkRates.ts` now exact per Tabel IV.A (TLO was inverted; Cat 4/5 COMP too high; motorcycle rates wrong)
+- **Motorcycle TLO zone-dependent** — W1 1.94%, W2 1.98%, W3 0.74% (was flat 0.65%)
+- **Perluasan corrected per Tabel IV.B** — SRCC & Terorisme: COMP 0.05% / TLO 0.035% (was 0.07% flat); TPL now progressive (1% / 0.5% / 0.25% tiers); terrorism add-on added
+- **Rate band selection** — `rate_band` (MIN/MID/MAX) column in `sp_product_configs`; three-way selector in ProductConfigAdmin; public calculator shows all three bands (Batas Bawah / Tengah / Atas)
+- **Single source of truth** — `constants.ts getOJKRate()` now derives from `services/ojkRates.ts`
+
+### Full Platform Audit Fixes
+- **CRITICAL: AgentQuoteBuilder crash fixed** — `CAR_DATABASE` was referenced but never imported (ReferenceError when agent edits year on car quote)
+- **CRITICAL: ProductAIExplainer crash fixed** — read nonexistent `data.benefits` (correct: `neuralBenefits`); crashed on render
+- **Admin: backup date fixed** — read `createdAt` instead of `created_at`; showed "Invalid Date"
+- **Admin: withdrawal disburse button fixed** — redundant condition made the button logic unreachable for APPROVED status
+- **@types/react installed** — React 19 type definitions were missing entirely; surfaced 24 latent type errors, all fixed
+- **Lint green** — `tsc --noEmit` now passes with 0 errors (was 79)
+- **Security: internal PDFs removed from public/** — HANDOVER.pdf, MASTERMIND.pdf, PANDUAN_IT_SUREPATH.pdf were publicly downloadable
+- **Dead code removed** — `CarInsuranceWizard1.tsx`, `ui/signin-page.tsx` (never imported)
+- **Version aligned** — package.json + `src/version.ts` bumped to 1.9.0 (were stuck at 1.8.0 while CHANGELOG said 1.8.4)
+- **Type safety** — `SpPolicyOrder.coverage_type` widened for CUSTOM/MPAR/PA/TRAVEL/LIFE wizards; `SpUser` B2B company fields typed; quote types include MOTORCYCLE
+
+---
+
 ## v1.8.4 — 2026-06-15
 
 ### Fixes (Agent Portal)

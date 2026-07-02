@@ -1431,7 +1431,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               </div>
             )}
 
-            {isPendingApprovalAgent && aiVerdict !== 'REJECTED' && (
+            {isPendingApprovalAgent && (
               <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 p-4 flex flex-col gap-3 mb-4">
                 <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black">
                   <AlertTriangle className="w-5 h-5" />

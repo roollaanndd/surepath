@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Car, X, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, Sparkles, ExternalLink, Check } from 'lucide-react';
+import { Car, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
 import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
 import { InsuranceType, Language } from '../types';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
@@ -240,7 +240,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     });
   };
 
-  const handlePaymentResult = async (method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
+  const handlePaymentResult = async (_method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
     if (!premiumBreakdown || !selectedProvider) return;
     setLoading(true);
     try {

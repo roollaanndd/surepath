@@ -6,7 +6,7 @@ import {
 import SiteLayout from './site/SiteLayout';
 import PremiumCalcWidget from './site/PremiumCalcWidget';
 import {
-  SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter,
+  SitePageProps, useT, useSiteTheme, Reveal, 
   HeroVideo, PRODUCTS, SectionLabel, useWebsiteConfig,
 } from './site/siteKit';
 
@@ -17,7 +17,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   const { cardBg, cardBorder, textMuted, textMain, videoBg2, videoBg3, accent } = th;
 
   const heroConfig     = useWebsiteConfig('hero');
-  const statsConfig    = useWebsiteConfig('stats');
+  // const statsConfig = useWebsiteConfig('stats'); // re-enable with STATS section
   const productsConfig = useWebsiteConfig('products');
 
   const heroHeadline  = heroConfig?.headline    || t('Kami Ada,\nBuat Kamu Tenang.', 'We\'re here\nto protect.');
@@ -25,12 +25,13 @@ const HomePage: React.FC<SitePageProps> = (props) => {
   const heroCtaSec    = heroConfig?.cta_secondary_text || t('Lihat Produk', 'Our Products');
   const productsLabel = productsConfig?.headline || t('Produk Kami', 'Our Products');
 
-  const STATS = [
-    { target: 12400, suffix: '+', label: statsConfig?.headline || t('Nasabah Aktif', 'Active Clients') },
-    { target: 98,    suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate') },
-    { target: 18,    suffix: '+', label: t('Mitra Insurer', 'Insurer Partners') },
-    { target: 40,    suffix: '+', label: t('Produk Tersedia', 'Products Available') },
-  ];
+  // STATS section temporarily hidden — data kept for re-enable:
+  // const STATS = [
+  //     { target: 12400, suffix: '+', label: statsConfig?.headline || t('Nasabah Aktif', 'Active Clients') },
+  //     { target: 98,    suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate') },
+  //     { target: 18,    suffix: '+', label: t('Mitra Insurer', 'Insurer Partners') },
+  //     { target: 40,    suffix: '+', label: t('Produk Tersedia', 'Products Available') },
+  //   ];
 
   const WHY = [
     { color: '#2563eb', Icon: Search,    title: t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis'),   desc: t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu. Bukan yang paling menguntungkan komisi.', 'Before recommending any product, we deeply understand your life context — not just the most commission-profitable ones.') },

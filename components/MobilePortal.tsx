@@ -1,11 +1,9 @@
-import React from 'react';
-import { Badge } from './shared/UI';
 import {
   ShieldCheck, Bell, ChevronRight, Sparkles,
   Car, Plane, Heart, Home, Zap, FileText,
-  TrendingUp, Clock, ArrowUpRight
+  Clock, ArrowUpRight
 } from 'lucide-react';
-import { formatIDR } from './car-wizard/WizardUI';
+import {  } from './car-wizard/WizardUI';
 
 const MobilePortal = ({ currentUser, setPage, lang }: { currentUser: any, setPage: (p: string) => void, lang: string }) => {
   const t = (en: string, id: string) => lang === 'EN' ? en : id;

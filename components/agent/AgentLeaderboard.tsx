@@ -113,8 +113,6 @@ const CircularProgress: React.FC<{ value: number; size?: number; color?: string 
   );
 };
 
-const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-pink-500', 'bg-indigo-500'];
-const avatarColor = (name: string) => avatarColors[(name.charCodeAt(0) ?? 0) % avatarColors.length];
 const initials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
 const rankMedal: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -256,7 +254,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
                 <div
                   key={tier}
                   className={`rounded-xl px-3 py-2 border transition-all ${cfg.bgColor} ${cfg.borderColor} ${active ? 'ring-2 ring-offset-1' : ''}`}
-                  style={active ? { ringColor: cfg.svgColor } : {}}
+                  style={active ? ({ '--tw-ring-color': cfg.svgColor } as React.CSSProperties) : {}}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{cfg.emoji}</span>

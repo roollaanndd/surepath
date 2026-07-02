@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Share, Smartphone } from 'lucide-react';
+import { Download, X, Smartphone } from 'lucide-react';
 
 const DISMISS_KEY = 'sp_pwa_install_dismissed';
 const DISMISS_DAYS = 7;

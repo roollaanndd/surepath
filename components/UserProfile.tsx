@@ -4,10 +4,10 @@ import {
   User, ShieldCheck, ChevronRight, Landmark,
   Bell, FileCheck, Zap, LogOut,
   CheckCircle2, Lock, Package, Car, Plane,
-  Activity, X, History,
-  TrendingUp, Fingerprint, ShieldAlert, BadgeCheck,
-  CreditCard, LayoutGrid, Settings,
-  Cpu, Microscope, Eye, Send, Loader2
+  X, History,
+  Fingerprint, ShieldAlert, BadgeCheck,
+  CreditCard, LayoutGrid, 
+  Microscope, Eye, Send, Loader2
 } from 'lucide-react';
 import { db, Policy, Claim, Transaction } from '../db';
 import { Language } from '../types';

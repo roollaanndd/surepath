@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  ShieldAlert, User, Users, GraduationCap, Briefcase,
+  ShieldAlert, User, GraduationCap, Briefcase,
   ChevronRight, ChevronLeft, Check, Wallet,
-  ShieldCheck, Heart, Zap, Cpu, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
+  ShieldCheck, Heart, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 import { createPolicyOrder } from '../services/supabaseService';
 import { createXenditInvoice } from '../services/paymentService';
 import { PA_PLANS } from '../constants';
@@ -14,7 +14,7 @@ const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'curren
 const STEPS = ['Select Category', 'Select Plan', 'Insured Data', 'Beneficiary', 'Review'];
 
 /* Fix: Added lang to props */
-const PAInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [paData, setPaData] = useState<PAState>({
     category: 'GENERAL',

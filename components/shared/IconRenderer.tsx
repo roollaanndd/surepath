@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { 
   Shield, Zap, Star, Anchor, Home, Car, Plane, 
   Stethoscope, HeartPulse, Laptop, Smartphone, 

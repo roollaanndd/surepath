@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
-  Edit2, Save, X, LogOut, Copy, CheckCircle, Wallet,
-  FileText, Trophy, Loader2, Network, RefreshCw, FileEdit,
+  Edit2, Save, X, LogOut, Copy, CheckCircle, 
+  Trophy, Loader2, Network, RefreshCw, FileEdit,
   AlertCircle, Camera, Building2, ChevronRight,
 } from 'lucide-react';
 import { Language } from '../../types';

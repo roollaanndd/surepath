@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  Plane, Globe, MapPin, Calendar, Users, ChevronRight,
+  Globe, MapPin, Users, ChevronRight,
   ShieldCheck, Info, Check,
   ChevronLeft, User, AlertCircle,
   Wallet, ExternalLink, ArrowRight, Loader2} from 'lucide-react';
@@ -14,7 +14,7 @@ import { TravelState, TravelPlanType, TravelRegion, Language } from '../types';
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 /* Fix: Added lang to props */
-const TravelInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const TravelInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [travel, setTravel] = useState<TravelState>({
     destination: '',

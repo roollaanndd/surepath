@@ -29,6 +29,10 @@ export interface SpUser {
   profile_photo_url?: string | null;
   ktp_document_url?: string | null;
   is_suspended?: boolean;
+  // B2B corporate fields
+  company_name?: string | null;
+  company_reg_no?: string | null;
+  company_industry?: string | null;
 }
 
 export interface DownlineNode extends SpUser {
@@ -55,7 +59,7 @@ export interface SpPolicy {
   agent_id: string;
   client_id?: string;
   client_name: string;
-  type: 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
+  type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED';
   premium: number;
   start_date: string;
@@ -72,7 +76,7 @@ export interface SpCommission {
   order_id?: string;
   order_number?: string;
   client_name: string;
-  product_type: 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
+  product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   premium_amount: number;
   commission_amount: number;
   discount_rate?: number;
@@ -87,7 +91,7 @@ export interface SpQuote {
   agent_id: string;
   client_id?: string;
   client_name: string;
-  product_type: 'CAR' | 'TRAVEL' | 'PA' | 'MPAR';
+  product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   status: 'DRAFT' | 'SENT' | 'CONVERTED' | 'EXPIRED';
   premium_estimate: number;
   details: any;
@@ -664,7 +668,7 @@ export interface SpPolicyOrder {
   ai_score?: number;
   ai_verdict?: string;
   ai_findings?: any[];
-  coverage_type: 'COMPREHENSIVE' | 'TLO';
+  coverage_type: 'COMPREHENSIVE' | 'TLO' | 'CUSTOM' | 'MPAR' | 'PA' | 'TRAVEL' | 'LIFE';
   sum_insured: number;
   zone: number;
   vehicle_category: number;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Plus, X, Tag, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Save, Plus, X, Tag, Check } from 'lucide-react';
 import { TIER_CONFIG } from '../../types';
 import {
   getTierConfig, updateTierConfig,
@@ -14,7 +14,6 @@ const getAdminId = () => {
 };
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
-const fmtIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 // ─── Tier Config Tab ──────────────────────────────────────────────────────────
 
@@ -173,7 +172,7 @@ const PromoCodesTab: React.FC = () => {
   const [toggling, setToggling] = useState<string | null>(null);
 
   const emptyForm = {
-    code: '', description: '', discount_type: 'PERCENT' as const,
+    code: '', description: '', discount_type: 'PERCENT' as 'PERCENT' | 'FLAT',
     discount_value: 10, applicable_products: ['ALL'],
     valid_from: new Date().toISOString().slice(0, 10),
     valid_to: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),

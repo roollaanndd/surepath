@@ -4,6 +4,7 @@ import {
   CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart, FileText
 } from 'lucide-react';
 import { Language } from '../../types';
+import { CAR_DATABASE } from '../../constants';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
   saveQuote, createPolicy, addCommission,

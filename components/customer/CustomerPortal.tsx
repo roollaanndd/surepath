@@ -278,7 +278,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         </span>
                       </div>
                     ))}
-                    {customerClaims.slice(0, 1).map((c, i) => (
+                    {customerClaims.slice(0, 1).map((c) => (
                       <div key={c.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
                           <Zap size={16} className="text-rose-500" />

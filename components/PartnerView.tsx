@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Target, CheckCircle2, Star, Rocket, LineChart, User } from 'lucide-react';
 
 const PartnerView = () => {

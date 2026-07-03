@@ -2,6 +2,18 @@
 
 ---
 
+## v1.15.1 — 2026-07-03
+
+### Website Footer (Phase 3)
+- **Bug utama footer diperbaiki** — `navigate()` kini scroll ke atas saat pindah halaman; sebelumnya klik link footer terasa "tidak berfungsi" karena viewport tetap di bawah
+- **Halaman Kontak diaktifkan** — `ContactPage` yang sebelumnya tidak pernah dirender kini terhubung ke rute `/contact`; link "Hubungi Kami" di footer berfungsi
+- **Konten footer dilengkapi** — kolom kontak (email, telepon, lokasi), link Kemitraan & Kebijakan Cookie ditambahkan ke kolom yang sesuai
+- **Disclaimer regulasi OJK** — pernyataan bahwa SurePath adalah platform teknologi yang memasarkan produk asuransi berizin OJK (bukan perusahaan asuransi) — kepatuhan penting untuk situs asuransi
+- **Tahun copyright dinamis** + nama badan hukum `PT SurePath Digital Indonesia`
+- Handle media sosial dirapikan ke `myinsurepath`
+
+---
+
 ## v1.15.0 — 2026-07-03
 
 ### Agent Legal Agreement (Phase 2)

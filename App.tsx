@@ -26,6 +26,7 @@ const HomePage          = lazy(() => import('./src/pages/HomePage'));
 const ProductsPage      = lazy(() => import('./src/pages/ProductsPage'));
 const HowItWorksPage    = lazy(() => import('./src/pages/HowItWorksPage'));
 const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
+const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
 const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
@@ -133,6 +134,9 @@ const App = () => {
   const navigate = useCallback((path: string) => {
     window.history.pushState({}, '', path);
     setCurrentPath(path);
+    // Scroll to top on route change — without this, footer links appear
+    // broken because the viewport stays pinned at the bottom of the page.
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   const handleAuthSuccess = useCallback(async (user: any) => {
@@ -321,6 +325,7 @@ const App = () => {
     '/products': ProductsPage,
     '/how-it-works': HowItWorksPage,
     '/about': AboutPage,
+    '/contact': ContactPage,
   };
   const MarketingPage = MARKETING_PAGES[pathname];
   if (MarketingPage) {

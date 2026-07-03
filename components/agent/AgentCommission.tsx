@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
 import { Language } from '../../types';
-import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
+import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, getMyWithdrawals, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 interface Props {
@@ -35,6 +35,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   const [commissions, setCommissions] = useState<SpCommission[]>([]);
   const [coinBalance, setCoinBalance] = useState(0);
   const [coinLedger, setCoinLedger] = useState<SpCoinLedger[]>([]);
+  const [totalWithdrawn, setTotalWithdrawn] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('all');
 
@@ -42,14 +43,16 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
     if (!agentId) return;
     setLoading(true);
     try {
-      const [data, balance, ledger] = await Promise.all([
+      const [data, balance, ledger, withdrawals] = await Promise.all([
         getAgentCommissions(agentId),
         getAgentCoinBalance(agentId),
         getAgentCoinLedger(agentId),
+        getMyWithdrawals(100).catch(() => []),
       ]);
       setCommissions(data);
       setCoinBalance(balance);
       setCoinLedger(ledger);
+      setTotalWithdrawn(withdrawals.filter(w => w.status === 'DISBURSED').reduce((a, w) => a + (w.amount ?? 0), 0));
     } finally {
       setLoading(false);
     }
@@ -133,7 +136,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
           </div>
           <div className="bg-white/10 rounded-2xl px-4 py-3">
             <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mb-1">{t('Withdrawn', 'Dicairkan')}</p>
-            <p className="font-black text-sm text-white">Rp 0</p>
+            <p className="font-black text-sm text-white">{formatIDR(totalWithdrawn)}</p>
           </div>
         </div>
 

@@ -10,8 +10,9 @@ import {
   saveQuote, createPolicy, addCommission,
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
-import { generatePolicyCertPDF, generateQuotePDF } from '../../services/pdfService';
-import { calcPremium as calcOjkPremium, getZone, getVehicleCategory } from '../../services/ojkRates';
+import { generatePolicyCertPDF } from '../../services/pdfService';
+import { generateProposalPDF } from '../../services/proposalPdf';
+import { calcPremium as calcOjkPremium, getZone } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
@@ -225,7 +226,6 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setPrintingQuote(true);
     try {
       const zone = getZone('');  // default zone 3 when no province
-      const category = getVehicleCategory(carInputs.price);
       const breakdown = calcOjkPremium('CAR', carInputs.coverage, carInputs.price, zone, {
         flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0,
       });
@@ -237,26 +237,27 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         ...(breakdown.addonsDetail.paDriver > 0   ? [{ label: 'PA Pengemudi',         amount: breakdown.addonsDetail.paDriver }]   : []),
         ...(breakdown.addonsDetail.paPassenger > 0? [{ label: 'PA Penumpang',         amount: breakdown.addonsDetail.paPassenger }]: []),
       ];
-      await generateQuotePDF({
-        agentName: agent?.name ?? 'Agen SurePath',
-        agentCode: agent?.agent_code ?? '',
+      await generateProposalPDF({
+        quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         clientName,
+        preparedBy: agent?.name ?? 'Agen SurePath',
+        preparedByCode: agent?.agent_code ?? '',
         vehicleBrand: carInputs.brand,
         vehicleModel: carInputs.model,
         vehicleYear: carInputs.year,
         vehiclePrice: carInputs.price,
         coverageType: carInputs.coverage,
         zone,
-        category,
-        basePremium: breakdown.basePremium,
-        addons: addonsList,
-        adminFee: breakdown.adminFee,
-        stampDuty: breakdown.stampDuty,
-        totalPremium: breakdown.total,
         ojkRate: breakdown.rate,
         rateBand: 'MID',
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
+        rows: [
+          { label: 'Premi Dasar', amount: breakdown.basePremium },
+          ...addonsList,
+          { label: 'Biaya Admin', amount: breakdown.adminFee },
+          { label: 'Materai', amount: breakdown.stampDuty },
+        ],
+        totalPremium: breakdown.total,
       });
     } finally {
       setPrintingQuote(false);

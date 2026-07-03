@@ -21,70 +21,73 @@ export const COPY = {
 } as const;
 
 export const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
-  <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: '#07100c' }}>
-    {/* ambient emerald wash */}
+  <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: '#f6faf7' }}>
+    {/* ambient wash */}
     <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
-      background: 'radial-gradient(420px 320px at 50% 30%, rgba(16,185,129,0.14), transparent 65%), radial-gradient(520px 380px at 20% 100%, rgba(5,150,105,0.10), transparent 70%)' }} />
-    {/* top progress shimmer */}
-    <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
-      <div style={{
-        position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
-        background: 'linear-gradient(90deg, transparent, #10b981, transparent)',
-        animation: 'portal-slide 1.4s cubic-bezier(.4,0,.2,1) infinite',
-      }} />
-    </div>
+      background: 'radial-gradient(480px 360px at 50% 28%, rgba(16,185,129,0.10), transparent 65%), radial-gradient(560px 420px at 15% 105%, rgba(5,150,105,0.08), transparent 70%)' }} />
     <style>{`
-      @keyframes portal-slide { 0%{left:-60%} 100%{left:110%} }
-      @keyframes pl-pulse-ring { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(2.1); opacity: 0; } }
-      @keyframes pl-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-      @keyframes pl-orbit { from { transform: rotate(0deg) translateX(42px) rotate(0deg); } to { transform: rotate(360deg) translateX(42px) rotate(-360deg); } }
+      @keyframes pl-slide { 0%{left:-60%} 100%{left:110%} }
+      @keyframes pl-float { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-10px) rotate(1.5deg); } }
+      @keyframes pl-shadow { 0%,100% { transform: scaleX(1); opacity: .18; } 50% { transform: scaleX(0.72); opacity: .10; } }
+      @keyframes pl-path { to { stroke-dashoffset: -220; } }
+      @keyframes pl-runner { 0% { offset-distance: 0%; } 100% { offset-distance: 100%; } }
+      @keyframes pl-leaf { 0% { transform: translate(0,0) rotate(0deg) scale(0.6); opacity: 0; } 15% { opacity: .9; } 100% { transform: translate(var(--dx), -90px) rotate(160deg) scale(1); opacity: 0; } }
       @keyframes pl-dots { 0%,80%,100% { opacity: .25; } 40% { opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { .pl-anim, .pl-anim * { animation: none !important; } }
     `}</style>
-    <div className="pl-anim relative flex flex-col items-center gap-7">
-      {/* mascot shield with pulse rings + orbiting dot */}
-      <div className="relative flex items-center justify-center" style={{ width: 108, height: 108 }}>
-        {[0, 0.9].map(d => (
-          <span key={d} style={{
-            position: 'absolute', inset: 14, borderRadius: '50%',
-            border: '1.5px solid rgba(16,185,129,0.55)',
-            animation: `pl-pulse-ring 1.8s ease-out ${d}s infinite`,
-          }} />
-        ))}
-        <span style={{
-          position: 'absolute', width: 7, height: 7, borderRadius: '50%',
-          background: '#34d399', boxShadow: '0 0 10px #34d399',
-          animation: 'pl-orbit 2.2s linear infinite',
-        }} />
-        <div style={{
-          width: 72, height: 72, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(145deg, rgba(16,185,129,0.18), rgba(16,185,129,0.06))',
-          border: '1px solid rgba(16,185,129,0.35)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 34px -12px rgba(16,185,129,0.45)',
-          animation: 'pl-bob 2.4s ease-in-out infinite',
-        }}>
-          <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <circle cx="12" cy="11" r="3" strokeWidth="1.4" />
-            <circle cx="10.6" cy="11" r="0.55" fill="#34d399" />
-            <circle cx="13.4" cy="11" r="0.55" fill="#34d399" />
-          </svg>
-        </div>
-      </div>
-      {/* wordmark + loading dots */}
-      <div className="flex flex-col items-center gap-2.5">
-        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.95rem', fontWeight: 800, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.92)' }}>
+    {/* top progress shimmer */}
+    <div className="absolute top-0 left-0 right-0 h-[2.5px] overflow-hidden">
+      <div style={{ position: 'absolute', top: 0, left: '-60%', width: '60%', height: '100%',
+        background: 'linear-gradient(90deg, transparent, #059669, transparent)',
+        animation: 'pl-slide 1.4s cubic-bezier(.4,0,.2,1) infinite' }} />
+    </div>
+
+    <div className="pl-anim relative flex flex-col items-center">
+      {/* rising leaf particles */}
+      {[{ l: '32%', d: '0s', dx: '-26px' }, { l: '58%', d: '1.1s', dx: '20px' }, { l: '45%', d: '2.2s', dx: '-8px' }].map((p, i) => (
+        <span key={i} style={{
+          position: 'absolute', top: '52%', left: p.l, width: 10, height: 10,
+          background: 'radial-gradient(circle at 30% 30%, #6ee7b7, #059669)',
+          borderRadius: '0 60% 0 60%', ['--dx' as string]: p.dx,
+          animation: `pl-leaf 3.4s ease-out ${p.d}s infinite`,
+        } as React.CSSProperties} />
+      ))}
+
+      {/* floating official logo */}
+      <img src="/logo.png" alt="SurePath" width={104} height={120}
+        style={{ objectFit: 'contain', animation: 'pl-float 3s ease-in-out infinite',
+          filter: 'drop-shadow(0 18px 28px rgba(5,150,105,0.28))' }} />
+      {/* ground shadow */}
+      <div style={{ width: 74, height: 10, marginTop: 14, borderRadius: '50%',
+        background: 'radial-gradient(ellipse, rgba(6,78,59,0.5), transparent 70%)',
+        animation: 'pl-shadow 3s ease-in-out infinite' }} />
+
+      {/* winding path being drawn */}
+      <svg width="220" height="46" viewBox="0 0 220 46" fill="none" style={{ marginTop: 10 }}>
+        <path id="pl-road" d="M8 38 C 60 38, 55 8, 110 8 S 160 38, 212 38"
+          stroke="rgba(5,150,105,0.22)" strokeWidth="3" strokeLinecap="round" />
+        <path d="M8 38 C 60 38, 55 8, 110 8 S 160 38, 212 38"
+          stroke="#059669" strokeWidth="3" strokeLinecap="round"
+          strokeDasharray="26 84" style={{ animation: 'pl-path 2.2s linear infinite' }} />
+        <circle r="4.5" fill="#34d399" style={{
+          offsetPath: "path('M8 38 C 60 38, 55 8, 110 8 S 160 38, 212 38')",
+          animation: 'pl-runner 2.2s cubic-bezier(.45,.05,.55,.95) infinite',
+          filter: 'drop-shadow(0 0 6px #34d399)',
+        } as React.CSSProperties} />
+      </svg>
+
+      {/* wordmark + dots */}
+      <div className="flex flex-col items-center gap-2 mt-5">
+        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.26em', color: '#065f46' }}>
           SUREPATH
         </p>
         <div className="flex items-center gap-2">
-          <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.62rem', fontWeight: 500, color: 'rgba(255,255,255,0.35)' }}>
+          <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.62rem', fontWeight: 600, color: 'rgba(6,95,70,0.55)' }}>
             {COPY[lang].loading}
           </p>
           {[0, 1, 2].map(i => (
-            <span key={i} style={{
-              width: 4, height: 4, borderRadius: '50%', background: '#34d399',
-              animation: `pl-dots 1.2s ease-in-out ${i * 0.18}s infinite`,
-            }} />
+            <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: '#059669',
+              animation: `pl-dots 1.2s ease-in-out ${i * 0.18}s infinite` }} />
           ))}
         </div>
       </div>

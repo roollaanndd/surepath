@@ -1,7 +1,8 @@
 import React from 'react';
 
-const IconWrapper = ({ children, className = "w-6 h-6", color = "currentColor" }: { children: React.ReactNode, className?: string, color?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+const IconWrapper = ({ children, className, color = "currentColor", size, strokeWidth = 2 }: { children: React.ReactNode, className?: string, color?: string, size?: number, strokeWidth?: number }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
+    className={className ?? (size ? undefined : 'w-6 h-6')} width={size} height={size}>
     {children}
   </svg>
 );
@@ -124,5 +125,16 @@ export const BotChart = (props: any) => (
     <path d="M7 15l4-5 3 3 5-6" strokeWidth="1.8" />
     <circle cx="7" cy="15" r="0.8" fill="currentColor" />
     <circle cx="19" cy="7" r="0.8" fill="currentColor" />
+  </IconWrapper>
+);
+
+export const BotUser = (props: any) => (
+  <IconWrapper {...props}>
+    <circle cx="12" cy="8" r="4.5" />
+    <path d="M4.5 21c1.2-4.2 4.2-6.5 7.5-6.5s6.3 2.3 7.5 6.5" />
+    <circle cx="10.4" cy="7.6" r="0.6" fill="currentColor" />
+    <circle cx="13.6" cy="7.6" r="0.6" fill="currentColor" />
+    <path d="M10.6 9.8q1.4 1 2.8 0" strokeWidth="1" />
+    <path d="M12 3.5V2" strokeWidth="1" opacity="0.4" />
   </IconWrapper>
 );

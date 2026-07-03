@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  Home, ShoppingBag, Zap, History, UserCircle,
+  ShoppingBag, Zap, History,
   Sun, Moon, LogOut, ShieldCheck, Bell,
   Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
+import { BotHome, BotShield as BotShieldNav, BotClaimCam, BotPolicy, BotUser } from '../CustomIcons';
+import { APP_VERSION } from '../../src/version';
 import ClaimManager from '../ClaimManager';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -31,11 +33,11 @@ interface Props {
 }
 
 const TABS = [
-  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: Home },
-  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: ShoppingBag },
-  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: Zap },
-  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: History },
-  { id: 'profile',  labelEn: 'Profile', labelId: 'Profil',  Icon: UserCircle },
+  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: BotHome },
+  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: BotShieldNav },
+  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: BotClaimCam },
+  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: BotPolicy },
+  { id: 'profile',  labelEn: 'Profile', labelId: 'Profil',  Icon: BotUser },
 ];
 
 const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products }) => {
@@ -567,7 +569,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   Sure<span className="text-ds-green">Path</span>
                 </div>
                 <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none">
-                  {t('Customer Portal', 'Portal Nasabah')}
+                  {t('Customer Portal', 'Portal Nasabah')} <span className="text-ds-green/70 normal-case">v{APP_VERSION}</span>
                 </div>
               </div>
             </div>

@@ -2518,3 +2518,65 @@ export async function resetWebsiteSection(sectionKey: string): Promise<void> {
     .update({ headline: null, subtitle: null, cta_text: null, cta_secondary_text: null, bg_type: 'none', bg_value: null, is_visible: true, extra_json: {}, updated_at: new Date().toISOString() })
     .eq('section_key', sectionKey);
 }
+
+// ─── Agent Legal Agreement (sp_agent_agreements) ────────────────────────────
+export const AGREEMENT_DOC_VERSION = 'v1.0-2026';
+
+export interface SpAgentAgreement {
+  id: string;
+  agent_id: string;
+  agreement_no: string;
+  doc_version: string;
+  full_name: string;
+  ktp_number: string;
+  accepted_at: string;
+  user_agent?: string | null;
+  created_at?: string;
+}
+
+// Returns the current agent's signed agreement for the active doc version, or null.
+export async function getMyAgreement(): Promise<SpAgentAgreement | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from('sp_agent_agreements')
+    .select('*')
+    .eq('agent_id', user.id)
+    .eq('doc_version', AGREEMENT_DOC_VERSION)
+    .maybeSingle();
+  if (error) { console.error('getMyAgreement:', error); return null; }
+  return (data as SpAgentAgreement) ?? null;
+}
+
+// Records the agent's acceptance. Server enforces agent_id = auth.uid() via RLS.
+export async function acceptAgreement(fullName: string, ktpNumber: string): Promise<SpAgentAgreement | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from('sp_agent_agreements')
+    .insert({
+      agent_id: user.id,
+      doc_version: AGREEMENT_DOC_VERSION,
+      full_name: fullName.trim(),
+      ktp_number: ktpNumber.trim(),
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : null,
+    })
+    .select()
+    .single();
+  if (error) { console.error('acceptAgreement:', error); return null; }
+  return data as SpAgentAgreement;
+}
+
+// Admin/CMS: list all signed agreements with agent contact info for audit.
+export async function getAllAgreements(): Promise<Array<SpAgentAgreement & { agent_email?: string; agent_phone?: string }>> {
+  const { data, error } = await supabase
+    .from('sp_agent_agreements')
+    .select('*, sp_users(email, phone)')
+    .order('accepted_at', { ascending: false });
+  if (error) { console.error('getAllAgreements:', error); return []; }
+  return (data ?? []).map((r: any) => ({
+    ...r,
+    agent_email: r.sp_users?.email,
+    agent_phone: r.sp_users?.phone,
+  }));
+}

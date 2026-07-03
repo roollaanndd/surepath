@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck,
 } from 'lucide-react';
 import {
   BizAdminView, ApprovalsView, SettingsView, InventoryView,
@@ -17,6 +17,7 @@ import PolicyOrdersAdmin from './PolicyOrdersAdmin';
 import ProductConfigAdmin from './ProductConfigAdmin';
 import FinancialAdmin from './FinancialAdmin';
 import CommissionLedger from './CommissionLedger';
+import AgentAgreementsAdmin from './AgentAgreementsAdmin';
 import InsurerAdmin from './InsurerAdmin';
 import VehiclePricelistAdmin from './VehiclePricelistAdmin';
 import WebsiteEditorAdmin from './WebsiteEditorAdmin';
@@ -64,6 +65,7 @@ const MENU_ITEMS: MenuItem[] = [
   // AGEN & KOMISI
   { id: '_sep4', isSeparator: true, groupLabel: 'Agen & Komisi',      roles: ALL_ROLES },
   { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'agent_agreements', label: 'Perjanjian Agen',     icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   // PRODUK & ASURANSI
@@ -530,6 +532,7 @@ const AdminPortal = ({
       case 'user_mgmt':        return <UserManagementView />;
       case 'policy_orders':    return <PolicyOrdersAdmin />;
       case 'agents':           return <AgentManagementView />;
+      case 'agent_agreements': return <AgentAgreementsAdmin />;
       case 'claims_admin':     return <ClaimsAdminView />;
       case 'financial':        return <FinancialAdmin />;
       case 'insurers':         return <InsurerAdmin />;

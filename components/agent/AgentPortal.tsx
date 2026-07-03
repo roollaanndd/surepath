@@ -10,10 +10,12 @@ import {
   getAgentClients,
   getAgentStats,
   getNotifications,
+  getMyAgreement,
   type SpCommission,
   type SpClient,
   type AgentStats,
 } from '../../services/supabaseService';
+import AgentAgreementGate from './AgentAgreementGate';
 import AgentHome from './AgentHome';
 import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
@@ -80,6 +82,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   const [activeTab, setActiveTab] = useState('home');
   const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('AGENT'));
+  // Legal agreement gate — null = checking, false = must accept, true = signed
+  const [agreementOk, setAgreementOk] = useState<boolean | null>(null);
   const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -105,6 +109,13 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     }
     localStorage.setItem('sp_dark_mode', String(darkMode));
   }, [darkMode]);
+
+  // Check whether this agent has signed the current agreement version
+  useEffect(() => {
+    getMyAgreement()
+      .then(rec => setAgreementOk(!!rec))
+      .catch(() => setAgreementOk(true)); // fail-open on transient error; recheck next load
+  }, []);
 
   const loadData = async () => {
     if (!agent?.id) return;
@@ -226,10 +237,15 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     }
   };
 
+  // Legal agreement gate blocks all app access until signed
+  if (agreementOk === false) {
+    return <AgentAgreementGate agent={agent} lang={lang} onAccepted={() => setAgreementOk(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
-      {showOnboarding && (
+      {showOnboarding && agreementOk && (
         <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
       )}
       <style>{`

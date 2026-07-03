@@ -2,8 +2,20 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
+import * as Sentry from '@sentry/react';
 import App from './App';
 import './styles.css';
+
+// Error monitoring — no-op unless VITE_SENTRY_DSN is configured in the env
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: 0.1,
+    replaysOnErrorSampleRate: 0.1,
+  });
+}
 
 // Explicit SW registration — guarantees PWA install/offline works even if
 // the auto-injected registerSW.js script is blocked or dropped by a proxy.

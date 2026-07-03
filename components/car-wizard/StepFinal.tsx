@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Car, Smartphone, ShieldCheck, CheckCircle2, Shield, Wallet, 
-  BrainCircuit, Zap } from 'lucide-react';
+  BrainCircuit, Zap, FileDown } from 'lucide-react';
 import { formatIDR, PageTransition } from './WizardUI';
 import { Language } from '../../types';
+import { generateProposalPDF } from '../../services/proposalPdf';
 
 interface StepFinalProps {
   vehicle: any;
@@ -18,9 +19,48 @@ interface StepFinalProps {
 }
 
 const StepFinal: React.FC<StepFinalProps> = ({
-  vehicle, coverage, survey, premiumBreakdown, handleFinalPayment, lang
+  vehicle, stnkResult, coverage, survey, premiumBreakdown, handleFinalPayment, lang
 }) => {
   const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
+  const [printing, setPrinting] = useState(false);
+
+  const handleDownloadProposal = async () => {
+    if (!premiumBreakdown || printing) return;
+    setPrinting(true);
+    try {
+      const rows: { label: string; amount: number }[] = [
+        { label: 'Premi Dasar', amount: Math.round(premiumBreakdown.basicPremium) },
+        ...(premiumBreakdown.expansions ?? []).map((e: any) => ({ label: e.name, amount: Math.round(e.val) })),
+      ];
+      if (premiumBreakdown.tplPremium > 0)         rows.push({ label: 'TPL (Tanggung Jawab Pihak Ketiga)', amount: Math.round(premiumBreakdown.tplPremium) });
+      if (premiumBreakdown.paDriverPremium > 0)    rows.push({ label: 'Kecelakaan Diri — Pengemudi', amount: Math.round(premiumBreakdown.paDriverPremium) });
+      if (premiumBreakdown.paPassengerPremium > 0) rows.push({ label: 'Kecelakaan Diri — Penumpang', amount: Math.round(premiumBreakdown.paPassengerPremium) });
+      rows.push({ label: 'Biaya Admin', amount: premiumBreakdown.adminFee });
+      rows.push({ label: 'Materai', amount: premiumBreakdown.stampDuty });
+      rows.push({ label: 'Biaya Aplikasi', amount: premiumBreakdown.applicationFee });
+
+      await generateProposalPDF({
+        quoteNumber: `PR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-4)}`,
+        validUntil: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+        clientName: stnkResult?.ownerName || vehicle.ownerName || t('Customer', 'Nasabah'),
+        preparedBy: 'SurePath Digital',
+        vehicleBrand: vehicle.brand,
+        vehicleModel: vehicle.model,
+        vehicleYear: vehicle.year,
+        vehiclePlate: vehicle.plate,
+        vehiclePrice: vehicle.price,
+        coverageType: coverage.type === 'COMPREHENSIVE' ? 'COMPREHENSIVE' : 'TLO',
+        zone: Number(vehicle.region) || undefined,
+        ojkRate: premiumBreakdown.baseRate ? premiumBreakdown.baseRate / 100 : undefined,
+        rateBand: 'MIN',
+        rows,
+        discountAmount: Math.round(premiumBreakdown.discountAmount || 0),
+        totalPremium: Math.round(premiumBreakdown.totalPayable),
+      });
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   const summaryItems = [
       { label: t('Vehicle', 'Unit Mobil'), value: `${vehicle.brand} ${vehicle.model}`, icon: Car },
@@ -127,6 +167,15 @@ const StepFinal: React.FC<StepFinalProps> = ({
               </div>
            </div>
         </div>
+
+        <button
+           onClick={handleDownloadProposal}
+           disabled={printing}
+           className="w-full py-4 mb-1 rounded-[2rem] font-black uppercase text-xs tracking-[0.3em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50 text-emerald-700 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/15"
+        >
+           <FileDown size={18} className={printing ? 'animate-bounce' : ''} />
+           {printing ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Proposal (PDF)', 'Unduh Proposal Penawaran (PDF)')}
+        </button>
 
         <button 
            onClick={handleFinalPayment} 

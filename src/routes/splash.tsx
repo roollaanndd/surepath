@@ -193,55 +193,6 @@ export const splashTheme = (darkMode: boolean): SplashTheme =>
         ],
       };
 
-const Celestial: React.FC<{ th: SplashTheme; show: boolean }> = ({ th, show }) => (
-  <div
-    className="sp-anim"
-    style={{
-      position: 'absolute', top: 28, right: 28, width: 44, height: 44,
-      opacity: show ? 1 : 0,
-      animation: show ? 'sp-celest-in .7s cubic-bezier(.22,1,.36,1) forwards' : 'none',
-    }}
-    aria-hidden
-  >
-    {th.isDay ? (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <svg width="44" height="44" viewBox="0 0 44 44" style={{ position: 'absolute', inset: 0, animation: 'sp-sun-ray 22s linear infinite' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <line key={i} x1="22" y1="3" x2="22" y2="9"
-              stroke={th.accent} strokeWidth="2" strokeLinecap="round"
-              transform={`rotate(${i * 45} 22 22)`} opacity="0.7" />
-          ))}
-        </svg>
-        <div style={{
-          position: 'absolute', inset: '12px', borderRadius: '50%',
-          background: `radial-gradient(circle, rgba(251,191,36,0.95), rgba(${th.accentRgb},0.7))`,
-          boxShadow: `0 0 18px rgba(251,191,36,0.6)`,
-          animation: 'sp-sun-pulse 3.5s ease-in-out infinite',
-        }} />
-      </div>
-    ) : (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-        <svg width="44" height="44" viewBox="0 0 44 44" style={{ position: 'absolute', inset: 0 }}>
-          <defs>
-            <mask id="sp-moon-mask">
-              <rect width="44" height="44" fill="white" />
-              <circle cx="28" cy="18" r="11" fill="black" />
-            </mask>
-          </defs>
-          <circle cx="22" cy="22" r="11" fill={th.accent} mask="url(#sp-moon-mask)"
-            style={{ filter: `drop-shadow(0 0 8px rgba(${th.accentRgb},0.6))` }} />
-        </svg>
-        {[[6, 8, 0], [38, 30, 0.6], [34, 6, 1.2]].map(([x, y, d], i) => (
-          <div key={i} style={{
-            position: 'absolute', left: x, top: y, width: 3, height: 3, borderRadius: '50%',
-            background: th.accent, animation: `sp-twinkle 2.${4 + i}s ease-in-out ${d}s infinite`,
-          }} />
-        ))}
-      </div>
-    )}
-  </div>
-);
-
 export const PathyMascot: React.FC<{ accentRgb: string; size?: number; wave?: boolean }> = ({ accentRgb, size = 150, wave = true }) => {
   const W = size, H = Math.round(size * 1.16);
   const eye = (left: number): React.CSSProperties => ({
@@ -403,59 +354,90 @@ export const AppEntryScreen = ({ name, onDone, lang, darkMode }: { name: string;
   const [visible, setVisible] = useState(false);
   const [fade, setFade]       = useState(false);
   const onDoneRef = useRef(onDone);
-  const th = splashTheme(darkMode);
+  void darkMode; // entry screen is brand-light regardless of app theme
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
-    ensureSPKeyframes();
-    const t0 = setTimeout(() => setVisible(true), 60);
-    const t1 = setTimeout(() => setFade(true), 1800);
-    const t2 = setTimeout(() => onDoneRef.current(), 2300);
+    const t0 = setTimeout(() => setVisible(true), 40);
+    const t1 = setTimeout(() => setFade(true), 1500);
+    const t2 = setTimeout(() => onDoneRef.current(), 1950);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   const G = COPY[lang];
+  const CONFETTI = [
+    { x: '18%', y: '30%', d: '0s',    c: '#34d399', s: 9 },
+    { x: '78%', y: '24%', d: '0.12s', c: '#fbbf24', s: 7 },
+    { x: '30%', y: '68%', d: '0.20s', c: '#059669', s: 8 },
+    { x: '70%', y: '64%', d: '0.28s', c: '#6ee7b7', s: 10 },
+    { x: '50%', y: '18%', d: '0.36s', c: '#a7f3d0', s: 6 },
+    { x: '12%', y: '52%', d: '0.44s', c: '#fbbf24', s: 6 },
+    { x: '88%', y: '46%', d: '0.32s', c: '#34d399', s: 7 },
+  ];
 
   return (
     <div
       className={`sp-anim fixed inset-0 z-[4999] flex flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      style={{ background: th.bg, fontFamily: "'Sora', sans-serif", transition: 'background 0.6s ease, opacity 0.5s ease' }}
+      style={{ background: '#f6faf7', fontFamily: "'Sora', sans-serif" }}
     >
-      <Celestial th={th} show={visible} />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div style={{ width: 440, height: 440, borderRadius: '50%', background: `radial-gradient(circle, rgba(${th.accentRgb},0.12) 0%, transparent 68%)`, opacity: visible ? 1 : 0, transition: 'opacity 1s' }} />
-      </div>
-      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
-        <div className="relative mx-auto mb-7" style={{ width: 124, height: 124 }}>
-          <div className="absolute inset-0 rounded-[2.5rem] blur-2xl" style={{ background: th.accent, opacity: 0.16 }} />
-          <div className="relative w-full h-full rounded-[2.5rem] flex items-center justify-center border"
-            style={{ background: th.tileBg, borderColor: th.tileBorder, boxShadow: `0 0 60px rgba(${th.accentRgb},0.12)` }}>
-            <svg width="72" height="72" viewBox="0 0 54 54" fill="none" className="sp-anim" style={{ animation: 'sp-check-glow 2.5s ease-in-out infinite' }}>
-              <path d="M27 4L43 11.5V26C43 36.2 36 44.6 27 48C18 44.6 11 36.2 11 26V11.5L27 4Z"
-                fill={`rgba(${th.accentRgb},0.12)`} stroke={th.accent} strokeWidth="1.5" />
-              <path d="M19 27L23.5 31.5L35 20"
-                stroke={th.accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                style={{ strokeDasharray: 32, strokeDashoffset: visible ? 0 : 32, transition: 'stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1) 0.35s' }} />
+      <style>{`
+        @keyframes entry-pop { 0% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.25); } 100% { opacity: 0; transform: scale(0.4) translateY(26px); } }
+        @keyframes entry-ring { 0% { transform: scale(0.6); opacity: 0.5; } 100% { transform: scale(1.9); opacity: 0; } }
+        @keyframes entry-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @media (prefers-reduced-motion: reduce) { .sp-anim * { animation: none !important; } }
+      `}</style>
+      {/* ambient wash */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(460px 340px at 50% 32%, rgba(16,185,129,0.14), transparent 65%), radial-gradient(520px 400px at 50% 110%, rgba(5,150,105,0.09), transparent 70%)' }} />
+
+      {/* confetti burst */}
+      {visible && CONFETTI.map((p, i) => (
+        <span key={i} style={{
+          position: 'absolute', left: p.x, top: p.y, width: p.s, height: p.s,
+          background: p.c, borderRadius: i % 2 ? '50%' : '0 60% 0 60%',
+          animation: `entry-pop 1.15s cubic-bezier(.22,1,.36,1) ${p.d} both`,
+        }} />
+      ))}
+
+      <div className={`relative z-10 text-center transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'}`}>
+        {/* logo + expanding success rings + check badge */}
+        <div className="relative mx-auto mb-7" style={{ width: 128, height: 128 }}>
+          {[0, 0.5].map(d => (
+            <span key={d} style={{
+              position: 'absolute', inset: 8, borderRadius: '50%',
+              border: '1.5px solid rgba(16,185,129,0.45)',
+              animation: `entry-ring 1.5s ease-out ${d}s infinite`,
+            }} />
+          ))}
+          <div className="relative w-full h-full rounded-[2.6rem] sp-glass flex items-center justify-center"
+            style={{ animation: 'entry-bob 2.6s ease-in-out infinite' }}>
+            <img src="/logo.png" alt="SurePath" width={76} height={88} style={{ objectFit: 'contain' }} />
+          </div>
+          {/* check badge — draws in */}
+          <div className="absolute -bottom-1.5 -right-1.5 w-11 h-11 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #059669, #047857)', boxShadow: '0 10px 22px -8px rgba(5,150,105,0.7)', border: '2.5px solid #f6faf7' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12.5L10 17.5L19 7.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                style={{ strokeDasharray: 26, strokeDashoffset: visible ? 0 : 26, transition: 'stroke-dashoffset 0.55s cubic-bezier(0.4,0,0.2,1) 0.4s' }} />
             </svg>
           </div>
         </div>
-        <p style={{ fontSize: '0.75rem', fontWeight: 500, color: th.accent, marginBottom: '0.4rem', letterSpacing: '0.02em' }}>
+
+        <p style={{ fontSize: '0.78rem', fontWeight: 600, color: '#059669', marginBottom: '0.4rem' }}>
           {G.welcome},
         </p>
-        <h2 style={{ fontSize: 'clamp(2rem,7vw,2.8rem)', fontWeight: 700, letterSpacing: '-0.03em', color: th.text, lineHeight: 1, marginBottom: '1.2rem' }}>
+        <h2 style={{ fontSize: 'clamp(2rem,7vw,2.7rem)', fontWeight: 800, letterSpacing: '-0.03em', color: '#0f172a', lineHeight: 1, marginBottom: '1.1rem' }}>
           {name} 👋
         </h2>
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
-          style={{ borderColor: `rgba(${th.accentRgb},0.22)`, background: `rgba(${th.accentRgb},0.08)` }}>
-          <div className="sp-anim" style={{ width: 6, height: 6, borderRadius: '50%', background: th.accent, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
-          <span style={{ fontSize: '0.7rem', fontWeight: 500, color: th.accent }}>{G.verified}</span>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full"
+          style={{ border: '1px solid rgba(16,185,129,0.28)', background: 'rgba(16,185,129,0.08)' }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#059669', animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#047857' }}>{G.verified}</span>
         </div>
       </div>
-      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 600, color: th.textFaint, letterSpacing: '0.32em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={`rgba(${th.accentRgb},0.27)`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-        SurePath
+
+      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 700, color: 'rgba(15,23,42,0.25)', letterSpacing: '0.32em', textTransform: 'uppercase' }}>
+        SUREPATH
       </div>
     </div>
   );

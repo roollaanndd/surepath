@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { APP_VERSION } from '../src/version';
 import { 
   User, ShieldCheck, ChevronRight, Landmark,
   Bell, FileCheck, Zap, LogOut,
@@ -591,6 +592,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
         >
           <LogOut size={16}/> {t('Sign Out', 'Keluar')}
         </button>
+        <p className="text-center text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mt-4">
+          SurePath · v{APP_VERSION}
+        </p>
       </div>
     </div>
   );

@@ -2,6 +2,14 @@
 
 ---
 
+## v1.14.1 — 2026-07-03
+
+### Fixes (Phase 1)
+- **Popup install PWA muncul andal** — fallback 4 detik saat browser tidak mengirim `beforeinstallprompt` (menampilkan panduan pasang via menu browser); kunci dismiss kini per-versi sehingga setiap rilis menawarkan ulang sekali
+- **Versi app di My Profile** — baris `SurePath · v<versi>` di bawah tombol Keluar pada profil Nasabah dan Agen
+
+---
+
 ## v1.14.0 — 2026-07-03
 
 ### Insurer Selection, Success Animations, PWA Popup, Product Cards

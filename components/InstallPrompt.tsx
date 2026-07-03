@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
+import { APP_VERSION } from '../src/version';
 
-const DISMISS_KEY = 'sp_pwa_install_dismissed';
+// Version-scoped: every release re-offers the install prompt once
+const DISMISS_KEY = `sp_pwa_install_dismissed_${APP_VERSION}`;
 const DISMISS_DAYS = 7;
 
 function isDismissed(): boolean {
@@ -35,6 +37,7 @@ export const InstallPrompt: React.FC<Props> = ({ lang }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [show, setShow] = useState(false);
   const [ios, setIos] = useState(false);
+  const [manualMode, setManualMode] = useState(false); // no beforeinstallprompt -> browser-menu guide
 
   useEffect(() => {
     if (isStandalone() || isDismissed()) return;
@@ -48,13 +51,29 @@ export const InstallPrompt: React.FC<Props> = ({ lang }) => {
       return;
     }
 
+    let fired = false;
     const handler = (e: any) => {
       e.preventDefault();
+      fired = true;
       setDeferredPrompt(e);
       setTimeout(() => setShow(true), 2000);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    // Fallback — Chrome withholds the event when install criteria are pending
+    // or the browser doesn't support it. Still show the popup with a manual
+    // "browser menu -> Install app" guide so users always have a path.
+    const fallback = setTimeout(() => {
+      if (!fired && !isStandalone()) {
+        setManualMode(true);
+        setShow(true);
+      }
+    }, 4000);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      clearTimeout(fallback);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -108,16 +127,20 @@ export const InstallPrompt: React.FC<Props> = ({ lang }) => {
             </div>
           ))}
 
-          {ios && (
+          {(ios || manualMode) && (
             <div className="mt-1 rounded-2xl bg-white/70 border border-emerald-900/10 p-3.5 space-y-2">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                {t('Cara Pasang di iPhone / iPad', 'How to install on iPhone / iPad')}
+                {ios ? t('Cara Pasang di iPhone / iPad', 'How to install on iPhone / iPad') : t('Cara Pasang', 'How to install')}
               </p>
-              {[
+              {(ios ? [
                 t('Ketuk ikon Share (kotak panah ke atas) di Safari', 'Tap the Share icon (box with arrow) in Safari'),
                 t('Pilih "Tambahkan ke Layar Utama"', 'Choose "Add to Home Screen"'),
                 t('Ketuk "Tambahkan"', 'Tap "Add"'),
-              ].map((step, i) => (
+              ] : [
+                t('Buka menu browser (ikon ⋮ di kanan atas)', 'Open the browser menu (⋮ icon, top right)'),
+                t('Pilih "Instal aplikasi" / "Tambahkan ke Layar Utama"', 'Choose "Install app" / "Add to Home Screen"'),
+                t('Konfirmasi pemasangan', 'Confirm the install'),
+              ]).map((step, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black text-white bg-emerald-500">{i + 1}</span>
                   <p className="text-xs text-slate-600 leading-snug">{step}</p>
@@ -129,7 +152,7 @@ export const InstallPrompt: React.FC<Props> = ({ lang }) => {
 
         {/* Actions */}
         <div className="p-6 pt-4 flex gap-2.5">
-          {!ios && (
+          {!ios && !manualMode && (
             <button
               onClick={handleInstall}
               className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white uppercase tracking-widest active:scale-[0.98] transition-transform"
@@ -141,9 +164,9 @@ export const InstallPrompt: React.FC<Props> = ({ lang }) => {
           )}
           <button
             onClick={handleDismiss}
-            className={`${ios ? 'flex-1' : ''} flex items-center justify-center px-5 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-500 bg-emerald-900/[0.06] active:scale-[0.98] transition-transform`}
+            className={`${(ios || manualMode) ? 'flex-1' : ''} flex items-center justify-center px-5 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-500 bg-emerald-900/[0.06] active:scale-[0.98] transition-transform`}
           >
-            {ios ? t('Mengerti', 'Got it') : t('Nanti', 'Later')}
+            {(ios || manualMode) ? t('Mengerti', 'Got it') : t('Nanti', 'Later')}
           </button>
         </div>
       </div>

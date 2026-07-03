@@ -6,6 +6,7 @@ import {
   AlertCircle, Camera, Building2, ChevronRight,
 } from 'lucide-react';
 import { Language } from '../../types';
+import { APP_VERSION } from '../../src/version';
 import {
   getAgentProfile, updateAgentProfile, getAgentStats,
   uploadAgentAvatar, uploadAgentKtp,
@@ -571,6 +572,9 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         <LogOut className="w-4 h-4" />
         {t('Sign Out', 'Keluar')}
       </button>
+      <p className="text-center text-[10px] font-bold uppercase tracking-[0.25em] text-ds-ink3 mt-4 pb-2">
+        SurePath · v{APP_VERSION}
+      </p>
     </div>
   );
 };

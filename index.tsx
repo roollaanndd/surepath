@@ -1,8 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
+import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import './styles.css';
+
+// Explicit SW registration — guarantees PWA install/offline works even if
+// the auto-injected registerSW.js script is blocked or dropped by a proxy.
+registerSW({ immediate: true });
 
 // Auto-reload when a lazy-loaded chunk fails (happens when SW serves stale assets after deploy)
 window.addEventListener('vite:preloadError', () => {

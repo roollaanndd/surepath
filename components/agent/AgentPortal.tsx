@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FileText, Wallet, Sun, Moon, Bell, UserCircle, ShoppingBag } from 'lucide-react';
+import { Sun, Moon, Bell, UserCircle } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
+import { BotHome, BotPolicy, BotShield as BotShieldNav, BotWallet, BotUser } from '../CustomIcons';
+import { APP_VERSION } from '../../src/version';
 import {
   supabase,
   getAgentCommissions,
@@ -37,11 +39,11 @@ interface Props {
 }
 
 const TABS = [
-  { id: 'home',       labelId: 'Beranda',  Icon: Home },
-  { id: 'policy',     labelId: 'Polis',    Icon: FileText },
-  { id: 'quotes',     labelId: 'Beli',     Icon: ShoppingBag },
-  { id: 'commission', labelId: 'Dompet',   Icon: Wallet },
-  { id: 'profile',    labelId: 'Profil',   Icon: UserCircle },
+  { id: 'home',       labelId: 'Beranda',  Icon: BotHome },
+  { id: 'policy',     labelId: 'Polis',    Icon: BotPolicy },
+  { id: 'quotes',     labelId: 'Beli',     Icon: BotShieldNav },
+  { id: 'commission', labelId: 'Dompet',   Icon: BotWallet },
+  { id: 'profile',    labelId: 'Profil',   Icon: BotUser },
 ];
 
 // Polis tab: order tracking + quote builder toggle
@@ -253,7 +255,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                 Sure<span className="text-ds-green">Path</span>
               </div>
               <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none mt-0.5">
-                Agent Portal
+                Agent Portal <span className="text-ds-green/70 normal-case">v{APP_VERSION}</span>
               </div>
             </div>
           </div>

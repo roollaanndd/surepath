@@ -381,29 +381,38 @@ body {
 /* ── True glassmorphism — mobile app surfaces (customer + agent, v1.9.x) ──
    Edge refraction via inset highlight; emerald-tinted shadow; light + dark. */
 .sp-glass {
-  background: linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,255,255,0.52));
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255,255,255,0.65);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.86), rgba(236,253,245,0.62));
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(16,185,129,0.16);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.80),
-    inset 0 0 0 0.5px rgba(255,255,255,0.35),
-    0 8px 24px -12px rgba(6,78,59,0.20);
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 0 0 0.5px rgba(255,255,255,0.40),
+    0 2px 6px -2px rgba(6,78,59,0.06),
+    0 14px 34px -16px rgba(6,78,59,0.22);
+}
+.sp-glass:hover {
+  border-color: rgba(16,185,129,0.30);
 }
 .dark .sp-glass {
-  background: linear-gradient(145deg, rgba(23,33,52,0.60), rgba(15,24,41,0.50));
-  border: 1px solid rgba(255,255,255,0.09);
+  background: linear-gradient(145deg, rgba(20,36,33,0.72), rgba(13,24,22,0.58));
+  border: 1px solid rgba(52,211,153,0.14);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.07),
-    0 8px 24px -12px rgba(0,0,0,0.55);
+    inset 0 1px 0 rgba(110,231,183,0.10),
+    0 2px 6px -2px rgba(0,0,0,0.35),
+    0 14px 34px -16px rgba(0,0,0,0.60);
+}
+.dark .sp-glass:hover {
+  border-color: rgba(52,211,153,0.28);
 }
 
 /* Stronger blur for fixed chrome: headers + bottom navs */
 .sp-glass-strong {
-  background: linear-gradient(160deg, rgba(255,255,255,0.80), rgba(255,255,255,0.62));
+  background: linear-gradient(160deg, rgba(255,255,255,0.88), rgba(236,253,245,0.72));
   backdrop-filter: blur(28px) saturate(170%);
   -webkit-backdrop-filter: blur(28px) saturate(170%);
-  border: 1px solid rgba(255,255,255,0.70);
+  border: 1px solid rgba(16,185,129,0.18);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.85),
     0 12px 32px -16px rgba(6,78,59,0.25);

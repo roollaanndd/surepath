@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
-import { BotShield, BotClaimCam, BotAgent, BotCoin, BotChart, BotCar, BotHeart, BotPlane, BotWallet } from './CustomIcons';
+import { ArtKeyframes, ArtProtection, ArtClaim, ArtSupport, ArtQuote, ArtCommission, ArtNetwork } from './OnboardingArt';
 import { fetchWebsiteSection } from '../services/supabaseService';
 
 /* ─── Gojek-style illustrated onboarding — fullscreen slides, role-aware ────
@@ -18,100 +18,44 @@ export const onboardingKey = (role: Role) => `SP_ONBOARDED_${role}`;
 export const needsOnboarding = (role: Role) =>
   typeof window !== 'undefined' && localStorage.getItem(onboardingKey(role)) !== '1';
 
-/* ── Illustration scenes (inline animated SVG-composites, mascot motif) ── */
+/* ── Slides — illustrative vector scenes per role ── */
 
-const SceneFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="relative flex items-center justify-center" style={{ width: 260, height: 260 }}>
-    {/* soft halo */}
-    <div className="absolute inset-6 rounded-full" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.22), transparent 68%)' }} />
-    {/* dashed orbit ring */}
-    <div className="absolute inset-2 rounded-full border border-dashed border-emerald-300/30" style={{ animation: 'ob-spin 26s linear infinite' }} />
-    {children}
-  </div>
-);
-
-const HeroBadge: React.FC<{ Icon: React.ElementType }> = ({ Icon }) => (
-  <div className="relative z-10 flex items-center justify-center rounded-[2.2rem]"
-    style={{
-      width: 128, height: 128,
-      background: 'linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.05))',
-      border: '1px solid rgba(255,255,255,0.28)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35), 0 24px 48px -18px rgba(0,0,0,0.45)',
-      backdropFilter: 'blur(10px)',
-      animation: 'ob-bob 3s ease-in-out infinite',
-    }}>
-    <Icon className="w-16 h-16" color="#ffffff" />
-  </div>
-);
-
-const Satellite: React.FC<{ Icon: React.ElementType; angle: number; delay: number }> = ({ Icon, angle, delay }) => (
-  <div className="absolute z-10 flex items-center justify-center rounded-2xl"
-    style={{
-      width: 52, height: 52,
-      left: '50%', top: '50%',
-      transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(108px) rotate(${-angle}deg)`,
-      background: 'rgba(255,255,255,0.12)',
-      border: '1px solid rgba(255,255,255,0.22)',
-      backdropFilter: 'blur(8px)',
-      animation: `ob-bob 3s ease-in-out ${delay}s infinite`,
-    }}>
-    <Icon className="w-6 h-6" color="#a7f3d0" />
-  </div>
-);
-
-const SLIDES: Record<Role, { Icon: React.ElementType; sats: { Icon: React.ElementType; angle: number }[]; id: [string, string]; en: [string, string] }[]> = {
+const SLIDES: Record<Role, { Art: React.ElementType; id: [string, string]; en: [string, string] }[]> = {
   CUSTOMER: [
     {
-      Icon: BotShield,
-      sats: [{ Icon: BotCar, angle: -35 }, { Icon: BotHeart, angle: 205 }, { Icon: BotPlane, angle: 90 }],
+      Art: ArtProtection,
       id: ['Semua perlindungan, satu aplikasi', 'Mobil, jiwa, perjalanan, sampai gadget — bandingkan dan beli dalam hitungan menit dengan tarif resmi OJK.'],
       en: ['All protection, one app', 'Car, life, travel, gadgets — compare and buy in minutes with official OJK rates.'],
     },
     {
-      Icon: BotClaimCam,
-      sats: [{ Icon: BotShield, angle: 210 }, { Icon: BotPolicyLite, angle: -20 }],
+      Art: ArtClaim,
       id: ['Klaim cukup lewat foto', 'Foto kerusakan dari HP kamu, AI kami langsung menilai. Tanpa formulir ribet, tanpa antre.'],
       en: ['Claim with just a photo', 'Snap the damage from your phone — our AI assesses it instantly. No forms, no queues.'],
     },
     {
-      Icon: BotAgent,
-      sats: [{ Icon: BotHeart, angle: 150 }, { Icon: BotShield, angle: -30 }],
+      Art: ArtSupport,
       id: ['Ada manusia di balik teknologi', 'Agen berlisensi dan asisten Pathy siap bantu 24/7 — dari pilih polis sampai proses klaim.'],
       en: ['Real humans behind the tech', 'Licensed agents and Pathy assistant, ready 24/7 — from choosing a policy to settling a claim.'],
     },
   ],
   AGENT: [
     {
-      Icon: BotChart,
-      sats: [{ Icon: BotCar, angle: -35 }, { Icon: BotShield, angle: 200 }],
+      Art: ArtQuote,
       id: ['Jual polis lebih cepat', 'Hitung premi tarif OJK, buat penawaran, dan kirim ke klien — semua dari genggaman.'],
       en: ['Sell policies faster', 'Quote official OJK rates, build offers, send to clients — all from your hand.'],
     },
     {
-      Icon: BotCoin,
-      sats: [{ Icon: BotWallet, angle: 160 }, { Icon: BotChart, angle: -15 }],
+      Art: ArtCommission,
       id: ['Komisi transparan, cair jelas', 'Lihat komisi per polis secara real-time dan tarik dana langsung dari dompet aplikasi.'],
       en: ['Transparent commission', 'Track commission per policy in real time and withdraw straight from your in-app wallet.'],
     },
     {
-      Icon: BotAgent,
-      sats: [{ Icon: BotHeart, angle: 140 }, { Icon: BotCoin, angle: -40 }],
+      Art: ArtNetwork,
       id: ['Bangun jaringan & naik level', 'Kelola klien, pantau order, dan kembangkan tim downline — semua terukur di satu dashboard.'],
       en: ['Grow your network', 'Manage clients, track orders, grow your downline team — all measured in one dashboard.'],
     },
   ],
 };
-
-// lightweight doc icon reused inside scenes (kept local; not exported)
-function BotPolicyLite({ className, color = 'currentColor' }: { className?: string; color?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-      <path d="M14 2v6h6" />
-      <path d="M8 13h8M8 17h5" strokeWidth="1.4" />
-    </svg>
-  );
-}
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang }) => {
   const slides = SLIDES[role];
@@ -155,13 +99,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
       </div>
 
       {/* illustration */}
-      <div className="ob-anim flex-1 flex items-center justify-center" key={`scene-${step}`} style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
-        <SceneFrame>
-          <HeroBadge Icon={slides[step].Icon} />
-          {slides[step].sats.map((s, i) => (
-            <Satellite key={i} Icon={s.Icon} angle={s.angle} delay={0.4 + i * 0.5} />
-          ))}
-        </SceneFrame>
+      <div className="ob-anim oa flex-1 flex items-center justify-center" key={`scene-${step}`} style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
+        <ArtKeyframes />
+        {React.createElement(slides[step].Art)}
       </div>
 
       {/* bottom glass card */}

@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight, ShieldCheck, Zap, Clock } from 'lucide-react';
-import { STAMP_DUTY } from '../../constants';
+import { STAMP_DUTY, INSURANCE_PROVIDERS } from '../../constants';
 import { formatIDR } from './WizardUI';
-import { db, DBProvider } from '../../db';
-import { ProviderIcon } from '../shared/IconRenderer';
+import { getInsurers } from '../../services/supabaseService';
+import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
 
 interface StepProvidersProps {
   sortBy: 'RATING' | 'PRICE';
@@ -42,8 +42,9 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                    return (
                      <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/30 transition-all text-slate-900 dark:text-white">
                         <div className="text-center space-y-3 relative z-10">
-                           <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-white/10 rounded-2xl flex items-center justify-center shadow-sm text-2xl font-black text-gray-500 dark:text-gray-300">
-                               <ProviderIcon name={p.logo} size={32}/>
+                           <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center shadow-sm border border-black/5"
+                               style={{ background: INSURER_BRANDS[p.id]?.bg ?? '#ecfdf5' }}>
+                               <InsurerLogo id={p.id} size={38}/>
                            </div>
                            <div>
                              <h4 className="font-black text-lg uppercase tracking-tight">{p.name}</h4>
@@ -87,14 +88,21 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 }) => {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
-  const [dynamicProviders, setDynamicProviders] = useState<DBProvider[]>([]);
+  // Presentation data lives in INSURANCE_PROVIDERS; sp_insurers (CMS) decides
+  // which are active. Codes are matched case-insensitively; if the CMS is
+  // unreachable or has no matching rows, all providers stay visible.
+  const [dynamicProviders, setDynamicProviders] = useState<any[]>(INSURANCE_PROVIDERS);
 
   useEffect(() => {
-    db.providers.toArray().then(providers => {
-      // Filter active providers (checking both boolean true and number 1 for safety)
-      const activeProviders = providers.filter(p => p.isActive === true || (p.isActive as any) === 1);
-      setDynamicProviders(activeProviders);
-    });
+    getInsurers()
+      .then(rows => {
+        if (!rows.length) return;
+        const activeCodes = new Set(rows.filter(r => r.is_active).map(r => r.code.toLowerCase()));
+        const known = new Set(rows.map(r => r.code.toLowerCase()));
+        const visible = INSURANCE_PROVIDERS.filter(p => !known.has(p.id) || activeCodes.has(p.id));
+        if (visible.length) setDynamicProviders(visible);
+      })
+      .catch(() => {});
   }, []);
 
   const sortedList = [...dynamicProviders].sort((a, b) => {
@@ -189,8 +197,9 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
                   <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center font-black text-2xl shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}`}>
-                      <ProviderIcon name={p.logo} size={32}/>
+                    <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 border ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-500/25' : 'border-black/5 dark:border-white/10'}`}
+                      style={{ background: INSURER_BRANDS[p.id]?.bg ?? '#ecfdf5' }}>
+                      <InsurerLogo id={p.id} size={38}/>
                     </div>
                     <div>
                        <h4 className="font-black text-lg uppercase tracking-tighter leading-tight text-slate-900 dark:text-white">{p.name}</h4>

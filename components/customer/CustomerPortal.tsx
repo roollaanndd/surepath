@@ -323,34 +323,39 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </button>
               </div>
 
-              {/* Product cards */}
-              <div className="grid grid-cols-1 gap-3">
+              {/* Product cards — creative tilt-tile layout */}
+              <div className="grid grid-cols-1 gap-3.5">
                 {(products ?? []).filter(p => p?.id).map((p, pIdx) => (
                   <div
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
                     style={{ animationDelay: `${pIdx * 60}ms` }}
-                    className={`group relative sp-glass rounded-2xl p-4 flex items-center gap-4 transition-all duration-200 overflow-hidden animate-fade-in ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md hover:border-emerald-500/20 active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
+                    className={`group relative sp-glass rounded-[1.6rem] p-4 pl-5 flex items-center gap-4 transition-all duration-300 overflow-hidden animate-fade-in ${p.active ? 'cursor-pointer hover:-translate-y-1 hover:shadow-ds-md active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
-                    {/* Subtle background glow — product brand color at very low opacity */}
-                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.06) 0%, transparent 70%)' }} />
+                    {/* left color rail — product identity */}
+                    <div className={`absolute left-0 top-3 bottom-3 w-1.5 rounded-r-full ${p.bg ?? 'bg-ds-card2'} opacity-80`} />
+                    {/* oversized ghost icon watermark */}
+                    <div className={`absolute -right-4 -bottom-6 opacity-[0.06] group-hover:opacity-[0.12] group-hover:-rotate-6 transition-all duration-500 ${p.color ?? 'text-ds-ink3'}`}>
+                      {typeof p.icon === 'function' && <p.icon size={104} strokeWidth={1.4} />}
                     </div>
-                    {/* Faint dot-grid pattern */}
-                    <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                    <div className={`w-12 h-12 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-ds-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 relative z-10`}>
-                      {typeof p.icon === 'function' && <p.icon size={24} strokeWidth={2} />}
+                    {/* hover glow */}
+                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute top-0 right-8 w-36 h-36 rounded-full blur-3xl" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)' }} />
+                    </div>
+                    {/* icon tile — gradient ring, lifts on hover */}
+                    <div className={`relative z-10 w-14 h-14 rounded-[1.15rem] flex items-center justify-center flex-shrink-0 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} shadow-ds-sm ring-1 ring-black/5 group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-lg transition-all duration-300`}>
+                      {typeof p.icon === 'function' && <p.icon size={26} strokeWidth={2} />}
                     </div>
                     <div className="flex-1 min-w-0 relative z-10">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="font-black text-sm text-ds-ink tracking-tight">{p.title}</h4>
-                        {p.tech && <span className="px-2 py-0.5 bg-ds-card2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-ds-ink3">{p.tech}</span>}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-black text-[0.95rem] text-ds-ink tracking-tight">{p.title}</h4>
+                        {p.tech && <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">{p.tech}</span>}
                       </div>
-                      <p className="text-xs text-ds-ink2 leading-relaxed">{p.desc}</p>
+                      <p className="text-xs text-ds-ink2 leading-relaxed line-clamp-2">{p.desc}</p>
                     </div>
                     {p.active && (
-                      <div className="w-8 h-8 rounded-xl bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 group-hover:shadow-lg transition-all duration-200 relative z-10">
-                        <ArrowRight size={14} />
+                      <div className="relative z-10 w-9 h-9 rounded-full bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 group-hover:translate-x-0.5 transition-all duration-200">
+                        <ArrowRight size={15} />
                       </div>
                     )}
                   </div>

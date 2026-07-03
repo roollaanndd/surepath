@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, ArrowLeft, Loader2, Clock } from 'lucide-react';
+import SuccessBurst from './shared/SuccessBurst';
 import { callGateway } from '../services/supabaseService';
 
 interface Props {
@@ -48,6 +49,7 @@ const PaymentRedirect: React.FC<Props> = ({ status }) => {
   }, [orderId, verifyState]);
 
   const isSuccess = verifyState === 'confirmed' || (verifyState === 'timeout' && status === 'success');
+  const [burstDone, setBurstDone] = React.useState(false);
 
   if (verifyState === 'verifying') {
     return (
@@ -64,6 +66,8 @@ const PaymentRedirect: React.FC<Props> = ({ status }) => {
   }
 
   return (
+    <>
+    {isSuccess && !burstDone && <SuccessBurst title="Pembayaran Berhasil!" subtitle="Terima kasih — polis kamu sedang diproses." onDone={() => setBurstDone(true)} />}
     <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm text-center">
         <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
@@ -129,6 +133,7 @@ const PaymentRedirect: React.FC<Props> = ({ status }) => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 

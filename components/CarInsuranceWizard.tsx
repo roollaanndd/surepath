@@ -16,6 +16,7 @@ import StepPreSummary from './car-wizard/StepPreSummary';
 import StepSurvey from './car-wizard/StepSurvey';
 import StepFinal from './car-wizard/StepFinal';
 import StepPayment from './car-wizard/StepPayment';
+import SuccessBurst from './shared/SuccessBurst';
 
 const STEPS = [
   { id: 'VEHICLE', label: 'Data Mobil' },
@@ -37,6 +38,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [showProviderBreakdown, setShowProviderBreakdown] = useState(false);
   const [sortBy, setSortBy] = useState<'RATING' | 'PRICE'>('RATING');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showBurst, setShowBurst] = useState(false);
   const [isPayLater, setIsPayLater] = useState(false);
   const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
@@ -326,6 +328,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       setInvoiceUrl(link);
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
+      setShowBurst(true);
     } catch (e) {
       console.error('handlePaymentResult:', e);
       alert('Gagal memproses pesanan. Silakan coba lagi.');
@@ -336,10 +339,15 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
   if (isSuccess) {
      const iconBg = isPendingApproval ? 'bg-amber-500' : isPayLater ? 'bg-amber-400' : 'bg-emerald-500';
+     const burstTitle = isPendingApproval ? 'Pengajuan Terkirim!' : isPayLater ? 'Pesanan Dibuat!' : 'Pembayaran Berhasil!';
+     const burstSub = isPendingApproval
+       ? 'Pengajuan kamu sedang direview tim kami.'
+       : isPayLater ? 'Selesaikan pembayaran lewat link tagihan.' : 'Polis kamu segera diproses. Terima kasih!';
      const statusLabel = isPendingApproval ? 'Menunggu Persetujuan' : isPayLater ? 'Menunggu Pembayaran' : 'Diproses';
      const statusBadgeCls = isPendingApproval ? 'bg-amber-50 text-amber-600 border-amber-200' : isPayLater ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-blue-600 border-blue-200';
      return (
         <div className="bg-white min-h-screen pb-28 flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+           {showBurst && <SuccessBurst title={burstTitle} subtitle={burstSub} onDone={() => setShowBurst(false)} />}
            <div className={`w-24 h-24 ${iconBg} rounded-2xl flex items-center justify-center text-white shadow-2xl mb-8`}>
               {isPendingApproval ? <Clock size={56} strokeWidth={2.5}/> : isPayLater ? <Clock size={56} strokeWidth={2.5}/> : <ShieldCheck size={56} strokeWidth={2.5}/>}
            </div>

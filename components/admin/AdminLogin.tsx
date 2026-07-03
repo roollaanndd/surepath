@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, AlertTriangle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
 import { db } from '../../db';
 import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
@@ -124,7 +124,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: '#03050a', fontFamily: "'Inter', 'Sora', sans-serif" }}
+      style={{ background: '#f6faf7', fontFamily: "'Sora', sans-serif" }}
     >
       <style>{`
         @keyframes adm-scan { 0% { transform: translateY(-100%) } 100% { transform: translateY(200vh) } }
@@ -133,13 +133,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
 
       {/* Dot-matrix background */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(22,163,74,0.10) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(5,150,105,0.09) 1px, transparent 1px)',
         backgroundSize: '26px 26px',
       }} />
 
       {/* Blobs */}
-      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(22,163,74,0.07) 0%, transparent 65%)' }} />
-      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(34,197,94,0.04) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.13) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.09) 0%, transparent 65%)' }} />
 
       {/* Slow scanline sweep */}
       <div className="absolute inset-x-0 h-px pointer-events-none" style={{
@@ -157,9 +157,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         <button
           onClick={onBack}
           className="absolute top-6 left-6 flex items-center gap-1.5 transition-colors duration-200"
-          style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#374151' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#6b7280')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#374151')}
+          style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#94a3b8' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#059669')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Kembali
@@ -169,7 +169,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
       {/* Live session badge */}
       <div className="absolute top-6 right-6 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#16a34a', boxShadow: '0 0 6px rgba(22,163,74,0.7)', animation: 'adm-ping 2.4s ease-in-out infinite' }} />
-        <span style={{ fontSize: '0.44rem', letterSpacing: '0.42em', textTransform: 'uppercase', color: '#1f2937', fontWeight: 700 }}>Secure Session</span>
+        <span style={{ fontSize: '0.44rem', letterSpacing: '0.42em', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>Secure Session</span>
       </div>
 
       <div className="relative z-10 w-full max-w-xs px-5">
@@ -183,20 +183,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
               animation: 'adm-ping 3s ease-in-out infinite',
             }} />
             {/* Shield icon tile with gradient border — enlarged icon fitted to box */}
-            <div className="relative p-px rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.4), rgba(22,163,74,0.08) 60%, rgba(22,163,74,0.25))' }}>
-              <div className="w-16 h-16 rounded-[calc(1rem-1px)] flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.10) 0%, rgba(3,5,10,0.95) 100%)' }}>
-                <ShieldCheck size={40} style={{ color: '#16a34a' }} />
-              </div>
+            <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
+              <img src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
             </div>
           </div>
 
-          <h1 style={{ fontSize: '1.65rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#f3f4f6', lineHeight: 1, marginBottom: '0.55rem' }}>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 700, letterSpacing: '-0.04em', color: '#0f172a', lineHeight: 1, marginBottom: '0.55rem' }}>
             Admin Portal
           </h1>
           <div className="flex items-center gap-2.5">
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(22,163,74,0.4))' }} />
-            <span style={{ fontSize: '0.46rem', fontWeight: 700, color: '#374151', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.46rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
               Authorized Access Only
             </span>
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, rgba(22,163,74,0.4), transparent)' }} />
@@ -204,16 +201,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         </div>
 
         {/* Card — gradient-border wrapper */}
-        <div className="relative rounded-2xl p-px"
-          style={{ background: 'linear-gradient(145deg, rgba(22,163,74,0.25) 0%, rgba(255,255,255,0.05) 45%, rgba(22,163,74,0.12) 100%)' }}>
-          <div className="rounded-[calc(1rem-1px)] p-6 space-y-5"
-            style={{ background: 'rgba(4,6,12,0.94)', backdropFilter: 'blur(24px)' }}>
+        <div className="relative sp-glass rounded-2xl">
+          <div className="rounded-2xl p-6 space-y-5">
 
             {legacyWarning && (
               <div className="p-3 rounded-xl flex items-start gap-2.5"
                 style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.18)' }}>
                 <AlertTriangle className="shrink-0 mt-0.5" size={13} style={{ color: '#f59e0b' }} />
-                <p style={{ fontSize: '0.67rem', fontWeight: 500, color: '#fcd34d', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '0.67rem', fontWeight: 600, color: '#b45309', lineHeight: 1.5 }}>
                   Akun ini belum terhubung ke Supabase Auth. Hubungi super admin untuk migrasi.
                 </p>
               </div>
@@ -223,7 +218,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
               <div className="p-3 rounded-xl flex items-start gap-2.5"
                 style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.15)' }}>
                 <AlertCircle className="shrink-0 mt-0.5" size={13} style={{ color: '#f87171' }} />
-                <p style={{ fontSize: '0.72rem', fontWeight: 500, color: '#fca5a5', lineHeight: 1.5 }}>{error}</p>
+                <p style={{ fontSize: '0.72rem', fontWeight: 600, color: '#dc2626', lineHeight: 1.5 }}>{error}</p>
               </div>
             )}
 
@@ -231,45 +226,45 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
 
               {/* Email */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#374151', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#4b5563' }} />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#059669' }} />
                   <input
                     type="email" required autoComplete="username"
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="admin@surepath.ai"
-                    className="block w-full pl-10 pr-4 py-3 rounded-xl text-gray-200 placeholder-gray-700 outline-none transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'monospace', fontSize: '0.78rem' }}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(22,163,74,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
-                    onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(255,255,255,0.03)'; e.target.style.boxShadow = 'none'; }}
+                    className="block w-full pl-10 pr-4 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
+                    style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
+                    onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               </div>
 
               {/* Password */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#374151', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#4b5563' }} />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#059669' }} />
                   <input
                     type={showPass ? 'text' : 'password'} required autoComplete="current-password"
                     value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="block w-full pl-10 pr-11 py-3 rounded-xl text-gray-200 placeholder-gray-700 outline-none transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'monospace', fontSize: '0.78rem' }}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(22,163,74,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
-                    onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.background = 'rgba(255,255,255,0.03)'; e.target.style.boxShadow = 'none'; }}
+                    className="block w-full pl-10 pr-11 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
+                    style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
+                    onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
                   />
                   <button
                     type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200"
-                    style={{ color: '#4b5563' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#16a34a')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
+                    style={{ color: '#94a3b8' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#059669')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
                   >
                     {showPass ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
@@ -295,7 +290,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         </div>
 
         <p className="text-center mt-7 flex items-center justify-center gap-2"
-          style={{ fontSize: '0.42rem', fontWeight: 600, color: '#1f2937', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+          style={{ fontSize: '0.42rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(22,163,74,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>

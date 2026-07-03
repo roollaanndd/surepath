@@ -325,7 +325,7 @@ const AdminPortal = ({
   );
 
   // ── Sidebar widths ─────────────────────────────────────────────────────────
-  const sidebarBg = th(darkMode, 'bg-black/40 border-white/5', 'bg-white border-gray-100 shadow-sm');
+  const sidebarBg = th(darkMode, 'bg-emerald-950/30 border-emerald-500/10 backdrop-blur-xl', 'bg-white/80 backdrop-blur-xl border-emerald-900/10 shadow-sm');
 
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
@@ -553,8 +553,8 @@ const AdminPortal = ({
   };
 
   // ── Layout vars ────────────────────────────────────────────────────────────
-  const rootBg   = th(darkMode, 'bg-[#050505] text-white',           'bg-gray-50 text-gray-900');
-  const headerBg = th(darkMode, 'bg-black/20 border-white/5',        'bg-white border-gray-100 shadow-sm');
+  const rootBg   = th(darkMode, 'bg-[#08120d] text-white',           'bg-[#f6faf7] text-gray-900');
+  const headerBg = th(darkMode, 'bg-emerald-950/25 border-emerald-500/10 backdrop-blur-xl', 'bg-white/80 backdrop-blur-xl border-emerald-900/10 shadow-sm');
   const inputBg  = th(darkMode, 'bg-white/5 border-white/10 text-white placeholder-gray-600', 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400');
 
   return (
@@ -580,7 +580,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a0a0a]', 'bg-white shadow-sm')}`}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a1510]', 'bg-white shadow-sm')}`}>
             <SidebarContent />
           </aside>
         </div>

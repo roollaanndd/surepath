@@ -84,6 +84,35 @@ export const INSURANCE_PROVIDERS: Provider[] = [
     authorizedGarage: true,
     claimSpeed: '1–2 hari kerja',
     benefits: ['Aplikasi klaim mobile canggih', 'Bagian BUMN Group — terpercaya', 'Derek gratis 24/7', 'Klaim diproses 1–2 hari kerja']
+  }  ,{
+    id: 'sinarmas',
+    name: 'Asuransi Sinar Mas',
+    logo: 'Sun',
+    adminFee: 45000,
+    stampDuty: 10000,
+    rating: 4.7,
+    advantages: ['Jaringan cabang terluas di Indonesia', 'Klaim ekspres < 3 hari', 'Bengkel rekanan 1.000+'],
+    disadvantages: ['Antrian CS kadang panjang', 'Aplikasi mobile masih dasar'],
+    extraCoinsPercent: 12,
+    features: ['Widest Branch Network', 'Express Claim', '1.000+ Workshops'],
+    authorizedGarage: true,
+    claimSpeed: '1–3 hari kerja',
+    benefits: ['Jaringan cabang & bengkel terluas', 'Klaim ekspres kurang dari 3 hari', 'Simas Mobil: manfaat mobil pengganti', 'Cashback koin 12%']
+  },
+  {
+    id: 'sompo',
+    name: 'Sompo Insurance Indonesia',
+    logo: 'Waves',
+    adminFee: 50000,
+    stampDuty: 10000,
+    rating: 4.8,
+    advantages: ['Standar layanan Jepang', 'Roadside assistance 24/7', 'Proses klaim transparan via app'],
+    disadvantages: ['Premi sedikit di atas rata-rata', 'Cabang terbatas di kota besar'],
+    extraCoinsPercent: 10,
+    features: ['Japanese Service Standard', '24/7 Roadside', 'Transparent Claims'],
+    authorizedGarage: true,
+    claimSpeed: '1–3 hari kerja',
+    benefits: ['Standar layanan premium Jepang', 'Roadside assistance 24/7', 'Tracking klaim real-time', 'Bengkel authorized dealer']
   }
 ];
 

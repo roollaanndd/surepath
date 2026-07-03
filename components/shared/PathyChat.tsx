@@ -5,7 +5,7 @@ import { pathyChat } from '../../services/supabaseService';
 const WHATSAPP_NUMBER = '6280000000000'; // placeholder — do NOT treat as a real number
 
 type Lang = Language | 'EN' | 'ID';
-const isEN = (lang: Lang) => lang === Language.EN || lang === 'EN';
+const isEN = (lang: Lang) => lang === Language.EN;
 
 // ─── Pathy mascot (self-contained, animated) ──────────────────────────────────
 const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, animate = true }) => {

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, ShieldAlert, ChevronLeft, HeartPulse } from 'lucide-react';
 import OpenAI from 'openai';
 import { CHAT_MODEL } from '../services/geminiService';

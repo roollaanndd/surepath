@@ -3,7 +3,6 @@ import { RefreshCw, Check, X } from 'lucide-react';
 import {
   getAdminEndorsements,
   reviewEndorsement,
-  type SpEndorsement,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 

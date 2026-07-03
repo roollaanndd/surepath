@@ -140,8 +140,6 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
     }
   };
 
-  const needsExtra = selected === 'AGENT' || selected === 'B2B_CLIENT';
-
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 py-12 font-sora">
       {/* Logo */}

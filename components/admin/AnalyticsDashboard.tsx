@@ -78,7 +78,6 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     const load = async () => {
       const now = new Date();
-      const yearStart = new Date(now.getFullYear(), 0, 1).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       const { data: analyticsRaw } = await callGateway('admin_analytics_data', {});

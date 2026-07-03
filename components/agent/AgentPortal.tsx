@@ -28,6 +28,7 @@ import AgentEndorsements from './AgentEndorsements';
 import AgentOrderStatus from './AgentOrderStatus';
 import PathyChat from '../shared/PathyChat';
 import { SectionLabel } from '../shared/cards';
+import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 
 interface Props {
   agent: any;
@@ -76,6 +77,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [activeTab, setActiveTab] = useState('home');
+  const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('AGENT'));
   const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -224,6 +226,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
   return (
     <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
+      <div aria-hidden className="sp-ambient" />
+      {showOnboarding && (
+        <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
       <style>{`
         @keyframes spFadeIn {
           from { opacity: 0; transform: translateY(6px); }
@@ -235,7 +241,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       `}</style>
 
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 bg-ds-card border-b border-ds-border shadow-ds-sm">
+      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
         <div className="flex items-center justify-between px-5 py-3">
           {/* Logo + Brand */}
           <div className="flex items-center gap-2.5">
@@ -299,7 +305,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 pb-32 min-h-screen">
+      <main className="relative z-10 pt-16 pb-32 min-h-screen">
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
@@ -313,7 +319,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       </main>
 
       {/* Floating bottom tab nav */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 bg-ds-card/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
+      <nav className="fixed bottom-6 inset-x-3 z-50 sp-glass-strong rounded-[3rem]">
         <div className="flex items-center justify-around px-1 py-2.5">
           {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;

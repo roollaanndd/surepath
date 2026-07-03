@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { ArrowRight, ShieldCheck, Shield, Zap } from "lucide-react";
 
 interface HeroProps {

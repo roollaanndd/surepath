@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Globe, Car, Zap, Sparkles, Plane, Activity, TrendingUp } from 'lucide-react';
 import { Language } from '../types';
 

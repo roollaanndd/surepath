@@ -13,6 +13,7 @@ export interface SpProductConfig {
   base_commission_rate: number;
   max_discount_rate: number;
   coin_rate: number;
+  rate_band: 'MIN' | 'MID' | 'MAX';
   is_active: boolean;
   notes?: string;
   created_at?: string;
@@ -159,6 +160,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
     draft.base_commission_rate !== config.base_commission_rate ||
     draft.max_discount_rate !== config.max_discount_rate ||
     draft.coin_rate !== config.coin_rate ||
+    draft.rate_band !== config.rate_band ||
     draft.notes !== config.notes ||
     draft.is_active !== config.is_active;
 
@@ -180,6 +182,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
       base_commission_rate: draft.base_commission_rate,
       max_discount_rate: draft.max_discount_rate,
       coin_rate: draft.coin_rate,
+      rate_band: draft.rate_band,
       is_active: draft.is_active,
       notes: draft.notes,
     });
@@ -250,6 +253,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
           <coverageBadge.Icon size={10} />
           {coverageBadge.label}
         </span>
+      </div>
+
+      {/* OJK Rate Band */}
+      <div>
+        <SectionLabel>Tarif OJK (Batas)</SectionLabel>
+        <div className="grid grid-cols-3 gap-1.5">
+          {(['MIN', 'MID', 'MAX'] as const).map(b => {
+            const labels = { MIN: 'Bawah', MID: 'Tengah', MAX: 'Atas' };
+            const active = draft.rate_band === b;
+            return (
+              <button
+                key={b}
+                onClick={() => setDraft(prev => ({ ...prev, rate_band: b }))}
+                className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  active ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                }`}
+              >
+                {labels[b]}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[9px] text-slate-600 font-bold mt-1">
+          {draft.rate_band === 'MIN' ? 'Tarif batas bawah OJK — estimasi premi paling rendah'
+           : draft.rate_band === 'MAX' ? 'Tarif batas atas OJK — estimasi premi paling tinggi'
+           : 'Tarif tengah OJK — estimasi premi standar'}
+        </p>
       </div>
 
       {/* Rate sliders */}
@@ -373,6 +403,7 @@ const EMPTY_NEW: NewProductConfig = {
   base_commission_rate: 0.10,
   max_discount_rate: 0.05,
   coin_rate: 0.10,
+  rate_band: 'MID',
   is_active: true,
   notes: '',
 };
@@ -482,6 +513,29 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
                 <option value="TLO">TLO</option>
                 <option value="ALL">Semua</option>
               </select>
+            </div>
+          </div>
+
+          {/* Rate band */}
+          <div>
+            <SectionLabel>Tarif OJK (Batas)</SectionLabel>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['MIN', 'MID', 'MAX'] as const).map(b => {
+                const labels = { MIN: 'Bawah', MID: 'Tengah', MAX: 'Atas' };
+                const active = form.rate_band === b;
+                return (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => set('rate_band', b)}
+                    className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      active ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    {labels[b]}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

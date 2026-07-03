@@ -2,7 +2,7 @@ import React from 'react';
 import { FilePlus, ChevronRight } from 'lucide-react';
 import { Language } from '../../types';
 import { type SpB2BSubmission, type SpB2BQuote } from '../../services/supabaseService';
-import { HeroCard, StatCard } from '../shared/cards';
+import { HeroCard } from '../shared/cards';
 
 interface Props {
   client: any;

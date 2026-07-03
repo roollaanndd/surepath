@@ -103,7 +103,6 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
   // Lead form state
   const [leadName, setLeadName] = useState('');
   const [leadWa, setLeadWa] = useState('');
-  const [leadSuccess, setLeadSuccess] = useState(false);
 
   function calculate() {
     const cat = getCategory(hargaJuta);
@@ -119,7 +118,6 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
     setStep('form');
     setLeadName('');
     setLeadWa('');
-    setLeadSuccess(false);
   }
 
   function handleLeadSubmit(e: React.FormEvent) {
@@ -144,7 +142,6 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
       `Halo SurePath, saya ${leadName} ingin tanya asuransi mobil ${coverageLabel} harga Rp${hargaJuta}juta di ${wilayahLabel}`
     );
     window.open(`https://wa.me/6281234567890?text=${text}`, '_blank');
-    setLeadSuccess(true);
     setStep('success');
   }
 

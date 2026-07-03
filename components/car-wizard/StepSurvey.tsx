@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   FileText, FileSearch, Trash2, Camera, Loader2, AlertTriangle, Check,
-  RefreshCw, Cpu, ShieldCheck, Activity, ShieldX, Sparkles,
+  RefreshCw, ShieldCheck, Activity, ShieldX, Sparkles,
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';

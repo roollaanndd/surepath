@@ -196,23 +196,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
     await resolveAndLogin(data.user);
   };
 
-  // ── Demo login (read-only showcase accounts) ────────────────────────────────
-  const handleDemoLogin = async (role: 'CUSTOMER' | 'AGENT') => {
-    setLoading(true);
-    setError(null);
-    resolvedRef.current = false;
-    const { data, error: authErr } = await supabase.auth.signInWithPassword({
-      email:    role === 'AGENT' ? 'demo.agent@myinsurepath.com' : 'demo.customer@myinsurepath.com',
-      password: 'Demo1234!',
-    });
-    if (authErr || !data.user) {
-      setError(t('Demo login unavailable. Please try again later.', 'Login demo tidak tersedia. Coba lagi nanti.'));
-      setLoading(false);
-      return;
-    }
-    await resolveAndLogin(data.user);
-  };
-
   // ── Supabase register ────────────────────────────────────────────────────────
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,11 +320,6 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   // ── Premium design tokens (no green) ──────────────────────────────────────
   const GRAD = 'linear-gradient(135deg, #16a34a 0%, #059669 100%)';
-  const primaryBtn: React.CSSProperties = {
-    background: GRAD,
-    color: '#fff',
-    boxShadow: '0 12px 32px -10px rgba(22,163,74,0.65)',
-  };
   const inputCls = 'w-full h-12 px-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all duration-150';
 
   return (

@@ -1,5 +1,4 @@
 
-import React from 'react';
 // Added comment above fix
 // Fix: Removed unused 'Card' from imports as it is not exported from './shared/UI'.
 import { Section, Button, Badge } from './shared/UI';

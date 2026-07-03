@@ -160,7 +160,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
             placeholder={t('Search clients…', 'Cari klien…')}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 rounded-2xl border border-ds-border bg-ds-card shadow-ds-sm text-sm text-ds-ink placeholder:text-ds-ink3 focus:outline-none focus:ring-2 focus:ring-ds-green/30 focus:border-ds-green transition-all"
+            className="w-full h-11 pl-10 pr-4 rounded-2xl sp-glass text-sm text-ds-ink placeholder:text-ds-ink3 focus:outline-none focus:ring-2 focus:ring-ds-green/30 focus:border-ds-green transition-all"
           />
         </div>
 
@@ -197,7 +197,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
       <div className="px-4 py-3 space-y-2">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 animate-pulse h-20" />
+            <div key={i} className="sp-glass rounded-2xl p-4 animate-pulse h-20" />
           ))
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-8 text-center bg-ds-card2 rounded-2xl border border-ds-border mt-4">
@@ -215,7 +215,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
               <div
                 key={client.id}
                 onClick={() => { setSelectedClient(client); onSelectClient?.(client); }}
-                className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-3 active:bg-ds-card2 transition-colors cursor-pointer"
+                className="sp-glass rounded-2xl p-4 flex items-center gap-3 active:sp-glass2 transition-colors cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center text-ds-green font-bold text-sm flex-shrink-0">
                   {initials(client.name)}

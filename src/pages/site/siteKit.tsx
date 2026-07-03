@@ -262,8 +262,8 @@ export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: bool
 );
 
 // ─── Product icons ────────────────────────────────────────────────────────────
-const IconVehicle: React.FC<{ color?: string; size?: number }> = ({ color = '#22c55e', size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+const IconVehicle: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#22c55e', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M5 24 L8 16 Q9 13 12 13 L28 13 Q31 13 32 16 L35 24 L35 29 Q35 31 33 31 L7 31 Q5 31 5 29 Z" stroke={color} strokeWidth="1.6" fill={`${color}15`} strokeLinejoin="round"/>
     <path d="M11 13 L13 8 Q14 6 16 6 L24 6 Q26 6 27 8 L29 13" stroke={color} strokeWidth="1.4" fill={`${color}10`}/>
     <circle cx="12" cy="31" r="3.5" stroke={color} strokeWidth="1.6" fill={`${color}20`}/>
@@ -272,8 +272,8 @@ const IconVehicle: React.FC<{ color?: string; size?: number }> = ({ color = '#22
     <path d="M33.5 14.5 L34 16 L35.5 16 L34.3 17 L34.8 18.5 L33.5 17.5 L32.2 18.5 L32.7 17 L31.5 16 L33 16 Z" fill={color}/>
   </svg>
 );
-const IconTravel: React.FC<{ color?: string; size?: number }> = ({ color = '#3b82f6', size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+const IconTravel: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#3b82f6', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="20" cy="21" r="13" stroke={color} strokeWidth="1.6" fill={`${color}10`}/>
     <path d="M14 21 Q20 13 26 21 Q20 29 14 21" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
     <path d="M7 21 L33 21" stroke={color} strokeWidth="1.2" opacity="0.4"/>
@@ -283,8 +283,8 @@ const IconTravel: React.FC<{ color?: string; size?: number }> = ({ color = '#3b8
     <path d="M33 10 L31 11 L32 9 Z" fill={color} opacity="0.6"/>
   </svg>
 );
-const IconPersonalAccident: React.FC<{ color?: string; size?: number }> = ({ color = '#a855f7', size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+const IconPersonalAccident: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#a855f7', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="20" cy="22" rx="12" ry="13" fill={`${color}12`}/>
     <path d="M20 4 L33 9 L33 22 Q33 32 20 37 Q7 32 7 22 L7 9 Z" stroke={color} strokeWidth="1.6" fill={`${color}18`} strokeLinejoin="round"/>
     <circle cx="20" cy="15" r="3.2" stroke={color} strokeWidth="1.4" fill={`${color}20`}/>
@@ -292,8 +292,8 @@ const IconPersonalAccident: React.FC<{ color?: string; size?: number }> = ({ col
     <path d="M14 23 L11 26 M26 23 L29 26" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
   </svg>
 );
-const IconProperty: React.FC<{ color?: string; size?: number }> = ({ color = '#f59e0b', size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+const IconProperty: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#f59e0b', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="10" y="4" width="20" height="34" rx="4" stroke={color} strokeWidth="1.6" fill={`${color}12`}/>
     <rect x="12.5" y="8" width="15" height="22" rx="2" stroke={color} strokeWidth="1" fill={`${color}08`} opacity="0.8"/>
     <rect x="17" y="33" width="6" height="2" rx="1" fill={`${color}50`}/>
@@ -303,8 +303,8 @@ const IconProperty: React.FC<{ color?: string; size?: number }> = ({ color = '#f
     <path d="M27 4 L25 8 L27.5 8 L24.5 13 L27 13 L24 18" stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
   </svg>
 );
-const IconHealth: React.FC<{ color?: string; size?: number }> = ({ color = '#ef4444', size = 28 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+const IconHealth: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#ef4444', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M20 34 Q6 25 6 15 Q6 8 13 7 Q17 7 20 11 Q23 7 27 7 Q34 8 34 15 Q34 25 20 34 Z" stroke={color} strokeWidth="1.6" fill={`${color}20`} strokeLinejoin="round"/>
     <path d="M6 20 L12 20 L14 15 L16 25 L18 18 L20 23 L22 20 L28 20 L34 20" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
   </svg>

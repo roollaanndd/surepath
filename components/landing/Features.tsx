@@ -1,4 +1,3 @@
-import React from "react";
 import { Section } from "../shared/UI";
 import { Camera, Zap, ShieldCheck, Heart } from "lucide-react";
 

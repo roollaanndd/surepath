@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-  Package, Laptop, Smartphone, Home as House, ChevronRight,
+  Laptop, Smartphone, Home as House, ChevronRight,
   ChevronLeft, Check, ShieldCheck, Wallet,
   Camera, Zap,
   Trash2, Microscope,
@@ -17,7 +17,7 @@ const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'curren
 
 const STEPS = ['Select Category', 'Item Registry', 'Select Term', 'Proses Scanning', 'Review & Pay'];
 
-const MPARInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
+const MPARInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [mpar, setMpar] = useState<MPARState>({

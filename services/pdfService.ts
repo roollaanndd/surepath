@@ -211,6 +211,8 @@ export interface QuotePDFData {
   totalPremium: number;
   validUntil: string;
   quoteNumber: string;
+  ojkRate?: number;   // decimal, e.g. 0.0247 = 2.47% p.a.
+  rateBand?: 'MIN' | 'MID' | 'MAX';
 }
 
 export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
@@ -223,8 +225,8 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
   const contentW = pageW - marginL * 2;
 
   // ── Colours ────────────────────────────────────────────────────────────────
-  const NAVY   = [10, 22, 40]    as [number, number, number];
-  const ORANGE = [249, 115, 22]  as [number, number, number];
+  const NAVY   = [6, 78, 59]     as [number, number, number];   // deep emerald header
+  const ORANGE = [5, 150, 105]   as [number, number, number];   // emerald accent
   const WHITE  = [255, 255, 255] as [number, number, number];
   const GRAY_L = [245, 246, 248] as [number, number, number];
   const GRAY_T = [120, 120, 130] as [number, number, number];
@@ -235,16 +237,27 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
   doc.setFillColor(...NAVY);
   doc.rect(0, 0, pageW, 45, 'F');
 
+  // Shield logo mark (vector, mascot motif)
+  doc.setDrawColor(52, 211, 153);
+  doc.setLineWidth(0.9);
+  doc.lines(
+    [[5, 2], [0, 7], [-5, 5], [-5, -5], [0, -7]],
+    marginL + 2, 14
+  );
+  doc.setFillColor(52, 211, 153);
+  doc.circle(marginL + 4.4, 19.5, 0.8, 'F');
+  doc.circle(marginL + 8.4, 19.5, 0.8, 'F');
+
   // SurePath logo text
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
   doc.setTextColor(...WHITE);
-  doc.text('SurePath', marginL, 22);
+  doc.text('SurePath', marginL + 15, 22);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(160, 170, 185);
-  doc.text('Insurance Solutions', marginL, 30);
+  doc.setTextColor(167, 243, 208);
+  doc.text('Asuransi Digital Terpercaya', marginL + 15, 30);
 
   // "SURAT PENAWARAN" right side
   doc.setFont('helvetica', 'bold');
@@ -322,7 +335,10 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
     [{ l: 'Merek', v: data.vehicleBrand }, { l: 'Model', v: data.vehicleModel }],
     [{ l: 'Tahun', v: String(data.vehicleYear) }, { l: 'Kategori OJK', v: `Kategori ${data.category}` }],
     [{ l: 'Harga Kendaraan', v: formatIDR(data.vehiclePrice) }, { l: 'Zona', v: `Zona ${data.zone}` }],
-    [{ l: 'Tipe Perlindungan', v: data.coverageType === 'COMPREHENSIVE' ? 'KOMPREHENSIF (All Risk)' : 'TLO (Total Loss Only)' }, { l: '', v: '' }],
+    [{ l: 'Tipe Perlindungan', v: data.coverageType === 'COMPREHENSIVE' ? 'KOMPREHENSIF (All Risk)' : 'TLO (Total Loss Only)' },
+     data.ojkRate
+       ? { l: 'Tarif OJK', v: `${(data.ojkRate * 100).toFixed(2)}% p.a.${data.rateBand ? ` (Batas ${data.rateBand === 'MIN' ? 'Bawah' : data.rateBand === 'MAX' ? 'Atas' : 'Tengah'})` : ''}` }
+       : { l: '', v: '' }],
   ];
 
   vehicleGrid.forEach(row => {
@@ -400,20 +416,20 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
     '• Harga dapat berubah sesuai kondisi kendaraan saat survei.',
   ];
 
-  doc.setFillColor(255, 247, 237);
-  doc.setDrawColor(253, 186, 116);
+  doc.setFillColor(236, 253, 245);
+  doc.setDrawColor(110, 231, 183);
   doc.setLineWidth(0.3);
   doc.roundedRect(marginL, y, contentW, 5 + noteLines.length * 5.5, 2, 2, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
-  doc.setTextColor(180, 80, 0);
+  doc.setTextColor(4, 120, 87);
   doc.text('CATATAN & KETENTUAN', marginL + 3, y + 4);
 
   noteLines.forEach((line, i) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(120, 60, 0);
+    doc.setTextColor(6, 95, 70);
     doc.text(line, marginL + 3, y + 9 + i * 5.5);
   });
 
@@ -432,7 +448,7 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...ORANGE);
-  doc.text('Protecting What Matters Most', pageW / 2, footerY, { align: 'center' });
+  doc.text('myinsurepath.com', pageW / 2, footerY, { align: 'center' });
 
   doc.setFontSize(6.5);
   doc.setTextColor(...GRAY_T);

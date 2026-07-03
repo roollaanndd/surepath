@@ -113,8 +113,6 @@ const CircularProgress: React.FC<{ value: number; size?: number; color?: string 
   );
 };
 
-const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-pink-500', 'bg-indigo-500'];
-const avatarColor = (name: string) => avatarColors[(name.charCodeAt(0) ?? 0) % avatarColors.length];
 const initials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
 const rankMedal: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -175,7 +173,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
       <div className="px-4 py-5 max-w-lg mx-auto space-y-4">
 
         {/* Monthly Target Card with circular progress */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm p-5">
+        <div className="sp-glass rounded-[2rem] p-5">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">
             {t('My Monthly Target', 'Target Bulanan Saya')}
           </p>
@@ -239,7 +237,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         </div>
 
         {/* Tier legend */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm p-5">
+        <div className="sp-glass rounded-[2rem] p-5">
           <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">
             {t('Tier Requirements', 'Syarat Tier')}
           </p>
@@ -256,7 +254,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
                 <div
                   key={tier}
                   className={`rounded-xl px-3 py-2 border transition-all ${cfg.bgColor} ${cfg.borderColor} ${active ? 'ring-2 ring-offset-1' : ''}`}
-                  style={active ? { ringColor: cfg.svgColor } : {}}
+                  style={active ? ({ '--tw-ring-color': cfg.svgColor } as React.CSSProperties) : {}}
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{cfg.emoji}</span>
@@ -271,7 +269,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         </div>
 
         {/* Top Agents Leaderboard List */}
-        <div className="bg-ds-card rounded-[2rem] border border-ds-border shadow-ds-sm overflow-hidden">
+        <div className="sp-glass rounded-[2rem] overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">
               {t('Top Agents', 'Agen Terbaik')}

@@ -69,31 +69,36 @@ export function getVehicleCategory(sumInsured: number): VehicleCategory {
   return 5;
 }
 
-// ─── OJK Rate Tables (midpoint of tarif bawah–tarif atas) ────────────────────
-// Source: SEOJK No. 6/SEOJK.05/2017
+// ─── OJK Rate Tables ──────────────────────────────────────────────────────────
+// Source: SEOJK No. 6/SEOJK.05/2017 — midpoints of tarif bawah–tarif atas
+// Zone: 1=Sumatera, 2=Jakarta/Jabar/Banten, 3=rest of Indonesia
 
-// Comprehensive (All Risk) rates — Roda 4
-// [category][zone]: percentage (e.g. 0.0401 = 4.01%)
+// Comprehensive (All Risk) midpoint rates — Roda 4
+// [category][zone]: e.g. 0.0401 = 4.01% per annum
 const CAR_COMP_RATES: Record<VehicleCategory, Record<Zone, number>> = {
   1: { 1: 0.0401, 2: 0.0343, 3: 0.0266 },
-  2: { 1: 0.0281, 2: 0.0260, 3: 0.0218 },
-  3: { 1: 0.0229, 2: 0.0218, 3: 0.0188 },
-  4: { 1: 0.0189, 2: 0.0180, 3: 0.0176 },
-  5: { 1: 0.0140, 2: 0.0140, 3: 0.0140 },
+  2: { 1: 0.0281, 2: 0.0260, 3: 0.0283 },
+  3: { 1: 0.0229, 2: 0.0219, 3: 0.0188 },
+  4: { 1: 0.0126, 2: 0.0126, 3: 0.0120 },
+  5: { 1: 0.0111, 2: 0.0111, 3: 0.0111 },
 };
 
-// TLO rates — Roda 4
+// TLO midpoint rates — Roda 4 (decreases with vehicle value, varies by zone)
 const CAR_TLO_RATES: Record<VehicleCategory, Record<Zone, number>> = {
-  1: { 1: 0.0056, 2: 0.0044, 3: 0.0047 },
-  2: { 1: 0.0069, 2: 0.0064, 3: 0.0063 },
-  3: { 1: 0.0099, 2: 0.0095, 3: 0.0090 },
-  4: { 1: 0.0121, 2: 0.0114, 3: 0.0110 },
-  5: { 1: 0.0132, 2: 0.0126, 3: 0.0120 },
+  1: { 1: 0.0052, 2: 0.0072, 3: 0.0054 },
+  2: { 1: 0.0066, 2: 0.0049, 3: 0.0046 },
+  3: { 1: 0.0044, 2: 0.0040, 3: 0.0032 },
+  4: { 1: 0.0028, 2: 0.0028, 3: 0.0025 },
+  5: { 1: 0.0022, 2: 0.0022, 3: 0.0022 },
 };
 
-// Motorcycle (Roda 2) — same rate nationwide
-const MOTO_COMP_RATE = 0.0290; // 2.90%
-const MOTO_TLO_RATE  = 0.0065; // 0.65%
+// Motorcycle (Roda 2) — COMP same nationwide; TLO zone-dependent
+const MOTO_COMP_MIN = 0.0318;
+const MOTO_COMP_MID = 0.0334;
+const MOTO_COMP_MAX = 0.0350;
+const MOTO_TLO_MIN: Record<Zone, number> = { 1: 0.0176, 2: 0.0180, 3: 0.0067 };
+const MOTO_TLO_MID: Record<Zone, number> = { 1: 0.0194, 2: 0.0198, 3: 0.0074 };
+const MOTO_TLO_MAX: Record<Zone, number> = { 1: 0.0211, 2: 0.0216, 3: 0.0080 };
 
 export function getBaseRate(
   vehicleType: VehicleType,
@@ -102,7 +107,7 @@ export function getBaseRate(
   category: VehicleCategory,
 ): number {
   if (vehicleType === 'MOTORCYCLE') {
-    return coverage === 'COMPREHENSIVE' ? MOTO_COMP_RATE : MOTO_TLO_RATE;
+    return coverage === 'COMPREHENSIVE' ? MOTO_COMP_MID : MOTO_TLO_MID[zone];
   }
   const table = coverage === 'COMPREHENSIVE' ? CAR_COMP_RATES : CAR_TLO_RATES;
   return table[category][zone];
@@ -113,9 +118,10 @@ export function getBaseRate(
 export interface AddOns {
   flood: boolean;
   earthquake: boolean;
-  riot: boolean;
-  tplLimit: number;      // 0 | 10_000_000 | 25_000_000 | 50_000_000
-  paDriver: boolean;     // PA for driver
+  riot: boolean;          // SRCC — Huru-hara dan Kerusuhan (OJK IV.B No.3)
+  terrorism?: boolean;    // Terorisme dan Sabotase (OJK IV.B No.4)
+  tplLimit: number;       // 0 | 10_000_000 | 25_000_000 | 50_000_000
+  paDriver: boolean;      // PA for driver
   paPassengerSeats: number; // 0-7
 }
 
@@ -126,21 +132,28 @@ export const TPL_OPTIONS = [
   { value: 50_000_000, label: 'Rp 50 Juta' },
 ];
 
-const TPL_PREMIUM: Record<number, number> = {
-  0:          0,
-  10_000_000: 50_000,
-  25_000_000: 100_000,
-  50_000_000: 200_000,
-};
+// Progressive TPL (Tanggung Jawab Hukum Pihak Ketiga) per OJK IV.B No.5
+// Kendaraan Penumpang & Sepeda Motor: 1% (≤25M) / 0.5% (25M-50M) / 0.25% (50M-100M)
+function calcTplPremium(limit: number): number {
+  if (limit <= 0) return 0;
+  let p = 0;
+  p += Math.min(limit, 25_000_000) * 0.01;
+  if (limit > 25_000_000) p += Math.min(limit - 25_000_000, 25_000_000) * 0.005;
+  if (limit > 50_000_000) p += Math.min(limit - 50_000_000, 50_000_000) * 0.0025;
+  return Math.round(p);
+}
 
-export function calcAddonPremium(addons: AddOns, sumInsured: number): number {
+export function calcAddonPremium(addons: AddOns, sumInsured: number, coverage: CoverageType = 'COMPREHENSIVE'): number {
+  // SRCC & Terorisme: COMP 0.05%, TLO 0.035% (OJK IV.B No.3 & No.4)
+  const srccRate = coverage === 'COMPREHENSIVE' ? 0.0005 : 0.00035;
   let total = 0;
-  if (addons.flood)      total += sumInsured * 0.0015;   // 0.15%
-  if (addons.earthquake) total += sumInsured * 0.0012;   // 0.12%
-  if (addons.riot)       total += sumInsured * 0.0007;   // 0.07%
-  total += TPL_PREMIUM[addons.tplLimit] ?? 0;
-  if (addons.paDriver)   total += 50_000;                // Rp 50k/tahun
-  total += addons.paPassengerSeats * 25_000;             // Rp 25k/seat/tahun
+  if (addons.flood)            total += sumInsured * 0.0015;    // per Lampiran II Tabel II.B
+  if (addons.earthquake)       total += sumInsured * 0.0012;    // per Lampiran III Tabel III.E
+  if (addons.riot)             total += sumInsured * srccRate;  // SRCC OJK IV.B No.3
+  if (addons.terrorism)        total += sumInsured * srccRate;  // Terorisme OJK IV.B No.4
+  total += calcTplPremium(addons.tplLimit);                     // progressive OJK IV.B No.5
+  if (addons.paDriver)         total += 50_000;                 // 0.5% × Rp10M PA sum assured OJK IV.B No.6a
+  total += addons.paPassengerSeats * 25_000;                    // 0.1% × Rp25M PA sum assured/seat OJK IV.B No.6b
   return Math.round(total);
 }
 
@@ -149,34 +162,34 @@ export function calcAddonPremium(addons: AddOns, sumInsured: number): number {
 
 export const CAR_COMP_MIN: Record<VehicleCategory, Record<Zone, number>> = {
   1: { 1: 0.0382, 2: 0.0326, 3: 0.0253 },
-  2: { 1: 0.0267, 2: 0.0247, 3: 0.0208 },
+  2: { 1: 0.0267, 2: 0.0247, 3: 0.0269 },
   3: { 1: 0.0218, 2: 0.0208, 3: 0.0179 },
-  4: { 1: 0.0180, 2: 0.0171, 3: 0.0168 },
-  5: { 1: 0.0133, 2: 0.0133, 3: 0.0133 },
+  4: { 1: 0.0120, 2: 0.0120, 3: 0.0114 },
+  5: { 1: 0.0105, 2: 0.0105, 3: 0.0105 },
 };
 
 export const CAR_COMP_MAX: Record<VehicleCategory, Record<Zone, number>> = {
   1: { 1: 0.0420, 2: 0.0359, 3: 0.0278 },
-  2: { 1: 0.0294, 2: 0.0272, 3: 0.0229 },
+  2: { 1: 0.0294, 2: 0.0272, 3: 0.0296 },
   3: { 1: 0.0240, 2: 0.0229, 3: 0.0197 },
-  4: { 1: 0.0198, 2: 0.0188, 3: 0.0185 },
-  5: { 1: 0.0147, 2: 0.0147, 3: 0.0147 },
+  4: { 1: 0.0132, 2: 0.0132, 3: 0.0125 },
+  5: { 1: 0.0116, 2: 0.0116, 3: 0.0116 },
 };
 
 export const CAR_TLO_MIN: Record<VehicleCategory, Record<Zone, number>> = {
-  1: { 1: 0.0053, 2: 0.0042, 3: 0.0045 },
-  2: { 1: 0.0066, 2: 0.0061, 3: 0.0060 },
-  3: { 1: 0.0094, 2: 0.0091, 3: 0.0086 },
-  4: { 1: 0.0115, 2: 0.0109, 3: 0.0105 },
-  5: { 1: 0.0126, 2: 0.0120, 3: 0.0114 },
+  1: { 1: 0.0047, 2: 0.0065, 3: 0.0051 },
+  2: { 1: 0.0063, 2: 0.0044, 3: 0.0044 },
+  3: { 1: 0.0041, 2: 0.0038, 3: 0.0029 },
+  4: { 1: 0.0025, 2: 0.0025, 3: 0.0023 },
+  5: { 1: 0.0020, 2: 0.0020, 3: 0.0020 },
 };
 
 export const CAR_TLO_MAX: Record<VehicleCategory, Record<Zone, number>> = {
-  1: { 1: 0.0059, 2: 0.0046, 3: 0.0050 },
-  2: { 1: 0.0072, 2: 0.0067, 3: 0.0066 },
-  3: { 1: 0.0104, 2: 0.0100, 3: 0.0095 },
-  4: { 1: 0.0127, 2: 0.0120, 3: 0.0116 },
-  5: { 1: 0.0139, 2: 0.0132, 3: 0.0126 },
+  1: { 1: 0.0056, 2: 0.0078, 3: 0.0056 },
+  2: { 1: 0.0069, 2: 0.0053, 3: 0.0048 },
+  3: { 1: 0.0046, 2: 0.0042, 3: 0.0035 },
+  4: { 1: 0.0030, 2: 0.0030, 3: 0.0027 },
+  5: { 1: 0.0024, 2: 0.0024, 3: 0.0024 },
 };
 
 export type OjkBand = 'MIN' | 'MID' | 'MAX';
@@ -189,10 +202,15 @@ export function getBaseRateByBand(
   band: OjkBand,
 ): number {
   if (vehicleType === 'MOTORCYCLE') {
-    const mid = coverage === 'COMPREHENSIVE' ? MOTO_COMP_RATE : MOTO_TLO_RATE;
-    if (band === 'MIN') return Math.round(mid * 0.95 * 10000) / 10000;
-    if (band === 'MAX') return Math.round(mid * 1.05 * 10000) / 10000;
-    return mid;
+    if (coverage === 'COMPREHENSIVE') {
+      if (band === 'MIN') return MOTO_COMP_MIN;
+      if (band === 'MAX') return MOTO_COMP_MAX;
+      return MOTO_COMP_MID;
+    }
+    // TLO — zone-dependent for motorcycles
+    if (band === 'MIN') return MOTO_TLO_MIN[zone];
+    if (band === 'MAX') return MOTO_TLO_MAX[zone];
+    return MOTO_TLO_MID[zone];
   }
   if (band === 'MID') {
     const table = coverage === 'COMPREHENSIVE' ? CAR_COMP_RATES : CAR_TLO_RATES;
@@ -238,6 +256,7 @@ export interface PremiumBreakdown {
     flood: number;
     earthquake: number;
     riot: number;
+    terrorism: number;
     tpl: number;
     paDriver: number;
     paPassenger: number;
@@ -250,17 +269,20 @@ export function calcPremium(
   sumInsured: number,
   zone: Zone,
   addons: AddOns,
+  band: OjkBand = 'MID',
 ): PremiumBreakdown {
   const category = vehicleType === 'CAR' ? getVehicleCategory(sumInsured) : 1;
-  const rate      = getBaseRate(vehicleType, coverage, zone, category);
+  const rate      = getBaseRateByBand(vehicleType, coverage, zone, category, band);
   const basePremium = Math.round(sumInsured * rate);
 
+  const srccRate = coverage === 'COMPREHENSIVE' ? 0.0005 : 0.00035;
   const addonDetail = {
-    flood:       addons.flood      ? Math.round(sumInsured * 0.0015) : 0,
-    earthquake:  addons.earthquake ? Math.round(sumInsured * 0.0012) : 0,
-    riot:        addons.riot       ? Math.round(sumInsured * 0.0007) : 0,
-    tpl:         TPL_PREMIUM[addons.tplLimit] ?? 0,
-    paDriver:    addons.paDriver ? 50_000 : 0,
+    flood:       addons.flood        ? Math.round(sumInsured * 0.0015)    : 0,
+    earthquake:  addons.earthquake   ? Math.round(sumInsured * 0.0012)    : 0,
+    riot:        addons.riot         ? Math.round(sumInsured * srccRate)  : 0,
+    terrorism:   addons.terrorism    ? Math.round(sumInsured * srccRate)  : 0,
+    tpl:         calcTplPremium(addons.tplLimit),
+    paDriver:    addons.paDriver     ? 50_000 : 0,
     paPassenger: addons.paPassengerSeats * 25_000,
   };
 

@@ -21,6 +21,7 @@ import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOr
 import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
 import OrderDetailSheet from './OrderDetailSheet';
+import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 
 interface Props {
   currentUser: any;
@@ -39,6 +40,7 @@ const TABS = [
 
 const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('CUSTOMER'));
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [activePage, setActivePage] = useState('home');
@@ -263,7 +265,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Recent Activity', 'Aktivitas Terbaru')}</p>
                     <button onClick={() => navigate('history')} className="text-xs font-bold text-ds-green">{t('All', 'Semua')}</button>
                   </div>
-                  <div className="bg-ds-card border border-ds-border rounded-2xl shadow-ds-sm overflow-hidden">
+                  <div className="sp-glass rounded-2xl overflow-hidden">
                     {customerPolicies.slice(0, 2).map((p, i) => (
                       <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${i < customerPolicies.slice(0, 2).length - 1 || customerClaims.length > 0 ? 'border-b border-ds-border' : ''}`}>
                         <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
@@ -278,7 +280,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         </span>
                       </div>
                     ))}
-                    {customerClaims.slice(0, 1).map((c, i) => (
+                    {customerClaims.slice(0, 1).map((c) => (
                       <div key={c.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
                           <Zap size={16} className="text-rose-500" />
@@ -326,7 +328,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     key={p.id}
                     onClick={() => p.active && navigate(`buy-${p.id}`)}
                     style={{ animationDelay: `${pIdx * 60}ms` }}
-                    className={`group relative bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center gap-4 transition-all duration-200 overflow-hidden animate-fade-in ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md hover:border-emerald-500/20 active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
+                    className={`group relative sp-glass rounded-2xl p-4 flex items-center gap-4 transition-all duration-200 overflow-hidden animate-fade-in ${p.active ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md hover:border-emerald-500/20 active:scale-[0.98]' : 'opacity-40 grayscale pointer-events-none'}`}
                   >
                     {/* Subtle background glow — product brand color at very low opacity */}
                     <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -449,7 +451,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   };
                   const meta = policyStatusMap[p.status] ?? { label: p.status, cls: 'bg-ds-card2 text-ds-ink3' };
                   return (
-                    <div key={i} onClick={() => setSelectedOrder(p)} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
+                    <div key={i} onClick={() => setSelectedOrder(p)} className="sp-glass rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
                           {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
@@ -485,7 +487,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 ) : customerClaims.map((c, i) => {
                   const cmeta = claimStatusMap[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink2' };
                   return (
-                    <div key={i} className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-4 flex items-center justify-between">
+                    <div key={i} className="sp-glass rounded-2xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
                           <AlertCircle size={18} className="text-ds-red" />
@@ -547,10 +549,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   return (
     <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-white transition-colors duration-300">
+      <div aria-hidden className="sp-ambient" />
+      {showOnboarding && (
+        <OnboardingFlow role="CUSTOMER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
 
       {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 bg-white/95 dark:bg-ds-dk-s1/95 backdrop-blur-xl border-b border-ds-border dark:border-ds-dk-bd shadow-ds-sm">
+        <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
@@ -648,14 +654,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       {/* Main content */}
       <main
         ref={scrollRef}
-        className={isFullscreen ? 'h-screen overflow-y-auto' : 'pt-16 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-16 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
       >
         {renderContent()}
       </main>
 
       {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/95 dark:bg-ds-dk-s1/95 backdrop-blur-2xl rounded-[3rem] shadow-ds-lg border border-ds-border dark:border-ds-dk-bd">
+        <nav className="fixed bottom-6 inset-x-3 z-50 sp-glass-strong rounded-[3rem]">
           <div className="flex items-center justify-around px-1 py-2.5">
             {TABS.map(({ id, labelEn, labelId, Icon }) => {
               const active = activeTab === id;

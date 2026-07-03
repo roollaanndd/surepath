@@ -54,3 +54,75 @@ export const BotBox = (props: any) => (
     <path d="M12 4V2" strokeWidth="1" opacity="0.4" />
   </IconWrapper>
 );
+export const BotWallet = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+    <circle cx="9" cy="13" r="0.7" fill="currentColor" />
+    <circle cx="12" cy="13" r="0.7" fill="currentColor" />
+    <path d="M9.5 16q1.5 1 3 0" strokeWidth="1" />
+  </IconWrapper>
+);
+
+export const BotCoin = (props: any) => (
+  <IconWrapper {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 3V1M12 1l-1.5-.5M12 1l1.5-.5" strokeWidth="1" opacity="0.5" />
+    <path d="M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4" strokeWidth="1.6" />
+    <path d="M12 8v1.5M12 15.5V17" strokeWidth="1.6" />
+    <circle cx="9" cy="7" r="0.6" fill="currentColor" />
+    <circle cx="15" cy="7" r="0.6" fill="currentColor" />
+  </IconWrapper>
+);
+
+export const BotPolicy = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 13h8M8 17h5" strokeWidth="1.4" />
+    <circle cx="10" cy="10" r="0.6" fill="currentColor" />
+    <circle cx="13" cy="10" r="0.6" fill="currentColor" />
+  </IconWrapper>
+);
+
+export const BotClaimCam = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+    <circle cx="12" cy="13" r="4" />
+    <circle cx="10.7" cy="12.5" r="0.6" fill="currentColor" />
+    <circle cx="13.3" cy="12.5" r="0.6" fill="currentColor" />
+    <path d="M10.8 14.6q1.2 1 2.4 0" strokeWidth="1" />
+    <path d="M12 4V2" strokeWidth="1" opacity="0.4" />
+  </IconWrapper>
+);
+
+export const BotAgent = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="M4 14v-3a8 8 0 0 1 16 0v3" />
+    <path d="M2 14a2 2 0 0 1 2-2v6a2 2 0 0 1-2-2v-2ZM22 14a2 2 0 0 0-2-2v6a2 2 0 0 0 2-2v-2Z" />
+    <path d="M20 18a4 4 0 0 1-4 4h-2" strokeWidth="1.4" />
+    <circle cx="10" cy="12" r="0.7" fill="currentColor" />
+    <circle cx="14" cy="12" r="0.7" fill="currentColor" />
+    <path d="M10 15q2 1.4 4 0" strokeWidth="1" />
+  </IconWrapper>
+);
+
+export const BotHome = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+    <path d="M12 3V1.5" strokeWidth="1" opacity="0.4" />
+    <circle cx="10" cy="12" r="0.7" fill="currentColor" />
+    <circle cx="14" cy="12" r="0.7" fill="currentColor" />
+    <path d="M10 15q2 1.4 4 0" strokeWidth="1" />
+  </IconWrapper>
+);
+
+export const BotChart = (props: any) => (
+  <IconWrapper {...props}>
+    <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+    <path d="M7 15l4-5 3 3 5-6" strokeWidth="1.8" />
+    <circle cx="7" cy="15" r="0.8" fill="currentColor" />
+    <circle cx="19" cy="7" r="0.8" fill="currentColor" />
+  </IconWrapper>
+);

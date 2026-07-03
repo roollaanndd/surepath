@@ -91,7 +91,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
 
               {/* Grid Features */}
               <div className="grid md:grid-cols-2 gap-6 animate-fade-in animation-delay-200">
-                 {data.benefits.map((ben, i) => (
+                 {data.neuralBenefits.map((ben, i) => (
                     <div key={i} className="p-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] group hover:border-emerald-500/30 transition-all">
                        <div className="flex items-center gap-4 mb-6">
                           <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">

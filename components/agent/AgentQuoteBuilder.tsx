@@ -4,6 +4,7 @@ import {
   CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart, FileText
 } from 'lucide-react';
 import { Language } from '../../types';
+import { CAR_DATABASE } from '../../constants';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
   saveQuote, createPolicy, addCommission,
@@ -252,6 +253,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         adminFee: breakdown.adminFee,
         stampDuty: breakdown.stampDuty,
         totalPremium: breakdown.total,
+        ojkRate: breakdown.rate,
+        rateBand: 'MID',
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
       });

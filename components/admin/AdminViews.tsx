@@ -11,22 +11,20 @@ import {
   Car, Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
   UserPlus, ChevronDown, Pencil, Shield,
-  X, Clock, AlertCircle, Send, Banknote
+  X, Clock, AlertCircle, Send,
 } from 'lucide-react';
-import { getSecurityPulse, getRecentThreats, generateLiveThreat, ThreatNode } from '../../services/NeuralGuardService';
-import { db, Policy, Transaction, AuditLog, CustomProduct, User } from '../../db';
+import { getSecurityPulse } from '../../services/NeuralGuardService';
+import { db, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   updateAgentTier,
-  supabase, callGateway,
+  callGateway,
   getAllOrders, updateOrderStatus, type SpPolicyOrder,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
   registerAgent,
-  getOnlineUsers, type OnlineUsersResult,
-  getSecurityStats, getRateLimitBlocks, getSessionActivityByHour,
-  getTrafficStats, type TrafficStats,
+  getSecurityStats, getSessionActivityByHour,
   getAdminPayments, getAdminFinancialReports,
 } from '../../services/supabaseService';
 import { TIER_CONFIG } from '../../types';
@@ -987,7 +985,7 @@ const BackupView: React.FC = () => {
     }
   };
 
-  const handleDownload = (id: string) => downloadBackup(id);
+  const handleDownload = (id: number | string) => downloadBackup(id);
 
   return (
     <div className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
@@ -1036,7 +1034,7 @@ const BackupView: React.FC = () => {
             <tbody>
               {backups.map(b => (
                 <tr key={b.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors text-xs">
-                  <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.createdAt).toLocaleString('id-ID')}</td>
+                  <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.created_at).toLocaleString('id-ID')}</td>
                   <td className="py-3 pr-4">
                     <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                       {b.backup_type}
@@ -2645,7 +2643,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                     Setujui
                   </button>
                 )}
-                {(wd.status === 'APPROVED' || (wd.status === 'APPROVED' && wd.scheduled_disburse_at && new Date(wd.scheduled_disburse_at) <= new Date())) && (
+                {wd.status === 'APPROVED' && (
                   <button
                     onClick={() => handleDisburse(wd.id)}
                     disabled={busy}

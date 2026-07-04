@@ -105,7 +105,7 @@ const AIAdminView: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">AI Admin Agent</p>
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Kontrol Polis Otomatis</h2>
-          <p className="text-xs text-gray-500 mt-1">Analisis cerdas berbasis Claude AI untuk setiap pengajuan polis</p>
+          <p className="text-xs text-gray-500 mt-1">Analisis cerdas berbasis SurePath AI untuk setiap pengajuan polis</p>
         </div>
         <div className="flex flex-col gap-2 items-end">
           {/* Auto-mode toggle */}

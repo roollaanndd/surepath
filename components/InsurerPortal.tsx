@@ -11,6 +11,7 @@ import {
 } from '../services/supabaseService';
 import { formatIDR } from './car-wizard/WizardUI';
 import jsPDF from 'jspdf';
+import { SecureDocLink } from './shared/SecureDoc';
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
 
@@ -396,10 +397,10 @@ const InsurerPortal: React.FC = () => {
           {/* Already uploaded */}
           {selected.policy_document_url && (
             <div className="pb-8">
-              <a href={selected.policy_document_url} target="_blank" rel="noopener noreferrer"
+              <SecureDocLink url={selected.policy_document_url}
                 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 transition-colors">
                 <Download size={14} /> Unduh Dokumen Polis
-              </a>
+              </SecureDocLink>
             </div>
           )}
         </div>

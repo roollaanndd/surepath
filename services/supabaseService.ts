@@ -793,6 +793,24 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
   return data.publicUrl;
 }
 
+// policy-documents and agent-docs are private buckets — the *_url fields
+// still hold the old-style public URL string, so this swaps it for a
+// short-lived signed URL at view time (RLS still scopes who may sign one).
+const SIGNED_URL_BUCKETS = new Set(['policy-documents', 'agent-docs']);
+
+export async function resolveDocumentUrl(rawUrl: string | null | undefined, expiresIn = 300): Promise<string | null> {
+  if (!rawUrl) return null;
+  const match = rawUrl.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+  if (!match) return rawUrl;
+  const [, bucket, encodedPath] = match;
+  if (!SIGNED_URL_BUCKETS.has(bucket)) return rawUrl;
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(decodeURIComponent(encodedPath), expiresIn);
+  if (error) { console.error('resolveDocumentUrl:', error); return null; }
+  return data.signedUrl;
+}
+
 export async function uploadLogoImage(file: File): Promise<string | null> {
   const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'png');
   const path = `logo/logo.${ext}`;

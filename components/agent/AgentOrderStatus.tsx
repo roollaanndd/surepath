@@ -10,6 +10,7 @@ import {
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { SecureDocLink } from '../shared/SecureDoc';
 
 interface Props {
   agentId: string;
@@ -149,15 +150,13 @@ const OrderSheet: React.FC<{
         )}
 
         {order.policy_document_url && (
-          <a
-            href={order.policy_document_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <SecureDocLink
+            url={order.policy_document_url}
             className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-transform"
           >
             <Download size={15} />
             {t('Download Policy', 'Unduh Polis')} — {order.policy_number}
-          </a>
+          </SecureDocLink>
         )}
       </div>
     </div>

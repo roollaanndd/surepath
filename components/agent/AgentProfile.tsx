@@ -13,6 +13,7 @@ import {
   type SpUser, type AgentStats,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { SecureDocLink } from '../shared/SecureDoc';
 
 interface Props {
   agent: any;
@@ -430,8 +431,8 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             </div>
             <div className="flex items-center gap-2">
               {(profile as any)?.ktp_document_url && (
-                <a href={(profile as any).ktp_document_url} target="_blank" rel="noreferrer"
-                   className="text-[10px] font-black text-ds-blue underline">Lihat</a>
+                <SecureDocLink url={(profile as any).ktp_document_url}
+                   className="text-[10px] font-black text-ds-blue underline">Lihat</SecureDocLink>
               )}
               <button
                 onClick={() => ktpInputRef.current?.click()}

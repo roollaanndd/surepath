@@ -320,7 +320,7 @@ export const PRODUCTS = [
 
 // ─── Promo banners ────────────────────────────────────────────────────────────
 const BANNERS = [
-  { badge: 'Gratis', title: ['Konsultasi', 'dengan Agen Kami'], sub: 'Dapatkan saran perlindungan yang tepat, tanpa tekanan dan tanpa biaya.', cta: 'Mulai Chat', icon: MessageSquare, grad: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)', accent: '#22c55e', badgeBg: 'rgba(34,197,94,0.15)', badgeColor: '#4ade80' },
+  { badge: 'Gratis', title: ['Konsultasi', 'dengan Mitra Kami'], sub: 'Dapatkan saran perlindungan yang tepat, tanpa tekanan dan tanpa biaya.', cta: 'Mulai Chat', icon: MessageSquare, grad: 'linear-gradient(135deg, #052e16 0%, #064e3b 100%)', accent: '#22c55e', badgeBg: 'rgba(34,197,94,0.15)', badgeColor: '#4ade80' },
   { badge: 'Referral Program', title: ['Ajak Teman,', 'Raih Keuntungan'], sub: 'Setiap referral yang bergabung memberikan keuntungan nyata untuk Anda berdua.', cta: 'Lihat Syarat', icon: Gift, grad: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', accent: '#818cf8', badgeBg: 'rgba(129,140,248,0.15)', badgeColor: '#a5b4fc' },
   { badge: 'Produk Unggulan', title: ['Proteksi Gadget', '& Elektronik'], sub: 'Satu produk untuk semua perangkat berhargamu. Mudah, terjangkau, komprehensif.', cta: 'Cek Harga', icon: Smartphone, grad: 'linear-gradient(135deg, #0c0a1e 0%, #1a0533 100%)', accent: '#c084fc', badgeBg: 'rgba(192,132,252,0.15)', badgeColor: '#e879f9' },
 ];

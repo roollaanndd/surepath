@@ -16,7 +16,7 @@ type Meta = { Icon: React.FC<{ size?: number; style?: React.CSSProperties }>; co
 
 const META: Record<string, Meta> = {
   careers:     { Icon: Briefcase,  color: '#2563eb', color2: '#7c3aed', label: ['Karir', 'Careers'] },
-  agents:      { Icon: Award,      color: '#d97706', color2: '#dc2626', label: ['Program Agen', 'Agent Program'] },
+  agents:      { Icon: Award,      color: '#d97706', color2: '#dc2626', label: ['Program Mitra', 'Partner Program'] },
   partnership: { Icon: Handshake,  color: '#0891b2', color2: '#2563eb', label: ['Kemitraan', 'Partnership'] },
   privacy:     { Icon: Lock,       color: '#64748b', color2: '#0891b2', label: ['Legal', 'Legal'] },
   terms:       { Icon: ScrollText, color: '#64748b', color2: '#7c3aed', label: ['Legal', 'Legal'] },

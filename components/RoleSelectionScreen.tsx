@@ -33,7 +33,7 @@ const ROLE_CARDS = [
   },
   {
     role: 'AGENT' as Role,
-    title: 'Agen',
+    title: 'Mitra',
     subtitle: 'Asuransi',
     description: 'Jual asuransi dan dapatkan komisi',
     icon: (
@@ -217,13 +217,13 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
                   <div className="px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-2">
                     <span className="text-base">🔗</span>
                     <p className="text-blue-300/90 text-[0.68rem] m-0">
-                      Referral dari agen <strong>{refCode}</strong> akan otomatis terhubung.
+                      Referral dari mitra <strong>{refCode}</strong> akan otomatis terhubung.
                     </p>
                   </div>
                 )}
                 <div className="px-3 py-2 rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15">
                   <p className="text-emerald-400/80 text-[0.68rem] m-0 leading-relaxed">
-                    Akun agen perlu diverifikasi admin sebelum bisa digunakan.
+                    Akun mitra perlu diverifikasi admin sebelum bisa digunakan.
                   </p>
                 </div>
               </div>

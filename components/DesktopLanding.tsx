@@ -55,7 +55,7 @@ const DistributionDiagram = () => (
        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-blue-500 border border-slate-50 dark:border-white/5 transition-transform group-hover:scale-110">
           <Users size={28}/>
        </div>
-       <p className="mt-2 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Jaringan Agen</p>
+       <p className="mt-2 text-center text-[9px] font-black uppercase text-slate-400 tracking-widest">Jaringan Mitra</p>
     </div>
 
     {/* Direct Customer */}

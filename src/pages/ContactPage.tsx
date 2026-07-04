@@ -157,7 +157,7 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
             <button onClick={onSignIn}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02]"
               style={{ background: accent }}>
-              {config?.cta_text || t('Chat dengan Agen', 'Chat with Agent')} <ArrowRight size={16} />
+              {config?.cta_text || t('Chat dengan Mitra', 'Chat with Partner')} <ArrowRight size={16} />
             </button>
           </Reveal>
         </div>

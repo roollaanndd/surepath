@@ -34,7 +34,7 @@ const SLIDES: Record<Role, { Art: React.ElementType; id: [string, string]; en: [
     },
     {
       Art: ArtSupport,
-      id: ['Ada manusia di balik teknologi', 'Agen berlisensi dan asisten Pathy siap bantu 24/7 — dari pilih polis sampai proses klaim.'],
+      id: ['Ada manusia di balik teknologi', 'Mitra berlisensi dan asisten Pathy siap bantu 24/7 — dari pilih polis sampai proses klaim.'],
       en: ['Real humans behind the tech', 'Licensed agents and Pathy assistant, ready 24/7 — from choosing a policy to settling a claim.'],
     },
   ],

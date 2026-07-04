@@ -432,7 +432,7 @@ const TierPromoConfigAdmin: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-2 bg-white/[0.03] border border-white/5 rounded-2xl p-1">
         {([
-          { id: 'tier' as const, label: 'Bonus Tier Agen' },
+          { id: 'tier' as const, label: 'Bonus Tier Mitra' },
           { id: 'promo' as const, label: 'Kode Promo Nasabah' },
         ] as const).map(t => (
           <button

@@ -247,7 +247,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         clientName,
-        preparedBy: agent?.name ?? 'Agen SurePath',
+        preparedBy: agent?.name ?? 'Mitra SurePath',
         preparedByCode: agent?.agent_code ?? '',
         vehicleBrand: carInputs.brand,
         vehicleModel: carInputs.model,

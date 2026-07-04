@@ -386,7 +386,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
                       </div>
                       <div>
                          <span className="text-[0.65rem] font-black uppercase text-emerald-400">Hemat Kamu</span>
-                         <p className="text-[0.5rem] font-bold text-emerald-500/60 uppercase">Potongan Komisi Agen {premiumBreakdown.discountPercent}%</p>
+                         <p className="text-[0.5rem] font-bold text-emerald-500/60 uppercase">Potongan Komisi Mitra {premiumBreakdown.discountPercent}%</p>
                       </div>
                    </div>
                    <span className="font-mono text-emerald-400 text-lg font-black">-{formatIDR(premiumBreakdown.discountAmount)}</span>

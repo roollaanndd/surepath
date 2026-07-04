@@ -37,7 +37,7 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Backend Engineer (Node.js / Supabase)', 'Backend Engineer (Node.js / Supabase)'],
           ['AI & Machine Learning Engineer', 'AI & Machine Learning Engineer'],
           ['Product Manager', 'Product Manager'],
-          ['Agen Asuransi — berbagai kota di Indonesia', 'Insurance Agent — various cities across Indonesia'],
+          ['Mitra Asuransi — berbagai kota di Indonesia', 'Insurance Partner — various cities across Indonesia'],
           ['Customer Success Specialist', 'Customer Success Specialist'],
         ],
       },
@@ -64,21 +64,21 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
   },
 
   agents: {
-    title: ['Program Agen SurePath', 'SurePath Agent Program'],
+    title: ['Program Mitra SurePath', 'SurePath Partner Program'],
     subtitle: [
-      'Jadilah bagian dari jaringan agen insurtech terdepan dan paling inovatif di Indonesia.',
-      'Become part of the most advanced and innovative insurtech agent network in Indonesia.',
+      'Jadilah bagian dari jaringan mitra insurtech terdepan dan paling inovatif di Indonesia.',
+      'Become part of the most advanced and innovative insurtech partner network in Indonesia.',
     ],
     sections: [
       {
-        heading: ['Apa Itu Program Agen?', 'What Is the Agent Program?'],
+        heading: ['Apa Itu Program Mitra?', 'What Is the Partner Program?'],
         body: [
-          'Program Agen SurePath membuka peluang bagi Anda untuk memasarkan produk asuransi unggulan dari 18+ insurer terkemuka, dengan dukungan teknologi digital penuh dan pelatihan tersertifikasi.',
-          'The SurePath Agent Program lets you market top insurance products from 18+ leading insurers, backed by full digital technology and certified training.',
+          'Program Mitra SurePath membuka peluang bagi Anda untuk memasarkan produk asuransi unggulan dari 18+ insurer terkemuka, dengan dukungan teknologi digital penuh dan pelatihan tersertifikasi. Perlu diingat: keputusan akseptasi risiko, penerbitan polis, dan klaim tetap sepenuhnya berada pada wewenang masing-masing perusahaan asuransi.',
+          'The SurePath Partner Program lets you market top insurance products from 18+ leading insurers, backed by full digital technology and certified training. Note: decisions on risk acceptance, policy issuance, and claims remain entirely the authority of each insurance company.',
         ],
       },
       {
-        heading: ['Keunggulan Menjadi Agen SurePath', 'Benefits of Being a SurePath Agent'],
+        heading: ['Keunggulan Menjadi Mitra SurePath', 'Benefits of Being a SurePath Partner'],
         body: [
           ['Komisi kompetitif hingga 15% per polis yang berhasil diterbitkan', 'Competitive commission up to 15% per issued policy'],
           ['Dashboard digital real-time untuk kelola klien, polis, dan komisi', 'Real-time digital dashboard to manage clients, policies, and commissions'],
@@ -95,17 +95,18 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Pendidikan minimal SMA / sederajat', 'Minimum high school education or equivalent'],
           ['Memiliki KTP dan NPWP aktif', 'Have an active national ID (KTP) and tax ID (NPWP)'],
           ['Berkomitmen tinggi, jujur, dan berintegritas', 'Highly committed, honest, and with strong integrity'],
+          ['Bersedia secara sukarela memberikan data yang benar dan akurat, yang akan diteruskan kepada perusahaan asuransi terkait', 'Willing to voluntarily provide true and accurate data, which will be forwarded to the relevant insurance company'],
         ],
       },
       {
         heading: ['Proses Pendaftaran', 'Registration Process'],
         body: [
-          'Klik tombol "Daftar Jadi Agen", isi formulir pendaftaran agen, lalu ikuti proses onboarding dan pelatihan online. Agen aktif akan mendapat akses penuh ke portal agen dalam 3–5 hari kerja.',
-          'Click "Register as Agent", fill in the agent registration form, then complete onboarding and online training. Active agents get full access to the agent portal within 3–5 business days.',
+          'Klik tombol "Daftar Jadi Mitra", isi formulir pendaftaran mitra, lalu ikuti proses onboarding dan pelatihan online. Mitra aktif akan mendapat akses penuh ke portal mitra dalam 3–5 hari kerja.',
+          'Click "Register as Partner", fill in the partner registration form, then complete onboarding and online training. Active partners get full access to the partner portal within 3–5 business days.',
         ],
       },
     ],
-    ctaLabel: ['Daftar Jadi Agen', 'Register as Agent'],
+    ctaLabel: ['Daftar Jadi Mitra', 'Register as Partner'],
   },
 
   partnership: {
@@ -167,6 +168,7 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Personalisasi pengalaman dan rekomendasi produk yang relevan', 'Personalizing your experience and recommending relevant products'],
           ['Komunikasi terkait layanan, polis, dan informasi penting', 'Communicating about services, policies, and important information'],
           ['Kepatuhan penuh terhadap regulasi OJK dan peraturan hukum yang berlaku', 'Full compliance with OJK regulations and applicable laws'],
+          ['Diteruskan kepada perusahaan asuransi terkait, dengan persetujuan sukarela Anda, untuk keperluan akseptasi risiko, penerbitan polis, dan penyelesaian klaim — keputusan atas hal-hal tersebut sepenuhnya berada di tangan perusahaan asuransi', 'Forwarded to the relevant insurance company, with your voluntary consent, for risk acceptance, policy issuance, and claims settlement — decisions on these matters rest solely with the insurance company'],
         ],
       },
       {
@@ -212,25 +214,26 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
       {
         heading: ['2. Layanan yang Disediakan', '2. Services Provided'],
         body: [
-          'SurePath adalah platform insurtech berlisensi yang menyediakan akses ke produk asuransi dari berbagai perusahaan asuransi berlisensi OJK. SurePath bertindak sebagai agen / pialang asuransi yang menjadi perantara antara nasabah dan perusahaan asuransi.',
-          'SurePath is a licensed insurtech platform providing access to insurance products from various OJK-licensed insurers. SurePath acts as an insurance agent / broker intermediating between customers and insurers.',
+          'SurePath adalah platform teknologi insurtech berlisensi yang memfasilitasi akses ke produk asuransi dari berbagai perusahaan asuransi berlisensi OJK. SurePath menjadi perantara teknologi dan pemasaran antara nasabah dan perusahaan asuransi — SurePath bukan penanggung dan tidak menerbitkan polis. Seluruh keputusan akseptasi risiko, syarat & ketentuan polis, serta persetujuan dan penyelesaian klaim sepenuhnya berada pada wewenang perusahaan asuransi terkait.',
+          'SurePath is a licensed insurtech technology platform that facilitates access to insurance products from various OJK-licensed insurers. SurePath is a technology and marketing intermediary between customers and insurers — SurePath is not an insurer and does not issue policies. All decisions on risk acceptance, policy terms, and claims approval or settlement rest solely with the relevant insurance company.',
         ],
       },
       {
         heading: ['3. Kewajiban Pengguna', '3. User Obligations'],
         body: [
-          ['Memberikan informasi yang benar, lengkap, dan tidak menyesatkan', 'Provide accurate, complete, and non-misleading information'],
+          ['Memberikan informasi yang benar, lengkap, dan tidak menyesatkan secara sukarela dan sepengetahuan Anda sendiri', 'Voluntarily provide accurate, complete, and non-misleading information to the best of your knowledge'],
           ['Menjaga kerahasiaan akun, password, dan kode OTP Anda', 'Keep your account, password, and OTP codes confidential'],
           ['Tidak menyalahgunakan platform untuk kegiatan yang melanggar hukum', 'Do not misuse the platform for unlawful activities'],
           ['Membayar premi tepat waktu sesuai jadwal yang tertera pada polis', 'Pay premiums on time according to the schedule stated in your policy'],
           ['Segera melaporkan perubahan data atau informasi material kepada SurePath', 'Promptly report any change of data or material information to SurePath'],
+          ['Memahami bahwa data yang Anda berikan akan diteruskan kepada perusahaan asuransi terkait untuk keperluan akseptasi risiko, penerbitan polis, dan klaim', 'Understand that the data you provide will be forwarded to the relevant insurance company for risk acceptance, policy issuance, and claims purposes'],
         ],
       },
       {
-        heading: ['4. Batasan Tanggung Jawab', '4. Limitation of Liability'],
+        heading: ['4. Batasan Tanggung Jawab & Wewenang Perusahaan Asuransi', '4. Limitation of Liability & Insurer Authority'],
         body: [
-          'SurePath tidak bertanggung jawab atas penolakan atau penundaan klaim oleh perusahaan asuransi yang disebabkan oleh ketidakakuratan data yang diberikan pengguna, kondisi pengecualian dalam polis, atau pelanggaran ketentuan polis oleh tertanggung.',
-          'SurePath is not liable for claim rejections or delays by insurers caused by inaccurate data provided by the user, policy exclusions, or breaches of policy terms by the insured.',
+          'SurePath tidak bertanggung jawab atas penolakan atau penundaan klaim oleh perusahaan asuransi yang disebabkan oleh ketidakakuratan data yang diberikan pengguna, kondisi pengecualian dalam polis, atau pelanggaran ketentuan polis oleh tertanggung. Perusahaan asuransi terkait memegang wewenang dan keputusan akhir yang mengikat atas akseptasi risiko, syarat polis, dan penyelesaian klaim — SurePath tidak dapat mengubah atau menjamin hasil dari keputusan tersebut.',
+          'SurePath is not liable for claim rejections or delays by insurers caused by inaccurate data provided by the user, policy exclusions, or breaches of policy terms by the insured. The relevant insurance company holds sole and final binding authority over risk acceptance, policy terms, and claims settlement — SurePath cannot alter or guarantee the outcome of that decision.',
         ],
       },
       {

@@ -272,7 +272,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
         <div className="sp-glass rounded-[2rem] overflow-hidden">
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">
-              {t('Top Agents', 'Agen Terbaik')}
+              {t('Top Partners', 'Mitra Terbaik')}
             </p>
             <div className="flex items-center gap-1 text-ds-green">
               <TrendingUp size={14} />

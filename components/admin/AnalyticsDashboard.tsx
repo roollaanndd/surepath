@@ -128,7 +128,7 @@ const AnalyticsDashboard = () => {
 
       // ── Top 5 agents this month ─────────────────────────────────────────────
       const agentNameMap: Record<string, string> = {};
-      agents.forEach((a: any) => { agentNameMap[a.id] = a.name ?? 'Agen'; });
+      agents.forEach((a: any) => { agentNameMap[a.id] = a.name ?? 'Mitra'; });
       const agentGWP: Record<string, number> = {};
       orders
         .filter((o: any) => o.status === 'ISSUED' && o.created_at >= monthStart)
@@ -138,7 +138,7 @@ const AnalyticsDashboard = () => {
       const top5 = Object.entries(agentGWP)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
-        .map(([id, gwp]) => ({ name: agentNameMap[id] ?? 'Agen', gwp }));
+        .map(([id, gwp]) => ({ name: agentNameMap[id] ?? 'Mitra', gwp }));
       setTopAgents(top5);
 
       // ── Payment funnel ──────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ const AnalyticsDashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard label="GWP YTD" value={formatM(kpi!.gwpYTD * 1_000_000 > 0 ? kpi!.gwpYTD : 0)} sub={formatIDR(kpi!.gwpYTD)} />
           <KPICard label="Polis Diterbitkan" value={kpi!.policiesIssued.toLocaleString('id-ID')} sub="Status ISSUED" />
-          <KPICard label="Agen Aktif" value={kpi!.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
+          <KPICard label="Mitra Aktif" value={kpi!.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
           <KPICard label="Claims Ratio" value={`${kpi!.claimsRatio}%`} sub="Klaim / Premi YTD" />
         </div>
       )}
@@ -235,7 +235,7 @@ const AnalyticsDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           {loading ? <Skeleton h="h-64" /> : (
-            <Section title="Top 5 Agen Bulan Ini (GWP)">
+            <Section title="Top 5 Mitra Bulan Ini (GWP)">
               {topAgents.length === 0 ? (
                 <p className="text-xs text-gray-500 text-center py-16">Belum ada data bulan ini</p>
               ) : (

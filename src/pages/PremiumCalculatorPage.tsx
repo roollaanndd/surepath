@@ -409,7 +409,7 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
                   <CheckCircle size={36} color={GREEN} />
                   <p style={{ margin: 0, fontWeight: 700, fontSize: 16 }}>{t('Terima kasih!', 'Thank you!')}</p>
                   <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-                    {t('Agen kami akan segera menghubungi kamu.', 'Our agent will contact you shortly.')}
+                    {t('Mitra kami akan segera menghubungi kamu.', 'Our partner will contact you shortly.')}
                   </p>
                 </div>
               ) : (

@@ -89,7 +89,7 @@ export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
   doc.text('PARA PIHAK', mL + 5, y + 6);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7.6); doc.setTextColor(...INK);
   doc.text(`PIHAK PERTAMA: ${AGREEMENT_META.company.name} ("Perusahaan"), berkedudukan di ${AGREEMENT_META.company.domicile}.`, mL + 5, y + 13, { maxWidth: cw - 10 });
-  doc.text(`PIHAK KEDUA: ${d.fullName} — NIK/KTP ${d.ktpNumber} ("Agen").`, mL + 5, y + 20, { maxWidth: cw - 10 });
+  doc.text(`PIHAK KEDUA: ${d.fullName} — NIK/KTP ${d.ktpNumber} ("Mitra").`, mL + 5, y + 20, { maxWidth: cw - 10 });
   doc.text('Kedua pihak sepakat terikat pada seluruh ketentuan Perjanjian berikut.', mL + 5, y + 26, { maxWidth: cw - 10 });
   y += 38;
 
@@ -119,10 +119,10 @@ export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
   const rows: [string, string][] = [
     ['Nomor Perjanjian', d.agreementNo],
     ['Versi Dokumen', d.docVersion],
-    ['Nama Lengkap (Agen)', d.fullName],
+    ['Nama Lengkap (Mitra)', d.fullName],
     ['Nomor KTP (NIK)', maskKtp(d.ktpNumber)],
     ['Disetujui pada', stamp],
-    ['Kontak Agen', [d.agentEmail, d.agentPhone].filter(Boolean).join(' · ') || '—'],
+    ['Kontak Mitra', [d.agentEmail, d.agentPhone].filter(Boolean).join(' · ') || '—'],
   ];
   rows.forEach(([l, v], i) => {
     const yy = y + 7 + i * 5.4;
@@ -140,5 +140,5 @@ export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
   doc.text(disc, mL, y);
 
   drawFooter();
-  doc.save(`SurePath-Perjanjian-Agen-${d.agreementNo}.pdf`);
+  doc.save(`SurePath-Perjanjian-Mitra-${d.agreementNo}.pdf`);
 }

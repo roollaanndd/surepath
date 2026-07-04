@@ -313,7 +313,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
       <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 space-y-1.5 text-[10px] font-bold">
         <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">Aturan Bisnis</p>
         <div className="flex justify-between">
-          <span className="text-slate-400">Agen mendapat komisi</span>
+          <span className="text-slate-400">Mitra mendapat komisi</span>
           <span className="text-white font-black">{pct(draft.base_commission_rate)} dari premi</span>
         </div>
         <div className="flex justify-between">
@@ -323,7 +323,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ config, onSaved }) => {
         <div className="flex justify-between">
           <span className="text-slate-400">Jika diskon maks</span>
           <span className="text-white font-black">
-            Agen tetap dapat {pct(draft.base_commission_rate - draft.max_discount_rate)}
+            Mitra tetap dapat {pct(draft.base_commission_rate - draft.max_discount_rate)}
           </span>
         </div>
         <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-1">

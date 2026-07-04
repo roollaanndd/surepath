@@ -99,7 +99,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div>
             <p className="text-xs text-ds-ink3 font-medium">{greeting()},</p>
             <h2 className="text-2xl font-black text-ds-ink tracking-tight">
-              {agent?.name?.split(' ')[0] ?? 'Agen'}
+              {agent?.name?.split(' ')[0] ?? 'Mitra'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                   : 'bg-amber-100 text-amber-700'
               }`}>
                 {agentTier === 'ELITE' ? <Gem size={11} /> : <Star size={11} />}
-                {agentTier === 'ELITE' ? t('Elite', 'Elite') : t('Top Agent', 'Agen Top')}
+                {agentTier === 'ELITE' ? t('Elite', 'Elite') : t('Top Partner', 'Mitra Top')}
               </span>
             )}
             <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-sm shadow-ds-green">

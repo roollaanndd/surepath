@@ -195,7 +195,7 @@ const FinancialAdmin: React.FC = () => {
               sub="× Rp 1.000 / koin"
             />
             <KpiCard label="Diskon Diberikan" value={formatIDR(kpi.discountGiven)} sub="Polis ISSUED" />
-            <KpiCard label="Agen Aktif" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Role AGENT" />
+            <KpiCard label="Mitra Aktif" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Role AGENT" />
           </div>
 
           {/* ── Recent Issued Orders ── */}

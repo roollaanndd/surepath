@@ -1568,7 +1568,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           return (
             <SectionCard>
               <h3 className="font-black text-slate-700 dark:text-slate-200 text-sm uppercase tracking-widest mb-4">
-                Diskon & Komisi Agen
+                Diskon & Komisi Mitra
               </h3>
 
               {/* Discount slider */}

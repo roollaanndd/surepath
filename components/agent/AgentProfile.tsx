@@ -200,7 +200,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           <div className="flex items-center justify-center gap-1 mt-2">
             <BadgeCheck className="w-4 h-4 text-ds-blue" />
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-ds-blue text-xs font-bold">
-              {t('Verified Agent', 'Agen Terverifikasi')}
+              {t('Verified Partner', 'Mitra Terverifikasi')}
             </span>
           </div>
         )}
@@ -209,7 +209,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
             tier === 'ELITE' ? 'bg-ds-purple-lt text-ds-purple' : 'bg-amber-50 text-ds-amber'
           }`}>
-            {tier === 'ELITE' ? '💎 Agen Elite' : '⭐ Agen Bintang'}
+            {tier === 'ELITE' ? '💎 Mitra Elite' : '⭐ Mitra Bintang'}
           </div>
         )}
       </div>
@@ -232,7 +232,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
       {/* Referral Link */}
       <div className="mx-5 mt-4 sp-glass rounded-2xl p-4">
-        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-2">Link Rekrutmen Agen</p>
+        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-2">Link Rekrutmen Mitra</p>
         <div className="flex items-center gap-2 bg-ds-card2 rounded-xl p-3">
           <p className="text-xs font-mono text-ds-ink2 flex-1 truncate">
             https://myinsurepath.com?ref={profile?.agent_code}

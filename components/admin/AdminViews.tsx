@@ -158,7 +158,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             {/* Agent-specific */}
             {user.role === 'AGENT' && (
               <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-x-6 gap-y-4">
-                <Field label="Kode Agen" value={user.agent_code} />
+                <Field label="Kode Mitra" value={user.agent_code} />
                 <Field label="Kode Referral" value={user.referral_code} />
                 <Field label="Tier" value={user.tier ?? 'Standard'} />
                 <Field label="Komisi Rate" value={user.commission_rate != null ? `${(user.commission_rate * 100).toFixed(0)}%` : null} />
@@ -531,7 +531,7 @@ export const LedgerView = () => {
                     amount: c.commission_amount ?? 0,
                     status: (c.status === 'PAID' || c.status === 'APPROVED') ? 'SUCCESS' : c.status === 'REJECTED' ? 'FAILED' : 'PENDING',
                     referenceId: c.order_number,
-                    description: `Komisi Agen${c.client_name ? ' — ' + c.client_name : ''}`,
+                    description: `Komisi Mitra${c.client_name ? ' — ' + c.client_name : ''}`,
                 });
             });
 
@@ -1086,7 +1086,7 @@ const MENU_IDS = [
   { id: 'claims_admin',      label: 'Antrean Klaim' },
   { id: 'inventory',         label: 'Data Polis' },
   { id: 'endorsements',      label: 'Endorsement' },
-  { id: 'agents',            label: 'Manajemen Agen' },
+  { id: 'agents',            label: 'Manajemen Mitra' },
   { id: 'commission_ledger', label: 'Komisi' },
   { id: 'b2b',               label: 'B2B' },
   { id: 'product_config',    label: 'Produk' },
@@ -1480,7 +1480,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-3">
             <Upload size={18} className="text-blue-400" />
-            Impor Agen dari CSV/Excel
+            Impor Mitra dari CSV/Excel
           </h3>
           {!importing && (
             <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
@@ -1822,7 +1822,7 @@ export const AgentManagementView = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Total Agen',   value: agents.length, color: 'text-white' },
+          { label: 'Total Mitra',  value: agents.length, color: 'text-white' },
           { label: 'Aktif',        value: active.length, color: 'text-emerald-400' },
           { label: 'Pending',      value: pending.length, color: 'text-amber-400' },
           { label: TIER_CONFIG.STAR.label,  value: starCount,  color: 'text-amber-400' },
@@ -1849,7 +1849,7 @@ export const AgentManagementView = () => {
 
       <div>
         <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-4">
-          Agen Aktif ({active.length})
+          Mitra Aktif ({active.length})
         </h3>
         {active.length === 0 ? (
           <Card className="text-center py-10 text-gray-500 text-sm font-bold">Belum ada agen aktif.</Card>
@@ -2545,7 +2545,7 @@ export const WithdrawalsAdminView: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-black uppercase tracking-tight">Penarikan Dana Agen</h2>
+        <h2 className="text-2xl font-black uppercase tracking-tight">Penarikan Dana Mitra</h2>
         <button onClick={load} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all active:scale-95">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -2590,7 +2590,7 @@ export const WithdrawalsAdminView: React.FC = () => {
             <div key={wd.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-black text-white">{wd.agent_name ?? 'Unknown Agent'}</p>
+                  <p className="text-sm font-black text-white">{wd.agent_name ?? 'Mitra Tidak Dikenal'}</p>
                   <p className="text-[0.5rem] text-gray-500">{wd.agent_email}</p>
                   <p className="text-[0.5rem] text-gray-500 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
                 </div>
@@ -2606,7 +2606,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                   <p className="text-xs font-black text-amber-400">-{IDR(wd.xendit_fee)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diterima Agen</p>
+                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diterima Mitra</p>
                   <p className="text-xs font-black text-emerald-400">{IDR(wd.net_amount)}</p>
                 </div>
               </div>
@@ -2655,7 +2655,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                 )}
                 {(wd.status.startsWith('PENDING') || wd.status === 'APPROVED') && (
                   <button
-                    onClick={() => setRejectModal({ id: wd.id, agentName: wd.agent_name ?? 'Agen' })}
+                    onClick={() => setRejectModal({ id: wd.id, agentName: wd.agent_name ?? 'Mitra' })}
                     disabled={busy}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-95 disabled:opacity-40"
                   >

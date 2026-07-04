@@ -23,7 +23,7 @@ export enum AgentTier {
 
 export const TIER_CONFIG = {
   STAR: {
-    label:           'Agen Bintang',
+    label:           'Mitra Bintang',
     emoji:           '⭐',
     color:           '#f59e0b',
     coinBonusRate:   0.10,   // +10% extra coins on every sale
@@ -31,7 +31,7 @@ export const TIER_CONFIG = {
     l2OverrideRate:  0.01,   // 1% of L2 downline's commission
   },
   ELITE: {
-    label:           'Agen Elite',
+    label:           'Mitra Elite',
     emoji:           '💎',
     color:           '#8b5cf6',
     coinBonusRate:   0.15,   // +15% extra coins on every sale

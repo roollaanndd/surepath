@@ -109,8 +109,8 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
             <FileText size={15} className="text-emerald-600 mt-0.5 flex-shrink-0" />
             <p className="text-[11px] text-slate-500 leading-relaxed">
               {t(
-                `Between ${AGREEMENT_META.company.name} ("Company") and you as Agent. Read fully before accepting.`,
-                `Antara ${AGREEMENT_META.company.name} ("Perusahaan") dan Anda sebagai Agen. Baca seluruhnya sebelum menyetujui.`
+                `Between ${AGREEMENT_META.company.name} ("Company") and you as Mitra (Partner). Read fully before accepting.`,
+                `Antara ${AGREEMENT_META.company.name} ("Perusahaan") dan Anda sebagai Mitra. Baca seluruhnya sebelum menyetujui.`
               )}
             </p>
           </div>
@@ -158,8 +158,8 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
               className="mt-0.5 w-4 h-4 rounded accent-emerald-600 flex-shrink-0" />
             <span className="text-[11px] text-slate-600 leading-snug">
               {t(
-                'I have read, understood, and agree to be legally bound by this Agency Agreement. My name and KTP number above serve as valid electronic consent.',
-                'Saya telah membaca, memahami, dan menyetujui untuk terikat secara hukum pada Perjanjian Keagenan ini. Nama dan Nomor KTP di atas merupakan persetujuan elektronik yang sah.'
+                'I have read, understood, and agree to be legally bound by this Partnership Agreement, including that data I provide is forwarded to the insurance company and that the insurance company holds final authority over acceptance and claims. My name and KTP number above serve as valid, voluntary electronic consent.',
+                'Saya telah membaca, memahami, dan menyetujui untuk terikat secara hukum pada Perjanjian Kemitraan ini, termasuk bahwa data yang saya berikan akan diteruskan kepada perusahaan asuransi dan bahwa perusahaan asuransi memegang wewenang akhir atas akseptasi dan klaim. Nama dan Nomor KTP di atas merupakan persetujuan elektronik yang sah dan sukarela.'
               )}
             </span>
           </label>

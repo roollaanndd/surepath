@@ -134,7 +134,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">
-              {t('Agent Registration', 'Daftar Agen')}
+              {t('Partner Registration', 'Daftar Mitra')}
             </h1>
             <p className="text-sm text-gray-400 mb-8">
               {t(`Step ${step} of 2`, `Langkah ${step} dari 2`)}
@@ -169,7 +169,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <p className="text-sm text-gray-400 leading-relaxed mb-8">
                 {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
                 <span className="text-emerald-400 font-bold">{email}</span>
-                {t('. Click it, then sign in to activate your agent account.', '. Klik link tersebut, lalu masuk untuk mengaktifkan akun agen Anda.')}
+                {t('. Click it, then sign in to activate your partner account.', '. Klik link tersebut, lalu masuk untuk mengaktifkan akun mitra Anda.')}
               </p>
               <button
                 onClick={onBack}
@@ -295,7 +295,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   {t('Professional Information', 'Informasi Profesional')}
                 </p>
                 <p className="text-sm text-gray-400 mb-8">
-                  {t('Optional details to complete your agent profile.', 'Detail opsional untuk melengkapi profil agen Anda.')}
+                  {t('Optional details to complete your partner profile.', 'Detail opsional untuk melengkapi profil mitra Anda.')}
                 </p>
               </div>
 
@@ -334,8 +334,8 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 />
                 <span className="text-xs font-medium text-gray-400 leading-relaxed">
                   {t(
-                    'By signing up you agree to SurePath agent terms and conditions.',
-                    'Dengan mendaftar, Anda menyetujui syarat dan ketentuan agen SurePath.',
+                    'By signing up you agree to SurePath partner (Mitra) terms and conditions, and voluntarily consent that the data you provide will be forwarded to the relevant insurance company.',
+                    'Dengan mendaftar, Anda menyetujui syarat dan ketentuan Mitra SurePath, dan secara sukarela menyetujui bahwa data yang Anda berikan akan diteruskan kepada perusahaan asuransi terkait.',
                   )}
                 </span>
               </label>
@@ -356,7 +356,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 ) : (
                   <>
                     <ShieldCheck size={16} />
-                    {t('Create Agent Account', 'Buat Akun Agen')}
+                    {t('Create Partner Account', 'Buat Akun Mitra')}
                   </>
                 )}
               </button>

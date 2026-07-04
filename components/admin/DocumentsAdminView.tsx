@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText, Image, User, Eye, Filter, Search, FileImage, Shield,
 } from 'lucide-react';
-import { getAllOrders, callGateway, supabase } from '../../services/supabaseService';
+import { getAllOrders, callGateway, supabase, resolveDocumentUrl } from '../../services/supabaseService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -245,8 +245,14 @@ const DocumentsAdminView: React.FC = () => {
         }
       }
 
+      // policy/ktp docs live in private buckets — swap for signed URLs before
+      // rendering; still-public buckets (vehicle/claim photos) pass through as-is.
+      const resolved = await Promise.all(
+        collected.map(async d => ({ ...d, url: (await resolveDocumentUrl(d.url)) ?? d.url }))
+      );
+
       if (!cancelled) {
-        setDocs(collected);
+        setDocs(resolved);
         setLoading(false);
       }
     };

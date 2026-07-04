@@ -63,6 +63,7 @@ const Card: React.FC<{ children?: React.ReactNode, className?: string }> = ({ ch
 
 // ── User/Agent detail modal ──────────────────────────────────────────────────
 import { getAdminUser } from '../../services/supabaseService';
+import { SecureDocLink, SecureDocImage } from '../shared/SecureDoc';
 
 const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ userId, onClose }) => {
   const [user, setUser] = useState<any>(null);
@@ -126,15 +127,14 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
               {/* KTP document */}
               <div className="space-y-2">
                 <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Dokumen KTP</p>
-                {user.ktp_document_url && !imgError['ktp'] ? (
-                  <a href={user.ktp_document_url} target="_blank" rel="noreferrer">
-                    <img
-                      src={user.ktp_document_url}
+                {user.ktp_document_url ? (
+                  <SecureDocLink url={user.ktp_document_url} className="block w-full">
+                    <SecureDocImage
+                      url={user.ktp_document_url}
                       alt="KTP"
                       className="w-full h-36 object-cover rounded-2xl border border-white/10 hover:opacity-80 transition-opacity cursor-pointer"
-                      onError={() => setImgError(p => ({ ...p, ktp: true }))}
                     />
-                  </a>
+                  </SecureDocLink>
                 ) : (
                   <div className="w-full h-36 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center justify-center text-gray-600 text-xs font-bold">
                     Belum ada dokumen

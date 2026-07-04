@@ -12,6 +12,7 @@ import {
 } from '../../services/supabaseService';
 import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { SecureDocLink } from '../shared/SecureDoc';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
@@ -341,15 +342,13 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
           {/* Issued policy link */}
           {order.policy_document_url && (
-            <a
-              href={order.policy_document_url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <SecureDocLink
+              url={order.policy_document_url}
               className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 text-emerald-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-colors"
             >
               <Download size={14} />
               Download Polis ({order.policy_number ?? '—'})
-            </a>
+            </SecureDocLink>
           )}
 
           {/* Insurer submission result */}

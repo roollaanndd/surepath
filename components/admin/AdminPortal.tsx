@@ -53,7 +53,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'user_mgmt',        label: 'Kelola Akun',         icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-  { id: 'withdrawals',      label: 'Penarikan Agen',      icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
+  { id: 'withdrawals',      label: 'Penarikan Mitra',     icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
   // POLIS & KLAIM
   { id: '_sep3', isSeparator: true, groupLabel: 'Polis & Klaim',      roles: ALL_ROLES },
   { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
@@ -62,10 +62,10 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   { id: 'documents',        label: 'Dokumen',             icon: FileImage,       roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  // AGEN & KOMISI
-  { id: '_sep4', isSeparator: true, groupLabel: 'Agen & Komisi',      roles: ALL_ROLES },
-  { id: 'agents',           label: 'Manajemen Agen',      icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'agent_agreements', label: 'Perjanjian Agen',     icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
+  // MITRA & KOMISI
+  { id: '_sep4', isSeparator: true, groupLabel: 'Mitra & Komisi',     roles: ALL_ROLES },
+  { id: 'agents',           label: 'Manajemen Mitra',     icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'agent_agreements', label: 'Perjanjian Mitra',    icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   // PRODUK & ASURANSI
@@ -359,7 +359,7 @@ const AdminPortal = ({
           { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
           { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
-          { label: 'Agen Aktif',        value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
         ].map(card => (
           <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
             className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
@@ -381,7 +381,7 @@ const AdminPortal = ({
             { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
             { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
             { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
-            { label: 'Total Komisi Agen',      value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
           ].map(card => (
             <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
               className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
@@ -450,7 +450,7 @@ const AdminPortal = ({
 
         {/* Top agents */}
         <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Agen Teratas</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Mitra Teratas</p>
           {adminStats
             ? adminStats.topAgents.length === 0
               ? <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Belum ada data.</p>

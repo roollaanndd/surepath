@@ -35,7 +35,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
 
   const WHY = [
     { color: '#2563eb', Icon: Search,    title: t('Analisis Kebutuhan Cerdas', 'Smart Needs Analysis'),   desc: t('Sebelum rekomendasiin produk apapun, kita pahami dulu konteks hidupmu. Bukan yang paling menguntungkan komisi.', 'Before recommending any product, we deeply understand your life context — not just the most commission-profitable ones.') },
-    { color: '#7c3aed', Icon: Users,     title: t('Agen Berlisensi', 'Licensed Agents'),                  desc: t('Semua agen udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our agents hold official certifications and continuously update their knowledge.') },
+    { color: '#7c3aed', Icon: Users,     title: t('Mitra Berlisensi', 'Licensed Partners'),               desc: t('Semua mitra udah lulus sertifikasi resmi dan terus update ilmunya — jadi kamu dapat saran yang beneran valid.', 'All our partners hold official certifications and continuously update their knowledge.') },
     { color: '#d97706', Icon: BarChart2, title: t('Pilihan Terlengkap', 'Widest Selection'),               desc: t('Berbagai produk dari insurer terpercaya dalam satu platform. Apapun kebutuhan perlindunganmu, ada di sini.', 'A wide range of products from trusted insurers in one platform.') },
     { color: accent,    Icon: Zap,       title: 'Digital-First, Human Touch',                              desc: t('Teknologi bikin semuanya gampang, tapi di baliknya ada manusia nyata yang peduli dan siap bantu.', 'Technology makes everything easy, but behind it are real humans who care and are ready to help.') },
   ];

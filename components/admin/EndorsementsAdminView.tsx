@@ -188,7 +188,7 @@ const EndorsementsAdminView: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs font-black text-white">
-                      Agen: {agentName} <span className="text-emerald-500">{agentCode}</span>
+                      Mitra: {agentName} <span className="text-emerald-500">{agentCode}</span>
                     </p>
                     <p className="text-[10px] text-gray-500">
                       Order: <span className="text-gray-300">{orderNum}</span> — {clientName}

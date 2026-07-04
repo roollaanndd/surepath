@@ -475,7 +475,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       onClick={() => setRegRole(UserRole.AGENT)}
                       className={`py-3 rounded-2xl text-[0.55rem] font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-emerald-900/10 text-slate-400 hover:border-emerald-900/25'}`}
                     >
-                      <Briefcase size={14} /> {t('Agent', 'Agen')}
+                      <Briefcase size={14} /> {t('Partner', 'Mitra')}
                     </button>
                   </div>
                 </>
@@ -550,7 +550,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     {mode === 'LOGIN'
                       ? t('Sign In', 'Masuk')
                       : regRole === UserRole.AGENT
-                        ? t('Continue to Agent Setup', 'Lanjut ke Setup Agen')
+                        ? t('Continue to Partner Setup', 'Lanjut ke Setup Mitra')
                         : t('Create Account', 'Buat Akun')}
                     <ArrowRight size={14} />
                   </>

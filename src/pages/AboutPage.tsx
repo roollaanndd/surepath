@@ -27,8 +27,8 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
   ];
 
   const TESTIMONIALS = [
-    { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: accent, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Agen mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their agent took time to genuinely listen.') },
-    { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Agen SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', "For the first time I truly understood my insurance policy. SurePath's agent patiently explained each clause clearly.") },
+    { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: accent, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Mitra mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their partner took time to genuinely listen.') },
+    { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Mitra SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', "For the first time I truly understood my insurance policy. SurePath's partner patiently explained each clause clearly.") },
     { name: 'Hendra K.', role: t('Arsitek', 'Architect'), city: 'Bandung', initial: 'H', color: '#7c3aed', quote: t('Proses seluruhnya digital namun saya tetap merasa ditangani secara personal. Ada manusia di balik teknologinya.', 'The process is fully digital yet I still felt handled personally. There are real humans behind the technology.') },
   ];
 
@@ -39,7 +39,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
     { q: 'Bagaimana cara klaim asuransi dengan cepat?', a: 'Klaim bisa dilakukan 100% online: lapor kejadian lewat aplikasi atau WhatsApp, upload dokumen, lalu tim klaim kami akan memproses dalam 1–3 hari kerja. Untuk klaim darurat, tersedia layanan 24 jam.' },
     { q: 'Apa perbedaan asuransi all risk dan TLO?', a: 'All risk menanggung semua kerusakan — dari goresan kecil sampai kecelakaan besar. TLO hanya menanggung kerugian total (kendaraan hilang atau rusak >75%). All risk lebih komprehensif tapi preminya lebih tinggi.' },
     { q: 'Apakah asuransi SurePath sudah terdaftar OJK?', a: 'SurePath bermitra dengan perusahaan-perusahaan asuransi yang semuanya telah terdaftar dan diawasi oleh OJK. Seluruh produk yang kami pasarkan berasal dari mitra insurer berlisensi.' },
-    { q: 'Bagaimana cara daftar jadi agen asuransi di SurePath?', a: 'Daftar sebagai agen di halaman Program Agen kami. Syarat: usia minimal 21 tahun, punya KTP, bersedia mengikuti pelatihan sertifikasi. SurePath menyediakan pelatihan, materi, dan dukungan teknologi penuh.' },
+    { q: 'Bagaimana cara daftar jadi mitra asuransi di SurePath?', a: 'Daftar sebagai mitra di halaman Program Mitra kami. Syarat: usia minimal 21 tahun, punya KTP, bersedia mengikuti pelatihan sertifikasi, dan secara sukarela memberikan data yang benar untuk diteruskan kepada perusahaan asuransi terkait. SurePath menyediakan pelatihan, materi, dan dukungan teknologi penuh.' },
     { q: 'Apa manfaat asuransi perjalanan SurePath?', a: 'Menanggung: biaya medis darurat, pembatalan/keterlambatan penerbangan, kehilangan bagasi, dan evakuasi medis. Tersedia untuk perjalanan domestik maupun internasional, mulai dari Rp50.000 per perjalanan.' },
   ];
 

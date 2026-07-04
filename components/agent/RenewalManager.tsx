@@ -55,7 +55,7 @@ function buildWALink(phone: string, order: SpPolicyOrder, days: number): string 
     `Segera hubungi kami untuk proses renewal agar perlindungan Anda tetap aktif.`,
     ``,
     `Terima kasih,`,
-    `Agen SurePath`,
+    `Mitra SurePath`,
   ].join('\n');
   const normalized = phone.replace(/\D/g, '').replace(/^0/, '62');
   return `https://wa.me/${normalized}?text=${encodeURIComponent(text)}`;

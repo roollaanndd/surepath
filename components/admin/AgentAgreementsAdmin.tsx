@@ -47,10 +47,10 @@ const AgentAgreementsAdmin: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-            <ShieldCheck size={22} className="text-emerald-400" /> Perjanjian Agen
+            <ShieldCheck size={22} className="text-emerald-400" /> Perjanjian Mitra
           </h2>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
-            {rows.length} agen menyetujui · audit legal
+            {rows.length} mitra menyetujui · audit legal
           </p>
         </div>
         <button onClick={load}

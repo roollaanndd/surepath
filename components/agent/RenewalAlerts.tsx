@@ -42,7 +42,7 @@ function buildWAMessage(policy: ExpiringPolicy, days: number): string {
     `Segera hubungi kami untuk proses renewal agar perlindungan Anda tetap aktif.`,
     ``,
     `Terima kasih,`,
-    `Agen SurePath`,
+    `Mitra SurePath`,
   ].join('\n');
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }

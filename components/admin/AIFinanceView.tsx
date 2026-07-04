@@ -42,7 +42,7 @@ const AIFinanceView: React.FC = () => {
     setError(null);
     const result = await runAIFinanceReview(period);
     if (!result) {
-      setError('Gagal menjalankan analisis. Pastikan ANTHROPIC_API_KEY sudah dikonfigurasi di Supabase Secrets.');
+      setError('Gagal menjalankan analisis. Layanan AI belum dikonfigurasi. Hubungi administrator sistem.');
     } else {
       setAnalysis(result);
     }
@@ -63,7 +63,7 @@ const AIFinanceView: React.FC = () => {
             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">AI Finance Agent</p>
           </div>
           <h2 className="text-2xl font-black text-white">Analisis Keuangan Cerdas</h2>
-          <p className="text-xs text-slate-400 mt-1">Analisis keuangan mendalam dengan kecerdasan buatan Claude AI</p>
+          <p className="text-xs text-slate-400 mt-1">Analisis keuangan mendalam dengan kecerdasan buatan SurePath AI</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-3 py-2">
@@ -244,7 +244,7 @@ const AIFinanceView: React.FC = () => {
           {/* Footer */}
           <p className="text-[9px] text-slate-600 text-center">
             Analisis dihasilkan {analysis.generated_at ? new Date(analysis.generated_at).toLocaleString('id-ID') : ''}
-            {' '}· Periode {analysis.period_days} hari · Didukung Claude AI
+            {' '}· Periode {analysis.period_days} hari · Didukung SurePath AI
           </p>
         </>
       )}

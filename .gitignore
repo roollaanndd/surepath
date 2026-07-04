@@ -32,3 +32,17 @@ dist-ssr
 *.keystore
 .gstack/
 .planning/
+
+# AI dev tooling — excluded from client handover
+.agents/
+.claude-flow/
+.claude/
+.swarm/
+.hive-mind/
+CLAUDE.md
+GEMINI.md
+AGENTS.md
+.mcp.json
+skills-lock.json
+coordination/
+memory/

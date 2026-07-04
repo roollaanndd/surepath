@@ -413,7 +413,8 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
           <div className="space-y-1">
              <p className="text-[0.65rem] font-black text-amber-800 dark:text-amber-200 uppercase tracking-wider">Sedikit Lagi!</p>
              <p className="text-[0.6rem] font-medium text-amber-700/80 dark:text-amber-200/60 leading-relaxed uppercase">
-                Pastikan <span className="font-black">Plat Nomor & NIK</span> sudah benar ya. Setelah ini kita akan melakukan audit visual singkat dengan AI untuk memastikan kondisi mobilmu.
+                Butuh penawaran saja? Ketuk <span className="font-black">Unduh Penawaran</span> di atas — tanpa survei foto.
+                Untuk <span className="font-black">lanjut beli & terbitkan polis</span>, kita lakukan audit visual singkat dengan AI untuk memastikan kondisi mobilmu.
              </p>
           </div>
        </div>

@@ -12,7 +12,7 @@ import {
 } from '../../services/supabaseService';
 import { generatePolicyCertPDF } from '../../services/pdfService';
 import { generateProposalPDF } from '../../services/proposalPdf';
-import { calcPremium as calcOjkPremium, getZone } from '../../services/ojkRates';
+import { calcPremium as calcOjkPremium, getZone, getBaseRateByBand, getVehicleCategory } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
@@ -50,7 +50,11 @@ const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgC
 
 const calcPremium = (product: ProductType, inputs: any): number => {
   if (product === 'CAR' || product === 'MOTORCYCLE') {
-    const rate = inputs.coverage === 'COMPREHENSIVE' ? 0.025 : 0.018;
+    // Official OJK rate (SEOJK 6/2017), zone-defaulted; MID band
+    const rate = getBaseRateByBand(
+      product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR',
+      inputs.coverage, getZone(''), getVehicleCategory(inputs.price ?? 0), 'MID',
+    );
     return Math.round((inputs.price ?? 0) * rate);
   }
   if (product === 'TRAVEL') {
@@ -176,10 +180,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       premium_estimate: premium,
       details: currentInputs(),
     });
-    setSavedQuote(q);
     setSaving(false);
     if (q) {
-      // brief success flash
+      setSavedQuote(q);
+    } else {
+      alert(t('Failed to save the quote. Please check your connection and try again.',
+              'Gagal menyimpan penawaran. Periksa koneksi dan coba lagi.'));
     }
   };
 
@@ -801,7 +807,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 text-xs font-bold">Rate OJK</span>
-                <span className="font-bold text-sm">{carInputs.coverage === 'COMPREHENSIVE' ? '2.5%' : '1.8%'}</span>
+                <span className="font-bold text-sm">{(getBaseRateByBand(product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR', carInputs.coverage, getZone(''), getVehicleCategory(carInputs.price), 'MID') * 100).toFixed(2)}%</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-white/10">

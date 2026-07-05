@@ -3,62 +3,150 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── DS v2 Design System — CSS custom properties for automatic dark mode ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SurePath Design System v3 — World-Class Token Layer (2026-07-06)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Consolidates the four parallel color systems that existed before (DS-v2
+   CSS vars, unused HSL landing tokens, Tailwind lp-*/primary/brand, and
+   234 inline hex values) into ONE semantic token system.
+
+   Old tokens (--ds-bg, --ds-card, --ds-ink, etc.) are preserved as aliases
+   so existing components keep working. New code should prefer the v3 tokens
+   (--ds-bg, --ds-surface, --ds-text-primary, etc.) which match Series-D
+   fintech conventions (Cash App / Mercury / Ramp).
+
+   Light + dark mode handled via CSS variables switched by the `.dark` class.
+   WCAG AA contrast: every text token hits ≥4.5:1 against its paired bg.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  --ds-bg:         #F4F7FB;
-  --ds-card:       #FFFFFF;
-  --ds-card2:      #F8FAFC;
-  --ds-border:     #E2E8F0;
-  --ds-green:      #00C16A;
-  --ds-green-dk:   #009E52;
-  --ds-green-tint: #E6FAF0;
-  --ds-ink:        #111827;
-  --ds-ink2:       #4B5563;
-  --ds-ink3:       #9CA3AF;
-  --ds-blue:       #3B82F6;
-  --ds-amber:      #F59E0B;
-  --ds-red:        #EF4444;
-  --ds-purple:     #7C3AED;
-  --ds-purple-lt:  #EDE9FE;
+  /* ── Backgrounds ─────────────────────────────────────────────────────── */
+  --ds-bg:           #F4F7FB;   /* app background — was --ds-bg */
+  --ds-surface:      #FFFFFF;   /* cards, sheets — was --ds-card */
+  --ds-surface-2:    #F8FAFC;   /* inset cards, code blocks — was --ds-card2 */
+  --ds-surface-hero: linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%);
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --ds-border:        #E2E8F0;   /* default — was --ds-border */
+  --ds-border-strong: #CBD5E1;   /* focused inputs, dividers */
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --ds-text-primary:   #0F172A;   /* headings, body — was --ds-ink (#111827) */
+  --ds-text-secondary: #4B5563;   /* secondary labels — was --ds-ink2 */
+  --ds-text-muted:     #6B7280;   /* captions — bumped from #9CA3AF for WCAG AA */
+  --ds-text-inverse:   #FFFFFF;   /* text on dark/hero surfaces */
+
+  /* ── Brand ───────────────────────────────────────────────────────────── */
+  --ds-primary:        #00C16A;   /* primary action — was --ds-green */
+  --ds-primary-hover:  #009E52;   /* hover state — was --ds-green-dk */
+  --ds-primary-tint:   #E6FAF0;   /* tinted bg — was --ds-green-tint */
+  --ds-primary-hero:   #003B2F;   /* dark emerald for hero cards */
+
+  /* ── Semantic ────────────────────────────────────────────────────────── */
+  --ds-success:      #00C16A;  --ds-success-tint: #E6FAF0;
+  --ds-warning:      #F59E0B;  --ds-warning-tint: #FEF3C7;
+  --ds-danger:       #EF4444;  --ds-danger-tint:  #FEE2E2;
+  --ds-info:         #3B82F6;  --ds-info-tint:    #DBEAFE;
+  --ds-accent:       #7C3AED;  --ds-accent-tint:  #EDE9FE;
+
+  /* ── Legacy aliases (preserve for backward compat) ──────────────────── */
+  --ds-card:         var(--ds-surface);
+  --ds-card2:        var(--ds-surface-2);
+  --ds-green:        var(--ds-primary);
+  --ds-green-dk:     var(--ds-primary-hover);
+  --ds-green-tint:   var(--ds-primary-tint);
+  --ds-ink:          var(--ds-text-primary);
+  --ds-ink2:         var(--ds-text-secondary);
+  --ds-ink3:         var(--ds-text-muted);
+  --ds-blue:         var(--ds-info);
+  --ds-amber:        var(--ds-warning);
+  --ds-red:          var(--ds-danger);
+  --ds-purple:       var(--ds-accent);
+  --ds-purple-lt:    var(--ds-accent-tint);
+
+  /* ── Radii ───────────────────────────────────────────────────────────── */
+  --ds-radius-sm:    6px;
+  --ds-radius-md:    12px;
+  --ds-radius-lg:    16px;
+  --ds-radius-xl:    24px;
+  --ds-radius-2xl:   32px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --ds-motion-fast:   150ms ease-out;
+  --ds-motion-base:   250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-motion-slow:   450ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-motion-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dark {
-  --ds-bg:         #080B12;
-  --ds-card:       #0F1829;
-  --ds-card2:      #162035;
-  --ds-border:     #1E2D3D;
-  --ds-green:      #00C16A;
-  --ds-green-dk:   #009E52;
-  --ds-green-tint: #052B1E;
-  --ds-ink:        #F1F5F9;
-  --ds-ink2:       #94A3B8;
-  --ds-ink3:       #475569;
-  --ds-blue:       #60A5FA;
-  --ds-amber:      #FCD34D;
-  --ds-red:        #F87171;
-  --ds-purple:     #A78BFA;
-  --ds-purple-lt:  #1E1040;
+  /* ── Backgrounds ─────────────────────────────────────────────────────── */
+  --ds-bg:           #080B12;
+  --ds-surface:      #0F1829;
+  --ds-surface-2:    #162035;
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --ds-border:        #1E2D3D;
+  --ds-border-strong: #2D3F52;
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --ds-text-primary:   #F1F5F9;
+  --ds-text-secondary: #94A3B8;
+  --ds-text-muted:     #94A3B8;   /* keep same as secondary in dark — both pass AA */
+  --ds-text-inverse:   #0F172A;
+
+  /* ── Brand (same in dark) ───────────────────────────────────────────── */
+  /* --ds-primary / --ds-primary-hover unchanged */
+
+  /* ── Semantic tints darken in dark mode ─────────────────────────────── */
+  --ds-primary-tint:   #052B1E;
+  --ds-success-tint:   #052B1E;
+  --ds-warning-tint:   #422006;
+  --ds-danger-tint:    #4C0519;
+  --ds-info-tint:      #0B1E3D;
+  --ds-accent-tint:    #1E1040;
+
+  /* ── Legacy aliases follow the new values automatically ─────────────── */
 }
 
-/* ── Landing page CSS custom properties ─────────────────────────────────── */
-:root {
-  --background: 0 0% 10%;
-  --foreground: 0 0% 96%;
-  --primary: 119 99% 46%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 18%;
-  --secondary-foreground: 0 0% 96%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 119 99% 46%;
-  --accent-foreground: 0 0% 4%;
-  --destructive: 0 84% 60%;
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
-  --ring: 119 99% 46%;
-  --radius: 0.5rem;
-  --nav-button: 0 0% 18%;
-  --hero-bg: 0 0% 8%;
+/* ═══════════════════════════════════════════════════════════════════════════
+   Global reduced-motion nuke — applies to ALL animations, not just the
+   ~10 components that previously opted in. Critical for accessibility.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Global focus-visible rule — every interactive element gets a consistent
+   emerald outline. Removes the need to add focus:ring-* per component.
+   ═══════════════════════════════════════════════════════════════════════════ */
+*:focus-visible {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+
+/* Remove default outline only when focus-visible is supported (replaced above) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Global tap highlight + touch target hygiene (mobile)
+   ═══════════════════════════════════════════════════════════════════════════ */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safari: prevent text size adjustment on orientation change */
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @layer utilities {
@@ -69,18 +157,26 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .writing-vertical-rl {
     writing-mode: vertical-rl;
   }
-  
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }
   .animation-delay-4000 {
     animation-delay: 4s;
   }
+
+  /* ── Safe-area helpers (mobile PWA) ─────────────────────────────────── */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+  .min-h-safe { min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
 }
+
 
 @layer components {
   .bg-animated-gradient {

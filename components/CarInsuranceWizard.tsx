@@ -1,10 +1,20 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Car, ChevronLeft, ChevronRight, ShieldCheck, CheckCircle2, ArrowRight, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
-import { getOJKRate, EXPANSION_RATES, AUTHORIZED_WORKSHOP_RATE, STAMP_DUTY, PLATE_REGIONS, INSURANCE_PROVIDERS, BASE_COMMISSION_PERCENT } from '../constants';
 import { InsuranceType, Language } from '../types';
 import { DamageIssue, PhotoFlag } from '../services/geminiService';
-import { getVehicleMarketValue, createPolicyOrder } from '../services/supabaseService';
+import {
+  createPolicyOrder,
+  getAvailableInsurerProducts,
+  getVehicleMarketValue,
+  type SpInsurerProduct,
+} from '../services/supabaseService';
+import {
+  calcPremium,
+  getZone,
+  type Zone,
+} from '../services/ojkRates';
+import { lookupPlate } from '../services/plateCodes';
 import { createXenditInvoice } from '../services/paymentService';
 
 // Import Steps
@@ -29,6 +39,12 @@ const STEPS = [
   { id: 'PAYMENT', label: 'Bayar' }
 ];
 
+// SurePath platform application fee — flat per transaction, kept in sync with
+// the agent VehicleUnderwritingWizard (which also adds Rp 5,000). Not sourced
+// from the per-insurer CMS product config because it's a platform-level fee,
+// not an insurer-level commercial term.
+const APPLICATION_FEE = 5000;
+
 const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -48,42 +64,54 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     brand: '', model: '', year: new Date().getFullYear(), isOther: false,
     price: 0, basePrice: 0, manualPrice: false, plate: '',
     vin: '', engine: '', color: '',
-    region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW'
+    region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW',
+    province: '' as string, // CMS-backed province name (drives zone via getZone)
   });
 
-  // Auto-populate price from admin vehicle DB when brand/model/year change
+  // Auto-populate price from admin vehicle DB when brand/model/year change.
+  // Vehicle brand/model list comes from services/vehicleDatabase.ts (synced
+  // with the agent app in PR #47); market value comes from sp_vehicle_overrides
+  // (CMS) via getVehicleMarketValue().
   useEffect(() => {
     if (!vehicle.brand || !vehicle.model || vehicle.manualPrice) return;
     let cancelled = false;
-    getVehicleMarketValue(vehicle.brand, vehicle.model, vehicle.year).then(val => {
-      if (!cancelled && val && val > 0) {
-        setVehicle(prev => prev.manualPrice ? prev : { ...prev, price: val, basePrice: val });
-      }
-    }).catch(() => {});
+    getVehicleMarketValue(vehicle.brand, vehicle.model, vehicle.year)
+      .then(val => {
+        if (!cancelled && val && val > 0) {
+          setVehicle(prev => prev.manualPrice ? prev : { ...prev, price: val, basePrice: val });
+        }
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [vehicle.brand, vehicle.model, vehicle.year, vehicle.manualPrice]);
 
   const [coverage, setCoverage] = useState({
     type: InsuranceType.COMPREHENSIVE as InsuranceType,
-    flood: false, earthquake: false, srcc: false, 
-    terrorism: false, authorized: false, 
-    tpl: 0, 
-    paDriver: 0, 
+    flood: false, earthquake: false, srcc: false,
+    terrorism: false, authorized: false,
+    tpl: 0,
+    paDriver: 0,
     paPassenger: 0,
     promo: '', discount: 0, discountType: 'PERCENT' as 'NOMINAL' | 'PERCENT'
   });
 
-  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
-  const [kycData, setKycData] = useState({ 
-    name: currentUser?.name || '', 
-    ktp: currentUser?.ktp || '', 
-    address: currentUser?.address || '', 
-    email: currentUser?.email || '', 
-    phone: currentUser?.phone || '', 
-    photo: null as string|null 
+  // ── CMS-backed insurer products ────────────────────────────────────────────
+  // Loaded fresh whenever vehicle age or coverage type changes. Replaces the
+  // old hardcoded INSURANCE_PROVIDERS list — insurer commercial terms now come
+  // from sp_insurer_products joined with sp_insurers (logos, names).
+  const [availableProducts, setAvailableProducts] = useState<SpInsurerProduct[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+
+  const [kycData, setKycData] = useState({
+    name: currentUser?.name || '',
+    ktp: currentUser?.ktp || '',
+    address: currentUser?.address || '',
+    email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
+    photo: null as string | null,
   });
   const [verifiedFields, setVerifiedFields] = useState<Set<string>>(new Set());
-  
+
   const [stnkResult, setStnkResult] = useState({
     ownerName: '',
     plate: '',
@@ -91,79 +119,167 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     engine: '',
     color: '',
     year: '',
-    status: ''
+    status: '',
   });
 
-  const [survey, setSurvey] = useState({ 
-    stnk: null as string|null, 
-    photos: {} as Record<string, string>, 
-    score: 0, 
+  const [survey, setSurvey] = useState({
+    stnk: null as string | null,
+    photos: {} as Record<string, string>,
+    score: 0,
     summary: '',
     underwritingReport: '',
-    detailedIssues: [] as DamageIssue[], 
+    detailedIssues: [] as DamageIssue[],
     photoFlags: [] as PhotoFlag[],
     verdict: '' as 'CLEAN' | 'REVIEW_REQUIRED' | 'REJECTED' | 'MANUAL_REQUIRED' | '',
     rejectionReason: '',
-    manualVerif: false, 
+    manualVerif: false,
     manualRequestStatus: 'NONE' as 'NONE' | 'REQUESTED',
     manualDate: '',
     manualType: 'VIDEO' as 'VIDEO' | 'PHYSICAL',
-    accessories: '' 
+    accessories: '',
   });
 
-  const [photoValidation, setPhotoValidation] = useState<Record<string, { status: 'LOADING' | 'VALID' | 'INVALID', msg?: string }>>({});
+  const [photoValidation, setPhotoValidation] = useState<Record<string, { status: 'LOADING' | 'VALID' | 'INVALID'; msg?: string }>>({});
 
-  const selectedProvider = useMemo(() => INSURANCE_PROVIDERS.find(p => p.id === selectedProviderId), [selectedProviderId]);
+  const vehicleAgeYears = useMemo(
+    () => Math.max(0, new Date().getFullYear() - vehicle.year),
+    [vehicle.year],
+  );
 
+  useEffect(() => {
+    if (!vehicle.price || vehicle.price <= 0) return;
+    let cancelled = false;
+    const coverageType = coverage.type === InsuranceType.COMPREHENSIVE ? 'COMPREHENSIVE' : 'TLO';
+    getAvailableInsurerProducts('CAR', coverageType, vehicleAgeYears)
+      .then(({ products }) => {
+        if (cancelled) return;
+        setAvailableProducts(products);
+        // If the currently-selected product is no longer in the list (e.g.
+        // coverage type or vehicle age changed), clear the selection.
+        if (selectedProductId && !products.some(p => p.id === selectedProductId)) {
+          setSelectedProductId(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableProducts([]);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicle.year, vehicle.price, coverage.type, vehicleAgeYears]);
+
+  const selectedProduct = useMemo<SpInsurerProduct | null>(
+    () => availableProducts.find(p => p.id === selectedProductId) ?? null,
+    [availableProducts, selectedProductId],
+  );
+
+  // ── Premium calculation — CMS-backed via calcPremium() ─────────────────────
+  // calcPremium pulls the active OJK rate set (province zones, category bands,
+  // base rates, addon rates) from sp_ojk_rate_sets via applyOjkRateSet() at
+  // app startup. The selected insurer product contributes stamp_duty and
+  // policy_cost; commission, discount cap, and coin rate also come from the
+  // selected product (with fallback to defaults).
   const premiumBreakdown = useMemo(() => {
     if (!vehicle.price) return null;
-    const baseRate = getOJKRate(vehicle.price / 1000000, vehicle.region, coverage.type);
-    const basicPremium = (vehicle.price * baseRate) / 100;
-    
-    const expansions = [];
-    if (coverage.authorized) expansions.push({ name: 'Bengkel Resmi (Authorized)', val: (vehicle.price * AUTHORIZED_WORKSHOP_RATE) / 100, rate: AUTHORIZED_WORKSHOP_RATE });
-    if (coverage.flood) expansions.push({ name: 'Banjir & Angin Ribut', val: (vehicle.price * EXPANSION_RATES.FLOOD) / 100, rate: EXPANSION_RATES.FLOOD });
-    if (coverage.earthquake) expansions.push({ name: 'Gempa & Tsunami', val: (vehicle.price * EXPANSION_RATES.EARTHQUAKE) / 100, rate: EXPANSION_RATES.EARTHQUAKE });
-    
-    const srccRate = coverage.type === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.SRCC.COMPREHENSIVE : EXPANSION_RATES.SRCC.TLO;
-    if (coverage.srcc) expansions.push({ name: 'SRCC (Kerusuhan)', val: (vehicle.price * srccRate) / 100, rate: srccRate });
 
-    const tsRate = coverage.type === InsuranceType.COMPREHENSIVE ? EXPANSION_RATES.TERRORISM.COMPREHENSIVE : EXPANSION_RATES.TERRORISM.TLO;
-    if (coverage.terrorism) expansions.push({ name: 'Terorisme & Sabotase', val: (vehicle.price * tsRate) / 100, rate: tsRate });
+    const coverageType: 'COMPREHENSIVE' | 'TLO' =
+      coverage.type === InsuranceType.COMPREHENSIVE ? 'COMPREHENSIVE' : 'TLO';
+    const zone: Zone = (parseInt(vehicle.region) as Zone) || 3;
+    const sumInsured = vehicle.price;
 
-    const tplPremium = (coverage.tpl / 100); 
-    const paDriverPremium = (coverage.paDriver * EXPANSION_RATES.PA_DRIVER) / 100;
-    const paPassengerPremium = (coverage.paPassenger * 4 * EXPANSION_RATES.PA_PASSENGER) / 100; // Assume 4 passengers
+    const addons = {
+      flood: coverage.flood,
+      earthquake: coverage.earthquake,
+      riot: coverage.srcc,
+      terrorism: coverage.terrorism,
+      tplLimit: coverage.tpl,
+      paDriver: coverage.paDriver > 0,            // customer UI: 0 = off, >0 = on
+      paPassengerSeats: coverage.paPassenger > 0 ? 4 : 0,
+    };
 
-    const expansionTotal = expansions.reduce((acc: number, curr: any) => acc + curr.val, 0) + tplPremium + paDriverPremium + paPassengerPremium;
-    const grossPremium = basicPremium + expansionTotal;
-    
-    const discountAmount = coverage.discountType === 'NOMINAL'
-      ? Math.min(Math.max(coverage.discount || 0, 0), grossPremium)
-      : grossPremium * (Math.min(coverage.discount || 0, BASE_COMMISSION_PERCENT) / 100);
-    const discountPercent = grossPremium > 0 ? (discountAmount / grossPremium) * 100 : 0;
-    const netPremium = grossPremium - discountAmount;
+    const calc = calcPremium('CAR', coverageType, sumInsured, zone, addons);
+
+    // Override admin fee and stamp duty with the selected insurer's commercial
+    // terms when one is selected. Falls back to the calc defaults (Rp 50,000
+    // admin + Rp 10,000 stamp) which match OJK norms.
+    const adminFee = selectedProduct?.policy_cost ?? calc.adminFee;
+    const stampDuty = selectedProduct?.stamp_duty ?? calc.stampDuty;
+
+    // Commission rate from CMS (decimal). Customer discount caps at the
+    // insurer's max_discount_rate (decimal). Effective commission = base - discount.
+    const baseCommRate = selectedProduct?.base_commission_rate ?? 0.10;
+    const maxDiscountRate = selectedProduct?.max_discount_rate ?? 0;
+    const discountRateApplied = Math.min(
+      Math.max(coverage.discount || 0, 0) / 100,
+      maxDiscountRate,
+    );
+    const discountAmount = Math.round(calc.total * discountRateApplied);
+    const netPremium = calc.total - discountAmount;
+
+    // Build the expansions array for downstream UI (StepPreSummary/StepFinal).
+    // calc.addonsDetail already breaks out every add-on line.
+    const expansions: { name: string; val: number; rate: number }[] = [];
+    if (coverage.authorized) {
+      expansions.push({
+        name: 'Bengkel Resmi (Authorized)',
+        val: calc.addonsDetail.riot ? 0 : 0, // Authorized workshop is a network feature, not a per-% premium line in the OJK table
+        rate: 0,
+      });
+    }
+    if (coverage.flood)      expansions.push({ name: 'Banjir & Angin Ribut',  val: calc.addonsDetail.flood,      rate: 0 });
+    if (coverage.earthquake) expansions.push({ name: 'Gempa & Tsunami',       val: calc.addonsDetail.earthquake, rate: 0 });
+    if (coverage.srcc)       expansions.push({ name: 'SRCC (Kerusuhan)',      val: calc.addonsDetail.riot,       rate: 0 });
+    if (coverage.terrorism)  expansions.push({ name: 'Terorisme & Sabotase',  val: calc.addonsDetail.terrorism,  rate: 0 });
+
+    const expansionTotal =
+      calc.addonsDetail.flood + calc.addonsDetail.earthquake +
+      calc.addonsDetail.riot + calc.addonsDetail.terrorism +
+      calc.addonsDetail.tpl + calc.addonsDetail.paDriver + calc.addonsDetail.paPassenger;
+
+    const totalPayable = netPremium + adminFee + stampDuty + APPLICATION_FEE - calc.adminFee - calc.stampDuty;
+    // ^ calcPremium already added adminFee + stampDuty into calc.total. We
+    //   subtract those defaults and add the insurer-specific ones so the
+    //   total reflects the actual product the customer selected.
 
     return {
-        baseRate, basicPremium, expansions, expansionTotal, tplPremium, paDriverPremium, paPassengerPremium, grossPremium, discountPercent, discountAmount,
-        adminFee: selectedProvider?.adminFee || 0,
-        stampDuty: STAMP_DUTY,
-        netPremium,
-        applicationFee: 5000,
-        totalPayable: netPremium + (selectedProvider?.adminFee || 0) + STAMP_DUTY + 5000
+      baseRate: calc.rate * 100,           // percent (matches old getOJKRate output)
+      basicPremium: calc.basePremium,
+      expansions,
+      expansionTotal,
+      tplPremium: calc.addonsDetail.tpl,
+      paDriverPremium: calc.addonsDetail.paDriver,
+      paPassengerPremium: calc.addonsDetail.paPassenger,
+      grossPremium: calc.basePremium + expansionTotal,
+      discountPercent: discountRateApplied * 100,
+      discountAmount,
+      adminFee,
+      stampDuty,
+      netPremium,
+      applicationFee: APPLICATION_FEE,
+      totalPayable,
+      // CMS-backed metadata for transparency in the order payload
+      vehicleCategory: calc.category,
+      ojkRateDecimal: calc.rate,
+      commissionRate: baseCommRate - discountRateApplied,
+      maxDiscountPercent: maxDiscountRate * 100,
     };
-  }, [vehicle, coverage, selectedProvider]);
+  }, [vehicle, coverage, selectedProduct]);
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => setStep(s => Math.max(s - 1, 0));
 
   // Pending-approval checkout: create order with SUBMITTED status, skip Xendit invoice
   const handlePendingApprovalCheckout = async () => {
-    if (!premiumBreakdown || !selectedProvider) return;
+    if (!premiumBreakdown || !selectedProduct) return;
     setLoading(true);
     try {
-      const commissionAmount = Math.round((premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100);
-      const coinReward = Math.round((premiumBreakdown.grossPremium * (selectedProvider.extraCoinsPercent || 0)) / 100);
+      const commissionAmount = Math.round(
+        (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
+        premiumBreakdown.commissionRate,
+      );
+      const coinReward = Math.round(
+        (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
+        (selectedProduct.coin_rate ?? 0),
+      );
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
         client_id: currentUser?.id,
@@ -171,16 +287,16 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         client_phone: kycData.phone,
         client_ktp: kycData.ktp,
         product_code: 'CAR_INSURANCE',
-        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProvider.name}`,
+        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProduct.insurer_name ?? 'Insurer'}`,
         vehicle_type: 'CAR',
         vehicle_details: {
           make: vehicle.brand, model: vehicle.model, year: vehicle.year,
           color: vehicle.color, plate: vehicle.plate, chassis: vehicle.vin,
-          engine: vehicle.engine, usage: vehicle.usage, province: vehicle.regionName,
+          engine: vehicle.engine, usage: vehicle.usage, province: vehicle.province || vehicle.regionName,
         },
         coverage_type: coverage.type,
         zone: parseInt(vehicle.region),
-        vehicle_category: 1,
+        vehicle_category: premiumBreakdown.vehicleCategory,
         addons: {
           flood: coverage.flood, earthquake: coverage.earthquake, srcc: coverage.srcc,
           terrorism: coverage.terrorism, authorized: coverage.authorized,
@@ -192,17 +308,18 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         admin_fee: premiumBreakdown.adminFee,
         stamp_duty: premiumBreakdown.stampDuty,
         total_premium: Math.round(premiumBreakdown.totalPayable),
-        ojk_rate: premiumBreakdown.baseRate,
+        ojk_rate: premiumBreakdown.ojkRateDecimal,
         discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
         discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
         net_premium: Math.round(premiumBreakdown.netPremium),
-        commission_rate: BASE_COMMISSION_PERCENT / 100,
+        commission_rate: premiumBreakdown.commissionRate,
         commission_amount: commissionAmount,
         coin_reward: coinReward,
         ai_score: survey.score,
         ai_verdict: survey.verdict || undefined,
         ai_findings: survey.detailedIssues,
-        insurer_name: selectedProvider.name,
+        insurer_id: selectedProduct.insurer_id,
+        insurer_name: selectedProduct.insurer_name ?? 'Insurer',
         status: 'SUBMITTED',
         start_date: new Date().toISOString(),
         end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
@@ -231,26 +348,38 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputVal = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
-    const prefix = inputVal.split(' ')[0];
-    const regionInfo = PLATE_REGIONS[prefix];
-    
+    const entry = lookupPlate(inputVal);
+    const province = entry?.province ?? '';
+    const zone = province ? getZone(province) : 3;
+    const region = String(zone) as '1' | '2' | '3';
+    const regionName = entry
+      ? `${entry.region} (Region ${region})`
+      : 'Luar Kota';
+
     setVehicle({
-      ...vehicle, 
-      plate: inputVal, 
-      region: regionInfo?.region || '3', 
-      regionName: regionInfo ? `${regionInfo.name} (Region ${regionInfo.region})` : 'Luar Kota'
+      ...vehicle,
+      plate: inputVal,
+      region,
+      regionName,
+      province,
     });
   };
 
   const handlePaymentResult = async (_method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
-    if (!premiumBreakdown || !selectedProvider) return;
+    if (!premiumBreakdown || !selectedProduct) return;
     setLoading(true);
     try {
       const payLaterMode = resultStatus === 'PENDING_PAYMENT';
       setIsPayLater(payLaterMode);
 
-      const commissionAmount = Math.round((premiumBreakdown.grossPremium * BASE_COMMISSION_PERCENT) / 100);
-      const coinReward = Math.round((premiumBreakdown.grossPremium * (selectedProvider.extraCoinsPercent || 0)) / 100);
+      const commissionAmount = Math.round(
+        (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
+        premiumBreakdown.commissionRate,
+      );
+      const coinReward = Math.round(
+        (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
+        (selectedProduct.coin_rate ?? 0),
+      );
 
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
@@ -259,7 +388,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         client_phone: kycData.phone,
         client_ktp: kycData.ktp,
         product_code: 'CAR_INSURANCE',
-        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProvider.name}`,
+        product_name: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProduct.insurer_name ?? 'Insurer'}`,
         vehicle_type: 'CAR',
         vehicle_details: {
           make: vehicle.brand,
@@ -270,11 +399,11 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
           chassis: vehicle.vin,
           engine: vehicle.engine,
           usage: vehicle.usage,
-          province: vehicle.regionName,
+          province: vehicle.province || vehicle.regionName,
         },
         coverage_type: coverage.type,
         zone: parseInt(vehicle.region),
-        vehicle_category: 1,
+        vehicle_category: premiumBreakdown.vehicleCategory,
         addons: {
           flood: coverage.flood, earthquake: coverage.earthquake,
           srcc: coverage.srcc, terrorism: coverage.terrorism,
@@ -287,17 +416,18 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         admin_fee: premiumBreakdown.adminFee,
         stamp_duty: premiumBreakdown.stampDuty,
         total_premium: Math.round(premiumBreakdown.totalPayable),
-        ojk_rate: premiumBreakdown.baseRate,
+        ojk_rate: premiumBreakdown.ojkRateDecimal,
         discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
         discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
         net_premium: Math.round(premiumBreakdown.netPremium),
-        commission_rate: BASE_COMMISSION_PERCENT / 100,
+        commission_rate: premiumBreakdown.commissionRate,
         commission_amount: commissionAmount,
         coin_reward: coinReward,
         ai_score: survey.score,
         ai_verdict: survey.verdict || undefined,
         ai_findings: survey.detailedIssues,
-        insurer_name: selectedProvider.name,
+        insurer_id: selectedProduct.insurer_id,
+        insurer_name: selectedProduct.insurer_name ?? 'Insurer',
         status: 'SUBMITTED',
         start_date: new Date().toISOString(),
         end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
@@ -459,8 +589,8 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
        {/* MAIN CONTENT AREA */}
        <div className="px-5 py-4">
           {step === 0 && <StepVehicle vehicle={vehicle} setVehicle={setVehicle} entryMode={entryMode} setEntryMode={setEntryMode} handlePlateChange={handlePlateChange} formatInputCurrency={(val) => new Intl.NumberFormat('id-ID').format(parseInt(val || "0"))} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} setStnkResult={setStnkResult} />}
-          {step === 1 && <StepCoverage coverage={coverage} setCoverage={setCoverage} premiumBreakdown={premiumBreakdown} />}
-          {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={INSURANCE_PROVIDERS} selectedProviderId={selectedProviderId} setSelectedProviderId={setSelectedProviderId} premiumBreakdown={premiumBreakdown} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
+          {step === 1 && <StepCoverage coverage={coverage} setCoverage={setCoverage} premiumBreakdown={premiumBreakdown} maxDiscountPercent={premiumBreakdown?.maxDiscountPercent ?? 25} />}
+          {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={availableProducts} selectedProviderId={selectedProductId} setSelectedProviderId={setSelectedProductId} premiumBreakdown={premiumBreakdown} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
           {step === 3 && <StepKYC kycData={kycData} setKycData={setKycData} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} verifiedFields={verifiedFields} setVerifiedFields={setVerifiedFields} />}
           {step === 4 && <StepPreSummary vehicle={vehicle} coverage={coverage} premiumBreakdown={premiumBreakdown} showBreakdown={showBreakdown} setShowBreakdown={setShowBreakdown} stnkResult={stnkResult} kycData={kycData} />}
           {step === 5 && <StepSurvey survey={survey} setSurvey={setSurvey} stnkResult={stnkResult} setStnkResult={setStnkResult} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} photoValidation={photoValidation} setPhotoValidation={setPhotoValidation} vehicle={vehicle} />}

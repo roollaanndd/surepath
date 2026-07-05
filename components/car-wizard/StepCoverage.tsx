@@ -2,15 +2,20 @@ import React from 'react';
 import { Info, Building, CloudRain, Zap, AlertCircle, AlertTriangle, Percent, ArrowDown } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 import { InsuranceType } from '../../types';
-import { BASE_COMMISSION_PERCENT } from '../../constants';
+import { TPL_OPTIONS } from '../../services/ojkRates';
 
 interface StepCoverageProps {
   coverage: any;
   setCoverage: (c: any) => void;
-  premiumBreakdown?: any; 
+  premiumBreakdown?: any;
+  /** CMS-backed discount cap (percent). From selected insurer product's
+   *  max_discount_rate × 100. Falls back to 25 when no product is selected
+   *  yet so the slider remains usable before the provider step. */
+  maxDiscountPercent?: number;
 }
 
-const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, premiumBreakdown }) => {
+const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, premiumBreakdown, maxDiscountPercent = 25 }) => {
+  const discountCap = Math.max(0, Math.min(100, maxDiscountPercent));
   return (
     <div className="space-y-6 animate-fade-in">
        <div className="p-1.5 bg-gray-100 dark:bg-white/[0.03] rounded-[1.8rem] flex gap-1.5 border border-black/5 dark:border-white/5">
@@ -29,13 +34,13 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
        <div className="space-y-4">
           <label className="text-[0.65rem] font-black uppercase text-gray-500 ml-2 tracking-widest">Tanggung Jawab Pihak Ketiga (TPL)</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-             {[0, 10000000, 25000000, 50000000].map(val => (
-                <button 
-                   key={val}
-                   onClick={() => setCoverage({...coverage, tpl: val})}
-                   className={`p-4 rounded-[1.5rem] border-2 transition-all flex flex-col items-center gap-1 tap-feedback ${coverage.tpl === val ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600 shadow-lg' : 'border-black/5 bg-white dark:bg-white/[0.03] text-gray-400 opacity-70'}`}
+             {TPL_OPTIONS.map(opt => (
+                <button
+                   key={opt.value}
+                   onClick={() => setCoverage({...coverage, tpl: opt.value})}
+                   className={`p-4 rounded-[1.5rem] border-2 transition-all flex flex-col items-center gap-1 tap-feedback ${coverage.tpl === opt.value ? 'border-emerald-500 bg-emerald-500/5 text-emerald-600 shadow-lg' : 'border-black/5 bg-white dark:bg-white/[0.03] text-gray-400 opacity-70'}`}
                 >
-                   <span className="font-black text-[0.7rem]">{val === 0 ? 'TIDAK ADA' : `${val/1000000}JT`}</span>
+                   <span className="font-black text-[0.7rem]">{opt.value === 0 ? 'TIDAK ADA' : `${opt.value/1000000}JT`}</span>
                    <span className="text-[0.45rem] font-bold opacity-60">Limit Ganti Rugi</span>
                 </button>
              ))}
@@ -73,7 +78,7 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
                 <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center"><Percent size={20}/></div>
                 <div>
                    <p className="text-[0.6rem] font-black uppercase tracking-widest text-gray-500">Punya Kode Diskon?</p>
-                   <p className="text-[0.5rem] font-bold text-amber-500 uppercase tracking-widest opacity-80">Maks. diskon = maks. komisi ({BASE_COMMISSION_PERCENT}%)</p>
+                   <p className="text-[0.5rem] font-bold text-amber-500 uppercase tracking-widest opacity-80">Maks. diskon = maks. komisi ({discountCap}%)</p>
                 </div>
              </div>
              <div className="text-right">
@@ -84,20 +89,20 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
           <div className="relative h-2 bg-gray-100 dark:bg-white/10 rounded-full">
              <div
                className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all"
-               style={{ width: `${(coverage.discount / BASE_COMMISSION_PERCENT) * 100}%` }}
+               style={{ width: `${discountCap > 0 ? (coverage.discount / discountCap) * 100 : 0}%` }}
              ></div>
              <input
                type="range"
                min="0"
-               max={BASE_COMMISSION_PERCENT}
+               max={discountCap}
                step="1"
-               value={coverage.discount}
+               value={Math.min(coverage.discount, discountCap)}
                onChange={(e) => setCoverage({...coverage, discount: parseInt(e.target.value)})}
                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
              />
              <div
                 className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-amber-500 rounded-full shadow-lg pointer-events-none transition-all"
-                style={{ left: `${(coverage.discount / BASE_COMMISSION_PERCENT) * 100}%`, transform: 'translate(-50%, -50%)' }}
+                style={{ left: `${discountCap > 0 ? (Math.min(coverage.discount, discountCap) / discountCap) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
              ></div>
           </div>
 

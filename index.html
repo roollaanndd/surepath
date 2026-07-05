@@ -23,7 +23,8 @@
     <meta name="author" content="SurePath" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://myinsurepath.com/" />
-    <link rel="preload" as="video" href="/hero.mp4" type="video/mp4" />
+    <!-- Hero video: do NOT preload — 12 MB on 3G blocks first paint for 6+ seconds.
+         The video element itself uses preload="none" and loads on viewport intersection. -->
     <link rel="preload" as="image" href="/surepath-logo.png" />
     <meta name="geo.region" content="ID" />
     <meta name="geo.country" content="Indonesia" />

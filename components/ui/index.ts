@@ -20,3 +20,22 @@ export { ConfirmDialogProvider, useConfirmDialog } from './ConfirmDialog';
 export { Skeleton, SkeletonCard, SkeletonList, SkeletonText } from './Skeleton';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { useHaptic, type HapticPattern } from './useHaptic';
+
+// Modern duotone icon system (Phosphor Icons) — for hero/feature moments
+export {
+  ShieldCheckDuotone, ShieldStarDuotone, LockKeyDuotone, CertificateDuotone,
+  CarDuotone, MotorcycleDuotone, AirplaneDuotone, UmbrellaDuotone,
+  WalletDuotone, CreditCardDuotone, QrCodeDuotone, ReceiptDuotone,
+  TrendUpDuotone, TrophyDuotone, MedalDuotone, CrownDuotone, TargetDuotone,
+  UserDuotone, UsersDuotone, UserCircleDuotone, UserPlusDuotone,
+  ChatDuotone, BellDuotone, BellRingingDuotone,
+  FileTextDuotone, FileCheckDuotone,
+  CheckCircleDuotone, WarningDuotone, InfoDuotone, SparkleDuotone,
+  ClockDuotone, CalendarCheckDuotone,
+} from './ModernIcon';
+
+// Trust signals — drop into headers at conversion moments
+export { OjkBadge, EncryptionBadge, LicensedInsurersBadge, TrustBar } from './TrustBadges';
+
+// Floating WhatsApp button — for marketing pages only
+export { FloatingWhatsApp } from './FloatingWhatsApp';

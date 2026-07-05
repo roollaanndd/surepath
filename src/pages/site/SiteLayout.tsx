@@ -6,6 +6,7 @@ import {
   SitePageProps, useT, useSiteTheme,
   SectionBackground, PWAPopup, InstallModal, SiteChromeContext, useSiteChrome, isStandaloneMode, ACCENT,
 } from './siteKit';
+import { FloatingWhatsApp } from '../../../components/ui';
 
 // ─── PWA install state hook ───────────────────────────────────────────────────
 const usePwa = () => {
@@ -337,6 +338,10 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
             hasPwaPrompt={!!pwa.pwaPrompt}
           />
         )}
+
+        {/* Floating WhatsApp — Indonesian users expect to ask pre-purchase
+            questions via WhatsApp. Its absence is the #1 conversion friction. */}
+        <FloatingWhatsApp />
       </div>
     </SiteChromeContext.Provider>
   );

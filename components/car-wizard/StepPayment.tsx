@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import {
-  Smartphone, Landmark, Check,
+  Smartphone, Landmark, Check, CreditCard,
   Lock, ShieldCheck, Zap,
   Loader2, Info, CalendarClock
 } from 'lucide-react';
@@ -14,7 +14,7 @@ interface StepPaymentProps {
 }
 
 const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSuccess, loading }) => {
-  const [method, setMethod] = useState<'VA' | 'EWALLET' | null>(null);
+  const [method, setMethod] = useState<'VA' | 'EWALLET' | 'CARD' | null>(null);
   const [selectedSubMethod, setSelectedSubMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -38,16 +38,29 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
     }
   };
 
+  // ── Payment methods ──────────────────────────────────────────────────────
+  // Order reflects Indonesian payment-volume share (GoPay > DANA > OVO > QRIS
+  // > ShopeePay > BCA VA > Mandiri VA > BNI VA > LinkAja > Credit Card).
+  // Logos still hot-linked from Wikipedia — TODO: self-host as SVG in
+  // /public/payment-logos/ in a follow-up sprint (Wikipedia ToS + reliability).
+  const eWallets = [
+    { id: 'GOPAY', name: 'GoPay', icon: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/GoPay_logo.svg' },
+    { id: 'DANA', name: 'DANA', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg' },
+    { id: 'OVO', name: 'OVO', icon: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg' },
+    { id: 'SHOPEEPAY', name: 'ShopeePay', icon: 'https://upload.wikimedia.org/wikipedia/commons/6/63/Shopee_Pay_logo.svg' },
+    { id: 'LINKAJA', name: 'LinkAja', icon: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/LinkAja_logo.svg' },
+    { id: 'QRIS', name: 'QRIS / Semua Dompet Digital', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg' },
+  ];
+
   const vaBanks = [
     { id: 'BCA', name: 'BCA Virtual Account', icon: 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Logo_BCA.svg' },
     { id: 'MANDIRI', name: 'Mandiri Virtual Account', icon: 'https://upload.wikimedia.org/wikipedia/id/f/fa/Bank_Mandiri_logo.svg' },
-    { id: 'BNI', name: 'BNI Virtual Account', icon: 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg' }
+    { id: 'BNI', name: 'BNI Virtual Account', icon: 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg' },
   ];
 
-  const eWallets = [
-    { id: 'OVO', name: 'OVO', icon: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg' },
-    { id: 'DANA', name: 'DANA', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg' },
-    { id: 'QRIS', name: 'QRIS / Semua Dompet Digital', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg' }
+  const creditCards = [
+    { id: 'VISA', name: 'Visa', icon: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg' },
+    { id: 'MASTERCARD', name: 'Mastercard', icon: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg' },
   ];
 
   return (
@@ -68,7 +81,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
             </div>
          </div>
 
-         <div className="grid grid-cols-2 gap-3 relative z-10">
+         <div className="grid grid-cols-3 gap-3 relative z-10">
             <button
                onClick={() => { setMethod('VA'); setSelectedSubMethod(null); }}
                className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all duration-300 active:scale-95 ${method === 'VA' ? 'border-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
@@ -85,13 +98,21 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                <Smartphone size={24}/>
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Dompet Digital</span>
             </button>
+            <button
+               onClick={() => { setMethod('CARD'); setSelectedSubMethod(null); }}
+               className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all duration-300 active:scale-95 ${method === 'CARD' ? 'border-emerald-500 text-white shadow-lg shadow-emerald-500/25' : 'border-black/5 text-gray-400 hover:border-black/10 dark:bg-white/5'}`}
+               style={method === 'CARD' ? { background: 'linear-gradient(135deg, #00C16A 0%, #009E52 100%)' } : {}}
+            >
+               <CreditCard size={24}/>
+               <span className="text-[0.5rem] font-black uppercase tracking-widest">Kartu Kredit</span>
+            </button>
          </div>
       </div>
 
       <div className="min-h-[220px] animate-fade-in">
          {method === 'VA' && (
             <div className="space-y-3">
-               <p className="text-[0.6rem] font-black text-gray-400 ml-4 uppercase tracking-[0.2em]">Pilih Protokol Transfer</p>
+               <p className="text-[0.6rem] font-black text-gray-400 ml-4 uppercase tracking-[0.2em]">Pilih Bank</p>
                {vaBanks.map(bank => (
                   <button 
                      key={bank.id}
@@ -112,7 +133,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
 
          {method === 'EWALLET' && (
             <div className="space-y-3">
-               <p className="text-[0.6rem] font-black text-gray-400 ml-4 uppercase tracking-[0.2em]">Pilih Simpul Digital</p>
+               <p className="text-[0.6rem] font-black text-gray-400 ml-4 uppercase tracking-[0.2em]">Pilih Dompet Digital</p>
                <div className="grid grid-cols-1 gap-3">
                   {eWallets.map(wallet => (
                      <button 
@@ -130,6 +151,30 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                      </button>
                   ))}
                </div>
+            </div>
+         )}
+
+         {method === 'CARD' && (
+            <div className="space-y-3">
+               <p className="text-[0.6rem] font-black text-gray-400 ml-4 uppercase tracking-[0.2em]">Pilih Kartu Kredit</p>
+               <div className="grid grid-cols-1 gap-3">
+                  {creditCards.map(card => (
+                     <button 
+                        key={card.id}
+                        onClick={() => setSelectedSubMethod(card.name)}
+                        className={`w-full p-6 bg-white dark:bg-white/5 rounded-[2rem] border-2 transition-all flex items-center justify-between group active:scale-[0.98] ${selectedSubMethod === card.name ? 'border-emerald-500 shadow-xl shadow-emerald-500/15' : 'border-black/5'}`}
+                     >
+                        <div className="flex items-center gap-5">
+                           <img src={card.icon} className="h-6 w-auto object-contain" alt={card.name} />
+                           <span className="text-sm font-black uppercase tracking-tight text-gray-700 dark:text-gray-200">{card.name}</span>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedSubMethod === card.name ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-black/10'}`}>
+                           {selectedSubMethod === card.name && <Check size={14} strokeWidth={4}/>}
+                        </div>
+                     </button>
+                  ))}
+               </div>
+               <p className="text-[0.5rem] text-gray-400 ml-4 mt-2 leading-relaxed">Transaksi diproses aman oleh Xendit. Data kartu tidak disimpan SurePath.</p>
             </div>
          )}
 

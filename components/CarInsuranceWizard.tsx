@@ -146,6 +146,55 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     [vehicle.year],
   );
 
+  // ── Wizard progress auto-save ─────────────────────────────────────────────
+  // Persists vehicle + coverage + step to localStorage on every change so
+  // users who close the tab or lose connectivity mid-wizard can resume.
+  // Cleared on successful order completion (existing removeItem calls at
+  // lines 331 + 459 already do this).
+  const WIZARD_PROGRESS_KEY = 'SUREPATH_CAR_WIZARD_PROGRESS';
+  const [restoredFromDraft, setRestoredFromDraft] = useState(false);
+
+  useEffect(() => {
+    // Restore on mount
+    try {
+      const saved = localStorage.getItem(WIZARD_PROGRESS_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        // Only restore if the draft is recent (< 7 days old)
+        if (draft.savedAt && (Date.now() - draft.savedAt) < 7 * 24 * 60 * 60 * 1000) {
+          if (draft.vehicle) setVehicle(draft.vehicle);
+          if (draft.coverage) setCoverage(draft.coverage);
+          if (typeof draft.step === 'number' && draft.step > 0) {
+            // Restore to the step they were on, but not past the survey step
+            // (5) — re-doing the survey is safer than resuming mid-photo.
+            setStep(Math.min(draft.step, 4));
+            setRestoredFromDraft(true);
+          }
+        } else {
+          localStorage.removeItem(WIZARD_PROGRESS_KEY);
+        }
+      }
+    } catch { /* ignore parse errors */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Save on every change (debounced via React's natural render batching)
+    if (restoredFromDraft) {
+      // Don't re-save immediately after restoring — would create a loop
+      setRestoredFromDraft(false);
+      return;
+    }
+    try {
+      localStorage.setItem(WIZARD_PROGRESS_KEY, JSON.stringify({
+        vehicle,
+        coverage,
+        step,
+        savedAt: Date.now(),
+      }));
+    } catch { /* quota exceeded — non-blocking */ }
+  }, [vehicle, coverage, step, restoredFromDraft]);
+
   useEffect(() => {
     if (!vehicle.price || vehicle.price <= 0) return;
     let cancelled = false;

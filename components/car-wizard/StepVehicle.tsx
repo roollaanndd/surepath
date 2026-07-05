@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2 } from 'lucide-react';
-import { CAR_DATABASE } from '../../constants';
+import { VEHICLE_BRANDS, getModelsForBrand, getMarketValueForYear } from '../../services/vehicleDatabase';
 import { extractStnkData } from '../../services/geminiService';
 import { ScannerOverlay, formatIDR } from './WizardUI';
 import { REGEX } from '../../services/authService';
@@ -33,17 +33,15 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
   const isPlateValid = useMemo(() => REGEX.PLATE.test(vehicle.plate), [vehicle.plate]);
 
   const availableModels = useMemo(
-    () => CAR_DATABASE.filter(c => c.brand === vehicle.brand),
+    () => getModelsForBrand(vehicle.brand),
     [vehicle.brand]
   );
 
   const marketPriceEntry = useMemo(() => {
     if (entryMode !== 'DATABASE' || !vehicle.brand || !vehicle.model) return null;
-    const entry = CAR_DATABASE.find(c => c.brand === vehicle.brand && c.modelName === vehicle.model);
-    if (!entry) return null;
-    const base = entry.yearPrices[vehicle.year];
+    const base = getMarketValueForYear(vehicle.brand, vehicle.model, vehicle.year);
     if (!base) return null;
-    return { min: Math.round(base * 0.95 * 1_000_000), max: Math.round(base * 1.05 * 1_000_000) };
+    return { min: Math.round(base * 0.95), max: Math.round(base * 1.05) };
   }, [entryMode, vehicle.brand, vehicle.model, vehicle.year]);
 
   const generateStnkPdf = async () => {
@@ -198,18 +196,21 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
             setExtractedStnk(cleanData);
             if (setStnkResult) setStnkResult(cleanData);
 
-            const match = CAR_DATABASE.find(c => 
-                data.brand.toUpperCase().includes(c.brand) || 
-                (c.modelName && data.brand.toUpperCase().includes(c.modelName))
+            const matchedBrand = VEHICLE_BRANDS.find(b =>
+                data.brand.toUpperCase().includes(b.toUpperCase())
+            );
+            const modelsForBrand = matchedBrand ? getModelsForBrand(matchedBrand) : [];
+            const matchedModel = modelsForBrand.find(m =>
+                data.model && (data.model.toUpperCase().includes(m.toUpperCase()) || m.toUpperCase().includes(data.model.toUpperCase()))
             );
 
-            const yearInt = parseInt(data.year) || 2025;
-            const price = match ? (match.yearPrices[yearInt] || match.yearPrices[2024] || 0) * 1000000 : 0;
+            const yearInt = parseInt(data.year) || new Date().getFullYear();
+            const price = matchedBrand && matchedModel ? (getMarketValueForYear(matchedBrand, matchedModel, yearInt) ?? 0) : 0;
 
             setVehicle((prev: any) => ({
                 ...prev,
-                brand: match?.brand || data.brand.split(' ')[0] || prev.brand,
-                model: match?.modelName || data.model || prev.model,
+                brand: matchedBrand || data.brand.split(' ')[0] || prev.brand,
+                model: matchedModel || data.model || prev.model,
                 year: yearInt || prev.year,
                 plate: data.plate || prev.plate,
                 vin: data.vin || prev.vin,
@@ -219,7 +220,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                 condition: yearInt < new Date().getFullYear() ? 'USED' : 'NEW'
             }));
 
-            if (!match) setEntryMode('MANUAL');
+            if (!matchedBrand) setEntryMode('MANUAL');
             else setEntryMode('DATABASE');
             setShowManualForm(true);
         } else {
@@ -303,7 +304,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                                 onChange={(e) => setVehicle({...vehicle, brand: e.target.value, model: ''})}
                             >
                                 <option value="">Pilih Merk</option>
-                                {Array.from(new Set(CAR_DATABASE.map(c => c.brand))).sort().map(b => <option key={b} value={b}>{b}</option>)}
+                                {VEHICLE_BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
                             </select>
                         ) : (
                             <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm text-emerald-500 uppercase" value={vehicle.brand} onChange={e => setVehicle({...vehicle, brand: e.target.value.toUpperCase()})} />
@@ -319,17 +320,17 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                                 className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm appearance-none transition-all text-emerald-500 uppercase"
                                 value={vehicle.model}
                                 onChange={(e) => {
-                                    const selected = availableModels.find(c => c.modelName === e.target.value);
-                                    const yearPrice = selected?.yearPrices?.[vehicle.year];
+                                    const model = e.target.value;
+                                    const yearPrice = getMarketValueForYear(vehicle.brand, model, vehicle.year);
                                     setVehicle({
                                         ...vehicle,
-                                        model: e.target.value,
-                                        ...(yearPrice ? { price: yearPrice * 1_000_000, manualPrice: false } : {})
+                                        model,
+                                        ...(yearPrice ? { price: yearPrice, manualPrice: false } : {})
                                     });
                                 }}
                             >
                                 <option value="">Pilih Model</option>
-                                {availableModels.map(c => <option key={c.modelName} value={c.modelName}>{c.modelName}</option>)}
+                                {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         ) : (
                             <input className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 outline-none focus:border-emerald-500 font-black text-sm text-emerald-500 uppercase" value={vehicle.model} onChange={e => setVehicle({...vehicle, model: e.target.value.toUpperCase()})} />
@@ -344,7 +345,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                     <label className="text-[0.6rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Tahun</label>
                     <div className="relative">
                         <select className="w-full p-5 rounded-[1.8rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 outline-none focus:border-emerald-500 font-black text-sm appearance-none" value={vehicle.year} onChange={e => setVehicle({...vehicle, year: parseInt(e.target.value)})}>
-                            {Array.from({ length: 11 }, (_, i) => 2025 - i).map(y => (<option key={y} value={y}>{y}</option>))}
+                            {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => new Date().getFullYear() - i).map(y => (<option key={y} value={y}>{y}</option>))}
                         </select>
                         <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
                     </div>

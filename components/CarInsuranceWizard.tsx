@@ -45,7 +45,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState({
-    brand: '', model: '', year: 2025, isOther: false,
+    brand: '', model: '', year: new Date().getFullYear(), isOther: false,
     price: 0, basePrice: 0, manualPrice: false, plate: '',
     vin: '', engine: '', color: '',
     region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW'

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
   SitePageProps, useT, useSiteTheme,
-  SectionBackground, PWAPopup, InstallModal, SiteChromeContext, ACCENT,
+  SectionBackground, PWAPopup, InstallModal, SiteChromeContext, useSiteChrome, isStandaloneMode, ACCENT,
 } from './siteKit';
 
 // ─── PWA install state hook ───────────────────────────────────────────────────
 const usePwa = () => {
   const [pwaPrompt, setPwaPrompt] = useState<any>(null);
   const [pwaVisible, setPwaVisible] = useState(false);
-  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [pwaInstalled, setPwaInstalled] = useState(() => isStandaloneMode());
   const [installModalOpen, setInstallModalOpen] = useState(false);
 
   useEffect(() => {
@@ -48,6 +48,7 @@ const NAV_LINKS = [
 const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navigate, lang, setLang, darkMode, active }) => {
   const t = useT(lang);
   const th = useSiteTheme(darkMode);
+  const { onInstall, installed } = useSiteChrome();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -86,6 +87,13 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
 
       {/* Right actions */}
       <div className="flex items-center gap-2">
+        {!installed && (
+          <button onClick={onInstall} aria-label="Install app"
+            className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:opacity-90"
+            style={{ background: 'rgba(22,163,74,0.12)', color: th.accent, border: `1px solid ${th.accent}30` }}>
+            <Download size={12} /> {t('Install App', 'Install App')}
+          </button>
+        )}
         <button onClick={() => setLang(lang === Language.EN ? Language.ID : Language.EN)} aria-label="Switch language"
           className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all hover:opacity-80"
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
@@ -119,7 +127,14 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
               <span>{t(l.label[0], l.label[1])}</span><ChevronRight size={14} />
             </button>
           ))}
-          <div className="flex gap-2 mt-4">
+          {!installed && (
+            <button onClick={() => { setMenuOpen(false); onInstall(); }}
+              className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-xl text-xs font-black"
+              style={{ background: 'rgba(22,163,74,0.12)', color: th.accent, border: `1px solid ${th.accent}30` }}>
+              <Download size={13} /> {t('Install App', 'Install App')}
+            </button>
+          )}
+          <div className="flex gap-2 mt-2">
             <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
               style={{ borderColor: th.cardBorder, color: th.textMuted }}>Admin</button>
             <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black text-white"
@@ -284,7 +299,7 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
   const pwa = usePwa();
 
   return (
-    <SiteChromeContext.Provider value={{ onInstall: pwa.handleInstallClick }}>
+    <SiteChromeContext.Provider value={{ onInstall: pwa.handleInstallClick, installed: pwa.pwaInstalled }}>
       <div className="min-h-screen font-sora"
         style={{ background: bgVideo ? 'transparent' : th.sectionBg1, color: th.textMain }}>
 

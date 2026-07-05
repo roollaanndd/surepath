@@ -1211,9 +1211,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                         : 'border-slate-200 dark:border-white/10 hover:border-[#86efac]'
                     }`}
                   >
-                    <p className={`font-black text-sm mb-2 ${selected ? 'text-[#16a34a]' : 'text-slate-700 dark:text-slate-200'}`}>
-                      {p.insurer_name ?? p.insurer_code}
-                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      {p.insurer_logo_url && (
+                        <img src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
+                          className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
+                      )}
+                      <p className={`font-black text-sm ${selected ? 'text-[#16a34a]' : 'text-slate-700 dark:text-slate-200'}`}>
+                        {p.insurer_name ?? p.insurer_code}
+                      </p>
+                    </div>
                     {estComm !== null && estCoins !== null ? (
                       <div className="flex flex-wrap gap-2 mb-2">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">

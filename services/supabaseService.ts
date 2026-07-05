@@ -811,6 +811,17 @@ export async function resolveDocumentUrl(rawUrl: string | null | undefined, expi
   return data.signedUrl;
 }
 
+export async function uploadInsurerLogo(insurerId: string, file: File): Promise<string | null> {
+  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'png');
+  const path = `${insurerId}/logo.${ext}`;
+  const { error } = await supabase.storage
+    .from('insurer-logos')
+    .upload(path, file, { upsert: true });
+  if (error) { console.error('uploadInsurerLogo:', error); return null; }
+  const { data } = supabase.storage.from('insurer-logos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function uploadLogoImage(file: File): Promise<string | null> {
   const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'png');
   const path = `logo/logo.${ext}`;
@@ -1011,6 +1022,7 @@ export interface SpInsurer {
   admin_email?: string;
   pic_name?: string;
   pic_phone?: string;
+  logo_url?: string;
   created_at?: string;
 }
 
@@ -1044,6 +1056,7 @@ export interface SpInsurerProduct {
   // joined
   insurer_name?: string;
   insurer_code?: string;
+  insurer_logo_url?: string;
 }
 
 // ─── Vehicle Overrides ────────────────────────────────────────────────────────
@@ -1163,7 +1176,7 @@ export async function getAvailableInsurerProducts(
 ): Promise<AvailableInsurerProductsResult> {
   const { data, error } = await supabase
     .from('sp_insurer_products')
-    .select('*, sp_insurers!inner(name, code, is_active)')
+    .select('*, sp_insurers!inner(name, code, is_active, logo_url)')
     .eq('product_type', vehicleType)
     .eq('is_active', true)
     .or(`vehicle_coverage.eq.${coverageType},vehicle_coverage.eq.ALL`);
@@ -1175,6 +1188,7 @@ export async function getAvailableInsurerProducts(
       ...r,
       insurer_name: r.sp_insurers?.name,
       insurer_code: r.sp_insurers?.code,
+      insurer_logo_url: r.sp_insurers?.logo_url,
     })) as SpInsurerProduct[];
   return { products, excludedByAgeCount: activeRows.length - products.length };
 }

@@ -38,10 +38,26 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
-    const rec = await acceptAgreement(fullName, ktp);
+    const { rec, error } = await acceptAgreement(fullName, ktp);
     setSubmitting(false);
     if (!rec) {
-      setError(t('Failed to record agreement. Please try again.', 'Gagal menyimpan persetujuan. Coba lagi.'));
+      // Surface a more specific message for known recoverable cases. The
+      // agreement wording itself is unchanged — this is purely diagnostic.
+      let msg = t('Failed to record agreement. Please try again.', 'Gagal menyimpan persetujuan. Coba lagi.');
+      if (error?.code === '23505') {
+        // unique_violation — agent already accepted this doc version
+        msg = t(
+          'You have already accepted this agreement version. Reload the app to continue.',
+          'Anda telah menyetujui versi perjanjian ini. Muat ulang aplikasi untuk melanjutkan.'
+        );
+      } else if (error?.code === '42P01') {
+        // undefined_table — migration has not been applied yet
+        msg = t(
+          'Agreement storage is not configured yet. Please contact support.',
+          'Penyimpanan perjanjian belum dikonfigurasi. Silakan hubungi dukungan.'
+        );
+      }
+      setError(msg);
       return;
     }
     setDone(rec);

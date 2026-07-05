@@ -2667,9 +2667,25 @@ export async function getMyAgreement(): Promise<SpAgentAgreement | null> {
 }
 
 // Records the agent's acceptance. Server enforces agent_id = auth.uid() via RLS.
-export async function acceptAgreement(fullName: string, ktpNumber: string): Promise<SpAgentAgreement | null> {
+//
+// Returns { rec, error } so callers can show a more specific message to the
+// agent when the insert fails (e.g. unique violation = "already accepted",
+// schema error = "table missing — run migrations", RLS denial = "auth issue").
+// The UI still falls back to a generic message; this just makes the actual
+// Postgres error code reachable for debugging.
+export interface AcceptAgreementResult {
+  rec: SpAgentAgreement | null;
+  error: { code: string; message: string } | null;
+}
+
+export async function acceptAgreement(
+  fullName: string,
+  ktpNumber: string,
+): Promise<AcceptAgreementResult> {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    return { rec: null, error: { code: 'NO_USER', message: 'Not authenticated' } };
+  }
   const { data, error } = await supabase
     .from('sp_agent_agreements')
     .insert({
@@ -2681,8 +2697,11 @@ export async function acceptAgreement(fullName: string, ktpNumber: string): Prom
     })
     .select()
     .single();
-  if (error) { console.error('acceptAgreement:', error); return null; }
-  return data as SpAgentAgreement;
+  if (error) {
+    console.error('acceptAgreement:', error);
+    return { rec: null, error: { code: error.code ?? 'UNKNOWN', message: error.message } };
+  }
+  return { rec: data as SpAgentAgreement, error: null };
 }
 
 // Admin/CMS: list all signed agreements with agent contact info for audit.

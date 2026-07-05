@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   ToggleLeft, ToggleRight, X, Save, Building2, Package,
-  RefreshCw,
+  RefreshCw, Upload, Loader2,
 } from 'lucide-react';
-import { supabase } from '../../services/supabaseService';
+import { supabase, uploadInsurerLogo } from '../../services/supabaseService';
 import {
   CAR_COMP_MIN, CAR_COMP_MAX, CAR_TLO_MIN, CAR_TLO_MAX,
   NON_VEHICLE_RATES,
@@ -22,6 +22,7 @@ interface SpInsurer {
   admin_email?: string;
   pic_name?: string;
   pic_phone?: string;
+  logo_url?: string;
   created_at?: string;
 }
 
@@ -191,6 +192,22 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
     pic_phone: initial?.pic_phone ?? '',
   });
   const [saving, setSaving] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(initial?.logo_url ?? '');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !initial) return;
+    setLogoUploading(true);
+    const url = await uploadInsurerLogo(initial.id, file);
+    if (url) {
+      await supabase.from('sp_insurers').update({ logo_url: url }).eq('id', initial.id);
+      setLogoUrl(url);
+    }
+    setLogoUploading(false);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,6 +220,27 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
   return (
     <Modal title={initial ? 'Edit Perusahaan Asuransi' : 'Tambah Perusahaan Asuransi'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-5">
+        {initial && (
+          <div>
+            <SectionLabel>Logo</SectionLabel>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt={form.name} className="w-full h-full object-contain p-1.5" />
+                ) : (
+                  <Building2 size={20} className="text-slate-500" />
+                )}
+              </div>
+              <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden" onChange={handleLogoUpload} />
+              <button type="button" onClick={() => logoInputRef.current?.click()} disabled={logoUploading}
+                className={`${secondaryBtn} flex items-center gap-1.5`}>
+                {logoUploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                {logoUploading ? 'Mengupload...' : logoUrl ? 'Ganti Logo' : 'Upload Logo'}
+              </button>
+            </div>
+          </div>
+        )}
         <div>
           <SectionLabel>Nama Perusahaan</SectionLabel>
           <input
@@ -789,8 +827,12 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
 
       {/* Header row */}
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-          <Building2 size={18} className="text-emerald-400" />
+        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {insurer.logo_url ? (
+            <img src={insurer.logo_url} alt={insurer.name} className="w-full h-full object-contain p-1" />
+          ) : (
+            <Building2 size={18} className="text-emerald-400" />
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

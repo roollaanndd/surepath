@@ -3,7 +3,8 @@ import PromoBanner from './components/PromoBanner';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getAgentByEmail, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView } from './services/supabaseService';
+import { supabase, getAgentProfile, getAgentByEmail, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet } from './services/supabaseService';
+import { applyOjkRateSet } from './services/ojkRates';
 import TermsModal from './components/TermsModal';
 import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
@@ -99,6 +100,12 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('sp_dark_mode', darkMode.toString());
   }, [darkMode]);
+
+  // Prefer the CMS-managed OJK rate set over the compiled-in defaults, if one
+  // is active — falls back silently to services/ojkRates.ts's built-in values.
+  useEffect(() => {
+    getActiveOjkRateSet().then(row => { if (row) applyOjkRateSet(row as any); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const loadCustomProducts = async () => {

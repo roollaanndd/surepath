@@ -1194,6 +1194,86 @@ export async function deleteInsurerProduct(id: string): Promise<boolean> {
   return true;
 }
 
+// ─── OJK Rate Set CRUD (services/ojkRates.ts CMS) ─────────────────────────────
+
+export interface SpOjkRateSet {
+  id: string;
+  version: string;
+  source_reference: string;
+  effective_date: string;
+  is_active: boolean;
+  province_zones: Record<string, number>;
+  category_bands: Record<string, number>;
+  car_comp_min: Record<string, Record<string, number>>;
+  car_comp_mid: Record<string, Record<string, number>>;
+  car_comp_max: Record<string, Record<string, number>>;
+  car_tlo_min: Record<string, Record<string, number>>;
+  car_tlo_mid: Record<string, Record<string, number>>;
+  car_tlo_max: Record<string, Record<string, number>>;
+  moto_comp_min: number;
+  moto_comp_mid: number;
+  moto_comp_max: number;
+  moto_tlo_min: Record<string, number>;
+  moto_tlo_mid: Record<string, number>;
+  moto_tlo_max: Record<string, number>;
+  addon_rates: Record<string, number>;
+  non_vehicle_rates: Record<string, any>;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getActiveOjkRateSet(): Promise<SpOjkRateSet | null> {
+  const { data, error } = await supabase
+    .from('sp_ojk_rate_sets')
+    .select('*')
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) { console.error('getActiveOjkRateSet:', error); return null; }
+  return data as SpOjkRateSet | null;
+}
+
+export async function getAllOjkRateSets(): Promise<SpOjkRateSet[]> {
+  const { data, error } = await supabase
+    .from('sp_ojk_rate_sets')
+    .select('*')
+    .order('effective_date', { ascending: false });
+  if (error) { console.error('getAllOjkRateSets:', error); return []; }
+  return (data ?? []) as SpOjkRateSet[];
+}
+
+export async function createOjkRateSet(payload: Omit<SpOjkRateSet, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> {
+  const { error } = await supabase.from('sp_ojk_rate_sets').insert(payload);
+  if (error) { console.error('createOjkRateSet:', error); return false; }
+  return true;
+}
+
+export async function updateOjkRateSet(id: string, payload: Partial<SpOjkRateSet>): Promise<boolean> {
+  const { error } = await supabase
+    .from('sp_ojk_rate_sets')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) { console.error('updateOjkRateSet:', error); return false; }
+  return true;
+}
+
+// Activates one rate set and deactivates all others (partial unique index
+// only allows a single is_active=true row, so the old one must be turned
+// off first in the same round-trip).
+export async function activateOjkRateSet(id: string): Promise<boolean> {
+  const { error: offErr } = await supabase.from('sp_ojk_rate_sets').update({ is_active: false }).eq('is_active', true);
+  if (offErr) { console.error('activateOjkRateSet (deactivate):', offErr); return false; }
+  const { error } = await supabase.from('sp_ojk_rate_sets').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) { console.error('activateOjkRateSet:', error); return false; }
+  return true;
+}
+
+export async function deleteOjkRateSet(id: string): Promise<boolean> {
+  const { error } = await supabase.from('sp_ojk_rate_sets').delete().eq('id', id);
+  if (error) { console.error('deleteOjkRateSet:', error); return false; }
+  return true;
+}
+
 // ─── Vehicle Override CRUD ────────────────────────────────────────────────────
 
 export async function getVehicleOverrides(): Promise<SpVehicleOverride[]> {

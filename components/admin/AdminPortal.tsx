@@ -19,6 +19,7 @@ import FinancialAdmin from './FinancialAdmin';
 import CommissionLedger from './CommissionLedger';
 import AgentAgreementsAdmin from './AgentAgreementsAdmin';
 import InsurerAdmin from './InsurerAdmin';
+import OjkRateAdmin from './OjkRateAdmin';
 import VehiclePricelistAdmin from './VehiclePricelistAdmin';
 import WebsiteEditorAdmin from './WebsiteEditorAdmin';
 import AIAdminView from './AIAdminView';
@@ -73,6 +74,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'tier_promo',       label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'ojk_rates',        label: 'Rate OJK',            icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   // PLATFORM
   { id: '_sep6', isSeparator: true, groupLabel: 'Platform',           roles: ALL_ROLES },
@@ -536,6 +538,7 @@ const AdminPortal = ({
       case 'claims_admin':     return <ClaimsAdminView />;
       case 'financial':        return <FinancialAdmin />;
       case 'insurers':         return <InsurerAdmin />;
+      case 'ojk_rates':        return <OjkRateAdmin />;
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;
       case 'payments':         return <PaymentsAdminView />;

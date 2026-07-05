@@ -705,7 +705,7 @@ export async function createPolicyOrder(data: Omit<SpPolicyOrder, 'id' | 'order_
   // Route through the gateway: the owner (agent_id) is derived server-side from
   // the authenticated caller, so any client-supplied agent_id is ignored.
   const { data: result, error } = await callGateway('create_policy_order', data as unknown as Record<string, unknown>);
-  if (error) { console.error('createPolicyOrder:', error); return null; }
+  if (error) { console.error('createPolicyOrder:', error); throw new Error(error); }
   return (result as SpPolicyOrder) ?? null;
 }
 
@@ -1151,26 +1151,32 @@ export async function getInsurerProducts(insurer_id?: string): Promise<SpInsurer
   })) as SpInsurerProduct[];
 }
 
+export interface AvailableInsurerProductsResult {
+  products: SpInsurerProduct[];
+  excludedByAgeCount: number;
+}
+
 export async function getAvailableInsurerProducts(
   vehicleType: string,
   coverageType: string,
   vehicleAgeYears: number,
-): Promise<SpInsurerProduct[]> {
+): Promise<AvailableInsurerProductsResult> {
   const { data, error } = await supabase
     .from('sp_insurer_products')
     .select('*, sp_insurers!inner(name, code, is_active)')
     .eq('product_type', vehicleType)
     .eq('is_active', true)
     .or(`vehicle_coverage.eq.${coverageType},vehicle_coverage.eq.ALL`);
-  if (error) { console.error('getAvailableInsurerProducts:', error); return []; }
-  return (data ?? [])
-    .filter((r: any) => r.sp_insurers?.is_active)
+  if (error) { console.error('getAvailableInsurerProducts:', error); return { products: [], excludedByAgeCount: 0 }; }
+  const activeRows = (data ?? []).filter((r: any) => r.sp_insurers?.is_active);
+  const products = activeRows
     .filter((r: any) => !r.max_vehicle_age_years || vehicleAgeYears <= r.max_vehicle_age_years)
     .map((r: any) => ({
       ...r,
       insurer_name: r.sp_insurers?.name,
       insurer_code: r.sp_insurers?.code,
     })) as SpInsurerProduct[];
+  return { products, excludedByAgeCount: activeRows.length - products.length };
 }
 
 export async function createInsurerProduct(payload: Omit<SpInsurerProduct, 'id' | 'created_at' | 'updated_at' | 'insurer_name' | 'insurer_code'>): Promise<boolean> {

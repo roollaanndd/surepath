@@ -97,7 +97,7 @@ serve(async (req) => {
       const reviewUrl  = `https://myinsurepath.com/insurer/orders/${orderId}`;
       const dashUrl    = `https://myinsurepath.com/insurer/dashboard`;
       const premiumFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPremium);
-      const subject    = `Pengajuan Polis Baru: ${orderNumber} – ${clientName}`;
+      const subject    = `Pengajuan Polis Baru: ${orderNumber} - ${clientName}`;
       const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"/><title>${esc(subject)}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
@@ -240,12 +240,12 @@ serve(async (req) => {
         // Telegram push to admin team
         const tgTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
         sendTelegram(
-          `🆕 <b>${roleLabel} Baru – SurePath</b>\n\n` +
-          `👤 <b>Nama:</b> ${String(insertRow.name)}\n` +
-          `📧 <b>Email:</b> ${email}\n` +
-          `📱 <b>HP:</b> ${String(insertRow.phone) || '-'}\n` +
-          `🕐 <b>Waktu:</b> ${tgTime} WIB\n\n` +
-          `🔗 <a href="https://myinsurepath.com/admin">Buka Admin Panel</a>`
+          `Akun ${roleLabel} Baru - SurePath\n\n` +
+          `Nama: ${String(insertRow.name)}\n` +
+          `Email: ${email}\n` +
+          `HP: ${String(insertRow.phone) || '-'}\n` +
+          `Waktu: ${tgTime} WIB\n\n` +
+          `Buka Admin Panel: https://myinsurepath.com/admin`
         );
         return json({ data });
       }
@@ -810,6 +810,29 @@ serve(async (req) => {
           }
         }
 
+        // Server-side vehicle-age-vs-insurer-limit check. The client (agent
+        // wizard) already filters this, but that's advisory only — re-verify
+        // here so it can't be bypassed by calling the gateway directly with a
+        // stale/edited payload. Silently skipped when no insurer is chosen yet
+        // or the vehicle year isn't present (e.g. non-vehicle products).
+        if (p.insurer_id && p.vehicle_type && p.vehicle_details?.year) {
+          const vehicleAge = new Date().getFullYear() - Number(p.vehicle_details.year);
+          const { data: matchingProducts } = await db
+            .from('sp_insurer_products')
+            .select('max_vehicle_age_years, vehicle_coverage')
+            .eq('insurer_id', p.insurer_id)
+            .eq('product_type', p.vehicle_type)
+            .eq('is_active', true)
+            .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`);
+          // Prefer the exact coverage-type match over a generic "ALL" row.
+          const matchingProduct = (matchingProducts ?? []).find((r: any) => r.vehicle_coverage === p.coverage_type)
+            ?? (matchingProducts ?? [])[0];
+          const maxAge = matchingProduct?.max_vehicle_age_years;
+          if (maxAge && vehicleAge > maxAge) {
+            return json({ error: `Kendaraan berusia ${vehicleAge} tahun melebihi batas maksimal ${maxAge} tahun untuk insurer ini.` }, 400);
+          }
+        }
+
         // Build the insert from the client payload, then OVERRIDE the owner.
         // Strip any client-supplied owner/identity fields that must be trusted.
         const { id: _omitId, order_number: _omitOrderNumber, created_at: _omitCreated, updated_at: _omitUpdated, agent_id: _omitAgent, ...rest } = p;
@@ -828,14 +851,14 @@ serve(async (req) => {
           ? `Rp ${Number(order.total_premium).toLocaleString('id-ID')}`
           : '-';
         sendTelegram(
-          `📋 <b>Order Polis Baru – SurePath</b>\n\n` +
-          `🔢 <b>No. Order:</b> ${order.order_number ?? order.id}\n` +
-          `👤 <b>Nasabah:</b> ${order.client_name ?? '-'}\n` +
-          `📦 <b>Produk:</b> ${order.product_name ?? '-'}\n` +
-          `💰 <b>Premi:</b> ${premiumStr}\n` +
-          `📊 <b>Status:</b> ${order.status ?? '-'}\n` +
-          `🕐 <b>Waktu:</b> ${orderTime} WIB\n\n` +
-          `🔗 <a href="https://myinsurepath.com/admin">Buka Admin Panel</a>`
+          `Order Polis Baru - SurePath\n\n` +
+          `No. Order: ${order.order_number ?? order.id}\n` +
+          `Nasabah: ${order.client_name ?? '-'}\n` +
+          `Produk: ${order.product_name ?? '-'}\n` +
+          `Premi: ${premiumStr}\n` +
+          `Status: ${order.status ?? '-'}\n` +
+          `Waktu: ${orderTime} WIB\n\n` +
+          `Buka Admin Panel: https://myinsurepath.com/admin`
         );
         // Email the insurer's PIC if an insurer is attached to this order
         if (order.insurer_id) {
@@ -952,10 +975,10 @@ serve(async (req) => {
           db.from('sp_claims').select('claim_number,status,created_at').eq('user_id', caller.spUser.id).limit(5),
         ]);
         const policySummary = (ordersRes.data ?? [])
-          .map((o: any) => `• ${o.order_number}: ${o.product_name} (${o.status})`)
+          .map((o: any) => `- ${o.order_number}: ${o.product_name} (${o.status})`)
           .join('\n') || 'No active policies.';
         const claimSummary = (claimsRes.data ?? [])
-          .map((c: any) => `• ${c.claim_number}: ${c.status}`)
+          .map((c: any) => `- ${c.claim_number}: ${c.status}`)
           .join('\n') || 'No claims.';
         const systemPrompt = `You are Pathy, a friendly AI assistant for SurePath, an Indonesian InsurTech platform.
 You are speaking with ${caller.spUser.name ?? 'a user'} (role: ${caller.role ?? 'CUSTOMER'}).

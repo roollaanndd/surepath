@@ -274,6 +274,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ── Step 4b: Insurer Selection ──
   const [availableProducts, setAvailableProducts] = useState<SpInsurerProduct[]>([]);
+  const [excludedByAgeCount, setExcludedByAgeCount] = useState(0);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedInsurerProduct, setSelectedInsurerProduct] = useState<SpInsurerProduct | null>(null);
 
@@ -426,7 +427,10 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     setLoadingProducts(true);
     const vehicleAge = currentYear - vehicleDetails.year;
     getAvailableInsurerProducts(vehicleType, coverageType, vehicleAge)
-      .then(setAvailableProducts)
+      .then(({ products, excludedByAgeCount }) => {
+        setAvailableProducts(products);
+        setExcludedByAgeCount(excludedByAgeCount);
+      })
       .finally(() => setLoadingProducts(false));
   }, [province, sumInsured, coverageType, vehicleDetails.year]);
 
@@ -1180,6 +1184,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           <h3 className="font-black text-slate-700 dark:text-slate-200 mb-4 text-sm uppercase tracking-widest">
             Pilih Perusahaan Asuransi
           </h3>
+          {!loadingProducts && excludedByAgeCount > 0 && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mb-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-3 py-2">
+              {excludedByAgeCount} mitra asuransi tidak ditampilkan karena melebihi batas maksimal usia kendaraan mereka.
+            </p>
+          )}
           {loadingProducts ? (
             <p className="text-xs text-slate-400">Memuat daftar insurer...</p>
           ) : availableProducts.length === 0 ? (

@@ -1,15 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Filter, Star, Coins, CheckCircle2, MinusCircle, ReceiptText, Check, Scale, X, ArrowRight, ShieldCheck, Zap, Clock } from 'lucide-react';
-import { STAMP_DUTY, INSURANCE_PROVIDERS } from '../../constants';
 import { formatIDR } from './WizardUI';
-import { getInsurers } from '../../services/supabaseService';
 import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
 
 interface StepProvidersProps {
   sortBy: 'RATING' | 'PRICE';
   setSortBy: (s: 'RATING' | 'PRICE') => void;
-  sortedProviders: any[]; // will be replaced internally
+  // CMS-backed: array of SpInsurerProduct (joined with sp_insurers for name/logo).
+  // Each row carries policy_cost (admin fee), stamp_duty, base_commission_rate,
+  // max_discount_rate, coin_rate — all sourced from sp_insurer_products.
+  sortedProviders: any[];
   selectedProviderId: string | null;
   setSelectedProviderId: (id: string | null) => void;
   premiumBreakdown: any;
@@ -38,13 +39,13 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
           <div className="flex-1 overflow-y-auto p-6 no-scrollbar bg-[#f8fafc] dark:bg-[#050505]">
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {comparisonData.map((p: any) => {
-                   const price = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
+                   const price = (premiumBreakdown?.netPremium || 0) + p.adminFee + (p.stampDuty ?? premiumBreakdown?.stampDuty ?? 10000);
                    return (
                      <div key={p.id} className="p-6 rounded-[2.5rem] bg-white dark:bg-white/[0.03] border-2 border-black/5 dark:border-white/5 flex flex-col gap-6 shadow-xl relative overflow-hidden group hover:border-emerald-500/30 transition-all text-slate-900 dark:text-white">
                         <div className="text-center space-y-3 relative z-10">
                            <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center shadow-sm border border-black/5"
-                               style={{ background: INSURER_BRANDS[p.id]?.bg ?? '#ecfdf5' }}>
-                               <InsurerLogo id={p.id} size={38}/>
+                               style={{ background: INSURER_BRANDS[p.logoId ?? p.id]?.bg ?? '#ecfdf5' }}>
+                               <InsurerLogo id={p.logoId ?? p.id} size={38}/>
                            </div>
                            <div>
                              <h4 className="font-black text-lg uppercase tracking-tight">{p.name}</h4>
@@ -84,29 +85,34 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
 
 const StepProviders: React.FC<StepProvidersProps> = ({
   sortBy, setSortBy, selectedProviderId, setSelectedProviderId,
-  premiumBreakdown, showProviderBreakdown, setShowProviderBreakdown
+  premiumBreakdown, showProviderBreakdown, setShowProviderBreakdown,
+  sortedProviders,
 }) => {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
-  // Presentation data lives in INSURANCE_PROVIDERS; sp_insurers (CMS) decides
-  // which are active. Codes are matched case-insensitively; if the CMS is
-  // unreachable or has no matching rows, all providers stay visible.
-  const [dynamicProviders, setDynamicProviders] = useState<any[]>(INSURANCE_PROVIDERS);
 
-  useEffect(() => {
-    getInsurers()
-      .then(rows => {
-        if (!rows.length) return;
-        const activeCodes = new Set(rows.filter(r => r.is_active).map(r => r.code.toLowerCase()));
-        const known = new Set(rows.map(r => r.code.toLowerCase()));
-        const visible = INSURANCE_PROVIDERS.filter(p => !known.has(p.id) || activeCodes.has(p.id));
-        if (visible.length) setDynamicProviders(visible);
-      })
-      .catch(() => {});
-  }, []);
+  // Build a display-shape from the CMS-backed products. Maps SpInsurerProduct
+  // fields to the legacy Provider shape so the existing UI template keeps
+  // working without a full rewrite. `logoId` falls back to insurer_code (e.g.
+  // 'intra', 'zurich') so InsurerLogo can render the proper brand mark; if
+  // that fails the InsurerLogo fallback shows the first letter.
+  const dynamicProviders = sortedProviders.map(p => ({
+    id: p.id,
+    name: p.insurer_name ?? 'Insurer',
+    logoId: p.insurer_code ?? p.id,
+    adminFee: p.policy_cost ?? 0,
+    stampDuty: p.stamp_duty ?? 10000,
+    rating: p.rating ?? 0,
+    extraCoinsPercent: Math.round((p.coin_rate ?? 0) * 100),
+    advantages: p.advantages ?? [],
+    disadvantages: p.disadvantages ?? [],
+    benefits: p.benefits ?? [],
+    authorizedGarage: p.authorizedGarage ?? false,
+    claimSpeed: p.claimSpeed ?? '',
+  }));
 
   const sortedList = [...dynamicProviders].sort((a, b) => {
-    if (sortBy === 'RATING') return b.rating - a.rating;
+    if (sortBy === 'RATING') return (b.rating || 0) - (a.rating || 0);
     if (sortBy === 'PRICE') {
         const priceA = (premiumBreakdown?.netPremium || 0) + a.adminFee;
         const priceB = (premiumBreakdown?.netPremium || 0) + b.adminFee;
@@ -176,7 +182,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
        <div className="space-y-5">
          {sortedList.map((p, cardIdx) => {
-           const finalPremi = (premiumBreakdown?.netPremium || 0) + p.adminFee + STAMP_DUTY;
+           const finalPremi = (premiumBreakdown?.netPremium || 0) + p.adminFee + (p.stampDuty ?? premiumBreakdown?.stampDuty ?? 10000);
            const isSelected = selectedProviderId === p.id;
            const isComparing = compareList.includes(p.id);
 
@@ -198,8 +204,8 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 border ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-500/25' : 'border-black/5 dark:border-white/10'}`}
-                      style={{ background: INSURER_BRANDS[p.id]?.bg ?? '#ecfdf5' }}>
-                      <InsurerLogo id={p.id} size={38}/>
+                      style={{ background: INSURER_BRANDS[p.logoId ?? p.id]?.bg ?? '#ecfdf5' }}>
+                      <InsurerLogo id={p.logoId ?? p.id} size={38}/>
                     </div>
                     <div>
                        <h4 className="font-black text-lg uppercase tracking-tighter leading-tight text-slate-900 dark:text-white">{p.name}</h4>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2 } from 'lucide-react';
+import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2, AlertCircle } from 'lucide-react';
 import { VEHICLE_BRANDS, getModelsForBrand, getMarketValueForYear } from '../../services/vehicleDatabase';
-import { extractStnkData } from '../../services/geminiService';
+import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
 import { ScannerOverlay, formatIDR } from './WizardUI';
 import { REGEX } from '../../services/authService';
 import { jsPDF } from 'jspdf';
@@ -25,6 +25,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
   loading, setLoading, loadingType, setLoadingType, setStnkResult
 }) => {
   const [extractedStnk, setExtractedStnk] = useState<any>(null);
+  const [stnkOcrResult, setStnkOcrResult] = useState<StnkOcrResult | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [stnkBase64, setStnkBase64] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -164,57 +165,62 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
   const handleStnkAutofill = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const mimeType = file.type;
     setLoading(true);
     setLoadingType('STNK');
     setExtractedStnk(null);
+    setStnkOcrResult(null);
     setShowManualForm(false);
-    
+
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result as string;
         setStnkBase64(base64);
-        const response = await extractStnkData(base64, mimeType);
+
+        // Use the new structured STNK OCR service. Falls back to the legacy
+        // Gemini path automatically if the new edge function isn't deployed.
+        const result = await extractStnkOcr(base64, mimeType);
         setLoading(false);
         setLoadingType(null);
 
-        if (response.success && response.data) {
-            const data = response.data;
-            const cleanData = {
-                ownerName: data.owner || '',
-                plate: data.plate || '',
-                brand: data.brand || '',
-                model: data.model || '',
-                color: data.color || '',
-                year: data.year || '',
-                vin: data.vin || '',
-                engine: data.engine || '',
-                status: data.status || 'OK'
-            };
+        setStnkOcrResult(result);
 
+        // Build the legacy extractedStnk shape for backward compatibility
+        // (generateStnkPdf and the success banner read it).
+        const cleanData = {
+            ownerName: result.ownerName ?? '',
+            plate: result.plate ?? '',
+            brand: result.brand ?? '',
+            model: result.model ?? '',
+            color: result.color ?? '',
+            year: result.year ? String(result.year) : '',
+            vin: result.vin ?? '',
+            engine: result.engineNo ?? '',
+            status: result.status === 'OK' ? 'OK' : result.status === 'PARTIAL' ? 'OK' : 'UNCLEAR',
+        };
+
+        if (result.ok || result.status === 'PARTIAL') {
             setExtractedStnk(cleanData);
             if (setStnkResult) setStnkResult(cleanData);
 
-            const matchedBrand = VEHICLE_BRANDS.find(b =>
-                data.brand.toUpperCase().includes(b.toUpperCase())
-            );
-            const modelsForBrand = matchedBrand ? getModelsForBrand(matchedBrand) : [];
-            const matchedModel = modelsForBrand.find(m =>
-                data.model && (data.model.toUpperCase().includes(m.toUpperCase()) || m.toUpperCase().includes(data.model.toUpperCase()))
-            );
+            const matchedBrand = result.brand && VEHICLE_BRANDS.includes(result.brand) ? result.brand : '';
+            const matchedModel = matchedBrand
+              ? (getModelsForBrand(matchedBrand).find(m => result.model && m.toUpperCase() === result.model.toUpperCase()) ?? result.model)
+              : result.model;
 
-            const yearInt = parseInt(data.year) || new Date().getFullYear();
+            const yearInt = result.year ?? new Date().getFullYear();
             const price = matchedBrand && matchedModel ? (getMarketValueForYear(matchedBrand, matchedModel, yearInt) ?? 0) : 0;
 
             setVehicle((prev: any) => ({
                 ...prev,
-                brand: matchedBrand || data.brand.split(' ')[0] || prev.brand,
-                model: matchedModel || data.model || prev.model,
+                brand: matchedBrand || result.brand || prev.brand,
+                model: matchedModel || result.model || prev.model,
                 year: yearInt || prev.year,
-                plate: data.plate || prev.plate,
-                vin: data.vin || prev.vin,
-                engine: data.engine || prev.engine,
+                plate: result.plate || prev.plate,
+                vin: result.vin || prev.vin,
+                engine: result.engineNo || prev.engine,
+                color: result.color || prev.color,
                 price: price || prev.price,
                 manualPrice: !price,
                 condition: yearInt < new Date().getFullYear() ? 'USED' : 'NEW'
@@ -224,9 +230,13 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
             else setEntryMode('DATABASE');
             setShowManualForm(true);
         } else {
-            alert('AI gagal membaca STNK. Silakan isi data secara manual.');
+            // OCR couldn't read the document at all — fall through to manual entry.
+            setExtractedStnk(null);
             setEntryMode('MANUAL');
             setShowManualForm(true);
+            if (result.notes) {
+              console.warn('STNK OCR failed:', result.notes);
+            }
         }
     };
     reader.readAsDataURL(file);
@@ -271,12 +281,22 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       {(extractedStnk || showManualForm) && (
         <div className="space-y-6 animate-pop-in">
            {extractedStnk && (
+             <>
              <div className="flex items-center justify-between p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-sm animate-pop-in">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg"><CheckCircle2 size={16}/></div>
-                    <span className="text-[0.65rem] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-widest">STNK Berhasil Terverifikasi</span>
+                    <div className="flex flex-col">
+                      <span className="text-[0.65rem] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-widest">
+                        {stnkOcrResult?.status === 'PARTIAL' ? 'STNK Terbaca Sebagian' : 'STNK Berhasil Terverifikasi'}
+                      </span>
+                      {stnkOcrResult && stnkOcrResult.confidence > 0 && (
+                        <span className="text-[0.5rem] font-bold text-emerald-700/70 dark:text-emerald-300/70 uppercase tracking-wider mt-0.5">
+                          AI Confidence {(stnkOcrResult.confidence * 100).toFixed(0)}% · via {stnkOcrResult.source === 'stnk-ocr-edge' ? 'SurePath OCR' : 'fallback'}
+                        </span>
+                      )}
+                    </div>
                 </div>
-                <button 
+                <button
                   onClick={generateStnkPdf}
                   disabled={isGeneratingPdf}
                   className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/10 rounded-xl text-[0.55rem] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors shadow-sm disabled:opacity-50"
@@ -285,6 +305,27 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
                   Simpan PDF
                 </button>
              </div>
+
+             {/* AI OCR validation warnings — surface any field that failed
+                 regex / database validation so the user knows what to verify. */}
+             {stnkOcrResult && !stnkOcrResult.ok && stnkOcrResult.status !== 'UNCLEAR' && (
+               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 space-y-1.5">
+                 <p className="text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5">
+                   <AlertCircle size={11}/> Beberapa field perlu verifikasi
+                 </p>
+                 <ul className="text-[0.55rem] font-bold space-y-0.5 list-disc list-inside opacity-90">
+                   {!stnkOcrResult.validation.plate && <li>Format plat tidak standar</li>}
+                   {!stnkOcrResult.validation.vin && <li>Nomor Rangka (VIN) tidak valid atau tidak terbaca — wajib diisi manual</li>}
+                   {!stnkOcrResult.validation.year && <li>Tahun pembuatan tidak terdeteksi</li>}
+                   {!stnkOcrResult.validation.brand && <li>Merk tidak cocok dengan database</li>}
+                   {!stnkOcrResult.validation.model && <li>Model tidak cocok dengan database</li>}
+                 </ul>
+                 {stnkOcrResult.notes && (
+                   <p className="text-[0.5rem] italic opacity-70 pt-1">Catatan AI: {stnkOcrResult.notes}</p>
+                 )}
+               </div>
+             )}
+             </>
            )}
 
            <div className="flex bg-gray-100 dark:bg-white/[0.03] p-1.5 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner">

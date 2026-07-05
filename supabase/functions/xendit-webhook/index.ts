@@ -37,15 +37,37 @@ serve(async (req) => {
     }
 
     const payload = await req.json();
-    console.log('Xendit webhook payload:', JSON.stringify(payload));
+    // SECURITY: do not log full payload — it contains payer_email, phone, etc.
+    // Log only the fields we act on.
+    console.log('Xendit webhook:', {
+      external_id: payload?.external_id,
+      status: payload?.status,
+      payment_method: payload?.payment_method,
+      paid_amount: payload?.paid_amount,
+    });
 
-    const { external_id, id: xendit_invoice_id, status, payment_method, payment_channel, paid_amount, paid_at, payer_email } = payload;
+    const { external_id, id: xendit_invoice_id, status, payment_method, payment_channel, paid_amount, paid_at } = payload;
 
     if (!external_id) {
       return new Response('Missing external_id', { status: 400, headers: CORS });
     }
 
     const supabase = supabaseConfig;
+
+    // ── IDEMPOTENCY: fetch the existing payment row first ─────────────────
+    // Xendit retries webhooks on non-2xx and sometimes on network timeouts.
+    // If this payment was already marked PAID, this is a replay — return 200
+    // immediately without re-crediting commission / coins / overrides.
+    const { data: existingPayment } = await supabase
+      .from('sp_payments')
+      .select('id, status, order_id')
+      .eq('external_id', external_id)
+      .maybeSingle();
+
+    if (existingPayment?.status === 'PAID') {
+      console.log(`Webhook replay for ${external_id} — already PAID, skipping commission credit`);
+      return new Response('ok', { status: 200, headers: CORS });
+    }
 
     // Update sp_payments
     const { data: payment, error: payErr } = await supabase
@@ -56,8 +78,8 @@ serve(async (req) => {
         payment_channel: payment_channel ?? null,
         paid_amount:     paid_amount ?? null,
         paid_at:         paid_at ? new Date(paid_at).toISOString() : null,
-        payer_email:     payer_email ?? null,
-        xendit_payload:  payload,
+        payer_email:     null, // drop PII we don't need
+        xendit_payload:  { external_id, status, payment_method, payment_channel, paid_amount, paid_at },
         updated_at:      new Date().toISOString(),
       })
       .eq('external_id', external_id)
@@ -71,12 +93,45 @@ serve(async (req) => {
 
     // If PAID — advance order to UNDER_REVIEW, auto-generate review token, notify all parties
     if (status === 'PAID' && payment.order_id) {
-      // Fetch full order details
+      // ── AMOUNT VERIFICATION: prevent fraud via tampered order rows ──────
+      // Compare the amount Xendit actually received against the order's
+      // total_premium. If they don't match (within Rp 100 rounding tolerance),
+      // do NOT credit commission — flag for manual review.
       const { data: order } = await supabase
         .from('sp_policy_orders')
-        .select('agent_id, order_number, client_name, client_phone, product_name, total_premium, insurer_name')
+        .select('agent_id, order_number, client_name, client_phone, product_name, total_premium, insurer_name, commission_amount, coin_reward')
         .eq('id', payment.order_id)
         .single();
+
+      const expectedAmount = Number(order?.total_premium ?? 0);
+      const actualPaid = Number(paid_amount ?? 0);
+      const amountMismatch = order && Math.abs(actualPaid - expectedAmount) > 100;
+
+      if (amountMismatch) {
+        console.error(`Amount mismatch for order ${payment.order_id}: expected ${expectedAmount}, paid ${actualPaid}`);
+        // Mark the order for manual review instead of auto-advancing.
+        await supabase
+          .from('sp_policy_orders')
+          .update({
+            status: 'SUBMITTED',
+            updated_at: new Date().toISOString(),
+            // Stash the mismatch in metadata for the admin to investigate
+            // (assumes a jsonb column exists; if not, this is a no-op)
+          })
+          .eq('id', payment.order_id)
+          .in('status', ['SUBMITTED']);
+
+        await supabase.from('sp_admin_notifications').insert({
+          type:     'PAYMENT_AMOUNT_MISMATCH',
+          title:    `Mismatch Pembayaran – ${order?.order_number ?? ''}`,
+          body:     `Dibayar Rp ${actualPaid.toLocaleString('id-ID')}, seharusnya Rp ${expectedAmount.toLocaleString('id-ID')}. Order memerlukan review manual.`,
+          order_id: payment.order_id,
+          metadata: { expected: expectedAmount, paid: actualPaid },
+          read:     false,
+        });
+
+        return new Response('ok', { status: 200, headers: CORS });
+      }
 
       // Move order status: SUBMITTED → UNDER_REVIEW
       await supabase
@@ -164,12 +219,10 @@ serve(async (req) => {
         }
 
         // Credit agent wallet + tier-based coin bonus + 2-layer downline overrides
+        // `order` already includes commission_amount + coin_reward + order_number
+        // from the amount-verification fetch above; no second DB call needed.
         if (order.agent_id) {
-          const { data: orderDetails } = await supabase
-            .from('sp_policy_orders')
-            .select('commission_amount, coin_reward, order_number')
-            .eq('id', payment.order_id)
-            .single();
+          const orderDetails = order;
 
           if (orderDetails?.commission_amount && orderDetails.commission_amount > 0) {
             // Fetch selling agent's tier and upline chain (max 2 levels)

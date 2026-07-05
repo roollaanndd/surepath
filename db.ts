@@ -166,10 +166,16 @@ export const seedDatabase = async () => {
     // Guard: never wipe if master admin already exists (protects against localStorage clear)
     const adminExists = await db.users.where('email').equals('master@surepath.ai').first();
 
-    if (!isMigrated && !adminExists) {
+    // SECURITY: IndexedDB demo seeding is DEV-only. In production, all auth
+    // goes through Supabase — there's no reason to seed 3,000 demo users or
+    // local admin credentials into the browser. The previous code used
+    // VITE_ADMIN_KEY (which Vite statically substitutes into the client
+    // bundle, exposing it to anyone) to seed master@surepath.ai with a
+    // known password — that path is now blocked in AdminLogin.tsx.
+    if (import.meta.env.DEV && !isMigrated && !adminExists) {
       await db.users.clear();
 
-      const adminCreds = await hashPassword(import.meta.env.VITE_ADMIN_KEY || crypto.randomUUID());
+      const adminCreds = await hashPassword(import.meta.env.VITE_ADMIN_KEY || 'dev-only-admin-password');
       const userCreds = await hashPassword('user');
 
       const FIRST_NAMES = ["Budi", "Siti", "Anton", "Dewi", "Agus", "Ayu", "Eko", "Putri", "Wawan", "Sari", "Rudi", "Rina", "Dwi", "Sri", "Hadi", "Yuni", "Joko", "Tari", "Iwan", "Lestari", "Andi", "Maya", "Deni", "Nita", "Hendra", "Sisca", "Fajar", "Dian"];
@@ -250,17 +256,18 @@ export const seedDatabase = async () => {
       await db.users.bulkAdd(newUsers).catch(e => console.warn('Seeding users failed:', e));
     }
 
-    // Re-sync admin password only when VITE_ADMIN_KEY is explicitly configured.
-    // No hardcoded fallback — if the key is absent the block is skipped entirely,
-    // preventing any default/known password from granting local-DB access.
-    const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY;
-    if (ADMIN_KEY) {
-      const freshCreds = await hashPassword(ADMIN_KEY);
-      const ADMIN_EMAILS = ['master@surepath.ai', 'finance@surepath.ai'];
-      for (const email of ADMIN_EMAILS) {
-        const adminUser = await db.users.where('email').equals(email).first();
-        if (adminUser) {
-          await db.users.update(adminUser.id, { passwordHash: freshCreds.hash, salt: freshCreds.salt });
+    // Re-sync admin password only in DEV when VITE_ADMIN_KEY is explicitly set.
+    // Production builds skip this entirely (no admin password in the bundle).
+    if (import.meta.env.DEV) {
+      const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY;
+      if (ADMIN_KEY) {
+        const freshCreds = await hashPassword(ADMIN_KEY);
+        const ADMIN_EMAILS = ['master@surepath.ai', 'finance@surepath.ai'];
+        for (const email of ADMIN_EMAILS) {
+          const adminUser = await db.users.where('email').equals(email).first();
+          if (adminUser) {
+            await db.users.update(adminUser.id, { passwordHash: freshCreds.hash, salt: freshCreds.salt });
+          }
         }
       }
     }

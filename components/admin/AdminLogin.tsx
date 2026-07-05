@@ -89,6 +89,19 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         return;
       }
 
+      // ── Legacy IndexedDB fallback — DEV ONLY ─────────────────────────────
+      // SECURITY: Previously this ran in production, allowing anyone who
+      // extracted VITE_ADMIN_KEY from the client bundle to log in as
+      // master@surepath.ai via the local IndexedDB. Supabase Auth is now the
+      // only legitimate production login path. The legacy fallback is kept
+      // for local dev (where Supabase Auth may not be configured) but gated
+      // behind import.meta.env.DEV so it's stripped from production builds.
+      if (!import.meta.env.DEV) {
+        recordFailedAttempt(normalEmail);
+        setError('Kredensial salah atau akun tidak ditemukan.');
+        return;
+      }
+
       const user = await db.users.where('email').equals(normalEmail).first();
 
       if (user?.passwordHash && user?.salt) {

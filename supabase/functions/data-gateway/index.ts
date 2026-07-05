@@ -216,12 +216,20 @@ serve(async (req) => {
         // Referral linkage — code travels in signup metadata (survives the
         // email-confirmation flow, even on another device) or explicit param.
         // Matches the upline's agent_code OR referral_code.
-        const refCode = String(params.referral_code ?? meta.referral_code ?? '').trim();
+        // SECURITY: sanitize the ref code before interpolating into a PostgREST
+        // .or() string — otherwise a value like "xyz,id.eq.<admin_uuid>" would
+        // extend the filter and match arbitrary rows (filter injection).
+        const rawRefCode = String(params.referral_code ?? meta.referral_code ?? '').trim();
+        const refCode = rawRefCode.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
         if (refCode) {
+          // Use the structured .or() form to avoid string interpolation entirely.
           const { data: upline } = await db
             .from('sp_users')
             .select('id')
-            .or(`agent_code.eq.${refCode},referral_code.eq.${refCode}`)
+            .or([
+              { agent_code: `eq.${refCode}` },
+              { referral_code: `eq.${refCode}` },
+            ])
             .neq('id', authId)
             .maybeSingle();
           if (upline) insertRow.upline_id = upline.id;
@@ -254,13 +262,19 @@ serve(async (req) => {
       // Sets upline_id once; matches agent_code OR referral_code; never self.
       case 'apply_referral': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
-        const code = String(params.code ?? '').trim();
+        // SECURITY: sanitize the code — PostgREST .or() string interpolation
+        // is otherwise vulnerable to filter injection.
+        const rawCode = String(params.code ?? '').trim();
+        const code = rawCode.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
         if (!code) return json({ error: 'Missing code' }, 400);
         if (caller.spUser.upline_id) return json({ data: { upline_id: caller.spUser.upline_id, already_set: true } });
         const { data: upline, error: lookupErr } = await db
           .from('sp_users')
           .select('id')
-          .or(`agent_code.eq.${code},referral_code.eq.${code}`)
+          .or([
+            { agent_code: `eq.${code}` },
+            { referral_code: `eq.${code}` },
+          ])
           .neq('id', caller.spUser.id)
           .maybeSingle();
         if (lookupErr) return json({ error: lookupErr.message }, 400);
@@ -370,6 +384,51 @@ serve(async (req) => {
       case 'admin_update_user': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.user_id) return json({ error: 'Missing user_id' }, 400);
+
+        // ── Role escalation matrix ───────────────────────────────────────
+        // Only MASTER_ADMIN can set MASTER_ADMIN or ADMIN roles.
+        // ADMIN can set the other roles (FINANCE*, INSURANCE_ADMIN, AGENT, etc.)
+        // No admin can change their own role (anti-self-escalation).
+        // FINANCE_MANAGER / FINANCE / FINANCE_DIRECTOR / INSURANCE_ADMIN
+        // cannot change role at all — they can only set tier/commission_rate.
+        const VALID_ROLES = new Set([
+          'CUSTOMER', 'AGENT', 'B2B_CLIENT',
+          'INSURANCE_ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR',
+          'ADMIN', 'MASTER_ADMIN',
+        ]);
+
+        if ('role' in params) {
+          const newRole = String(params.role);
+          if (!VALID_ROLES.has(newRole)) {
+            return json({ error: `Invalid role: ${newRole}` }, 400);
+          }
+          // Self-escalation check
+          if (params.user_id === caller.authId) {
+            return json({ error: 'Cannot change your own role' }, 403);
+          }
+          // Role hierarchy check
+          const callerRole = caller.role ?? '';
+          const PROTECTED_ROLES = ['MASTER_ADMIN', 'ADMIN'];
+          if (PROTECTED_ROLES.includes(newRole) && callerRole !== 'MASTER_ADMIN') {
+            return json({ error: 'Only MASTER_ADMIN can assign ADMIN or MASTER_ADMIN roles' }, 403);
+          }
+          // FINANCE* and INSURANCE_ADMIN cannot change roles at all
+          const ROLE_CHANGE_ALLOWED = ['MASTER_ADMIN', 'ADMIN'];
+          if (!ROLE_CHANGE_ALLOWED.includes(callerRole)) {
+            return json({ error: 'Your role is not permitted to change user roles' }, 403);
+          }
+        }
+
+        // ── Tier assignment restriction ──────────────────────────────────
+        // Only MASTER_ADMIN, ADMIN, FINANCE_MANAGER can assign tiers.
+        if ('tier' in params) {
+          const callerRole = caller.role ?? '';
+          const TIER_ASSIGNERS = ['MASTER_ADMIN', 'ADMIN', 'FINANCE_MANAGER'];
+          if (!TIER_ASSIGNERS.includes(callerRole)) {
+            return json({ error: 'Your role is not permitted to assign tiers' }, 403);
+          }
+        }
+
         const ALLOWED = ['role', 'verified', 'is_suspended', 'tier', 'tier_assigned_by', 'tier_assigned_at', 'commission_rate', 'name', 'phone'];
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const k of ALLOWED) {

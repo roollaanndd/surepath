@@ -4,7 +4,6 @@ import {
   CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart, FileText
 } from 'lucide-react';
 import { Language } from '../../types';
-import { CAR_DATABASE } from '../../constants';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
   saveQuote, createPolicy, addCommission,
@@ -17,8 +16,8 @@ import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
 import {
-  VEHICLE_BRANDS, getModelsForBrand, getMarketValue,
-  MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto,
+  VEHICLE_BRANDS, getModelsForBrand, getMarketValue, getMarketValueForYear,
+  MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto, getMarketValueForMotoYear,
 } from '../../services/vehicleDatabase';
 
 interface Props {
@@ -644,11 +643,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   value={carInputs.year}
                   onChange={e => {
                     const yr = parseInt(e.target.value) || new Date().getFullYear();
-                    const entry = carInputs.model
-                      ? CAR_DATABASE.find(c => c.brand === carInputs.brand && c.modelName === carInputs.model)
+                    const yearPrice = carInputs.model
+                      ? (product === 'CAR'
+                          ? getMarketValueForYear(carInputs.brand, carInputs.model, yr)
+                          : getMarketValueForMotoYear(carInputs.brand, carInputs.model, yr))
                       : null;
-                    const yearPrice = entry?.yearPrices?.[yr] ?? 0;
-                    setCarInputs(v => ({ ...v, year: yr, price: yearPrice ? yearPrice * 1_000_000 : v.price }));
+                    setCarInputs(v => ({ ...v, year: yr, price: yearPrice ?? v.price }));
                   }}
                   className={inputClass}
                 />

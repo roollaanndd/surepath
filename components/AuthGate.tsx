@@ -9,6 +9,7 @@ import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
 import { supabase, ensureProfile } from '../services/supabaseService';
 import AgentOnboarding from './agent/AgentOnboarding';
+import { OjkBadge, EncryptionBadge } from './ui';
 
 interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
@@ -593,6 +594,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
           <Shield size={10} style={{ color: 'rgba(5,150,105,0.55)' }} />
           SurePath · Secure Connection
         </p>
+
+        {/* Trust signals — Indonesian insurance buyers explicitly look for
+            OJK licensing + encryption at the signup moment. Previously buried
+            in the footer of the marketing site only. */}
+        <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'center' }}>
+          <OjkBadge />
+          <EncryptionBadge />
+        </div>
       </div>
     </div>
   );

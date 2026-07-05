@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import {
   ShoppingBag, Zap, History,
   Sun, Moon, LogOut, ShieldCheck, Bell,
@@ -8,22 +8,33 @@ import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
 import { BotHome, BotShield as BotShieldNav, BotClaimCam, BotPolicy, BotUser } from '../CustomIcons';
 import { APP_VERSION } from '../../src/version';
-import ClaimManager from '../ClaimManager';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
-import CarInsuranceWizard from '../CarInsuranceWizard';
-import TravelInsuranceWizard from '../TravelInsuranceWizard';
-import PAInsuranceWizard from '../PAInsuranceWizard';
-import MPARInsuranceWizard from '../MPARInsuranceWizard';
-import CustomInsuranceWizard from '../CustomInsuranceWizard';
-import HealthChat from '../HealthChat';
-import ContactPage from '../ContactPage';
+// ── Performance: lazy-load heavy wizards + chat so they don't bloat the
+//    initial CustomerPortal chunk. Each is ~50-150 KB; loading all 7 eagerly
+//    adds ~700 KB to the initial bundle. Now they only load when the customer
+//    actually opens them.
+const ClaimManager = lazy(() => import('../ClaimManager'));
+const CarInsuranceWizard = lazy(() => import('../CarInsuranceWizard'));
+const TravelInsuranceWizard = lazy(() => import('../TravelInsuranceWizard'));
+const PAInsuranceWizard = lazy(() => import('../PAInsuranceWizard'));
+const MPARInsuranceWizard = lazy(() => import('../MPARInsuranceWizard'));
+const CustomInsuranceWizard = lazy(() => import('../CustomInsuranceWizard'));
+const HealthChat = lazy(() => import('../HealthChat'));
+const ContactPage = lazy(() => import('../ContactPage'));
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import PathyChat from '../shared/PathyChat';
 import OrderDetailSheet from './OrderDetailSheet';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
+
+// Lightweight Suspense fallback — matches the portal's general feel
+const WizardLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-10 h-10 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin" />
+  </div>
+);
 
 interface Props {
   currentUser: any;
@@ -663,7 +674,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         ref={scrollRef}
         className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-16 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
       >
-        {renderContent()}
+        <Suspense fallback={<WizardLoader />}>
+          {renderContent()}
+        </Suspense>
       </main>
 
       {/* Bottom tab navigation */}

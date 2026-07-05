@@ -153,6 +153,17 @@ const App = () => {
       if (spUser) enrichedUser = { ...user, supabaseId: spUser.id, agent_code: spUser.agent_code };
     }
     setEntryUser({ name: enrichedUser.name?.split(' ')[0] || 'Pengguna' });
+
+    // ── Analytics: identify the user + fire login event ────────────────────
+    try {
+      const { setUserId, track } = await import('./services/analytics');
+      setUserId(enrichedUser.id ?? enrichedUser.supabaseId ?? '', {
+        role: enrichedUser.role,
+        email: enrichedUser.email,
+      });
+      track('login', { role: enrichedUser.role, method: enrichedUser.method ?? 'email' });
+    } catch { /* analytics is non-blocking */ }
+
     setTimeout(() => {
       setCurrentUser(enrichedUser);
       localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));

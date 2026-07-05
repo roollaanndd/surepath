@@ -22,8 +22,19 @@ class PortalErrorBoundary extends Component<
   state = { error: null };
   static getDerivedStateFromError(e: Error) { return { error: e }; }
 
-  componentDidCatch(e: Error) {
-    console.error('[SurePath portal error]', e);
+  componentDidCatch(e: Error, errorInfo: React.ErrorInfo) {
+    console.error('[SurePath portal error]', e, errorInfo);
+
+    // ── Capture in Sentry so we actually see production errors ────────────
+    // Previously this only console.error'd, which meant React render errors
+    // never reached Sentry even when the SDK was initialized.
+    try {
+      const Sentry = (window as any).__SENTRY__;
+      if (Sentry?.captureException) {
+        Sentry.captureException(e, { contexts: { react: { componentStack: errorInfo.componentStack } } });
+      }
+    } catch { /* no-op */ }
+
     if (isStaleChunkError(e) && !sessionStorage.getItem(RELOAD_GUARD_KEY)) {
       sessionStorage.setItem(RELOAD_GUARD_KEY, '1');
       window.location.reload();

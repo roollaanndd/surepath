@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Car, Bike, Search, User, ChevronRight, Upload, CheckCircle,
   AlertTriangle, XCircle, ArrowLeft, Loader2, FileText,
-  Mail, Package, Smartphone,
+  Mail, Package, Smartphone, ScanLine,
 } from 'lucide-react';
 import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
 import { analyzeVehicleSurvey, validateVehiclePhoto, SurveyAnalysisResult } from '../../services/geminiService';
+import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
+import { lookupPlate } from '../../services/plateCodes';
 import {
   calcPremium, getZone, getVehicleCategory, PROVINCES,
   VEHICLE_USAGES, TPL_OPTIONS, ZONE_LABELS,
@@ -337,6 +339,97 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     setSumInsured(num);
     setSumInsuredDisplay(num === 0 ? '' : num.toLocaleString('id-ID'));
   };
+
+  // ── STNK AI OCR — auto-fill vehicle details from a photographed STNK ──────
+  // Calls the same extractStnkOcr service the customer wizard uses. Fills
+  // every field it can read; surfaces a warning banner with the per-field
+  // validation result so the agent knows what to double-check.
+  const [stnkScanning, setStnkScanning] = useState(false);
+  const [stnkOcrResult, setStnkOcrResult] = useState<StnkOcrResult | null>(null);
+  const stnkFileRef = useRef<HTMLInputElement>(null);
+
+  const handleStnkScan = useCallback(async (file: File) => {
+    setStnkScanning(true);
+    setStnkOcrResult(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const result = await extractStnkOcr(dataUrl, file.type);
+      setStnkOcrResult(result);
+
+      if (result.status === 'UNCLEAR' || result.status === 'ERROR') {
+        // Don't fill anything — let the agent enter details manually.
+        return;
+      }
+
+      // Brand — only fill if it matched the vehicle database for the current
+      // vehicle type (CAR vs MOTORCYCLE). Avoids setting "HONDA" for a car
+      // when the agent is processing a motorcycle, etc.
+      const isCar = vehicleType === 'CAR';
+      const brandList = isCar ? CAR_BRANDS : MOTO_BRANDS;
+      const matchedBrand = result.brand && brandList.some(b => b.toUpperCase() === result.brand!.toUpperCase())
+        ? result.brand
+        : '';
+
+      if (matchedBrand) {
+        handleVehicleDetailChange('make', matchedBrand);
+        // Model — match against the brand's known models for the vehicle type
+        const knownModels = isCar
+          ? getModelsForBrand(matchedBrand)
+          : getModelsForMotoBrand(matchedBrand);
+        const matchedModel = result.model && knownModels.some(m => m.toUpperCase() === result.model!.toUpperCase())
+          ? result.model
+          : (result.model ?? '');
+        handleVehicleDetailChange('model', matchedModel);
+
+        // Auto-fill sum insured from market value when both make + model matched
+        if (matchedModel) {
+          const mv = isCar
+            ? getMarketValue(matchedBrand, matchedModel)
+            : getMarketValueForMoto(matchedBrand, matchedModel);
+          if (mv && mv > 0) {
+            setSumInsured(mv);
+            setSumInsuredDisplay(mv.toLocaleString('id-ID'));
+          }
+        }
+      }
+
+      // Year
+      if (result.year) handleVehicleDetailChange('year', result.year);
+
+      // Color
+      if (result.color) handleVehicleDetailChange('color', result.color);
+
+      // Plate — split into code / number / suffix for the agent wizard's
+      // 3-field plate input (e.g. "B 1234 ABC" → code=B, num=1234, suffix=ABC)
+      if (result.plate) {
+        const m = result.plate.match(/^([A-Z]{1,2})\s+(\d{1,4})\s+([A-Z]{1,3})$/);
+        if (m) {
+          handleVehicleDetailChange('plateCode', m[1]);
+          handleVehicleDetailChange('plateNum', m[2]);
+          handleVehicleDetailChange('plateSuffix', m[3]);
+          handleVehicleDetailChange('plate', result.plate);
+          // Resolve province from plate code for the zone calculation
+          const entry = lookupPlate(result.plate);
+          if (entry) {
+            setProvince(entry.province);
+          }
+        }
+      }
+
+      // Chassis + engine
+      if (result.vin) handleVehicleDetailChange('chassis', result.vin);
+      if (result.engineNo) handleVehicleDetailChange('engine', result.engineNo);
+    } catch (e) {
+      console.error('STNK OCR scan failed:', e);
+    } finally {
+      setStnkScanning(false);
+    }
+  }, [vehicleType, handleVehicleDetailChange]);
 
   const handlePlatePartChange = useCallback((field: 'plateCode' | 'plateNum' | 'plateSuffix', value: string) => {
     setVehicleDetails(prev => {
@@ -781,6 +874,71 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     return (
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-black text-slate-800 dark:text-white">Detail Kendaraan</h2>
+
+        {/* AI STNK OCR — auto-fills every field below from a photographed STNK.
+            Same service the customer wizard uses; runs server-side via the
+            stnk-ocr edge function with a fallback to Gemini Vision. */}
+        <input
+          ref={stnkFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleStnkScan(f);
+            e.target.value = ''; // allow re-uploading the same file
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => stnkFileRef.current?.click()}
+          disabled={stnkScanning}
+          className="flex items-center justify-center gap-2 w-full p-4 rounded-2xl border-2 border-dashed border-emerald-400/50 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-300 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition disabled:opacity-50"
+        >
+          {stnkScanning ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Membaca STNK dengan AI…</>
+          ) : (
+            <><ScanLine className="w-4 h-4" /> Pindai STNK dengan AI</>
+          )}
+        </button>
+
+        {/* OCR result summary + per-field validation warnings */}
+        {stnkOcrResult && stnkOcrResult.status !== 'UNCLEAR' && stnkOcrResult.status !== 'ERROR' && (
+          <div className={`p-3 rounded-2xl border text-xs flex items-start gap-2 ${
+            stnkOcrResult.ok
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200'
+              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200'
+          }`}>
+            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-1">
+              <p className="font-black uppercase tracking-widest text-[0.6rem]">
+                {stnkOcrResult.ok ? 'STNK Terbaca Lengkap' : 'STNK Terbaca Sebagian'} · {(stnkOcrResult.confidence * 100).toFixed(0)}% confidence
+              </p>
+              {!stnkOcrResult.ok && (
+                <ul className="text-[0.55rem] font-bold list-disc list-inside opacity-90">
+                  {!stnkOcrResult.validation.plate && <li>Format plat tidak standar</li>}
+                  {!stnkOcrResult.validation.vin && <li>Nomor Rangka (VIN) perlu verifikasi manual</li>}
+                  {!stnkOcrResult.validation.year && <li>Tahun tidak terdeteksi</li>}
+                  {!stnkOcrResult.validation.brand && <li>Merk tidak cocok dengan database</li>}
+                  {!stnkOcrResult.validation.model && <li>Model tidak cocok dengan database</li>}
+                </ul>
+              )}
+              {stnkOcrResult.notes && (
+                <p className="text-[0.5rem] italic opacity-70">Catatan AI: {stnkOcrResult.notes}</p>
+              )}
+            </div>
+          </div>
+        )}
+        {stnkOcrResult && (stnkOcrResult.status === 'UNCLEAR' || stnkOcrResult.status === 'ERROR') && (
+          <div className="p-3 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-black uppercase tracking-widest text-[0.6rem]">STNK tidak terbaca</p>
+              <p className="text-[0.55rem] opacity-90">Foto mungkin buram atau terpotong. Isi data secara manual di bawah ini.</p>
+            </div>
+          </div>
+        )}
+
         <SectionCard>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Make */}

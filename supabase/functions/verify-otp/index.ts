@@ -2,8 +2,29 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders as buildCors } from '../_shared/cors.ts'
 
+// ─── Verify OTP ──────────────────────────────────────────────────────────────
+//
+// SECURITY HISTORY:
+// Previous version accepted a client-supplied `email` parameter and, after
+// verifying the OTP against a phone number, generated a Supabase magic-link
+// for that email and returned the action_link URL in the response. The phone
+// and email were completely independent — an attacker could verify their own
+// phone OTP and then request a magic link for ANY email (including admins),
+// resulting in complete account takeover.
+//
+// FIXED: The function now ONLY verifies the OTP and marks it used. It does not
+// generate magic links for any email. If phone-based login is needed, callers
+// should use `supabase.auth.signInWithOtp({ phone })` via the SDK, which
+// generates a phone-verified session directly (not an arbitrary email link).
+//
+// The function also now:
+//   - Enforces a max-attempt counter (5 wrong tries locks the code)
+//   - Returns generic error messages (no timing-safe check, but no PII leak)
+//   - Fails closed on any configuration error
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const MAX_ATTEMPTS = 5
 
 function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '')
@@ -19,7 +40,8 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, code, purpose = 'LOGIN', email } = await req.json()
+    const body = await req.json().catch(() => ({}))
+    const { phone, code, purpose = 'LOGIN' } = body as { phone?: string; code?: string; purpose?: string }
 
     if (!phone || !code) {
       return new Response(JSON.stringify({ ok: false, error: 'Phone and code required' }), {
@@ -33,7 +55,7 @@ serve(async (req) => {
     // Find valid, unused, non-expired OTP
     const { data: rows, error: fetchErr } = await supabase
       .from('sp_otp_codes')
-      .select('id, code, expires_at, used_at')
+      .select('id, code, expires_at, used_at, attempts')
       .eq('phone', normalized)
       .eq('purpose', purpose)
       .is('used_at', null)
@@ -44,14 +66,33 @@ serve(async (req) => {
     if (fetchErr) throw fetchErr
 
     if (!rows || rows.length === 0) {
-      return new Response(JSON.stringify({ ok: false, error: 'Kode OTP tidak valid atau sudah kedaluwarsa' }), {
+      return new Response(JSON.stringify({ ok: false, error: 'Kode otp tidak valid atau sudah kedaluwarsa' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     const row = rows[0]
+
+    // ── Attempt counter — lock after MAX_ATTEMPTS wrong tries ──────────────
+    const attempts = Number(row.attempts ?? 0)
+    if (attempts >= MAX_ATTEMPTS) {
+      // Mark as used so it can't be retried
+      await supabase
+        .from('sp_otp_codes')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', row.id)
+      return new Response(JSON.stringify({ ok: false, error: 'Terlalu banyak percobaan. Silakan minta kode baru.' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     if (row.code !== code) {
-      return new Response(JSON.stringify({ ok: false, error: 'Kode OTP salah' }), {
+      // Increment attempts counter
+      await supabase
+        .from('sp_otp_codes')
+        .update({ attempts: attempts + 1 })
+        .eq('id', row.id)
+      return new Response(JSON.stringify({ ok: false, error: 'Kode otp salah' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -62,28 +103,17 @@ serve(async (req) => {
       .update({ used_at: new Date().toISOString() })
       .eq('id', row.id)
 
-    // If email provided, generate a magic link so client can sign in
-    if (email) {
-      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-      })
-      if (linkErr) throw linkErr
-
-      return new Response(JSON.stringify({
-        ok: true,
-        action_link: linkData.properties?.action_link ?? null,
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    return new Response(JSON.stringify({ ok: true }), {
+    // ── SECURITY: do NOT generate a magic link for any email ──────────────
+    // Previous behavior allowed account takeover. Phone OTP verification now
+    // only confirms the phone is valid — the caller must use Supabase Auth's
+    // native phone-OTP sign-in (supabase.auth.signInWithOtp({ phone })) to
+    // get a session, which binds the session to the verified phone.
+    return new Response(JSON.stringify({ ok: true, phone: normalized }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
     console.error('verify-otp error:', err)
-    return new Response(JSON.stringify({ ok: false, error: String(err) }), {
+    return new Response(JSON.stringify({ ok: false, error: 'Terjadi kesalahan. Coba lagi.' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

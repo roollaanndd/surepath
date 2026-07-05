@@ -455,8 +455,13 @@ export const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; ha
   );
 };
 
+// ─── PWA standalone detection ─────────────────────────────────────────────────
+export const isStandaloneMode = () =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
+
 // ─── Chrome context — exposes the PWA install handler to nested sections ───────
-export const SiteChromeContext = createContext<{ onInstall: () => void }>({ onInstall: () => {} });
+export const SiteChromeContext = createContext<{ onInstall: () => void; installed: boolean }>({ onInstall: () => {}, installed: false });
 export const useSiteChrome = () => useContext(SiteChromeContext);
 
 // ─── 3D tilt hook — attach to any card for mouse-tracking perspective ─────────

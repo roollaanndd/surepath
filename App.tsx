@@ -425,12 +425,25 @@ const App = () => {
     );
   }
 
+  // Default: render AuthGate (login screen)
   return (
-    <>
-      <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>
-      <AppUpdateNotification />
-    </>
+    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>
   );
 };
 
-export default App;
+// ─── Wrap the entire App in the ToastProvider + ConfirmDialogProvider ────────
+// These two context providers power the new useToast() and useConfirmDialog()
+// hooks (components/ui/Toast.tsx, components/ui/ConfirmDialog.tsx). They must
+// wrap the entire app so any component can show a toast or confirm dialog.
+
+import { ToastProvider, ConfirmDialogProvider } from './components/ui';
+
+const AppWithProviders: React.FC = () => (
+  <ToastProvider>
+    <ConfirmDialogProvider>
+      <App />
+    </ConfirmDialogProvider>
+  </ToastProvider>
+);
+
+export default AppWithProviders;

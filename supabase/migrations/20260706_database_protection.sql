@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.sp_audit_log (
   new_data        jsonb,       -- full row snapshot after the change (for UPDATE)
   actor_id        uuid,        -- auth.uid() of the caller (if available)
   actor_email     text,        -- looked up from sp_users
-  session_user    text,        -- current_setting('app.user_email') if set
+  session_info    text,        -- current_setting('app.user_email') if set
   reason          text,        -- optional reason (set by force_delete)
   created_at      timestamptz  NOT NULL DEFAULT now()
 );
@@ -116,7 +116,7 @@ BEGIN
   -- Check if hard delete is explicitly allowed (set by force_delete function)
   IF current_setting('app.allow_hard_delete', true) = 'true' THEN
     -- Allowed — log to audit table and let the DELETE proceed
-    INSERT INTO public.sp_audit_log (table_name, row_id, action, old_data, actor_id, session_user, reason)
+    INSERT INTO public.sp_audit_log (table_name, row_id, action, old_data, actor_id, session_info, reason)
     VALUES (
       TG_TABLE_NAME,
       CASE WHEN TG_OP = 'DELETE' THEN (old.id)::text ELSE NULL END,
@@ -290,7 +290,7 @@ BEGIN
      OR OLD.commission_amount IS DISTINCT FROM NEW.commission_amount
      OR OLD.discount_amount IS DISTINCT FROM NEW.discount_amount
   THEN
-    INSERT INTO public.sp_audit_log (table_name, row_id, action, old_data, new_data, actor_id, session_user)
+    INSERT INTO public.sp_audit_log (table_name, row_id, action, old_data, new_data, actor_id, session_info)
     VALUES (
       TG_TABLE_NAME,
       (NEW.id)::text,

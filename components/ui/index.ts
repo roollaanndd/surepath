@@ -51,3 +51,5 @@ export { FAB, type FABProps } from './FAB';
 export { UnderlineTabs, type UnderlineTab, type UnderlineTabsProps } from './UnderlineTabs';
 // "Sedang Ramai" live badge — pulsing dot + count for social proof
 export { LiveBadge, type LiveBadgeProps } from './LiveBadge';
+// Customer referral card — "Ajak Teman" with copy + share buttons
+export { ReferralCard, type ReferralCardProps } from './ReferralCard';

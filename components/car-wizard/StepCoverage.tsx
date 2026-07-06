@@ -1,8 +1,10 @@
-import React from 'react';
-import { Info, Building, CloudRain, Zap, AlertCircle, AlertTriangle, Percent, ArrowDown } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Info, Building, CloudRain, Zap, AlertCircle, AlertTriangle, Ticket, Check, Loader2, X } from 'lucide-react';
 import { formatIDR } from './WizardUI';
 import { InsuranceType } from '../../types';
 import { TPL_OPTIONS } from '../../services/ojkRates';
+import { validatePromoCode, promoToDiscountPercent, type PromoCodeValidation } from '../../services/promoCodeService';
+import { useHaptic } from '../ui';
 
 interface StepCoverageProps {
   coverage: any;
@@ -16,6 +18,61 @@ interface StepCoverageProps {
 
 const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, premiumBreakdown, maxDiscountPercent = 25 }) => {
   const discountCap = Math.max(0, Math.min(100, maxDiscountPercent));
+  const haptic = useHaptic();
+
+  // ── Promo code state ─────────────────────────────────────────────────────
+  // Replaces the discount slider. Customers enter a code; we validate it
+  // against sp_promo_codes (CMS) and apply the discount. Default discount = 0
+  // unless a valid code is entered — restores margin that was previously
+  // being given away silently via the slider.
+  const [promoInput, setPromoInput] = useState(coverage.promoCode ?? '');
+  const [promoValidation, setPromoValidation] = useState<PromoCodeValidation | null>(null);
+  const [promoChecking, setPromoChecking] = useState(false);
+
+  const orderTotal = premiumBreakdown?.totalPayable ?? premiumBreakdown?.grossPremium ?? 0;
+
+  const handleApplyPromo = useCallback(async () => {
+    const code = promoInput.trim();
+    if (!code) {
+      setPromoValidation({ valid: false, error: 'Masukkan kode promo' });
+      haptic.error();
+      return;
+    }
+    setPromoChecking(true);
+    setPromoValidation(null);
+    try {
+      const result = await validatePromoCode(code, orderTotal);
+      setPromoValidation(result);
+      if (result.valid) {
+        const discountPercent = promoToDiscountPercent(result, orderTotal, discountCap);
+        setCoverage({
+          ...coverage,
+          promoCode: result.code,
+          discount: discountPercent,
+          discountType: result.discountType === 'NOMINAL' ? 'NOMINAL' : 'PERCENT',
+        });
+        haptic.success();
+      } else {
+        // Clear the discount on invalid code
+        setCoverage({ ...coverage, promoCode: '', discount: 0 });
+        haptic.error();
+      }
+    } catch (e) {
+      setPromoValidation({ valid: false, error: 'Terjadi kesalahan. Coba lagi.' });
+      setCoverage({ ...coverage, promoCode: '', discount: 0 });
+      haptic.error();
+    } finally {
+      setPromoChecking(false);
+    }
+  }, [promoInput, orderTotal, discountCap, coverage, setCoverage, haptic]);
+
+  const handleRemovePromo = useCallback(() => {
+    setPromoInput('');
+    setPromoValidation(null);
+    setCoverage({ ...coverage, promoCode: '', discount: 0, discountType: 'PERCENT' });
+    haptic.tap();
+  }, [coverage, setCoverage, haptic]);
+
   return (
     <div className="space-y-6 animate-fade-in">
        <div className="p-1.5 bg-gray-100 dark:bg-white/[0.03] rounded-[1.8rem] flex gap-1.5 border border-black/5 dark:border-white/5">
@@ -56,7 +113,7 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
             { id: 'srcc', label: 'Kerusuhan (SRCC)', icon: AlertCircle, desc: 'Huru-hara & Riot' },
             { id: 'terrorism', label: 'Terorisme & Sabotase', icon: AlertTriangle, desc: 'TS / Sabotase' },
           ].map(opt => (
-            <button 
+            <button
               key={opt.id}
               onClick={() => setCoverage({...coverage, [opt.id]: !coverage[opt.id as keyof typeof coverage]})}
               className={`p-5 rounded-[2rem] border-2 text-left flex flex-col gap-2.5 transition-all tap-feedback ${coverage[opt.id as keyof typeof coverage] ? 'border-emerald-500 bg-emerald-500/5 shadow-lg ring-1 ring-emerald-500/20' : 'border-black/5 bg-white dark:bg-white/[0.03] opacity-60 hover:opacity-100'}`}
@@ -72,48 +129,84 @@ const StepCoverage: React.FC<StepCoverageProps> = ({ coverage, setCoverage, prem
           ))}
        </div>
 
-       <div className="p-6 bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-[2.5rem] shadow-sm space-y-5">
-          <div className="flex justify-between items-center">
-             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center"><Percent size={20}/></div>
-                <div>
-                   <p className="text-[0.6rem] font-black uppercase tracking-widest text-gray-500">Punya Kode Diskon?</p>
-                   <p className="text-[0.5rem] font-bold text-amber-500 uppercase tracking-widest opacity-80">Maks. diskon = maks. komisi ({discountCap}%)</p>
-                </div>
-             </div>
-             <div className="text-right">
-                <p className="text-xl font-black text-amber-500">{coverage.discount}%</p>
+       {/* ── Promo code input (replaces the discount slider) ────────────────── */}
+       <div className="p-6 bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-[2.5rem] shadow-sm space-y-4">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center"><Ticket size={20}/></div>
+             <div>
+                <p className="text-[0.6rem] font-black uppercase tracking-widest text-gray-500">Punya Kode Promo?</p>
+                <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest opacity-80">Maks. diskon {discountCap}% · komisi mitra</p>
              </div>
           </div>
 
-          <div className="relative h-2 bg-gray-100 dark:bg-white/10 rounded-full">
-             <div
-               className="absolute top-0 left-0 h-full bg-amber-500 rounded-full transition-all"
-               style={{ width: `${discountCap > 0 ? (coverage.discount / discountCap) * 100 : 0}%` }}
-             ></div>
-             <input
-               type="range"
-               min="0"
-               max={discountCap}
-               step="1"
-               value={Math.min(coverage.discount, discountCap)}
-               onChange={(e) => setCoverage({...coverage, discount: parseInt(e.target.value)})}
-               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-             />
-             <div
-                className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-4 border-amber-500 rounded-full shadow-lg pointer-events-none transition-all"
-                style={{ left: `${discountCap > 0 ? (Math.min(coverage.discount, discountCap) / discountCap) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
-             ></div>
-          </div>
-
-          {premiumBreakdown && premiumBreakdown.discountAmount > 0 && (
-             <div className="grid grid-cols-1 gap-4 pt-2">
-                <div className="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center">
-                   <p className="text-[0.45rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1"><ArrowDown size={10}/> Total Hemat Kamu</p>
-                   <p className="text-sm font-black text-emerald-500">{formatIDR(premiumBreakdown.discountAmount)}</p>
-                </div>
-             </div>
+          {promoValidation?.valid ? (
+            // ── Valid code applied — show success state with remove button ──
+            <div className="flex items-center justify-between p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/20">
+               <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center"><Check size={14} strokeWidth={3}/></div>
+                  <div>
+                     <p className="text-xs font-black text-emerald-700 dark:text-emerald-300">{promoValidation.code}</p>
+                     <p className="text-[0.55rem] font-bold text-emerald-600 dark:text-emerald-400">
+                        {promoValidation.discountType === 'PERCENT'
+                           ? `Diskon ${promoValidation.discountValue}%`
+                           : `Diskon ${formatIDR(promoValidation.discountValue ?? 0)}`}
+                        {coverage.discount < (promoValidation.discountValue ?? 0) && promoValidation.discountType === 'PERCENT'
+                           ? ` (dibatasi ${discountCap}%)`
+                           : ''}
+                     </p>
+                  </div>
+               </div>
+               <button
+                  onClick={handleRemovePromo}
+                  aria-label="Hapus kode promo"
+                  className="w-7 h-7 rounded-lg bg-white dark:bg-white/10 text-gray-400 hover:text-rose-500 flex items-center justify-center transition-colors"
+               >
+                  <X size={14}/>
+               </button>
+            </div>
+          ) : (
+            // ── Input + apply button ────────────────────────────────────────
+            <div className="flex gap-2">
+               <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleApplyPromo(); }}
+                  placeholder=" Contoh: WELCOME10"
+                  className="flex-1 h-12 px-4 rounded-2xl border-2 border-black/5 dark:border-white/10 bg-white dark:bg-white/5 text-sm font-mono font-bold tracking-wider text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/30 focus:outline-none focus:border-emerald-500 uppercase"
+               />
+               <button
+                  onClick={handleApplyPromo}
+                  disabled={promoChecking || !promoInput.trim()}
+                  className="h-12 px-5 rounded-2xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+               >
+                  {promoChecking ? <Loader2 size={14} className="animate-spin"/> : null}
+                  {promoChecking ? 'Cek...' : 'Pakai'}
+               </button>
+            </div>
           )}
+
+          {/* Validation feedback */}
+          {promoValidation && !promoValidation.valid && promoValidation.error && (
+            <div className="flex items-center gap-2 p-2.5 bg-rose-500/5 rounded-xl border border-rose-500/20">
+               <AlertCircle size={14} className="text-rose-500 shrink-0"/>
+               <p className="text-[0.6rem] font-bold text-rose-600 dark:text-rose-400">{promoValidation.error}</p>
+            </div>
+          )}
+
+          {/* Discount amount display (when a valid code is applied) */}
+          {promoValidation?.valid && premiumBreakdown && premiumBreakdown.discountAmount > 0 && (
+            <div className="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center">
+               <p className="text-[0.45rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                  Total Hemat Kamu
+               </p>
+               <p className="text-sm font-black text-emerald-500">{formatIDR(premiumBreakdown.discountAmount)}</p>
+            </div>
+          )}
+
+          <p className="text-[0.5rem] text-gray-400 italic flex items-center gap-1.5">
+             <Info size={9}/> Coba <span className="font-mono font-bold">WELCOME10</span> untuk diskon 10%.
+          </p>
        </div>
     </div>
   );

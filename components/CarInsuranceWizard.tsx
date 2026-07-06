@@ -92,7 +92,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
     tpl: 0,
     paDriver: 0,
     paPassenger: 0,
-    promo: '', discount: 0, discountType: 'PERCENT' as 'NOMINAL' | 'PERCENT'
+    promo: '', promoCode: '', discount: 0, discountType: 'PERCENT' as 'NOMINAL' | 'PERCENT'
   });
 
   // ── CMS-backed insurer products ────────────────────────────────────────────
@@ -360,6 +360,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         ojk_rate: premiumBreakdown.ojkRateDecimal,
         discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
         discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
+        promo_code: coverage.promoCode || undefined,
         net_premium: Math.round(premiumBreakdown.netPremium),
         commission_rate: premiumBreakdown.commissionRate,
         commission_amount: commissionAmount,
@@ -468,6 +469,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         ojk_rate: premiumBreakdown.ojkRateDecimal,
         discount_rate: (premiumBreakdown.discountPercent || 0) / 100,
         discount_amount: Math.round(premiumBreakdown.discountAmount || 0),
+        promo_code: coverage.promoCode || undefined,
         net_premium: Math.round(premiumBreakdown.netPremium),
         commission_rate: premiumBreakdown.commissionRate,
         commission_amount: commissionAmount,

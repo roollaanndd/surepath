@@ -916,7 +916,7 @@ serve(async (req) => {
           // Validate the code against sp_promo_codes
           const { data: promoRow } = await db
             .from('sp_promo_codes')
-            .select('code, discount_type, discount_value, min_premium, max_uses, uses_count, starts_at, ends_at, is_active')
+            .select('code, discount_type, discount_value, min_premium, usage_limit, used_count, valid_from, valid_to, is_active')
             .eq('code', clientPromoCode)
             .eq('is_active', true)
             .maybeSingle();
@@ -925,16 +925,16 @@ serve(async (req) => {
             return json({ error: `Kode promo "${clientPromoCode}" tidak valid atau sudah tidak aktif` }, 400);
           }
 
-          // Check date range
+          // Check date range (existing schema: valid_from / valid_to)
           const now = new Date();
-          if (new Date(promoRow.starts_at) > now) {
+          if (new Date(promoRow.valid_from) > now) {
             return json({ error: 'Kode promo belum berlaku' }, 400);
           }
-          if (promoRow.ends_at && new Date(promoRow.ends_at) < now) {
+          if (promoRow.valid_to && new Date(promoRow.valid_to) < now) {
             return json({ error: 'Kode promo sudah kedaluwarsa' }, 400);
           }
-          // Check usage limit
-          if (promoRow.max_uses !== null && promoRow.uses_count >= promoRow.max_uses) {
+          // Check usage limit (existing schema: usage_limit / used_count)
+          if (promoRow.usage_limit !== null && promoRow.used_count >= promoRow.usage_limit) {
             return json({ error: 'Kuota kode promo sudah habis' }, 400);
           }
           // Check minimum premium

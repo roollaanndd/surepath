@@ -46,7 +46,7 @@ export async function validatePromoCode(
   try {
     const { data, error } = await supabase
       .from('sp_promo_codes')
-      .select('code, description, discount_type, discount_value, min_premium, max_uses, uses_count, starts_at, ends_at, is_active')
+      .select('code, description, discount_type, discount_value, min_premium, usage_limit, used_count, valid_from, valid_to, is_active')
       .eq('code', normalized)
       .eq('is_active', true)
       .maybeSingle();
@@ -60,10 +60,10 @@ export async function validatePromoCode(
       return { valid: false, error: 'Kode tidak ditemukan atau sudah tidak aktif' };
     }
 
-    // Check date range
+    // Check date range (existing schema uses valid_from / valid_to)
     const now = new Date();
-    const startsAt = new Date(data.starts_at);
-    const endsAt = data.ends_at ? new Date(data.ends_at) : null;
+    const startsAt = new Date(data.valid_from);
+    const endsAt = data.valid_to ? new Date(data.valid_to) : null;
     if (now < startsAt) {
       return { valid: false, error: 'Kode belum berlaku' };
     }
@@ -71,8 +71,8 @@ export async function validatePromoCode(
       return { valid: false, error: 'Kode sudah kedaluwarsa' };
     }
 
-    // Check usage limit
-    if (data.max_uses !== null && data.uses_count >= data.max_uses) {
+    // Check usage limit (existing schema uses usage_limit / used_count)
+    if (data.usage_limit !== null && data.used_count >= data.usage_limit) {
       return { valid: false, error: 'Kuota kode sudah habis' };
     }
 

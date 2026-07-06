@@ -18,11 +18,12 @@ ALTER TABLE public.sp_promo_codes
   ADD COLUMN IF NOT EXISTS min_premium numeric NOT NULL DEFAULT 0;
 
 -- Seed the 3 legacy codes (idempotent — ON CONFLICT DO NOTHING)
-INSERT INTO public.sp_promo_codes (code, description, discount_type, discount_value, is_active, usage_limit)
+-- valid_to is NOT NULL in the existing schema, so we set a far-future date.
+INSERT INTO public.sp_promo_codes (code, description, discount_type, discount_value, is_active, usage_limit, valid_from, valid_to)
 VALUES
-  ('SUREPATH25', 'Legacy code — 25% off (was hardcoded in constants.ts)', 'PERCENT', 25, true, 100000),
-  ('WELCOME10',  'Welcome discount — 10% off for new customers',          'PERCENT', 10, true, 100000),
-  ('AI5',        'AI launch promo — 5% off',                              'PERCENT', 5,  true, 100000)
+  ('SUREPATH25', 'Legacy code — 25% off (was hardcoded in constants.ts)', 'PERCENT', 25, true, 100000, now(), '2099-12-31T23:59:59Z'),
+  ('WELCOME10',  'Welcome discount — 10% off for new customers',          'PERCENT', 10, true, 100000, now(), '2099-12-31T23:59:59Z'),
+  ('AI5',        'AI launch promo — 5% off',                              'PERCENT', 5,  true, 100000, now(), '2099-12-31T23:59:59Z')
 ON CONFLICT (code) DO NOTHING;
 
 -- RLS: anyone can read active codes (for client-side validation);

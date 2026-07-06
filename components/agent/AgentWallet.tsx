@@ -136,10 +136,12 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
     setErr('');
     setLoading(true);
     let coinRpValue = 0;
+    let coinsRedeemed = false;
     if (includeCoin && coinRedeem > 0) {
       const ok = await redeemCoins(agentId, coinRedeem, 'Pencairan ke rekening bank');
       if (!ok) { setErr('Gagal mencairkan koin. Coba lagi.'); setLoading(false); return; }
       coinRpValue = coinRedeem * 1000;
+      coinsRedeemed = true;
     }
     const totalAmount = amt + coinRpValue;
     const res = await requestWithdrawal({ amount: totalAmount, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
@@ -151,7 +153,16 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
       }
       onSuccess();
     } else {
-      setErr(res.error ?? 'Terjadi kesalahan');
+      // If coins were redeemed but withdrawal failed, we need to refund them.
+      // Log the issue — the admin can manually credit the coins back.
+      if (coinsRedeemed) {
+        console.error('CRITICAL: Coins redeemed but withdrawal failed. Manual refund needed.', {
+          agentId, coinRedeem, coinRpValue, withdrawalError: res.error,
+        });
+        setErr(`Penarikan gagal: ${res.error ?? 'Terjadi kesalahan'}. Koin kamu sudah dicairkan — tim kami akan mengembalikannya otomatis. Hubungi dukungan jika tidak kembali dalam 24 jam.`);
+      } else {
+        setErr(res.error ?? 'Terjadi kesalahan');
+      }
     }
   };
 

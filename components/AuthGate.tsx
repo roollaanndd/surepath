@@ -82,10 +82,23 @@ const AuthGate: React.FC<AuthGateProps> = ({
     try {
       const userObj = await buildUserObj(user);
       onAuthSuccess(userObj);
-    } catch {
+    } catch (e: any) {
       resolvedRef.current = false;
       setLoading(false);
-      setError(lang === Language.EN ? 'Login failed. Please try again.' : 'Login gagal. Coba lagi.');
+      // If ensureProfile fails, still log the user in with a fallback profile
+      // rather than blocking them completely. The profile will be created
+      // on the next call to ensureProfile (e.g. when they navigate).
+      console.error('resolveAndLogin error:', e);
+      const fallbackUser = {
+        id: user.id,
+        name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'User',
+        email: user.email ?? '',
+        role: UserRole.CUSTOMER,
+        supabaseId: user.id,
+        nodeId: `SP-${user.id.slice(0, 8).toUpperCase()}`,
+        trustScore: 85,
+      };
+      onAuthSuccess(fallbackUser);
     }
   };
 

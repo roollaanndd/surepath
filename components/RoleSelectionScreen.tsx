@@ -120,7 +120,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       }
 
       if (!profile) {
-        setError('Gagal membuat akun. Coba lagi.');
+        setError('Gagal membuat akun. Periksa koneksi internet Anda atau coba lagi. Jika masalah berlanjut, hubungi dukungan.');
         setLoading(false);
         return;
       }

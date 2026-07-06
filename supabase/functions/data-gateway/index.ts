@@ -222,14 +222,15 @@ serve(async (req) => {
         const rawRefCode = String(params.referral_code ?? meta.referral_code ?? '').trim();
         const refCode = rawRefCode.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
         if (refCode) {
-          // Use the structured .or() form to avoid string interpolation entirely.
+          // SECURITY: refCode is sanitized (alphanumeric + dash only, max 32 chars)
+          // so it's safe to interpolate into the PostgREST .or() string filter.
+          // The array form .or([{...}, {...}]) is NOT supported by the Supabase
+          // JS client — it only accepts a string. Using the array form causes a
+          // silent crash that breaks registration.
           const { data: upline } = await db
             .from('sp_users')
             .select('id')
-            .or([
-              { agent_code: `eq.${refCode}` },
-              { referral_code: `eq.${refCode}` },
-            ])
+            .or(`agent_code.eq.${refCode},referral_code.eq.${refCode}`)
             .neq('id', authId)
             .maybeSingle();
           if (upline) insertRow.upline_id = upline.id;
@@ -271,10 +272,7 @@ serve(async (req) => {
         const { data: upline, error: lookupErr } = await db
           .from('sp_users')
           .select('id')
-          .or([
-            { agent_code: `eq.${code}` },
-            { referral_code: `eq.${code}` },
-          ])
+          .or(`agent_code.eq.${code},referral_code.eq.${code}`)
           .neq('id', caller.spUser.id)
           .maybeSingle();
         if (lookupErr) return json({ error: lookupErr.message }, 400);

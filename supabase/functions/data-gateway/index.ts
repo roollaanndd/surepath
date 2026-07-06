@@ -296,6 +296,21 @@ serve(async (req) => {
         return json({ data });
       }
 
+      // ── Update FCM push notification token ────────────────────────────────
+      // Called by the client after requestNotificationPermission() succeeds.
+      // Stores the token on sp_users.fcm_token so edge functions can send push.
+      case 'update_fcm_token': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const token = String(params.token ?? '').trim();
+        if (!token) return json({ error: 'Missing token' }, 400);
+        const { error: updErr } = await db
+          .from('sp_users')
+          .update({ fcm_token: token, updated_at: new Date().toISOString() })
+          .eq('id', caller.spUser.id);
+        if (updErr) return json({ error: updErr.message }, 400);
+        return json({ data: { ok: true } });
+      }
+
       // Admin-only: list users. Optional role filter via params.role.
       case 'admin_list_users': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);

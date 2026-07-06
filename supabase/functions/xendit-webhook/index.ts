@@ -305,6 +305,92 @@ serve(async (req) => {
           }
         }
       }
+
+      // ── Customer referral reward (double-sided Rp 25k/Rp 25k) ───────────
+      // If the paying customer has an upline_id (referrer), and this is the
+      // referee's first PAID order, credit both sides with a Rp 25k discount
+      // token. Idempotent via UNIQUE(referrer_id, referee_id) constraint.
+      if (order.agent_id) {
+        try {
+          // Check if the customer (agent_id on a self-purchase order) has a referrer
+          const { data: customerProfile } = await supabase
+            .from('sp_users')
+            .select('upline_id, role, name')
+            .eq('id', order.agent_id)
+            .single();
+
+          if (customerProfile?.upline_id && customerProfile.role === 'CUSTOMER') {
+            // Check if this is the referee's first PAID order
+            const { count: paidOrderCount } = await supabase
+              .from('sp_payments')
+              .select('id', { count: 'exact', head: true })
+              .eq('order_id' as any, payment.order_id)  // current order
+              .eq('status', 'PAID');
+
+            // Check if this order_id is the first PAID for this customer
+            // (simpler: just check if a referral reward already exists for this pair)
+            const { data: existingReward } = await supabase
+              .from('sp_referral_rewards')
+              .select('id')
+              .eq('referrer_id', customerProfile.upline_id)
+              .eq('referee_id', order.agent_id)
+              .maybeSingle();
+
+            if (!existingReward) {
+              // Credit referrer: Rp 25k discount token
+              await supabase.from('sp_referral_rewards').insert({
+                referrer_id: customerProfile.upline_id,
+                referee_id:  order.agent_id,
+                order_id:    payment.order_id,
+                reward_type: 'DISCOUNT_TOKEN',
+                reward_amount: 25000,
+                status: 'ISSUED',
+                issued_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), // 180 days
+                notes: `Referral reward — referrer credit for order ${orderDetails.order_number ?? ''}`,
+              });
+
+              // Credit referee (new customer): Rp 25k discount token
+              await supabase.from('sp_referral_rewards').insert({
+                referrer_id: customerProfile.upline_id,
+                referee_id:  order.agent_id,
+                order_id:    payment.order_id,
+                reward_type: 'DISCOUNT_TOKEN',
+                reward_amount: 25000,
+                status: 'ISSUED',
+                issued_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+                notes: `Referral reward — referee credit for order ${orderDetails.order_number ?? ''}`,
+              });
+
+              // Notify both parties
+              await supabase.from('sp_notifications').insert([
+                {
+                  agent_id: customerProfile.upline_id,
+                  type: 'SYSTEM',
+                  title: 'Hadiah Referral Diterima! 🎁',
+                  body: 'Temannya telah membeli polis pertama. Kamu mendapat diskon Rp 25.000 untuk perpanjangan polis berikutnya.',
+                  metadata: { reward_type: 'referral_referrer' },
+                  read: false,
+                },
+                {
+                  agent_id: order.agent_id,
+                  type: 'SYSTEM',
+                  title: 'Bonus Referral Diterima! 🎁',
+                  body: 'Selamat! Kamu mendapat diskon Rp 25.000 untuk pembelian polis berikutnya.',
+                  metadata: { reward_type: 'referral_referee' },
+                  read: false,
+                },
+              ]);
+
+              console.log(`Referral reward issued: referrer=${customerProfile.upline_id}, referee=${order.agent_id}`);
+            }
+          }
+        } catch (refErr) {
+          // Non-blocking — referral rewards are a nice-to-have, must not break the payment flow
+          console.warn('Referral reward failed (non-blocking):', refErr);
+        }
+      }
     }
 
     // If EXPIRED — update order and notify agent

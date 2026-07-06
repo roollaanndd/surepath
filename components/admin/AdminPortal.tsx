@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Component } from 'react';
+import React, { useState, useEffect, useRef, Component, lazy, Suspense } from 'react';
 import {
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
@@ -7,33 +7,51 @@ import {
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
   Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck,
 } from 'lucide-react';
-import {
-  BizAdminView, ApprovalsView, SettingsView, InventoryView,
-  SecurityView, LedgerView, ReportsView, AgentManagementView,
-  ClaimsAdminView, UserManagementView, PaymentsAdminView,
-  WithdrawalsAdminView, RolePermissionsView,
-} from './AdminViews';
-import PolicyOrdersAdmin from './PolicyOrdersAdmin';
-import ProductConfigAdmin from './ProductConfigAdmin';
-import FinancialAdmin from './FinancialAdmin';
-import CommissionLedger from './CommissionLedger';
-import AgentAgreementsAdmin from './AgentAgreementsAdmin';
-import InsurerAdmin from './InsurerAdmin';
-import OjkRateAdmin from './OjkRateAdmin';
-import VehiclePricelistAdmin from './VehiclePricelistAdmin';
-import WebsiteEditorAdmin from './WebsiteEditorAdmin';
-import AIAdminView from './AIAdminView';
-import AIFinanceView from './AIFinanceView';
-import AnalyticsDashboard from './AnalyticsDashboard';
-import EndorsementsAdminView from './EndorsementsAdminView';
-import B2BAdminView from './B2BAdminView';
-import DocumentsAdminView from './DocumentsAdminView';
-import TierPromoConfigAdmin from './TierPromoConfigAdmin';
+// ── Performance: lazy-load all admin views ──────────────────────────────────
+// AdminPortal chunk was 724 KB (largest in the app). Each admin view is
+// 50-200 KB; loading all 17 eagerly bloated the initial bundle. Now they
+// only load when the admin navigates to them.
+const BizAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.BizAdminView })));
+const ApprovalsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ApprovalsView })));
+const SettingsView = lazy(() => import('./AdminViews').then(m => ({ default: m.SettingsView })));
+const InventoryView = lazy(() => import('./AdminViews').then(m => ({ default: m.InventoryView })));
+const SecurityView = lazy(() => import('./AdminViews').then(m => ({ default: m.SecurityView })));
+const LedgerView = lazy(() => import('./AdminViews').then(m => ({ default: m.LedgerView })));
+const ReportsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ReportsView })));
+const AgentManagementView = lazy(() => import('./AdminViews').then(m => ({ default: m.AgentManagementView })));
+const ClaimsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.ClaimsAdminView })));
+const UserManagementView = lazy(() => import('./AdminViews').then(m => ({ default: m.UserManagementView })));
+const PaymentsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.PaymentsAdminView })));
+const WithdrawalsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.WithdrawalsAdminView })));
+const RolePermissionsView = lazy(() => import('./AdminViews').then(m => ({ default: m.RolePermissionsView })));
+const PolicyOrdersAdmin = lazy(() => import('./PolicyOrdersAdmin'));
+const ProductConfigAdmin = lazy(() => import('./ProductConfigAdmin'));
+const FinancialAdmin = lazy(() => import('./FinancialAdmin'));
+const CommissionLedger = lazy(() => import('./CommissionLedger'));
+const AgentAgreementsAdmin = lazy(() => import('./AgentAgreementsAdmin'));
+const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
+const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
+const VehiclePricelistAdmin = lazy(() => import('./VehiclePricelistAdmin'));
+const WebsiteEditorAdmin = lazy(() => import('./WebsiteEditorAdmin'));
+const AIAdminView = lazy(() => import('./AIAdminView'));
+const AIFinanceView = lazy(() => import('./AIFinanceView'));
+const AnalyticsDashboard = lazy(() => import('./AnalyticsDashboard'));
+const EndorsementsAdminView = lazy(() => import('./EndorsementsAdminView'));
+const B2BAdminView = lazy(() => import('./B2BAdminView'));
+const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
+const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
+
+// Suspense fallback for lazy-loaded admin views
+const AdminViewLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <Loader2 size={32} className="animate-spin text-emerald-500" />
+  </div>
+);
 
 // ─── Menu definition ─────────────────────────────────────────────────────────
 const ALL_ROLES = Object.values(UserRole);
@@ -723,7 +741,9 @@ const AdminPortal = ({
         {/* Content */}
         <div className={`flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar ${th(darkMode, '', 'bg-gray-50')}`}>
           <div className="max-w-7xl mx-auto">
-            {renderContent()}
+            <Suspense fallback={<AdminViewLoader />}>
+              {renderContent()}
+            </Suspense>
           </div>
         </div>
       </main>

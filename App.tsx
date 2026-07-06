@@ -164,20 +164,8 @@ const App = () => {
       track('login', { role: enrichedUser.role, method: enrichedUser.method ?? 'email' });
     } catch { /* analytics is non-blocking */ }
 
-    // ── Push notifications: request permission after first login ──────────
-    // Don't prompt before the user has context (annoying). After login is
-    // the right moment — they've engaged with the app.
-    // Non-blocking — if it fails or the user denies, the app still works.
-    try {
-      const { requestNotificationPermission } = await import('./services/pushNotificationService');
-      const userId = enrichedUser.id ?? enrichedUser.supabaseId;
-      if (userId) {
-        // Delay 3s so the entry animation finishes first
-        setTimeout(() => {
-          requestNotificationPermission(userId).catch(() => {});
-        }, 3000);
-      }
-    } catch { /* push is non-blocking */ }
+    // Note: Lock-screen push notifications (FCM) are deferred to a future
+    // sprint. In-app notifications (bell icon) work without Firebase.
 
     setTimeout(() => {
       setCurrentUser(enrichedUser);

@@ -1,10 +1,30 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
+// ─── notify-admin — Telegram admin notifications ────────────────────────────
+//
+// SECURITY HISTORY:
+// Previous version had two issues:
+//   1. If WEBHOOK_SECRET was unset, the function accepted any unauthenticated
+//      POST (fail-open). Now fail-closed: if WEBHOOK_SECRET is unset, return 500.
+//   2. User-supplied data (name, email, phone, order numbers) was interpolated
+//      into Telegram HTML messages without escaping. A name like
+//      "</b><b>URGENT: Transfer funds</b>" would render as a fake urgent
+//      message in the admin Telegram chat. Now all fields are HTML-escaped.
+
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
 const TELEGRAM_CHAT_ID   = Deno.env.get('TELEGRAM_ADMIN_CHAT_ID') ?? ''
-// Shared secret for DB webhook calls — set WEBHOOK_SECRET in Supabase env vars
-// and configure the same value in the pg_net / Supabase webhook header.
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') ?? ''
+
+/** Escape HTML special characters for safe Telegram HTML rendering. */
+function escapeHtml(s: unknown): string {
+  if (s == null) return '-'
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 async function sendTelegram(text: string) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return
@@ -23,14 +43,21 @@ async function sendTelegram(text: string) {
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok', { status: 200 })
 
-  // Validate webhook secret if configured
-  if (WEBHOOK_SECRET) {
-    const provided = req.headers.get('x-webhook-secret') ?? ''
-    if (provided !== WEBHOOK_SECRET) {
-      return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
-        status: 401, headers: { 'Content-Type': 'application/json' },
-      })
-    }
+  // ── Fail-closed: require WEBHOOK_SECRET to be configured ──────────────
+  // Previously: if WEBHOOK_SECRET was unset, the if-block was skipped and
+  // any unauthenticated POST was accepted. Now: 500 if not configured.
+  if (!WEBHOOK_SECRET) {
+    console.error('notify-admin: WEBHOOK_SECRET not configured — rejecting request')
+    return new Response(JSON.stringify({ ok: false, error: 'Server misconfiguration' }), {
+      status: 500, headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const provided = req.headers.get('x-webhook-secret') ?? ''
+  if (provided !== WEBHOOK_SECRET) {
+    return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
+      status: 401, headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   try {
@@ -39,10 +66,10 @@ serve(async (req) => {
 
     // New user registration
     if (table === 'sp_users' && type === 'INSERT') {
-      const name  = record.full_name ?? record.name ?? 'Unknown'
-      const email = record.email ?? '-'
-      const phone = record.phone ?? '-'
-      const role  = record.role ?? 'CUSTOMER'
+      const name  = escapeHtml(record.full_name ?? record.name ?? 'Unknown')
+      const email = escapeHtml(record.email ?? '-')
+      const phone = escapeHtml(record.phone ?? '-')
+      const role  = escapeHtml(record.role ?? 'CUSTOMER')
       const time  = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
 
       await sendTelegram(
@@ -56,15 +83,15 @@ serve(async (req) => {
       )
     }
 
-    // New policy order (sp_policy_orders is the active orders table)
+    // New policy order
     if (table === 'sp_policy_orders' && type === 'INSERT') {
-      const orderNo  = record.order_number ?? record.id ?? '-'
-      const client   = record.client_name ?? '-'
-      const product  = record.product_name ?? '-'
+      const orderNo  = escapeHtml(record.order_number ?? record.id ?? '-')
+      const client   = escapeHtml(record.client_name ?? '-')
+      const product  = escapeHtml(record.product_name ?? '-')
       const premium  = record.total_premium
         ? `Rp ${Number(record.total_premium).toLocaleString('id-ID')}`
         : '-'
-      const status   = record.status ?? 'PENDING'
+      const status   = escapeHtml(record.status ?? 'PENDING')
       const time     = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
 
       await sendTelegram(
@@ -81,8 +108,8 @@ serve(async (req) => {
 
     // New claim submitted
     if (table === 'sp_claims' && type === 'INSERT') {
-      const claimId  = record.id ?? '-'
-      const location = record.location ?? '-'
+      const claimId  = escapeHtml(record.id ?? '-')
+      const location = escapeHtml(record.location ?? '-')
       const amount   = record.amount_estimated
         ? `Rp ${Number(record.amount_estimated).toLocaleString('id-ID')}`
         : '-'
@@ -103,7 +130,7 @@ serve(async (req) => {
     })
   } catch (err) {
     console.error('notify-admin error:', err)
-    return new Response(JSON.stringify({ ok: false, error: String(err) }), {
+    return new Response(JSON.stringify({ ok: false, error: 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })

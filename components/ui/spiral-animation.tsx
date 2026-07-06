@@ -234,7 +234,7 @@ class Star {
     const vy = (this.z - (-400)) * screenY / 100
     const pos = new Vector3D(vx, vy, this.z)
 
-    let sz = dp < 0.6 ? 1.0 + dp * 0.2 : 1.2 * (1 - (dp - 0.6) / 0.4) + this.finalScale * ((dp - 0.6) / 0.4)
+    const sz = dp < 0.6 ? 1.0 + dp * 0.2 : 1.2 * (1 - (dp - 0.6) / 0.4) + this.finalScale * ((dp - 0.6) / 0.4)
     c.showProjectedDot(pos, 8.5 * this.strokeWeightFactor * sz)
   }
 }

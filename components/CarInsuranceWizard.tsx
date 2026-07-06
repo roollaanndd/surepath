@@ -175,7 +175,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         }
       }
     } catch { /* ignore parse errors */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {
@@ -397,7 +397,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   };
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputVal = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
+    const inputVal = e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g, "");
     const entry = lookupPlate(inputVal);
     const province = entry?.province ?? '';
     const zone = province ? getZone(province) : 3;

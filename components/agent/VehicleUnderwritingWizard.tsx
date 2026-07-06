@@ -512,7 +512,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     const { code } = productInfo(vehicleType, coverageType);
     // product code in DB uses dash: MRKB4-COMP; productInfo returns MRKB4-COMP (already)
     getProductConfig(code).then(cfg => setProductConfig(cfg ?? null));
-  }, [step, vehicleType, coverageType]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step, vehicleType, coverageType]);  
 
   useEffect(() => {
     if (!province || !sumInsured || !coverageType) return;

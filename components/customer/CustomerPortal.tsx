@@ -25,7 +25,7 @@ const ContactPage = lazy(() => import('../ContactPage'));
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
-import { CircularActionGrid, LiveBadge, ClayCard } from '../ui';
+import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
 import { ShieldPlus, MessageCircle } from 'lucide-react';
 import PathyChat from '../shared/PathyChat';
 import OrderDetailSheet from './OrderDetailSheet';
@@ -270,6 +270,12 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     )}
                 suggestion={latestPolicy ? { label: t('Add baggage delay coverage', 'Tambah proteksi bagasi'), onClick: () => navigate('buy-travel') } : undefined}
                 cta={{ label: t('Chat with Pathy', 'Chat dengan Pathy'), onClick: () => navigate('bot') }}
+              />
+
+              {/* Referral card — "Ajak Teman" (v1: share + attribution) */}
+              <ReferralCard
+                referralCode={currentUser?.nodeId ?? currentUser?.agent_code}
+                customerName={currentUser?.name?.split(' ')[0]}
               />
 
               {/* Featured for you */}

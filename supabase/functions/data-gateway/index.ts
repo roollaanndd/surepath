@@ -900,6 +900,68 @@ serve(async (req) => {
           agent_id: caller.spUser.id, // owner — never trust the client
         };
 
+        // ── Server-side promo code validation ───────────────────────────────
+        // SECURITY: The client sends discount_rate + discount_amount in the
+        // payload. Without this check, a user could bypass the promo code UI
+        // and just send discount_rate: 0.25 directly. We re-validate the code
+        // server-side and override the discount fields with the authoritative
+        // values from sp_promo_codes.
+        //
+        // If no promoCode is provided but discount_rate > 0, we zero it out
+        // (no discount without a valid code).
+        const clientDiscountRate = Number(p.discount_rate ?? 0);
+        const clientPromoCode = String(p.promoCode ?? p.promo_code ?? '').trim().toUpperCase();
+
+        if (clientPromoCode) {
+          // Validate the code against sp_promo_codes
+          const { data: promoRow } = await db
+            .from('sp_promo_codes')
+            .select('code, discount_type, discount_value, min_premium, max_uses, uses_count, starts_at, ends_at, is_active')
+            .eq('code', clientPromoCode)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (!promoRow) {
+            return json({ error: `Kode promo "${clientPromoCode}" tidak valid atau sudah tidak aktif` }, 400);
+          }
+
+          // Check date range
+          const now = new Date();
+          if (new Date(promoRow.starts_at) > now) {
+            return json({ error: 'Kode promo belum berlaku' }, 400);
+          }
+          if (promoRow.ends_at && new Date(promoRow.ends_at) < now) {
+            return json({ error: 'Kode promo sudah kedaluwarsa' }, 400);
+          }
+          // Check usage limit
+          if (promoRow.max_uses !== null && promoRow.uses_count >= promoRow.max_uses) {
+            return json({ error: 'Kuota kode promo sudah habis' }, 400);
+          }
+          // Check minimum premium
+          const orderTotal = Number(p.total_premium ?? 0);
+          if (Number(promoRow.min_premium) > 0 && orderTotal < Number(promoRow.min_premium)) {
+            return json({ error: `Minimum pembelian Rp ${Number(promoRow.min_premium).toLocaleString('id-ID')} untuk kode promo ini` }, 400);
+          }
+
+          // Override the discount fields with the authoritative values
+          if (promoRow.discount_type === 'PERCENT') {
+            const validatedDiscountRate = Math.min(Number(promoRow.discount_value) / 100, clientDiscountRate > 0 ? clientDiscountRate : 1);
+            insertRow.discount_rate = validatedDiscountRate;
+            insertRow.discount_amount = Math.round(orderTotal * validatedDiscountRate);
+          } else {
+            // NOMINAL — fixed IDR amount
+            const nominalDiscount = Number(promoRow.discount_value);
+            insertRow.discount_rate = orderTotal > 0 ? nominalDiscount / orderTotal : 0;
+            insertRow.discount_amount = Math.min(nominalDiscount, orderTotal);
+          }
+          insertRow.promo_code = promoRow.code;
+        } else if (clientDiscountRate > 0) {
+          // No promo code but client sent a discount — zero it out
+          console.warn(`[data-gateway] create_policy_order: caller ${caller.authId} sent discount_rate=${clientDiscountRate} without a promo code — zeroing out`);
+          insertRow.discount_rate = 0;
+          insertRow.discount_amount = 0;
+        }
+
         const { data, error } = await db.from('sp_policy_orders').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
 

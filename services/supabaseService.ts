@@ -681,6 +681,7 @@ export interface SpPolicyOrder {
   ojk_rate?: number;
   discount_rate?: number;
   discount_amount?: number;
+  promo_code?: string;
   net_premium?: number;
   commission_rate?: number;
   commission_amount?: number;

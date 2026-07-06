@@ -89,6 +89,36 @@
           }
         },
         {
+          "@type": "InsuranceAgency",
+          "@id": "https://myinsurepath.com/#insuranceagency",
+          "name": "SurePath — Asuransi Digital Indonesia",
+          "url": "https://myinsurepath.com",
+          "description": "Platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online dengan premi terjangkau. Klaim cepat via HP, didukung AI.",
+          "image": "https://myinsurepath.com/surepath-logo.png",
+          "priceRange": "$$",
+          "areaServed": { "@type": "Country", "name": "Indonesia" },
+          "address": { "@type": "PostalAddress", "addressLocality": "Jakarta", "addressCountry": "ID" },
+          "telephone": "+62-800-1234-5678",
+          "email": "info@myinsurepath.com",
+          "knowsAbout": [
+            "Asuransi Mobil", "Asuransi Kendaraan Bermotor", "Asuransi All Risk",
+            "Asuransi TLO", "Asuransi Jiwa", "Asuransi Perjalanan",
+            "Asuransi Properti", "Klaim Asuransi", "Premi Asuransi",
+            "OJK", "SEOJK No. 6/SEOJK.05/2017"
+          ],
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Produk Asuransi SurePath",
+            "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Asuransi Mobil All Risk", "description": "Perlindungan komprehensif untuk mobil Anda — rusak, hilang, banjir, gempa, bengkel resmi." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Asuransi Mobil TLO", "description": "Perlindungan Total Loss Only — ganti rugi jika kendaraan hilang atau rusak total." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Asuransi Perjalanan", "description": "Proteksi perjalanan domestik dan internasional mulai Rp 45rb/trip." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Asuransi Kecelakaan Diri (PA)", "description": "Perlindungan jiwa dan kecelakaan diri untuk Anda dan keluarga." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Asuransi Properti", "description": "Perlindungan rumah dan properti dari risiko kebakaran, pencurian, dan bencana." } }
+            ]
+          }
+        },
+        {
           "@type": "WebSite",
           "@id": "https://myinsurepath.com/#website",
           "url": "https://myinsurepath.com",
@@ -130,22 +160,52 @@
             {
               "@type": "Question",
               "name": "Apa itu SurePath?",
-              "acceptedAnswer": { "@type": "Answer", "text": "SurePath adalah platform asuransi digital terpercaya di Indonesia yang memungkinkan Anda membeli asuransi mobil, jiwa, perjalanan, dan properti secara online dengan mudah dan cepat." }
+              "acceptedAnswer": { "@type": "Answer", "text": "SurePath adalah platform asuransi digital terpercaya di Indonesia yang memungkinkan Anda membeli asuransi mobil, jiwa, perjalanan, dan properti secara online dengan mudah dan cepat. SurePath memasarkan produk dari perusahaan asuransi berizin dan diawasi OJK." }
             },
             {
               "@type": "Question",
-              "name": "Bagaimana cara klaim asuransi di SurePath?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Klaim asuransi di SurePath bisa dilakukan langsung dari HP Anda. Upload foto kerusakan, isi formulir klaim digital, dan tim kami akan memproses klaim dalam hitungan menit." }
-            },
-            {
-              "@type": "Question",
-              "name": "Apakah saya bisa menjadi agen asuransi di SurePath?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Ya, Anda bisa mendaftar sebagai mitra agen SurePath secara gratis. Dapatkan komisi menarik setiap kali berhasil menjual polis asuransi kepada nasabah." }
+              "name": "Bagaimana cara beli asuransi mobil online di SurePath?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Beli asuransi mobil online di SurePath sangat mudah: 1) Foto STNK Anda, AI kami akan otomatis mengisi data kendaraan. 2) Pilih jenis perlindungan (All Risk atau TLO) dan add-on seperti banjir, gempa, SRCC. 3) Pilih perusahaan asuransi dan bandingkan premi. 4) Bayar via GoPay, DANA, OVO, QRIS, Virtual Account, atau kartu kredit. Polis aktif dalam hitungan menit." }
             },
             {
               "@type": "Question",
               "name": "Berapa premi asuransi mobil di SurePath?",
-              "acceptedAnswer": { "@type": "Answer", "text": "Premi asuransi mobil di SurePath bervariasi tergantung jenis kendaraan, tahun pembuatan, dan wilayah. Gunakan kalkulator premi kami untuk mendapatkan estimasi harga yang tepat." }
+              "acceptedAnswer": { "@type": "Answer", "text": "Premi asuransi mobil di SurePath mengikuti tarif resmi OJK (SEOJK No. 6/SEOJK.05/2017). Premi bervariasi tergantung jenis kendaraan, tahun pembuatan, wilayah (Zona 1-3), dan jenis coverage (All Risk atau TLO). Gunakan kalkulator premi kami di /kalkulator untuk mendapatkan estimasi harga yang tepat." }
+            },
+            {
+              "@type": "Question",
+              "name": "Apa perbedaan Asuransi All Risk dan TLO?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Asuransi All Risk (Comprehensive) menanggung kerusakan akibat tabrakan, goresan, banjir, gempa, huru-hara, dan kehilangan total. Asuransi TLO (Total Loss Only) hanya menanggung kerusakan total (biaya perbaikan ≥ 75% nilai kendaraan) atau kehilangan. All Risk lebih mahal tapi proteksinya lebih lengkap. TLO lebih murah dan cocok untuk kendaraan tua." }
+            },
+            {
+              "@type": "Question",
+              "name": "Bagaimana cara klaim asuransi di SurePath?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Klaim asuransi di SurePath bisa dilakukan langsung dari HP Anda. Upload foto kerusakan, AI kami akan menganalisis tingkat kerusakan dan estimasi biaya perbaikan. Isi formulir klaim digital, dan tim kami akan memproses klaim dalam 24 jam. Anda akan mendapat notifikasi status klaim secara real-time." }
+            },
+            {
+              "@type": "Question",
+              "name": "Apakah saya bisa menjadi agen asuransi di SurePath?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Ya, Anda bisa mendaftar sebagai mitra agen SurePath secara gratis. Daftar online, setujui perjanjian kemitraan digital, dan langsung mulai jual polis. Dapatkan komisi hingga 25% per polis, bonus koin, dan komisi override dari downline 2 level. Ada juga program tier STAR dan ELITE dengan bonus tambahan." }
+            },
+            {
+              "@type": "Question",
+              "name": "Metode pembayaran apa saja yang tersedia?",
+              "acceptedAnswer": { "@type": "Answer", "text": "SurePath menerima pembayaran via GoPay, DANA, OVO, ShopeePay, LinkAja, QRIS, Virtual Account (BCA, Mandiri, BNI), dan kartu kredit (Visa, Mastercard). Semua pembayaran diproses aman oleh Xendit dengan enkripsi PCI-DSS." }
+            },
+            {
+              "@type": "Question",
+              "name": "Apakah SurePath terdaftar di OJK?",
+              "acceptedAnswer": { "@type": "Answer", "text": "SurePath adalah platform teknologi yang memasarkan produk asuransi dari perusahaan asuransi berizin dan diawasi oleh Otoritas Jasa Keuangan (OJK). Tarif premi yang digunakan mengikuti SEOJK No. 6/SEOJK.05/2017. Mitra asuransi kami meliputi Zurich, Tugu, Sinar Mas, Sompo, dan Intra Asia." }
+            },
+            {
+              "@type": "Question",
+              "name": "Apakah ada diskon atau promo asuransi mobil?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Ya, SurePath memiliki kode promo yang bisa Anda gunakan saat checkout. Gunakan kode WELCOME10 untuk diskon 10% sebagai pelanggan baru. Cek halaman promo atau ikuti Instagram kami untuk promo terbaru." }
+            },
+            {
+              "@type": "Question",
+              "name": "Bisakah saya memperpanjang polis asuransi yang sudah ada?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Ya, SurePath menyediakan fitur perpanjangan polis (renewal) yang mudah. Anda akan mendapat notifikasi pengingat 30, 14, dan 7 hari sebelum polis berakhir. Cukup buka aplikasi, pilih polis yang akan diperpanjang, dan bayar premi — polis baru aktif langsung tanpa survey ulang." }
             }
           ]
         },

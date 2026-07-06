@@ -1,5 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders as buildCors } from '../_shared/cors.ts'
 
 // ─── Send OTP ────────────────────────────────────────────────────────────────
@@ -53,7 +52,7 @@ function json(body: unknown, status: number, corsHeaders: Record<string, string>
   })
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const corsHeaders = buildCors(req.headers.get('origin'))
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })

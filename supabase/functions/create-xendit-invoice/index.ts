@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth } from '../_shared/auth.ts';
 
@@ -19,7 +19,7 @@ import { verifyAuth } from '../_shared/auth.ts';
 //   3. Use the DB-sourced amount for the Xendit invoice.
 //   4. Redact Xendit error details in the response (log full error server-side).
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 

@@ -1,8 +1,8 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth, adminOnly } from '../_shared/auth.ts';
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 

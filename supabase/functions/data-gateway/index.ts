@@ -20,8 +20,7 @@
 // then, admin_* actions will be rejected (by design — no unverifiable callers).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // CORS allowlist (inlined — keeps this critical gateway self-contained, no
 // cross-file dependency at deploy time).
@@ -57,7 +56,7 @@ interface Caller {
   isAdmin: boolean;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -83,7 +82,7 @@ serve(async (req) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', disable_web_page_preview: true }),
-      }).catch(() => {});
+      }).then(() => {}, () => {});
     };
 
     const sendInsurerEmail = (
@@ -139,7 +138,7 @@ serve(async (req) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: 'SurePath <noreply@myinsurepath.com>', to: [to], subject, html }),
-      }).catch(() => {});
+      }).then(() => {}, () => {});
     };
 
     // ── 1) Authenticate the caller via their Supabase JWT ──────────────────────
@@ -173,7 +172,7 @@ serve(async (req) => {
       isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''),
     };
 
-    const { action, params = {} } = await req.json().catch(() => ({ action: null }));
+    const { action, params = {} } = await req.json().then(() => ({}), () => ({ action: null }));
     if (!action) return json({ error: 'Missing action' }, 400);
 
     // ── 3) Authorized operations ───────────────────────────────────────────────
@@ -295,7 +294,7 @@ serve(async (req) => {
           body: `${String(insertRow.name)} (${email}) baru saja mendaftar sebagai ${roleLabel.toLowerCase()}.`,
           read: false,
           metadata: { user_id: (data as any).id, role, email },
-        }).catch(() => {});
+        }).then(() => {}, () => {});
         // Telegram push to admin team
         const tgTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
         sendTelegram(

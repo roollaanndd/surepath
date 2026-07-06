@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Server-to-server only: called by Supabase cron, not from a browser.
 // Protect with a shared secret stored in CRON_SECRET env var.
@@ -16,7 +16,7 @@ function fmtIDR(n: number) {
   return `Rp ${n}`;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok');
 
   // Require Authorization: Bearer <CRON_SECRET>

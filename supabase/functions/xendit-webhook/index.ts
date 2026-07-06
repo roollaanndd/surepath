@@ -1,10 +1,10 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Server-to-server: called by Xendit payment gateway (no browser CORS needed).
 const CORS = { 'Content-Type': 'application/json' };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   try {
@@ -214,7 +214,7 @@ serve(async (req) => {
                 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
               },
               body: JSON.stringify({ phone: agentUser.phone, message: waMsg, event_type: 'PAYMENT_CONFIRMED' }),
-            }).catch(() => {});
+            }).then(() => {}, () => {});
           }
         }
 

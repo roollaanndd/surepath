@@ -344,9 +344,10 @@ serve(async (req) => {
                 order_id:    payment.order_id,
                 reward_type: 'DISCOUNT_TOKEN',
                 reward_amount: 25000,
+                reward_recipient: 'REFERRER',
                 status: 'ISSUED',
                 issued_at: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(), // 180 days
+                expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
                 notes: `Referral reward — referrer credit for order ${orderDetails.order_number ?? ''}`,
               });
 
@@ -357,6 +358,7 @@ serve(async (req) => {
                 order_id:    payment.order_id,
                 reward_type: 'DISCOUNT_TOKEN',
                 reward_amount: 25000,
+                reward_recipient: 'REFEREE',
                 status: 'ISSUED',
                 issued_at: new Date().toISOString(),
                 expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),

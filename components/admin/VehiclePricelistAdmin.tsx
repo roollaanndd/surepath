@@ -211,7 +211,7 @@ const VehiclePricelistAdmin: React.FC = () => {
       hasSeededRef.current = true;
       await syncFromConstants(rows);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   useEffect(() => { fetchOverrides(); }, [fetchOverrides]);
 

@@ -304,7 +304,7 @@ export const seedDatabase = async () => {
               if (year === today.getFullYear() && month > today.getMonth()) break;
 
               // Up and down pattern
-              let monthMultiplier = 1 + (Math.sin(month) * 0.15) + (Math.random() * 0.1 - 0.05);
+              const monthMultiplier = 1 + (Math.sin(month) * 0.15) + (Math.random() * 0.1 - 0.05);
               let targetRevenue = baseMrrIDR * monthMultiplier;
               
               // If it's the current month, prorate the target revenue up to the current day
@@ -316,8 +316,8 @@ export const seedDatabase = async () => {
               let currentRevenue = 0;
 
               // 120-160 active users this month
-              let activeUserCount = 120 + Math.floor(Math.random() * 40);
-              let activeUsers = [...userIds].sort(() => 0.5 - Math.random()).slice(0, activeUserCount);
+              const activeUserCount = 120 + Math.floor(Math.random() * 40);
+              const activeUsers = [...userIds].sort(() => 0.5 - Math.random()).slice(0, activeUserCount);
 
               // Distribute transactions to hit the target revenue
               while (currentRevenue < targetRevenue) {

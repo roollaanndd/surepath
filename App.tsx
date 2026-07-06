@@ -434,6 +434,7 @@ const App = () => {
         <Suspense fallback={<PortalLoader />}>
           <HomePage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
         </Suspense>
+        <InstallPrompt lang={lang} />
         <AppUpdateNotification />
       </div>
     );

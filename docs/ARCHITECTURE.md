@@ -45,11 +45,10 @@
 
 ## Backend (Supabase `uyjgeteelnswphyzkjwi`)
 
-### Edge Functions terpasang
+### Edge Functions terpasang (18 functions)
 `data-gateway` (inti, lihat `DATA_GATEWAY.md`), `create-xendit-invoice`, `xendit-webhook`, `xendit-disburse`,
-`send-otp` / `verify-otp`, `send-whatsapp`, `submit-policy-insurer`, `ocr-scan`, `notify-admin`,
-`ai-policy-review`, `ai-finance-review`, `admin-auth`, `signup-member`, `push-notify`,
-plus milik aplikasi lain: `generate-daily-renungan`, `backup-daily`.
+`send-otp` / `verify-otp`, `send-whatsapp`, `submit-policy-insurer`, `ocr-scan`, `stnk-ocr`,
+`notify-admin`, `ai-policy-review`, `ai-finance-review`, `ai-proxy`, `daily-report`, `send-insurer-email`.
 
 ### Prinsip keamanan
 - Tabel sensitif (`sp_users`, `sp_policy_orders`, `sp_payments`, `sp_claims`, dll) → **hanya** lewat data-gateway.

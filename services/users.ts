@@ -44,7 +44,11 @@ export async function ensureProfile(params?: {
   referral_code?: string | null;
 }): Promise<SpUser | null> {
   const { data, error } = await callGateway('ensure_profile', params);
-  if (error || !data) return null;
+  if (error) {
+    console.error('ensureProfile error:', error);
+    return null;
+  }
+  if (!data) return null;
   return data as SpUser;
 }
 

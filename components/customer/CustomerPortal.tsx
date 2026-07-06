@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import {
-  ShoppingBag, Zap, History,
+  Zap, History,
   Sun, Moon, LogOut, ShieldCheck, Bell,
   Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
 } from 'lucide-react';
@@ -24,7 +24,9 @@ const HealthChat = lazy(() => import('../HealthChat'));
 const ContactPage = lazy(() => import('../ContactPage'));
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
-import { HeroCard, AICard, StatCard, ActionGrid, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
+import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
+import { CircularActionGrid, LiveBadge, ClayCard } from '../ui';
+import { ShieldPlus, MessageCircle } from 'lucide-react';
 import PathyChat from '../shared/PathyChat';
 import OrderDetailSheet from './OrderDetailSheet';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
@@ -219,30 +221,41 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
               </HeroCard>
 
-              {/* My Protection — 3 metrics */}
+              {/* My Protection — 3 metrics (wrapped in ClayCard for tangible feel) */}
               {latestPolicy && (
                 <div>
                   <SectionLabel>{t('My Protection', 'Proteksi Saya')}</SectionLabel>
-                  <div className="grid grid-cols-3 gap-3">
-                    <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDR(totalPremium)} sub={t('all policies', 'semua polis')} />
-                    <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
-                    <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={t('to renewal', 'ke perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
-                  </div>
+                  <ClayCard padding="md" variant="default">
+                    <div className="grid grid-cols-3 gap-3">
+                      <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDR(totalPremium)} sub={t('all policies', 'semua polis')} />
+                      <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
+                      <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={t('to renewal', 'ke perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
+                    </div>
+                  </ClayCard>
                 </div>
               )}
 
-              {/* Quick actions */}
+              {/* Quick actions — Livin'-style circular action grid */}
               <div>
                 <SectionLabel>{t('Quick Actions', 'Aksi Cepat')}</SectionLabel>
-                <ActionGrid
-                  actions={[
-                    { id: 'products', label: t('Buy Protection', 'Beli Proteksi'), icon: ShoppingBag, color: 'text-ds-blue',   bg: 'bg-blue-50',       onClick: () => navigate('products') },
-                    { id: 'claim',    label: t('Submit Claim', 'Lapor Klaim'),     icon: Zap,         color: 'text-rose-500',  bg: 'bg-rose-50',       onClick: () => navigate('claim') },
-                    { id: 'history',  label: t('My Policies', 'Polis Saya'),        icon: History,     color: 'text-ds-green',  bg: 'bg-ds-green-tint', onClick: () => navigate('history') },
-                    { id: 'bot',      label: t('AI Advisor', 'Penasihat AI'),       icon: Bot,         color: 'text-ds-purple', bg: 'bg-ds-purple-lt',  onClick: () => navigate('bot') },
-                  ]}
-                />
+                <ClayCard padding="md" variant="default">
+                  <CircularActionGrid
+                    actions={[
+                      { id: 'buy', label: t('Buy', 'Beli'), icon: ShieldPlus, color: '#00C16A', onClick: () => navigate('products') },
+                      { id: 'claim', label: t('Claim', 'Klaim'), icon: FileText, color: '#EF4444', onClick: () => navigate('claim') },
+                      { id: 'history', label: t('Policies', 'Polis'), icon: History, color: '#3B82F6', onClick: () => navigate('history') },
+                      { id: 'bot', label: t('AI Help', 'AI Bantu'), icon: MessageCircle, color: '#7C3AED', onClick: () => navigate('bot') },
+                    ]}
+                  />
+                </ClayCard>
               </div>
+
+              {/* Live social proof — "Sedang Ramai" pattern from Livin' */}
+              {!latestPolicy && (
+                <div className="flex justify-center">
+                  <LiveBadge count={43} label={t('buying insurance now', 'orang sedang beli asuransi')} />
+                </div>
+              )}
 
               {/* Pathy AI card */}
               <AICard

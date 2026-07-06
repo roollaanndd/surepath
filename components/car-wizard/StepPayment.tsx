@@ -6,6 +6,7 @@ import {
   Loader2, Info, CalendarClock
 } from 'lucide-react';
 import { formatIDR } from './WizardUI';
+import { ClayCard, LiveBadge } from '../ui';
 
 interface StepPaymentProps {
   premiumBreakdown: any;
@@ -65,12 +66,15 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
 
   return (
     <div className="space-y-6 animate-fade-in pb-24">
-      <div className="bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 dark:border-white/5 p-8 shadow-xl relative overflow-hidden">
+      <ClayCard variant="hero" padding="lg" gradientBorder>
          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500"></div>
          <div className="flex justify-between items-start mb-8 relative z-10">
             <div className="space-y-1">
                <p className="text-[0.6rem] font-black text-gray-400 uppercase tracking-[0.2em]">Total Tagihan Premi</p>
-               <h3 className="text-4xl font-black text-emerald-500 tracking-tighter drop-shadow-sm">{formatIDR(premiumBreakdown?.totalPayable || 0)}</h3>
+               {/* Livin'-style bold large number for the amount */}
+               <h3 className="text-4xl font-black text-emerald-500 tracking-tighter drop-shadow-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
+                  {formatIDR(premiumBreakdown?.totalPayable || 0)}
+               </h3>
             </div>
             <div className="flex flex-col items-end">
                <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full mb-2 border border-blue-500/20">
@@ -79,6 +83,11 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                </div>
                <p className="text-[0.5rem] font-bold text-gray-400 uppercase">INV: SP-{Date.now().toString().slice(-6)}</p>
             </div>
+         </div>
+
+         {/* Social proof — "Sedang Ramai" pattern from Livin' (Image 1) */}
+         <div className="mb-4 relative z-10">
+            <LiveBadge count={12} label="polis mobil terjual minggu ini" color="#F59E0B" />
          </div>
 
          <div className="grid grid-cols-3 gap-3 relative z-10">
@@ -107,7 +116,7 @@ const StepPayment: React.FC<StepPaymentProps> = ({ premiumBreakdown, onPaymentSu
                <span className="text-[0.5rem] font-black uppercase tracking-widest">Kartu Kredit</span>
             </button>
          </div>
-      </div>
+      </ClayCard>
 
       <div className="min-h-[220px] animate-fade-in">
          {method === 'VA' && (

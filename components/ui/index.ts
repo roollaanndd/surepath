@@ -39,3 +39,15 @@ export { OjkBadge, EncryptionBadge, LicensedInsurersBadge, TrustBar } from './Tr
 
 // Floating WhatsApp button — for marketing pages only
 export { FloatingWhatsApp } from './FloatingWhatsApp';
+
+// ── Modern patterns (Livin' / Astro inspired) ───────────────────────────────
+// Claymorphism card — soft, rounded, tangible. For hero moments.
+export { ClayCard, type ClayCardProps } from './ClayCard';
+// Livin'-style circular action grid (4-col, icon + label)
+export { CircularActionGrid, type CircularAction, type CircularActionGridProps } from './CircularActionGrid';
+// Floating action button — primary CTA above the bottom nav
+export { FAB, type FABProps } from './FAB';
+// Underline tabs — Livin'/Astro-style horizontal tab navigation
+export { UnderlineTabs, type UnderlineTab, type UnderlineTabsProps } from './UnderlineTabs';
+// "Sedang Ramai" live badge — pulsing dot + count for social proof
+export { LiveBadge, type LiveBadgeProps } from './LiveBadge';

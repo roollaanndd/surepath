@@ -41,8 +41,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
     const { rec, error } = await acceptAgreement(fullName, ktp);
     setSubmitting(false);
     if (!rec) {
-      // Surface a more specific message for known recoverable cases. The
-      // agreement wording itself is unchanged — this is purely diagnostic.
+      // Surface a more specific message for known recoverable cases.
       let msg = t('Failed to record agreement. Please try again.', 'Gagal menyimpan persetujuan. Coba lagi.');
       if (error?.code === '23505') {
         // unique_violation — agent already accepted this doc version
@@ -56,6 +55,20 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
           'Agreement storage is not configured yet. Please contact support.',
           'Penyimpanan perjanjian belum dikonfigurasi. Silakan hubungi dukungan.'
         );
+      } else if (error?.code === '23503') {
+        // foreign_key_violation — agent_id not in sp_users
+        msg = t(
+          'Your profile is not fully set up yet. Please log out and log back in.',
+          'Profil kamu belum siap. Silakan keluar dan masuk kembali.'
+        );
+      } else if (error?.code === 'NO_USER') {
+        msg = t(
+          'Session expired. Please log out and log back in.',
+          'Sesi berakhir. Silakan keluar dan masuk kembali.'
+        );
+      } else if (error?.message) {
+        // Show the actual error message so the user (and support) can diagnose
+        msg = `${t('Failed to save agreement:', 'Gagal menyimpan:')} ${error.message}`;
       }
       setError(msg);
       return;

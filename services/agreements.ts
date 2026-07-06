@@ -1,57 +1,53 @@
 // Agent legal agreements (sp_agent_agreements) and Terms & Conditions
 // acceptance records (sp_tnc_records). Owns the AGREEMENT_DOC_VERSION constant.
 
-import { supabase } from './db';
+import { supabase, callGateway } from './db';
 import { TNC_VERSION, buildTncText } from '../src/tnc-content';
-import type { SpAgentAgreement, AcceptAgreementResult, TncRecord } from './dbTypes';
+import type { AcceptAgreementResult, TncRecord } from './dbTypes';
 
 // ─── Agent Legal Agreement (sp_agent_agreements) ────────────────────────────
 export const AGREEMENT_DOC_VERSION = 'v1.0-2026';
 
+export interface SpAgentAgreement {
+  id: string;
+  agent_id: string;
+  agreement_no: string;
+  doc_version: string;
+  full_name: string;
+  ktp_number: string;
+  accepted_at: string;
+  user_agent?: string | null;
+  created_at?: string;
+}
+
 // Returns the current agent's signed agreement for the active doc version, or null.
 export async function getMyAgreement(): Promise<SpAgentAgreement | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data, error } = await supabase
-    .from('sp_agent_agreements')
-    .select('*')
-    .eq('agent_id', user.id)
-    .eq('doc_version', AGREEMENT_DOC_VERSION)
-    .maybeSingle();
+  const { data, error } = await callGateway('get_my_agreement');
   if (error) { console.error('getMyAgreement:', error); return null; }
   return (data as SpAgentAgreement) ?? null;
 }
 
-// Records the agent's acceptance. Server enforces agent_id = auth.uid() via RLS.
-//
-// Returns { rec, error } so callers can show a more specific message to the
-// agent when the insert fails (e.g. unique violation = "already accepted",
-// schema error = "table missing — run migrations", RLS denial = "auth issue").
-// The UI still falls back to a generic message; this just makes the actual
-// Postgres error code reachable for debugging.
+// Records the agent's acceptance. Routed through the data-gateway
+// (service_role) to bypass RLS — the previous direct client-side insert
+// was silently failing for some agents due to RLS/foreign-key issues.
 export async function acceptAgreement(
   fullName: string,
   ktpNumber: string,
 ): Promise<AcceptAgreementResult> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { rec: null, error: { code: 'NO_USER', message: 'Not authenticated' } };
-  }
-  const { data, error } = await supabase
-    .from('sp_agent_agreements')
-    .insert({
-      agent_id: user.id,
-      doc_version: AGREEMENT_DOC_VERSION,
-      full_name: fullName.trim(),
-      ktp_number: ktpNumber.trim(),
-      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : null,
-    })
-    .select()
-    .single();
+  const { data, error } = await callGateway('accept_agreement', {
+    full_name: fullName.trim(),
+    ktp_number: ktpNumber.trim(),
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : null,
+  });
   if (error) {
     console.error('acceptAgreement:', error);
-    return { rec: null, error: { code: error.code ?? 'UNKNOWN', message: error.message } };
+    // Map gateway errors to error codes the UI can handle
+    if (error === 'ALREADY_ACCEPTED') {
+      return { rec: null, error: { code: '23505', message: 'Already accepted' } };
+    }
+    return { rec: null, error: { code: 'UNKNOWN', message: error } };
   }
+  if (!data) return { rec: null, error: { code: 'UNKNOWN', message: 'No data returned' } };
   return { rec: data as SpAgentAgreement, error: null };
 }
 

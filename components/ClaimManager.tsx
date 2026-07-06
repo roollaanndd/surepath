@@ -109,7 +109,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           setClaimResult(response.data);
           setStep('result');
         } else {
-          alert(t('Audit failed. Please try a clearer photo.', 'Cek gagal. Mohon gunakan foto yang lebih jelas.'));
+          alert(t('Could not read the photo. Please try a clearer one.', 'Foto tidak terbaca. Coba foto yang lebih jelas ya.'));
           setStep('upload');
         }
       } else if (claimType === 'HEALTH') {
@@ -249,7 +249,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   if (step === 'upload') {
     return (
       <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center">
-        <Header title={claimType === 'AUTO' ? t("Vehicle Audit", "Cek Kendaraan") : t("Medical Audit", "Cek Kuitansi")} />
+        <Header title={claimType === 'AUTO' ? t("Vehicle Check", "Cek Kendaraan") : t("Receipt Check", "Cek Kuitansi")} />
         <div className="aspect-square relative rounded-[3rem] overflow-hidden bg-gray-50 dark:bg-white/5 border-2 border-dashed border-emerald-500/20 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
           <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center text-emerald-500 mb-6 group-hover:scale-110 transition-transform shadow-xl">
             <Camera size={48} />
@@ -272,7 +272,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
       <div className="glass-card rounded-[3rem] h-full flex flex-col items-center justify-center animate-pop-in bg-white dark:bg-midnight overflow-hidden">
         <SmartProcessingView 
           label={t("Analyzing Evidence...", "Menganalisa Bukti...")} 
-          sublabel={t("Our Sistem Cerdas is parsing visual data for claim integrity.", "Sistem Cerdas kami sedang memproses data visual untuk integritas klaim.")}
+          sublabel={t("Our AI is checking your photo to estimate the claim.", "Sistem Cerdas kami sedang memeriksa foto kamu untuk menghitung estimasi klaim.")}
         />
       </div>
     );
@@ -282,7 +282,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     const isAuto = claimType === 'AUTO';
     return (
        <div className="space-y-6 animate-pop-in h-full flex flex-col pb-6">
-          <Header title={t("Hasil Audit", "Hasil Audit")} />
+          <Header title={t("Check Result", "Hasil Pengecekan")} />
           
           {/* Main Hero Card */}
           <div className="p-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-2xl transition-all hover:scale-[1.02]">
@@ -291,9 +291,9 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             </div>
             <div className="relative z-10 space-y-5">
                <div className="flex justify-between items-center">
-                  <p className="text-[0.6rem] font-black uppercase text-emerald-400 tracking-[0.4em]">{t('Audit Payout Est.', 'Estimasi Pencairan')}</p>
+                  <p className="text-[0.6rem] font-black uppercase text-emerald-400 tracking-[0.4em]">{t('Estimasi Klaim', 'Estimasi Klaim')}</p>
                   <div className={`px-3 py-1 rounded-lg font-black text-[0.5rem] uppercase tracking-widest border border-white/20 ${isAuto && claimResult?.severity === 'Ringan' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                     {isAuto ? `${claimResult?.severity} Severity` : 'Medical Node'}
+                     {isAuto ? `${claimResult?.severity} Severity` : 'Catatan Medis'}
                   </div>
                </div>
                <h3 className="text-5xl font-black tracking-tighter leading-none">{formatIDR(isAuto ? claimResult?.totalEstimasi || 0 : healthResult?.totalAmount || 0)}</h3>
@@ -309,7 +309,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
              {[
                { id: 'evidence', label: t('Breakdown', 'Rincian'), icon: ClipboardList },
                { id: 'reasoning', label: t('AI Reasoning', 'Analisa'), icon: BrainCircuit },
-               { id: 'steps', label: t('Next Node', 'Langkah'), icon: Zap }
+               { id: 'steps', label: t('Langkah Selanjutnya', 'Langkah Selanjutnya'), icon: Zap }
              ].map(tab => (
                <button 
                  key={tab.id}
@@ -350,7 +350,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"><Receipt size={20}/></div>
                                <div>
                                   <p className="text-xs font-black uppercase text-slate-800 dark:text-white">{item.item}</p>
-                                  <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest mt-1">Medical Ledger Node</p>
+                                  <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest mt-1">Catatan Medis</p>
                                </div>
                             </div>
                             <p className="text-sm font-black text-rose-500">{formatIDR(item.cost)}</p>
@@ -376,7 +376,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                      <div className="p-8 bg-blue-500/5 rounded-[2.5rem] border border-blue-500/10 flex items-center gap-6">
                         <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg"><Building2 size={24}/></div>
                         <div className="flex-1">
-                           <p className="text-[0.55rem] font-black uppercase text-blue-400 tracking-widest">Workshop Registry</p>
+                           <p className="text-[0.55rem] font-black uppercase text-blue-400 tracking-widest">Bengkel Rekanan</p>
                            <h4 className="text-lg font-black uppercase tracking-tight text-slate-800 dark:text-white leading-none mt-1">{claimResult?.rekomendasiBengkel}</h4>
                         </div>
                      </div>
@@ -386,7 +386,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
 
              {activeTab === 'steps' && (
                 <div className="space-y-4 animate-fade-in">
-                   {(isAuto ? claimResult?.nextSteps : [t('Review medical record', 'Tinjau catatan medis'), t('Finalize payout node', 'Finalisasi simpul pencairan')])?.map((step, i) => (
+                   {(isAuto ? claimResult?.nextSteps : [t('Review medical record', 'Tinjau catatan medis'), t('Proses pencairan klaim', 'Proses pencairan klaim')])?.map((step, i) => (
                       <div key={i} className="flex gap-5 items-start p-6 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5">
                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xs shrink-0">{i+1}</div>
                          <p className="text-sm font-bold text-slate-600 dark:text-gray-400 pt-1">{step}</p>
@@ -400,11 +400,11 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
              <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-200">
                 <AlertCircle className="text-amber-500 shrink-0" size={20}/>
                 <p className="text-[0.6rem] font-bold text-amber-700 leading-tight uppercase tracking-wide">
-                   {t('Confirming this report will freeze the evidence for policy audit.', 'Mengonfirmasi laporan ini akan membekukan bukti untuk audit polis.')}
+                   {t('Once you continue, photos and details can no longer be edited.', 'Setelah lanjut, foto dan detail tidak bisa diubah lagi.')}
                 </p>
              </div>
              <button onClick={() => setStep('reporting')} className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4">
-                {t('Finalize & Report', 'Finalisasi & Lapor')} <ArrowRight size={20}/>
+                {t('Kirim Klaim', 'Kirim Klaim')} <ArrowRight size={20}/>
              </button>
           </div>
        </div>
@@ -414,7 +414,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   if (step === 'reporting') {
     return (
       <div className="animate-fade-in flex flex-col h-full">
-        <Header title={t("Incident Registry", "Registrasi Kejadian")} showBack onBack={() => setStep('result')} />
+        <Header title={t("Incident Details", "Detail Kejadian")} showBack onBack={() => setStep('result')} />
         <form onSubmit={handleFinalReport} className="flex-1 overflow-y-auto pr-1 no-scrollbar space-y-6 pt-2">
           <div className="space-y-1.5">
             <label className="text-[0.55rem] font-black uppercase tracking-widest text-gray-400 ml-2">{t('Policy Number', 'Nomor Polis')}</label>
@@ -491,7 +491,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           className="mt-6 w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 transition-all active:scale-95 group relative overflow-hidden"
         >
           {isSubmitting ? <Loader2 className="animate-spin" size={24}/> : <Rocket size={24} className="relative z-10"/>}
-          <span className="relative z-10">{t('Initialize Claim Transmission', 'Kirim Transmisi Klaim')}</span>
+          <span className="relative z-10">{t('Ajukan Klaim', 'Ajukan Klaim')}</span>
         </button>
       </div>
     );
@@ -504,12 +504,12 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
            <CheckCircle2 size={72} strokeWidth={2.5} />
         </div>
         <div className="space-y-4 px-8">
-          <h3 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">{t('Transmission Success!', 'Transmisi Berhasil!')}</h3>
+          <h3 className="text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white leading-none">{t('Klaim Diterima!', 'Klaim Diterima!')}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-bold uppercase tracking-widest max-w-sm">
-            {t('Report node successfully uploaded. Protokol verifikasi initialized. Check status in 60 minutes.', 'Simpul laporan berhasil diunggah. Protokol verifikasi otomatis diinisialisasi. Cek status dalam 60 menit.')}
+            {t('Klaim kamu telah kami terima. Tim kami akan meninjau dalam 24 jam. Cek status di menu Klaim.', 'Klaim kamu telah kami terima. Tim kami akan meninjau dalam 24 jam. Cek status di menu Klaim.')}
           </p>
         </div>
-        <button onClick={onComplete} className="w-full max-w-sm py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl transition-all active:scale-95">{t('Back to Matrix', 'Selesai')}</button>
+        <button onClick={onComplete} className="w-full max-w-sm py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl transition-all active:scale-95">{t('Selesai', 'Selesai')}</button>
       </div>
     );
   }

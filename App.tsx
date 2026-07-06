@@ -164,6 +164,21 @@ const App = () => {
       track('login', { role: enrichedUser.role, method: enrichedUser.method ?? 'email' });
     } catch { /* analytics is non-blocking */ }
 
+    // ── Push notifications: request permission after first login ──────────
+    // Don't prompt before the user has context (annoying). After login is
+    // the right moment — they've engaged with the app.
+    // Non-blocking — if it fails or the user denies, the app still works.
+    try {
+      const { requestNotificationPermission } = await import('./services/pushNotificationService');
+      const userId = enrichedUser.id ?? enrichedUser.supabaseId;
+      if (userId) {
+        // Delay 3s so the entry animation finishes first
+        setTimeout(() => {
+          requestNotificationPermission(userId).catch(() => {});
+        }, 3000);
+      }
+    } catch { /* push is non-blocking */ }
+
     setTimeout(() => {
       setCurrentUser(enrichedUser);
       localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));

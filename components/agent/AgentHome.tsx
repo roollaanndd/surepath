@@ -12,6 +12,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
+import { ClayCard } from '../ui';
 
 interface Props {
   agent: any;
@@ -232,23 +233,25 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
       </motion.div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions — wrapped in ClayCard for tangible feel */}
       <motion.div className="px-5 mt-7" {...reveal(5)}>
         <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
-        <div className="grid grid-cols-4 gap-y-5 gap-x-3">
-          {quickActions.map((action) => (
-            <button
-              key={`${action.tab}-${action.label}`}
-              onClick={() => onNavigate(action.tab)}
-              className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
-            >
-              <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
-                <action.icon size={22} strokeWidth={2} />
-              </div>
-              <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
-            </button>
-          ))}
-        </div>
+        <ClayCard padding="md">
+          <div className="grid grid-cols-4 gap-y-5 gap-x-3">
+            {quickActions.map((action) => (
+              <button
+                key={`${action.tab}-${action.label}`}
+                onClick={() => onNavigate(action.tab)}
+                className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
+              >
+                <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
+                  <action.icon size={22} strokeWidth={2} />
+                </div>
+                <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </ClayCard>
       </motion.div>
 
       {/* Recent Commissions */}
@@ -257,7 +260,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
           <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('View All', 'Semua')}</button>
         </div>
-        <div className="sp-glass rounded-[1.5rem] overflow-hidden">
+        <ClayCard padding="none" className="overflow-hidden">
           {recentCommissions.length === 0 ? (
             <div className="p-8 flex flex-col items-center text-center gap-2">
               <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
@@ -286,7 +289,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               </div>
             ))
           )}
-        </div>
+        </ClayCard>
       </motion.div>
 
       {/* Leaderboard Teaser */}

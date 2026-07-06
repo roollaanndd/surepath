@@ -957,8 +957,28 @@ serve(async (req) => {
           }
 
           // Override the discount fields with the authoritative values
+          // SECURITY: fetch the insurer's max_discount_rate and clamp the
+          // promo discount to it — prevents a malicious client from bypassing
+          // the UI cap by sending a higher discount_rate directly.
+          let insurerMaxDiscount = 1; // default: no cap (100%)
+          if (p.insurer_id) {
+            const { data: insurerProduct } = await db
+              .from('sp_insurer_products')
+              .select('max_discount_rate')
+              .eq('insurer_id', p.insurer_id)
+              .eq('product_type', p.vehicle_type ?? 'CAR')
+              .eq('is_active', true)
+              .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`)
+              .maybeSingle();
+            if (insurerProduct?.max_discount_rate != null) {
+              insurerMaxDiscount = Number(insurerProduct.max_discount_rate);
+            }
+          }
+
           if (promoRow.discount_type === 'PERCENT') {
-            const validatedDiscountRate = Math.min(Number(promoRow.discount_value) / 100, clientDiscountRate > 0 ? clientDiscountRate : 1);
+            // Cap at: min(promo_value, insurer_max_discount)
+            const promoRate = Number(promoRow.discount_value) / 100;
+            const validatedDiscountRate = Math.min(promoRate, insurerMaxDiscount);
             insertRow.discount_rate = validatedDiscountRate;
             insertRow.discount_amount = Math.round(orderTotal * validatedDiscountRate);
           } else {

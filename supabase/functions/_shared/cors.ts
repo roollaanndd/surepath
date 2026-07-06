@@ -11,8 +11,11 @@ const ALLOWED_ORIGINS = [
 
 // Vercel preview deployments: https://<project>-<hash>-<scope>.vercel.app
 const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
-// Local development
-const LOCAL_RE = /^http:\/\/localhost(:\d+)?$/i;
+// Local development + Capacitor native app (Android uses https://localhost,
+// iOS uses capacitor://localhost — both must be allowed or the native app
+// gets CORS-blocked from every edge function except data-gateway which has
+// its own inlined CORS)
+const LOCAL_RE = /^(https?|capacitor):\/\/localhost(:\d+)?$/i;
 
 export function corsHeaders(origin: string | null): Record<string, string> {
   const allow =

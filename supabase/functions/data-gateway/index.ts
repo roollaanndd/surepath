@@ -184,6 +184,56 @@ serve(async (req) => {
         return json({ data: caller.spUser });
       }
 
+      // ── Agent agreement: save acceptance (service_role bypasses RLS) ──────
+      // Previously this was a direct client-side insert which went through
+      // RLS. The RLS policy + foreign key + sequence could all cause silent
+      // failures. Routing through the gateway (service_role) is more robust
+      // and consistent with how all other mutations work.
+      case 'accept_agreement': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const fullName = String(params.full_name ?? '').trim();
+        const ktpNumber = String(params.ktp_number ?? '').trim();
+        if (fullName.length < 3) return json({ error: 'Name too short' }, 400);
+        if (!/^[0-9]{16}$/.test(ktpNumber)) return json({ error: 'KTP must be 16 digits' }, 400);
+
+        const { data: existing } = await db
+          .from('sp_agent_agreements')
+          .select('id')
+          .eq('agent_id', caller.authId)
+          .eq('doc_version', 'v1.0-2026')
+          .maybeSingle();
+        if (existing) return json({ error: 'ALREADY_ACCEPTED' }, 409);
+
+        const { data: agreement, error: agErr } = await db
+          .from('sp_agent_agreements')
+          .insert({
+            agent_id: caller.authId,
+            doc_version: 'v1.0-2026',
+            full_name: fullName,
+            ktp_number: ktpNumber,
+            user_agent: String(params.user_agent ?? '').slice(0, 255) || null,
+          })
+          .select()
+          .single();
+        if (agErr) {
+          console.error('accept_agreement error:', agErr);
+          return json({ error: agErr.message }, 400);
+        }
+        return json({ data: agreement });
+      }
+
+      // ── Agent agreement: check if already accepted ────────────────────────
+      case 'get_my_agreement': {
+        if (!caller.spUser) return json({ data: null });
+        const { data: ag } = await db
+          .from('sp_agent_agreements')
+          .select('*')
+          .eq('agent_id', caller.authId)
+          .eq('doc_version', 'v1.0-2026')
+          .maybeSingle();
+        return json({ data: ag ?? null });
+      }
+
       // Self-service profile creation: returns the caller's profile, creating it
       // from their verified JWT identity if missing. Used right after signup
       // (customer or agent) and as a self-heal at login. The row id is ALWAYS

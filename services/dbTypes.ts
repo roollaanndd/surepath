@@ -630,20 +630,10 @@ export interface SpWebsiteConfig {
 }
 
 // ─── Agent Legal Agreement ───────────────────────────────────────────────────
-
-export interface SpAgentAgreement {
-  id: string;
-  agent_id: string;
-  agreement_no: string;
-  doc_version: string;
-  full_name: string;
-  ktp_number: string;
-  accepted_at: string;
-  user_agent?: string | null;
-  created_at?: string;
-}
+// SpAgentAgreement + AcceptAgreementResult are defined in services/agreements.ts
+// to avoid duplicate export conflicts.
 
 export interface AcceptAgreementResult {
-  rec: SpAgentAgreement | null;
+  rec: import('./agreements').SpAgentAgreement | null;
   error: { code: string; message: string } | null;
 }

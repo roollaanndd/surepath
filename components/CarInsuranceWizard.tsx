@@ -331,7 +331,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       );
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
-        client_id: currentUser?.id,
+
         client_name: kycData.name,
         client_phone: kycData.phone,
         client_ktp: kycData.ktp,
@@ -433,7 +433,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
-        client_id: currentUser?.id,
+
         client_name: kycData.name,
         client_phone: kycData.phone,
         client_ktp: kycData.ktp,

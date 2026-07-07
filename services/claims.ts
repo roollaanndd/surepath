@@ -15,14 +15,16 @@ export async function getAgentClaims(agentId: string): Promise<SpClaim[]> {
   return (data ?? []) as SpClaim[];
 }
 
-export async function submitClaim(data: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'>): Promise<SpClaim | null> {
-  const { data: result, error } = await supabase
-    .from('sp_claims')
-    .insert(data)
-    .select()
-    .single();
+export async function submitClaim(claimData: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'>): Promise<SpClaim | null> {
+  // Routed through the gateway (service_role bypasses RLS on sp_claims)
+  const { data, error } = await callGateway('submit_claim', {
+    claim_type: (claimData as any).claim_type,
+    description: (claimData as any).description,
+    location: (claimData as any).location,
+    amount_estimated: (claimData as any).amount_estimated,
+  });
   if (error) { console.error('submitClaim:', error); return null; }
-  return result as SpClaim;
+  return data as SpClaim;
 }
 
 export async function updateClaimStatus(id: string, status: SpClaim['status'], admin_notes?: string): Promise<boolean> {
@@ -38,9 +40,6 @@ export async function getAllClaims(): Promise<SpClaim[]> {
 }
 
 export async function getCustomerClaims(_userId: string): Promise<SpClaim[]> {
-  // Routed through the gateway, which scopes results to the authenticated
-  // caller's own claims (user_id = caller). The param is kept for signature
-  // stability but the server derives ownership; it is not trusted.
   const { data, error } = await callGateway('get_my_claims');
   if (error) { console.error('getCustomerClaims:', error); return []; }
   return (data ?? []) as SpClaim[];

@@ -308,6 +308,77 @@ Deno.serve(async (req) => {
         return json({ data });
       }
 
+      // ── Customer: get my orders (self-purchases where agent_id = caller) ──
+      case 'get_my_orders': {
+        const { data, error } = await db
+          .from('sp_policy_orders')
+          .select('*')
+          .eq('agent_id', caller.authId)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Customer: cancel my order (only SUBMITTED/UNDER_REVIEW) ──────────
+      case 'cancel_my_order': {
+        if (!params.order_id) return json({ error: 'Missing order_id' }, 400);
+        const { data, error } = await db
+          .from('sp_policy_orders')
+          .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+          .eq('id', params.order_id)
+          .eq('agent_id', caller.authId)
+          .in('status', ['SUBMITTED', 'UNDER_REVIEW'])
+          .select()
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: 'Order not found or cannot be cancelled' }, 404);
+        return json({ data });
+      }
+
+      // ── Customer: get my claims ──────────────────────────────────────────
+      case 'get_my_claims': {
+        const { data, error } = await db
+          .from('sp_claims')
+          .select('*')
+          .eq('user_id', caller.authId)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Customer: submit a claim ─────────────────────────────────────────
+      case 'submit_claim': {
+        const insertRow: Record<string, unknown> = {
+          user_id: caller.authId,
+          claim_type: String(params.claim_type ?? 'VEHICLE'),
+          description: String(params.description ?? ''),
+          location: String(params.location ?? ''),
+          amount_estimated: Number(params.amount_estimated ?? 0),
+          status: 'SUBMITTED',
+        };
+        const { data, error } = await db
+          .from('sp_claims')
+          .insert(insertRow)
+          .select()
+          .single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Get my notifications (works for both customers and agents) ───────
+      case 'get_my_notifications': {
+        const { data, error } = await db
+          .from('sp_notifications')
+          .select('*')
+          .eq('agent_id', caller.authId)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
       // ── Apply a referral code to the caller's own profile (post-signup) ────
       // Sets upline_id once; matches agent_code OR referral_code; never self.
       case 'apply_referral': {

@@ -6,13 +6,19 @@ import type { SpNotification, SpAdminNotification } from './dbTypes';
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 export async function getNotifications(agentId: string): Promise<SpNotification[]> {
-  const { data, error } = await supabase
-    .from('sp_notifications')
-    .select('*')
-    .eq('agent_id', agentId)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  if (error) { console.error('getNotifications:', error); return []; }
+  // Routed through the gateway (service_role bypasses RLS on sp_notifications)
+  const { data, error } = await callGateway('get_my_notifications');
+  if (error) {
+    console.error('getNotifications:', error);
+    // Fallback to direct query (works for agents who have RLS access)
+    const { data: fallback } = await supabase
+      .from('sp_notifications')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    return (fallback ?? []) as SpNotification[];
+  }
   return (data ?? []) as SpNotification[];
 }
 

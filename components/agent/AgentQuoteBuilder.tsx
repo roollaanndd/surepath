@@ -183,7 +183,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     if (q) {
       setSavedQuote(q);
     } else {
-      alert(t('Failed to save the quote. Please check your connection and try again.',
+      console.warn(t('Failed to save the quote. Please check your connection and try again.',
               'Gagal menyimpan penawaran. Periksa koneksi dan coba lagi.'));
     }
   };

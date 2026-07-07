@@ -40,7 +40,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
     if (result) {
       onCancelled();
     } else {
-      alert(t('Failed to cancel submission.', 'Gagal membatalkan pengajuan.'));
+      console.warn(t('Failed to cancel submission.', 'Gagal membatalkan pengajuan.'));
     }
   };
 

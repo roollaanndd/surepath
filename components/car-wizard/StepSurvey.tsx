@@ -115,7 +115,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
   const runSurveyAI = async () => {
     const images = Object.entries(survey.photos).map(([slotId, data]) => ({ slotId, data: data as string }));
     if (images.length < 3) {
-      alert("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
+      console.warn("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
       return;
     }
     setAnalyzing(true);
@@ -179,7 +179,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
   const submitManualRequest = () => {
     if (!survey.manualDate) {
-        alert("Pilih tanggal survei");
+        console.warn("Pilih tanggal survei");
         return;
     }
     setSurvey((prev: any) => ({ ...prev, manualRequestStatus: 'REQUESTED' }));

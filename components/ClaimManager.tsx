@@ -109,7 +109,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           setClaimResult(response.data);
           setStep('result');
         } else {
-          alert(t('Could not read the photo. Please try a clearer one.', 'Foto tidak terbaca. Coba foto yang lebih jelas ya.'));
+          console.warn(t('Could not read the photo. Please try a clearer one.', 'Foto tidak terbaca. Coba foto yang lebih jelas ya.'));
           setStep('upload');
         }
       } else if (claimType === 'HEALTH') {
@@ -118,7 +118,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           setHealthResult(response.data);
           setStep('result');
         } else {
-          alert(t('Failed to read receipt.', 'Gagal membaca kuitansi.'));
+          console.warn(t('Failed to read receipt.', 'Gagal membaca kuitansi.'));
           setStep('upload');
         }
       }
@@ -129,7 +129,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   const handleFinalReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (reportForm.chronology.length < 10) {
-      alert(t("Please provide more details.", "Berikan kronologi lebih detail."));
+      console.warn(t("Please provide more details.", "Berikan kronologi lebih detail."));
       return;
     }
     
@@ -178,7 +178,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
         }, 1500);
     } catch (error) {
         console.error("Save failed", error);
-        alert(t("Error submitting claim.", "Gagal mengirim laporan."));
+        console.warn(t("Error submitting claim.", "Gagal mengirim laporan."));
         setIsSubmitting(false);
     }
   };

@@ -110,7 +110,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
   const handleSubmit = async () => {
     if (!action || !tokenRecord || !order) return;
     if ((action === 'REQUEST_INFO' || action === 'DECLINED') && notes.trim().length < 5) {
-      alert('Catatan wajib diisi (minimal 5 karakter) untuk Request Info dan Decline.');
+      console.warn('Catatan wajib diisi (minimal 5 karakter) untuk Request Info dan Decline.');
       return;
     }
     setSubmitting(true);
@@ -118,7 +118,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
     if (ok) {
       setDone(true);
     } else {
-      alert('Gagal mengirim keputusan. Coba lagi.');
+      console.warn('Gagal mengirim keputusan. Coba lagi.');
     }
     setSubmitting(false);
   };

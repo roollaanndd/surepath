@@ -156,7 +156,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       doc.save(`STNK_SurePath_${extractedStnk.plate.replace(' ', '_')}.pdf`);
     } catch (err) {
       console.error(err);
-      alert("Gagal membuat PDF.");
+      console.warn("Gagal membuat PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }

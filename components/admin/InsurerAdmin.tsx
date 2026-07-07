@@ -1100,7 +1100,7 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
       if (error) throw new Error(error);
       load();
     } catch (e: any) {
-      window.alert(`Gagal hapus token: ${e.message}`);
+      console.warn(`Gagal hapus token: ${e.message}`);
     }
   };
 
@@ -1116,7 +1116,7 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
       });
       load();
     } catch (e: any) {
-      window.alert(`Gagal generate token: ${e.message}`);
+      console.warn(`Gagal generate token: ${e.message}`);
     } finally {
       setGeneratingFor(null);
     }

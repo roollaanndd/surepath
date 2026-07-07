@@ -20,7 +20,7 @@ export interface FloatingWhatsAppProps {
 }
 
 export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
-  phoneNumber = '6281234567890',  // TODO: replace with actual SurePath business number
+  phoneNumber = '6282199920300',  // SurePath business number
   defaultMessage = 'Halo SurePath, saya mau tanya tentang asuransi mobil.',
 }) => {
   const [dismissed, setDismissed] = useState(false);

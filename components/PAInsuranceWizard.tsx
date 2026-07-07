@@ -98,7 +98,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
       setIsSuccess(true);
     } catch (e) {
       console.error('handleActivate PA:', e);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
     }

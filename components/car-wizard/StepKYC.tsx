@@ -133,7 +133,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
       doc.save(`KTP_SurePath_${kycData.name.replace(/ /g, '_')}.pdf`);
     } catch (err) {
       console.error(err);
-      alert("Gagal membuat PDF.");
+      console.warn("Gagal membuat PDF.");
     } finally {
       setIsGeneratingPdf(false);
     }

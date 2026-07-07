@@ -68,7 +68,7 @@ const AIAdminView: React.FC = () => {
 
   const applyDecision = async (order: OrderWithAI, rec: AIPolicyReview) => {
     if (rec.recommendation === 'REQUEST_INFO') {
-      alert('Gunakan "Mulai Review" dan tambahkan catatan untuk meminta informasi tambahan.');
+      console.warn('Gunakan "Mulai Review" dan tambahkan catatan untuk meminta informasi tambahan.');
       return;
     }
     setApplying(true);

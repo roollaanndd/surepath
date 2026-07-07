@@ -52,7 +52,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     setGeneratingLink(true);
     const token = await createReviewToken(order.id);
     setGeneratingLink(false);
-    if (!token) { alert('Gagal membuat link. Coba lagi.'); return; }
+    if (!token) { console.warn('Gagal membuat link. Coba lagi.'); return; }
     const url = `${window.location.origin}/review/${token}`;
     await navigator.clipboard.writeText(url).catch(() => {
       prompt('Salin link berikut:', url);
@@ -70,7 +70,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   };
 
   const handleReject = async () => {
-    if (!notes.trim()) { alert('Wajib isi catatan penolakan.'); return; }
+    if (!notes.trim()) { console.warn('Wajib isi catatan penolakan.'); return; }
     setSaving(true);
     await onStatusChange(order.id, 'REJECTED', { reviewer_notes: notes });
     setSaving(false);
@@ -88,7 +88,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     setUploading(true);
 
     const docUrl = await uploadPolicyDocument(file, order.order_number ?? order.id);
-    if (!docUrl) { setUploading(false); alert('Upload gagal.'); return; }
+    if (!docUrl) { setUploading(false); console.warn('Upload gagal.'); return; }
 
     const policyNumber = order.policy_number
       ?? `SP-${(order.product_code ?? 'MRKB').replace(/_/g, '-')}-${Date.now().toString(36).toUpperCase()}`;

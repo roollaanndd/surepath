@@ -838,7 +838,7 @@ export const ApprovalsView = () => {
 
     const act = async (id: string, status: SpPolicyOrder['status']) => {
         if (status === 'REJECTED' && !(notes[id] ?? '').trim()) {
-            alert('Wajib isi catatan penolakan.');
+            console.warn('Wajib isi catatan penolakan.');
             return;
         }
         setActing(id);

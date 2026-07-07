@@ -166,12 +166,12 @@ Deno.serve(async (req) => {
           const { data, error: rpcErr } = await db.rpc('increment_rate_limit', {
             p_identifier: identifier, p_action: action, p_hour_bucket: hourBucket,
           });
-          if (rpcErr) return true; // fail-open
+          if (rpcErr) return false; // fail-closed (block on DB error for security)
           return (data ?? 1) <= limit;
         }
         return true; // first request this hour
       } catch {
-        return true; // fail-open
+        return false; // fail-closed
       }
     };
 
@@ -1381,6 +1381,7 @@ Deno.serve(async (req) => {
       // ── Admin: list all clients; agent can list their own ────────────────
       case 'admin_list_clients': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        // Non-admins can only see their own clients; admins can see all
         let q = db.from('sp_clients').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
         if (caller.isAdmin && params.agent_id) {
           q = q.eq('agent_id', params.agent_id);
@@ -1395,7 +1396,7 @@ Deno.serve(async (req) => {
       // ── Admin: list claims ────────────────────────────────────────────────
       case 'admin_list_claims': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        let q = db.from('sp_claims').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
+        let q = db.from('sp_claims').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(Number(params.limit ?? 200));
         if (params.status) q = q.eq('status', params.status);
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
@@ -1636,7 +1637,7 @@ Deno.serve(async (req) => {
       // ── Admin: list all policy orders ────────────────────────────────────
       case 'admin_list_orders': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        let q = db.from('sp_policy_orders').select('*').order('created_at', { ascending: false }).limit(Number(params.limit ?? 500));
+        let q = db.from('sp_policy_orders').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(Number(params.limit ?? 500));
         if (params.status) q = q.eq('status', String(params.status));
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
@@ -1685,6 +1686,7 @@ Deno.serve(async (req) => {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         const { data, error } = await db.from('sp_payments')
           .select('*, sp_policy_orders!order_id(order_number, client_name, product_name)')
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
         if (error) return json({ error: error.message }, 400);

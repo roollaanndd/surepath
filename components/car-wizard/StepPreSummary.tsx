@@ -230,7 +230,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
       doc.save(`SurePath_Penawaran_${vehicle.plate.replace(' ', '_')}.pdf`);
     } catch (error) {
       console.error("PDF generation error:", error);
-      alert("Gagal menyimpan PDF. Silakan coba lagi.");
+      console.warn("Gagal menyimpan PDF. Silakan coba lagi.");
     } finally {
       setIsGeneratingPdf(false);
     }

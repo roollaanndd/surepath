@@ -384,7 +384,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       setIsSuccess(true);
     } catch (e) {
       console.error('handlePendingApprovalCheckout:', e);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -514,7 +514,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       setShowBurst(true);
     } catch (e) {
       console.error('handlePaymentResult:', e);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
+      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }

@@ -1857,25 +1857,10 @@ Deno.serve(async (req) => {
           `Waktu: ${orderTime} WIB\n\n` +
           `Buka Admin Panel: https://myinsurepath.com/admin`
         );
-        // Email the insurer's PIC if an insurer is attached to this order
-        if (order.insurer_id) {
-          const { data: ins } = await db
-            .from('sp_insurers')
-            .select('admin_email, name')
-            .eq('id', order.insurer_id)
-            .maybeSingle();
-          if (ins?.admin_email) {
-            sendInsurerEmail(
-              String(ins.admin_email),
-              String(ins.name ?? 'Penanggung'),
-              String(order.order_number ?? order.id),
-              String(order.client_name ?? '-'),
-              String(order.product_name ?? '-'),
-              Number(order.total_premium ?? 0),
-              String(order.id),
-            );
-          }
-        }
+        // NOTE: Insurer review link is NOT sent here. It's sent only after
+        // operator approves the order (via admin_send_insurer_review_link
+        // action called from OperatorOrders.handleApprove). Sending it here
+        // would notify the insurer before SurePath has reviewed the order.
 
         return json({ data });
       }

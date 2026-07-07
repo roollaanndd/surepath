@@ -704,6 +704,105 @@ Deno.serve(async (req) => {
         return json({ data: { success: true, review_url: reviewUrl, insurer_email: insurerEmail } });
       }
 
+      // ── Admin: list all insurer auth tokens (for CMS token management) ────
+      case 'admin_list_insurer_tokens': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, token, email, expires_at, used_at, created_at')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (error) return json({ error: error.message }, 400);
+        // Enrich with insurer name
+        const insurerIds = [...new Set((data ?? []).map((t: any) => t.insurer_id))];
+        const { data: insurers } = await db.from('sp_insurers')
+          .select('id, name')
+          .in('id', insurerIds);
+        const insurerMap: Record<string, string> = {};
+        for (const ins of (insurers ?? [])) insurerMap[ins.id] = ins.name;
+        const enriched = (data ?? []).map((t: any) => ({ ...t, insurer_name: insurerMap[t.insurer_id] ?? 'Unknown' }));
+        return json({ data: enriched });
+      }
+
+      // ── Admin: revoke an insurer auth token (instant logout) ──────────────
+      case 'admin_revoke_insurer_token': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const tokenId = String(params.token_id ?? '');
+        if (!tokenId) return json({ error: 'token_id required' }, 400);
+        const { error } = await db.from('sp_insurer_auth_tokens').delete().eq('id', tokenId);
+        if (error) return json({ error: error.message }, 400);
+        // Audit notification
+        db.from('sp_admin_notifications').insert({
+          type: 'INSURER_TOKEN_REVOKED',
+          title: 'Token Insurer Dihapus',
+          body: `Admin menghapus token akses insurer.`,
+          read: false,
+          metadata: { token_id: tokenId, revoked_by: caller.authId },
+        }).then(() => {}, () => {});
+        return json({ data: { success: true } });
+      }
+
+      // ── Admin: generate a new insurer auth token + return magic link ──────
+      case 'admin_generate_insurer_token': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        if (!insurerId) return json({ error: 'insurer_id required' }, 400);
+        // Fetch insurer
+        const { data: ins, error: insErr } = await db.from('sp_insurers')
+          .select('id, name, pic_email, admin_email')
+          .eq('id', insurerId)
+          .maybeSingle();
+        if (insErr) return json({ error: insErr.message }, 400);
+        if (!ins) return json({ error: 'Insurer not found' }, 404);
+        const email = ins.pic_email || ins.admin_email;
+        if (!email) return json({ error: 'Insurer has no email configured (pic_email or admin_email)' }, 400);
+        // Generate new token (7-day rolling)
+        const newToken = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { error: tkErr } = await db.from('sp_insurer_auth_tokens').insert({
+          insurer_id: insurerId,
+          token: newToken,
+          email,
+          expires_at: expiresAt,
+        });
+        if (tkErr) return json({ error: tkErr.message }, 400);
+        const magicLink = `https://myinsurepath.com/insurerapp?token=${newToken}`;
+        // Audit notification
+        db.from('sp_admin_notifications').insert({
+          type: 'INSURER_TOKEN_GENERATED',
+          title: 'Token Insurer Baru Dibuat',
+          body: `Token akses baru untuk ${ins.name}. Link: ${magicLink}`,
+          read: false,
+          metadata: { insurer_id: insurerId, token_id: newToken, generated_by: caller.authId },
+        }).then(() => {}, () => {});
+        return json({ data: { success: true, token: newToken, magic_link: magicLink, insurer_name: ins.name, email } });
+      }
+
+      // ── Admin: list all review tokens (for CMS review link management) ────
+      case 'admin_list_review_tokens': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_review_tokens')
+          .select('id, token, order_id, expires_at, insurer_action, insurer_notes, actioned_at, accessed_count, last_accessed_at, created_at, review_url')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (error) return json({ error: error.message }, 400);
+        // Enrich with order info
+        const orderIds = [...new Set((data ?? []).map((t: any) => t.order_id))];
+        const { data: orders } = await db.from('sp_policy_orders')
+          .select('id, order_number, client_name, product_name, insurer_name, status')
+          .in('id', orderIds);
+        const orderMap: Record<string, any> = {};
+        for (const o of (orders ?? [])) orderMap[o.id] = o;
+        const enriched = (data ?? []).map((t: any) => ({
+          ...t,
+          order_number: orderMap[t.order_id]?.order_number ?? null,
+          client_name: orderMap[t.order_id]?.client_name ?? null,
+          product_name: orderMap[t.order_id]?.product_name ?? null,
+          insurer_name: orderMap[t.order_id]?.insurer_name ?? null,
+          order_status: orderMap[t.order_id]?.status ?? null,
+        }));
+        return json({ data: enriched });
+      }
+
       // Public: get order details by review token (for /review/:uuid page)
       case 'get_insurer_review': {
         const token = String(params.token ?? '');

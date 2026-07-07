@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   ToggleLeft, ToggleRight, X, Save, Building2, Package,
-  RefreshCw, Upload, Loader2,
+  RefreshCw, Upload, Loader2, KeyRound, Link2, Copy, Check, Ban,
 } from 'lucide-react';
-import { supabase, uploadInsurerLogo } from '../../services/supabaseService';
+import { supabase, uploadInsurerLogo, callGateway } from '../../services/supabaseService';
 import {
   CAR_COMP_MIN, CAR_COMP_MAX, CAR_TLO_MIN, CAR_TLO_MAX,
   NON_VEHICLE_RATES,
@@ -21,6 +21,7 @@ interface SpInsurer {
   admin_name?: string;
   admin_email?: string;
   pic_name?: string;
+  pic_email?: string;
   pic_phone?: string;
   logo_url?: string;
   created_at?: string;
@@ -171,6 +172,7 @@ interface InsurerFormData {
   admin_name: string;
   admin_email: string;
   pic_name: string;
+  pic_email: string;
   pic_phone: string;
 }
 
@@ -189,6 +191,7 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
     admin_name: initial?.admin_name ?? '',
     admin_email: initial?.admin_email ?? '',
     pic_name: initial?.pic_name ?? '',
+    pic_email: initial?.pic_email ?? '',
     pic_phone: initial?.pic_phone ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -291,6 +294,12 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
             <input className={inputCls} value={form.pic_name}
               onChange={e => setForm(f => ({ ...f, pic_name: e.target.value }))}
               placeholder="PIC operasional" />
+          </div>
+          <div>
+            <SectionLabel>Email PIC</SectionLabel>
+            <input className={inputCls} type="email" value={form.pic_email}
+              onChange={e => setForm(f => ({ ...f, pic_email: e.target.value }))}
+              placeholder="pic@insurerco.com" />
           </div>
           <div>
             <SectionLabel>No. Telepon PIC</SectionLabel>
@@ -900,6 +909,7 @@ const InsurerAdmin: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<SpInsurer | null>(null);
+  const [activeTab, setActiveTab] = useState<'insurers' | 'tokens' | 'review-links'>('insurers');
 
   const fetchInsurers = useCallback(async () => {
     setLoading(true);
@@ -953,60 +963,443 @@ const InsurerAdmin: React.FC = () => {
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
             Manajemen
           </p>
-          <h1 className="text-2xl font-black text-white">Perusahaan Asuransi</h1>
+          <h1 className="text-2xl font-black text-white">Mitra Asuransi</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchInsurers}
-            className={`${secondaryBtn} flex items-center gap-2`}
+        {activeTab === 'insurers' && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchInsurers}
+              className={`${secondaryBtn} flex items-center gap-2`}
+            >
+              <RefreshCw size={12} />
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className={`${primaryBtn} flex items-center gap-2`}
+            >
+              <Plus size={13} />
+              Tambah Perusahaan
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-1 border-b border-white/5">
+        {([
+          { id: 'insurers',      label: 'Perusahaan',    icon: Building2 },
+          { id: 'tokens',        label: 'Token Akses',   icon: KeyRound },
+          { id: 'review-links',  label: 'Link Review',   icon: Link2 },
+        ] as const).map(tab => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-colors ${
+                active
+                  ? 'border-emerald-400 text-emerald-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <tab.icon size={13} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'insurers' && (
+        <>
+          {/* Stats */}
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Total</p>
+              <p className="text-xl font-black text-white">{insurers.length}</p>
+            </div>
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Aktif</p>
+              <p className="text-xl font-black text-emerald-400">{insurers.filter(i => i.is_active).length}</p>
+            </div>
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Nonaktif</p>
+              <p className="text-xl font-black text-rose-400">{insurers.filter(i => !i.is_active).length}</p>
+            </div>
+          </div>
+
+          {/* Grid */}
+          {loading ? (
+            <div className="text-center py-16 text-slate-500 text-sm font-bold">Memuat data...</div>
+          ) : insurers.length === 0 ? (
+            <div className="text-center py-16 text-slate-500 text-sm font-bold">
+              Belum ada perusahaan asuransi. Klik "Tambah Perusahaan" untuk memulai.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {insurers.map(ins => (
+                <InsurerCard
+                  key={ins.id}
+                  insurer={ins}
+                  onEdit={setEditTarget}
+                  onDelete={handleDelete}
+                  onToggleActive={handleToggleActive}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'tokens' && <InsurerTokenManagement insurers={insurers} />}
+      {activeTab === 'review-links' && <ReviewLinkManagement />}
+    </div>
+  );
+};
+
+// ─── Insurer Token Management Sub-Component ──────────────────────────────────
+
+interface InsurerToken {
+  id: string;
+  insurer_id: string;
+  token: string;
+  email: string;
+  expires_at: string;
+  used_at: string | null;
+  created_at: string;
+  insurer_name?: string;
+}
+
+const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers }) => {
+  const [tokens, setTokens] = useState<InsurerToken[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<{ insurerName: string; link: string; email: string } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await callGateway('admin_list_insurer_tokens', { limit: 200 });
+      if (error) throw new Error(error);
+      setTokens(data ?? []);
+    } catch (e: any) {
+      console.error('Token load:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleRevoke = async (tokenId: string, insurerName: string) => {
+    if (!window.confirm(`Hapus token akses untuk ${insurerName}? Insurer akan langsung logout dari dashboard.`)) return;
+    try {
+      const { error } = await callGateway('admin_revoke_insurer_token', { token_id: tokenId });
+      if (error) throw new Error(error);
+      load();
+    } catch (e: any) {
+      window.alert(`Gagal hapus token: ${e.message}`);
+    }
+  };
+
+  const handleGenerate = async (insurerId: string) => {
+    setGeneratingFor(insurerId);
+    try {
+      const { data, error } = await callGateway('admin_generate_insurer_token', { insurer_id: insurerId });
+      if (error) throw new Error(error);
+      setGeneratedLink({
+        insurerName: data.insurer_name,
+        link: data.magic_link,
+        email: data.email,
+      });
+      load();
+    } catch (e: any) {
+      window.alert(`Gagal generate token: ${e.message}`);
+    } finally {
+      setGeneratingFor(null);
+    }
+  };
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const isExpired = (expiresAt: string) => new Date(expiresAt) < new Date();
+
+  return (
+    <div className="space-y-6">
+      {/* Generate token for insurer */}
+      <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Generate Token Baru</p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <select
+            className="bg-[#0a0a0a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-slate-900"
+            defaultValue=""
+            onChange={e => { if (e.target.value) handleGenerate(e.target.value); }}
           >
-            <RefreshCw size={12} />
-            Refresh
-          </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            className={`${primaryBtn} flex items-center gap-2`}
-          >
-            <Plus size={13} />
-            Tambah Perusahaan
+            <option value="">Pilih perusahaan asuransi…</option>
+            {insurers.filter(i => i.is_active).map(ins => (
+              <option key={ins.id} value={ins.id}>{ins.name}</option>
+            ))}
+          </select>
+          {generatingFor && <Loader2 size={14} className="animate-spin text-emerald-400" />}
+        </div>
+        {insurers.filter(i => i.is_active).length === 0 && (
+          <p className="text-[10px] text-amber-400 mt-2">⚠ Tidak ada insurer aktif. Tambahkan insurer dulu di tab Perusahaan.</p>
+        )}
+      </div>
+
+      {/* Generated link modal */}
+      {generatedLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setGeneratedLink(null)}>
+          <div className="bg-[#0f1829] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-white">Token Berhasil Dibuat</h3>
+              <button onClick={() => setGeneratedLink(null)} className="text-slate-400 hover:text-white"><X size={16} /></button>
+            </div>
+            <p className="text-xs text-slate-400">Untuk: <span className="text-white font-bold">{generatedLink.insurerName}</span> ({generatedLink.email})</p>
+            <div className="bg-black/30 border border-white/5 rounded-xl p-3">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">Magic Link (kirim ke PIC insurer):</p>
+              <p className="text-xs text-emerald-400 font-mono break-all">{generatedLink.link}</p>
+            </div>
+            <button
+              onClick={() => handleCopy(generatedLink.link, 'generated')}
+              className="w-full py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-400"
+            >
+              {copiedId === 'generated' ? <><Check size={13} /> Tersalin!</> : <><Copy size={13} /> Copy Link</>}
+            </button>
+            <p className="text-[10px] text-slate-500 text-center">Token berlaku 7 hari, auto-renew setiap insurer buka dashboard.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Active tokens list */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Token Aktif ({tokens.filter(t => !isExpired(t.expires_at)).length})</p>
+          <button onClick={load} className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+            <RefreshCw size={10} /> Refresh
           </button>
         </div>
+        {loading ? (
+          <div className="text-center py-8 text-slate-500 text-xs">Memuat token…</div>
+        ) : tokens.length === 0 ? (
+          <div className="text-center py-8 text-slate-500 text-xs">
+            Belum ada token akses. Generate token baru di atas untuk memberikan akses dashboard ke insurer.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {tokens.map(t => {
+              const expired = isExpired(t.expires_at);
+              return (
+                <div key={t.id} className={`bg-white/[0.03] border ${expired ? 'border-rose-500/20' : 'border-white/5'} rounded-2xl p-4`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white">{t.insurer_name ?? 'Unknown'}</p>
+                        {expired ? (
+                          <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400">Expired</span>
+                        ) : (
+                          <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">Active</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">{t.email}</p>
+                      <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
+                        <span>Dibuat: {new Date(t.created_at).toLocaleDateString('id-ID')}</span>
+                        <span>Expire: {new Date(t.expires_at).toLocaleDateString('id-ID')}</span>
+                        {t.used_at && <span>Last used: {new Date(t.used_at).toLocaleDateString('id-ID')}</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleCopy(`https://myinsurepath.com/insurerapp?token=${t.token}`, t.id)}
+                        className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-emerald-400 hover:bg-white/10 transition-colors"
+                        title="Copy magic link"
+                      >
+                        {copiedId === t.id ? <Check size={12} /> : <Copy size={12} />}
+                      </button>
+                      <button
+                        onClick={() => handleRevoke(t.id, t.insurer_name ?? 'insurer')}
+                        className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-rose-400 hover:bg-white/10 transition-colors"
+                        title="Revoke token"
+                      >
+                        <Ban size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Review Link Management Sub-Component ────────────────────────────────────
+
+interface ReviewToken {
+  id: string;
+  token: string;
+  order_id: string;
+  expires_at: string;
+  insurer_action: string | null;
+  insurer_notes: string | null;
+  actioned_at: string | null;
+  accessed_count: number;
+  last_accessed_at: string | null;
+  created_at: string;
+  review_url: string | null;
+  order_number: string | null;
+  client_name: string | null;
+  product_name: string | null;
+  insurer_name: string | null;
+  order_status: string | null;
+}
+
+const ReviewLinkManagement: React.FC = () => {
+  const [tokens, setTokens] = useState<ReviewToken[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'actioned' | 'expired'>('all');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await callGateway('admin_list_review_tokens', { limit: 200 });
+      if (error) throw new Error(error);
+      setTokens(data ?? []);
+    } catch (e: any) {
+      console.error('Review tokens load:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleCopy = (url: string, id: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const isExpired = (expiresAt: string) => new Date(expiresAt) < new Date();
+
+  const filtered = tokens.filter(t => {
+    if (filter === 'pending') return !t.insurer_action && !isExpired(t.expires_at);
+    if (filter === 'actioned') return !!t.insurer_action;
+    if (filter === 'expired') return isExpired(t.expires_at) && !t.insurer_action;
+    return true;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Filter tabs */}
+      <div className="flex items-center gap-2">
+        {([
+          { id: 'all',      label: 'Semua' },
+          { id: 'pending',  label: 'Menunggu' },
+          { id: 'actioned', label: 'Sudah Diproses' },
+          { id: 'expired',  label: 'Kedaluwarsa' },
+        ] as const).map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
+              filter === f.id ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-white/[0.03] text-slate-500 border border-white/5'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <button onClick={load} className="ml-auto text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+          <RefreshCw size={10} /> Refresh
+        </button>
       </div>
 
       {/* Stats */}
-      <div className="flex items-center gap-6 flex-wrap">
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-4 py-3">
           <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Total</p>
-          <p className="text-xl font-black text-white">{insurers.length}</p>
+          <p className="text-lg font-black text-white">{tokens.length}</p>
         </div>
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Aktif</p>
-          <p className="text-xl font-black text-emerald-400">{insurers.filter(i => i.is_active).length}</p>
+        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Menunggu</p>
+          <p className="text-lg font-black text-amber-400">{tokens.filter(t => !t.insurer_action && !isExpired(t.expires_at)).length}</p>
         </div>
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Nonaktif</p>
-          <p className="text-xl font-black text-rose-400">{insurers.filter(i => !i.is_active).length}</p>
+        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Diproses</p>
+          <p className="text-lg font-black text-emerald-400">{tokens.filter(t => t.insurer_action).length}</p>
+        </div>
+        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-4 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Expired</p>
+          <p className="text-lg font-black text-rose-400">{tokens.filter(t => isExpired(t.expires_at) && !t.insurer_action).length}</p>
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Token list */}
       {loading ? (
-        <div className="text-center py-16 text-slate-500 text-sm font-bold">Memuat data...</div>
-      ) : insurers.length === 0 ? (
-        <div className="text-center py-16 text-slate-500 text-sm font-bold">
-          Belum ada perusahaan asuransi. Klik "Tambah Perusahaan" untuk memulai.
+        <div className="text-center py-8 text-slate-500 text-xs">Memuat review links…</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8 text-slate-500 text-xs">
+          Tidak ada review link untuk filter ini. Link otomatis dibuat saat operator menyetujui pengajuan polis.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {insurers.map(ins => (
-            <InsurerCard
-              key={ins.id}
-              insurer={ins}
-              onEdit={setEditTarget}
-              onDelete={handleDelete}
-              onToggleActive={handleToggleActive}
-            />
-          ))}
+        <div className="space-y-2">
+          {filtered.map(t => {
+            const expired = isExpired(t.expires_at);
+            return (
+              <div key={t.id} className={`bg-white/[0.03] border ${expired ? 'border-rose-500/20' : 'border-white/5'} rounded-2xl p-4`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-white">{t.order_number ?? t.order_id.slice(0, 8)}</p>
+                      <span className="text-[10px] text-slate-500">{t.insurer_name ?? '-'}</span>
+                      {t.insurer_action ? (
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                          t.insurer_action === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400'
+                          : t.insurer_action === 'REQUEST_INFO' ? 'bg-amber-500/10 text-amber-400'
+                          : 'bg-rose-500/10 text-rose-400'
+                        }`}>
+                          {t.insurer_action}
+                        </span>
+                      ) : expired ? (
+                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400">Expired</span>
+                      ) : (
+                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400">Pending</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">{t.client_name ?? '-'} · {t.product_name ?? '-'}</p>
+                    {t.insurer_notes && (
+                      <p className="text-[10px] text-slate-500 mt-1 italic">"{t.insurer_notes}"</p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
+                      <span>Dibuat: {new Date(t.created_at).toLocaleDateString('id-ID')}</span>
+                      <span>Akses: {t.accessed_count}x</span>
+                      {t.last_accessed_at && <span>Last: {new Date(t.last_accessed_at).toLocaleDateString('id-ID')}</span>}
+                    </div>
+                  </div>
+                  {t.review_url && !t.insurer_action && (
+                    <button
+                      onClick={() => handleCopy(t.review_url!, t.id)}
+                      className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-emerald-400 hover:bg-white/10 transition-colors shrink-0"
+                      title="Copy review link"
+                    >
+                      {copiedId === t.id ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

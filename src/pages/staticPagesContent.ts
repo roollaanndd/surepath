@@ -132,7 +132,7 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Infrastruktur teknologi AI dan Computer Vision yang siap pakai', 'Ready-to-use AI and Computer Vision technology infrastructure'],
           ['Proses onboarding mitra yang cepat (2–4 minggu)', 'Fast partner onboarding (2–4 weeks)'],
           ['Tim teknis, legal, dan kepatuhan yang berpengalaman', 'Experienced technical, legal, and compliance teams'],
-          ['Terdaftar OJK dan patuh penuh pada regulasi Indonesia', 'OJK-registered and fully compliant with Indonesian regulations'],
+          ['Bekerja sama dengan perusahaan asuransi berijin OJK', 'OJK-registered and fully compliant with Indonesian regulations'],
         ],
       },
       {
@@ -167,7 +167,7 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Verifikasi identitas dan pencegahan penipuan', 'Identity verification and fraud prevention'],
           ['Personalisasi pengalaman dan rekomendasi produk yang relevan', 'Personalizing your experience and recommending relevant products'],
           ['Komunikasi terkait layanan, polis, dan informasi penting', 'Communicating about services, policies, and important information'],
-          ['Kepatuhan penuh terhadap regulasi OJK dan peraturan hukum yang berlaku', 'Full compliance with OJK regulations and applicable laws'],
+          ['Bekerja sama dengan perusahaan asuransi berijin OJK', 'Full compliance with OJK regulations and applicable laws'],
           ['Diteruskan kepada perusahaan asuransi terkait, dengan persetujuan sukarela Anda, untuk keperluan akseptasi risiko, penerbitan polis, dan penyelesaian klaim — keputusan atas hal-hal tersebut sepenuhnya berada di tangan perusahaan asuransi', 'Forwarded to the relevant insurance company, with your voluntary consent, for risk acceptance, policy issuance, and claims settlement — decisions on these matters rest solely with the insurance company'],
         ],
       },

@@ -16,11 +16,11 @@ import { ShieldCheck, Lock, FileCheck } from 'lucide-react';
 export const OjkBadge: React.FC<{ className?: string; compact?: boolean }> = ({ className = '', compact = false }) => (
   <div
     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ds-green-tint border border-ds-green/30 ${className}`}
-    title="SurePath memasarkan produk dari perusahaan asuransi berizin dan diawasi OJK"
+    title="Bekerja sama dengan perusahaan asuransi berijin OJK"
   >
     <ShieldCheck size={12} className="text-ds-green" />
     <span className="text-[0.6rem] font-black uppercase tracking-wider text-ds-green-dk">
-      {compact ? 'OJK' : 'Diawasi OJK'}
+      {compact ? 'OJK' : 'Mitra Asuransi Berizin OJK'}
     </span>
   </div>
 );

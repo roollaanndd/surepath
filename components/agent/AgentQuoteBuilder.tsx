@@ -155,7 +155,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
   const buildWAText = () => {
     const lines = [
-      `*SurePath Insurance Quote*`,
+      `*PT Ruang Proteksi Indonesia Quote*`,
       `─────────────────────`,
       `Client: ${clientName}`,
       `Product: ${product}`,

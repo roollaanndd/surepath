@@ -23,7 +23,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
     { title: t('Transparansi', 'Transparency'), desc: t('Tidak ada biaya tersembunyi, tidak ada klausul yang membingungkan.', 'No hidden fees, no confusing clauses.') },
     { title: t('Humanis', 'Human-Centered'),    desc: t('Di balik teknologi canggih, ada agen nyata yang siap mendampingi.', 'Behind advanced technology, real agents ready to support you.') },
     { title: t('Inovatif', 'Innovative'),        desc: t('AI-powered claims, instant approval, pengalaman digital-first.', 'AI-powered claims, instant approval, digital-first experience.') },
-    { title: t('Terpercaya', 'Trusted'),         desc: t('Bermitra dengan insurer yang terdaftar dan diawasi penuh oleh OJK.', 'Partnered with insurers fully registered and supervised by OJK.') },
+    { title: t('Terpercaya', 'Trusted'),         desc: t('Bekerja sama dengan perusahaan asuransi berijin OJK.', 'Partnered with insurers fully registered and supervised by OJK.') },
   ];
 
   const TESTIMONIALS = [
@@ -38,7 +38,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
     { q: 'Apa perbedaan asuransi jiwa unit link dan tradisional?', a: 'Tradisional memberikan perlindungan murni tanpa komponen investasi — premi lebih terjangkau. Unit link menggabungkan proteksi jiwa dengan investasi. Jika fokus proteksi, tradisional lebih cocok; jika mau sekaligus investasi, unit link bisa jadi pilihan.' },
     { q: 'Bagaimana cara klaim asuransi dengan cepat?', a: 'Klaim bisa dilakukan 100% online: lapor kejadian lewat aplikasi atau WhatsApp, upload dokumen, lalu tim klaim kami akan memproses dalam 1–3 hari kerja. Untuk klaim darurat, tersedia layanan 24 jam.' },
     { q: 'Apa perbedaan asuransi all risk dan TLO?', a: 'All risk menanggung semua kerusakan — dari goresan kecil sampai kecelakaan besar. TLO hanya menanggung kerugian total (kendaraan hilang atau rusak >75%). All risk lebih komprehensif tapi preminya lebih tinggi.' },
-    { q: 'Apakah asuransi SurePath sudah terdaftar OJK?', a: 'SurePath bermitra dengan perusahaan-perusahaan asuransi yang semuanya telah terdaftar dan diawasi oleh OJK. Seluruh produk yang kami pasarkan berasal dari mitra insurer berlisensi.' },
+    { q: 'Apakah SurePath bekerja sama dengan perusahaan asuransi berijin OJK?', a: 'Ya, PT Ruang Proteksi Indonesia bekerja sama dengan perusahaan-perusahaan asuransi yang berijin dan diawasi oleh OJK. Seluruh produk yang kami pasarkan berasal dari mitra insurer berlisensi.' },
     { q: 'Bagaimana cara daftar jadi mitra asuransi di SurePath?', a: 'Daftar sebagai mitra di halaman Program Mitra kami. Syarat: usia minimal 21 tahun, punya KTP, bersedia mengikuti pelatihan sertifikasi, dan secara sukarela memberikan data yang benar untuk diteruskan kepada perusahaan asuransi terkait. SurePath menyediakan pelatihan, materi, dan dukungan teknologi penuh.' },
     { q: 'Apa manfaat asuransi perjalanan SurePath?', a: 'Menanggung: biaya medis darurat, pembatalan/keterlambatan penerbangan, kehilangan bagasi, dan evakuasi medis. Tersedia untuk perjalanan domestik maupun internasional, mulai dari Rp50.000 per perjalanan.' },
   ];

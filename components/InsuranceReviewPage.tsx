@@ -387,7 +387,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
 
         {/* Footer */}
         <p className="text-center text-[9px] font-bold text-slate-700 uppercase tracking-widest pb-4">
-          SurePath Insurance Platform · Link ini bersifat rahasia dan hanya untuk digunakan oleh pihak penanggung
+          PT Ruang Proteksi Indonesia · Link ini bersifat rahasia dan hanya untuk digunakan oleh pihak penanggung
         </p>
       </div>
     </div>

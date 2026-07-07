@@ -41,8 +41,8 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
 
   const referralLink = `${baseUrl}?ref=${referralCode}`;
   const shareMessage = customerName
-    ? `Halo! ${customerName} mengajak kamu coba SurePath — beli asuransi mobil online, cepat & diawasi OJK.\n\nGunakan kode referral: *${referralCode}*\n\nDaftar di: ${referralLink}\n\nDapat bonus untuk kamu! 🎁`
-    : `Halo! Saya mengajak kamu coba SurePath — beli asuransi mobil online, cepat & diawasi OJK.\n\nGunakan kode referral saya: *${referralCode}*\n\nDaftar di: ${referralLink}\n\nDapat bonus untuk kamu! 🎁`;
+    ? `Halo! ${customerName} mengajak kamu coba SurePath — beli asuransi mobil online, cepat & bermitra dengan perusahaan asuransi berijin OJK.\n\nGunakan kode referral: *${referralCode}*\n\nDaftar di: ${referralLink}\n\nDapat bonus untuk kamu! 🎁`
+    : `Halo! Saya mengajak kamu coba SurePath — beli asuransi mobil online, cepat & bermitra dengan perusahaan asuransi berijin OJK.\n\nGunakan kode referral saya: *${referralCode}*\n\nDaftar di: ${referralLink}\n\nDapat bonus untuk kamu! 🎁`;
 
   const handleCopy = async () => {
     haptic.tap();

@@ -326,7 +326,7 @@ const DesktopWebsite: React.FC<DesktopWebsiteProps> = ({
           {/* Bottom Footer (Copyright & Legal) */}
           <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
             <p className="text-xs text-slate-500 font-bold tracking-widest uppercase text-center md:text-left leading-relaxed">
-              © 2025 PT SurePath Indonesia. <br />{" "}
+              © 2025 PT Ruang Proteksi Indonesia. <br />{" "}
               {t("All rights reserved.", "Seluruh hak cipta dilindungi.")}
             </p>
             <div className="flex flex-wrap justify-center gap-6 md:gap-10">

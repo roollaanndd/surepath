@@ -198,7 +198,8 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
 
       addCostRow("Biaya Administrasi & Polis", premiumBreakdown?.adminFee || 0);
       addCostRow("Biaya Materai", premiumBreakdown?.stampDuty || 0);
-      addCostRow("Biaya Aplikasi", premiumBreakdown?.applicationFee || 5000);
+      addCostRow("Biaya Layanan", premiumBreakdown?.applicationFee || 6000);
+      addCostRow("Biaya Pengiriman Polis", premiumBreakdown?.policyDeliveryFee || 20000);
 
       if (premiumBreakdown?.discountAmount > 0) {
         addCostRow(`Diskon Spesial (${premiumBreakdown.discountPercent}%)`, premiumBreakdown.discountAmount, true);
@@ -224,7 +225,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.text("Dokumen ini diterbitkan secara otomatis oleh sistem SurePath dan sah tanpa tanda tangan basah.", pageWidth / 2, pageHeight - 18, { align: 'center' });
-      doc.text("PT SurePath Asuransi Digital terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).", pageWidth / 2, pageHeight - 12, { align: 'center' });
+      doc.text("PT Ruang Proteksi Indonesia terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).", pageWidth / 2, pageHeight - 12, { align: 'center' });
 
       doc.save(`SurePath_Penawaran_${vehicle.plate.replace(' ', '_')}.pdf`);
     } catch (error) {

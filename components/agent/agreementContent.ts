@@ -8,7 +8,7 @@ export const AGREEMENT_META = {
   version: 'v2.0-2026',
   effectiveDate: '1 Juli 2026',
   company: {
-    name: 'PT SurePath Digital Indonesia',
+    name: 'PT Ruang Proteksi Indonesia',
     brand: 'SurePath — myinsurepath.com',
     domicile: 'Jakarta, Republik Indonesia',
   },
@@ -23,7 +23,7 @@ export const AGREEMENT_CLAUSES: AgreementClause[] = [
   {
     heading: 'PASAL 1 — DEFINISI',
     body: [
-      '1.1. "Perusahaan" adalah PT SurePath Digital Indonesia beserta seluruh badan hukum afiliasinya yang mengoperasikan platform SurePath.',
+      '1.1. "Perusahaan" adalah PT Ruang Proteksi Indonesia beserta seluruh badan hukum afiliasinya yang mengoperasikan platform SurePath.',
       '1.2. "Mitra" adalah perorangan yang telah mendaftar, terverifikasi, dan menyetujui Perjanjian ini untuk memasarkan produk asuransi melalui platform SurePath.',
       '1.3. "Platform" adalah aplikasi dan sistem digital SurePath, termasuk aplikasi seluler, situs web, dan seluruh layanan pendukungnya — sebuah platform teknologi yang memfasilitasi pemasaran produk asuransi, bukan penanggung/penerbit polis.',
       '1.4. "Nasabah" adalah pihak yang membeli produk asuransi melalui Mitra pada Platform.',

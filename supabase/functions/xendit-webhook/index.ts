@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
             .single();
 
           if (agentUser?.phone) {
-            const waMsg = `✅ *Pembayaran Diterima*\n\nOrder ${order.order_number ?? ''} untuk ${order.client_name ?? 'klien'} telah dibayar.\nProses review sedang berjalan.\n\nSurePath Insurance`;
+            const waMsg = `✅ *Pembayaran Diterima*\n\nOrder ${order.order_number ?? ''} untuk ${order.client_name ?? 'klien'} telah dibayar.\nProses review sedang berjalan.\n\nPT Ruang Proteksi Indonesia`;
             await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
               method: 'POST',
               headers: {

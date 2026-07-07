@@ -37,7 +37,8 @@ const StepFinal: React.FC<StepFinalProps> = ({
       if (premiumBreakdown.paPassengerPremium > 0) rows.push({ label: 'Kecelakaan Diri — Penumpang', amount: Math.round(premiumBreakdown.paPassengerPremium) });
       rows.push({ label: 'Biaya Admin', amount: premiumBreakdown.adminFee });
       rows.push({ label: 'Materai', amount: premiumBreakdown.stampDuty });
-      rows.push({ label: 'Biaya Aplikasi', amount: premiumBreakdown.applicationFee });
+      rows.push({ label: 'Biaya Layanan', amount: premiumBreakdown.applicationFee });
+      rows.push({ label: 'Biaya Pengiriman Polis', amount: premiumBreakdown.policyDeliveryFee || 20000 });
 
       await generateProposalPDF({
         quoteNumber: `PR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-4)}`,

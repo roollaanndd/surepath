@@ -572,7 +572,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (insErr) return json({ error: insErr.message }, 400);
         const insurerEmail = ins?.pic_email || ins?.admin_email;
-        if (!insurerEmail) return json({ error: 'Insurer has no email configured' }, 400 });
+        if (!insurerEmail) return json({ error: 'Insurer has no email configured' }, 400);
 
         // Check if there's already an active (non-expired, non-actioned) token
         const { data: existing } = await db.from('sp_review_tokens')
@@ -597,7 +597,6 @@ Deno.serve(async (req) => {
             created_by: caller.authId,
             expires_at: expiresAt,
             accessed_count: 0,
-            reminder_count: 0,
           });
           if (tkErr) return json({ error: tkErr.message }, 400);
         }

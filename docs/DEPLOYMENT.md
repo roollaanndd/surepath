@@ -1,6 +1,6 @@
 # SurePath — Panduan Deployment
 
-> Terakhir diperbarui: 10 Juni 2026.
+> Terakhir diperbarui: 7 Juli 2026 (v1.23.0).
 
 ## Ringkasan: 3 hal yang dideploy TERPISAH
 
@@ -35,6 +35,67 @@ supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi
 - Sumber kode di `supabase/functions/<nama>/index.ts`.
 - ⚠️ Mengubah file di repo TIDAK mengubah fungsi yang jalan — selalu deploy manual.
 - Secrets fungsi (otomatis tersedia): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`.
+
+### Daftar edge functions (per v1.23.0)
+
+| Function | Trigger | Catatan |
+|---|---|---|
+| `data-gateway` | HTTP | Inti — semua akses tabel sensitif lewat sini |
+| `create-xendit-invoice` | HTTP | Buat invoice Xendit |
+| `xendit-webhook` | HTTP (Xendit callback) | Credit wallet saat PAID |
+| `xendit-disburse` | HTTP | Trigger disbursement |
+| `send-otp` / `verify-otp` | HTTP | OTP email login |
+| `send-whatsapp` | HTTP | WhatsApp notification |
+| `submit-policy-insurer` | HTTP | Submit polis ke insurer API |
+| `ocr-scan` | HTTP | AI photo scoring |
+| `stnk-ocr` | HTTP | OCR STNK |
+| `notify-admin` | HTTP | Telegram alert |
+| `ai-policy-review` | HTTP | AI underwriting |
+| `ai-finance-review` | HTTP | AI financial health |
+| `ai-proxy` | HTTP | Proxy AI vendor |
+| `daily-report` | HTTP | Laporan harian |
+| `send-insurer-email` | HTTP | Kirim review-link email ke insurer (v1.20.0) |
+| `insurer-reminder-cron` | **Supabase Cron** | Pengingat insurer tiap 4 jam (v1.22.0) — lihat di bawah |
+
+### `insurer-reminder-cron` — scheduled function (v1.22.0+)
+
+Edge function ini tidak dipanggil HTTP manual, melainkan dijalankan otomatis oleh **Supabase Cron** (pg_cron extension) tiap 4 jam.
+
+**Schedule (Unix cron format):**
+```
+0 */4 * * *
+```
+Artinya: menit 0, setiap 4 jam (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC).
+
+**Setup sekali saja (cek di Supabase Dashboard → Database → Cron Schedules):**
+```sql
+select cron.schedule(
+  'insurer-reminder-cron',
+  '0 */4 * * *',
+  $$
+  select net.http_post(
+    url := 'https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/insurer-reminder-cron',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || current_setting('request.jwt.secret', true),
+      'x-cron-secret', '<CRON_SECRET>'
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+**Secret yang wajib diset di Supabase → Project Settings → Edge Functions:**
+- `CRON_SECRET` — secret string acak (mis. `openssl rand -hex 32`). Edge function `insurer-reminder-cron` memvalidasi header `x-cron-secret` == nilai ini sebelum eksekusi, supaya endpoint tidak bisa dipanggil sembarang dari internet.
+
+**Cara deploy + verify:**
+```bash
+supabase functions deploy insurer-reminder-cron --project-ref uyjgeteelnswphyzkjwi
+# verify jadwalnya aktif:
+supabase db execute "select * from cron.job;" --project-ref uyjgeteelnswphyzkjwi
+```
+
+Function mengirim email pengingat hanya ke review token yang: belum dipakai, belum expired, dan `last_reminded_at` lebih dari 24 jam lalu (anti-spam). Counter `reminder_count` dinaikkan tiap email terkirim.
 
 ## 3. Migrasi Database
 

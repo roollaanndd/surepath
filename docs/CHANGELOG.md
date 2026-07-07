@@ -2,6 +2,113 @@
 
 ---
 
+## v1.23.0 — 2026-07-07
+
+### Rate Limiting, Activity Logging, API Config
+- **Rate limiting** — IP-based (60 req/hr) and insurer-token-based (200 req/hr) limits enforced at the gateway via `sp_rate_limits` + `increment_rate_limit()` RPC
+- **Activity logging** — every insurer action (login, decision, payment, policy upload) is recorded in `sp_insurer_activity_log` for full audit trail
+- **API config management** — `sp_insurer_api_configs` table lets admins store per-insurer integration credentials (endpoint, key, headers) editable from Insurer CMS
+- **Security audit** (Phase 3-6 follow-up) — reviewed all new endpoints, confirmed token expiry + revocation + scope checks
+
+---
+
+## v1.22.0 — 2026-07-07
+
+### Reminder System, Email URL Fix, Critical Migration
+- **Insurer reminder cron** — new `insurer-reminder-cron` edge function (scheduled every 4h) emails insurers with pending review links; tracks `reminder_count` + `last_reminded_at` on `sp_review_tokens` to avoid spamming
+- **Email URL fix** — review-link emails now point at the correct production domain (`https://myinsurepath.com/review/<uuid>`) instead of localhost
+- **Critical DB migration** — added `insurer_decision`, `insurer_decision_notes`, `insurer_decision_at`, `insurer_review_token_id` columns to `sp_policy_orders` to persist insurer verdicts
+- **Security audit pass** — reviewed token-based auth flow, hardened `is_operator()` + `is_staff()` helpers (search_path fixed, EXECUTE revoked from anon)
+
+---
+
+## v1.21.1 — 2026-07-07
+
+### Insurer CMS Phase 2
+- **Token management UI** — admin can list, generate, and revoke `sp_insurer_auth_tokens` from Insurer CMS; expiry + last-used-at surfaced
+- **Review link management** — admin can resend / revoke `sp_review_tokens` per order; status badge (pending / submitted / expired) shown
+- **`pic_email` field on `sp_insurers`** — distinct from contact email; used as the default recipient for insurer review links + reminders
+
+---
+
+## v1.21.0 — 2026-07-07
+
+### Insurer App (5-tab portal)
+- **Complete Insurer portal** — dedicated `/insurerapp` with 5-tab bottom-nav: Beranda (dashboard), Polis (review queue), Klaim, Bayar (payments), Profil
+- **Token-based auth** — insurers log in via issued bearer token (no Supabase Auth); tokens stored in `sp_insurer_auth_tokens` with TTL + last-used tracking
+- **Supabase Realtime** — operator + insurer apps subscribe to `sp_admin_notifications` / `sp_insurer_activity_log` channels for live updates (new in v1.21+)
+- **Authed decision flow** — `insurer_submit_decision_authed` gateway action lets logged-in insurers approve / reject / request-info without needing a fresh review link
+
+---
+
+## v1.20.0 — 2026-07-07
+
+### Insurer Review Flow (operator → email → insurer)
+- **Operator approve → email** — when operator approves a queue item, system generates a `sp_review_tokens` row (UUID, 7-day expiry) and emails the insurer a single-order review link
+- **Insurer review page** — public `/review/:uuid` route renders order summary + documents + 3 decision buttons (Approve / Reject / Request Info); submission goes through `submit_insurer_decision` gateway action (token verified server-side)
+- **Decision persisted** — verdict + notes written back to `sp_policy_orders` and the token marked used; operator sees the decision in their queue in realtime
+
+---
+
+## v1.19.2 — 2026-07-07
+
+### Fix
+- **Customer app logout button** — fixed z-index collision with bottom nav + enlarged touch target; button now reliably tappable on iOS + Android
+
+---
+
+## v1.19.1 — 2026-07-07
+
+### Fix
+- **Version-gated session refresh** — sessions older than the minimum supported app version are force-refreshed on load; fixes blank-screen bug where stale localStorage sessions referenced routes/keys removed in newer builds
+
+---
+
+## v1.19.0 — 2026-07-07
+
+### Multi-App Login + Agent Verification
+- **`allowed_apps` field** — `sp_users.allowed_apps` (array) controls which apps a user can enter; when >1 entry, user lands on `/select-app` to pick; admin can edit from User Management
+- **Agent verification tab** — operator app gains a "Verify Agent" tab listing `sp_users` with role=AGENT + `is_verified=false`; operator can view KTP + agreement + approve (`admin_verify_agent`)
+- **SettingsView fix** — broken settings tab in operator app (was 404'ing) re-wired to the right component
+
+---
+
+## v1.18.2 — 2026-07-07
+
+### Fixes (Operator App polish)
+- **Bottom nav fixed** — active tab state was not reflecting current route; now uses `useLocation` correctly
+- **Dark mode** — operator app now respects `sp_dark_mode` localStorage like customer + agent apps
+- **Polis detail sheet** — added document viewer (image + PDF) inside the operator's policy detail bottom-sheet; previously documents were download-only
+
+---
+
+## v1.18.1 — 2026-07-07
+
+### Fix
+- **`is_suspended` column** — production `sp_users` schema was missing the `is_suspended` column added in v1.18.0; added via hotfix migration, unblocking operator suspend/unsuspend actions
+
+---
+
+## v1.18.0 — 2026-07-07
+
+### Operator App
+- **Dedicated `/operatorapp` route** — separate PWA with 5-tab bottom-nav: Antrean (queue), Polis, Klaim, Penarikan (withdrawals), Profil
+- **OPERATOR role** — new `sp_users.role = 'OPERATOR'` with scoped permissions; `is_operator()` SECURITY DEFINER helper gates actions
+- **Realtime notifications** — operator notifications panel subscribes to `sp_admin_notifications` via Supabase Realtime; new items appear without refresh
+- **Agent verification queue** — operator can review + verify newly registered agents (KTP + agreement check) before they can sell
+- **New gateway actions** — `admin_queue_summary`, `admin_mark_all_notifications_read`, `admin_list_pending_agents`, `admin_get_agent_detail`, `admin_verify_agent`
+
+---
+
+## v1.17.0 — 2026-07-07
+
+### Stabilization Release
+- Pre-Operator-App baseline; security + RLS hardening in preparation for the Operator App launch (v1.18.0)
+- Internal housekeeping, dependency bumps, and CI tweaks — no public-facing UX changes
+- Build + lint green; CI gate (`tsc --noEmit` + build) active on every PR to `main`
+
+---
+
 ## v1.16.1 — 2026-07-04
 
 ### Quote / Order Fixes (Phase 5)

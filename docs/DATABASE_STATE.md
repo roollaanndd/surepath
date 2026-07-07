@@ -1,7 +1,7 @@
 # SurePath — Keadaan Database (Live vs Repo)
 
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
-> Snapshot per 15 Juni 2026, project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
+> Snapshot per 7 Juli 2026 (v1.23.0), project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
 ## Tabel inti (prefix `sp_`)
 
@@ -18,6 +18,36 @@
 | `sp_page_views` | Analytics halaman | anon insert + auth select (tapi lihat catatan grants!) |
 | `sp_quotes`, `sp_product_configs`, `sp_website_config` | Quote publik, harga, CMS landing | publik/terbuka |
 | `sp_withdrawals`, `sp_wallet_transactions` | Penarikan & wallet agent | via gateway / RPC |
+
+## Tabel + kolom baru (v1.18.0 → v1.23.0)
+
+Ditambahkan oleh rangkaian rilis Operator App + Insurer App + rate limiting. Semua sudah diapply ke production (cek `supabase/migrations/20260707_*.sql`).
+
+### Tabel baru
+
+| Tabel | Versi | Isi | Akses |
+|---|---|---|---|
+| `sp_agent_agreements` | v1.15.0 | Bukti e-sign perjanjian keagenan (nomor surat, KTP, accepted_at, user-agent) | RLS: agent insert+read miliknya, admin read all, **tidak ada UPDATE/DELETE policy** (immutable) |
+| `sp_insurer_activity_log` | v1.23.0 | Audit trail aksi insurer (login, decision, payment, policy upload) — append-only | **deny-all** → hanya service_role insert via gateway; admin read via `admin_list_insurer_activity` |
+| `sp_insurer_api_configs` | v1.23.0 | Config integrasi API per-insurer (endpoint, key, headers, updated_by) | **deny-all** → hanya gateway; admin edit via `admin_get_insurer_api_config` / `admin_save_insurer_api_config` |
+| `sp_insurer_auth_tokens` | v1.21.0 | Bearer token untuk login Insurer app (token hash, insurer_id, expires_at, last_used_at, revoked_at) | **deny-all** → hanya gateway; admin manage via `admin_list_insurer_tokens` / `admin_generate_insurer_token` / `admin_revoke_insurer_token` |
+| `sp_rate_limits` | v1.23.0 | Counter rate-limit per key (`ip:<addr>` / `insurer:<token_id>`), window 1 jam, hit_count + window_start | **deny-all** → hanya service_role via `increment_rate_limit()` RPC |
+| `sp_review_tokens` | v1.20.0 | UUID token untuk halaman `/review/:uuid` (7-day expiry, submitted_at, reminder_count, last_reminded_at) | **deny-all** → gateway-only; admin manage via `admin_list_review_tokens` / `admin_send_insurer_review_link` |
+
+### Kolom baru pada tabel existing
+
+| Tabel | Kolom | Versi | Catatan |
+|---|---|---|---|
+| `sp_users` | `allowed_apps` (`text[]`) | v1.19.0 | Array nama app yang boleh dimasuki user; >1 entry → user mendarat di `/select-app`. Default `{customer}` / `{agent}` / `{admin}` sesuai role |
+| `sp_users` | `is_suspended` (`boolean default false`) | v1.18.0 | Operator bisa suspend/unsuspend user; v1.18.1 hotfix menambahkan kolom ini ke production |
+| `sp_users` | `is_verified` (`boolean default false`) | v1.18.0 | Agen harus diverifikasi operator sebelum bisa jual; operator approve via `admin_verify_agent` |
+| `sp_policy_orders` | `insurer_decision` (`text`) | v1.22.0 | `APPROVED` / `REJECTED` / `REQUEST_INFO` dari insurer |
+| `sp_policy_orders` | `insurer_decision_notes` (`text`) | v1.22.0 | Catatan insurer saat decision |
+| `sp_policy_orders` | `insurer_decision_at` (`timestamptz`) | v1.22.0 | Waktu decision insurer |
+| `sp_policy_orders` | `insurer_review_token_id` (`uuid` FK → `sp_review_tokens`) | v1.22.0 | Link ke review token yang dipakai untuk decision ini |
+| `sp_review_tokens` | `reminder_count` (`int default 0`) | v1.22.0 | Counter email pengingat yang sudah dikirim |
+| `sp_review_tokens` | `last_reminded_at` (`timestamptz`) | v1.22.0 | Timestamp email pengingat terakhir (anti-spam, 24h cooldown) |
+| `sp_insurers` | `pic_email` (`text`) | v1.21.1 | Email PIC insurer — penerima default review-link + reminder |
 
 ## Status RLS live (per 15 Juni 2026)
 
@@ -49,3 +79,13 @@
 - `increment_coins_balance` (EXECUTE dicabut dari anon/authenticated — hanya service_role)
 - `reverse_withdrawal` (reversal saat penarikan ditolak)
 - `handle_new_user` (trigger milik app lain)
+
+### RPC baru (v1.18.0 → v1.23.0)
+
+| RPC | Versi | Kegunaan |
+|---|---|---|
+| `increment_rate_limit(p_key text, p_window_seconds int)` | v1.23.0 | SECURITY DEFINER — atomic increment hit_count di `sp_rate_limits`, reset kalau window lewat, return `(hit_count, window_start)`. Gateway memanggil ini sebelum action dijalankan |
+| `is_operator()` | v1.18.0 | SECURITY DEFINER — return `true` jika `auth.uid()` punya role `OPERATOR`. Search_path hardened, EXECUTE revoked dari anon |
+| `is_staff()` | v1.18.0 | SECURITY DEFINER — return `true` jika role di (`MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR, INSURANCE_ADMIN, OPERATOR`) |
+| `notify_new_withdrawal(p_withdrawal_id uuid)` | v1.20.0 | Trigger → insert row baru di `sp_admin_notifications` saat withdrawal request dibuat, supaya operator dapat notifikasi realtime |
+| `notify_paid_payment(p_payment_id uuid)` | v1.20.0 | Trigger → insert row baru di `sp_admin_notifications` saat payment PAID, supaya operator + agent dapat notifikasi realtime |

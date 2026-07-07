@@ -141,40 +141,69 @@ Deno.serve(async (req) => {
       }).then(() => {}, () => {});
     };
 
-    // ── 1) Authenticate the caller via their Supabase JWT ──────────────────────
-    const authHeader = req.headers.get('authorization') ?? '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    if (!token) return json({ error: 'Unauthorized: missing bearer token' }, 401);
-
-    // Verify the JWT by asking Supabase Auth who this token belongs to.
-    const authClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await authClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: 'Unauthorized: invalid token' }, 401);
-
-    const authId = userData.user.id;
-    const email  = (userData.user.email ?? '').toLowerCase();
-
-    // ── 2) Resolve the caller's SurePath identity + role (service_role) ────────
-    const db = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: spUser } = await db
-      .from('sp_users')
-      .select('*')
-      .or(`id.eq.${authId},email.eq.${email}`)
-      .maybeSingle();
-
-    const caller: Caller = {
-      authId,
-      email,
-      spUser: spUser ?? null,
-      role: spUser?.role ?? null,
-      isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''),
-    };
-
+    // ── 0) Parse the action early so we can skip JWT for public actions ──────
     try { var parsed = await req.json(); } catch { var parsed = { action: null }; }
     const { action, params = {} } = parsed;
     if (!action) return json({ error: 'Missing action' }, 400);
+
+    // Service-role DB client — used by all actions (both JWT-authed and token-authed)
+    const db = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Public actions that don't require a Supabase JWT — they use their own
+    // token-based auth (review token or insurer auth token) passed in params.
+    // These are used by the insurer app + review page where users don't have
+    // Supabase Auth accounts.
+    const PUBLIC_ACTIONS = new Set([
+      'get_insurer_review',           // /review/:uuid page (review token)
+      'submit_insurer_decision',      // /review/:uuid page (review token)
+      'get_insurer_dashboard',        // /insurerapp dashboard (auth token)
+      'insurer_submit_decision_authed', // /insurerapp dashboard (auth token)
+      'insurer_list_payments',        // /insurerapp payments tab (auth token)
+      'insurer_upload_policy',        // /insurerapp policy upload (auth token)
+    ]);
+
+    let caller: Caller;
+
+    if (PUBLIC_ACTIONS.has(action)) {
+      // Skip JWT auth — the action will validate its own token from params
+      caller = {
+        authId: '',
+        email: '',
+        spUser: null,
+        role: null,
+        isAdmin: false,
+      };
+    } else {
+      // ── 1) Authenticate the caller via their Supabase JWT ──────────────────
+      const authHeader = req.headers.get('authorization') ?? '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!token) return json({ error: 'Unauthorized: missing bearer token' }, 401);
+
+      // Verify the JWT by asking Supabase Auth who this token belongs to.
+      const authClient = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await authClient.auth.getUser();
+      if (userErr || !userData?.user) return json({ error: 'Unauthorized: invalid token' }, 401);
+
+      const authId = userData.user.id;
+      const email  = (userData.user.email ?? '').toLowerCase();
+
+      // ── 2) Resolve the caller's SurePath identity + role (service_role) ────
+      const { data: spUser } = await db
+        .from('sp_users')
+        .select('*')
+        .or(`id.eq.${authId},email.eq.${email}`)
+        .maybeSingle();
+
+      caller = {
+        authId,
+        email,
+        spUser: spUser ?? null,
+        role: spUser?.role ?? null,
+        isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''),
+      };
+    }
 
     // ── 3) Authorized operations ───────────────────────────────────────────────
     switch (action) {

@@ -56,13 +56,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
     return profile
       ? {
-          id:         profile.id,
-          name:       profile.name,
-          email:      profile.email,
-          role:       profile.role as UserRole,
-          supabaseId: profile.id,
-          nodeId:     profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
-          trustScore: profile.trust_score ?? 85,
+          id:           profile.id,
+          name:         profile.name,
+          email:        profile.email,
+          role:         profile.role as UserRole,
+          supabaseId:   profile.id,
+          nodeId:       profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
+          trustScore:   profile.trust_score ?? 85,
+          allowed_apps: (profile as any).allowed_apps ?? null,
         }
       : {
           id:         user.id,

@@ -29,6 +29,10 @@ export interface SpUser {
   profile_photo_url?: string | null;
   ktp_document_url?: string | null;
   is_suspended?: boolean;
+  // Multi-app access — NULL or single-element array = single-app routing
+  // (uses role for legacy compat). Multi-element = AppSelector screen shown.
+  // Values match UserRole enum: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN'.
+  allowed_apps?: string[] | null;
   // B2B corporate fields
   company_name?: string | null;
   company_reg_no?: string | null;

@@ -15,16 +15,33 @@ import AppUpdateNotification from './components/AppUpdateNotification';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
-const rolePath = (role: UserRole) =>
-  ADMIN_ROLES.includes(role) ? '/admin'
-  : role === UserRole.OPERATOR ? '/operatorapp'
-  : role === UserRole.AGENT ? '/agapps' : '/custapp';
+// Decide where to route a signed-in user.
+// 1. If allowed_apps has 2+ entries → '/select-app' (multi-app selector screen)
+// 2. Else if allowed_apps has 1 entry → that app
+// 3. Else fall back to legacy role-based routing (single-app users)
+const rolePath = (user: any) => {
+  const allowed: string[] | null | undefined = user?.allowed_apps;
+  if (Array.isArray(allowed) && allowed.length > 1) return '/select-app';
+  if (Array.isArray(allowed) && allowed.length === 1) {
+    const app = allowed[0];
+    if (app === 'ADMIN' || ADMIN_ROLES.includes(user.role)) return '/admin';
+    if (app === 'OPERATOR') return '/operatorapp';
+    if (app === 'AGENT') return '/agapps';
+    return '/custapp';
+  }
+  // Legacy single-role routing
+  const role = user?.role;
+  return ADMIN_ROLES.includes(role) ? '/admin'
+    : role === UserRole.OPERATOR ? '/operatorapp'
+    : role === UserRole.AGENT ? '/agapps' : '/custapp';
+};
 
 const AuthGate          = lazy(() => import('./components/AuthGate'));
 const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
 const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
 const OperatorPortal    = lazy(() => import('./components/operator/OperatorPortal'));
 const OperatorLogin     = lazy(() => import('./components/operator/OperatorLogin'));
+const AppSelector       = lazy(() => import('./components/AppSelector'));
 const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
 const HomePage          = lazy(() => import('./src/pages/HomePage'));
@@ -175,7 +192,7 @@ const App = () => {
       setCurrentUser(enrichedUser);
       localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
       setAppMode(true);
-      navigate(rolePath(enrichedUser.role));
+      navigate(rolePath(enrichedUser));
     }, 1400);
   }, [navigate]);
 
@@ -231,6 +248,7 @@ const App = () => {
             role: profile.role as UserRole, supabaseId: profile.id,
             nodeId: profile.agent_code ?? `SP-${u.id.slice(0, 8).toUpperCase()}`,
             trustScore: profile.trust_score ?? 85,
+            allowed_apps: (profile as any).allowed_apps ?? null,
           });
         } else {
           setPendingOAuthUser({
@@ -399,10 +417,48 @@ const App = () => {
     );
   }
 
+  // ── Multi-app selector — shown when user has >1 entry in allowed_apps ─────
+  if (pathname === '/select-app' && currentUser) {
+    const allowed: string[] = Array.isArray(currentUser.allowed_apps) ? currentUser.allowed_apps : [];
+    if (allowed.length <= 1) {
+      // Single app or no allowed_apps — redirect to the right place
+      navigate(rolePath(currentUser));
+      return null;
+    }
+    const handleAppSelect = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN') => {
+      const target = app === 'ADMIN' ? '/admin'
+        : app === 'OPERATOR' ? '/operatorapp'
+        : app === 'AGENT' ? '/agapps' : '/custapp';
+      navigate(target);
+    };
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AppSelector user={currentUser} onSelect={handleAppSelect} onLogout={handleLogout} />
+      </Suspense>
+    );
+  }
+
+  // ── Helper: does this user have access to a specific app? ─────────────────
+  // Multi-app users (allowed_apps has the app listed) OR legacy single-role users
+  // whose role matches the app's role.
+  const hasAppAccess = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN'): boolean => {
+    if (!currentUser) return false;
+    const allowed: string[] | null | undefined = currentUser.allowed_apps;
+    if (Array.isArray(allowed) && allowed.length > 0) {
+      return allowed.includes(app);
+    }
+    // Legacy: use role
+    if (app === 'ADMIN') return ADMIN_ROLES.includes(currentUser.role);
+    if (app === 'OPERATOR') return currentUser.role === UserRole.OPERATOR;
+    if (app === 'AGENT') return currentUser.role === UserRole.AGENT;
+    if (app === 'CUSTOMER') return true; // everyone can be a customer
+    return false;
+  };
+
   // ── Operator app — newly built internal staff portal (parallel to /admin) ──
   // OPERATOR role is NOT in ADMIN_ROLES above, so they don't get the CMS.
   // They get their own /operatorapp with bottom-nav UX (matching agent app).
-  if (pathname === '/operatorapp' && (!currentUser || currentUser.role !== UserRole.OPERATOR)) {
+  if (pathname === '/operatorapp' && (!currentUser || !hasAppAccess('OPERATOR'))) {
     return (
       <Suspense fallback={<PortalLoader lang={lang} />}>
         <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
@@ -410,7 +466,7 @@ const App = () => {
     );
   }
 
-  if (currentUser && currentUser.role === UserRole.OPERATOR) {
+  if (currentUser && hasAppAccess('OPERATOR') && pathname === '/operatorapp') {
     return (
       <PortalErrorBoundary onReset={handleLogout}>
         <Suspense fallback={<PortalLoader />}>
@@ -420,7 +476,7 @@ const App = () => {
     );
   }
 
-  if (currentUser && currentUser.role === UserRole.AGENT) {
+  if (currentUser && hasAppAccess('AGENT') && (pathname === '/agapps' || pathname === '/agentapp')) {
     const agentWithSupabaseId = currentUser.supabaseId
       ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
       : { ...currentUser, agent_code: currentUser.nodeId };

@@ -69,24 +69,30 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
           return;
         }
 
-        if (spUser.role !== UserRole.OPERATOR) {
+        // Multi-app access check: user can access operator app if either:
+        // 1. role === 'OPERATOR' (legacy single-app operator)
+        // 2. allowed_apps array includes 'OPERATOR' (multi-app user)
+        const allowedApps: string[] = Array.isArray((spUser as any).allowed_apps) ? (spUser as any).allowed_apps : [];
+        const canAccessOperator = spUser.role === UserRole.OPERATOR || allowedApps.includes('OPERATOR');
+        if (!canAccessOperator) {
           await supabase.auth.signOut();
           recordFailedAttempt(normalEmail);
-          setError('Akses ditolak. Akun ini bukan Operator internal. Gunakan portal yang sesuai.');
+          setError('Akses ditolak. Akun ini tidak memiliki akses Operator. Gunakan portal yang sesuai.');
           setLoading(false);
           return;
         }
 
         clearRateLimit(normalEmail);
         onLoginSuccess({
-          id:         spUser.id,
-          name:       spUser.name,
-          email:      spUser.email,
-          role:       spUser.role,
-          supabaseId: authData.user.id,
-          nodeId:     spUser.agent_code ?? `SP-OP-${authData.user.id.slice(0, 6).toUpperCase()}`,
-          trustScore: spUser.trust_score ?? 85,
-          token:      authData.session.access_token,
+          id:           spUser.id,
+          name:         spUser.name,
+          email:        spUser.email,
+          role:         spUser.role,
+          supabaseId:   authData.user.id,
+          nodeId:       spUser.agent_code ?? `SP-OP-${authData.user.id.slice(0, 6).toUpperCase()}`,
+          trustScore:   spUser.trust_score ?? 85,
+          allowed_apps: allowedApps ?? null,
+          token:        authData.session.access_token,
         });
         return;
       }

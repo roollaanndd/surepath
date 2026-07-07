@@ -129,6 +129,19 @@ export interface OperatorAgent {
   tier: string | null;
   trust_score: number | null;
   created_at: string;
+  // New fields for verification UI
+  ktp?: string | null;
+  address?: string | null;
+  profile_photo_url?: string | null;
+  ktp_document_url?: string | null;
+  agreement?: {
+    agent_id: string;
+    agreement_no: string;
+    full_name: string;
+    ktp_number: string;
+    accepted_at: string;
+    user_agent: string | null;
+  } | null;
 }
 
 export interface OperatorNotification {
@@ -222,15 +235,49 @@ export async function rejectWithdrawal(
 }
 
 export async function listPendingAgents(): Promise<OperatorAgent[]> {
+  // Use the new richer endpoint that returns agreement info too.
+  try {
+    const { data, error } = await callGateway('admin_list_pending_agents', { limit: 100 });
+    if (!error && data) return data as OperatorAgent[];
+  } catch (e) {
+    console.warn('admin_list_pending_agents failed, falling back to admin_list_users', e);
+  }
+  // Fallback to old behavior (no agreement info)
   const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 200 });
   if (error) throw new Error(error);
-  // Note: production sp_users schema does NOT have is_suspended column —
-  // pending agents = unverified agents only.
   return ((data ?? []) as OperatorAgent[]).filter(a => !a.verified);
 }
 
-export async function verifyAgent(userId: string): Promise<void> {
-  const { error } = await callGateway('admin_update_user', { user_id: userId, verified: true });
+export interface AgentDetail {
+  agent: OperatorAgent & {
+    allowed_apps?: string[] | null;
+    referral_code?: string | null;
+    upline_id?: string | null;
+  };
+  agreements: Array<{
+    id: string;
+    agreement_no: string;
+    doc_version: string;
+    full_name: string;
+    ktp_number: string;
+    accepted_at: string;
+    user_agent: string | null;
+  }>;
+}
+
+export async function getAgentDetail(agentId: string): Promise<AgentDetail> {
+  const { data, error } = await callGateway('admin_get_agent_detail', { agent_id: agentId });
+  if (error) throw new Error(error);
+  return data as AgentDetail;
+}
+
+export async function verifyAgent(agentId: string): Promise<void> {
+  const { error } = await callGateway('admin_verify_agent', { agent_id: agentId, approve: true });
+  if (error) throw new Error(error);
+}
+
+export async function rejectAgent(agentId: string): Promise<void> {
+  const { error } = await callGateway('admin_verify_agent', { agent_id: agentId, approve: false });
   if (error) throw new Error(error);
 }
 

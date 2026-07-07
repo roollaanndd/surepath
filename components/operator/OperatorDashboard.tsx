@@ -1,10 +1,10 @@
 // OperatorDashboard.tsx — Beranda tab. Aggregated queue summary + quick stats.
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, ShieldAlert, Wallet, UserCheck, Bell, TrendingUp, Clock } from 'lucide-react';
+import { FileText, ShieldAlert, Wallet, UserCheck, Bell, TrendingUp, Clock, Eye } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
-import { SkeletonCard, useToast, useConfirmDialog } from '../ui';
-import { getQueueSummary, listPendingAgents, verifyAgent, type QueueSummary, type OperatorAgent } from '../../services/operatorService';
+import { SkeletonCard, useToast } from '../ui';
+import { getQueueSummary, listPendingAgents, type QueueSummary, type OperatorAgent } from '../../services/operatorService';
 
 interface Props {
   operator: any;
@@ -15,7 +15,6 @@ interface Props {
 
 const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick }) => {
   const toast = useToast();
-  const confirm = useConfirmDialog();
   const [summary, setSummary] = useState<QueueSummary | null>(null);
   const [pendingAgents, setPendingAgents] = useState<OperatorAgent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,23 +38,6 @@ const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick 
 
   useEffect(() => { load(); }, [load, refreshTick]);
 
-  const handleVerifyAgent = async (userId: string, name: string) => {
-    const ok = await confirm({
-      title: 'Verifikasi Agen',
-      description: `Setujui ${name} sebagai agen terverifikasi? Agen ini dapat mulai bertransaksi setelah diverifikasi.`,
-      confirmLabel: 'Verifikasi',
-      variant: 'primary',
-    });
-    if (!ok) return;
-    try {
-      await verifyAgent(userId);
-      toast.success(`${name} berhasil diverifikasi`);
-      load();
-    } catch (e: any) {
-      toast.error(`Gagal verifikasi: ${e.message}`);
-    }
-  };
-
   if (loading) {
     return (
       <div className="px-5 pt-5 space-y-4">
@@ -70,7 +52,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick 
     { label: 'Polis Pending',   value: summary?.pendingOrders ?? 0,        icon: FileText,    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',     tab: 'orders' },
     { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        icon: ShieldAlert, color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-950/30',     tab: 'claims' },
     { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, icon: Wallet,      color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
-    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'home' },
+    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
   ];
 
   return (
@@ -144,26 +126,37 @@ const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick 
       {/* Pending agent verifications */}
       {pendingAgents.length > 0 && (
         <div>
-          <SectionLabel>Agen Menunggu Verifikasi</SectionLabel>
+          <SectionLabel action={{ label: 'Lihat semua', onClick: () => onNavigate('agents') }}>
+            Agen Menunggu Verifikasi
+          </SectionLabel>
           <div className="space-y-2">
             {pendingAgents.slice(0, 5).map(a => (
-              <div key={a.id} className="p-3 rounded-2xl border border-ds-border bg-ds-card flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center font-black text-ds-green">
-                  {a.name?.charAt(0)?.toUpperCase() ?? '?'}
+              <button
+                key={a.id}
+                onClick={() => onNavigate('agents')}
+                className="w-full p-3 rounded-2xl border border-ds-border bg-ds-card flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
+              >
+                <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center font-black text-ds-green overflow-hidden">
+                  {a.profile_photo_url ? (
+                    <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
+                  ) : (
+                    (a.name?.charAt(0)?.toUpperCase() ?? '?')
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ds-ink truncate">{a.name}</p>
                   <p className="text-xs text-ds-ink3 truncate">{a.email} · {a.phone ?? '-'}</p>
                   <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">{a.agent_code ?? 'SP-AGT-???'}</p>
                 </div>
-                <button
-                  onClick={() => handleVerifyAgent(a.id, a.name)}
-                  className="px-3 py-2 rounded-xl bg-ds-green text-white text-xs font-bold active:scale-95 transition-transform"
-                >
-                  Verifikasi
-                </button>
-              </div>
+                <Eye size={14} className="text-ds-ink3 shrink-0" />
+              </button>
             ))}
+            <button
+              onClick={() => onNavigate('agents')}
+              className="w-full py-2.5 rounded-2xl text-xs font-bold bg-ds-green-tint text-ds-green active:scale-95 transition-transform"
+            >
+              Verifikasi semua agen →
+            </button>
           </div>
         </div>
       )}

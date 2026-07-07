@@ -68,7 +68,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
           return;
         }
 
-        if (!ADMIN_ROLES.includes(spUser.role as UserRole)) {
+        // Multi-app access: admin if role in ADMIN_ROLES OR allowed_apps includes 'ADMIN'
+        const allowedApps: string[] = Array.isArray((spUser as any).allowed_apps) ? (spUser as any).allowed_apps : [];
+        const canAccessAdmin = ADMIN_ROLES.includes(spUser.role as UserRole) || allowedApps.includes('ADMIN');
+        if (!canAccessAdmin) {
           await supabase.auth.signOut();
           recordFailedAttempt(normalEmail);
           setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
@@ -77,12 +80,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
 
         clearRateLimit(normalEmail);
         onLoginSuccess({
-          id:         spUser.id,
-          name:       spUser.name,
-          email:      spUser.email,
-          role:       spUser.role,
-          supabaseId: authData.user.id,
-          nodeId:     spUser.agent_code ?? `SP-${authData.user.id.slice(0, 8).toUpperCase()}`,
+          id:           spUser.id,
+          name:         spUser.name,
+          email:        spUser.email,
+          role:         spUser.role,
+          supabaseId:   authData.user.id,
+          nodeId:       spUser.agent_code ?? `SP-${authData.user.id.slice(0, 8).toUpperCase()}`,
+          allowed_apps: allowedApps ?? null,
           trustScore: spUser.trust_score ?? 85,
           token:      authData.session.access_token,
         });

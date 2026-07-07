@@ -1,98 +1,124 @@
+// AppSelector.tsx — Multi-app picker screen.
+// Shown when a user has more than 1 entry in sp_users.allowed_apps.
+// User picks which app to enter; we then navigate to that app's route.
+//
+// The selected app is remembered in localStorage so the next login auto-routes
+// (until user explicitly logs out, which clears the choice).
 
-import React from 'react';
-import { Zap, ArrowRight, ShieldCheck, Cpu, Globe, Terminal, Briefcase } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, Briefcase, ShieldCheck, Settings, ArrowRight, LogOut } from 'lucide-react';
 
 interface AppSelectorProps {
-  onSelect: (app: 'AGENT' | 'CLAIM' | 'HQ') => void;
-  userName: string;
+  user: any;
+  onSelect: (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN') => void;
+  onLogout: () => void;
 }
 
-const AppSelector: React.FC<AppSelectorProps> = ({ onSelect, userName }) => {
-  const APPS = [
-    { 
-      id: 'AGENT' as const, 
-      label: 'Agent Module', 
-      desc: 'Commission matrix & product deployment.', 
-      icon: Briefcase, 
-      color: 'bg-emerald-500', 
-      tag: 'Partner Node'
-    },
-    { 
-      id: 'CLAIM' as const, 
-      label: 'Claim AI', 
-      desc: '60s autonomous damage audit engine.', 
-      icon: Zap, 
-      color: 'bg-emerald-500', 
-      tag: 'Express Path'
-    },
-    { 
-      id: 'HQ' as const, 
-      label: 'HQ Control', 
-      desc: 'Global ledger & digital monitoring.', 
-      icon: Terminal, 
-      color: 'bg-blue-600', 
-      tag: 'Command Level'
-    }
-  ];
+const APPS: Array<{
+  id: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN';
+  label: string;
+  desc: string;
+  Icon: React.FC<any>;
+  color: string;
+  bg: string;
+}> = [
+  {
+    id: 'CUSTOMER',
+    label: 'Customer App',
+    desc: 'Beli polis, klaim, lacak proteksi Anda',
+    Icon: Home,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+  },
+  {
+    id: 'AGENT',
+    label: 'Agent App',
+    desc: 'Buat penawaran, kelola nasabah, komisi',
+    Icon: Briefcase,
+    color: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-50 dark:bg-blue-950/30',
+  },
+  {
+    id: 'OPERATOR',
+    label: 'Operator App',
+    desc: 'Approve polis, klaim, verifikasi agen',
+    Icon: ShieldCheck,
+    color: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-950/30',
+  },
+  {
+    id: 'ADMIN',
+    label: 'Admin CMS',
+    desc: 'Kelola produk, rates, users, laporan',
+    Icon: Settings,
+    color: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-purple-50 dark:bg-purple-950/30',
+  },
+];
+
+const AppSelector: React.FC<AppSelectorProps> = ({ user, onSelect, onLogout }) => {
+  const allowedApps: string[] = Array.isArray(user?.allowed_apps) ? user.allowed_apps : [];
+  const visibleApps = APPS.filter(a => allowedApps.includes(a.id));
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#f0fdf9] flex flex-col items-center justify-center p-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-slate-900/5 opacity-100 pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-400/10 rounded-full blur-[140px] pointer-events-none animate-pulse"></div>
-      
-      <div className="max-w-5xl w-full space-y-16 animate-fade-in relative z-10">
-        <div className="space-y-6 text-center">
-          <div className="inline-flex items-center gap-3 bg-white px-5 py-2 rounded-full shadow-xl border border-emerald-100 mb-4 animate-float">
-             <ShieldCheck size={16} className="text-emerald-500"/>
-             <span className="text-[0.7rem] font-black text-emerald-700 uppercase tracking-[0.4em]">Biometric ID Verified</span>
-          </div>
-          <h2 className="text-5xl md:text-7xl font-black text-midnight uppercase tracking-tighter leading-none">
-            Welcome, <br/>
-            <span className="text-emerald-500 text-glow-emerald">Pathfinder</span> {userName.split(' ')[0]}
-          </h2>
-          <div className="flex justify-center items-center gap-6 pt-4">
-             <div className="flex items-center gap-2 bg-white/70 backdrop-blur-md px-6 py-2 rounded-full border border-emerald-100 shadow-sm"><Globe size={14} className="text-emerald-500"/><span className="text-[0.65rem] font-black text-gray-600 uppercase tracking-widest">Node: JKT-S01</span></div>
-             <div className="flex items-center gap-2 bg-white/70 backdrop-blur-md px-6 py-2 rounded-full border border-emerald-100 shadow-sm"><Cpu size={14} className="text-emerald-500"/><span className="text-[0.65rem] font-black text-gray-600 uppercase tracking-widest">Sync: Active</span></div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-ds-bg dark:bg-[#080B12] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sora">
+      <div aria-hidden className="sp-ambient" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {APPS.map((app) => (
-            <button
-              key={app.id}
-              onClick={() => onSelect(app.id)}
-              className="group relative text-left glass-card rounded-[4rem] p-10 border-2 border-emerald-100 bg-white/90 hover:border-emerald-500 hover:shadow-[0_40px_80px_-20px_rgba(16,185,129,0.3)] transition-all duration-500 hover:scale-[1.05] hover:-translate-y-3 overflow-hidden active:scale-95"
-            >
-              <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-[0.06] group-hover:scale-125 transition-all duration-1000">
-                <app.icon size={240} />
-              </div>
-              
-              <div className="relative z-10 space-y-8">
-                <div className={`w-20 h-20 ${app.color} rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl transition-all duration-700 group-hover:rotate-6 group-hover:scale-110 shadow-emerald-500/20`}>
-                  <app.icon size={36} />
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                     <div className={`w-1.5 h-1.5 rounded-full ${app.color} animate-pulse`}></div>
-                     <span className="text-[0.6rem] font-black text-gray-400 uppercase tracking-widest">{app.tag}</span>
-                  </div>
-                  <h3 className="text-3xl font-black text-midnight uppercase tracking-tighter group-hover:text-emerald-600 transition-colors leading-none">{app.label}</h3>
-                  <p className="text-[0.8rem] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
-                    {app.desc}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-[0.7rem] font-black uppercase text-emerald-500 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 tracking-[0.25em]">
-                  Initialize Node <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
-                </div>
-              </div>
-            </button>
-          ))}
+      {/* Header */}
+      <div className="relative z-10 text-center mb-8">
+        <div className="w-16 h-16 rounded-2xl sp-glass mx-auto mb-4 flex items-center justify-center">
+          <img src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
         </div>
-
-        <div className="pt-10 text-center">
-            <p className="text-[0.65rem] font-black text-emerald-800/30 uppercase tracking-[0.5em] animate-pulse">Select Environment to proceed through proses selanjutnya</p>
-        </div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">
+          Selamat datang kembali
+        </p>
+        <h1 className="text-2xl font-black tracking-tight text-ds-ink mt-1">
+          {user?.name?.split(' ')[0] ?? 'Pengguna'} 👋
+        </h1>
+        <p className="text-xs text-ds-ink3 mt-2 max-w-xs">
+          Anda memiliki akses ke beberapa aplikasi. Pilih yang ingin Anda buka.
+        </p>
       </div>
+
+      {/* App cards */}
+      <div className="relative z-10 w-full max-w-md space-y-3">
+        {visibleApps.map(({ id, label, desc, Icon, color, bg }) => (
+          <button
+            key={id}
+            onClick={() => onSelect(id)}
+            onMouseEnter={() => setHovered(id)}
+            onMouseLeave={() => setHovered(null)}
+            className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] ${
+              hovered === id
+                ? 'border-emerald-400 dark:border-emerald-500 shadow-ds-md'
+                : 'border-ds-border bg-ds-card'
+            }`}
+            style={{ background: hovered === id ? undefined : 'var(--ds-card)' }}
+          >
+            <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
+              <Icon size={22} className={color} />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-sm font-black text-ds-ink">{label}</p>
+              <p className="text-xs text-ds-ink3 mt-0.5 truncate">{desc}</p>
+            </div>
+            <ArrowRight size={18} className="text-ds-ink3 shrink-0" />
+          </button>
+        ))}
+      </div>
+
+      {/* Logout */}
+      <button
+        onClick={onLogout}
+        className="relative z-10 mt-8 flex items-center gap-2 text-xs font-bold text-ds-ink3 hover:text-rose-500 transition-colors"
+      >
+        <LogOut size={12} /> Keluar
+      </button>
+
+      <p className="relative z-10 mt-6 text-[10px] text-ds-ink3 font-bold uppercase tracking-widest">
+        SurePath · PT Ruang Proteksi Indonesia
+      </p>
     </div>
   );
 };

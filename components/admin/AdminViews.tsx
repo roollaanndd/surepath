@@ -28,6 +28,7 @@ import {
   getAdminPayments, getAdminFinancialReports,
 } from '../../services/supabaseService';
 import { TIER_CONFIG } from '../../types';
+import { useToast } from '../ui';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import type { BackupRecord } from '../../services/backupService';
@@ -1216,6 +1217,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
 };
 
 export const SettingsView = ({ products, setProducts, currentUserRole }: { products: any[], setProducts: any, currentUserRole?: string }) => {
+  const toast = useToast();
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
 
@@ -1227,10 +1229,20 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   }, []);
 
   const handleAddCustomProduct = async () => {
-    if (!newProduct.name) return;
-    await db.customProducts.add({ ...newProduct, isActive: true });
-    setNewProduct({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
-    db.customProducts.toArray().then(setCustomProducts);
+    if (!newProduct.name) {
+      toast.error('Nama produk wajib diisi');
+      return;
+    }
+    try {
+      await db.customProducts.add({ ...newProduct, isActive: true });
+      setNewProduct({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
+      const list = await db.customProducts.toArray();
+      setCustomProducts(list);
+      toast.success('Produk kustom ditambahkan');
+    } catch (e: any) {
+      console.error('handleAddCustomProduct:', e);
+      toast.error(`Gagal menambah produk: ${e.message ?? e}`);
+    }
   };
 
   const toggleProduct = (id: string) => {
@@ -1238,24 +1250,47 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   };
 
   const toggleCustomProduct = async (product: CustomProduct) => {
-    await db.customProducts.update(product.id!, { isActive: !product.isActive });
-    db.customProducts.toArray().then(setCustomProducts);
+    try {
+      await db.customProducts.update(product.id!, { isActive: !product.isActive });
+      const list = await db.customProducts.toArray();
+      setCustomProducts(list);
+    } catch (e: any) {
+      console.error('toggleCustomProduct:', e);
+      toast.error(`Gagal toggle produk: ${e.message ?? e}`);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("Ukuran logo maksimal 2MB");
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran logo maksimal 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (reader.error) {
+        console.error('FileReader error:', reader.error);
+        toast.error(`Gagal membaca file: ${reader.error.message}`);
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      try {
         localStorage.setItem('surepath_custom_logo', reader.result as string);
         window.dispatchEvent(new Event('logo-updated'));
-      };
-      reader.readAsDataURL(file);
-    }
+        toast.success('Logo berhasil diupload');
+      } catch (e: any) {
+        console.error('localStorage.setItem error:', e);
+        if (e?.name === 'QuotaExceededError') {
+          toast.error('Storage penuh. Logo terlalu besar — gunakan < 1MB.');
+        } else {
+          toast.error(`Gagal simpan logo: ${e.message ?? e}`);
+        }
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Gagal membaca file gambar');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Ensure default products is an array to fix map issue
@@ -1988,10 +2023,12 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 export const UserManagementView = () => {
+  const toast = useToast();
   const [users, setUsers] = useState<UserWithActive[]>([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('All');
   const [editRoleId, setEditRoleId] = useState<string | null>(null);
+  const [editAppsId, setEditAppsId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', role: UserRole.ADMIN as UserRole });
   const [addError, setAddError] = useState<string | null>(null);
@@ -2029,17 +2066,55 @@ export const UserManagementView = () => {
     try {
       await callGateway('admin_update_user', { user_id: u.id, role: newRole });
       setEditRoleId(null);
+      toast.success(`Role ${u.name} → ${newRole}`);
       load();
-    } catch { /* role update failed silently */ }
+    } catch (e: any) {
+      toast.error(`Gagal ganti role: ${e?.message ?? e}`);
+      setEditRoleId(null);
+    }
+  };
+
+  // ── Multi-app access toggle ─────────────────────────────────────────────
+  // Toggles an app in the user's allowed_apps array. Persists to sp_users
+  // via gateway. Multi-app users see the AppSelector screen on next login.
+  const handleAppToggle = async (u: UserWithActive, app: string, checked: boolean) => {
+    if (!u.id) return;
+    const current: string[] = Array.isArray((u as any).allowed_apps) ? (u as any).allowed_apps : (u.role ? [u.role] : []);
+    let next: string[];
+    if (checked) {
+      if (current.includes(app)) return; // already there
+      next = [...current, app];
+    } else {
+      if (current.length <= 1) {
+        toast.error('Minimal 1 app harus aktif');
+        return;
+      }
+      next = current.filter(a => a !== app);
+    }
+    // Optimistic update
+    setUsers(prev => prev.map(x => x.id === u.id ? { ...x, allowed_apps: next } as any : x));
+    try {
+      await callGateway('admin_update_user', { user_id: u.id, allowed_apps: next });
+      toast.success(`${u.name}: ${next.join(', ')}`);
+    } catch (e: any) {
+      toast.error(`Gagal update apps: ${e?.message ?? e}`);
+      // Rollback
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, allowed_apps: current } as any : x));
+    }
   };
 
   const handleToggleActive = async (u: UserWithActive) => {
     if (!u.id) return;
     const isActive = u.isActive !== false;
     try {
+      // Note: production sp_users has no is_suspended column — this will fail
+      // gracefully. The column exists in dbTypes.ts but not in live schema.
       await callGateway('admin_update_user', { user_id: u.id, is_suspended: isActive });
+      toast.success(`${u.name} ${isActive ? 'dinonaktifkan' : 'diaktifkan'}`);
       load();
-    } catch { /* toggle failed silently */ }
+    } catch (e: any) {
+      toast.error(`Gagal toggle status: ${e?.message ?? e}`);
+    }
   };
 
   const handleAddUser = async () => {
@@ -2123,12 +2198,13 @@ export const UserManagementView = () => {
       {/* Table */}
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left whitespace-nowrap min-w-[700px]">
+          <table className="w-full text-left whitespace-nowrap min-w-[800px]">
             <thead>
               <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
                 <th className="py-4 pl-6">Nama</th>
                 <th className="py-4">Email</th>
                 <th className="py-4">Role</th>
+                <th className="py-4">Apps</th>
                 <th className="py-4">Status</th>
                 <th className="py-4">Member Sejak</th>
                 <th className="py-4 text-center">T&amp;C</th>
@@ -2139,6 +2215,8 @@ export const UserManagementView = () => {
               {filtered.slice(0, 100).map(u => {
                 const isActive = u.isActive !== false;
                 const isEditingRole = editRoleId === u.id;
+                const isEditingApps = editAppsId === u.id;
+                const userAllowedApps: string[] = Array.isArray((u as any).allowed_apps) ? (u as any).allowed_apps : (u.role ? [u.role] : []);
                 return (
                   <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
                     <td className="py-3.5 pl-6">
@@ -2150,7 +2228,7 @@ export const UserManagementView = () => {
                         <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
                           {(u as any).profile_photo_url ? (
                             <img src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
-                          ) : u.name[0].toUpperCase()}
+                          ) : (u.name?.[0] ?? '?').toUpperCase()}
                         </div>
                         <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>
                       </button>
@@ -2183,6 +2261,47 @@ export const UserManagementView = () => {
                             <Pencil size={11} />
                           </button>
                         </div>
+                      )}
+                    </td>
+                    <td className="py-3.5">
+                      {isEditingApps ? (
+                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                          {['CUSTOMER', 'AGENT', 'OPERATOR', 'ADMIN'].map(app => {
+                            const checked = userAllowedApps.includes(app);
+                            return (
+                              <label key={app} className="flex items-center gap-1 text-[0.55rem] font-bold uppercase cursor-pointer bg-white/5 px-1.5 py-0.5 rounded">
+                                <input
+                                  type="checkbox"
+                                  defaultChecked={checked}
+                                  onChange={e => handleAppToggle(u, app, e.target.checked)}
+                                  className="w-2.5 h-2.5 accent-emerald-500"
+                                />
+                                {app}
+                              </label>
+                            );
+                          })}
+                          <button
+                            onClick={() => setEditAppsId(null)}
+                            className="text-[0.55rem] font-black text-emerald-400 hover:text-emerald-300 ml-1"
+                          >Done</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setEditAppsId(u.id)}
+                          className="flex items-center gap-1 flex-wrap max-w-[180px] hover:opacity-80 transition-opacity"
+                          title="Edit Apps Access"
+                        >
+                          {userAllowedApps.length === 0 ? (
+                            <span className="text-[0.6rem] text-gray-500 italic">— none —</span>
+                          ) : (
+                            userAllowedApps.map(app => (
+                              <span key={app} className="text-[0.5rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                                {app}
+                              </span>
+                            ))
+                          )}
+                          <Pencil size={10} className="text-gray-600 hover:text-emerald-400 transition-colors" />
+                        </button>
                       )}
                     </td>
                     <td className="py-3.5">

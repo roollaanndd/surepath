@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Bell, UserCircle, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
+import { Sun, Moon, Bell, UserCircle, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
@@ -18,6 +18,7 @@ import OperatorDashboard from './OperatorDashboard';
 import OperatorOrders from './OperatorOrders';
 import OperatorClaims from './OperatorClaims';
 import OperatorWithdrawals from './OperatorWithdrawals';
+import OperatorAgents from './OperatorAgents';
 import OperatorProfile from './OperatorProfile';
 import OperatorNotifications from './OperatorNotifications';
 
@@ -32,6 +33,7 @@ const TABS = [
   { id: 'orders',       labelId: 'Polis',   Icon: FileText },
   { id: 'claims',       labelId: 'Klaim',   Icon: ShieldAlert },
   { id: 'withdrawals',  labelId: 'Tarik',   Icon: Wallet },
+  { id: 'agents',       labelId: 'Agen',    Icon: UserCheck },
   { id: 'profile',      labelId: 'Profil',  Icon: User },
 ];
 
@@ -131,6 +133,8 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
         return <OperatorClaims operator={operator} lang={lang} refreshTick={refreshTick} />;
       case 'withdrawals':
         return <OperatorWithdrawals operator={operator} lang={lang} refreshTick={refreshTick} />;
+      case 'agents':
+        return <OperatorAgents operator={operator} lang={lang} refreshTick={refreshTick} />;
       case 'profile':
         return <OperatorProfile operator={operator} lang={lang} onLogout={onLogout} />;
       default:

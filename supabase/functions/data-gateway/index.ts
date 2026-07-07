@@ -46,7 +46,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR', 'INSURANCE_ADMIN'];
+const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR', 'INSURANCE_ADMIN', 'OPERATOR'];
 
 interface Caller {
   authId: string;
@@ -365,6 +365,14 @@ Deno.serve(async (req) => {
           .select()
           .single();
         if (error) return json({ error: error.message }, 400);
+        // ── Operator/admin in-app notification ──────────────────────────────
+        db.from('sp_admin_notifications').insert({
+          type: 'NEW_CLAIM',
+          title: 'Klaim Baru Diajukan',
+          body: `${String((data as any).claim_type ?? 'Klaim')} · Rp ${Number((data as any).amount_estimated ?? 0).toLocaleString('id-ID')}`,
+          read: false,
+          metadata: { claim_id: (data as any).id, user_id: caller.authId },
+        }).then(() => {}, () => {});
         return json({ data });
       }
 
@@ -528,7 +536,7 @@ Deno.serve(async (req) => {
         const VALID_ROLES = new Set([
           'CUSTOMER', 'AGENT', 'B2B_CLIENT',
           'INSURANCE_ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR',
-          'ADMIN', 'MASTER_ADMIN',
+          'OPERATOR', 'ADMIN', 'MASTER_ADMIN',
         ]);
 
         if ('role' in params) {
@@ -752,6 +760,46 @@ Deno.serve(async (req) => {
         const { data, error } = await db.from('sp_admin_notifications').insert({ ...params, read: false }).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+      // ── Operator-friendly: mark ALL unread notifications as read ─────────
+      case 'admin_mark_all_notifications_read': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { error: updErr } = await db.from('sp_admin_notifications').update({ read: true }).eq('read', false);
+        if (updErr) return json({ error: updErr.message }, 400);
+        return json({ data: { success: true } });
+      }
+
+      // ── Operator-friendly: aggregated queue summary for /operatorapp home ─
+      // Returns counts of pending items across orders, claims, withdrawals,
+      // agent verifications, and unread admin notifications — single round trip.
+      case 'admin_queue_summary': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const [
+          pendingOrdersRes, pendingClaimsRes, pendingWithdrawalsRes,
+          pendingAgentsRes, unreadNotifsRes, paymentsRes,
+        ] = await Promise.all([
+          db.from('sp_policy_orders').select('id', { count: 'exact', head: true }).in('status', ['SUBMITTED', 'UNDER_REVIEW']),
+          db.from('sp_claims').select('id', { count: 'exact', head: true }).in('status', ['SUBMITTED', 'UNDER_REVIEW']),
+          db.from('sp_withdrawals').select('id', { count: 'exact', head: true }).in('status', ['PENDING_L1', 'PENDING_L2', 'PENDING_L3']),
+          db.from('sp_users').select('id', { count: 'exact', head: true }).eq('role', 'AGENT').eq('verified', false).eq('is_suspended', false),
+          db.from('sp_admin_notifications').select('id', { count: 'exact', head: true }).eq('read', false),
+          db.from('sp_payments').select('id, status, paid_amount').in('status', ['PENDING', 'PAID']),
+        ]);
+        const payments = (paymentsRes.data ?? []) as any[];
+        const totalPaid = payments.filter((p: any) => p.status === 'PAID').length;
+        const totalPendingPayments = payments.filter((p: any) => p.status === 'PENDING').length;
+        return json({
+          data: {
+            pendingOrders:       pendingOrdersRes.count ?? 0,
+            pendingClaims:       pendingClaimsRes.count ?? 0,
+            pendingWithdrawals:  pendingWithdrawalsRes.count ?? 0,
+            pendingAgents:       pendingAgentsRes.count ?? 0,
+            unreadNotifications: unreadNotifsRes.count ?? 0,
+            paidPayments:        totalPaid,
+            pendingPayments:     totalPendingPayments,
+          },
+        });
       }
 
       // ── Admin: dashboard stats (cross-table aggregation) ─────────────────
@@ -1125,6 +1173,15 @@ Deno.serve(async (req) => {
         const premiumStr = order.total_premium
           ? `Rp ${Number(order.total_premium).toLocaleString('id-ID')}`
           : '-';
+        // ── Operator/admin in-app notification (for /operatorapp realtime feed) ──
+        db.from('sp_admin_notifications').insert({
+          type: 'NEW_ORDER',
+          title: 'Pengajuan Polis Baru',
+          body: `${String(order.client_name ?? '-')} · ${String(order.product_name ?? '-')} · ${premiumStr}`,
+          order_id: order.id,
+          read: false,
+          metadata: { order_id: order.id, order_number: order.order_number, status: order.status },
+        }).then(() => {}, () => {});
         sendTelegram(
           `Order Polis Baru - SurePath\n\n` +
           `No. Order: ${order.order_number ?? order.id}\n` +

@@ -16,11 +16,15 @@ import AppUpdateNotification from './components/AppUpdateNotification';
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
 const rolePath = (role: UserRole) =>
-  ADMIN_ROLES.includes(role) ? '/admin' : role === UserRole.AGENT ? '/agapps' : '/custapp';
+  ADMIN_ROLES.includes(role) ? '/admin'
+  : role === UserRole.OPERATOR ? '/operatorapp'
+  : role === UserRole.AGENT ? '/agapps' : '/custapp';
 
 const AuthGate          = lazy(() => import('./components/AuthGate'));
 const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
 const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
+const OperatorPortal    = lazy(() => import('./components/operator/OperatorPortal'));
+const OperatorLogin     = lazy(() => import('./components/operator/OperatorLogin'));
 const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
 const HomePage          = lazy(() => import('./src/pages/HomePage'));
@@ -368,6 +372,15 @@ const App = () => {
     return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>;
   }
 
+  // Allow direct navigation to /operatorapp when not signed in (will hit OperatorLogin below).
+  if (pathname === '/operatorapp' && !currentUser) {
+    return (
+      <Suspense fallback={<PortalLoader lang={lang} />}>
+        <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
+      </Suspense>
+    );
+  }
+
   if ((pathname === '/admin' || pathname.startsWith('/admin/')) && (!currentUser || !ADMIN_ROLES.includes(currentUser.role))) {
     return (
       <Suspense fallback={<PortalLoader lang={lang} />}>
@@ -381,6 +394,27 @@ const App = () => {
       <PortalErrorBoundary onReset={handleLogout}>
         <Suspense fallback={<PortalLoader />}>
           <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} currentUser={currentUser} />
+        </Suspense>
+      </PortalErrorBoundary>
+    );
+  }
+
+  // ── Operator app — newly built internal staff portal (parallel to /admin) ──
+  // OPERATOR role is NOT in ADMIN_ROLES above, so they don't get the CMS.
+  // They get their own /operatorapp with bottom-nav UX (matching agent app).
+  if (pathname === '/operatorapp' && (!currentUser || currentUser.role !== UserRole.OPERATOR)) {
+    return (
+      <Suspense fallback={<PortalLoader lang={lang} />}>
+        <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
+      </Suspense>
+    );
+  }
+
+  if (currentUser && currentUser.role === UserRole.OPERATOR) {
+    return (
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <OperatorPortal operator={currentUser} onLogout={handleLogout} lang={lang} />
         </Suspense>
       </PortalErrorBoundary>
     );

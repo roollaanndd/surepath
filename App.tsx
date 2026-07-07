@@ -12,6 +12,7 @@ import RoleSelectionScreen from './components/RoleSelectionScreen';
 import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
 import { SplashScreen, AppEntryScreen, PortalLoader } from './src/routes/splash';
 import AppUpdateNotification from './components/AppUpdateNotification';
+import { APP_VERSION } from './src/version';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
@@ -189,10 +190,13 @@ const App = () => {
     // sprint. In-app notifications (bell icon) work without Firebase.
 
     setTimeout(() => {
-      setCurrentUser(enrichedUser);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(enrichedUser));
+      // Tag the session with the current app version so we can detect
+      // stale sessions on next load and force a refresh (see useEffect below).
+      const userWithVersion = { ...enrichedUser, __appVersion: APP_VERSION };
+      setCurrentUser(userWithVersion);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(userWithVersion));
       setAppMode(true);
-      navigate(rolePath(enrichedUser));
+      navigate(rolePath(userWithVersion));
     }, 1400);
   }, [navigate]);
 
@@ -209,14 +213,42 @@ const App = () => {
     if (saved) {
       try {
         const user = JSON.parse(saved);
-        setCurrentUser(user);
-        setAppMode(true);
-        setOauthLoading(false);
-        const restoredId = user?.supabaseId ?? user?.id;
-        if (restoredId && !isTcCachedLocally(restoredId)) {
-          getUserTcStatus(restoredId)
-            .then((tcAccepted) => { if (tcAccepted) { cacheTcLocally(restoredId); } else { setShowTc(true); } })
-            .catch(() => {});
+        // ── Version-gated session refresh ──────────────────────────────────
+        // If the saved session's app version doesn't match the current
+        // APP_VERSION, the session shape may be stale (e.g., missing
+        // allowed_apps in v1.19.0). Clear it and let the Supabase Auth
+        // listener rebuild the session from the gateway profile.
+        const savedVersion = (user as any)?.__appVersion;
+        if (savedVersion && savedVersion !== APP_VERSION) {
+          console.info(`[SurePath] Session version mismatch (${savedVersion} → ${APP_VERSION}), clearing session for refresh.`);
+          localStorage.removeItem(SESSION_KEY);
+          sessionStorage.removeItem(SESSION_KEY);
+          // Don't set currentUser — fall through to Supabase Auth path below
+        } else {
+          setCurrentUser(user);
+          setAppMode(true);
+          setOauthLoading(false);
+          const restoredId = user?.supabaseId ?? user?.id;
+          if (restoredId && !isTcCachedLocally(restoredId)) {
+            getUserTcStatus(restoredId)
+              .then((tcAccepted) => { if (tcAccepted) { cacheTcLocally(restoredId); } else { setShowTc(true); } })
+              .catch(() => {});
+          }
+          // ── Background profile refresh ──────────────────────────────────
+          // Fetch the latest profile from the gateway (in case allowed_apps
+          // or other fields changed server-side since the session was saved).
+          // Non-blocking — the UI renders immediately with the cached session.
+          import('./services/supabaseService').then(({ callGateway }) => {
+            callGateway('get_my_profile')
+              .then(({ data, error }: any) => {
+                if (!error && data) {
+                  const refreshedUser = { ...user, allowed_apps: (data as any).allowed_apps ?? null, role: (data as any).role ?? user.role, verified: (data as any).verified ?? user.verified };
+                  setCurrentUser(refreshedUser);
+                  localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedUser));
+                }
+              })
+              .catch(() => {});
+          }).catch(() => {});
         }
       } catch {
         localStorage.removeItem(SESSION_KEY);

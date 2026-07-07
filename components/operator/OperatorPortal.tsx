@@ -224,12 +224,25 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center ${
-                  active ? 'bg-ds-green text-white scale-105 shadow-ds-green' : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5'
-                }`}
+                className="flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center"
+                style={active ? {
+                  background: 'rgba(0, 193, 106, 0.12)',
+                  color: '#00C16A',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 4px 20px rgba(0,193,106,0.20)',
+                } : {
+                  color: 'var(--ds-ink3)',
+                }}
               >
-                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'opacity-100' : 'opacity-80'}`}>
+                <Icon
+                  size={22}
+                  strokeWidth={active ? 2.8 : 2}
+                  style={active ? { color: '#00C16A' } : { color: 'var(--ds-ink3)' }}
+                />
+                <span
+                  className="text-[9px] font-black uppercase tracking-widest leading-none"
+                  style={active ? { color: '#00C16A' } : { color: 'var(--ds-ink3)' }}
+                >
                   {labelId}
                 </span>
               </button>

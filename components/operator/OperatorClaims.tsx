@@ -164,14 +164,19 @@ const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
 
       {selectedClaim && (
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setSelectedClaim(null)}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative w-full bg-ds-card rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="w-12 h-1 bg-ds-border rounded-full mx-auto mb-4" />
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-ds-ink">Detail Klaim</h3>
-              <button onClick={() => setSelectedClaim(null)} className="w-8 h-8 rounded-full bg-ds-card2 text-ds-ink3">✕</button>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full bg-white dark:bg-[#0F1829] rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 pt-3 pb-2 bg-inherit">
+              <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-3" />
+              <div className="flex items-center justify-between px-5">
+                <h3 className="text-lg font-black text-gray-900 dark:text-white">Detail Klaim</h3>
+                <button onClick={() => setSelectedClaim(null)} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#162035] text-gray-500 dark:text-gray-400 flex items-center justify-center text-lg">✕</button>
+              </div>
             </div>
-            <div className="space-y-2 text-sm">
+            <div className="px-5 pb-8 space-y-2 text-sm">
               <Row label="ID" value={selectedClaim.id.slice(0, 8)} />
               <Row label="Tipe" value={selectedClaim.claim_type ?? '-'} />
               <Row label="Lokasi" value={selectedClaim.location ?? '-'} />
@@ -190,9 +195,9 @@ const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
 };
 
 const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex justify-between gap-3 py-2 border-b border-ds-border">
-    <span className="text-ds-ink3 text-xs font-bold uppercase tracking-widest">{label}</span>
-    <span className="text-ds-ink text-sm font-medium text-right break-all">{value}</span>
+  <div className="flex justify-between gap-3 py-2.5 px-3 border-b border-gray-200 dark:border-[#1E2D3D] bg-white dark:bg-[#0F1829]">
+    <span className="text-gray-500 dark:text-gray-400 text-[10px] font-bold uppercase tracking-widest">{label}</span>
+    <span className="text-gray-900 dark:text-white text-xs font-medium text-right break-all max-w-[60%]">{value}</span>
   </div>
 );
 

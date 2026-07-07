@@ -149,10 +149,48 @@ Deno.serve(async (req) => {
     // Service-role DB client — used by all actions (both JWT-authed and token-authed)
     const db = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    // ── Rate limiting helper ────────────────────────────────────────────────
+    // Checks sp_rate_limits table. Returns true if request allowed, false if
+    // rate limit exceeded. Limits: 200/hr per insurer, 60/hr per IP for public.
+    const checkRateLimit = async (identifier: string, limit: number): Promise<boolean> => {
+      const now = new Date();
+      const hourBucket = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,'0')}-${String(now.getUTCDate()).padStart(2,'0')}-${String(now.getUTCHours()).padStart(2,'0')}`;
+      try {
+        // Try insert first. If conflict (row exists), update count atomically.
+        const { error: insErr } = await db.from('sp_rate_limits').insert({
+          identifier, action, hour_bucket: hourBucket,
+          request_count: 1, last_request: now.toISOString(),
+        });
+        if (insErr) {
+          // Row exists — increment count via RPC
+          const { data, error: rpcErr } = await db.rpc('increment_rate_limit', {
+            p_identifier: identifier, p_action: action, p_hour_bucket: hourBucket,
+          });
+          if (rpcErr) return true; // fail-open
+          return (data ?? 1) <= limit;
+        }
+        return true; // first request this hour
+      } catch {
+        return true; // fail-open
+      }
+    };
+
+    // ── Activity log helper ─────────────────────────────────────────────────
+    const logActivity = (insurerId: string | null, orderId: string | null, logAction: string, details: Record<string, unknown> = {}): void => {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? null;
+      const userAgent = req.headers.get('user-agent')?.slice(0, 255) ?? null;
+      db.from('sp_insurer_activity_log').insert({
+        insurer_id: insurerId,
+        order_id: orderId,
+        action: logAction,
+        details: { ...details, ip, user_agent: userAgent },
+        ip_address: ip,
+        user_agent: userAgent,
+      }).then(() => {}, () => {});
+    };
+
     // Public actions that don't require a Supabase JWT — they use their own
     // token-based auth (review token or insurer auth token) passed in params.
-    // These are used by the insurer app + review page where users don't have
-    // Supabase Auth accounts.
     const PUBLIC_ACTIONS = new Set([
       'get_insurer_review',           // /review/:uuid page (review token)
       'submit_insurer_decision',      // /review/:uuid page (review token)
@@ -165,6 +203,13 @@ Deno.serve(async (req) => {
     let caller: Caller;
 
     if (PUBLIC_ACTIONS.has(action)) {
+      // ── Rate limit public actions by IP (60 req/hour) ────────────────────
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
+      const ipAllowed = await checkRateLimit(`ip:${clientIp}`, 60);
+      if (!ipAllowed) {
+        return json({ error: 'Rate limit exceeded. Terlalu banyak request dari IP ini. Coba lagi dalam 1 jam.' }, 429);
+      }
+
       // Skip JWT auth — the action will validate its own token from params
       caller = {
         authId: '',
@@ -803,6 +848,77 @@ Deno.serve(async (req) => {
         return json({ data: enriched });
       }
 
+      // ── Admin: list insurer activity log (audit trail) ────────────────────
+      case 'admin_list_insurer_activity': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db.from('sp_insurer_activity_log')
+          .select('id, insurer_id, order_id, action, details, ip_address, user_agent, created_at')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 100));
+        if (params.insurer_id) q = q.eq('insurer_id', params.insurer_id);
+        if (params.action) q = q.eq('action', params.action);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        // Enrich with insurer name + order number
+        const insurerIds = [...new Set((data ?? []).map((l: any) => l.insurer_id).filter(Boolean))];
+        const orderIds = [...new Set((data ?? []).map((l: any) => l.order_id).filter(Boolean))];
+        const [insRes, ordRes] = await Promise.all([
+          insurerIds.length > 0 ? db.from('sp_insurers').select('id, name').in('id', insurerIds) : Promise.resolve({ data: [] }),
+          orderIds.length > 0 ? db.from('sp_policy_orders').select('id, order_number, client_name').in('id', orderIds) : Promise.resolve({ data: [] }),
+        ]);
+        const insMap: Record<string, string> = {};
+        for (const i of (insRes.data ?? [])) insMap[i.id] = i.name;
+        const ordMap: Record<string, any> = {};
+        for (const o of (ordRes.data ?? [])) ordMap[o.id] = o;
+        const enriched = (data ?? []).map((l: any) => ({
+          ...l,
+          insurer_name: l.insurer_id ? (insMap[l.insurer_id] ?? 'Unknown') : null,
+          order_number: l.order_id ? (ordMap[l.order_id]?.order_number ?? null) : null,
+          client_name: l.order_id ? (ordMap[l.order_id]?.client_name ?? null) : null,
+        }));
+        return json({ data: enriched });
+      }
+
+      // ── Admin: get/set insurer API config ─────────────────────────────────
+      case 'admin_get_insurer_api_config': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        if (!insurerId) return json({ error: 'insurer_id required' }, 400);
+        const { data, error } = await db.from('sp_insurer_api_configs')
+          .select('*')
+          .eq('insurer_id', insurerId)
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      case 'admin_save_insurer_api_config': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        const endpointUrl = String(params.endpoint_url ?? '');
+        const apiKey = String(params.api_key ?? '');
+        const webhookSecret = String(params.webhook_secret ?? '');
+        const isActive = params.is_active !== false;
+        if (!insurerId || !endpointUrl) return json({ error: 'insurer_id and endpoint_url required' }, 400);
+        // SSRF guard: block private IPs + localhost
+        const isPrivate = /^(https?:\/\/)(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|169\.254\.|::1|fc00:|fe80:)/i.test(endpointUrl);
+        if (isPrivate) return json({ error: 'Endpoint URL tidak boleh private/localhost' }, 400);
+        const { data, error } = await db.from('sp_insurer_api_configs')
+          .upsert({
+            insurer_id: insurerId,
+            endpoint_url: endpointUrl,
+            api_key: apiKey || null,
+            webhook_secret: webhookSecret || null,
+            is_active: isActive,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'insurer_id' })
+          .select()
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        logActivity(insurerId, null, 'API_CONFIG_SAVED', { endpoint_url: endpointUrl, is_active: isActive });
+        return json({ data });
+      }
+
       // Public: get order details by review token (for /review/:uuid page)
       case 'get_insurer_review': {
         const token = String(params.token ?? '');
@@ -834,6 +950,8 @@ Deno.serve(async (req) => {
             .maybeSingle();
           insurer = ins;
         }
+        // ── Log activity (review page opened) ───────────────────────────────
+        logActivity(order.insurer_id ?? null, rt.order_id, 'REVIEW_OPENED', { token_id: rt.id, accessed_count: (rt.accessed_count ?? 0) + 1 });
         return json({ data: { token: rt, order, insurer } });
       }
 
@@ -917,6 +1035,8 @@ Deno.serve(async (req) => {
           `Notes: ${notes || '-'}\n` +
           `Waktu: ${tgTime} WIB`
         );
+        // ── Log activity ────────────────────────────────────────────────────
+        logActivity(order?.insurer_id ?? null, rt.order_id, 'DECISION_SUBMITTED', { action, notes, via: 'review_token' });
         return json({ data: { success: true, order_status: orderStatus, action } });
       }
 
@@ -932,6 +1052,11 @@ Deno.serve(async (req) => {
         if (authErr) return json({ error: authErr.message }, 400);
         if (!authToken) return json({ error: 'Invalid token' }, 404);
         if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // ── Rate limit per insurer (200 req/hour) ───────────────────────────
+        const insurerAllowed = await checkRateLimit(`insurer:${authToken.insurer_id}`, 200);
+        if (!insurerAllowed) {
+          return json({ error: 'Rate limit exceeded untuk insurer ini. Coba lagi dalam 1 jam.' }, 429);
+        }
         // Load insurer
         const { data: insurer, error: insErr } = await db.from('sp_insurers')
           .select('id, name, logo_url, admin_name, admin_email, pic_name, pic_email, pic_phone')
@@ -939,6 +1064,8 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (insErr) return json({ error: insErr.message }, 400);
         if (!insurer) return json({ error: 'Insurer not found' }, 404);
+        // ── Log activity ────────────────────────────────────────────────────
+        logActivity(authToken.insurer_id, null, 'DASHBOARD_VIEWED', { email: authToken.email });
         // Load orders for this insurer
         const { data: orders, error: ordErr } = await db.from('sp_policy_orders')
           .select('id, order_number, client_name, client_phone, product_name, product_code, coverage_type, sum_insured, total_premium, net_premium, status, insurer_decision, insurer_decision_notes, insurer_decision_at, policy_number, policy_document_url, vehicle_image_url, vehicle_details, created_at, reviewed_at, issued_at')
@@ -1031,6 +1158,8 @@ Deno.serve(async (req) => {
         sendTelegram(
           `Insurer Decision (Dashboard) - SurePath\n\nOrder: ${order.order_number}\nNasabah: ${order.client_name}\nDecision: ${action}\nNotes: ${notes || '-'}`
         );
+        // ── Log activity ────────────────────────────────────────────────────
+        logActivity(authToken.insurer_id, orderId, 'DECISION_SUBMITTED', { action, notes, via: 'dashboard' });
         return json({ data: { success: true, order_status: orderStatus, action } });
       }
 
@@ -1123,6 +1252,8 @@ Deno.serve(async (req) => {
             metadata: { order_id: orderId, policy_number: policyNumber },
           }).then(() => {}, () => {});
         }
+        // ── Log activity ────────────────────────────────────────────────────
+        logActivity(authToken.insurer_id, orderId, 'POLICY_UPLOADED', { policy_number: policyNumber, document_url: policyDocumentUrl });
         return json({ data: { success: true, order: updated } });
       }
 

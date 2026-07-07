@@ -585,10 +585,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
       </div>
 
       {/* Logout */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-32 relative z-30">
         <button
-          onClick={onLogout}
-          className="w-full h-12 rounded-2xl bg-rose-50 border border-rose-100 text-ds-red font-bold text-sm flex items-center justify-center gap-2 active:bg-rose-100 transition-colors"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (onLogout) onLogout();
+          }}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="w-full h-12 rounded-2xl bg-rose-50 border border-rose-100 text-ds-red font-bold text-sm flex items-center justify-center gap-2 active:bg-rose-100 hover:bg-rose-100 transition-colors touch-manipulation"
+          style={{ minHeight: '48px' }}
         >
           <LogOut size={16}/> {t('Sign Out', 'Keluar')}
         </button>

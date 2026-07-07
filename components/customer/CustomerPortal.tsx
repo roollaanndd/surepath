@@ -680,11 +680,18 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </button>
 
               <button
+                type="button"
                 aria-label={t('Log out', 'Keluar')}
-                onClick={onLogout}
-                className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1 hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onLogout();
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="relative z-50 w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1 hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none touch-manipulation"
+                style={{ minHeight: '44px', minWidth: '44px' }}
               >
-                <LogOut size={13} className="text-rose-500" />
+                <LogOut size={14} className="text-rose-500" />
               </button>
             </div>
           </div>

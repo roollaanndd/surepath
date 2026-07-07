@@ -172,7 +172,8 @@ Deno.serve(async (req) => {
       isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''),
     };
 
-    const { action, params = {} } = await req.json().then(() => ({}), () => ({ action: null }));
+    try { var parsed = await req.json(); } catch { var parsed = { action: null }; }
+    const { action, params = {} } = parsed;
     if (!action) return json({ error: 'Missing action' }, 400);
 
     // ── 3) Authorized operations ───────────────────────────────────────────────

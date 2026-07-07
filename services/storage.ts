@@ -101,8 +101,11 @@ export async function uploadAgentAvatar(agentId: string, base64: string): Promis
   const { error } = await supabase.storage.from('agent-profiles').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
   if (error) { console.error('uploadAgentAvatar:', error); return null; }
   const { data } = supabase.storage.from('agent-profiles').getPublicUrl(path);
-  await callGateway('update_my_profile', { profile_photo_url: data.publicUrl }).catch(() => {});
-  return data.publicUrl;
+  // Add cache-busting timestamp so the browser fetches the new image
+  // instead of showing the old cached version
+  const cacheBustUrl = `${data.publicUrl}?t=${Date.now()}`;
+  await callGateway('update_my_profile', { profile_photo_url: cacheBustUrl }).then(() => {}, () => {});
+  return cacheBustUrl;
 }
 
 export async function uploadAgentKtp(agentId: string, file: File): Promise<string | null> {

@@ -54,7 +54,7 @@ interface SavedAccount {
 const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () => void; onCancel: () => void }> = ({ amount, fee, onAccept, onCancel }) => {
   const [agreed, setAgreed] = useState(false);
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-[#003B2F]/70 backdrop-blur-sm flex items-end justify-center p-4">
       <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-md p-6 space-y-5">
         <h3 className="text-base font-black text-ds-ink">Syarat Penarikan Dana</h3>
         <div className="space-y-2.5 text-[11px] text-ds-ink2 leading-relaxed">
@@ -322,6 +322,10 @@ const AgentWalletView: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [tab, setTab] = useState<'ledger' | 'withdrawals' | 'accounts'>('ledger');
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
+  // Bank account management (accounts tab)
+  const [newBankCode, setNewBankCode] = useState('');
+  const [newAccNum, setNewAccNum] = useState('');
+  const [newAccName, setNewAccName] = useState('');
   const [loading, setLoading] = useState(true);
   const [coinBalance, setCoinBalance] = useState(0);
   const [agentId, setAgentId] = useState('');
@@ -481,18 +485,15 @@ const AgentWalletView: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 bg-ds-card2 border border-ds-border p-1.5 rounded-2xl mx-5 mt-4">
-        {(['ledger', 'withdrawals'] as const).map(t => (
+        {(['ledger', 'withdrawals', 'accounts'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-ds-navy text-white shadow-ds-navy' : 'text-ds-ink3'}`}
+            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-ds-green text-white shadow-ds-green' : 'text-ds-ink3'}`}
           >
-            {t === 'ledger' ? 'Riwayat Kredit' : 'Penarikan'}
+            {t === 'ledger' ? 'Riwayat' : t === 'withdrawals' ? 'Penarikan' : 'Rekening'}
           </button>
         ))}
-        <button onClick={load} className="p-3 rounded-xl bg-ds-card2 border border-ds-border text-ds-ink3 active:scale-95 transition-all">
-          <RefreshCw size={14} />
-        </button>
       </div>
 
       {/* Ledger */}
@@ -568,6 +569,55 @@ const AgentWalletView: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Accounts tab — manage saved bank accounts */}
+      {tab === 'accounts' && (
+        <div className="space-y-3 mx-5 mt-4">
+          {savedAccounts.length === 0 ? (
+            <div className="text-center py-12 text-ds-ink3 text-sm">
+              <Building2 size={32} className="mx-auto mb-3 opacity-30" />
+              <p>Belum ada rekening tersimpan</p>
+              <p className="text-[10px] mt-1">Tambahkan rekening untuk memudahkan penarikan</p>
+            </div>
+          ) : (
+            savedAccounts.map((acc, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-4 rounded-2xl sp-glass">
+                <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center">
+                  <Building2 size={16} className="text-ds-green" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-ds-ink">{acc.bank_code} · {acc.account_number}</p>
+                  <p className="text-[10px] text-ds-ink3">{acc.account_holder_name}{acc.label ? ` · ${acc.label}` : ''}</p>
+                </div>
+                <button onClick={() => handleDeleteAccount(idx)} className="p-2 rounded-lg text-ds-ink3 hover:text-ds-red transition-colors">
+                  <XCircle size={16} />
+                </button>
+              </div>
+            ))
+          )}
+          {/* Add new account form */}
+          <div className="p-4 rounded-2xl border border-dashed border-ds-border space-y-3">
+            <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">Tambah Rekening Baru</p>
+            <select className="w-full bg-ds-card border border-ds-border rounded-2xl py-3 px-4 text-sm font-bold text-ds-ink outline-none focus:border-ds-green" value={newBankCode} onChange={e => setNewBankCode(e.target.value)}>
+              <option value="">Pilih Bank</option>
+              {BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
+            </select>
+            <input className="w-full h-12 px-4 rounded-xl border border-ds-border bg-ds-card text-ds-ink text-sm focus:ring-2 focus:ring-ds-green/30 focus:border-ds-green outline-none transition-all font-mono" placeholder="Nomor Rekening" value={newAccNum} onChange={e => setNewAccNum(e.target.value.replace(/\D/g, ''))} />
+            <input className="w-full h-12 px-4 rounded-xl border border-ds-border bg-ds-card text-ds-ink text-sm focus:ring-2 focus:ring-ds-green/30 focus:border-ds-green outline-none transition-all" placeholder="Nama Pemegang Rekening" value={newAccName} onChange={e => setNewAccName(e.target.value)} />
+            {newBankCode && newAccNum.trim() && newAccName.trim() && (
+              <button
+                onClick={() => {
+                  handleSaveAccount({ bank_code: newBankCode, account_number: newAccNum.trim(), account_holder_name: newAccName.trim() });
+                  setNewBankCode(''); setNewAccNum(''); setNewAccName('');
+                }}
+                className="w-full h-12 rounded-xl bg-ds-green text-white font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 size={16} /> Simpan Rekening
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

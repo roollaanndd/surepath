@@ -19,7 +19,6 @@ import AgentAgreementGate from './AgentAgreementGate';
 import AgentHome from './AgentHome';
 import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
-import AgentBuyMarketplace from './AgentBuyMarketplace';
 import AgentCommission from './AgentCommission';
 import AgentWalletView from './AgentWallet';
 import AgentLeaderboard from './AgentLeaderboard';
@@ -43,7 +42,7 @@ interface Props {
 const TABS = [
   { id: 'home',       labelId: 'Beranda',  Icon: BotHome },
   { id: 'policy',     labelId: 'Polis',    Icon: BotPolicy },
-  { id: 'quotes',     labelId: 'Beli',     Icon: BotShieldNav },
+  { id: 'quotes',     labelId: 'Buat',     Icon: BotShieldNav },
   { id: 'commission', labelId: 'Dompet',   Icon: BotWallet },
   { id: 'profile',    labelId: 'Profil',   Icon: BotUser },
 ];
@@ -181,12 +180,13 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         return <AgentCRM agentId={agent?.id ?? ''} lang={lang} />;
       case 'quotes':
         return (
-          <AgentBuyMarketplace
+          <AgentQuoteBuilder
             agentId={agent?.id ?? ''}
-            agent={agent}
             clients={clients}
             lang={lang}
             onBack={() => handleTabChange('home')}
+            agent={agent}
+            quoteOnly
           />
         );
       case 'claims':
@@ -345,12 +345,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 ${
-                  active ? 'bg-ds-green text-white scale-110 shadow-ds-green' : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5'
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center ${
+                  active ? 'bg-ds-green text-white scale-105 shadow-ds-green' : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5'
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                <span className={`text-[8px] font-black uppercase tracking-widest leading-none ${active ? 'opacity-100' : 'opacity-80'}`}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'opacity-100' : 'opacity-80'}`}>
                   {labelId}
                 </span>
               </button>

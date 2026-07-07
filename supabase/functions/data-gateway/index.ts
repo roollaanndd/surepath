@@ -827,7 +827,120 @@ Deno.serve(async (req) => {
           declined: (orders ?? []).filter((o: any) => o.insurer_decision === 'DECLINED').length,
           issued: (orders ?? []).filter((o: any) => o.status === 'ISSUED').length,
         };
-        return json({ data: { insurer, orders: orders ?? [], kpi } });
+        // Auto-renew token (rolling 7-day) — non-blocking
+        const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        db.from('sp_insurer_auth_tokens').update({ expires_at: newExpiry, used_at: new Date().toISOString() })
+          .eq('id', authToken.id).then(() => {}, () => {});
+        return json({ data: { insurer, orders: orders ?? [], kpi, token_expires_at: newExpiry } });
+      }
+
+      // Public: insurer submits decision from dashboard (auth token, not review token)
+      case 'insurer_submit_decision_authed': {
+        const token = String(params.token ?? '');
+        const orderId = String(params.order_id ?? '');
+        const action = String(params.action ?? '');
+        const notes = String(params.notes ?? '');
+        if (!token || !orderId || !action) return json({ error: 'token, order_id, action required' }, 400);
+        const VALID_ACTIONS = ['APPROVED', 'REQUEST_INFO', 'DECLINED'];
+        if (!VALID_ACTIONS.includes(action)) return json({ error: 'Invalid action' }, 400);
+        if ((action === 'REQUEST_INFO' || action === 'DECLINED') && notes.trim().length < 5) {
+          return json({ error: 'Notes required (min 5 chars) for REQUEST_INFO and DECLINED' }, 400);
+        }
+        // Validate auth token
+        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, expires_at')
+          .eq('token', token)
+          .maybeSingle();
+        if (authErr) return json({ error: authErr.message }, 400);
+        if (!authToken) return json({ error: 'Invalid token' }, 404);
+        if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Verify order belongs to this insurer
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders')
+          .select('id, order_number, client_name, agent_id, product_name, insurer_id, status, insurer_decision')
+          .eq('id', orderId)
+          .eq('insurer_id', authToken.insurer_id)
+          .maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
+        if (order.insurer_decision) return json({ error: 'Order already has a decision', existing_action: order.insurer_decision }, 409);
+        // Map action → order status
+        const orderStatus = action === 'APPROVED' ? 'APPROVED'
+          : action === 'REQUEST_INFO' ? 'UNDER_REVIEW' : 'REJECTED';
+        const ts = new Date().toISOString();
+        const { error: updErr } = await db.from('sp_policy_orders').update({
+          status: orderStatus,
+          insurer_decision: action,
+          insurer_decision_notes: notes,
+          insurer_decision_at: ts,
+          reviewer_notes: `Insurer ${action}: ${notes}`,
+          reviewed_at: ts,
+          updated_at: ts,
+        }).eq('id', orderId);
+        if (updErr) return json({ error: updErr.message }, 400);
+        // Notifications
+        const decisionLabel = action === 'APPROVED' ? 'menyetujui' : action === 'REQUEST_INFO' ? 'meminta info tambahan untuk' : 'menolak';
+        db.from('sp_admin_notifications').insert({
+          type: `INSURER_${action}`,
+          title: `Insurer ${decisionLabel} pengajuan`,
+          body: `${order.order_number} — ${order.client_name}: ${notes || '(tanpa catatan)'}`,
+          order_id: orderId,
+          read: false,
+          metadata: { order_id: orderId, action, notes, insurer_id: authToken.insurer_id },
+        }).then(() => {}, () => {});
+        if (order.agent_id) {
+          const userTitle = action === 'APPROVED' ? 'Pengajuan polis disetujui insurer'
+            : action === 'REQUEST_INFO' ? 'Insurer meminta info tambahan'
+            : 'Pengajuan polis ditolak insurer';
+          db.from('sp_notifications').insert({
+            agent_id: order.agent_id,
+            type: 'CLAIM_UPDATE',
+            title: userTitle,
+            body: `${order.order_number}: ${notes || 'Mohon lengkapi persyaratan dari insurer.'}`,
+            read: false,
+            metadata: { order_id: orderId, action, notes },
+          }).then(() => {}, () => {});
+        }
+        sendTelegram(
+          `Insurer Decision (Dashboard) - SurePath\n\nOrder: ${order.order_number}\nNasabah: ${order.client_name}\nDecision: ${action}\nNotes: ${notes || '-'}`
+        );
+        return json({ data: { success: true, order_status: orderStatus, action } });
+      }
+
+      // Public: insurer lists payments for their orders (auth token)
+      case 'insurer_list_payments': {
+        const token = String(params.token ?? '');
+        if (!token) return json({ error: 'token required' }, 400);
+        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, expires_at')
+          .eq('token', token)
+          .maybeSingle();
+        if (authErr) return json({ error: authErr.message }, 400);
+        if (!authToken) return json({ error: 'Invalid token' }, 404);
+        if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Get all order IDs for this insurer
+        const { data: orders } = await db.from('sp_policy_orders')
+          .select('id, order_number, client_name, product_name, total_premium, insurer_id')
+          .eq('insurer_id', authToken.insurer_id);
+        const orderIds = (orders ?? []).map((o: any) => o.id);
+        if (orderIds.length === 0) return json({ data: { payments: [], orders: [] } });
+        // Fetch payments for these orders
+        const { data: payments, error: payErr } = await db.from('sp_payments')
+          .select('id, order_id, amount, currency, status, payment_method, payment_channel, paid_amount, paid_at, payer_email, created_at, updated_at')
+          .in('order_id', orderIds)
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (payErr) return json({ error: payErr.message }, 400);
+        // Map order_id → order info for easy lookup
+        const orderMap: Record<string, any> = {};
+        for (const o of (orders ?? [])) orderMap[o.id] = o;
+        const enrichedPayments = (payments ?? []).map((p: any) => ({
+          ...p,
+          order_number: orderMap[p.order_id]?.order_number ?? null,
+          client_name: orderMap[p.order_id]?.client_name ?? null,
+          product_name: orderMap[p.order_id]?.product_name ?? null,
+          total_premium: orderMap[p.order_id]?.total_premium ?? null,
+        }));
+        return json({ data: { payments: enrichedPayments } });
       }
 
       // Public: insurer uploads policy PDF (sets status → ISSUED)

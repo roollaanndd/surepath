@@ -52,7 +52,10 @@ const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
 const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
-const InsurerPortal       = lazy(() => import('./components/InsurerPortal'));
+// Old InsurerPortal (legacy) — kept for reference but not routed anymore
+// const OldInsurerPortal     = lazy(() => import('./components/InsurerPortal'));
+const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPortal'));
+const InsurerLogin         = lazy(() => import('./components/insurer/InsurerLogin'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
@@ -379,7 +382,35 @@ const App = () => {
   }
 
   if (pathname === '/insurer-portal') {
-    return <Suspense fallback={<PortalLoader />}><InsurerPortal /></Suspense>;
+    // Legacy route — redirect to new /insurerapp (preserve token if present)
+    const t = new URLSearchParams(window.location.search).get('token');
+    window.location.href = t ? `/insurerapp?token=${encodeURIComponent(t)}` : '/insurerapp';
+    return null;
+  }
+
+  // ── New Insurer App — /insurerapp?token=xxx ──────────────────────────────
+  // Insurers authenticate via a rolling 7-day token (not Supabase Auth).
+  // Token comes from URL param or localStorage (saved from previous login).
+  if (pathname === '/insurerapp') {
+    const urlToken = new URLSearchParams(window.location.search).get('token');
+    const savedToken = localStorage.getItem('SUREPATH_INSURER_TOKEN');
+    const token = urlToken ?? savedToken;
+    if (!token) {
+      return (
+        <Suspense fallback={<PortalLoader lang={lang} />}>
+          <InsurerLogin onLoginSuccess={() => window.location.reload()} onBack={() => navigate('/')} />
+        </Suspense>
+      );
+    }
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <InsurerPortal
+          authToken={token}
+          onLogout={() => { window.location.href = '/'; }}
+          lang={lang}
+        />
+      </Suspense>
+    );
   }
 
   const reviewMatch = pathname.match(/^\/review\/([0-9a-f-]{36})$/i);

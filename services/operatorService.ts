@@ -88,7 +88,6 @@ export interface OperatorAgent {
   phone: string | null;
   agent_code: string | null;
   verified: boolean;
-  is_suspended: boolean;
   commission_rate: number | null;
   tier: string | null;
   trust_score: number | null;
@@ -188,16 +187,13 @@ export async function rejectWithdrawal(
 export async function listPendingAgents(): Promise<OperatorAgent[]> {
   const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 200 });
   if (error) throw new Error(error);
-  return ((data ?? []) as OperatorAgent[]).filter(a => !a.verified && !a.is_suspended);
+  // Note: production sp_users schema does NOT have is_suspended column —
+  // pending agents = unverified agents only.
+  return ((data ?? []) as OperatorAgent[]).filter(a => !a.verified);
 }
 
 export async function verifyAgent(userId: string): Promise<void> {
   const { error } = await callGateway('admin_update_user', { user_id: userId, verified: true });
-  if (error) throw new Error(error);
-}
-
-export async function suspendAgent(userId: string): Promise<void> {
-  const { error } = await callGateway('admin_update_user', { user_id: userId, is_suspended: true });
   if (error) throw new Error(error);
 }
 

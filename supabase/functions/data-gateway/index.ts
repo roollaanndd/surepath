@@ -443,7 +443,7 @@ Deno.serve(async (req) => {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db
           .from('sp_users')
-          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, is_suspended, tc_accepted, tc_accepted_at, tnc_ref_number, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target')
+          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, tc_accepted, tc_accepted_at, tnc_ref_number, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
         if (params.role) q = q.eq('role', params.role);
@@ -571,7 +571,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        const ALLOWED = ['role', 'verified', 'is_suspended', 'tier', 'tier_assigned_by', 'tier_assigned_at', 'commission_rate', 'name', 'phone'];
+        const ALLOWED = ['role', 'verified', 'tier', 'tier_assigned_by', 'tier_assigned_at', 'commission_rate', 'name', 'phone'];
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const k of ALLOWED) {
           if (k in params) updates[k] = params[k];
@@ -782,7 +782,7 @@ Deno.serve(async (req) => {
           db.from('sp_policy_orders').select('id', { count: 'exact', head: true }).in('status', ['SUBMITTED', 'UNDER_REVIEW']),
           db.from('sp_claims').select('id', { count: 'exact', head: true }).in('status', ['SUBMITTED', 'UNDER_REVIEW']),
           db.from('sp_withdrawals').select('id', { count: 'exact', head: true }).in('status', ['PENDING_L1', 'PENDING_L2', 'PENDING_L3']),
-          db.from('sp_users').select('id', { count: 'exact', head: true }).eq('role', 'AGENT').eq('verified', false).eq('is_suspended', false),
+          db.from('sp_users').select('id', { count: 'exact', head: true }).eq('role', 'AGENT').eq('verified', false),
           db.from('sp_admin_notifications').select('id', { count: 'exact', head: true }).eq('read', false),
           db.from('sp_payments').select('id, status, paid_amount').in('status', ['PENDING', 'PAID']),
         ]);

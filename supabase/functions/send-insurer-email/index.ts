@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
         <!-- Footer -->
         <tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;">
           <table width="100%"><tr>
-            <td style="font-size:11px;color:#94a3b8;font-weight:600;">SurePath Insurance Platform</td>
+            <td style="font-size:11px;color:#94a3b8;font-weight:600;">PT Ruang Proteksi Indonesia</td>
             <td align="right" style="font-size:11px;color:#94a3b8;">myinsurepath.com</td>
           </tr></table>
         </td></tr>

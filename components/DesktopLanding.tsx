@@ -204,7 +204,7 @@ const DesktopLanding = ({ onStart, lang }: { onStart: () => void, lang: Language
                   <a href="#" className="hover:text-emerald-500 transition-colors">Kontak</a>
                   <a href="#" className="hover:text-emerald-500 transition-colors">Pusat Bantuan</a>
                </div>
-               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">© 2025 SurePath Insurtech. Terdaftar dan diawasi oleh OJK Indonesia.</p>
+               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">© 2025 SurePath Insurtech. Bekerja sama dengan perusahaan asuransi berijin OJK.</p>
             </div>
          </div>
       </footer>

@@ -334,7 +334,7 @@ export const analyzeVehicleSurvey = async (
 - Plat   : ${expectedData.plate}`
       : 'KONTEKS KENDARAAN: tidak tersedia — lakukan analisa tanpa verifikasi identitas.';
 
-    const prompt = `Anda adalah Surveyor Asuransi Senior di SurePath Insurance. Lakukan inspeksi pra-asuransi (Pre-Insurance Vehicle Survey) secara menyeluruh dan teliti terhadap ${images.length} foto kendaraan berikut.
+    const prompt = `Anda adalah Surveyor Asuransi Senior di PT Ruang Proteksi Indonesia. Lakukan inspeksi pra-asuransi (Pre-Insurance Vehicle Survey) secara menyeluruh dan teliti terhadap ${images.length} foto kendaraan berikut.
 
 ${contextBlock}
 

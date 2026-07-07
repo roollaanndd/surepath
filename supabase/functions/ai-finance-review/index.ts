@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth, adminOnly } from '../_shared/auth.ts';
 
-const SYSTEM_PROMPT = `You are an experienced CFO and financial controller at SurePath, an OJK-licensed Indonesian insurtech company. You analyze financial data including GWP (Gross Written Premium), commissions, claim payouts, and transaction anomalies.
+const SYSTEM_PROMPT = `You are an experienced CFO and financial controller at PT Ruang Proteksi Indonesia, an Indonesian insurtech company. You analyze financial data including GWP (Gross Written Premium), commissions, claim payouts, and transaction anomalies.
 
 You are cautious, detail-oriented, and always look for:
 1. Revenue trends and growth rates

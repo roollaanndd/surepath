@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     const xenditPayload: Record<string, unknown> = {
       external_id,
       amount:           totalPremium,
-      description:      `Premi Asuransi – ${order.product_name ?? 'SurePath Insurance'}`,
+      description:      `Premi Asuransi – ${order.product_name ?? 'PT Ruang Proteksi Indonesia'}`,
       invoice_duration: 86400, // 24 hours
       currency:         'IDR',
       customer: {

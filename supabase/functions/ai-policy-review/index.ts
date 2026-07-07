@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth, adminOnly } from '../_shared/auth.ts';
 
-const SYSTEM_PROMPT = `You are an expert insurance underwriter and policy control administrator at SurePath, an OJK-licensed Indonesian insurtech company. You review motor vehicle insurance orders submitted by agents on behalf of clients.
+const SYSTEM_PROMPT = `You are an expert insurance underwriter and policy control administrator at PT Ruang Proteksi Indonesia, an Indonesian insurtech company. You review motor vehicle insurance orders submitted by agents on behalf of clients.
 
 Analyze each order for: vehicle risk, client profile completeness, AI survey score, coverage appropriateness, OJK rate compliance, and anomalies.
 

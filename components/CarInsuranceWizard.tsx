@@ -43,7 +43,8 @@ const STEPS = [
 // the agent VehicleUnderwritingWizard (which also adds Rp 5,000). Not sourced
 // from the per-insurer CMS product config because it's a platform-level fee,
 // not an insurer-level commercial term.
-const APPLICATION_FEE = 5000;
+const APPLICATION_FEE = 6000;
+const POLICY_DELIVERY_FEE = 20000;
 
 const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
@@ -284,7 +285,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       calc.addonsDetail.riot + calc.addonsDetail.terrorism +
       calc.addonsDetail.tpl + calc.addonsDetail.paDriver + calc.addonsDetail.paPassenger;
 
-    const totalPayable = netPremium + adminFee + stampDuty + APPLICATION_FEE - calc.adminFee - calc.stampDuty;
+    const totalPayable = netPremium + adminFee + stampDuty + APPLICATION_FEE + POLICY_DELIVERY_FEE - calc.adminFee - calc.stampDuty;
     // ^ calcPremium already added adminFee + stampDuty into calc.total. We
     //   subtract those defaults and add the insurer-specific ones so the
     //   total reflects the actual product the customer selected.
@@ -304,6 +305,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       stampDuty,
       netPremium,
       applicationFee: APPLICATION_FEE,
+      policyDeliveryFee: POLICY_DELIVERY_FEE,
       totalPayable,
       // CMS-backed metadata for transparency in the order payload
       vehicleCategory: calc.category,

@@ -266,7 +266,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
         </div>
 
         <div className="mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.18)' }}>© {new Date().getFullYear()} PT SurePath Digital Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
+          <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.18)' }}>© {new Date().getFullYear()} PT Ruang Proteksi Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
           <div className="flex items-center gap-6">
             {[
               { label: t('Privasi', 'Privacy'), path: '/privacy' },

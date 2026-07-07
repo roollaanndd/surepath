@@ -604,7 +604,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           addon_premium: breakdown.addonPremium,
           admin_fee: breakdown.adminFee,
           stamp_duty: breakdown.stampDuty,
-          total_premium: breakdown.total + 5000,
+          total_premium: breakdown.total + 26000,
           ojk_rate: breakdown.rate,
           discount_rate: discountRate,
           discount_amount: discountAmount,
@@ -1698,7 +1698,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <div className="flex justify-between py-3 text-sm">
               <span className="text-slate-500 dark:text-slate-400">Biaya Aplikasi SurePath</span>
               <span className="font-semibold text-slate-700 dark:text-slate-200">
-                {formatIDR(5000)}
+                {formatIDR(6000)}
               </span>
             </div>
           </div>
@@ -1708,7 +1708,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <span className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">
               Total Premi
             </span>
-            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total + 5000)}</span>
+            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total + 26000)}</span>
           </div>
 
           {/* Dates */}
@@ -1909,7 +1909,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
       client_email: clientEmail,
       client_phone: clientPhone || undefined,
       product_name: productName,
-      total_premium: breakdown.total + 5000,
+      total_premium: breakdown.total + 26000,
     });
     setPayLoading(false);
     if (!result?.invoice_url) {

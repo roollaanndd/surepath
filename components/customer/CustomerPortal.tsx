@@ -25,6 +25,7 @@ const ContactPage = lazy(() => import('../ContactPage'));
 import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
+import { HeroProtected, EmptyStateSearch } from '../shared/Illustrations';
 import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
 import { ShieldPlus, MessageCircle } from 'lucide-react';
 import PathyChat from '../shared/PathyChat';
@@ -169,9 +170,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </button>
               </div>
 
-              {/* Protection Score Hero */}
+              {/* Protection Score Hero — with character illustration */}
               <HeroCard>
-                <div className="flex items-center gap-5">
+                {/* Character illustration — top right of hero card */}
+                <div className="absolute top-2 right-2 opacity-90 pointer-events-none">
+                  <HeroProtected size={90} />
+                </div>
+                <div className="flex items-center gap-5 relative z-10">
                   {/* SVG Protection Score Ring */}
                   <div className="relative flex-shrink-0">
                     <svg width="86" height="86" viewBox="0 0 100 100">
@@ -472,9 +477,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </div>
                 {customerPolicies.length === 0 ? (
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
-                      <FileText size={22} className="text-ds-green" />
-                    </div>
+                    <EmptyStateSearch size={100} />
                     <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet.', 'Belum ada polis.')}</p>
                     <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform">
                       {t('Browse Plans', 'Lihat Paket')}

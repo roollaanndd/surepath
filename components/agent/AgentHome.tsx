@@ -13,6 +13,7 @@ import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
+import { AgentEarning } from '../shared/Illustrations';
 
 interface Props {
   agent: any;
@@ -126,6 +127,10 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 12px 40px rgba(0,59,47,0.45)' }}>
           <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
           <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.07)' }} />
+          {/* Character illustration */}
+          <div className="absolute top-0 right-0 opacity-80 pointer-events-none">
+            <AgentEarning size={80} />
+          </div>
 
           <div className="relative z-10 flex items-center gap-5">
             <div className="flex-1 min-w-0">

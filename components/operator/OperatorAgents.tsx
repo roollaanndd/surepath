@@ -228,11 +228,11 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setSelected(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className={`relative w-full ${SHEET_BG} rounded-t-3xl shadow-2xl max-h-[92vh] overflow-y-auto`}
+            className={`relative w-full ${SHEET_BG} rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col`}
             onClick={e => e.stopPropagation()}
           >
             {/* Drag handle + header */}
-            <div className="sticky top-0 z-10 pt-3 pb-2 bg-inherit">
+            <div className="shrink-0 pt-3 pb-2 bg-inherit">
               <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-3" />
               <div className="flex items-center justify-between px-5">
                 <h3 className={`text-lg font-black ${SHEET_TEXT}`}>Verifikasi Agen</h3>
@@ -249,7 +249,8 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
                 <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin" />
               </div>
             ) : detail ? (
-              <div className="px-5 pb-8 space-y-5">
+              <>
+                <div className="flex-1 overflow-y-auto px-5 pb-44 space-y-5">
                 {/* Agent header */}
                 <div className={`rounded-2xl p-4 ${SHEET_INSET}`}>
                   <div className="flex items-center gap-3">
@@ -362,24 +363,36 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
                   </div>
                 )}
 
-                {/* Action buttons */}
+                {/* Action buttons — moved to sticky footer */}
+                </div>
+
+                {/* Sticky footer with action buttons */}
                 {!detail.agent.verified && (
-                  <div className="flex items-center gap-2 pt-2 sticky bottom-0 bg-inherit pb-2">
-                    <button
-                      onClick={() => handleVerify(selected)}
-                      className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
-                    >
-                      <CheckCircle2 size={14} /> Verifikasi Agen
-                    </button>
-                    <button
-                      onClick={() => handleReject(selected)}
-                      className="flex-1 py-3 rounded-xl text-sm font-bold bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-rose-500/30"
-                    >
-                      <XCircle size={14} /> Tolak
-                    </button>
+                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-5 safe-area-pb`}>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleVerify(selected)}
+                        className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
+                      >
+                        <CheckCircle2 size={14} /> Verifikasi Agen
+                      </button>
+                      <button
+                        onClick={() => handleReject(selected)}
+                        className="flex-1 py-3 rounded-xl text-sm font-bold bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-rose-500/30"
+                      >
+                        <XCircle size={14} /> Tolak
+                      </button>
+                    </div>
                   </div>
                 )}
-              </div>
+                {detail.agent.verified && (
+                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-5 safe-area-pb`}>
+                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                      <CheckCircle2 size={14} /> Agen Sudah Diverifikasi
+                    </div>
+                  </div>
+                )}
+              </>
             ) : null}
           </div>
         </div>

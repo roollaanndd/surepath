@@ -340,6 +340,7 @@ export interface SpInsurer {
   admin_name?: string;
   admin_email?: string;
   pic_name?: string;
+  pic_email?: string;
   pic_phone?: string;
   logo_url?: string;
   created_at?: string;
@@ -438,7 +439,7 @@ export interface SpReviewToken {
   expires_at: string;
   accessed_count: number;
   last_accessed_at?: string;
-  insurer_action?: 'APPROVED' | 'REJECTED';
+  insurer_action?: 'APPROVED' | 'REQUEST_INFO' | 'DECLINED';
   insurer_notes?: string;
   actioned_at?: string;
   created_at: string;

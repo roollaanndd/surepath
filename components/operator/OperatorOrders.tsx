@@ -5,7 +5,7 @@ import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, Externa
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
-import { listOrders, updateOrderStatus, type OperatorOrder } from '../../services/operatorService';
+import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
 
 interface Props {
   operator: any;
@@ -68,14 +68,21 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
   const handleApprove = async (o: OperatorOrder) => {
     const ok = await confirm({
       title: 'Setujui Pengajuan Polis',
-      description: `Setujui order ${o.order_number ?? o.id} untuk ${o.client_name}? Order akan diteruskan ke insurer untuk penerbitan polis.`,
+      description: `Setujui order ${o.order_number ?? o.id} untuk ${o.client_name}? Link review akan otomatis dikirim ke insurer (${o.insurer_name ?? 'penanggung'}) untuk ditinjau.`,
       confirmLabel: 'Setujui',
       variant: 'primary',
     });
     if (!ok) return;
     try {
       await updateOrderStatus(o.id, 'APPROVED', 'Disetujui oleh operator');
-      toast.success('Order disetujui');
+      // Trigger insurer review flow — generates secure token + sends email
+      try {
+        const { insurerEmail } = await sendInsurerReviewLink(o.id);
+        toast.success(`Order disetujui. Link review terkirim ke ${insurerEmail}`);
+      } catch (emailErr: any) {
+        // Order approved but email failed — still success, just warn
+        toast.warning(`Order disetujui, tapi email ke insurer gagal: ${emailErr.message}`);
+      }
       load();
     } catch (e: any) {
       toast.error(`Gagal menyetujui: ${e.message}`);
@@ -226,11 +233,11 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
         <div className="fixed inset-0 z-50 flex items-end" onClick={() => setSelectedOrder(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className={`relative w-full ${SHEET_BG} rounded-t-3xl shadow-2xl max-h-[92vh] overflow-y-auto`}
+            className={`relative w-full ${SHEET_BG} rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col`}
             onClick={e => e.stopPropagation()}
           >
             {/* Drag handle */}
-            <div className="sticky top-0 z-10 pt-3 pb-2 bg-inherit">
+            <div className="shrink-0 pt-3 pb-2 bg-inherit">
               <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-3" />
               <div className="flex items-center justify-between px-5">
                 <h3 className={`text-lg font-black ${SHEET_TEXT}`}>Detail Pengajuan</h3>
@@ -244,7 +251,8 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
               </div>
             </div>
 
-            <div className="px-5 pb-8 space-y-5">
+            {/* Scrollable content area — flex-1 + overflow-y-auto + bottom padding for nav */}
+            <div className="flex-1 overflow-y-auto px-5 pb-44 space-y-5">
               {/* Order header */}
               <div className={`rounded-2xl p-4 ${SHEET_INSET}`}>
                 <div className="flex items-start justify-between">
@@ -403,8 +411,12 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
                 </Section>
               )}
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-2 pt-2 sticky bottom-0 bg-inherit pb-2">
+              {/* Action buttons — moved to sticky footer below scroll area */}
+            </div>
+
+            {/* Sticky footer with action buttons — padded to clear bottom nav */}
+            <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
+              <div className="flex items-center gap-2">
                 {(selectedOrder.status === 'SUBMITTED' || selectedOrder.status === 'UNDER_REVIEW') && (
                   <>
                     <button
@@ -422,12 +434,27 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
                   </>
                 )}
                 {selectedOrder.status === 'APPROVED' && (
-                  <button
-                    onClick={() => handleIssue(selectedOrder)}
-                    className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
-                  >
-                    <Clock size={14} /> Terbitkan Polis
-                  </button>
+                  <div className="flex-1 space-y-2">
+                    <div className="py-2.5 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                      <CheckCircle2 size={14} /> Disetujui — Link review terkirim ke insurer
+                    </div>
+                    <button
+                      onClick={() => handleIssue(selectedOrder)}
+                      className="w-full py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
+                    >
+                      <Clock size={14} /> Terbitkan Polis (manual)
+                    </button>
+                  </div>
+                )}
+                {selectedOrder.status === 'ISSUED' && (
+                  <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 size={14} /> Polis Diterbitkan
+                  </div>
+                )}
+                {selectedOrder.status === 'REJECTED' && (
+                  <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 flex items-center justify-center gap-1.5">
+                    <XCircle size={14} /> Pengajuan Ditolak
+                  </div>
                 )}
               </div>
             </div>

@@ -183,6 +183,15 @@ export async function updateOrderStatus(
   return data as OperatorOrder;
 }
 
+// Trigger insurer review flow: generates secure review token + sends email
+// to insurer PIC with link to /review/:token page where they can approve,
+// request additional info, or decline the policy application.
+export async function sendInsurerReviewLink(orderId: string): Promise<{ reviewUrl: string; insurerEmail: string }> {
+  const { data, error } = await callGateway('admin_send_insurer_review_link', { order_id: orderId });
+  if (error) throw new Error(error);
+  return { reviewUrl: data.review_url, insurerEmail: data.insurer_email };
+}
+
 export async function listClaims(status?: string, limit = 100): Promise<OperatorClaim[]> {
   const { data, error } = await callGateway('admin_list_claims', { status, limit });
   if (error) throw new Error(error);

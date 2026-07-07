@@ -86,7 +86,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
   const [order, setOrder] = useState<SpPolicyOrder | null>(null);
   const [tokenRecord, setTokenRecord] = useState<SpReviewToken | null>(null);
   const [error, setError] = useState<'expired' | 'not_found' | null>(null);
-  const [action, setAction] = useState<'APPROVED' | 'REJECTED' | null>(null);
+  const [action, setAction] = useState<'APPROVED' | 'REQUEST_INFO' | 'DECLINED' | null>(null);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -100,7 +100,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
         setTokenRecord(result.tokenRecord);
         if (result.tokenRecord.insurer_action) {
           setDone(true);
-          setAction(result.tokenRecord.insurer_action as 'APPROVED' | 'REJECTED');
+          setAction(result.tokenRecord.insurer_action as 'APPROVED' | 'REQUEST_INFO' | 'DECLINED');
         }
       }
       setLoading(false);
@@ -109,8 +109,8 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
 
   const handleSubmit = async () => {
     if (!action || !tokenRecord || !order) return;
-    if (action === 'REJECTED' && !notes.trim()) {
-      alert('Catatan wajib diisi untuk penolakan.');
+    if ((action === 'REQUEST_INFO' || action === 'DECLINED') && notes.trim().length < 5) {
+      alert('Catatan wajib diisi (minimal 5 karakter) untuk Request Info dan Decline.');
       return;
     }
     setSubmitting(true);
@@ -165,22 +165,32 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
   // ── Done state ────────────────────────────────────────────────────────────
 
   if (done) {
+    const isApproved = action === 'APPROVED';
+    const isRequestInfo = action === 'REQUEST_INFO';
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center space-y-6">
           <div className={`w-20 h-20 mx-auto rounded-[2rem] flex items-center justify-center ${
-            action === 'APPROVED' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
+            isApproved ? 'bg-emerald-500/10'
+            : isRequestInfo ? 'bg-amber-500/10'
+            : 'bg-rose-500/10'
           }`}>
-            {action === 'APPROVED'
+            {isApproved
               ? <CheckCircle size={36} className="text-emerald-400" />
+              : isRequestInfo
+              ? <AlertTriangle size={36} className="text-amber-400" />
               : <XCircle size={36} className="text-rose-400" />}
           </div>
           <div>
             <h2 className="text-2xl font-black text-white">
-              {action === 'APPROVED' ? 'Pengajuan Disetujui' : 'Pengajuan Ditolak'}
+              {isApproved ? 'Pengajuan Disetujui'
+              : isRequestInfo ? 'Permintaan Info Terkirim'
+              : 'Pengajuan Ditolak'}
             </h2>
             <p className="text-sm text-slate-400 mt-2">
-              Keputusan Anda telah disimpan. Tim SurePath akan menindaklanjuti order <span className="text-white font-bold">{order.order_number}</span>.
+              {isRequestInfo
+                ? 'Permintaan informasi tambahan telah dikirim ke nasabah dan tim SurePath. Mereka akan melengkapi data yang dibutuhkan.'
+                : `Keputusan Anda telah disimpan. Tim SurePath akan menindaklanjuti order ${order?.order_number}.`}
             </p>
           </div>
         </div>
@@ -328,10 +338,10 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
           <div className="bg-white/[0.03] border border-white/10 rounded-[2rem] p-6 space-y-5">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Keputusan Anda</p>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setAction('APPROVED')}
-                className={`py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   action === 'APPROVED'
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
                     : 'bg-white/5 text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400'
@@ -341,9 +351,20 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
                 Setujui
               </button>
               <button
-                onClick={() => setAction('REJECTED')}
-                className={`py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                  action === 'REJECTED'
+                onClick={() => setAction('REQUEST_INFO')}
+                className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  action === 'REQUEST_INFO'
+                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                    : 'bg-white/5 text-slate-400 hover:bg-amber-500/10 hover:text-amber-400'
+                }`}
+              >
+                <AlertTriangle size={16} className="mx-auto mb-1" />
+                Info
+              </button>
+              <button
+                onClick={() => setAction('DECLINED')}
+                className={`py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  action === 'DECLINED'
                     ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
                     : 'bg-white/5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400'
                 }`}
@@ -356,7 +377,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
             {action && (
               <div className="space-y-3 animate-fade-in">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
-                  Catatan {action === 'REJECTED' ? '(wajib diisi)' : '(opsional)'}
+                  Catatan {(action === 'REQUEST_INFO' || action === 'DECLINED') ? '(wajib diisi — min 5 karakter)' : '(opsional)'}
                 </label>
                 <textarea
                   value={notes}
@@ -365,6 +386,8 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
                   placeholder={
                     action === 'APPROVED'
                       ? 'Catatan persetujuan (opsional)…'
+                      : action === 'REQUEST_INFO'
+                      ? 'Contoh: Foto STNK kurang jelas, mohon kirim ulang dengan resolusi lebih tinggi…'
                       : 'Alasan penolakan (wajib)…'
                   }
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 resize-none transition-colors"
@@ -375,10 +398,16 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
                   className={`w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
                     action === 'APPROVED'
                       ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                      : action === 'REQUEST_INFO'
+                      ? 'bg-amber-500 hover:bg-amber-400 text-white'
                       : 'bg-rose-500 hover:bg-rose-400 text-white'
                   } disabled:opacity-50`}
                 >
-                  {submitting ? 'Mengirim…' : `Konfirmasi ${action === 'APPROVED' ? 'Persetujuan' : 'Penolakan'}`}
+                  {submitting ? 'Mengirim…' : `Konfirmasi ${
+                    action === 'APPROVED' ? 'Persetujuan'
+                    : action === 'REQUEST_INFO' ? 'Permintaan Info'
+                    : 'Penolakan'
+                  }`}
                 </button>
               </div>
             )}

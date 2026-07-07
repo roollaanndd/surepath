@@ -543,6 +543,349 @@ Deno.serve(async (req) => {
         return json({ data });
       }
 
+      // ── Insurer Review Flow (token-based, no JWT required) ────────────────
+      // These actions are called from the public /review/:uuid page and the
+      // /insurer-portal dashboard. Auth is via the review token or insurer
+      // auth token — NOT the Supabase JWT. This is intentional because
+      // insurers don't have Supabase Auth accounts.
+
+      // Admin/Operator: generate review token + send email to insurer PIC
+      // Called when operator approves an order — triggers the insurer review flow.
+      case 'admin_send_insurer_review_link': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const orderId = String(params.order_id ?? '');
+        if (!orderId) return json({ error: 'order_id required' }, 400);
+
+        // Fetch order
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders')
+          .select('id, order_number, client_name, product_name, total_premium, insurer_id, insurer_name, status')
+          .eq('id', orderId)
+          .maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        if (!order) return json({ error: 'Order not found' }, 404);
+        if (!order.insurer_id) return json({ error: 'Order has no insurer assigned' }, 400);
+
+        // Fetch insurer email
+        const { data: ins, error: insErr } = await db.from('sp_insurers')
+          .select('id, name, admin_email, pic_email, pic_name')
+          .eq('id', order.insurer_id)
+          .maybeSingle();
+        if (insErr) return json({ error: insErr.message }, 400);
+        const insurerEmail = ins?.pic_email || ins?.admin_email;
+        if (!insurerEmail) return json({ error: 'Insurer has no email configured' }, 400 });
+
+        // Check if there's already an active (non-expired, non-actioned) token
+        const { data: existing } = await db.from('sp_review_tokens')
+          .select('id, token, expires_at, insurer_action')
+          .eq('order_id', orderId)
+          .is('insurer_action', null)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1);
+        let reviewToken: string;
+        let reviewUrl: string;
+        if (existing && existing.length > 0) {
+          // Reuse existing active token
+          reviewToken = existing[0].token;
+        } else {
+          // Create new token (7-day expiry)
+          reviewToken = crypto.randomUUID();
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { error: tkErr } = await db.from('sp_review_tokens').insert({
+            token: reviewToken,
+            order_id: orderId,
+            created_by: caller.authId,
+            expires_at: expiresAt,
+            accessed_count: 0,
+            reminder_count: 0,
+          });
+          if (tkErr) return json({ error: tkErr.message }, 400);
+        }
+
+        const appOrigin = 'https://myinsurepath.com';
+        reviewUrl = `${appOrigin}/review/${reviewToken}`;
+
+        // Update token with review URL
+        await db.from('sp_review_tokens').update({ review_url: reviewUrl }).eq('token', reviewToken).then(() => {}, () => {});
+
+        // Send email via Resend
+        if (insurerEmail && RESEND_KEY) {
+          const esc = (s: string) => s.replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
+          const premiumFmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.total_premium ?? 0);
+          const subject = `Pengajuan Polis Baru: ${order.order_number} - ${order.client_name}`;
+          const html = `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<tr><td style="background:#003B2F;padding:28px 32px;">
+  <span style="font-size:20px;font-weight:900;color:#fff;">Sure<span style="color:#00C16A;">Path</span></span>
+  <span style="display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:3px;text-transform:uppercase;margin-top:2px;">Insurer Review Request</span>
+</td></tr>
+<tr><td style="padding:32px;">
+  <p style="font-size:14px;color:#64748b;margin:0 0 8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Kepada ${esc(ins?.pic_name || 'Tim ' + (ins?.name || 'Penanggung'))}</p>
+  <h1 style="font-size:24px;font-weight:900;color:#0f172a;margin:0 0 24px;letter-spacing:-1px;line-height:1.3;">Terdapat pengajuan polis<br/>baru yang perlu ditinjau</h1>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:28px;"><tr><td style="padding:20px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">No. Order</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:800;color:#00C16A;font-family:monospace;">${esc(order.order_number)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Nasabah</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(order.client_name)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;">Produk</td>
+          <td align="right" style="padding:6px 0;font-size:13px;font-weight:700;color:#0f172a;">${esc(order.product_name)}</td></tr>
+      <tr><td style="padding:6px 0;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;border-top:1px solid #e2e8f0;">Total Premi</td>
+          <td align="right" style="padding:6px 0;font-size:16px;font-weight:900;color:#00C16A;border-top:1px solid #e2e8f0;">${premiumFmt}</td></tr>
+    </table>
+  </td></tr></table>
+  <a href="${reviewUrl}" style="display:block;background:#00C16A;color:#fff;font-size:14px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:16px 24px;border-radius:12px;text-align:center;margin-bottom:16px;">Review Pengajuan Ini</a>
+  <p style="font-size:12px;color:#94a3b8;margin:0;line-height:1.6;">Link review berlaku 7 hari. Di link tersebut Anda dapat: menyetujui, meminta informasi tambahan, atau menolak pengajuan.</p>
+</td></tr>
+<tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;">
+  <span style="font-size:11px;color:#94a3b8;font-weight:600;">PT Ruang Proteksi Indonesia · myinsurepath.com</span>
+</td></tr>
+</table></td></tr></table>
+</body></html>`;
+          fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: 'SurePath <noreply@myinsurepath.com>', to: [insurerEmail], subject, html }),
+          }).then(() => {}, () => {});
+        }
+
+        // Send Telegram alert
+        sendTelegram(
+          `Link Review Insurer Dikirim - SurePath\n\n` +
+          `Insurer: ${ins?.name ?? '-'}\n` +
+          `No. Order: ${order.order_number}\n` +
+          `Nasabah: ${order.client_name}\n` +
+          `Email PIC: ${insurerEmail}\n` +
+          `Link: ${reviewUrl}\n\n` +
+          `Insurer dapat: Approve / Request Info / Decline`
+        );
+
+        // Create admin notification
+        db.from('sp_admin_notifications').insert({
+          type: 'INSURER_REVIEW_SENT',
+          title: 'Link Review Dikirim ke Insurer',
+          body: `${ins?.name ?? 'Insurer'} — ${order.order_number} (${order.client_name})`,
+          order_id: orderId,
+          read: false,
+          metadata: { order_id: orderId, review_url: reviewUrl, insurer_email: insurerEmail },
+        }).then(() => {}, () => {});
+
+        return json({ data: { success: true, review_url: reviewUrl, insurer_email: insurerEmail } });
+      }
+
+      // Public: get order details by review token (for /review/:uuid page)
+      case 'get_insurer_review': {
+        const token = String(params.token ?? '');
+        if (!token) return json({ error: 'token required' }, 400);
+        // Load token
+        const { data: rt, error: rtErr } = await db.from('sp_review_tokens')
+          .select('id, token, order_id, expires_at, insurer_action, insurer_notes, actioned_at, accessed_count, reminder_count')
+          .eq('token', token)
+          .maybeSingle();
+        if (rtErr) return json({ error: rtErr.message }, 400);
+        if (!rt) return json({ error: 'Invalid token' }, 404);
+        if (new Date(rt.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Increment accessed_count (non-blocking)
+        db.from('sp_review_tokens').update({ accessed_count: (rt.accessed_count ?? 0) + 1, last_accessed_at: new Date().toISOString() })
+          .eq('id', rt.id).then(() => {}, () => {});
+        // Load order
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders')
+          .select('*')
+          .eq('id', rt.order_id)
+          .maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        if (!order) return json({ error: 'Order not found' }, 404);
+        // Load insurer info
+        let insurer: any = null;
+        if (order.insurer_id) {
+          const { data: ins } = await db.from('sp_insurers')
+            .select('id, name, logo_url, admin_name, admin_email, pic_name, pic_email, pic_phone')
+            .eq('id', order.insurer_id)
+            .maybeSingle();
+          insurer = ins;
+        }
+        return json({ data: { token: rt, order, insurer } });
+      }
+
+      // Public: submit insurer decision (APPROVED / REQUEST_INFO / DECLINED)
+      case 'submit_insurer_decision': {
+        const token = String(params.token ?? '');
+        const action = String(params.action ?? '');
+        const notes = String(params.notes ?? '');
+        if (!token || !action) return json({ error: 'token and action required' }, 400);
+        const VALID_ACTIONS = ['APPROVED', 'REQUEST_INFO', 'DECLINED'];
+        if (!VALID_ACTIONS.includes(action)) return json({ error: 'Invalid action' }, 400);
+        // Notes required for REQUEST_INFO and DECLINED
+        if ((action === 'REQUEST_INFO' || action === 'DECLINED') && notes.trim().length < 5) {
+          return json({ error: 'Notes required (min 5 chars) for REQUEST_INFO and DECLINED' }, 400);
+        }
+        // Load token
+        const { data: rt, error: rtErr } = await db.from('sp_review_tokens')
+          .select('id, order_id, expires_at, insurer_action')
+          .eq('token', token)
+          .maybeSingle();
+        if (rtErr) return json({ error: rtErr.message }, 400);
+        if (!rt) return json({ error: 'Invalid token' }, 404);
+        if (new Date(rt.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        if (rt.insurer_action) return json({ error: 'Token already acted on', existing_action: rt.insurer_action }, 409);
+        // Update token
+        const ts = new Date().toISOString();
+        const { error: updTokenErr } = await db.from('sp_review_tokens').update({
+          insurer_action: action,
+          insurer_notes: notes,
+          actioned_at: ts,
+        }).eq('id', rt.id);
+        if (updTokenErr) return json({ error: updTokenErr.message }, 400);
+        // Map insurer action → order status
+        const orderStatus = action === 'APPROVED' ? 'APPROVED'
+          : action === 'REQUEST_INFO' ? 'UNDER_REVIEW'
+          : 'REJECTED'; // DECLINED → REJECTED
+        // Update order
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders').update({
+          status: orderStatus,
+          insurer_decision: action,
+          insurer_decision_notes: notes,
+          insurer_decision_at: ts,
+          insurer_review_token_id: rt.id,
+          reviewer_notes: `Insurer ${action}: ${notes}`,
+          reviewed_at: ts,
+          updated_at: ts,
+        }).eq('id', rt.order_id).select('id, order_number, client_name, agent_id, product_name, insurer_id').maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        // Insert admin notification
+        const decisionLabel = action === 'APPROVED' ? 'menyetujui' : action === 'REQUEST_INFO' ? 'meminta info tambahan untuk' : 'menolak';
+        db.from('sp_admin_notifications').insert({
+          type: `INSURER_${action}`,
+          title: `Insurer ${decisionLabel} pengajuan`,
+          body: `${order?.order_number ?? 'Order'} — ${order?.client_name ?? ''}: ${notes || '(tanpa catatan)'}`,
+          order_id: rt.order_id,
+          read: false,
+          metadata: { order_id: rt.order_id, action, notes, insurer_id: order?.insurer_id },
+        }).then(() => {}, () => {});
+        // Insert user/agent notification
+        if (order?.agent_id) {
+          const userTitle = action === 'APPROVED' ? 'Pengajuan polis disetujui insurer'
+            : action === 'REQUEST_INFO' ? 'Insurer meminta info tambahan'
+            : 'Pengajuan polis ditolak insurer';
+          const userBody = `${order?.order_number ?? ''}: ${notes || 'Mohon lengkapi persyaratan dari insurer.'}`;
+          db.from('sp_notifications').insert({
+            agent_id: order.agent_id,
+            type: 'CLAIM_UPDATE',
+            title: userTitle,
+            body: userBody,
+            read: false,
+            metadata: { order_id: rt.order_id, action, notes },
+          }).then(() => {}, () => {});
+        }
+        // Send Telegram alert to admin team
+        const tgTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        sendTelegram(
+          `Insurer Decision - SurePath\n\n` +
+          `Order: ${order?.order_number ?? rt.order_id}\n` +
+          `Nasabah: ${order?.client_name ?? '-'}\n` +
+          `Decision: ${action}\n` +
+          `Notes: ${notes || '-'}\n` +
+          `Waktu: ${tgTime} WIB`
+        );
+        return json({ data: { success: true, order_status: orderStatus, action } });
+      }
+
+      // Public: get insurer dashboard data (multi-use auth token)
+      case 'get_insurer_dashboard': {
+        const token = String(params.token ?? '');
+        if (!token) return json({ error: 'token required' }, 400);
+        // Validate insurer auth token (rolling 7-day, multi-use)
+        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, email, expires_at, used_at')
+          .eq('token', token)
+          .maybeSingle();
+        if (authErr) return json({ error: authErr.message }, 400);
+        if (!authToken) return json({ error: 'Invalid token' }, 404);
+        if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Load insurer
+        const { data: insurer, error: insErr } = await db.from('sp_insurers')
+          .select('id, name, logo_url, admin_name, admin_email, pic_name, pic_email, pic_phone')
+          .eq('id', authToken.insurer_id)
+          .maybeSingle();
+        if (insErr) return json({ error: insErr.message }, 400);
+        if (!insurer) return json({ error: 'Insurer not found' }, 404);
+        // Load orders for this insurer
+        const { data: orders, error: ordErr } = await db.from('sp_policy_orders')
+          .select('id, order_number, client_name, client_phone, product_name, product_code, coverage_type, sum_insured, total_premium, net_premium, status, insurer_decision, insurer_decision_notes, insurer_decision_at, policy_number, policy_document_url, vehicle_image_url, vehicle_details, created_at, reviewed_at, issued_at')
+          .eq('insurer_id', insurer.id)
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        // KPI counts
+        const kpi = {
+          total: orders?.length ?? 0,
+          pending: (orders ?? []).filter((o: any) => !o.insurer_decision).length,
+          approved: (orders ?? []).filter((o: any) => o.insurer_decision === 'APPROVED').length,
+          request_info: (orders ?? []).filter((o: any) => o.insurer_decision === 'REQUEST_INFO').length,
+          declined: (orders ?? []).filter((o: any) => o.insurer_decision === 'DECLINED').length,
+          issued: (orders ?? []).filter((o: any) => o.status === 'ISSUED').length,
+        };
+        return json({ data: { insurer, orders: orders ?? [], kpi } });
+      }
+
+      // Public: insurer uploads policy PDF (sets status → ISSUED)
+      case 'insurer_upload_policy': {
+        const token = String(params.token ?? '');
+        const orderId = String(params.order_id ?? '');
+        const policyDocumentUrl = String(params.policy_document_url ?? '');
+        const policyNumber = String(params.policy_number ?? '');
+        if (!token || !orderId || !policyDocumentUrl) return json({ error: 'token, order_id, policy_document_url required' }, 400);
+        // Validate insurer auth token
+        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, expires_at')
+          .eq('token', token)
+          .maybeSingle();
+        if (authErr) return json({ error: authErr.message }, 400);
+        if (!authToken) return json({ error: 'Invalid token' }, 404);
+        if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Verify order belongs to this insurer
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders')
+          .select('id, order_number, insurer_id, status, client_name, agent_id')
+          .eq('id', orderId)
+          .eq('insurer_id', authToken.insurer_id)
+          .maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
+        // Update order
+        const ts = new Date().toISOString();
+        const { data: updated, error: updErr } = await db.from('sp_policy_orders').update({
+          policy_document_url: policyDocumentUrl,
+          policy_number: policyNumber || null,
+          status: 'ISSUED',
+          issued_at: ts,
+          updated_at: ts,
+        }).eq('id', orderId).select().maybeSingle();
+        if (updErr) return json({ error: updErr.message }, 400);
+        // Notifications
+        db.from('sp_admin_notifications').insert({
+          type: 'POLICY_ISSUED',
+          title: 'Polis Diterbitkan oleh Insurer',
+          body: `${order.order_number} — ${order.client_name}: polis ${policyNumber || '(no number)'} telah diterbitkan.`,
+          order_id: orderId,
+          read: false,
+          metadata: { order_id: orderId, policy_number: policyNumber, insurer_id: authToken.insurer_id },
+        }).then(() => {}, () => {});
+        if (order.agent_id) {
+          db.from('sp_notifications').insert({
+            agent_id: order.agent_id,
+            type: 'SYSTEM',
+            title: 'Polis Diterbitkan!',
+            body: `${order.order_number}: polis ${policyNumber || ''} sudah diterbitkan oleh insurer.`,
+            read: false,
+            metadata: { order_id: orderId, policy_number: policyNumber },
+          }).then(() => {}, () => {});
+        }
+        return json({ data: { success: true, order: updated } });
+      }
+
       // Update caller's own profile (safe fields only — role never changes here).
       case 'update_my_profile': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);

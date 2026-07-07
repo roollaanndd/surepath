@@ -254,10 +254,18 @@ export async function getOrderByToken(
 export async function submitInsurerReview(
   tokenId: string,
   orderId: string,
-  action: 'APPROVED' | 'REJECTED',
+  action: 'APPROVED' | 'REQUEST_INFO' | 'DECLINED',
   notes: string
 ): Promise<boolean> {
   const now = new Date().toISOString();
+  // Map insurer action to order status:
+  // APPROVED → APPROVED (order stays approved, ready for policy issuance)
+  // REQUEST_INFO → UNDER_REVIEW (order needs more info from customer)
+  // DECLINED → REJECTED (insurer declined)
+  const orderStatus = action === 'APPROVED' ? 'APPROVED'
+    : action === 'REQUEST_INFO' ? 'UNDER_REVIEW'
+    : 'REJECTED';
+
   const [tokenRes, orderRes] = await Promise.all([
     supabase.from('sp_review_tokens').update({
       insurer_action: action,
@@ -265,7 +273,7 @@ export async function submitInsurerReview(
       actioned_at: now,
     }).eq('id', tokenId),
     supabase.from('sp_policy_orders').update({
-      status: action,
+      status: orderStatus,
       reviewer_notes: notes,
       reviewed_at: now,
       updated_at: now,
@@ -281,7 +289,9 @@ export async function submitInsurerReview(
     .eq('id', orderId)
     .maybeSingle();
 
-  const label = action === 'APPROVED' ? 'Disetujui' : 'Ditolak';
+  const label = action === 'APPROVED' ? 'Disetujui Penanggung'
+    : action === 'REQUEST_INFO' ? 'Perlu Informasi Tambahan'
+    : 'Ditolak Penanggung';
   const orderRef = order?.order_number ?? orderId;
   const clientName = order?.client_name ?? 'Nasabah';
 
@@ -290,7 +300,9 @@ export async function submitInsurerReview(
       agent_id: order.agent_id,
       type: `POLICY_${action}`,
       title: `Polis ${label}: ${orderRef}`,
-      body: `Pengajuan polis ${clientName} (${orderRef}) telah ${label.toLowerCase()} oleh penanggung.${notes ? ` Catatan: ${notes}` : ''}`,
+      body: action === 'REQUEST_INFO'
+        ? `Penanggung meminta informasi tambahan untuk pengajuan ${clientName} (${orderRef}). Catatan: ${notes || '-'}`
+        : `Pengajuan polis ${clientName} (${orderRef}) telah ${label.toLowerCase()}.${notes ? ` Catatan: ${notes}` : ''}`,
       order_id: orderId,
       read: false,
     });
@@ -299,7 +311,9 @@ export async function submitInsurerReview(
   await supabase.from('sp_admin_notifications').insert({
     type: `POLICY_${action}`,
     title: `Polis ${label}: ${orderRef}`,
-    body: `Penanggung telah ${label.toLowerCase()} pengajuan polis ${clientName} (${orderRef}).${notes ? ` Catatan: ${notes}` : ''}`,
+    body: action === 'REQUEST_INFO'
+      ? `Penanggung meminta informasi tambahan untuk ${clientName} (${orderRef}). Catatan: ${notes || '-'}`
+      : `Penanggung telah ${label.toLowerCase()} pengajuan polis ${clientName} (${orderRef}).${notes ? ` Catatan: ${notes}` : ''}`,
     order_id: orderId,
     read: false,
   });

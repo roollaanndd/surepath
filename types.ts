@@ -11,6 +11,7 @@ export enum UserRole {
   FINANCE_MANAGER = 'FINANCE_MANAGER',
   FINANCE_DIRECTOR = 'FINANCE_DIRECTOR',
   INSURANCE_ADMIN = 'INSURANCE_ADMIN',
+  OPERATOR = 'OPERATOR', // Internal ops staff — uses /operatorapp (not /admin CMS)
   AGENT = 'AGENT',
   CUSTOMER = 'CUSTOMER',
   B2B_CLIENT = 'B2B_CLIENT'

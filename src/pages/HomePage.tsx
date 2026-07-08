@@ -265,9 +265,7 @@ const InteractiveStats: React.FC<{ darkMode: boolean; lang: any }> = ({ darkMode
 
   return (
     <section ref={ref} className="py-16 px-6" style={{
-      background: darkMode
-        ? 'linear-gradient(135deg, #080B12 0%, #0F1829 50%, #080B12 100%)'
-        : 'linear-gradient(135deg, #F4F7FB 0%, #E6FAF0 50%, #F4F7FB 100%)',
+      background: 'transparent',
     }}>
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">

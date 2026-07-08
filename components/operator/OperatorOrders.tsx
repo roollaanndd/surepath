@@ -1,11 +1,12 @@
 // OperatorOrders.tsx — Polis tab. List of policy orders, filter by status,
 // approve/reject/issue inline. Detail sheet includes document viewer.
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, ExternalLink, Car, User, Phone, CreditCard, Calendar, ShieldCheck, AlertTriangle, Sparkles } from 'lucide-react';
+import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, ExternalLink, Car, User, Phone, CreditCard, Calendar, ShieldCheck, AlertTriangle, Sparkles, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
+import { generateQuotationPDF } from '../../services/quotationPdf';
 
 interface Props {
   operator: any;
@@ -64,6 +65,45 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
       || (o.client_name ?? '').toLowerCase().includes(q)
       || (o.product_name ?? '').toLowerCase().includes(q);
   });
+
+  const handleGenerateQuotation = async (o: OperatorOrder) => {
+    try {
+      toast.info('Membuat quotation PDF...');
+      const vd = o.vehicle_details ?? {};
+      await generateQuotationPDF({
+        orderNumber: o.order_number ?? o.id,
+        orderDate: o.created_at,
+        status: o.status,
+        clientName: o.client_name,
+        clientPhone: o.client_phone ?? '-',
+        clientKtp: o.client_ktp ?? '-',
+        vehicleMake: vd.make ?? '-',
+        vehicleModel: vd.model ?? '',
+        vehicleYear: vd.year ? String(vd.year) : '-',
+        vehicleColor: vd.color ?? '-',
+        vehiclePlate: (vd.plate ?? `${vd.plateCode ?? ''} ${vd.plateNum ?? ''} ${vd.plateSuffix ?? ''}`.trim()) || '-',
+        vehicleChassis: vd.chassis ?? '-',
+        vehicleEngine: vd.engine ?? '-',
+        vehicleUsage: vd.usage ?? '-',
+        coverageType: o.coverage_type,
+        sumInsured: o.sum_insured ?? 0,
+        zone: o.zone ?? 1,
+        basePremium: o.base_premium ?? 0,
+        addonPremium: o.addon_premium ?? 0,
+        adminFee: o.admin_fee ?? 0,
+        stampDuty: o.stamp_duty ?? 0,
+        applicationFee: o.application_fee ?? 0,
+        totalPremium: o.total_premium ?? 0,
+        discountAmount: o.discount_amount ?? 0,
+        netPremium: o.net_premium ?? 0,
+        insurerName: o.insurer_name ?? '-',
+        addons: o.addons ?? {},
+      });
+      toast.success('Quotation PDF berhasil dibuat!');
+    } catch (e: any) {
+      toast.error(`Gagal membuat PDF: ${e.message}`);
+    }
+  };
 
   const handleApprove = async (o: OperatorOrder) => {
     const ok = await confirm({
@@ -416,6 +456,13 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
 
             {/* Sticky footer with action buttons — padded to clear bottom nav */}
             <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
+              {/* Generate Quotation button — always visible */}
+              <button
+                onClick={() => handleGenerateQuotation(selectedOrder)}
+                className="w-full mb-2 py-2.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+              >
+                <Download size={13} /> Generate Quotation PDF
+              </button>
               <div className="flex items-center gap-2">
                 {(selectedOrder.status === 'SUBMITTED' || selectedOrder.status === 'UNDER_REVIEW') && (
                   <>

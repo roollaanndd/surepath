@@ -96,7 +96,8 @@ const HomePage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* STATS section temporarily hidden */}
+      {/* ═══════════════ INTERACTIVE STATS COUNTER ═══════════════ */}
+      <InteractiveStats darkMode={props.darkMode} lang={lang} />
 
       {/* ═══════════════ WHY — left-border cards, ordinal bg ═══════════════ */}
       <section className="py-24 px-6" style={{ background: videoBg3 }}>
@@ -236,6 +237,86 @@ const HomePage: React.FC<SitePageProps> = (props) => {
 
     </SiteLayout>
   );
+};
+
+// ─── Interactive Animated Stats Counter ──────────────────────────────────────
+// Counts up from 0 to target when scrolled into view (IntersectionObserver).
+// Creates a memorable "wow" moment on the homepage.
+
+const InteractiveStats: React.FC<{ darkMode: boolean; lang: any }> = ({ darkMode }) => {
+  const [visible, setVisible] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const STATS = [
+    { target: 5,    suffix: '',     label: 'Produk Asuransi',   color: '#00C16A' },
+    { target: 24,   suffix: '/7',   label: 'Support Online',     color: '#3B82F6' },
+    { target: 60,   suffix: ' detik', label: 'Pendaftaran Cepat', color: '#F59E0B' },
+    { target: 100,  suffix: '%',    label: 'Tarif Transparan',   color: '#7C3AED' },
+  ];
+
+  return (
+    <section ref={ref} className="py-16 px-6" style={{
+      background: darkMode
+        ? 'linear-gradient(135deg, #080B12 0%, #0F1829 50%, #080B12 100%)'
+        : 'linear-gradient(135deg, #F4F7FB 0%, #E6FAF0 50%, #F4F7FB 100%)',
+    }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          {STATS.map((stat, i) => (
+            <div key={i} className="text-center" style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? 'translateY(0)' : 'translateY(20px)',
+              transition: `all 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.15}s`,
+            }}>
+              <div className="text-4xl md:text-5xl font-black tracking-tight" style={{ color: stat.color }}>
+                <CountUp target={stat.target} start={visible} />
+                <span style={{ fontSize: '0.6em' }}>{stat.suffix}</span>
+              </div>
+              <p className="text-xs md:text-sm font-bold uppercase tracking-widest mt-2" style={{
+                color: darkMode ? '#94A3B8' : '#6B7280',
+              }}>
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// CountUp component — animates from 0 to target
+const CountUp: React.FC<{ target: number; start: boolean }> = ({ target, start }) => {
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!start) return;
+    const duration = 1500;
+    const steps = 60;
+    const increment = target / steps;
+    let current = 0;
+    const interval = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        setCount(target);
+        clearInterval(interval);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(interval);
+  }, [start, target]);
+
+  return <>{count}</>;
 };
 
 export default HomePage;

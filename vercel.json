@@ -33,6 +33,9 @@
   ],
   "rewrites": [
     { "source": "/.well-known/(.*)", "destination": "/.well-known/$1" },
+    { "source": "/llms.txt", "destination": "/llms.txt" },
+    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/robots.txt" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

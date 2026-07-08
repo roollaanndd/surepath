@@ -60,8 +60,20 @@ Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  // ── Health check endpoint (GET /functions/v1/data-gateway) ──────────────
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({
+      status: 'ok',
+      service: 'data-gateway',
+      version: '1.25.0',
+      timestamp: new Date().toISOString(),
+    }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+
+  // Generate request ID for tracing
+  const requestId = crypto.randomUUID();
   const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json', 'X-Request-ID': requestId } });
 
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 

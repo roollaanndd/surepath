@@ -1,7 +1,7 @@
 {
   "name": "surepath---neural-insurtech",
   "private": true,
-  "version": "1.24.0",
+  "version": "1.26.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -12,8 +12,10 @@
     "lint:fix": "eslint . --fix",
     "lint:ts": "tsc --noEmit",
     "lint:es": "eslint .",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run && playwright test",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
@@ -42,6 +44,7 @@
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

@@ -1,5 +1,15 @@
-import { jsPDF } from 'jspdf';
 import { AGREEMENT_META, AGREEMENT_CLAUSES } from '../components/agent/agreementContent';
+
+// Lazy-load jsPDF to keep it out of the main bundle (358KB saved)
+let _jsPDF: any = null;
+async function getJsPDF(): Promise<any> {
+  if (!_jsPDF) {
+    const mod = await import('jspdf');
+    _jsPDF = mod.jsPDF;
+  }
+  return _jsPDF;
+}
+
 
 /* ─── Agent Agreement PDF — legally-formatted, numbered, timestamped ─────────
    Emitted after an agent accepts the T&C so both parties hold an auditable
@@ -38,7 +48,7 @@ async function loadLogo(): Promise<string | null> {
 const maskKtp = (k: string) => (k.length === 16 ? `${k.slice(0, 6)}******${k.slice(12)}` : k);
 
 export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc = new (await getJsPDF())({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const mL = 18, mR = pw - 18, cw = pw - 36;

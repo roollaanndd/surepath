@@ -1,4 +1,14 @@
-import { jsPDF } from 'jspdf';
+
+
+// Lazy-load jsPDF to keep it out of the main bundle (358KB saved)
+let _jsPDF: any = null;
+async function getJsPDF(): Promise<any> {
+  if (!_jsPDF) {
+    const mod = await import('jspdf');
+    _jsPDF = mod.jsPDF;
+  }
+  return _jsPDF;
+}
 
 /* ─── SurePath Proposal PDF — 3-page professional quotation proposal ─────────
    Page 1: branded cover · Page 2: quotation + breakdown · Page 3: benefits,
@@ -56,7 +66,7 @@ async function loadLogo(): Promise<string | null> {
 }
 
 // Vector shield fallback + decorative winding path
-function drawPath(doc: jsPDF, y: number, w: number, color: [number, number, number], alpha = 1) {
+function drawPath(doc: any, y: number, w: number, color: [number, number, number], alpha = 1) {
   doc.saveGraphicsState();
   doc.setGState(doc.GState({ opacity: alpha }));
   doc.setDrawColor(...color);
@@ -67,7 +77,7 @@ function drawPath(doc: jsPDF, y: number, w: number, color: [number, number, numb
   doc.restoreGraphicsState();
 }
 
-function pageFooter(doc: jsPDF, pageNum: number, total: number) {
+function pageFooter(doc: any, pageNum: number, total: number) {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   doc.setDrawColor(226, 232, 240);
@@ -82,7 +92,7 @@ function pageFooter(doc: jsPDF, pageNum: number, total: number) {
 }
 
 export async function generateProposalPDF(d: ProposalPDFData): Promise<void> {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc = new (await getJsPDF())({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();   // 210
   const ph = doc.internal.pageSize.getHeight();  // 297
   const mL = 18, mR = pw - 18, cw = pw - 36;

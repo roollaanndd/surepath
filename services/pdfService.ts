@@ -1,4 +1,14 @@
-import { jsPDF } from 'jspdf';
+
+
+// Lazy-load jsPDF to keep it out of the main bundle (358KB saved)
+let _jsPDF: any = null;
+async function getJsPDF(): Promise<any> {
+  if (!_jsPDF) {
+    const mod = await import('jspdf');
+    _jsPDF = mod.jsPDF;
+  }
+  return _jsPDF;
+}
 
 export interface PolicyCertData {
   policyNumber: string;
@@ -15,8 +25,8 @@ export interface PolicyCertData {
 
 const formatIDR = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 
-export function generatePolicyCertPDF(data: PolicyCertData): void {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+export async function generatePolicyCertPDF(data: PolicyCertData): Promise<void> {
+  const doc = new (await getJsPDF())({ orientation: 'portrait', unit: 'pt', format: 'a4' });
 
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 48;
@@ -216,7 +226,7 @@ export interface QuotePDFData {
 }
 
 export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc = new (await getJsPDF())({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   const pageW = doc.internal.pageSize.getWidth();   // 210mm
   const pageH = doc.internal.pageSize.getHeight();  // 297mm

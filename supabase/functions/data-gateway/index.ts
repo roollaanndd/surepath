@@ -476,6 +476,42 @@ Deno.serve(async (req) => {
         return json({ data });
       }
 
+      // ── Mark own notification as read ─────────────────────────────────────
+      case 'mark_my_notification_read': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const notifId = String(params.notification_id ?? '');
+        if (!notifId) return json({ error: 'notification_id required' }, 400);
+        const { error } = await db.from('sp_notifications')
+          .update({ read: true }).eq('id', notifId).eq('agent_id', caller.authId);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: { success: true } });
+      }
+
+      // ── Mark all own notifications as read ────────────────────────────────
+      case 'mark_all_my_notifications_read': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { error } = await db.from('sp_notifications')
+          .update({ read: true }).eq('agent_id', caller.authId).eq('read', false);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: { success: true } });
+      }
+
+      // ── Create notification (for agent's own feed) ────────────────────────
+      case 'create_notification': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { data, error } = await db.from('sp_notifications').insert({
+          agent_id: caller.authId,
+          type: String(params.type ?? 'SYSTEM'),
+          title: String(params.title ?? ''),
+          body: String(params.body ?? ''),
+          read: false,
+          metadata: params.metadata ?? null,
+          order_id: params.order_id ?? null,
+        }).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
       // ── Apply a referral code to the caller's own profile (post-signup) ────
       // Sets upline_id once; matches agent_code OR referral_code; never self.
       case 'apply_referral': {

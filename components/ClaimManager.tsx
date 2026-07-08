@@ -176,8 +176,8 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             setIsSubmitting(false);
             setStep('success');
         }, 1500);
-    } catch (error) {
-        console.error("Save failed", error);
+    } catch (e) {
+        console.error("Save failed", e);
         console.warn(t("Error submitting claim.", "Gagal mengirim laporan."));
         setIsSubmitting(false);
     }

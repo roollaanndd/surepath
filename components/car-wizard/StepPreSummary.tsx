@@ -227,8 +227,8 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
       doc.text("PT Ruang Proteksi Indonesia terdaftar dan diawasi oleh Otoritas Jasa Keuangan (OJK).", pageWidth / 2, pageHeight - 12, { align: 'center' });
 
       doc.save(`SurePath_Penawaran_${vehicle.plate.replace(' ', '_')}.pdf`);
-    } catch (error) {
-      console.error("PDF generation error:", error);
+    } catch (e) {
+      console.error("PDF generation error:", e);
       console.warn("Gagal menyimpan PDF. Silakan coba lagi.");
     } finally {
       setIsGeneratingPdf(false);

@@ -34,7 +34,7 @@ async function startServer() {
           paymentUrl: `/payment-simulation?tx=${transactionId}&amount=${amount}`,
           token: `mok_${transactionId}_${Date.now()}`
       });
-    } catch (error) {
+    } catch {
       console.error("Payment generation error:", error);
       res.status(500).json({ error: "Failed to initialize payment gateway" });
     }

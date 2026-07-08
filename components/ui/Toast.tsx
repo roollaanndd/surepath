@@ -161,7 +161,7 @@ export function useToast(): ToastContextValue {
     // Graceful fallback — return no-op functions so components don't crash
     // if used outside the provider (e.g., in legacy tests).
     return {
-      success: (m: string) => console.log('[toast.success]', m),
+      success: (m: string) => console.warn('[toast.success]', m),
       error:   (m: string) => console.error('[toast.error]', m),
       info:    (m: string) => console.info('[toast.info]', m),
       warning: (m: string) => console.warn('[toast.warning]', m),

@@ -139,7 +139,7 @@ export class SurePathDB extends Dexie {
 export const db = new SurePathDB();
 
 db.on('populate', () => {
-  console.log('Database populated');
+  console.warn('Database populated');
 });
 
 db.open().catch(err => {

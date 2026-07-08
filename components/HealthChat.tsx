@@ -65,7 +65,7 @@ Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan
 
       const aiText = response.choices[0]?.message?.content;
       setMessages(prev => [...prev, { role: 'model', text: aiText || (lang === Language.EN ? 'Sorry, my system is experiencing issues. Can you repeat that?' : 'Maaf, sistem saya sedang mengalami kendala. Bisa ulangi?') }]);
-    } catch (error) {
+    } catch {
       setMessages(prev => [...prev, { role: 'model', text: lang === Language.EN ? 'Connection to AI system lost. Please try again later.' : 'Koneksi ke sistem AI terputus. Silakan coba beberapa saat lagi.' }]);
     } finally {
       setLoading(false);

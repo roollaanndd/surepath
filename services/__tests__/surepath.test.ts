@@ -126,7 +126,7 @@ describe('Order shape', () => {
 
 // ─── Tests: OJK Rates (actual implementation, not mocked) ────────────────────
 
-import { getZone, TPL_OPTIONS } from '../ojkRates';
+import { calcPremium, getZone, getVehicleCategory, TPL_OPTIONS, PROVINCES } from '../ojkRates';
 
 describe('OJK Rates', () => {
   it('should have TPL_OPTIONS defined', () => {
@@ -177,5 +177,190 @@ describe('Promo Code Service', () => {
     const { promoToDiscountPercent } = await import('../promoCodeService');
     const result = promoToDiscountPercent({ valid: true, discountType: 'PERCENT', discountValue: 50 } as any, 500000, 25);
     expect(result).toBe(25);
+  });
+
+  it('promoToDiscountPercent should return 0 for missing discountType', async () => {
+    const { promoToDiscountPercent } = await import('../promoCodeService');
+    const result = promoToDiscountPercent({ valid: true, discountValue: 10 } as any, 500000);
+    expect(result).toBe(0);
+  });
+
+  it('promoToDiscountPercent should return 0 for zero order total NOMINAL', async () => {
+    const { promoToDiscountPercent } = await import('../promoCodeService');
+    const result = promoToDiscountPercent({ valid: true, discountType: 'NOMINAL', discountValue: 50000 } as any, 0);
+    expect(result).toBe(0);
+  });
+});
+
+// ─── Tests: AuthService (synchronous) ────────────────────────────────────────
+
+import { checkRateLimit, recordFailedAttempt, clearRateLimit, createSessionToken } from '../authService';
+
+describe('AuthService', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('checkRateLimit allows first attempt', () => {
+    const result = checkRateLimit('test@example.com');
+    expect(result.allowed).toBe(true);
+    expect(result.remainingAttempts).toBeGreaterThan(0);
+  });
+
+  it('checkRateLimit blocks after 5 failed attempts', () => {
+    for (let i = 0; i < 5; i++) recordFailedAttempt('blocked@example.com');
+    const result = checkRateLimit('blocked@example.com');
+    expect(result.allowed).toBe(false);
+  });
+
+  it('clearRateLimit resets counter', () => {
+    for (let i = 0; i < 5; i++) recordFailedAttempt('reset@example.com');
+    clearRateLimit('reset@example.com');
+    const result = checkRateLimit('reset@example.com');
+    expect(result.allowed).toBe(true);
+  });
+
+  it('createSessionToken returns decodable base64', () => {
+    const token = createSessionToken({ id: 'u1', email: 't@t.com', name: 'Test', role: 'CUSTOMER' });
+    expect(typeof token).toBe('string');
+    const decoded = JSON.parse(atob(token));
+    expect(decoded.id).toBe('u1');
+    expect(decoded.email).toBe('t@t.com');
+    expect(decoded.role).toBe('CUSTOMER');
+  });
+
+  it('createSessionToken includes expiration', () => {
+    const token = createSessionToken({ id: 'u2', email: 't2@t.com', name: 'T2', role: 'AGENT' });
+    const decoded = JSON.parse(atob(token));
+    expect(decoded.exp).toBeGreaterThan(Date.now());
+  });
+});
+
+// ─── Tests: OJK Rates calcPremium (comprehensive) ────────────────────────────
+
+describe('OJK Rates — Comprehensive', () => {
+  const baseAddons = { flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 };
+
+  it('calcPremium returns PremiumBreakdown with all fields', () => {
+    const r = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    expect(r).toHaveProperty('basePremium');
+    expect(r).toHaveProperty('addonPremium');
+    expect(r).toHaveProperty('adminFee');
+    expect(r).toHaveProperty('stampDuty');
+    expect(r).toHaveProperty('total');
+  });
+
+  it('admin fee is 50000', () => {
+    const r = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    expect(r.adminFee).toBe(50000);
+  });
+
+  it('stamp duty is 10000', () => {
+    const r = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    expect(r.stampDuty).toBe(10000);
+  });
+
+  it('total = base + addon + admin + stamp', () => {
+    const r = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    expect(r.total).toBe(r.basePremium + r.addonPremium + r.adminFee + r.stampDuty);
+  });
+
+  it('comprehensive > TLO for same vehicle', () => {
+    const comp = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    const tlo = calcPremium('CAR', 'TLO', 200000000, 1, baseAddons as any);
+    expect(comp.basePremium).toBeGreaterThan(tlo.basePremium);
+  });
+
+  it('flood addon increases total', () => {
+    const without = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    const withFlood = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, { ...baseAddons, flood: true } as any);
+    expect(withFlood.total).toBeGreaterThan(without.total);
+  });
+
+  it('earthquake addon increases total', () => {
+    const without = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    const withEq = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, { ...baseAddons, earthquake: true } as any);
+    expect(withEq.total).toBeGreaterThan(without.total);
+  });
+
+  it('TPL addon increases total', () => {
+    const without = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, baseAddons as any);
+    const withTpl = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, { ...baseAddons, tplLimit: 25000000 } as any);
+    expect(withTpl.total).toBeGreaterThan(without.total);
+  });
+
+  it('PA passengers increase with more seats', () => {
+    const r1 = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, { ...baseAddons, paPassengerSeats: 1 } as any);
+    const r4 = calcPremium('CAR', 'COMPREHENSIVE', 200000000, 1, { ...baseAddons, paPassengerSeats: 4 } as any);
+    expect(r4.total).toBeGreaterThan(r1.total);
+  });
+
+  it('higher sum insured = higher premium', () => {
+    const low = calcPremium('CAR', 'COMPREHENSIVE', 100000000, 1, baseAddons as any);
+    const high = calcPremium('CAR', 'COMPREHENSIVE', 500000000, 1, baseAddons as any);
+    expect(high.basePremium).toBeGreaterThan(low.basePremium);
+  });
+
+  it('motorcycle uses different rates than car', () => {
+    const car = calcPremium('CAR', 'COMPREHENSIVE', 20000000, 1, baseAddons as any);
+    const moto = calcPremium('MOTORCYCLE', 'COMPREHENSIVE', 20000000, 1, baseAddons as any);
+    expect(moto.basePremium).not.toEqual(car.basePremium);
+  });
+
+  it('getVehicleCategory bands', () => {
+    expect(getVehicleCategory(100000000)).toBe(1);
+    expect(getVehicleCategory(150000000)).toBe(2);
+    expect(getVehicleCategory(300000000)).toBe(3);
+    expect(getVehicleCategory(500000000)).toBe(4);
+    expect(getVehicleCategory(1000000000)).toBe(5);
+  });
+
+  it('TPL_OPTIONS has 4 options', () => {
+    expect(TPL_OPTIONS.length).toBe(4);
+    expect(TPL_OPTIONS.some(o => o.value === 0)).toBe(true);
+    expect(TPL_OPTIONS.some(o => o.value === 10000000)).toBe(true);
+    expect(TPL_OPTIONS.some(o => o.value === 25000000)).toBe(true);
+    expect(TPL_OPTIONS.some(o => o.value === 50000000)).toBe(true);
+  });
+
+  it('PROVINCES has >20 entries', () => {
+    expect(PROVINCES.length).toBeGreaterThan(20);
+  });
+
+  it('all provinces return valid zone (1-3)', () => {
+    for (const p of PROVINCES) {
+      const z = getZone(p);
+      expect(z).toBeGreaterThanOrEqual(1);
+      expect(z).toBeLessThanOrEqual(3);
+    }
+  });
+});
+
+// ─── Tests: Plate Codes (expanded) ───────────────────────────────────────────
+
+describe('Plate Codes — Expanded', () => {
+  it('has >20 entries', () => { expect(PLATE_CODES.length).toBeGreaterThan(20); });
+  it('includes B (Jakarta)', () => { expect(PLATE_CODES.find(p => p.code === 'B')).toBeDefined(); });
+  it('includes D (Bandung)', () => { expect(PLATE_CODES.find(p => p.code === 'D')).toBeDefined(); });
+  it('each entry has code, region, province', () => {
+    PLATE_CODES.forEach(p => {
+      expect(p).toHaveProperty('code');
+      expect(p).toHaveProperty('region');
+      expect(p).toHaveProperty('province');
+    });
+  });
+});
+
+// ─── Tests: Order status validation ──────────────────────────────────────────
+
+describe('Order Status Validation', () => {
+  it('valid statuses include all 6', async () => {
+    const validStatuses = ['SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED','ISSUED','CANCELLED'];
+    const { data } = await callGateway('admin_list_orders');
+    if (data && Array.isArray(data)) {
+      data.forEach((o: any) => {
+        expect(validStatuses).toContain(o.status);
+      });
+    }
   });
 });

@@ -3,7 +3,6 @@ import { ScanFace, ImageIcon, Plus, RefreshCw, ShieldCheck, UserCheck, Cpu, Chec
 import { ScannerOverlay } from './WizardUI';
 import { extractKtpData } from '../../services/geminiService';
 import { REGEX } from '../../services/authService';
-import { jsPDF } from 'jspdf';
 
 interface StepKYCProps {
   kycData: any;
@@ -27,7 +26,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
     if (!kycData.photo) return;
     setIsGeneratingPdf(true);
     try {
-      const doc = new jsPDF();
+      const doc = new (await import('jspdf')).jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });

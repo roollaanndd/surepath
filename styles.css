@@ -569,3 +569,66 @@ body {
 /* Dark mode for bg-gray-50, bg-gray-100 */
 .dark .bg-gray-50 { background-color: #080B12 !important; }
 .dark .bg-gray-100 { background-color: #0F1829 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v1.24.0 — Additional dark mode overrides for admin portal + touch targets
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Admin portal dark mode (global overrides for hardcoded colors) ────────── */
+.dark .text-slate-400 { color: #64748B !important; }
+.dark .text-slate-500 { color: #475569 !important; }
+.dark .text-slate-600 { color: #64748B !important; }
+.dark .text-slate-800 { color: #E2E8F0 !important; }
+.dark .text-slate-900 { color: #F1F5F9 !important; }
+.dark .text-slate-300 { color: #94A3B8 !important; }
+.dark .text-slate-200 { color: #CBD5E1 !important; }
+
+/* Dark mode for common admin backgrounds */
+.dark .bg-slate-900 { background-color: #0F172A !important; }
+.dark .bg-slate-800 { background-color: #1E293B !important; }
+.dark .bg-slate-700 { background-color: #334155 !important; }
+.dark .bg-slate-50 { background-color: #080B12 !important; }
+.dark .bg-slate-100 { background-color: #0F1829 !important; }
+
+/* Dark mode for white/[0.03] etc (admin card backgrounds) */
+.dark .bg-white\/\[0\.03\] { background-color: rgba(255,255,255,0.03) !important; }
+.dark .bg-white\/\[0\.02\] { background-color: rgba(255,255,255,0.02) !important; }
+.dark .bg-white\/5 { background-color: rgba(255,255,255,0.05) !important; }
+.dark .bg-white\/10 { background-color: rgba(255,255,255,0.10) !important; }
+.dark .bg-white\/20 { background-color: rgba(255,255,255,0.20) !important; }
+.dark .border-white\/5 { border-color: rgba(255,255,255,0.05) !important; }
+.dark .border-white\/10 { border-color: rgba(255,255,255,0.10) !important; }
+
+/* Dark mode for bg-gray-800 */
+.dark .bg-gray-800 { background-color: #1E293B !important; }
+.dark .bg-gray-900 { background-color: #0F172A !important; }
+
+/* Dark mode for common border colors */
+.dark .border-slate-700 { border-color: #334155 !important; }
+.dark .border-slate-800 { border-color: #1E293B !important; }
+.dark .border-gray-300 { border-color: #475569 !important; }
+.dark .border-gray-700 { border-color: #334155 !important; }
+.dark .border-gray-800 { border-color: #1E293B !important; }
+
+/* ── Touch target enforcement (WCAG 44px minimum) ─────────────────────────── */
+/* Ensures all icon-only buttons meet minimum touch target size */
+button[class*="w-8 h-8"]:not([class*="w-auto"]):not([class*="h-auto"]),
+button[class*="w-9 h-9"]:not([class*="w-auto"]):not([class*="h-auto"]) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ── Focus visible enhancement for accessibility ──────────────────────────── */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ds-primary);
+  outline-offset: 2px;
+}
+
+/* ── Reduced motion respect (already global, reinforced here) ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

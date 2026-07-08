@@ -85,8 +85,8 @@ flowchart TD
     end
 
     subgraph DemoLogin["Demo Accounts (AuthGate.tsx:200)"]
-        DL1[demo.customer@myinsurepath.com\nDemo1234!] --> CustomerPortal
-        DL2[demo.agent@myinsurepath.com\nDemo1234!] --> AgentPortal
+        DL1[[hubungi admin]\n[REDACTED — hubungi admin untuk kredensial]] --> CustomerPortal
+        DL2[[hubungi admin]\n[REDACTED — hubungi admin untuk kredensial]] --> AgentPortal
     end
 
     subgraph AdminLogin["Admin Direct Login (/admin, components/admin/AdminLogin.tsx)"]

@@ -8,7 +8,6 @@ import {
   BadgePercent, FileDown, Loader2
 } from 'lucide-react';
 import { formatIDR } from './WizardUI';
-import { jsPDF } from 'jspdf';
 
 interface StepPreSummaryProps {
   vehicle: any;
@@ -49,7 +48,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
   const generatePDF = async () => {
     setIsGeneratingPdf(true);
     try {
-      const doc = new jsPDF();
+      const doc = new (await import('jspdf')).jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });

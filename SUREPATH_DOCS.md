@@ -172,12 +172,12 @@ portal to enter (e.g. a user with both CUSTOMER + AGENT + OPERATOR access).
 - **Vehicle Pricelist** — manage 2025 vehicle prices (40+ brands, 2000+ models)
 - **Commission Ledger** — agent commission tracking
 
-**Demo accounts (password `Demo1234!` for all):**
+**Demo accounts (password `[REDACTED — hubungi admin untuk kredensial]` for all):**
 | Email | Role |
 |-------|------|
-| `demo.customer@myinsurepath.com` | CUSTOMER |
-| `demo.agent@myinsurepath.com` | AGENT |
-| `demo.admin@myinsurepath.com` | ADMIN |
+| `[hubungi admin]` | CUSTOMER |
+| `[hubungi admin]` | AGENT |
+| `[hubungi admin]` | ADMIN |
 
 ---
 

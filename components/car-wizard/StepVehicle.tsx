@@ -4,7 +4,6 @@ import { VEHICLE_BRANDS, getModelsForBrand, getMarketValueForYear } from '../../
 import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
 import { ScannerOverlay, formatIDR } from './WizardUI';
 import { REGEX } from '../../services/authService';
-import { jsPDF } from 'jspdf';
 
 interface StepVehicleProps {
   vehicle: any;
@@ -49,7 +48,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
     if (!stnkBase64 || !extractedStnk) return;
     setIsGeneratingPdf(true);
     try {
-      const doc = new jsPDF();
+      const doc = new (await import('jspdf')).jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });

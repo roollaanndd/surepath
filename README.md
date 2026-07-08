@@ -224,9 +224,9 @@ npm run build        # Production build (TypeScript checked)
 
 | Role | Email | Password |
 |------|-------|----------|
-| Customer | demo.customer@myinsurepath.com | Demo1234! |
-| Agent | demo.agent@myinsurepath.com | Demo1234! |
-| Admin | demo.admin@myinsurepath.com | Demo1234! |
+| Customer | [hubungi admin] | [REDACTED — hubungi admin untuk kredensial] |
+| Agent | [hubungi admin] | [REDACTED — hubungi admin untuk kredensial] |
+| Admin | [hubungi admin] | [REDACTED — hubungi admin untuk kredensial] |
 
 ---
 

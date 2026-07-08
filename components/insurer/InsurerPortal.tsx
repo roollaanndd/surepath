@@ -12,6 +12,7 @@ import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import InsurerDashboard from './InsurerDashboard';
 import InsurerOrders from './InsurerOrders';
+import InsurerClaims from './InsurerClaims';
 import InsurerPayments from './InsurerPayments';
 import InsurerProfile from './InsurerProfile';
 import InsurerNotifications from './InsurerNotifications';
@@ -89,13 +90,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       case 'orders':
         return <InsurerOrders authToken={authToken} lang={lang} refreshTick={refreshTick} />;
       case 'claims':
-        return (
-          <div className="px-5 pt-12 text-center">
-            <ShieldAlert size={48} className="mx-auto text-ds-ink3 opacity-40 mb-3" />
-            <p className="text-sm font-bold text-ds-ink">Modul Klaim</p>
-            <p className="text-xs text-ds-ink3 mt-1">Coming soon — klaim akan otomatis muncul di sini saat diajukan oleh nasabah.</p>
-          </div>
-        );
+        return <InsurerClaims authToken={authToken} lang={lang} refreshTick={refreshTick} />;
       case 'payments':
         return <InsurerPayments authToken={authToken} lang={lang} refreshTick={refreshTick} />;
       case 'profile':

@@ -906,6 +906,113 @@ Deno.serve(async (req) => {
         return json({ data });
       }
 
+      // ── Admin: insurer CRUD (replaces direct client mutations) ────────────
+      case 'admin_create_insurer': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_insurers').insert({
+          name: String(params.name ?? ''), code: String(params.code ?? ''),
+          description: String(params.description ?? ''), is_active: true,
+          admin_name: String(params.admin_name ?? ''), admin_email: String(params.admin_email ?? ''),
+          pic_name: String(params.pic_name ?? ''), pic_email: String(params.pic_email ?? ''),
+          pic_phone: String(params.pic_phone ?? ''),
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        logActivity(null, null, 'INSURER_CREATED', { insurer_id: (data as any)?.id, name: params.name });
+        return json({ data });
+      }
+
+      case 'admin_update_insurer': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        if (!insurerId) return json({ error: 'insurer_id required' }, 400);
+        const ALLOWED = ['name', 'code', 'description', 'is_active', 'admin_name', 'admin_email', 'pic_name', 'pic_email', 'pic_phone', 'logo_url'];
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const k of ALLOWED) { if (k in params) updates[k] = params[k]; }
+        const { data, error } = await db.from('sp_insurers').update(updates).eq('id', insurerId).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      case 'admin_delete_insurer': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        if (!insurerId) return json({ error: 'insurer_id required' }, 400);
+        const { error } = await db.from('sp_insurers').delete().eq('id', insurerId);
+        if (error) return json({ error: error.message }, 400);
+        logActivity(insurerId, null, 'INSURER_DELETED', { insurer_id: insurerId });
+        return json({ data: { success: true } });
+      }
+
+      case 'admin_save_insurer_product': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const insurerId = String(params.insurer_id ?? '');
+        if (!insurerId) return json({ error: 'insurer_id required' }, 400);
+        const payload: Record<string, unknown> = {
+          insurer_id: insurerId,
+          product_type: String(params.product_type ?? 'CAR'),
+          vehicle_coverage: String(params.vehicle_coverage ?? 'COMPREHENSIVE'),
+          base_commission_rate: Number(params.base_commission_rate ?? 0.1),
+          max_discount_rate: Number(params.max_discount_rate ?? 0.25),
+          coin_rate: Number(params.coin_rate ?? 0),
+          stamp_duty: Number(params.stamp_duty ?? 10000),
+          policy_cost: Number(params.policy_cost ?? 50000),
+          authorized_garage_rate: Number(params.authorized_garage_rate ?? 0.0025),
+          authorized_garage_max_age_years: Number(params.authorized_garage_max_age_years ?? 5),
+          is_active: params.is_active !== false,
+        };
+        if (params.max_vehicle_age_years) payload.max_vehicle_age_years = Number(params.max_vehicle_age_years);
+        if (params.id) {
+          const { data, error } = await db.from('sp_insurer_products').update(payload).eq('id', params.id).select().maybeSingle();
+          if (error) return json({ error: error.message }, 400);
+          return json({ data });
+        } else {
+          const { data, error } = await db.from('sp_insurer_products').insert(payload).select().single();
+          if (error) return json({ error: error.message }, 400);
+          return json({ data });
+        }
+      }
+
+      case 'admin_delete_insurer_product': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const productId = String(params.product_id ?? '');
+        if (!productId) return json({ error: 'product_id required' }, 400);
+        const { error } = await db.from('sp_insurer_products').delete().eq('id', productId);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: { success: true } });
+      }
+
+      case 'admin_save_ojk_rate_set': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_ojk_rate_sets').insert({
+          version: String(params.version ?? ''),
+          source_reference: String(params.source_reference ?? ''),
+          effective_date: String(params.effective_date ?? new Date().toISOString().slice(0, 10)),
+          is_active: false,
+          rates: params.rates ?? {},
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      case 'admin_activate_ojk_rate_set': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const rateSetId = String(params.rate_set_id ?? '');
+        if (!rateSetId) return json({ error: 'rate_set_id required' }, 400);
+        await db.from('sp_ojk_rate_sets').update({ is_active: false }).eq('is_active', true);
+        const { data, error } = await db.from('sp_ojk_rate_sets').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', rateSetId).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      case 'admin_delete_ojk_rate_set': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const rateSetId = String(params.rate_set_id ?? '');
+        if (!rateSetId) return json({ error: 'rate_set_id required' }, 400);
+        const { error } = await db.from('sp_ojk_rate_sets').delete().eq('id', rateSetId);
+        if (error) return json({ error: error.message }, 400);
+        return json({ data: { success: true } });
+      }
+
       case 'admin_save_insurer_api_config': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         const insurerId = String(params.insurer_id ?? '');

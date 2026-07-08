@@ -693,16 +693,13 @@ const ProductTable: React.FC<ProductTableProps> = ({ insurerId, insurerName, onR
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Hapus produk ini?')) return;
-    await supabase.from('sp_insurer_products').delete().eq('id', id);
+    await callGateway('admin_delete_insurer_product', { product_id: id });
     fetchProducts();
   };
 
   const handleEditSave = async (data: ProductFormData) => {
     if (!editTarget) return;
-    await supabase
-      .from('sp_insurer_products')
-      .update({ ...data, updated_at: new Date().toISOString() })
-      .eq('id', editTarget.id);
+    await callGateway('admin_save_insurer_product', { id: editTarget.id, ...data });
     setEditTarget(null);
     fetchProducts();
   };
@@ -813,11 +810,7 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleAddProduct = async (data: ProductFormData) => {
-    await supabase.from('sp_insurer_products').insert({
-      ...data,
-      insurer_id: insurer.id,
-      updated_at: new Date().toISOString(),
-    });
+    await callGateway('admin_save_insurer_product', { ...data, insurer_id: insurer.id });
     setShowAddProduct(false);
     setRefreshKey(k => k + 1);
   };
@@ -921,26 +914,26 @@ const InsurerAdmin: React.FC = () => {
   useEffect(() => { fetchInsurers(); }, [fetchInsurers]);
 
   const handleAdd = async (data: InsurerFormData) => {
-    await supabase.from('sp_insurers').insert(data);
+    await callGateway('admin_create_insurer', data as any);
     setShowAdd(false);
     fetchInsurers();
   };
 
   const handleEdit = async (data: InsurerFormData) => {
     if (!editTarget) return;
-    await supabase.from('sp_insurers').update(data).eq('id', editTarget.id);
+    await callGateway('admin_update_insurer', { insurer_id: editTarget.id, ...data });
     setEditTarget(null);
     fetchInsurers();
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Hapus perusahaan asuransi ini? Semua produk terkait juga akan terhapus.')) return;
-    await supabase.from('sp_insurers').delete().eq('id', id);
+    await callGateway('admin_delete_insurer', { insurer_id: id });
     fetchInsurers();
   };
 
   const handleToggleActive = async (ins: SpInsurer) => {
-    await supabase.from('sp_insurers').update({ is_active: !ins.is_active }).eq('id', ins.id);
+    await callGateway('admin_update_insurer', { insurer_id: ins.id, is_active: !ins.is_active });
     fetchInsurers();
   };
 

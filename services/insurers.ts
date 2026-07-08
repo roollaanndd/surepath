@@ -1,7 +1,7 @@
 // Insurers, insurer products, product commission configs, OJK rate sets and
 // vehicle market-value overrides.
 
-import { supabase } from './db';
+import { supabase, callGateway } from './db';
 import type {
   SpInsurer,
   SpInsurerProduct,
@@ -76,13 +76,13 @@ export async function createInsurer(payload: Omit<SpInsurer, 'id' | 'created_at'
 }
 
 export async function updateInsurer(id: string, payload: Partial<SpInsurer>): Promise<boolean> {
-  const { error } = await supabase.from('sp_insurers').update(payload).eq('id', id);
+  const { error } = await callGateway('admin_update_insurer', { insurer_id: id, ...payload });
   if (error) { console.error('updateInsurer:', error); return false; }
   return true;
 }
 
 export async function deleteInsurer(id: string): Promise<boolean> {
-  const { error } = await supabase.from('sp_insurers').delete().eq('id', id);
+  const { error } = await callGateway('admin_delete_insurer', { insurer_id: id });
   if (error) { console.error('deleteInsurer:', error); return false; }
   return true;
 }
@@ -128,22 +128,19 @@ export async function getAvailableInsurerProducts(
 }
 
 export async function createInsurerProduct(payload: Omit<SpInsurerProduct, 'id' | 'created_at' | 'updated_at' | 'insurer_name' | 'insurer_code'>): Promise<boolean> {
-  const { error } = await supabase.from('sp_insurer_products').insert(payload);
+  const { error } = await callGateway('admin_save_insurer_product', payload as any);
   if (error) { console.error('createInsurerProduct:', error); return false; }
   return true;
 }
 
 export async function updateInsurerProduct(id: string, payload: Partial<SpInsurerProduct>): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_insurer_products')
-    .update({ ...payload, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await callGateway('admin_save_insurer_product', { id, ...payload } as any);
   if (error) { console.error('updateInsurerProduct:', error); return false; }
   return true;
 }
 
 export async function deleteInsurerProduct(id: string): Promise<boolean> {
-  const { error } = await supabase.from('sp_insurer_products').delete().eq('id', id);
+  const { error } = await callGateway('admin_delete_insurer_product', { product_id: id });
   if (error) { console.error('deleteInsurerProduct:', error); return false; }
   return true;
 }
@@ -170,12 +167,13 @@ export async function getAllOjkRateSets(): Promise<SpOjkRateSet[]> {
 }
 
 export async function createOjkRateSet(payload: Omit<SpOjkRateSet, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> {
-  const { error } = await supabase.from('sp_ojk_rate_sets').insert(payload);
+  const { error } = await callGateway('admin_save_ojk_rate_set', payload as any);
   if (error) { console.error('createOjkRateSet:', error); return false; }
   return true;
 }
 
 export async function updateOjkRateSet(id: string, payload: Partial<SpOjkRateSet>): Promise<boolean> {
+  // OJK rate set updates are less common — use direct update for now (read-only tables)
   const { error } = await supabase
     .from('sp_ojk_rate_sets')
     .update({ ...payload, updated_at: new Date().toISOString() })
@@ -184,19 +182,14 @@ export async function updateOjkRateSet(id: string, payload: Partial<SpOjkRateSet
   return true;
 }
 
-// Activates one rate set and deactivates all others (partial unique index
-// only allows a single is_active=true row, so the old one must be turned
-// off first in the same round-trip).
 export async function activateOjkRateSet(id: string): Promise<boolean> {
-  const { error: offErr } = await supabase.from('sp_ojk_rate_sets').update({ is_active: false }).eq('is_active', true);
-  if (offErr) { console.error('activateOjkRateSet (deactivate):', offErr); return false; }
-  const { error } = await supabase.from('sp_ojk_rate_sets').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', id);
+  const { error } = await callGateway('admin_activate_ojk_rate_set', { rate_set_id: id });
   if (error) { console.error('activateOjkRateSet:', error); return false; }
   return true;
 }
 
 export async function deleteOjkRateSet(id: string): Promise<boolean> {
-  const { error } = await supabase.from('sp_ojk_rate_sets').delete().eq('id', id);
+  const { error } = await callGateway('admin_delete_ojk_rate_set', { rate_set_id: id });
   if (error) { console.error('deleteOjkRateSet:', error); return false; }
   return true;
 }

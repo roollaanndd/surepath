@@ -352,7 +352,7 @@ export async function updateLifeApplicationStatus(
   const payload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
   if (notes !== undefined) payload.insurer_notes = notes;
   if (policyNumber !== undefined) payload.policy_number = policyNumber;
-  const { error } = await supabase.from('sp_life_applications').update(payload).eq('id', id);
+  const { error } = await callGateway('admin_update_life_application', { application_id: id, ...payload }).then(r => r.error ? { error: r.error } : { error: null });
   if (error) { console.error('updateLifeApplicationStatus:', error); return false; }
   return true;
 }

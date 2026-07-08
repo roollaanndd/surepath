@@ -508,7 +508,7 @@ export async function updateB2BSubmissionStatus(
 ): Promise<boolean> {
   const payload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
   if (notes !== undefined) payload.admin_notes = notes;
-  const { error } = await supabase.from('sp_b2b_submissions').update(payload).eq('id', id);
+  const { error } = await callGateway('admin_update_b2b_submission', { submission_id: id, ...payload }).then(r => r.error ? { error: r.error } : { error: null });
   if (error) { console.error('updateB2BSubmissionStatus:', error); return false; }
   return true;
 }
@@ -526,7 +526,7 @@ export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
 export async function createB2BQuote(
   data: Omit<SpB2BQuote, 'id' | 'created_at' | 'updated_at'>,
 ): Promise<boolean> {
-  const { error } = await supabase.from('sp_b2b_quotes').insert(data);
+  const { error } = await callGateway('admin_create_b2b_quote', data).then(r => r.error ? { error: r.error } : { error: null });
   if (error) { console.error('createB2BQuote:', error); return false; }
   return true;
 }

@@ -2289,6 +2289,67 @@ Guidelines:
         return json({ data: { reply } });
       }
 
+      // ── Admin: update B2B submission ─────────────────────────────────────
+      case 'admin_update_b2b_submission': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const subId = String(params.submission_id ?? '');
+        if (!subId) return json({ error: 'submission_id required' }, 400);
+        const ALLOWED = ['status', 'notes', 'quoted_premium', 'assigned_to'];
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        for (const k of ALLOWED) { if (k in params) updates[k] = params[k]; }
+        const { data, error } = await db.from('sp_b2b_submissions').update(updates).eq('id', subId).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: create B2B quote ──────────────────────────────────────────
+      case 'admin_create_b2b_quote': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const { data, error } = await db.from('sp_b2b_quotes').insert({
+          submission_id: String(params.submission_id ?? ''),
+          insurer_id: String(params.insurer_id ?? ''),
+          premium: Number(params.premium ?? 0),
+          coverage_details: params.coverage_details ?? {},
+          status: 'PENDING',
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Admin: update life application status ────────────────────────────
+      case 'admin_update_life_application': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const appId = String(params.application_id ?? '');
+        if (!appId) return json({ error: 'application_id required' }, 400);
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        if (params.status) updates.status = String(params.status);
+        if (params.notes !== undefined) updates.insurer_notes = params.notes;
+        if (params.policy_number !== undefined) updates.policy_number = params.policy_number;
+        const { data, error } = await db.from('sp_life_applications').update(updates).eq('id', appId).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+      // ── Record T&C acceptance (gateway-routed for audit) ─────────────────
+      case 'record_tc_acceptance': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const refNumber = `TC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+        const { error: tcErr } = await db.from('sp_tnc_records').insert({
+          user_id: caller.spUser.id,
+          reference_number: refNumber,
+          tnc_version: String(params.tnc_version ?? 'v1.0'),
+          accepted_at: new Date().toISOString(),
+        });
+        if (tcErr) return json({ error: tcErr.message }, 400);
+        // Update sp_users tc_accepted fields
+        await db.from('sp_users').update({
+          tc_accepted: true,
+          tc_accepted_at: new Date().toISOString(),
+          tnc_ref_number: refNumber,
+        }).eq('id', caller.spUser.id);
+        return json({ data: { reference_number: refNumber } });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

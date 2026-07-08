@@ -15,7 +15,7 @@ export default defineConfig(() => {
           registerType: 'autoUpdate',
           includeAssets: ['apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512.png'],
           workbox: {
-            maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+            maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
             skipWaiting: true,
             clientsClaim: true,
             cleanupOutdatedCaches: true,

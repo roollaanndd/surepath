@@ -158,7 +158,8 @@ export async function seedDemoAgentData(agentId: string): Promise<void> {
     };
   });
 
-  await supabase.from('sp_commissions').insert(commissions);
+  // Demo data insert — low priority for gateway migration (seed function only)
+await supabase.from('sp_commissions').insert(commissions);
 
   // 10 policies
   const policies = Array.from({ length: 10 }, (_, i) => {

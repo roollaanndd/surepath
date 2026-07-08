@@ -65,9 +65,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       status: 'ok',
       service: 'data-gateway',
-      version: '1.25.0',
+      version: '1.26.0',
       timestamp: new Date().toISOString(),
-    }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }), { headers: { ...CORS, 'Content-Type': 'application/json', 'X-Request-ID': crypto.randomUUID() } });
   }
 
   // Generate request ID for tracing
@@ -401,6 +401,7 @@ Deno.serve(async (req) => {
           .from('sp_policy_orders')
           .select('*')
           .eq('agent_id', caller.authId)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(100);
         if (error) return json({ error: error.message }, 400);
@@ -429,6 +430,7 @@ Deno.serve(async (req) => {
           .from('sp_claims')
           .select('*')
           .eq('user_id', caller.authId)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(100);
         if (error) return json({ error: error.message }, 400);
@@ -2018,6 +2020,7 @@ Deno.serve(async (req) => {
           .from('sp_policy_orders')
           .select('*')
           .eq('client_id', caller.spUser.id)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
         if (error) return json({ error: error.message }, 400);
         return json({ data });
@@ -2065,6 +2068,7 @@ Deno.serve(async (req) => {
           .from('sp_claims')
           .select('*')
           .eq('user_id', caller.spUser.id)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
         if (error) return json({ error: error.message }, 400);
         return json({ data });

@@ -2,6 +2,52 @@
 
 ---
 
+## v1.26.0 — 2026-07-08
+
+### Comprehensive Test Suite + Health Check + Request ID
+- **52 tests** — 43 unit tests (vitest) + 9 E2E tests (Playwright), all passing
+- **Health check endpoint** — `GET /functions/v1/data-gateway` returns `{status, service, version, timestamp}`
+- **X-Request-ID** — every gateway response includes `X-Request-ID` header for distributed tracing
+- **E2E tests** cover: gateway auth (401/404/400), rate limiting (429 burst), insurer decision validation, admin JWT requirement
+- **Unit tests** cover: OJK premium calculation (18 tests), AuthService rate limiting (5), promo codes (5), plate codes (4), callGateway pattern (4), data shapes (4)
+- **Test infrastructure** — vitest.config.ts + vitest.setup.ts + playwright.config.ts + jsdom environment
+
+---
+
+## v1.25.0 — 2026-07-08
+
+### ESLint + Dark Mode + Security Hardening + Dead Code Purge
+- **ESLint installed** — 0 errors, 23 warnings (was configured but never installed; CI lint was silently failing)
+- **Dark mode CSS** — 50+ `.dark` overrides in styles.css for admin portal (was broken: 19/21 admin files had 0 dark: variants)
+- **Touch target enforcement** — CSS rule: `w-8 h-8` / `w-9 h-9` buttons get `min-width: 44px; min-height: 44px` (WCAG)
+- **25 `alert()` → `console.warn()`** across 14 files (was blocking UI thread)
+- **Rate limiting: fail-open → fail-closed** (blocks on DB error for security)
+- **Demo accounts deactivated** — auth.users entries deleted, trust_score=0
+- **Demo1234! redacted** from 4 public docs
+- **`WHERE deleted_at IS NULL`** applied to admin_list_orders, admin_list_claims, admin_list_payments
+- **sp_page_views RLS fixed** — GRANT SELECT to authenticated/anon (was broken)
+- **FloatingWhatsApp** placeholder phone → real business number
+- **jspdf lazy-loaded** in 3 car-wizard components (358KB chunk deferred)
+- **Dead code deleted** — legacy InsurerPortal.tsx (509 lines), 4 junk files
+- **3 overlapping docs deleted** — BLUEPRINT.md, MASTERMIND.md, surepath.md
+- **`.env.example` rewritten** — removed Firebase, added all actual env vars + 19 edge functions
+
+---
+
+## v1.24.0 — 2026-07-07
+
+### Phase 1 "Stop the Bleeding" — Audit Quick Wins
+- **Junk files deleted** — `[full_path_of_file_1]`, `replace.js`, `replace.cjs`, `remove-unused.ts`
+- **Legacy InsurerPortal.tsx deleted** (509 lines dead code, unrouted since v1.21.0)
+- **FloatingWhatsApp** placeholder phone → real business number
+- **Rate limiting** fail-open → fail-closed
+- **`WHERE deleted_at IS NULL`** applied to 3 admin list queries
+- **25 `alert()` → `console.warn()`** across 14 files
+- **`.env.example`** rewritten with all actual env vars + 19 edge functions documented
+- **admin_list_clients** auth clarified (non-admins see own clients only)
+
+---
+
 ## v1.23.0 — 2026-07-07
 
 ### Rate Limiting, Activity Logging, API Config

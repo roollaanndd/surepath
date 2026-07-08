@@ -1,11 +1,8 @@
-// Gateway domain modules — each handles a specific area of actions.
-// The main index.ts imports these and dispatches to them.
-// This keeps the main file thin while preserving the single Deno.serve entry point.
-
-import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
+// Gateway domain modules — shared types and helpers.
+// Each module receives GatewayContext and returns ActionResult | null.
 
 export interface GatewayContext {
-  db: SupabaseClient;
+  db: any;
   params: Record<string, any>;
   caller: {
     authId: string;
@@ -13,10 +10,11 @@ export interface GatewayContext {
     spUser: Record<string, any> | null;
     role: string | null;
     isAdmin: boolean;
+    userMetadata: Record<string, any> | null;
   };
   sendTelegram: (text: string) => void;
-  sendInsurerEmail: (to: string, insurerName: string, orderNumber: string, clientName: string, productName: string, totalPremium: number, orderId: string) => void;
   logActivity: (insurerId: string | null, orderId: string | null, action: string, details?: Record<string, unknown>) => void;
+  checkRateLimit: (identifier: string, limit: number) => Promise<boolean>;
   RESEND_KEY: string;
 }
 

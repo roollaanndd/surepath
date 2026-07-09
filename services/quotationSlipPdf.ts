@@ -134,13 +134,19 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   const pageH = 841.89; // A4 height in points
   const margin = 42;    // ~56px at 96dpi scaled
 
-  // ─── Pre-load SurePath logo from public/logo.png ─────────────────────
+  // ─── Pre-load SurePath logo from /logo-full.png (horizontal, full branded) ─
   // Try fetching at runtime; fall back to SVG-drawn shield if fetch fails.
+  // Uses logo-full.png (600×180) which already includes wordmark + tagline.
   let logoDataUrl: string | null = null;
   try {
     logoDataUrl = await loadLogoAsDataUrl(data.logoUrl);
+    if (logoDataUrl) {
+      console.log('QuotationSlip: ✓ Real SurePath logo loaded');
+    } else {
+      console.warn('QuotationSlip: ⚠ Logo fetch returned null, using SVG fallback');
+    }
   } catch (e) {
-    console.warn('QuotationSlip: logo load failed, falling back to SVG shield', e);
+    console.warn('QuotationSlip: ⚠ Logo load failed, falling back to SVG shield', e);
   }
 
   // Auto-extract year tag from quotation number if missing
@@ -826,29 +832,21 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 // SHARED DRAWING HELPERS
 // ═══════════════════════════════════════════════════════════════════════
 
-// SurePath logo: shield SVG + wordmark, OR real logo PNG if available
+// SurePath logo: real logo image (logo-full.png) OR fallback SVG shield + wordmark
 function drawSurePathLogo(doc: any, x: number, y: number, mode: 'light' | 'dark', logoDataUrl?: string | null) {
-  // If we have the real SurePath logo as a data URL, use it.
-  // Logo is rendered at ~32×32pt (preserving aspect ratio), then wordmark follows.
-  const logoBoxW = 32;
-  const logoBoxH = 32;
+  // If we have the real SurePath logo as a data URL, render the image only.
+  // logo-full.png already contains shield + "SurePath" wordmark + tagline (600×180 landscape).
+  // We fit it to ~120×36pt — sized to match a header logo position.
+  const logoBoxW = 120;
+  const logoBoxH = 36;
 
   if (logoDataUrl) {
     try {
-      // Real PNG logo — fits in a 32×32 box, preserves aspect ratio
-      doc.addImage(logoDataUrl, 'PNG', x, y - logoBoxH + 4, logoBoxW, logoBoxH, undefined, 'FAST');
-      // Wordmark after logo
-      const textColor = mode === 'light' ? COLOR.white : COLOR.ink;
-      const taglineColor = mode === 'light' ? [255, 255, 255, 0.45 * 255] as any : COLOR.inkMuted;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(...textColor);
-      doc.text('SurePath', x + logoBoxW + 6, y - 8);
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(7);
-      const tc = taglineColor as any;
-      doc.setTextColor(tc[0], tc[1], tc[2], tc[3] ?? 255);
-      doc.text('Your Path to Protection.', x + logoBoxW + 6, y + 2);
+      // Detect format from data URL prefix
+      const fmt = logoDataUrl.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+      // y is the baseline position; image is drawn above & slightly below baseline
+      doc.addImage(logoDataUrl, fmt, x, y - logoBoxH + 8, logoBoxW, logoBoxH, undefined, 'FAST');
+      console.log(`QuotationSlip: ✓ Logo image embedded (${fmt}, ${logoBoxW}×${logoBoxH}pt)`);
       return;
     } catch (e) {
       console.warn('QuotationSlip: addImage failed, falling back to SVG shield', e);
@@ -891,7 +889,9 @@ function drawSurePathLogo(doc: any, x: number, y: number, mode: 'light' | 'dark'
   doc.text('Your Path to Protection.', x + 24, y + 10);
 }
 
-// Load SurePath logo from /logo.png as a data URL for embedding in jsPDF
+// Load SurePath logo from /logo-full.png as a JPEG data URL for embedding in jsPDF.
+// Uses canvas to resize & convert to JPEG (jsPDF addImage is more reliable with JPEG).
+// Falls back to PNG data URL if canvas conversion fails.
 async function loadLogoAsDataUrl(overrideUrl?: string): Promise<string | null> {
   if (typeof window === 'undefined' || typeof fetch === 'undefined') return null;
   try {
@@ -901,20 +901,64 @@ async function loadLogoAsDataUrl(overrideUrl?: string): Promise<string | null> {
       const custom = localStorage.getItem('surepath_custom_logo');
       if (custom) url = custom;
     }
-    if (!url) url = '/logo.png';
+    // Default: use logo-full.png (horizontal, 600×180, includes wordmark + tagline)
+    if (!url) url = '/logo-full.png';
 
+    console.log('QuotationSlip: Loading logo from', url);
     const res = await fetch(url, { cache: 'force-cache' });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn('QuotationSlip: Logo fetch failed, HTTP', res.status);
+      return null;
+    }
     const blob = await res.blob();
-    return await new Promise<string>((resolve, reject) => {
+    console.log('QuotationSlip: Logo blob size', blob.size, 'bytes, type', blob.type);
+
+    // Convert blob to image, draw on canvas at scaled size, export as JPEG data URL
+    // (jsPDF addImage is much more reliable with JPEG than PNG RGBA)
+    const pngDataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+
+    // Try canvas resize + JPEG conversion
+    try {
+      const img = await loadImage(pngDataUrl);
+      // Target width: 240px (high enough for crisp PDF, small enough for fast embedding)
+      // Preserve aspect ratio
+      const targetW = 240;
+      const targetH = Math.round(img.height * (targetW / img.width));
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas 2D context not available');
+      // White background to handle transparency (RGBA → JPEG)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetW, targetH);
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      console.log('QuotationSlip: ✓ Logo converted to JPEG', jpegDataUrl.length, 'chars');
+      return jpegDataUrl;
+    } catch (e) {
+      console.warn('QuotationSlip: Canvas conversion failed, using PNG data URL', e);
+      return pngDataUrl;
+    }
   } catch (e) {
+    console.warn('QuotationSlip: loadLogoAsDataUrl failed', e);
     return null;
   }
+}
+
+// Helper: load an image from a data URL
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+    img.src = src;
+  });
 }
 
 // Helper: draw polygon (closed path) with fill + optional stroke

@@ -10,7 +10,8 @@ import {
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
 import { generatePolicyCertPDF } from '../../services/pdfService';
-import { generateProposalPDF } from '../../services/proposalPdf';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromAgentQuote } from '../../services/quotationSlipAdapter';
 import { calcPremium as calcOjkPremium, getZone, getBaseRateByBand, getVehicleCategory } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
@@ -242,12 +243,16 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         ...(breakdown.addonsDetail.paDriver > 0   ? [{ label: 'PA Pengemudi',         amount: breakdown.addonsDetail.paDriver }]   : []),
         ...(breakdown.addonsDetail.paPassenger > 0? [{ label: 'PA Penumpang',         amount: breakdown.addonsDetail.paPassenger }]: []),
       ];
-      await generateProposalPDF({
-        quoteNumber: `QS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`,
+
+      // Generate the new 4-page professional Quotation Slip PDF
+      const quoteNumber = `QS/SP/${new Date().getFullYear()}/${['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][new Date().getMonth()]}/${Math.floor(Math.random() * 9000 + 1000)}`;
+      await generateQuotationSlipPDF(fromAgentQuote({
+        quoteNumber,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         clientName,
-        preparedBy: agent?.name ?? 'Mitra SurePath',
-        preparedByCode: agent?.agent_code ?? '',
+        clientPhone: '',
+        agentName: agent?.name ?? 'Mitra SurePath',
+        agentCode: agent?.agent_code ?? '',
         vehicleBrand: carInputs.brand,
         vehicleModel: carInputs.model,
         vehicleYear: carInputs.year,
@@ -256,6 +261,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         zone,
         ojkRate: breakdown.rate,
         rateBand: 'MID',
+        providerName: 'PT Zurich Asuransi Indonesia Tbk',
         rows: [
           { label: 'Premi Dasar', amount: breakdown.basePremium },
           ...addonsList,
@@ -263,7 +269,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           { label: 'Materai', amount: breakdown.stampDuty },
         ],
         totalPremium: breakdown.total,
-      });
+      }));
     } finally {
       setPrintingQuote(false);
     }
@@ -823,10 +829,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           <button
             onClick={handlePrintQuote}
             disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-            className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
+            className="h-12 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
           >
             {printingQuote ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
-            Cetak Penawaran PDF
+            Cetak Slip Penawaran (4 halaman)
           </button>
 
           <button
@@ -903,10 +909,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             <button
               onClick={handlePrintQuote}
               disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-              className="h-12 px-5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:bg-gray-50 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
+              className="h-12 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
             >
               {printingQuote ? <RefreshCw size={14} className="animate-spin motion-reduce:animate-none" /> : <FileText size={14} />}
-              {t('Print Quote PDF', 'Cetak Penawaran PDF')}
+              {t('Print Quotation Slip (4 pages)', 'Cetak Slip Penawaran (4 halaman)')}
             </button>
           )}
 

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, Car, ShieldCheck, CheckCircle, Circle, XCircle } from 'lucide-react';
+import { X, Car, ShieldCheck, CheckCircle, Circle, XCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { cancelMyOrder, type SpPolicyOrder } from '../../services/supabaseService';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 
 interface Props {
   order: SpPolicyOrder;
@@ -26,6 +28,21 @@ const STATUS_FLOW = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED'];
 const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, onResubmit }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [cancelling, setCancelling] = useState(false);
+  const [downloadingQuote, setDownloadingQuote] = useState(false);
+
+  const handleDownloadQuote = async () => {
+    if (downloadingQuote) return;
+    setDownloadingQuote(true);
+    try {
+      const slipData = fromCustomerOrder(order as any);
+      await generateQuotationSlipPDF(slipData);
+    } catch (e) {
+      console.error('Quotation slip download failed:', e);
+      alert(t('Failed to generate quotation. Please try again.', 'Gagal membuat quotation. Coba lagi.'));
+    } finally {
+      setDownloadingQuote(false);
+    }
+  };
 
   const meta = policyStatusMap[order.status] ?? { label: order.status, cls: 'bg-gray-100 text-gray-500' };
   const isTerminal = order.status === 'REJECTED' || order.status === 'CANCELLED';
@@ -239,6 +256,25 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
 
           {/* Action buttons */}
           <div className="space-y-2 pb-6">
+            {/* Generate Quotation Slip — always available */}
+            <button
+              onClick={handleDownloadQuote}
+              disabled={downloadingQuote}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {downloadingQuote ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  {t('Generating...', 'Membuat...')}
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  {t('Download Quotation Slip', 'Unduh Slip Penawaran')}
+                </>
+              )}
+            </button>
+
             {canCancel && (
               <>
                 <button

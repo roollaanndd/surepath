@@ -1,9 +1,9 @@
 // OperatorClaims.tsx — Klaim tab. Approve/reject claims.
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShieldAlert, CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listClaims, updateClaimStatus, type OperatorClaim } from '../../services/operatorService';
 
 interface Props {
@@ -93,7 +93,12 @@ const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Antrian Klaim</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        title="Antrian Klaim"
+        subtitle="Tinjau bukti klaim dan putuskan dengan cepat & adil."
+        art={<SpotClaims size={72} />}
+      />
 
       <UnderlineTabs
         tabs={STATUS_TABS.map(t => ({ id: t.id, label: t.label }))}
@@ -102,10 +107,9 @@ const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
       />
 
       {claims.length === 0 ? (
-        <EmptyState
-          icon={ShieldAlert}
+        <AgentEmpty
           title="Tidak ada klaim"
-          description="Antrian klaim kosong untuk status ini."
+          desc="Antrian klaim kosong untuk status ini."
         />
       ) : (
         <div className="space-y-3">

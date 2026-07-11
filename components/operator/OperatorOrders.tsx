@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, ExternalLink, Car, User, Phone, CreditCard, Calendar, ShieldCheck, AlertTriangle, Sparkles, Download } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromOperatorOrder } from '../../services/quotationSlipAdapter';
@@ -143,7 +143,12 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Antrian Polis</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        title="Antrian Polis"
+        subtitle="Review pengajuan, terbitkan polis, dan unduh quotation slip."
+        art={<SpotOrders size={72} />}
+      />
 
       {/* Search */}
       <div className="relative">
@@ -165,10 +170,9 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={FileText}
+        <AgentEmpty
           title="Tidak ada order"
-          description="Antrian kosong untuk status ini. Notifikasi pop-up akan muncul saat ada order baru."
+          desc="Antrian kosong untuk status ini. Notifikasi pop-up akan muncul saat ada order baru."
         />
       ) : (
         <div className="space-y-3">

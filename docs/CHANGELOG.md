@@ -2,6 +2,20 @@
 
 ---
 
+## v1.37.0 — 2026-07-11
+
+### Operator App UI Redesign + Onboarding (visual only)
+Tema bank modern v1.36 diterapkan ke Operator app:
+- **Onboarding Operator 4 slide** — ilustrasi custom sesuai tugas operator: Command Center (antrean realtime), Review & Keputusan (dokumen + skor AI + approve/reject), Pencairan Berlapis (vault + L1/L2/L3), Verifikasi Mitra (ID card + verified check); tampil sekali via `SP_ONBOARDED_OPERATOR`
+- **4 scene ilustrasi baru** di `AgentArt.tsx`: `ObOpsQueue`, `ObOpsReview`, `ObOpsPayout`, `ObOpsVerify`
+- **Shell OperatorPortal** — bottom nav pill gaya bank + avatar berinisial gradient
+- **Dashboard** — hero greeting jadi kartu command center bergaya bank (pola kartu + ilustrasi)
+- **Hero banner + ilustrasi** di Antrian Polis, Antrian Klaim, Antrian Penarikan, Verifikasi Agen, Profil
+- **Empty states berilustrasi** menggantikan ikon polos di semua antrean + notifikasi
+- Logika, proses, menu, dan backend tidak berubah
+
+---
+
 ## v1.36.0 — 2026-07-11
 
 ### Agent App UI Redesign (visual only — tanpa perubahan backend/fungsi/menu)

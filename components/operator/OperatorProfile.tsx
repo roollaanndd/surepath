@@ -79,12 +79,17 @@ const OperatorProfile: React.FC<Props> = ({ operator, onLogout }) => {
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Profile card */}
-      <div className="relative overflow-hidden rounded-3xl p-5 text-white"
-        style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)' }}>
-        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.35) 0%, transparent 70%)' }} />
-        <div className="relative flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-2xl font-black">
+      {/* Profile card — bank-style gradient banner */}
+      <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.28) 0%, transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 bottom-0 h-4/5 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="185" cy="130" r="76" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="185" cy="130" r="50" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black ring-4 ring-white/15"
+            style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}>
             {operator?.name?.charAt(0)?.toUpperCase() ?? 'O'}
           </div>
           <div className="flex-1 min-w-0">

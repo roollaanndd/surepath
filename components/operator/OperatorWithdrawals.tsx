@@ -1,9 +1,9 @@
 // OperatorWithdrawals.tsx — Tarik tab. L1 approve/reject agent withdrawal requests.
 import React, { useEffect, useState, useCallback } from 'react';
-import { Wallet, CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotWallet, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listWithdrawals, approveWithdrawalL1, rejectWithdrawal, type OperatorWithdrawal } from '../../services/operatorService';
 
 interface Props {
@@ -92,7 +92,12 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Antrian Penarikan (Approval Multi-Level)</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        title="Antrian Penarikan"
+        subtitle="Approval multi-level L1/L2/L3 — setiap pencairan terjaga."
+        art={<SpotWallet size={72} />}
+      />
 
       <UnderlineTabs
         tabs={STATUS_TABS.map(t => ({ id: t.id, label: t.label }))}
@@ -101,10 +106,9 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, refreshTick }) => {
       />
 
       {withdrawals.length === 0 ? (
-        <EmptyState
-          icon={Wallet}
+        <AgentEmpty
           title="Tidak ada penarikan"
-          description="Antrian penarikan kosong untuk status ini."
+          desc="Antrian penarikan kosong untuk status ini."
         />
       ) : (
         <div className="space-y-3">

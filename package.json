@@ -1,7 +1,7 @@
 {
   "name": "surepath---neural-insurtech",
   "private": true,
-  "version": "1.31.0",
+  "version": "1.35.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

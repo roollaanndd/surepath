@@ -2,6 +2,18 @@
 
 ---
 
+## v1.35.0 — 2026-07-11
+
+### Quotation Slip PDF di Semua Apps
+Template Quotation Slip 4 halaman (v1.33) kini tersedia di seluruh aplikasi:
+- **Admin (PolicyOrdersAdmin)** — tombol "Quotation Slip" di modal detail order, tersedia untuk semua status
+- **Insurer (InsurerOrders)** — tombol "Unduh Quotation Slip (PDF)" di sheet detail pengajuan; nama insurer dari dashboard dipakai di slip
+- **B2B (B2BQuotes)** — tombol "Unduh Quotation (PDF)" per kartu penawaran; adapter baru `fromB2BQuote` untuk penawaran korporasi non-kendaraan (coverage details → tabel jaminan)
+- **Customer Car Wizard (StepFinal)** — "Unduh Proposal Penawaran" beralih dari generator lama `proposalPdf` ke template Quotation Slip yang sama via `fromAgentQuote`
+- Sebelumnya sudah terpasang: Customer (OrderDetailSheet), Agent (AgentQuoteBuilder), Operator (OperatorOrders) — kini 7 titik unduh dengan 1 template konsisten
+
+---
+
 ## v1.26.0 — 2026-07-08
 
 ### Comprehensive Test Suite + Health Check + Request ID

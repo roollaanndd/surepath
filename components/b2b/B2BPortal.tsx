@@ -82,7 +82,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           />
         );
       case 'quotes':
-        return <B2BQuotes clientId={client?.id ?? ''} lang={lang} />;
+        return <B2BQuotes clientId={client?.id ?? ''} lang={lang} companyName={client?.company_name} />;
       case 'profile':
         return (
           <B2BProfile

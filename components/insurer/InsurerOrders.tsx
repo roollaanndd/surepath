@@ -2,11 +2,13 @@
 // 3 decision buttons (Setujui/Minta Info/Tolak) + policy PDF upload.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, Phone, ShieldCheck, Sparkles, Upload, CheckCircle } from 'lucide-react';
+import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, Phone, ShieldCheck, Sparkles, Upload, CheckCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { UnderlineTabs, EmptyState, SkeletonCard, useToast } from '../ui';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 
 interface Props {
   authToken: string;
@@ -46,12 +48,15 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
   const [policyNumber, setPolicyNumber] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [insurerName, setInsurerName] = useState('');
+  const [downloadingSlip, setDownloadingSlip] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const d = await getInsurerDashboard(authToken);
       setAllOrders(d.orders);
+      setInsurerName(d.insurer?.name ?? '');
     } catch (e: any) {
       console.error('InsurerOrders load:', e);
       toast.error(`Gagal memuat order: ${e.message}`);
@@ -93,6 +98,19 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
       toast.error(`Gagal: ${e.message}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDownloadSlip = async (o: InsurerOrder) => {
+    if (downloadingSlip) return;
+    setDownloadingSlip(true);
+    try {
+      await generateQuotationSlipPDF(fromCustomerOrder({ ...o, insurer_name: insurerName || undefined } as any));
+    } catch (e: any) {
+      console.error('Quotation slip download failed:', e);
+      toast.error('Gagal membuat quotation slip. Coba lagi.');
+    } finally {
+      setDownloadingSlip(false);
     }
   };
 
@@ -427,6 +445,22 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                       <span className="text-sm font-black text-purple-600 dark:text-purple-400">{fmtIdr(selectedOrder.total_premium)}</span>
                     </div>
                   </Section>
+
+                  {/* Quotation slip download */}
+                  <button
+                    onClick={() => handleDownloadSlip(selectedOrder)}
+                    disabled={downloadingSlip}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border ${SHEET_BORDER} ${SHEET_INSET} active:scale-[0.98] transition-transform disabled:opacity-50`}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-sky-100 dark:bg-sky-950/40 flex items-center justify-center">
+                      <Download size={16} className="text-sky-600 dark:text-sky-400" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className={`text-sm font-bold ${SHEET_TEXT}`}>{downloadingSlip ? 'Menyiapkan PDF…' : 'Unduh Quotation Slip (PDF)'}</p>
+                      <p className={`text-[10px] ${SHEET_TEXT_MUTED}`}>Ringkasan penawaran 4 halaman</p>
+                    </div>
+                    <ExternalLink size={14} className={SHEET_TEXT_MUTED} />
+                  </button>
 
                   {/* Insurer decision (if already decided) */}
                   {selectedOrder.insurer_decision && (

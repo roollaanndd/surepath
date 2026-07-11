@@ -397,8 +397,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* Progress bar */}
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-          style={{ width: `${((stepIndex + 1) / 4) * 100}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${((stepIndex + 1) / 4) * 100}%`, background: 'linear-gradient(90deg, #00C16A, #047857)' }}
         />
       </div>
 

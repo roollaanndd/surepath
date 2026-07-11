@@ -160,12 +160,20 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   return (
     <div className="bg-ds-bg min-h-screen pb-28 font-sora">
 
-      {/* Avatar + Name hero */}
-      <div className="bg-ds-card border-b border-ds-border px-5 pt-12 pb-6 text-center">
-        <div className="relative w-16 h-16 mx-auto mb-3">
+      {/* Avatar + Name hero — bank-style gradient banner */}
+      <div className="relative overflow-hidden px-5 pt-12 pb-7 text-center text-white"
+        style={{ background: 'linear-gradient(150deg, #0B1120 0%, #0E3B2E 60%, #0B5E3B 100%)' }}>
+        <div aria-hidden className="absolute -top-16 -right-12 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.25), transparent 70%)' }} />
+        <svg aria-hidden className="absolute left-0 bottom-0 h-3/4 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="10" cy="130" r="80" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="10" cy="130" r="52" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10">
+        <div className="relative w-20 h-20 mx-auto mb-3">
           <button
             onClick={() => avatarInputRef.current?.click()}
-            className="w-16 h-16 rounded-full bg-ds-green flex items-center justify-center text-white font-bold text-xl mx-auto overflow-hidden relative"
+            className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto overflow-hidden relative ring-4 ring-white/15"
+            style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
           >
             {(profile as any)?.profile_photo_url
               ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -176,42 +184,42 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                 <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin motion-reduce:animate-none" />
               </div>
             )}
-            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-ds-green-dk flex items-center justify-center">
-              <Camera size={9} className="text-white" />
+            <div className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow">
+              <Camera size={11} className="text-[#0B3D2E]" />
             </div>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
         </div>
 
-        <h2 className="text-lg font-black text-ds-ink">{profile?.name ?? agent?.name}</h2>
+        <h2 className="text-lg font-black text-white">{profile?.name ?? agent?.name}</h2>
 
-        <div className="flex items-center justify-center gap-2 mt-1">
-          <span className="inline-flex px-3 py-1 rounded-full bg-ds-card2 border border-ds-border text-ds-ink2 text-xs font-medium">
+        <div className="flex items-center justify-center gap-2 mt-1.5">
+          <span className="inline-flex px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/85 text-xs font-bold tracking-wider font-mono">
             {profile?.agent_code ?? agent?.agent_code}
           </span>
-          <button onClick={copyCode} className="text-ds-ink3 hover:text-ds-green transition">
+          <button onClick={copyCode} className="text-white/60 hover:text-white transition">
             {copied
               ? <CheckCircle className="w-3.5 h-3.5 text-ds-green" />
               : <Copy className="w-3.5 h-3.5" />}
           </button>
         </div>
 
-        {profile?.verified && (
-          <div className="flex items-center justify-center gap-1 mt-2">
-            <BadgeCheck className="w-4 h-4 text-ds-blue" />
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-ds-blue text-xs font-bold">
+        <div className="flex items-center justify-center gap-2 mt-2.5 flex-wrap">
+          {profile?.verified && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-sky-300 text-xs font-bold">
+              <BadgeCheck className="w-3.5 h-3.5" />
               {t('Verified Partner', 'Mitra Terverifikasi')}
             </span>
-          </div>
-        )}
-
-        {tier && (
-          <div className={`mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
-            tier === 'ELITE' ? 'bg-ds-purple-lt text-ds-purple' : 'bg-amber-50 text-ds-amber'
-          }`}>
-            {tier === 'ELITE' ? '💎 Mitra Elite' : '⭐ Mitra Bintang'}
-          </div>
-        )}
+          )}
+          {tier && (
+            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black border border-white/15 ${
+              tier === 'ELITE' ? 'bg-white/10 text-purple-300' : 'bg-white/10 text-amber-300'
+            }`}>
+              {tier === 'ELITE' ? '💎 Mitra Elite' : '⭐ Mitra Bintang'}
+            </span>
+          )}
+        </div>
+        </div>
       </div>
 
       {/* Stats strip */}

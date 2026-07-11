@@ -3,6 +3,7 @@ import { Trophy, RefreshCw, TrendingUp, Star, Crown } from 'lucide-react';
 import { Language } from '../../types';
 import { getLeaderboard, getAgentStats, type AgentStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotTrophy, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -154,20 +155,22 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
 
-      {/* Page header */}
-      <div className="bg-ds-card px-5 pt-12 pb-4 border-b border-ds-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-ds-ink">{t('Leaderboard', 'Papan Peringkat')}</h1>
-            <p className="text-sm text-ds-ink2 mt-0.5">{t('This Month', 'Bulan Ini')}</p>
-          </div>
+      {/* Page header — hero banner */}
+      <div className="px-5 pt-5">
+        <AgentArtKeyframes />
+        <AgentHero
+          title={t('Leaderboard', 'Papan Peringkat')}
+          subtitle={t('Top performing partners this month.', 'Mitra dengan performa terbaik bulan ini.')}
+          art={<SpotTrophy size={76} />}
+        >
           <button
             onClick={loadData}
-            className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center active:scale-90 motion-reduce:active:scale-100 transition-transform"
+            className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 transition-transform"
           >
-            <RefreshCw size={15} className={loading ? 'animate-spin motion-reduce:animate-none text-ds-green' : 'text-ds-ink3'} />
+            <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
+            {t('Refresh', 'Perbarui')}
           </button>
-        </div>
+        </AgentHero>
       </div>
 
       <div className="px-4 py-5 max-w-lg mx-auto space-y-4">
@@ -289,16 +292,13 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
               ))}
             </div>
           ) : leaderboard.length === 0 ? (
-            <div className="px-5 pb-8 text-center">
-              <Trophy size={36} className="text-ds-ink3 mx-auto mb-3" />
-              <p className="font-black text-ds-ink2">{t('No data yet', 'Belum ada data')}</p>
-              <p className="text-ds-ink3 text-sm mt-1">
-                {t(
-                  'Convert quotes to policies to appear on the leaderboard.',
-                  'Konversikan penawaran ke polis untuk muncul di papan peringkat.',
-                )}
-              </p>
-            </div>
+            <AgentEmpty
+              title={t('No data yet', 'Belum ada data')}
+              desc={t(
+                'Convert quotes to policies to appear on the leaderboard.',
+                'Konversikan penawaran ke polis untuk muncul di papan peringkat.',
+              )}
+            />
           ) : (
             <div className="divide-y divide-ds-border">
               {leaderboard.map((entry, idx) => {

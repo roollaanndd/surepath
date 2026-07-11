@@ -13,7 +13,7 @@ import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
-import { AgentEarning } from '../shared/Illustrations';
+import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
 
 interface Props {
   agent: any;
@@ -122,14 +122,28 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
       </motion.div>
 
-      {/* Commission Hero — the single focal point of the screen */}
+      {/* Commission Hero — premium bank-card look, the focal point of the screen */}
       <motion.div className="px-5 pt-4" {...reveal(1)}>
-        <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 12px 40px rgba(0,59,47,0.45)' }}>
-          <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
-          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.07)' }} />
-          {/* Character illustration */}
-          <div className="absolute top-0 right-0 opacity-80 pointer-events-none">
-            <AgentEarning size={80} />
+        <AgentArtKeyframes />
+        <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)', boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)' }}>
+          {/* glow + fine card pattern */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.22)' }} />
+          <svg aria-hidden className="absolute inset-0 w-full h-full opacity-[0.10] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 320 200" fill="none">
+            <circle cx="290" cy="-10" r="110" stroke="#fff" strokeWidth="1" />
+            <circle cx="290" cy="-10" r="80" stroke="#fff" strokeWidth="1" />
+            <circle cx="290" cy="-10" r="50" stroke="#fff" strokeWidth="1" />
+            <circle cx="10" cy="210" r="90" stroke="#fff" strokeWidth="1" />
+            <circle cx="10" cy="210" r="60" stroke="#fff" strokeWidth="1" />
+          </svg>
+          {/* card chip + contactless (bank-card identity) */}
+          <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-block w-9 h-7 rounded-md" style={{ background: 'linear-gradient(135deg, #FDE047, #EAB308)', boxShadow: 'inset 0 0 0 1px rgba(113,63,18,0.35)' }}>
+                <svg viewBox="0 0 36 28" className="w-full h-full" fill="none"><path d="M0 14h36M18 0v28M6 7h24M6 21h24" stroke="rgba(113,63,18,0.45)" strokeWidth="1.4" /></svg>
+              </span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 8c2.2 2.2 2.2 5.8 0 8M12.5 5.5c3.6 3.6 3.6 9.4 0 13M17 3c5 5 5 13 0 18" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" /></svg>
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white/45">SurePath · Partner Card</span>
           </div>
 
           <div className="relative z-10 flex items-center gap-5">
@@ -181,9 +195,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             ))}
           </div>
 
-          <p className="relative z-10 mt-4 text-white/35 text-[10px] font-medium">
-            {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
-          </p>
+          <div className="relative z-10 mt-4 flex items-center justify-between">
+            <p className="text-white/35 text-[10px] font-medium">
+              {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
+            </p>
+            <p className="text-white/45 text-[11px] font-black tracking-[0.24em] font-mono uppercase">
+              {agent?.agent_code ?? 'SP-AGT'}
+            </p>
+          </div>
         </div>
       </motion.div>
 
@@ -249,8 +268,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                 onClick={() => onNavigate(action.tab)}
                 className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
               >
-                <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
-                  <action.icon size={22} strokeWidth={2} />
+                <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-[1.2rem] flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/10 shadow-ds-sm group-hover:scale-105 group-hover:shadow-ds-md transition-all duration-200`}>
+                  <action.icon size={22} strokeWidth={2.2} />
                 </div>
                 <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
               </button>
@@ -301,16 +320,16 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <motion.div className="px-5 mt-5 pb-4" {...reveal(7)}>
         <button
           onClick={() => onNavigate('leaderboard')}
-          className="w-full rounded-[1.5rem] sp-glass p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+          className="w-full rounded-[1.75rem] p-4 flex items-center gap-3 active:scale-[0.98] transition-transform relative overflow-hidden text-left"
+          style={{ background: 'linear-gradient(120deg, #0B1120 0%, #1F2937 60%, #78350F 130%)', boxShadow: '0 12px 30px -14px rgba(11,17,32,0.5)' }}
         >
-          <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-            <Trophy size={20} className="text-ds-amber" />
+          <div aria-hidden className="absolute -top-10 -right-6 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(253,224,71,0.25), transparent 70%)' }} />
+          <div className="flex-1 relative z-10">
+            <p className="text-sm font-black text-white">{t('Agent Leaderboard', 'Papan Peringkat')}</p>
+            <p className="text-xs text-white/55 mt-0.5">{t('See your ranking this month', 'Lihat ranking agen bulan ini')}</p>
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-black text-ds-ink">{t('Agent Leaderboard', 'Papan Peringkat')}</p>
-            <p className="text-xs text-ds-ink3">{t('See your ranking this month', 'Lihat ranking agen bulan ini')}</p>
-          </div>
-          <ChevronRight size={16} className="text-ds-ink3 flex-shrink-0" />
+          <div className="relative z-10 flex-shrink-0 -my-2"><SpotTrophy size={64} /></div>
+          <ChevronRight size={16} className="text-white/50 flex-shrink-0 relative z-10" />
         </button>
       </motion.div>
 

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  X, Bell, Wallet, AlertTriangle, FileText, CheckCircle, Info, ChevronRight
+  X, Wallet, AlertTriangle, FileText, CheckCircle, Info, ChevronRight
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getNotifications, markNotificationRead, markAllNotificationsRead,
   type SpNotification,
 } from '../../services/supabaseService';
+import { AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -72,21 +73,26 @@ const AgentNotifications: React.FC<Props> = ({ agentId, lang, onClose, onNavigat
         className="bg-white rounded-b-[2.5rem] shadow-2xl max-h-[80dvh] flex flex-col font-sora"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-100 flex items-center justify-between">
-          <p className="text-xl font-bold text-gray-900">{t('Notifications', 'Notifikasi')}</p>
-          <div className="flex items-center gap-3">
+        {/* Header — gradient banner */}
+        <div className="relative overflow-hidden px-5 pt-12 pb-4 flex items-center justify-between text-white"
+          style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 60%, #0B5E3B 100%)' }}>
+          <div aria-hidden className="absolute -top-10 -right-8 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.25), transparent 70%)' }} />
+          <div className="relative z-10">
+            <p className="text-xl font-black">{t('Notifications', 'Notifikasi')}</p>
+            {unread > 0 && <p className="text-[10px] text-white/55 font-bold uppercase tracking-widest mt-0.5">{unread} {t('unread', 'belum dibaca')}</p>}
+          </div>
+          <div className="relative z-10 flex items-center gap-3">
             {unread > 0 && (
               <button
                 onClick={handleMarkAll}
-                className="text-xs font-medium text-emerald-600"
+                className="text-xs font-bold text-emerald-300"
               >
                 {t('Mark all read', 'Tandai semua')}
               </button>
             )}
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center"
             >
               <X size={15} />
             </button>
@@ -100,15 +106,10 @@ const AgentNotifications: React.FC<Props> = ({ agentId, lang, onClose, onNavigat
               <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin motion-reduce:animate-none" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-3 mx-auto text-gray-400">
-                <Bell size={22} />
-              </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">
-                {t('No notifications', 'Tidak ada notifikasi')}
-              </p>
-              <p className="text-xs text-gray-400">{t('You\'re all caught up', 'Semua sudah terbaca')}</p>
-            </div>
+            <AgentEmpty
+              title={t('No notifications', 'Tidak ada notifikasi')}
+              desc={t('You\'re all caught up', 'Semua sudah terbaca')}
+            />
           ) : (
             notifications.map(n => {
               const meta = TYPE_META[n.type] ?? TYPE_META.SYSTEM;

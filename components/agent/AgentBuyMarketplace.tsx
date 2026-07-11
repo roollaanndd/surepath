@@ -7,6 +7,7 @@ import TravelInsuranceWizard from '../TravelInsuranceWizard';
 import PAInsuranceWizard from '../PAInsuranceWizard';
 import MPARInsuranceWizard from '../MPARInsuranceWizard';
 import { type SpClient } from '../../services/supabaseService';
+import { AgentArtKeyframes, AgentHero, SpotMarket } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -151,6 +152,14 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Langsung mulai proses pembelian</p>
         </div>
       </div>
+
+      {/* Hero banner */}
+      <AgentArtKeyframes />
+      <AgentHero
+        title="Marketplace Produk"
+        subtitle="Semua produk proteksi dengan tarif resmi OJK — siap dijual hari ini."
+        art={<SpotMarket size={76} />}
+      />
 
       {/* Product grid */}
       <div className="grid grid-cols-2 gap-3">

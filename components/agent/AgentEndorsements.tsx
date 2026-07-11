@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, FileEdit } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { Language } from '../../types';
 import {
   createEndorsement,
@@ -9,6 +9,7 @@ import {
   type SpPolicyOrder,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotEndorse, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -117,23 +118,20 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
   return (
     <div className="px-4 py-6 space-y-5 max-w-lg mx-auto font-sora">
 
-      {/* Header + CTA */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            {t('Endorsements', 'Endorsemen')}
-          </h2>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-            {t('Policy amendment requests', 'Permintaan perubahan polis')}
-          </p>
-        </div>
+      {/* Header + CTA — hero banner */}
+      <AgentArtKeyframes />
+      <AgentHero
+        title={t('Endorsements', 'Endorsemen')}
+        subtitle={t('Policy amendment requests', 'Permintaan perubahan polis')}
+        art={<SpotEndorse size={76} />}
+      >
         <button
           onClick={openModal}
-          className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#16a34a]/30 hover:brightness-105 transition-all"
+          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2.5 bg-white text-[#0B3D2E] rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:brightness-95 transition-all"
         >
           <Plus size={14} /> {t('Request', 'Ajukan')}
         </button>
-      </div>
+      </AgentHero>
 
       {successMsg && (
         <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-2xl px-4 py-3 text-xs font-bold text-emerald-700 dark:text-emerald-400">
@@ -143,14 +141,11 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
 
       {/* List */}
       {endorsements.length === 0 ? (
-        <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[2rem] p-10 text-center">
-          <FileEdit size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-            {t('No endorsement requests yet', 'Belum ada permintaan endorsemen')}
-          </p>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-            {t('Submit a request to amend an issued policy.', 'Ajukan permintaan untuk mengubah polis yang sudah diterbitkan.')}
-          </p>
+        <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[2rem]">
+          <AgentEmpty
+            title={t('No endorsement requests yet', 'Belum ada permintaan endorsemen')}
+            desc={t('Submit a request to amend an issued policy.', 'Ajukan permintaan untuk mengubah polis yang sudah diterbitkan.')}
+          />
         </div>
       ) : (
         <div className="space-y-3">

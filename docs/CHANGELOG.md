@@ -2,6 +2,20 @@
 
 ---
 
+## v1.36.0 — 2026-07-11
+
+### Agent App UI Redesign (visual only — tanpa perubahan backend/fungsi/menu)
+Tampilan Agent app dirombak ke gaya modern ala aplikasi bank:
+- **Kit ilustrasi baru** `components/agent/AgentArt.tsx` — 4 scene onboarding + 12 spot illustration vector custom (emerald/navy/gold) + komponen `AgentHero` (banner gradient) + `AgentEmpty` (empty state berilustrasi)
+- **Onboarding Agent 4 slide** — tiap slide dengan ilustrasi custom sesuai konten: Welcome (dashboard di genggaman), Quote cepat (dokumen + stempel OJK), Komisi & wallet (kartu bank + koin), Growth (trofi + jaringan)
+- **Shell AgentPortal** — bottom nav gaya bank dengan tombol tengah "Buat" menonjol; avatar berinisial gradient di header
+- **AgentHome** — kartu komisi bergaya kartu bank premium (chip, contactless, pola kartu, kode agen sebagai identitas kartu); teaser leaderboard dengan ilustrasi trofi
+- **Hero banner + ilustrasi di semua layar**: Orders/Polis, CRM (Buku Klien), Klaim, Komisi, Dompet, Leaderboard, Jaringan Mitra, Renewal, Endorsemen, Marketplace, Notifikasi, Profil (banner gradient + avatar besar)
+- **Empty states berilustrasi** menggantikan ikon polos di seluruh layar agent
+- Logika, proses aplikasi, menu, dan backend 100% tidak berubah
+
+---
+
 ## v1.35.0 — 2026-07-11
 
 ### Quotation Slip PDF di Semua Apps

@@ -9,6 +9,7 @@ import {
   type SpClient, type SpPolicy
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotClients, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -150,8 +151,18 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
 
+      {/* Hero banner */}
+      <div className="px-5 pt-5">
+        <AgentArtKeyframes />
+        <AgentHero
+          title={t('Client Book', 'Buku Klien')}
+          subtitle={t('Your relationships, organized like a private banker.', 'Kelola relasi klien Anda serapi private banker.')}
+          art={<SpotClients size={76} />}
+        />
+      </div>
+
       {/* Header */}
-      <div className="bg-ds-card px-5 pt-12 pb-4 border-b border-ds-border">
+      <div className="bg-ds-card px-5 pt-4 pb-4 border-b border-ds-border mt-4">
         {/* Search */}
         <div className="relative mb-3">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ds-ink3" />
@@ -200,12 +211,11 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
             <div key={i} className="sp-glass rounded-2xl p-4 animate-pulse h-20" />
           ))
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-8 text-center bg-ds-card2 rounded-2xl border border-ds-border mt-4">
-            <div className="w-16 h-16 rounded-2xl bg-ds-bg flex items-center justify-center mb-4 mx-auto">
-              <User size={28} className="text-ds-ink3" />
-            </div>
-            <p className="text-base font-semibold text-ds-ink mb-1">{t('No clients found', 'Klien tidak ditemukan')}</p>
-            <p className="text-sm text-ds-ink3">{t('Try adjusting your search or add a new client.', 'Coba ubah pencarian atau tambah klien baru.')}</p>
+          <div className="bg-ds-card2 rounded-2xl border border-ds-border mt-4">
+            <AgentEmpty
+              title={t('No clients found', 'Klien tidak ditemukan')}
+              desc={t('Try adjusting your search or add a new client.', 'Coba ubah pencarian atau tambah klien baru.')}
+            />
           </div>
         ) : (
           filtered.map(client => {

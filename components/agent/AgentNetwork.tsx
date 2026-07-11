@@ -12,6 +12,7 @@ import {
   type DownlineNode,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotNetwork } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -126,6 +127,14 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
 
   return (
     <div className="px-4 py-6 space-y-6 max-w-lg mx-auto font-sora">
+
+      {/* ── Hero banner ─────────────────────────────────────────────────── */}
+      <AgentArtKeyframes />
+      <AgentHero
+        title={t('Partner Network', 'Jaringan Mitra')}
+        subtitle={t('Grow your team and earn override commission.', 'Kembangkan tim Anda dan dapatkan komisi override.')}
+        art={<SpotNetwork size={80} />}
+      />
 
       {/* ── My Tier Card ─────────────────────────────────────────────────── */}
       {agentTier ? (

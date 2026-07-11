@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { ArtKeyframes, ArtProtection, ArtClaim, ArtSupport } from './OnboardingArt';
-import { AgentArtKeyframes, ObWelcome, ObQuote, ObWallet, ObGrowth } from './agent/AgentArt';
+import {
+  AgentArtKeyframes, ObWelcome, ObQuote, ObWallet, ObGrowth,
+  ObOpsQueue, ObOpsReview, ObOpsPayout, ObOpsVerify,
+} from './agent/AgentArt';
 import { fetchWebsiteSection } from '../services/supabaseService';
 
 /* ─── Gojek-style illustrated onboarding — fullscreen slides, role-aware ────
    Storage: SP_ONBOARDED_<role> so customer and agent each see their own tour. */
 
-type Role = 'CUSTOMER' | 'AGENT';
+type Role = 'CUSTOMER' | 'AGENT' | 'OPERATOR';
 
 interface OnboardingFlowProps {
   role: Role;
@@ -59,6 +62,28 @@ const SLIDES: Record<Role, { Art: React.ElementType; id: [string, string]; en: [
       Art: ObGrowth,
       id: ['Naik level bersama tim Anda', 'Kelola klien, kembangkan jaringan mitra, kejar peringkat leaderboard, dan raih tier Elite dengan benefit eksklusif.'],
       en: ['Level up with your team', 'Manage clients, grow your partner network, climb the leaderboard, and reach Elite tier with exclusive benefits.'],
+    },
+  ],
+  OPERATOR: [
+    {
+      Art: ObOpsQueue,
+      id: ['Pusat kendali operasional', 'Semua antrean — polis, klaim, penarikan, verifikasi — masuk real-time ke satu dashboard. Notifikasi pop-up otomatis setiap ada pengajuan baru.'],
+      en: ['Your operations command center', 'Every queue — policies, claims, withdrawals, verifications — flows in real time to one dashboard, with automatic pop-up alerts.'],
+    },
+    {
+      Art: ObOpsReview,
+      id: ['Review cepat, keputusan tepat', 'Periksa dokumen, foto kendaraan, dan skor AI survey dalam satu layar — lalu setujui, minta info, atau tolak dengan satu ketukan.'],
+      en: ['Fast review, right decision', 'Check documents, vehicle photos, and AI survey scores on one screen — then approve, request info, or decline in one tap.'],
+    },
+    {
+      Art: ObOpsPayout,
+      id: ['Pencairan dana yang aman', 'Proses penarikan komisi agen dengan persetujuan berlapis L1/L2/L3 — setiap rupiah tercatat dan terjaga.'],
+      en: ['Payouts, guarded', 'Process agent withdrawals with layered L1/L2/L3 approvals — every rupiah logged and protected.'],
+    },
+    {
+      Art: ObOpsVerify,
+      id: ['Jaga kualitas jaringan mitra', 'Verifikasi agen baru, tinjau kelengkapan dokumen, dan pastikan hanya mitra terpercaya yang mewakili SurePath.'],
+      en: ['Keep the partner network strong', 'Verify new agents, review their documents, and make sure only trusted partners represent SurePath.'],
     },
   ],
 };

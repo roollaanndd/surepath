@@ -6,8 +6,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { UserCheck, CheckCircle2, XCircle, Eye, FileText, ImageIcon, Phone, MapPin, CreditCard, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotProfile, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listPendingAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
 import { resolveDocumentUrl } from '../../services/storage';
 
@@ -137,7 +137,12 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Verifikasi Agen</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        title="Verifikasi Agen"
+        subtitle="Pastikan hanya mitra terpercaya yang mewakili SurePath."
+        art={<SpotProfile size={72} />}
+      />
 
       <UnderlineTabs
         tabs={STATUS_TABS.map(t => ({ id: t.id, label: t.label }))}
@@ -146,10 +151,9 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
       />
 
       {agents.length === 0 ? (
-        <EmptyState
-          icon={UserCheck}
+        <AgentEmpty
           title="Tidak ada agen"
-          description={activeStatus === 'PENDING'
+          desc={activeStatus === 'PENDING'
             ? 'Tidak ada agen menunggu verifikasi saat ini.'
             : 'Tidak ada agen pada kategori ini.'}
         />

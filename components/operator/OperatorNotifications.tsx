@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Bell, CheckCheck, FileText, ShieldAlert, Wallet, UserCheck, CreditCard } from 'lucide-react';
 import { Language } from '../../types';
-import { SkeletonCard, EmptyState, useToast } from '../ui';
+import { SkeletonCard, useToast } from '../ui';
+import { AgentEmpty } from '../agent/AgentArt';
 import { listNotifications, markNotificationRead, markAllNotificationsRead, type OperatorNotification } from '../../services/operatorService';
 
 interface Props {
@@ -108,10 +109,9 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
               <SkeletonCard />
             </div>
           ) : items.length === 0 ? (
-            <EmptyState
-              icon={Bell}
+            <AgentEmpty
               title="Belum ada notifikasi"
-              description="Notifikasi pengajuan baru akan muncul di sini secara real-time."
+              desc="Notifikasi pengajuan baru akan muncul di sini secara real-time."
             />
           ) : (
             <div className="space-y-2">

@@ -216,6 +216,162 @@ export const ObGrowth = () => (
   </OnbCanvas>
 );
 
+/* ═══ OPERATOR ONBOARDING SCENES (same theme, ops-specific content) ═══ */
+
+/* Ops 1 — Command center: realtime queue dashboard with incoming cards + bell */
+export const ObOpsQueue = () => (
+  <OnbCanvas>
+    <circle cx="150" cy="150" r="120" fill="rgba(255,255,255,0.06)" />
+    <circle cx="150" cy="150" r="90" fill="rgba(255,255,255,0.06)" />
+    {/* monitor/dashboard */}
+    <g style={anim('aga-float', '3.6s')}>
+      <rect x="66" y="70" width="168" height="118" rx="16" fill="#fff" />
+      <rect x="66" y="70" width="168" height="30" rx="15" fill="url(#opq-g1)" />
+      <circle cx="82" cy="85" r="5" fill="rgba(255,255,255,0.9)" />
+      <rect x="94" y="81" width="52" height="8" rx="4" fill="rgba(255,255,255,0.7)" />
+      {/* queue rows */}
+      {[0, 1, 2].map(i => (
+        <g key={i}>
+          <rect x="78" y={110 + i * 24} width="144" height="18" rx="7" fill={i === 0 ? '#EFFBF4' : '#F4F7F5'} stroke={i === 0 ? '#B9E8CF' : '#E3EBE6'} />
+          <circle cx="90" cy={119 + i * 24} r="5" fill={['#00C16A', '#F59E0B', '#3B82F6'][i]} />
+          <rect x="102" y={115 + i * 24} width="66" height="7" rx="3.5" fill="#C9DED2" />
+          <rect x="182" y={115 + i * 24} width="30" height="7" rx="3.5" fill={i === 0 ? '#00A45C' : '#DCE7E0'} />
+        </g>
+      ))}
+    </g>
+    {/* realtime bell */}
+    <g style={anim('aga-pop', '2.4s', '0.3s')}>
+      <circle cx="228" cy="62" r="24" fill="#FDE047" />
+      <path d="M228 48c-8 0-13 6-13 14v7l-4 7h34l-4-7v-7c0-8-5-14-13-14z" fill="#713F12" />
+      <circle cx="243" cy="47" r="7" fill="#EF4444" />
+    </g>
+    {/* incoming card flying in */}
+    <g style={anim('aga-drift', '2.6s', '0.5s')}>
+      <rect x="36" y="206" width="70" height="44" rx="10" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.45)" />
+      <rect x="46" y="216" width="36" height="6" rx="3" fill="#fff" />
+      <rect x="46" y="228" width="50" height="5" rx="2.5" fill="rgba(255,255,255,0.6)" />
+    </g>
+    <path d="M112 232c30 8 62 6 92-10" stroke="rgba(255,255,255,0.5)" strokeWidth="4" strokeLinecap="round" strokeDasharray="7 10" style={{ animation: 'aga-dash 1.9s linear infinite' }} />
+    <defs>
+      <linearGradient id="opq-g1" x1="66" y1="70" x2="234" y2="100"><stop stopColor="#00A45C" /><stop offset="1" stopColor="#047857" /></linearGradient>
+    </defs>
+  </OnbCanvas>
+);
+
+/* Ops 2 — Review & decide: document under magnifier + approve/reject buttons */
+export const ObOpsReview = () => (
+  <OnbCanvas>
+    <circle cx="150" cy="150" r="120" fill="rgba(255,255,255,0.06)" />
+    {/* document */}
+    <g style={anim('aga-float', '3.4s')}>
+      <rect x="86" y="48" width="118" height="150" rx="16" fill="#fff" />
+      <rect x="100" y="68" width="52" height="10" rx="5" fill="#00A45C" />
+      <rect x="100" y="90" width="90" height="8" rx="4" fill="#DCEFE5" />
+      <rect x="100" y="105" width="90" height="8" rx="4" fill="#DCEFE5" />
+      <rect x="100" y="120" width="62" height="8" rx="4" fill="#DCEFE5" />
+      {/* photo thumb */}
+      <rect x="100" y="140" width="42" height="32" rx="8" fill="#EFFBF4" stroke="#B9E8CF" />
+      <circle cx="112" cy="152" r="5" fill="#00A45C" />
+      <path d="M102 168l12-10 8 6 10-9 10 13z" fill="#8ED8B4" />
+      {/* AI score chip */}
+      <rect x="150" y="146" width="40" height="20" rx="9" fill="#0B3D2E" />
+      <text x="170" y="160" textAnchor="middle" fontSize="11" fontWeight="900" fill="#6EE7B7" fontFamily="Sora, sans-serif">AI 92</text>
+    </g>
+    {/* magnifier */}
+    <g style={anim('aga-drift', '3s', '0.4s')}>
+      <circle cx="206" cy="96" r="30" fill="rgba(255,255,255,0.16)" stroke="#fff" strokeWidth="6" />
+      <path d="M228 118l20 20" stroke="#fff" strokeWidth="9" strokeLinecap="round" />
+    </g>
+    {/* approve / reject buttons */}
+    <g style={anim('aga-pop', '2.4s', '0.3s')}>
+      <rect x="60" y="216" width="84" height="34" rx="16" fill="#00C16A" />
+      <path d="M88 233l8 8 16-17" stroke="#fff" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+    <g style={anim('aga-pop', '2.8s', '0.8s')}>
+      <rect x="156" y="216" width="84" height="34" rx="16" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.4)" />
+      <path d="M190 226l16 16M206 226l-16 16" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
+    </g>
+  </OnbCanvas>
+);
+
+/* Ops 3 — Payout guard: vault + layered L1/L2 approval + transfer to bank */
+export const ObOpsPayout = () => (
+  <OnbCanvas>
+    <circle cx="150" cy="150" r="120" fill="rgba(255,255,255,0.06)" />
+    {/* vault */}
+    <g style={anim('aga-float', '3.5s')}>
+      <rect x="64" y="76" width="108" height="112" rx="18" fill="url(#opp-g1)" />
+      <circle cx="118" cy="128" r="30" fill="none" stroke="#FDE047" strokeWidth="7" />
+      <circle cx="118" cy="128" r="12" fill="#FDE047" />
+      {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => (
+        <rect key={deg} x="115" y="90" width="6" height="12" rx="3" fill="#FDE047"
+          transform={`rotate(${deg} 118 128)`} />
+      ))}
+      <rect x="152" y="100" width="8" height="56" rx="4" fill="rgba(255,255,255,0.35)" />
+    </g>
+    {/* approval badges L1 L2 */}
+    {[0, 1].map(i => (
+      <g key={i} style={anim('aga-pop', `${2.4 + i * 0.4}s`, `${i * 0.4}s`)}>
+        <circle cx={208 + i * 34} cy={84 - i * 26} r="17" fill={i === 0 ? '#00C16A' : '#FDE047'} />
+        <text x={208 + i * 34} y={89 - i * 26} textAnchor="middle" fontSize="12" fontWeight="900" fill={i === 0 ? '#fff' : '#713F12'} fontFamily="Sora, sans-serif">L{i + 1}</text>
+      </g>
+    ))}
+    {/* transfer path to bank */}
+    <path d="M170 200c26 14 48 16 70 6" stroke="rgba(255,255,255,0.55)" strokeWidth="4" strokeLinecap="round" strokeDasharray="7 10" style={{ animation: 'aga-dash 1.8s linear infinite' }} />
+    <g style={anim('aga-float', '3s', '0.6s')}>
+      <rect x="196" y="152" width="66" height="46" rx="12" fill="#fff" />
+      <path d="M206 170l23-11 23 11" stroke="#0B3D2E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="211" y="174" width="6" height="15" rx="3" fill="#0B3D2E" />
+      <rect x="226" y="174" width="6" height="15" rx="3" fill="#0B3D2E" />
+      <rect x="241" y="174" width="6" height="15" rx="3" fill="#0B3D2E" />
+    </g>
+    {/* coin */}
+    <g style={anim('aga-float', '2.6s', '0.2s')}>
+      <ellipse cx="72" cy="226" rx="17" ry="15" fill="#FDE047" />
+      <text x="72" y="232" textAnchor="middle" fontSize="13" fontWeight="900" fill="#713F12" fontFamily="Sora, sans-serif">Rp</text>
+    </g>
+    <defs>
+      <linearGradient id="opp-g1" x1="64" y1="76" x2="172" y2="188"><stop stopColor="#065F46" /><stop offset="1" stopColor="#0B1120" /></linearGradient>
+    </defs>
+  </OnbCanvas>
+);
+
+/* Ops 4 — Verify partners: ID card + big verified check + star */
+export const ObOpsVerify = () => (
+  <OnbCanvas>
+    <circle cx="150" cy="150" r="120" fill="rgba(255,255,255,0.06)" />
+    {/* ID card */}
+    <g style={anim('aga-float', '3.4s')}>
+      <rect x="62" y="88" width="152" height="100" rx="16" fill="#fff" />
+      <rect x="62" y="88" width="152" height="24" rx="12" fill="url(#opv-g1)" />
+      <circle cx="98" cy="146" r="18" fill="#B9E8CF" />
+      <circle cx="98" cy="140" r="7" fill="#0B3D2E" />
+      <path d="M83 158c3-9 9-12 15-12s12 3 15 12" fill="#0B3D2E" />
+      <rect x="126" y="130" width="70" height="7" rx="3.5" fill="#C9DED2" />
+      <rect x="126" y="144" width="52" height="6" rx="3" fill="#DCE7E0" />
+      <rect x="126" y="156" width="60" height="6" rx="3" fill="#DCE7E0" />
+      <rect x="126" y="170" width="36" height="9" rx="4.5" fill="#EFFBF4" stroke="#B9E8CF" />
+    </g>
+    {/* big verified check */}
+    <g style={anim('aga-pop', '2.6s', '0.3s')}>
+      <circle cx="216" cy="200" r="34" fill="#00C16A" />
+      <circle cx="216" cy="200" r="34" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="4" strokeDasharray="6 8" />
+      <path d="M200 200l11 11 21-23" stroke="#fff" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+    {/* sparkle + star badge */}
+    <g style={anim('aga-blink', '2.2s')}>
+      <path d="M74 56l4 10 10 4-10 4-4 10-4-10-10-4 10-4 4-10z" fill="#FDE047" />
+    </g>
+    <g style={anim('aga-float', '3s', '0.6s')}>
+      <circle cx="228" cy="66" r="20" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.4)" />
+      <path d="M228 56l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1 3-7z" fill="#FDE047" />
+    </g>
+    <defs>
+      <linearGradient id="opv-g1" x1="62" y1="88" x2="214" y2="112"><stop stopColor="#00A45C" /><stop offset="1" stopColor="#047857" /></linearGradient>
+    </defs>
+  </OnbCanvas>
+);
+
 /* ═══ SPOT ILLUSTRATIONS (compact, for hero banners & empty states) ═══
    Drawn on 120×120 canvas, tuned to sit on the dark navy/emerald hero. */
 

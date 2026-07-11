@@ -3,14 +3,22 @@ import { ChevronRight, X } from 'lucide-react';
 import { ArtKeyframes, ArtProtection, ArtClaim, ArtSupport } from './OnboardingArt';
 import {
   AgentArtKeyframes, ObWelcome, ObQuote, ObWallet, ObGrowth,
-  ObOpsQueue, ObOpsReview, ObOpsPayout, ObOpsVerify,
+  ObOpsQueue, ObOpsReview, ObOpsPayout, ObOpsVerify, ObInsIssue,
 } from './agent/AgentArt';
 import { fetchWebsiteSection } from '../services/supabaseService';
 
 /* ─── Gojek-style illustrated onboarding — fullscreen slides, role-aware ────
    Storage: SP_ONBOARDED_<role> so customer and agent each see their own tour. */
 
-type Role = 'CUSTOMER' | 'AGENT' | 'OPERATOR';
+type Role = 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'INSURER';
+
+/* Per-role visual accent — INSURER uses the purple identity, others emerald */
+const ACCENT: Record<Role, { bg: string; btn: string; btnShadow: string; dot: string; dotDim: string }> = {
+  CUSTOMER: { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
+  AGENT:    { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
+  OPERATOR: { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
+  INSURER:  { bg: 'linear-gradient(170deg, #1E1B4B 0%, #2E1065 42%, #5B21B6 100%)', btn: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', btnShadow: '0 14px 30px -12px rgba(124,58,237,0.65)', dot: '#7c3aed', dotDim: 'rgba(124,58,237,0.25)' },
+};
 
 interface OnboardingFlowProps {
   role: Role;
@@ -86,6 +94,28 @@ const SLIDES: Record<Role, { Art: React.ElementType; id: [string, string]; en: [
       en: ['Keep the partner network strong', 'Verify new agents, review their documents, and make sure only trusted partners represent SurePath.'],
     },
   ],
+  INSURER: [
+    {
+      Art: ObOpsQueue,
+      id: ['Pengajuan masuk secara real-time', 'Setiap penutupan yang ditempatkan SurePath ke perusahaan Anda langsung muncul di dashboard — lengkap dengan notifikasi pop-up.'],
+      en: ['Submissions arrive in real time', 'Every placement SurePath routes to your company appears instantly on your dashboard, with pop-up alerts.'],
+    },
+    {
+      Art: ObOpsReview,
+      id: ['Review lengkap dalam satu layar', 'Data nasabah, detail kendaraan, foto, dan skor AI survey — lalu setujui, minta info tambahan, atau tolak dengan satu ketukan.'],
+      en: ['Full review on one screen', 'Customer data, vehicle details, photos, and AI survey scores — approve, request info, or decline in one tap.'],
+    },
+    {
+      Art: ObInsIssue,
+      id: ['Terbitkan polis tanpa hambatan', 'Upload PDF polis beserta nomornya — nasabah dan tim SurePath langsung menerima notifikasi penerbitan.'],
+      en: ['Issue policies without friction', 'Upload the policy PDF with its number — the customer and SurePath team are notified instantly.'],
+    },
+    {
+      Art: ObWallet,
+      id: ['Pantau premi & pembayaran', 'Lacak pembayaran premi setiap polis yang Anda terbitkan — transparan, tercatat, dan real-time.'],
+      en: ['Track premiums & payments', 'Follow premium payments for every policy you issue — transparent, logged, and real-time.'],
+    },
+  ],
 };
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang }) => {
@@ -111,9 +141,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
     }, 420);
   };
 
+  const accent = ACCENT[role];
+
   return (
     <div className={`fixed inset-0 z-[3000] flex flex-col transition-opacity duration-500 ${leaving ? 'opacity-0' : 'opacity-100'}`}
-      style={{ background: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)' }}>
+      style={{ background: accent.bg }}>
       <style>{`
         @keyframes ob-spin { to { transform: rotate(360deg); } }
         @keyframes ob-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -152,13 +184,13 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
             {slides.map((_, i) => (
               <button key={i} onClick={() => setStep(i)} aria-label={`slide ${i + 1}`}
                 className="rounded-full transition-all duration-300"
-                style={{ width: i === step ? 26 : 8, height: 8, background: i === step ? '#059669' : 'rgba(5,150,105,0.25)' }} />
+                style={{ width: i === step ? 26 : 8, height: 8, background: i === step ? accent.dot : accent.dotDim }} />
             ))}
           </div>
 
           <button onClick={() => (last ? finish() : setStep(s => s + 1))}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all active:scale-[0.98]"
-            style={{ background: 'linear-gradient(135deg, #059669, #047857)', boxShadow: '0 14px 30px -12px rgba(5,150,105,0.65)' }}>
+            style={{ background: accent.btn, boxShadow: accent.btnShadow }}>
             {last ? (isID ? 'Mulai Sekarang' : 'Get Started') : (isID ? 'Lanjut' : 'Next')}
             <ChevronRight size={17} />
           </button>

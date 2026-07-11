@@ -1,10 +1,10 @@
 // InsurerPayments.tsx — Bayar tab. Payment list + reconciliation summary.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Wallet, CheckCircle2, Clock } from 'lucide-react';
+import { CheckCircle2, Clock } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotWallet, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
 import { listInsurerPayments, type InsurerPayment } from '../../services/insurerService';
 
 interface Props {
@@ -99,9 +99,20 @@ const InsurerPayments: React.FC<Props> = ({ authToken, refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel action={{ label: 'Export CSV', onClick: handleExportCSV }}>
-        Notifikasi Pembayaran
-      </SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        tone="purple"
+        title="Notifikasi Pembayaran"
+        subtitle="Pantau pembayaran premi setiap polis yang Anda terbitkan."
+        art={<SpotWallet size={72} />}
+      >
+        <button
+          onClick={handleExportCSV}
+          className="mt-3 inline-flex items-center px-3.5 py-2 rounded-full bg-white/10 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+        >
+          Export CSV
+        </button>
+      </AgentHero>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
@@ -138,10 +149,9 @@ const InsurerPayments: React.FC<Props> = ({ authToken, refreshTick }) => {
       />
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={Wallet}
+        <AgentEmpty
           title="Tidak ada pembayaran"
-          description="Notifikasi pembayaran akan muncul di sini saat nasabah membayar premi."
+          desc="Notifikasi pembayaran akan muncul di sini saat nasabah membayar premi."
         />
       ) : (
         <div className="space-y-3">

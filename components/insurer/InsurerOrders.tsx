@@ -4,8 +4,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, Phone, ShieldCheck, Sparkles, Upload, CheckCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty } from '../agent/AgentArt';
+import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
@@ -159,7 +159,13 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Pengajuan Polis</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        tone="purple"
+        title="Pengajuan Polis"
+        subtitle="Review, putuskan, dan terbitkan polis dari penempatan SurePath."
+        art={<SpotOrdersArt size={72} />}
+      />
 
       {/* Search */}
       <div className="relative">
@@ -179,10 +185,9 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
       />
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={FileText}
+        <AgentEmpty
           title="Tidak ada order"
-          description="Tidak ada pengajuan untuk status ini."
+          desc="Tidak ada pengajuan untuk status ini."
         />
       ) : (
         <div className="space-y-3">

@@ -372,6 +372,39 @@ export const ObOpsVerify = () => (
   </OnbCanvas>
 );
 
+/* Ins — Issue policy: document + policy seal + upload to cloud */
+export const ObInsIssue = () => (
+  <OnbCanvas>
+    <circle cx="150" cy="150" r="120" fill="rgba(255,255,255,0.06)" />
+    {/* policy document */}
+    <g style={anim('aga-float', '3.4s')}>
+      <rect x="78" y="66" width="124" height="158" rx="16" fill="#fff" />
+      <rect x="94" y="86" width="56" height="11" rx="5.5" fill="#00A45C" />
+      <rect x="94" y="108" width="92" height="8" rx="4" fill="#DCEFE5" />
+      <rect x="94" y="123" width="92" height="8" rx="4" fill="#DCEFE5" />
+      <rect x="94" y="138" width="64" height="8" rx="4" fill="#DCEFE5" />
+      {/* policy number plate */}
+      <rect x="94" y="156" width="92" height="22" rx="8" fill="#EFFBF4" stroke="#B9E8CF" />
+      <text x="140" y="171" textAnchor="middle" fontSize="10" fontWeight="900" fill="#0B5E2E" fontFamily="Sora, sans-serif">POL-2026-001</text>
+      {/* official seal */}
+      <g style={anim('aga-pop', '2.6s', '0.4s')}>
+        <circle cx="176" cy="204" r="22" fill="#FDE047" />
+        <circle cx="176" cy="204" r="16" fill="none" stroke="#A16207" strokeWidth="2.4" strokeDasharray="3.5 3.5" />
+        <path d="M168 204l6 6 11-12" stroke="#713F12" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </g>
+    {/* upload to cloud */}
+    <g style={anim('aga-float', '3s', '0.5s')}>
+      <path d="M212 96c0-14 11-24 24-24 11 0 20 7 23 17 9 1 15 8 15 17 0 10-8 18-18 18h-40c-10 0-18-8-18-18 0-5 2-9 5-12" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" />
+      <path d="M238 118V92M238 92l-9 9M238 92l9 9" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+    {/* sparkle */}
+    <g style={anim('aga-blink', '2.2s')}>
+      <path d="M56 120l4 10 10 4-10 4-4 10-4-10-10-4 10-4 4-10z" fill="#FDE047" />
+    </g>
+  </OnbCanvas>
+);
+
 /* ═══ SPOT ILLUSTRATIONS (compact, for hero banners & empty states) ═══
    Drawn on 120×120 canvas, tuned to sit on the dark navy/emerald hero. */
 
@@ -582,7 +615,18 @@ export const SpotEmpty: React.FC<SpotProps> = (p) => (
   </Spot>
 );
 
-/* ═══ AgentHero — shared gradient banner used at the top of agent screens ═══ */
+/* ═══ AgentHero — shared gradient banner used at the top of app screens ═══ */
+
+const HERO_TONES = {
+  emerald: {
+    bg: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)',
+    glow: 'radial-gradient(circle, rgba(0,193,106,0.28), transparent 70%)',
+  },
+  purple: {
+    bg: 'linear-gradient(120deg, #0B1120 0%, #2E1065 55%, #5B21B6 100%)',
+    glow: 'radial-gradient(circle, rgba(139,92,246,0.30), transparent 70%)',
+  },
+} as const;
 
 export const AgentHero: React.FC<{
   title: string;
@@ -590,12 +634,13 @@ export const AgentHero: React.FC<{
   art?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
-}> = ({ title, subtitle, art, children, className = '' }) => (
+  tone?: keyof typeof HERO_TONES;
+}> = ({ title, subtitle, art, children, className = '', tone = 'emerald' }) => (
   <div className={`relative overflow-hidden rounded-[1.75rem] px-5 py-5 text-white ${className}`}
-    style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 14px 36px -14px rgba(11,17,32,0.55)' }}>
+    style={{ background: HERO_TONES[tone].bg, boxShadow: '0 14px 36px -14px rgba(11,17,32,0.55)' }}>
     {/* decorative rings + glow */}
     <div aria-hidden className="absolute -top-14 -right-10 w-48 h-48 rounded-full pointer-events-none"
-      style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.28), transparent 70%)' }} />
+      style={{ background: HERO_TONES[tone].glow }} />
     <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.14] pointer-events-none" viewBox="0 0 200 140" fill="none">
       <circle cx="170" cy="30" r="70" stroke="#fff" strokeWidth="1.4" />
       <circle cx="170" cy="30" r="46" stroke="#fff" strokeWidth="1.4" />

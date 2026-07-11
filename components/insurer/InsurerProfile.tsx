@@ -77,12 +77,17 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Profile card */}
-      <div className="relative overflow-hidden rounded-3xl p-5 text-white"
-        style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #6d28d9 60%, #4c1d95 100%)' }}>
-        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)' }} />
-        <div className="relative flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+      {/* Profile card — bank-style gradient banner (purple identity) */}
+      <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #2E1065 55%, #5B21B6 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.30) 0%, transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 bottom-0 h-4/5 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="185" cy="130" r="76" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="185" cy="130" r="50" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center ring-4 ring-white/15"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}>
             <Building2 size={28} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">

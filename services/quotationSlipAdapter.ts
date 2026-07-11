@@ -327,6 +327,124 @@ export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string,
   };
 }
 
+// ─── Adapter: B2B Quote → QuotationSlipData ────────────────────────────────
+export interface B2BQuoteSource {
+  id: string;
+  insurer_name?: string;
+  premium_amount: number;
+  coverage_details?: Record<string, any>;
+  valid_until?: string;
+  terms?: string;
+  created_at?: string;
+}
+
+export function fromB2BQuote(q: B2BQuoteSource, companyName?: string): QuotationSlipData {
+  const insurerName = q.insurer_name || 'PT Zurich Asuransi Indonesia Tbk';
+  const insurerShort = insurerName
+    .replace(/^PT\.?\s*/i, '')
+    .replace(/\s+(Asuransi|Tbk|Indonesia).*$/i, '')
+    .trim() || 'Insurer';
+  const periodStart = new Date().toISOString().slice(0, 10);
+  const periodEnd = addYearsID(periodStart, 1);
+  const company = companyName || 'Klien Korporasi SurePath';
+
+  const coverageEntries = Object.entries(q.coverage_details ?? {});
+  const coverageLabel = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const sumInsuredItems = coverageEntries.length > 0
+    ? coverageEntries.slice(0, 6).map(([k, v], i) => ({
+        no: String(i + 1),
+        desc: `${coverageLabel(k)}: ${String(v)}`,
+        amount: '—',
+      }))
+    : [{ no: '1', desc: 'Sesuai penawaran penanggung', amount: '—' }];
+
+  return {
+    quotationNumber: `QS/B2B/${q.id.slice(0, 8).toUpperCase()}`,
+    slipType: 'PENUTUPAN ASURANSI KORPORASI',
+    issueDate: q.created_at ? dateShortID(q.created_at) : todayID(),
+    yearTag: String(new Date().getFullYear()),
+
+    preparedForCompany: company,
+    preparedForPerson: '',
+    previousPolicyNumber: '-',
+    insurer: insurerName,
+    insurerShort,
+
+    periodStart: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
+    periodEnd,
+    periodStartShort: dateShortID(periodStart),
+    periodEndShort: dateShortID(periodEnd),
+
+    titleMain: 'Penawaran',
+    titleMid: 'Asuransi',
+    titleAccent: 'Korporasi.',
+    ledeHtml: `Penawaran asuransi korporasi untuk ${company}, ditempatkan melalui ${insurerShort}. Rincian jaminan dan premi tercantum pada halaman berikut.`,
+
+    insuredName: company,
+    insuredAddress: '-',
+    vehicleBrand: '-',
+    vehicleType: 'Korporasi / Bisnis',
+    vehicleYear: '-',
+    engineNumber: '-',
+    chassisNumber: '-',
+    plateNumber: '-',
+    seats: '-',
+    color: '-',
+    usage: 'Komersial',
+
+    coverageCondition: coverageEntries.length > 0
+      ? coverageEntries.map(([k, v]) => `${coverageLabel(k)}: ${String(v)}`).join('; ')
+      : 'Sesuai syarat dan kondisi polis standar yang berlaku pada penanggung.',
+    additionalCoverage: '-',
+    deductible: 'Sesuai ketentuan polis penanggung',
+    klausulList: [
+      'Klausul Premium Payment Warranty',
+      'Klausul Cancellation (30 hari)',
+      'Klausul sesuai wording polis penanggung',
+    ],
+
+    sumInsuredItems,
+    totalSumInsured: '—',
+
+    premiumComponents: [
+      { component: 'Premi Asuransi (tahunan)', basis: '—', rate: '—', premium: fmtIDR(q.premium_amount) },
+    ],
+    subtotalPremium: fmtIDR(q.premium_amount),
+    discountLabel: 'Diskon Penutupan 0%',
+    discountAmount: '(0,00)',
+    premiumAfterDiscount: fmtIDR(q.premium_amount),
+    policyFee: '0,00',
+    stampDuty: '0,00',
+    totalPremium: fmtIDR(q.premium_amount),
+
+    subjectivityList: [
+      'Kelengkapan data dan dokumen pendukung dari Tertanggung.',
+      'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
+      'Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer\'s acceptance).',
+    ],
+
+    termsList: [
+      `Penawaran ini ditempatkan pada ${insurerName}, mengikuti syarat dan kondisi polis standar penanggung beserta klausul terlampir.`,
+      q.valid_until
+        ? `Penawaran berlaku sampai ${dateShortID(q.valid_until)}.`
+        : 'Penawaran berlaku selama 30 (tiga puluh) hari sejak tanggal penerbitan.',
+      ...(q.terms ? [q.terms] : []),
+      'Polis diterbitkan setelah subjectivity terpenuhi, konfirmasi penutupan, dan pembayaran premi diterima.',
+    ],
+
+    closingTitle: 'Lindungi Bisnis Anda,',
+    closingAccent: 'Sekarang Juga.',
+    closingDesc: 'Konfirmasi penutupan dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.',
+
+    bankName: 'BANK BCA',
+    bankNameShort: 'BCA',
+    bankAccount: '5730 - 807 - 807',
+    bankAccountName: 'PT. Ruang Proteksi Indonesia',
+    paymentDueDate: dateShortID(periodStart),
+    transferMemo: `QS/B2B/${q.id.slice(0, 8).toUpperCase()} — ${company}`,
+  };
+}
+
 // ─── Adapter: Agent Quote Builder state → QuotationSlipData ───────────────
 export interface AgentQuoteSource {
   clientName: string;

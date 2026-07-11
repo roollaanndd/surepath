@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromB2BQuote } from '../../services/quotationSlipAdapter';
 
 interface Props {
   clientId: string;
   lang: Language;
+  companyName?: string;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -26,13 +29,27 @@ type FilterTab = 'ALL' | 'PENDING' | 'ACCEPTED';
 interface QuoteCardProps {
   quote: SpB2BQuote;
   lang: Language;
+  companyName?: string;
   onAction: (id: string, status: 'ACCEPTED' | 'REJECTED') => Promise<void>;
 }
 
-const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, onAction }) => {
+const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onAction }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [termsOpen, setTermsOpen] = useState(false);
   const [acting, setActing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await generateQuotationSlipPDF(fromB2BQuote(quote, companyName));
+    } catch (e) {
+      console.error('Quotation slip download failed:', e);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const fmtDate = (iso?: string) => {
     if (!iso) return '—';
@@ -102,6 +119,16 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, onAction }) => {
         </div>
       )}
 
+      {/* Download quotation slip */}
+      <button
+        disabled={downloading}
+        onClick={handleDownload}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-widest disabled:opacity-60"
+      >
+        {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
+        {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Quotation (PDF)')}
+      </button>
+
       {/* Actions */}
       {quote.status === 'PENDING' && (
         <div className="flex gap-2 pt-1">
@@ -126,7 +153,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, onAction }) => {
   );
 };
 
-const B2BQuotes: React.FC<Props> = ({ clientId, lang }) => {
+const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +211,7 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang }) => {
       ) : (
         <div className="space-y-3">
           {sorted.map(q => (
-            <QuoteCard key={q.id} quote={q} lang={lang} onAction={handleAction} />
+            <QuoteCard key={q.id} quote={q} lang={lang} companyName={companyName} onAction={handleAction} />
           ))}
         </div>
       )}

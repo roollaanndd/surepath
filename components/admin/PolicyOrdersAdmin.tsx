@@ -13,6 +13,8 @@ import {
 import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
@@ -46,7 +48,20 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   const [linkCopied, setLinkCopied] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [insurerMsg, setInsurerMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const [downloadingSlip, setDownloadingSlip] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadSlip = async () => {
+    if (downloadingSlip) return;
+    setDownloadingSlip(true);
+    try {
+      await generateQuotationSlipPDF(fromCustomerOrder(order as any));
+    } catch (e) {
+      console.error('Quotation slip download failed:', e);
+    } finally {
+      setDownloadingSlip(false);
+    }
+  };
 
   const handleSendReviewLink = async () => {
     setGeneratingLink(true);
@@ -364,6 +379,14 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
           {/* Action buttons */}
           <div className="flex gap-3 pt-2 flex-wrap">
+            <button
+              disabled={downloadingSlip}
+              onClick={handleDownloadSlip}
+              className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors"
+            >
+              <Download size={12} />
+              {downloadingSlip ? 'Menyiapkan…' : 'Quotation Slip'}
+            </button>
             {/* Send review link — available for all non-issued/rejected orders */}
             {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW' || order.status === 'APPROVED') && (
               <button

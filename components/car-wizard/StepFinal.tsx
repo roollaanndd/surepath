@@ -5,7 +5,8 @@ import {
   BrainCircuit, Zap, FileDown } from 'lucide-react';
 import { formatIDR, PageTransition } from './WizardUI';
 import { Language } from '../../types';
-import { generateProposalPDF } from '../../services/proposalPdf';
+import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { fromAgentQuote } from '../../services/quotationSlipAdapter';
 
 interface StepFinalProps {
   vehicle: any;
@@ -40,11 +41,12 @@ const StepFinal: React.FC<StepFinalProps> = ({
       rows.push({ label: 'Biaya Layanan', amount: premiumBreakdown.applicationFee });
       rows.push({ label: 'Biaya Pengiriman Polis', amount: premiumBreakdown.policyDeliveryFee || 20000 });
 
-      await generateProposalPDF({
-        quoteNumber: `PR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Date.now()).slice(-4)}`,
+      const romanMonths = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+      await generateQuotationSlipPDF(fromAgentQuote({
+        quoteNumber: `QS/SP/${new Date().getFullYear()}/${romanMonths[new Date().getMonth()]}/${String(Date.now()).slice(-4)}`,
         validUntil: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
         clientName: stnkResult?.ownerName || vehicle.ownerName || t('Customer', 'Nasabah'),
-        preparedBy: 'SurePath Digital',
+        agentName: 'SurePath Digital',
         vehicleBrand: vehicle.brand,
         vehicleModel: vehicle.model,
         vehicleYear: vehicle.year,
@@ -57,7 +59,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
         rows,
         discountAmount: Math.round(premiumBreakdown.discountAmount || 0),
         totalPremium: Math.round(premiumBreakdown.totalPayable),
-      });
+      }));
     } finally {
       setPrinting(false);
     }

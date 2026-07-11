@@ -4,7 +4,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Bell, FileText, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck } from 'lucide-react';
 import { Language } from '../../types';
-import { SkeletonCard, EmptyState } from '../ui';
+import { SkeletonCard } from '../ui';
+import { AgentEmpty } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerOrder } from '../../services/insurerService';
 
 interface Props {
@@ -75,10 +76,9 @@ const InsurerNotifications: React.FC<Props> = ({ authToken, onClose, onNavigate 
               <SkeletonCard />
             </div>
           ) : orders.length === 0 ? (
-            <EmptyState
-              icon={Bell}
+            <AgentEmpty
               title="Belum ada aktivitas"
-              description="Pengajuan polis baru akan muncul di sini secara real-time."
+              desc="Pengajuan polis baru akan muncul di sini secara real-time."
             />
           ) : (
             <div className="space-y-2">

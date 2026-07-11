@@ -5,6 +5,7 @@ import { FileText, CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, Tre
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
+import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerDashboard as InsurerDashboardData } from '../../services/insurerService';
 
 interface Props {
@@ -60,27 +61,36 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl p-5 text-white"
-        style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #6d28d9 60%, #4c1d95 100%)' }}>
-        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full" style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)' }} />
-        <div className="relative">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Selamat datang</p>
-          <h1 className="text-2xl font-black tracking-tight mt-1">{data.insurer.name}</h1>
-          <p className="text-xs text-white/80 mt-1.5 leading-relaxed">
-            {data.kpi.pending > 0
-              ? `Ada ${data.kpi.pending} pengajuan menunggu review Anda.`
-              : 'Tidak ada pengajuan pending. Pekerjaan rapi! 🎉'}
-          </p>
-          <div className="flex items-center gap-3 mt-4">
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-              <TrendingUp size={11} className="text-purple-300" />
-              <span className="text-[10px] font-bold">{data.kpi.total} total order</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-              <ShieldCheck size={11} className="text-emerald-300" />
-              <span className="text-[10px] font-bold">{data.kpi.issued} polis terbit</span>
-            </div>
+      {/* Hero — bank-grade command card (purple identity) */}
+      <AgentArtKeyframes />
+      <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #2E1065 55%, #5B21B6 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.30) 0%, transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="176" cy="16" r="48" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="176" cy="16" r="26" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Insurer Command Center</p>
+            <h1 className="text-2xl font-black tracking-tight mt-1">{data.insurer.name}</h1>
+            <p className="text-xs text-white/75 mt-1.5 leading-relaxed">
+              {data.kpi.pending > 0
+                ? `Ada ${data.kpi.pending} pengajuan menunggu review Anda.`
+                : 'Tidak ada pengajuan pending. Pekerjaan rapi! 🎉'}
+            </p>
+          </div>
+          <div className="flex-shrink-0 -my-2"><SpotOrders size={78} /></div>
+        </div>
+        <div className="relative z-10 flex items-center gap-3 mt-4 pt-3.5 border-t border-white/10">
+          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
+            <TrendingUp size={11} className="text-purple-300" />
+            <span className="text-[10px] font-bold">{data.kpi.total} total order</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
+            <ShieldCheck size={11} className="text-emerald-300" />
+            <span className="text-[10px] font-bold">{data.kpi.issued} polis terbit</span>
           </div>
         </div>
       </div>

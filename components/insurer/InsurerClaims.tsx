@@ -2,8 +2,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ShieldAlert, Search } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
-import { EmptyState, SkeletonCard, useToast } from '../ui';
+import { SkeletonCard, useToast } from '../ui';
+import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerOrder } from '../../services/insurerService';
 
 interface Props {
@@ -56,7 +56,13 @@ const InsurerClaims: React.FC<Props> = ({ authToken, refreshTick }) => {
 
   return (
     <div className="px-5 pt-5 space-y-4 pb-4">
-      <SectionLabel>Klaim Polis</SectionLabel>
+      <AgentArtKeyframes />
+      <AgentHero
+        tone="purple"
+        title="Klaim Polis"
+        subtitle="Klaim dari nasabah atas polis yang Anda terbitkan muncul otomatis di sini."
+        art={<SpotClaims size={72} />}
+      />
 
       <div className="bg-ds-card border border-ds-border rounded-2xl p-4">
         <div className="flex items-center gap-3">
@@ -82,10 +88,9 @@ const InsurerClaims: React.FC<Props> = ({ authToken, refreshTick }) => {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={ShieldAlert}
+        <AgentEmpty
           title="Tidak ada polis aktif"
-          description="Polis yang sudah diterbitkan akan muncul di sini. Klaim dari nasabah akan otomatis terhubung."
+          desc="Polis yang sudah diterbitkan akan muncul di sini. Klaim dari nasabah akan otomatis terhubung."
         />
       ) : (
         <div className="space-y-3">

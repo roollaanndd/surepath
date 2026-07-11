@@ -2,6 +2,21 @@
 
 ---
 
+## v1.39.0 — 2026-07-11
+
+### Insurer App UI Redesign + Onboarding (visual only, identitas ungu)
+Tema bank modern diterapkan ke Insurer app dengan mempertahankan identitas ungu:
+- **Onboarding Insurer 4 slide** — background gradient ungu khusus, ilustrasi sesuai alur kerja insurer: Pengajuan Realtime, Review Satu Layar (skor AI + approve/reject), Terbitkan Polis (scene baru `ObInsIssue`: dokumen polis + seal + upload), Pantau Premi & Pembayaran; tampil sekali via `SP_ONBOARDED_INSURER`
+- **OnboardingFlow kini mendukung aksen per-role** (emerald untuk Customer/Agent/Operator, ungu untuk Insurer)
+- **`AgentHero` mendukung `tone="purple"`** — gradient navy→ungu untuk seluruh banner insurer
+- **Shell InsurerPortal** — bottom nav pill gaya bank + avatar berinisial gradient ungu
+- **Dashboard** — hero jadi "Insurer Command Center" bergaya kartu bank + ilustrasi
+- **Hero banner + ilustrasi** di Pengajuan Polis, Klaim Polis, Notifikasi Pembayaran (dengan tombol Export CSV terintegrasi), Profil
+- **Empty states berilustrasi** di semua daftar + drawer aktivitas
+- Logika, proses, menu, dan backend tidak berubah
+
+---
+
 ## v1.38.0 — 2026-07-11
 
 ### CMS / Admin Panel UI Redesign (visual only)

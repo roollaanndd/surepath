@@ -10,6 +10,7 @@ import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
+import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 import InsurerDashboard from './InsurerDashboard';
 import InsurerOrders from './InsurerOrders';
 import InsurerClaims from './InsurerClaims';
@@ -34,6 +35,7 @@ const TABS = [
 const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('home');
+  const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('INSURER'));
   const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -103,6 +105,9 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   return (
     <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
+      {showOnboarding && (
+        <OnboardingFlow role="INSURER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
       <style>{`
         @keyframes spFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @media (prefers-reduced-motion: reduce) { [data-sp-anim] { animation: none !important; } }
@@ -149,10 +154,11 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
 
             <button
               onClick={() => handleTabChange('profile')}
-              className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center ml-1 active:scale-90 hover:bg-ds-card transition-all"
+              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all ring-2 ring-purple-500/25"
+              style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}
               aria-label="Profil"
             >
-              <User size={15} className="text-ds-ink2" />
+              {(insurerName ?? 'I')[0].toUpperCase()}
             </button>
           </div>
         </div>
@@ -165,33 +171,24 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
         </div>
       </main>
 
-      {/* Floating bottom tab nav */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 sp-glass-strong rounded-[3rem]">
-        <div className="flex items-center justify-around px-1 py-2.5">
+      {/* Floating bottom tab nav — bank-style pills (purple identity) */}
+      <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
+        <div className="flex items-center justify-around px-1 py-2">
           {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className="flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center"
-                style={active ? {
-                  background: 'rgba(124, 58, 237, 0.12)',
-                  color: '#7c3aed',
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 4px 20px rgba(124,58,237,0.20)',
-                } : {
-                  color: 'var(--ds-ink3)',
-                }}
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
               >
-                <Icon
-                  size={22}
-                  strokeWidth={active ? 2.8 : 2}
-                  style={active ? { color: '#7c3aed' } : { color: 'var(--ds-ink3)' }}
-                />
+                <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
+                  style={active ? { background: 'rgba(124,58,237,0.12)', color: '#7c3aed' } : { color: 'var(--ds-ink3)' }}>
+                  <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+                </span>
                 <span
-                  className="text-[9px] font-black uppercase tracking-widest leading-none"
-                  style={active ? { color: '#7c3aed' } : { color: 'var(--ds-ink3)' }}
+                  className="text-[9px] font-black uppercase tracking-widest leading-none transition-colors"
+                  style={{ color: active ? '#7c3aed' : 'var(--ds-ink3)', opacity: active ? 1 : 0.8 }}
                 >
                   {labelId}
                 </span>

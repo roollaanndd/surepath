@@ -11,6 +11,7 @@ import {
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
+import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -232,6 +233,14 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
 
   return (
     <div className="font-sora">
+      <AgentArtKeyframes />
+      {/* Hero banner */}
+      <AgentHero
+        title={t('Policies & Orders', 'Polis & Order')}
+        subtitle={t('Track every submission from quote to issued policy.', 'Pantau setiap pengajuan — dari penawaran sampai polis terbit.')}
+        art={<SpotOrders size={76} />}
+        className="mb-4"
+      />
       {/* Filter row */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
         {FILTERS.map(f => (
@@ -258,14 +267,10 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
           <div className="w-9 h-9 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
         </div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-3">
-            <FileText size={20} className="text-slate-400" />
-          </div>
-          <p className="font-black text-sm text-slate-400 uppercase tracking-widest">
-            {t('No orders yet', 'Belum ada order')}
-          </p>
-        </div>
+        <AgentEmpty
+          title={t('No orders yet', 'Belum ada order')}
+          desc={t('Create a quote and submit it to see it tracked here.', 'Buat penawaran dan ajukan untuk melihat statusnya di sini.')}
+        />
       ) : (
         <div className="space-y-3">
           {visible.map(order => {

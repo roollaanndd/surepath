@@ -10,6 +10,7 @@ import {
   type SpRenewal,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotRenewal } from './AgentArt';
 import RenewalModal from './RenewalModal';
 
 interface Props {
@@ -146,6 +147,13 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-2xl mx-auto font-sora">
+      {/* Hero banner */}
+      <AgentArtKeyframes />
+      <AgentHero
+        title={t('Renewal Center', 'Pusat Renewal')}
+        subtitle={t('Remind clients before their policies expire — keep protection unbroken.', 'Ingatkan klien sebelum polis berakhir — proteksi tanpa terputus.')}
+        art={<SpotRenewal size={76} />}
+      />
       {/* Stats header */}
       <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">

@@ -9,6 +9,7 @@ import {
   type SpClaim, type SpPolicy,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -312,22 +313,22 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
 
   return (
     <div className="px-4 pt-4 pb-6 font-sora">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-xl font-black tracking-tight">{t('Claims', 'Klaim')}</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-            {claims.length} {t('total', 'total')}
-          </p>
-        </div>
+      {/* Hero banner */}
+      <AgentArtKeyframes />
+      <AgentHero
+        title={t('Claims', 'Klaim')}
+        subtitle={`${claims.length} ${t('total claims — file and track on behalf of your clients.', 'klaim — ajukan dan pantau atas nama klien Anda.')}`}
+        art={<SpotClaims size={76} />}
+        className="mb-4"
+      >
         <button
           onClick={() => setShowSubmit(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#16a34a]/25 active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
+          className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-white text-[#0B3D2E] rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 motion-reduce:active:scale-100 hover:brightness-95 transition-all"
         >
           <Plus size={14} />
           {t('File Claim', 'Ajukan Klaim')}
         </button>
-      </div>
+      </AgentHero>
 
       {/* Search */}
       <div className="relative mb-4">
@@ -363,17 +364,10 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
           <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <div className="w-14 h-14 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center mb-4">
-            <FileText size={24} className="text-slate-400" />
-          </div>
-          <p className="font-black text-sm text-slate-400 uppercase tracking-widest">
-            {t('No claims yet', 'Belum ada klaim')}
-          </p>
-          <p className="text-xs text-slate-300 dark:text-slate-500 mt-1">
-            {t('File a claim on behalf of your client', 'Ajukan klaim untuk klien Anda')}
-          </p>
-        </div>
+        <AgentEmpty
+          title={t('No claims yet', 'Belum ada klaim')}
+          desc={t('File a claim on behalf of your client', 'Ajukan klaim untuk klien Anda')}
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map(claim => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
-import { ArtKeyframes, ArtProtection, ArtClaim, ArtSupport, ArtQuote, ArtCommission, ArtNetwork } from './OnboardingArt';
+import { ArtKeyframes, ArtProtection, ArtClaim, ArtSupport } from './OnboardingArt';
+import { AgentArtKeyframes, ObWelcome, ObQuote, ObWallet, ObGrowth } from './agent/AgentArt';
 import { fetchWebsiteSection } from '../services/supabaseService';
 
 /* ─── Gojek-style illustrated onboarding — fullscreen slides, role-aware ────
@@ -40,19 +41,24 @@ const SLIDES: Record<Role, { Art: React.ElementType; id: [string, string]; en: [
   ],
   AGENT: [
     {
-      Art: ArtQuote,
-      id: ['Jual polis lebih cepat', 'Hitung premi tarif OJK, buat penawaran, dan kirim ke klien — semua dari genggaman.'],
-      en: ['Sell policies faster', 'Quote official OJK rates, build offers, send to clients — all from your hand.'],
+      Art: ObWelcome,
+      id: ['Kantor asuransi di genggaman', 'Selamat datang, Mitra SurePath. Dashboard bisnis, polis, dan klien Anda — rapi dalam satu aplikasi berstandar perbankan.'],
+      en: ['Your insurance office, in hand', 'Welcome, SurePath Partner. Your business dashboard, policies, and clients — organized in one bank-grade app.'],
     },
     {
-      Art: ArtCommission,
-      id: ['Komisi transparan, cair jelas', 'Lihat komisi per polis secara real-time dan tarik dana langsung dari dompet aplikasi.'],
-      en: ['Transparent commission', 'Track commission per policy in real time and withdraw straight from your in-app wallet.'],
+      Art: ObQuote,
+      id: ['Buat penawaran dalam hitungan detik', 'Hitung premi tarif resmi OJK, terbitkan quotation slip PDF profesional, dan kirim ke klien langsung dari aplikasi.'],
+      en: ['Quotes in seconds', 'Calculate official OJK rates, generate a professional PDF quotation slip, and send it to clients straight from the app.'],
     },
     {
-      Art: ArtNetwork,
-      id: ['Bangun jaringan & naik level', 'Kelola klien, pantau order, dan kembangkan tim downline — semua terukur di satu dashboard.'],
-      en: ['Grow your network', 'Manage clients, track orders, grow your downline team — all measured in one dashboard.'],
+      Art: ObWallet,
+      id: ['Komisi transparan, cair cepat', 'Pantau komisi per polis secara real-time di dompet Anda dan tarik dana langsung ke rekening bank.'],
+      en: ['Transparent commission, fast payout', 'Track commission per policy in real time and withdraw straight to your bank account.'],
+    },
+    {
+      Art: ObGrowth,
+      id: ['Naik level bersama tim Anda', 'Kelola klien, kembangkan jaringan mitra, kejar peringkat leaderboard, dan raih tier Elite dengan benefit eksklusif.'],
+      en: ['Level up with your team', 'Manage clients, grow your partner network, climb the leaderboard, and reach Elite tier with exclusive benefits.'],
     },
   ],
 };
@@ -101,6 +107,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
       {/* illustration */}
       <div className="ob-anim oa flex-1 flex items-center justify-center" key={`scene-${step}`} style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
         <ArtKeyframes />
+        <AgentArtKeyframes />
         {React.createElement(slides[step].Art)}
       </div>
 

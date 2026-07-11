@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Bell, UserCircle } from 'lucide-react';
+import { Sun, Moon, Bell } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
 import { BotHome, BotPolicy, BotShield as BotShieldNav, BotWallet, BotUser } from '../CustomIcons';
@@ -71,7 +71,9 @@ const PolicyAndQuotes: React.FC<{
           Polis &amp; Penawaran
         </SectionLabel>
       </div>
-      <AgentOrderStatus agentId={agentId} lang={lang} />
+      <div className="px-5">
+        <AgentOrderStatus agentId={agentId} lang={lang} />
+      </div>
     </div>
   );
 };
@@ -314,9 +316,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
             <button
               onClick={() => handleTabChange('profile')}
-              className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center ml-1 active:scale-90 hover:bg-ds-card transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
+              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 ring-2 ring-ds-green/25"
+              style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
             >
-              <UserCircle size={15} className="text-ds-ink2" />
+              {(agent?.name ?? 'A')[0].toUpperCase()}
             </button>
           </div>
         </div>
@@ -336,21 +339,39 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      {/* Floating bottom tab nav */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 sp-glass-strong rounded-[3rem]">
-        <div className="flex items-center justify-around px-1 py-2.5">
-          {TABS.map(({ id, labelId, Icon }) => {
+      {/* Floating bottom tab nav — bank-style with raised center action */}
+      <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
+        <div className="flex items-end justify-around px-2 pt-2 pb-2">
+          {TABS.map(({ id, labelId, Icon }, idx) => {
             const active = activeTab === id;
+            const center = idx === 2;
+            if (center) {
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleTabChange(id)}
+                  className="relative -mt-8 flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                >
+                  <span className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all ${active ? 'scale-105' : ''}`}
+                    style={{ background: 'linear-gradient(135deg, #00C16A, #047857)', boxShadow: '0 12px 26px -8px rgba(0,193,106,0.65), inset 0 1px 0 rgba(255,255,255,0.25)' }}>
+                    <Icon size={24} strokeWidth={2.5} />
+                  </span>
+                  <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
+                    {labelId}
+                  </span>
+                </button>
+              );
+            }
             return (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center ${
-                  active ? 'bg-ds-green text-white scale-105 shadow-ds-green' : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5'
-                }`}
+                className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center"
               >
-                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'opacity-100' : 'opacity-80'}`}>
+                <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
+                  <Icon size={21} strokeWidth={active ? 2.5 : 2} />
+                </span>
+                <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
                   {labelId}
                 </span>
               </button>

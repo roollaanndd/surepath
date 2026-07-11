@@ -9,6 +9,7 @@ import {
   supabase,
   type AgentWallet, type WalletTransaction, type Withdrawal
 } from '../../services/supabaseService';
+import { AgentEmpty } from './AgentArt';
 
 const BANKS = [
   { code: 'BCA',     name: 'BCA' },
@@ -417,12 +418,24 @@ const AgentWalletView: React.FC = () => {
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
-      {/* Balance card */}
-      <div className="mx-5 mt-5 rounded-[2rem] p-5 bg-ds-navy shadow-ds-navy text-white sp-enter">
-        <div className="space-y-6">
+      {/* Balance card — premium bank-card look */}
+      <div className="mx-5 mt-5 rounded-[2rem] p-5 text-white sp-enter relative overflow-hidden"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        <div aria-hidden className="absolute -top-14 -right-12 w-52 h-52 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 bottom-0 h-4/5 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="180" cy="130" r="80" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="180" cy="130" r="54" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="180" cy="130" r="30" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="space-y-6 relative z-10">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">Saldo Tersedia</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-block w-8 h-6 rounded-md" style={{ background: 'linear-gradient(135deg, #FDE047, #EAB308)', boxShadow: 'inset 0 0 0 1px rgba(113,63,18,0.35)' }}>
+                  <svg viewBox="0 0 32 24" className="w-full h-full" fill="none"><path d="M0 12h32M16 0v24" stroke="rgba(113,63,18,0.45)" strokeWidth="1.3" /></svg>
+                </span>
+                <p className="text-white/60 text-xs font-medium uppercase tracking-wide">Saldo Tersedia</p>
+              </div>
               <h2 className="text-3xl font-bold font-mono text-white">{IDR(wallet?.balance ?? 0)}</h2>
               <p className="text-white/40 text-xs mt-1">Saldo Dompet</p>
             </div>
@@ -500,7 +513,7 @@ const AgentWalletView: React.FC = () => {
       {tab === 'ledger' && (
         <div className="sp-glass rounded-2xl mx-5 mt-4 overflow-hidden">
           {txns.length === 0 && (
-            <div className="text-center py-12 text-ds-ink3 text-sm">Belum ada transaksi</div>
+            <AgentEmpty title="Belum ada transaksi" desc="Riwayat mutasi dompet Anda akan tampil di sini." />
           )}
           {txns.map(tx => (
             <div key={tx.id} className="flex items-center gap-3 px-4 py-3 border-b border-ds-border bg-ds-card">
@@ -526,7 +539,7 @@ const AgentWalletView: React.FC = () => {
       {tab === 'withdrawals' && (
         <div className="space-y-3 mx-5 mt-4">
           {withdrawals.length === 0 && (
-            <div className="text-center py-12 text-ds-ink3 text-sm">Belum ada riwayat penarikan</div>
+            <AgentEmpty title="Belum ada riwayat penarikan" desc="Ajukan penarikan dana dan pantau statusnya di sini." />
           )}
           {withdrawals.map(wd => {
             const { cls, label } = statusBadge(wd.status);

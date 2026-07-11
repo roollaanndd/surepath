@@ -3,6 +3,7 @@ import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shie
 import { Language } from '../../types';
 import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, getMyWithdrawals, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { AgentArtKeyframes, SpotWallet, AgentEmpty } from './AgentArt';
 
 interface Props {
   agentId: string;
@@ -118,15 +119,25 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
 
-      {/* Balance Hero Card */}
-      <div className="mx-4 mt-5 rounded-[1.5rem] p-5 bg-ds-navy text-white shadow-ds-navy space-y-4">
-        <div className="flex items-center justify-between">
+      {/* Balance Hero Card — bank-card look */}
+      <AgentArtKeyframes />
+      <div className="mx-4 mt-5 rounded-[1.75rem] p-5 text-white space-y-4 relative overflow-hidden"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 40px -14px rgba(11,17,32,0.55)' }}>
+        <div aria-hidden className="absolute -top-14 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="175" cy="20" r="72" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="175" cy="20" r="48" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10 flex items-center justify-between">
           <p className="text-white/60 text-xs font-medium uppercase tracking-wide">{t('Total Earned', 'Total Komisi')}</p>
           <Wallet size={18} className="text-white/40" />
         </div>
-        <p className="text-3xl font-bold font-mono text-white">{formatIDR(totalEarned)}</p>
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <p className="text-3xl font-bold font-mono text-white">{formatIDR(totalEarned)}</p>
+          <div className="-my-3 flex-shrink-0"><SpotWallet size={72} /></div>
+        </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="relative z-10 grid grid-cols-2 gap-3">
           <div className="bg-white/10 rounded-2xl px-4 py-3">
             <div className="flex items-center gap-1.5 mb-1">
               <Clock size={12} className="text-ds-amber" />
@@ -143,7 +154,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
         <button
           onClick={handleWithdraw}
           disabled={totalPending === 0}
-          className="w-full py-3.5 bg-ds-green rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-ds-sm active:brightness-90 hover:brightness-105 transition-all motion-reduce:transition-none disabled:opacity-40"
+          className="relative z-10 w-full py-3.5 bg-ds-green rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-ds-sm active:brightness-90 hover:brightness-105 transition-all motion-reduce:transition-none disabled:opacity-40"
         >
           <ArrowDownToLine size={14} />
           {t('Request Withdrawal', 'Minta Pencairan')}
@@ -247,12 +258,11 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
       {activeTab === 'coins' && (
         <div className="space-y-2 px-4 mt-2">
           {coinLedger.length === 0 ? (
-            <div className="bg-ds-card2 rounded-2xl border border-ds-border p-8 text-center">
-              <Coins size={40} className="text-ds-ink3 mx-auto mb-3" />
-              <p className="font-black text-ds-ink2">{t('No coin history yet', 'Belum ada riwayat koin')}</p>
-              <p className="text-ds-ink3 text-sm mt-1">
-                {t('Earn coins when policies are issued.', 'Dapatkan koin saat polis diterbitkan.')}
-              </p>
+            <div className="bg-ds-card2 rounded-2xl border border-ds-border">
+              <AgentEmpty
+                title={t('No coin history yet', 'Belum ada riwayat koin')}
+                desc={t('Earn coins when policies are issued.', 'Dapatkan koin saat polis diterbitkan.')}
+              />
             </div>
           ) : (
             coinLedger.map((entry, i) => {
@@ -288,12 +298,11 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
               <div key={i} className="sp-glass rounded-2xl p-4 animate-pulse h-16" />
             ))
           ) : getFilteredCommissions().length === 0 ? (
-            <div className="bg-ds-card2 rounded-2xl border border-ds-border p-8 text-center">
-              <Wallet size={40} className="text-ds-ink3 mx-auto mb-3" />
-              <p className="font-black text-ds-ink2">{t('No commissions found', 'Belum ada komisi')}</p>
-              <p className="text-ds-ink3 text-sm mt-1">
-                {t('Create a quote and convert it to a policy to earn commissions.', 'Buat penawaran dan konversikan ke polis untuk mendapatkan komisi.')}
-              </p>
+            <div className="bg-ds-card2 rounded-2xl border border-ds-border">
+              <AgentEmpty
+                title={t('No commissions found', 'Belum ada komisi')}
+                desc={t('Create a quote and convert it to a policy to earn commissions.', 'Buat penawaran dan konversikan ke polis untuk mendapatkan komisi.')}
+              />
             </div>
           ) : (
             getFilteredCommissions().map((c, i) => {

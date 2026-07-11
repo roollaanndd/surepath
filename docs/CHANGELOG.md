@@ -2,6 +2,17 @@
 
 ---
 
+## v1.38.0 — 2026-07-11
+
+### CMS / Admin Panel UI Redesign (visual only)
+Tema bank modern v1.36–v1.37 diterapkan ke CMS (Admin Panel):
+- **Command banner dashboard** — greeting admin bergaya kartu bank (gradient navy→emerald, pola ring, ilustrasi jaringan, tombol refresh terintegrasi)
+- **Hero banner otomatis di semua ±28 menu view** — banner bertema dengan judul menu, subtitle deskriptif, dan ilustrasi yang sesuai konteks (dompet untuk pembayaran/penarikan/komisi, shield untuk klaim/keamanan/OJK, dokumen untuk polis/antrean, storefront untuk B2B/insurer/produk, dst.) — dirender sekali di shell, konsisten di seluruh CMS
+- **Sidebar** — tile logo & avatar footer gradient emerald (fungsi upload logo tetap)
+- Menu, role-permission, dan seluruh logika CMS tidak berubah
+
+---
+
 ## v1.37.0 — 2026-07-11
 
 ### Operator App UI Redesign + Onboarding (visual only)

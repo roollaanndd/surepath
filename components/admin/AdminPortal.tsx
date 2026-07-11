@@ -41,6 +41,11 @@ const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
 const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { UserRole } from '../../types';
+import {
+  AgentArtKeyframes, AgentHero,
+  SpotOrders, SpotClients, SpotClaims, SpotWallet, SpotNetwork,
+  SpotMarket, SpotProfile, SpotEndorse, SpotTrophy, SpotRenewal, SpotBell,
+} from '../agent/AgentArt';
 import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -106,6 +111,51 @@ const MENU_ITEMS: MenuItem[] = [
 
 const formatRole = (role: string) =>
   role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+// ── Per-tab hero art + subtitle (visual only) ────────────────────────────────
+const TAB_ART: Record<string, React.ComponentType<{ size?: number }>> = {
+  reports: SpotTrophy, analytics: SpotNetwork,
+  users: SpotClients, user_mgmt: SpotProfile,
+  transactions: SpotWallet, payments: SpotWallet, withdrawals: SpotWallet,
+  policy_orders: SpotOrders, approvals: SpotOrders, claims_admin: SpotClaims,
+  inventory: SpotOrders, endorsements: SpotEndorse, documents: SpotOrders,
+  agents: SpotProfile, agent_agreements: SpotEndorse, commission_ledger: SpotWallet,
+  b2b: SpotMarket, product_config: SpotMarket, tier_promo: SpotTrophy,
+  insurers: SpotMarket, ojk_rates: SpotClaims, financial: SpotWallet,
+  vehicle_pricelist: SpotRenewal, website_editor: SpotMarket,
+  ai_admin: SpotBell, ai_finance: SpotBell, security: SpotClaims, settings: SpotEndorse,
+};
+
+const TAB_SUBTITLE: Record<string, string> = {
+  reports: 'Ringkasan performa bisnis dan operasional.',
+  analytics: 'Analitik traffic, funnel, dan pertumbuhan.',
+  users: 'Data nasabah terdaftar di platform.',
+  user_mgmt: 'Kelola akun, peran, dan akses pengguna.',
+  transactions: 'Buku besar seluruh transaksi platform.',
+  payments: 'Pembayaran premi via Xendit.',
+  withdrawals: 'Pencairan komisi mitra — approval berlapis.',
+  policy_orders: 'Semua pesanan polis lintas produk.',
+  approvals: 'Antrean pengajuan yang menunggu keputusan.',
+  claims_admin: 'Antrean klaim yang perlu ditinjau.',
+  inventory: 'Arsip polis yang telah diterbitkan.',
+  endorsements: 'Permintaan perubahan polis dari mitra.',
+  documents: 'Dokumen nasabah dan polis.',
+  agents: 'Kelola jaringan mitra SurePath.',
+  agent_agreements: 'Perjanjian keagenan yang ditandatangani.',
+  commission_ledger: 'Buku komisi mitra per polis.',
+  b2b: 'Pengajuan dan penawaran korporasi.',
+  product_config: 'Konfigurasi produk, komisi, dan koin.',
+  tier_promo: 'Pengaturan tier mitra dan kode promo.',
+  insurers: 'Perusahaan asuransi rekanan.',
+  ojk_rates: 'Tarif acuan resmi OJK (SEOJK).',
+  financial: 'Kesehatan keuangan platform.',
+  vehicle_pricelist: 'Database harga kendaraan.',
+  website_editor: 'Kelola konten website publik.',
+  ai_admin: 'Asisten AI untuk tugas administratif.',
+  ai_finance: 'Asisten AI untuk analisis keuangan.',
+  security: 'Audit keamanan dan sesi pengguna.',
+  settings: 'Pengaturan platform.',
+};
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
 const th = (dark: boolean, darkCls: string, lightCls: string) => dark ? darkCls : lightCls;
@@ -262,7 +312,8 @@ const AdminPortal = ({
               onChange={handleLogoUpload}
             />
             <div
-              className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden cursor-pointer"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 overflow-hidden cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
               onClick={() => logoInputRef.current?.click()}
               title="Klik untuk ganti logo"
             >
@@ -328,7 +379,8 @@ const AdminPortal = ({
       {/* User footer — always visible */}
       <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${th(darkMode, 'bg-white/5 border-white/10', 'bg-gray-50 border-gray-100')}`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-black text-xs text-white flex-shrink-0">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 ring-2 ring-emerald-500/25"
+            style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}>
             {(currentUser?.name ?? userRole)[0].toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -352,26 +404,40 @@ const AdminPortal = ({
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500`}>Sistem aktif</p>
+      {/* Command banner — bank-grade hero, same theme as Agent/Operator apps */}
+      <div className="relative overflow-hidden rounded-[1.75rem] px-6 py-6 text-white"
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        <div aria-hidden className="absolute -top-14 -right-12 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
+        <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
+          <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="176" cy="16" r="48" stroke="#fff" strokeWidth="1.2" />
+          <circle cx="176" cy="16" r="26" stroke="#fff" strokeWidth="1.2" />
+        </svg>
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-300">Sistem aktif</p>
+            </div>
+            <h2 className="text-3xl font-black tracking-tight leading-none">
+              Halo, {(currentUser?.name ?? formatRole(userRole)).split(' ')[0]} 👋
+            </h2>
+            <p className="text-xs text-white/65 mt-2 leading-relaxed">
+              Pusat kendali SurePath — pantau pesanan, pembayaran, komisi, dan mitra dalam satu tempat.
+            </p>
           </div>
-          <h2 className={`text-3xl font-black tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
-            Dashboard
-          </h2>
+          <div className="hidden sm:block flex-shrink-0 -my-2"><SpotNetwork size={84} /></div>
+          <button
+            onClick={() => {
+              getAdminStats().then(setAdminStats).catch(() => {});
+              callGateway('admin_transaksi_overview', {}).then(({ data }) => { if (data) setTransaksiStats(data as any); }).catch(() => {});
+            }}
+            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all bg-white/10 border border-white/15 text-white/85 hover:bg-white/20 self-start"
+            title="Refresh data"
+          >
+            <RefreshCw size={13} /> Refresh
+          </button>
         </div>
-        <button
-          onClick={() => {
-            getAdminStats().then(setAdminStats).catch(() => {});
-            callGateway('admin_transaksi_overview', {}).then(({ data }) => { if (data) setTransaksiStats(data as any); }).catch(() => {});
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${th(darkMode, 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white', 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700')}`}
-          title="Refresh data"
-        >
-          <RefreshCw size={13} /> Refresh
-        </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -741,6 +807,21 @@ const AdminPortal = ({
         {/* Content */}
         <div className={`flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar ${th(darkMode, '', 'bg-gray-50')}`}>
           <div className="max-w-7xl mx-auto">
+            <AgentArtKeyframes />
+            {/* Themed hero banner for every view (dashboard has its own) */}
+            {activeTab !== 'dashboard' && (() => {
+              const item = MENU_ITEMS.find(m => !m.isSeparator && m.id === activeTab) as { label?: string } | undefined;
+              if (!item?.label) return null;
+              const Art = TAB_ART[activeTab] ?? SpotOrders;
+              return (
+                <AgentHero
+                  title={item.label}
+                  subtitle={TAB_SUBTITLE[activeTab]}
+                  art={<Art size={72} />}
+                  className="mb-6 lg:mb-8"
+                />
+              );
+            })()}
             <Suspense fallback={<AdminViewLoader />}>
               {renderContent()}
             </Suspense>

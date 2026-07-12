@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp, Users, Shield, ChevronRight,
-  FileText, ClipboardList,
-  Trophy, Network, RefreshCw, FileEdit, Target,
+  TrendingUp, ChevronRight, Target,
   Gem, Star, Coins,
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
@@ -14,6 +12,7 @@ import { getAgentCoinBalance } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
 import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
+import { IcQuote, IcClients, IcClaims, IcPolicy, IcRank, IcNetwork, IcRenewal, IcEndorse, IcTarget } from './AgentIcons';
 
 interface Props {
   agent: any;
@@ -80,15 +79,16 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
     return t('Good Night', 'Selamat Malam');
   };
 
+  // Custom hand-drawn duotone icons (AgentIcons) — Stitch design system tiles
   const quickActions = [
-    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  icon: FileText,      color: 'text-ds-blue',   bg: 'bg-blue-50'       },
-    { tab: 'clients',      label: t('Clients', 'Klien'),    icon: Users,         color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-    { tab: 'claims',       label: t('Claims', 'Klaim'),     icon: ClipboardList, color: 'text-rose-500',  bg: 'bg-rose-50'       },
-    { tab: 'policy',       label: t('Policy', 'Polis'),     icon: Shield,        color: 'text-ds-green',  bg: 'bg-ds-green-tint' },
-    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     icon: Trophy,        color: 'text-ds-amber',  bg: 'bg-amber-50'      },
-    { tab: 'network',      label: t('Network', 'Jaringan'), icon: Network,       color: 'text-ds-purple', bg: 'bg-ds-purple-lt'  },
-    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  icon: RefreshCw,     color: 'text-ds-blue',   bg: 'bg-blue-50'       },
-    { tab: 'endorsements', label: t('Endorse', 'Endors'),   icon: FileEdit,      color: 'text-ds-ink2',   bg: 'bg-ds-card2'      },
+    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: IcQuote,   color: 'text-sky-600',     tint: 'rgba(14,165,233,0.13)'  },
+    { tab: 'clients',      label: t('Clients', 'Klien'),    Ic: IcClients, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
+    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: IcClaims,  color: 'text-rose-500',    tint: 'rgba(244,63,94,0.12)'   },
+    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: IcPolicy,  color: 'text-emerald-700', tint: 'rgba(4,120,87,0.13)'    },
+    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: IcRank,    color: 'text-amber-600',   tint: 'rgba(245,158,11,0.14)'  },
+    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: IcNetwork, color: 'text-violet-600',  tint: 'rgba(139,92,246,0.13)'  },
+    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: IcRenewal, color: 'text-cyan-600',    tint: 'rgba(6,182,212,0.13)'   },
+    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: IcEndorse, color: 'text-slate-600',   tint: 'rgba(100,116,139,0.13)' },
   ];
 
   return (
@@ -148,12 +148,13 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
           <div className="relative z-10 flex items-center gap-5">
             <div className="flex-1 min-w-0">
-              <p className="text-white/50 text-[9px] font-black uppercase tracking-[0.18em] mb-2">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: 'rgba(253,224,71,0.75)' }}>
                 {t('Commission this month', 'Komisi Bulan Ini')}
               </p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-white/40 text-base font-medium">Rp</span>
-                <span className="text-4xl font-black text-white font-mono leading-none tracking-tight">
+                <span className="text-4xl font-black font-mono leading-none tracking-tight"
+                  style={{ backgroundImage: 'linear-gradient(160deg, #FFFDF0 10%, #FDE047 55%, #EAB308 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
                   {stats.totalCommissionMonth >= 1000000
                     ? `${(stats.totalCommissionMonth / 1000000).toFixed(1)}jt`
                     : stats.totalCommissionMonth.toLocaleString('id-ID')}
@@ -232,8 +233,9 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <motion.div className="px-5 mt-5" {...reveal(3)}>
         <div className="sp-glass rounded-[1.5rem] p-5">
           <div className="flex items-start gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center p-1 flex-shrink-0 animate-float">
-              <PathyMascot size={30} />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center p-1 flex-shrink-0 animate-float"
+              style={{ background: 'linear-gradient(135deg, rgba(0,193,106,0.16), rgba(253,224,71,0.20))', boxShadow: 'inset 0 0 0 1.5px rgba(0,193,106,0.25)' }}>
+              <PathyMascot size={32} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest text-ds-green mb-1.5">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
@@ -241,8 +243,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </div>
           </div>
           <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
-            <div className="w-7 h-7 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-              <Target size={13} className="text-ds-green" />
+            <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0 text-ds-green">
+              <IcTarget size={20} />
             </div>
             <div>
               <p className="text-[9px] text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
@@ -257,25 +259,22 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
       </motion.div>
 
-      {/* Quick Actions — wrapped in ClayCard for tangible feel */}
+      {/* Quick Actions — floating white tiles with custom duotone icons */}
       <motion.div className="px-5 mt-7" {...reveal(5)}>
         <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
-        <ClayCard padding="md">
-          <div className="grid grid-cols-4 gap-y-5 gap-x-3">
-            {quickActions.map((action) => (
-              <button
-                key={`${action.tab}-${action.label}`}
-                onClick={() => onNavigate(action.tab)}
-                className="flex flex-col items-center gap-2 cursor-pointer group active:scale-90 transition-transform"
-              >
-                <div className={`w-14 h-14 ${action.bg} ${action.color} rounded-[1.2rem] flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/10 shadow-ds-sm group-hover:scale-105 group-hover:shadow-ds-md transition-all duration-200`}>
-                  <action.icon size={22} strokeWidth={2.2} />
-                </div>
-                <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
-              </button>
-            ))}
-          </div>
-        </ClayCard>
+        <div className="grid grid-cols-4 gap-3">
+          {quickActions.map((action) => (
+            <button
+              key={`${action.tab}-${action.label}`}
+              onClick={() => onNavigate(action.tab)}
+              className={`flex flex-col items-center gap-2 py-3.5 px-1 rounded-[1.5rem] bg-ds-card ${action.color} cursor-pointer group active:scale-90 hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-black/[0.03] dark:ring-white/10`}
+              style={{ boxShadow: '0 10px 30px -12px rgba(11,17,32,0.12)', ['--ic-tint' as string]: action.tint }}
+            >
+              <action.Ic size={30} className="group-hover:scale-110 transition-transform duration-200" />
+              <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Recent Commissions */}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
-import { BotHome, BotPolicy, BotShield as BotShieldNav, BotWallet, BotUser } from '../CustomIcons';
+import { IcHome, IcPolicy, IcCreate, IcWallet, IcProfile, IcBell } from './AgentIcons';
 import { APP_VERSION } from '../../src/version';
 import {
   supabase,
@@ -40,11 +40,11 @@ interface Props {
 }
 
 const TABS = [
-  { id: 'home',       labelId: 'Beranda',  Icon: BotHome },
-  { id: 'policy',     labelId: 'Polis',    Icon: BotPolicy },
-  { id: 'quotes',     labelId: 'Buat',     Icon: BotShieldNav },
-  { id: 'commission', labelId: 'Dompet',   Icon: BotWallet },
-  { id: 'profile',    labelId: 'Profil',   Icon: BotUser },
+  { id: 'home',       labelId: 'Beranda',  Icon: IcHome },
+  { id: 'policy',     labelId: 'Polis',    Icon: IcPolicy },
+  { id: 'quotes',     labelId: 'Buat',     Icon: IcCreate },
+  { id: 'commission', labelId: 'Dompet',   Icon: IcWallet },
+  { id: 'profile',    labelId: 'Profil',   Icon: IcProfile },
 ];
 
 // Polis tab: order tracking + quote builder toggle
@@ -299,7 +299,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               onClick={() => setShowNotifications(true)}
               className="relative w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center active:scale-90 hover:bg-ds-card transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              <Bell size={15} className="text-ds-ink2" />
+              <IcBell size={18} className="text-ds-ink2" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-ds-green text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -353,8 +353,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                   className="relative -mt-8 flex flex-col items-center gap-1 active:scale-95 transition-transform"
                 >
                   <span className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all ${active ? 'scale-105' : ''}`}
-                    style={{ background: 'linear-gradient(135deg, #00C16A, #047857)', boxShadow: '0 12px 26px -8px rgba(0,193,106,0.65), inset 0 1px 0 rgba(255,255,255,0.25)' }}>
-                    <Icon size={24} strokeWidth={2.5} />
+                    style={{ background: 'linear-gradient(135deg, #00C16A, #047857)', boxShadow: '0 12px 26px -8px rgba(0,193,106,0.65), inset 0 1px 0 rgba(255,255,255,0.25)', ['--ic-tint' as string]: 'rgba(255,255,255,0.18)' }}>
+                    <Icon size={26} />
                   </span>
                   <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                     {labelId}
@@ -368,8 +368,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                 onClick={() => handleTabChange(id)}
                 className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[52px] min-h-[48px] justify-center"
               >
-                <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
-                  <Icon size={21} strokeWidth={active ? 2.5 : 2} />
+                <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
+                  style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}>
+                  <Icon size={23} />
                 </span>
                 <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
                   {labelId}

@@ -2,6 +2,21 @@
 
 ---
 
+## v1.40.0 — 2026-07-12
+
+### Agent App World-Class Refinement (Stitch-driven, visual only)
+Layar Agent app di-refine memakai design system yang digenerate Google Stitch (proyek "SurePath Agent App — Bank-Grade Refinement"):
+- **Set ikon custom buatan sendiri** `components/agent/AgentIcons.tsx` — 16 ikon duotone hand-drawn (grid 48px, goresan membulat 3px, tint emerald lembut + aksen emas per ikon): Home, Polis, Buat, Dompet, Profil, Penawaran, Klien, Klaim, Ranking, Jaringan, Renewal, Endors, Koin, Notif, Target, Grafik
+- **Bottom nav** — ikon custom menggantikan ikon generik; tombol tengah "Buat" dengan ikon squircle-plus + spark emas
+- **Quick actions Beranda** — tile putih mengambang (radius 24px, ambient shadow navy 12%, hover lift) dengan ikon duotone custom per warna kategori
+- **Hero Partner Card** — saldo komisi kini gradient emas (spec Stitch: "balance in gold"), label emas, sesuai estetika kartu premium
+- **AI Coach card** — ring gradient emerald→gold pada mascot Pathy + ikon target custom
+- **Dompet** — ikon wallet & koin custom di kartu saldo
+- Design system Stitch tersimpan di proyek Stitch untuk referensi desain selanjutnya
+- Logika, proses, menu, dan backend tidak berubah
+
+---
+
 ## v1.39.0 — 2026-07-11
 
 ### Insurer App UI Redesign + Onboarding (visual only, identitas ungu)

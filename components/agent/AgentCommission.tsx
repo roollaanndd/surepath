@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wallet, RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
+import { RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
 import { Language } from '../../types';
 import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, getMyWithdrawals, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, SpotWallet, AgentEmpty } from './AgentArt';
+import { IcWallet, IcCoin } from './AgentIcons';
 
 interface Props {
   agentId: string;
@@ -130,7 +131,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
         </svg>
         <div className="relative z-10 flex items-center justify-between">
           <p className="text-white/60 text-xs font-medium uppercase tracking-wide">{t('Total Earned', 'Total Komisi')}</p>
-          <Wallet size={18} className="text-white/40" />
+          <span className="text-white/50" style={{ ['--ic-tint' as string]: 'rgba(255,255,255,0.12)' }}><IcWallet size={22} /></span>
         </div>
         <div className="relative z-10 flex items-center justify-between gap-3">
           <p className="text-3xl font-bold font-mono text-white">{formatIDR(totalEarned)}</p>
@@ -165,8 +166,8 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
       <div className="mx-4 mt-3 sp-glass rounded-[1.5rem] p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center">
-              <Coins size={16} className="text-ds-amber" />
+            <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center text-ds-amber" style={{ ['--ic-tint' as string]: 'rgba(245,158,11,0.15)' }}>
+              <IcCoin size={22} />
             </div>
             <p className="text-ds-ink2 text-xs font-black uppercase tracking-widest">{t('SurePath Coins', 'Koin SurePath')}</p>
           </div>

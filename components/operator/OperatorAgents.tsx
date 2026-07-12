@@ -7,8 +7,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { UserCheck, CheckCircle2, XCircle, Eye, FileText, ImageIcon, Phone, MapPin, CreditCard, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotProfile, AgentEmpty } from '../agent/AgentArt';
-import { SectionLabel } from '../shared/cards';
-import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
 import { resolveDocumentUrl } from '../../services/storage';
 

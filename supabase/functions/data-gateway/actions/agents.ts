@@ -79,6 +79,17 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
           read: false,
           metadata: { agent_id: params.agent_id, approved: approve, reviewer_id: caller.authId },
         }).then(() => {}, () => {});
+        // NEW: Notify the agent themselves so they know their verification status changed
+        db.from('sp_notifications').insert({
+          agent_id: String(params.agent_id),
+          type: approve ? 'AGENT_VERIFIED' : 'AGENT_REJECTED',
+          title: approve ? 'Akun Anda Diverifikasi' : 'Verifikasi Ditolak',
+          body: approve
+            ? 'Selamat! Akun agen Anda telah diverifikasi. Anda dapat mulai bertransaksi sepenuhnya.'
+            : 'Maaf, verifikasi akun Anda ditolak. Silakan hubungi tim SurePath untuk informasi lebih lanjut.',
+          read: false,
+          metadata: { agent_id: params.agent_id, approved: approve, reviewer_id: caller.authId },
+        }).then(() => {}, () => {});
         return json({ data });
       }
 
@@ -104,6 +115,37 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
         return json({ data });
+      }
+
+    // ─── New: status-aware agent list (fixes Operator agent visibility bug) ──
+    // Returns agents filtered by status (PENDING | VERIFIED | ALL) + agreement info.
+    // Backward-compat: admin_list_pending_agents still works for dashboard preview.
+    case 'admin_list_agents': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const status = String(params.status ?? 'ALL').toUpperCase();
+        let q = db.from('sp_users')
+          .select('id, email, name, phone, agent_code, ktp, address, trust_score, commission_rate, profile_photo_url, ktp_document_url, verified, tier, created_at')
+          .eq('role', 'AGENT')
+          .order('created_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (status === 'PENDING')        q = q.eq('verified', false);
+        else if (status === 'VERIFIED')  q = q.eq('verified', true);
+        // ALL → no verified filter
+        const { data: agents, error: agErr } = await q;
+        if (agErr) return json({ error: agErr.message }, 400);
+
+        // Attach latest agreement (mirror admin_list_pending_agents behaviour)
+        const agentIds = (agents ?? []).map((a: any) => a.id);
+        let agrMap: Record<string, any> = {};
+        if (agentIds.length > 0) {
+          const { data: agrData } = await db.from('sp_agent_agreements')
+            .select('agent_id, agreement_no, full_name, ktp_number, accepted_at, user_agent')
+            .in('agent_id', agentIds)
+            .order('accepted_at', { ascending: false });
+          for (const a of (agrData ?? [])) if (!agrMap[a.agent_id]) agrMap[a.agent_id] = a;
+        }
+        const result = (agents ?? []).map((a: any) => ({ ...a, agreement: agrMap[a.id] ?? null }));
+        return json({ data: result });
       }
 
     default:

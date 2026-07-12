@@ -199,9 +199,11 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
       }
 
     case 'admin_update_order': {
-        if (!caller.isAdmin && caller.role !== 'INSURER') return json({ error: 'Forbidden' }, 403);
+        // FIX: removed `caller.role !== 'INSURER'` branch (no such role exists in sp_users).
+        // Now strictly admin-only. Insurer mutations route through insurer_upload_policy / submit_insurer_decision.
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.order_id || !params.status) return json({ error: 'order_id and status required' }, 400);
-        const ALLOWED_STATUS = ['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'ISSUED', 'CANCELLED'];
+        const ALLOWED_STATUS = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'ISSUED', 'CANCELLED'];
         if (!ALLOWED_STATUS.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
         const ALLOWED = ['status', 'reviewer_notes', 'policy_number', 'policy_document_url', 'sp_policy_id', 'reviewed_at', 'issued_at'];
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -209,8 +211,52 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
         const s = String(params.status);
         if (['UNDER_REVIEW', 'APPROVED', 'REJECTED'].includes(s) && !updates.reviewed_at) updates.reviewed_at = new Date().toISOString();
         if (s === 'ISSUED' && !updates.issued_at) updates.issued_at = new Date().toISOString();
+
+        // Fetch current row for notification targeting
+        const { data: current } = await db.from('sp_policy_orders')
+          .select('id, agent_id, client_name, order_number, status, total_premium')
+          .eq('id', String(params.order_id))
+          .maybeSingle();
+
         const { data, error } = await db.from('sp_policy_orders').update(updates).eq('id', params.order_id).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
+
+        // FIX: send notifications on status changes (previously silent — customer/agent never told about approval/rejection)
+        const cur = current as any;
+        if (cur && cur.status !== s) {
+          const statusLabels: Record<string, string> = {
+            SUBMITTED:    'Diajukan',
+            UNDER_REVIEW: 'Sedang Ditinjau',
+            APPROVED:     'Disetujui',
+            REJECTED:     'Ditolak',
+            ISSUED:       'Polis Diterbitkan',
+            CANCELLED:    'Dibatalkan',
+          };
+          const newLabel = statusLabels[s] ?? s;
+
+          // Notify the agent (whoever is recorded as agent_id on the order)
+          if (cur.agent_id) {
+            db.from('sp_notifications').insert({
+              agent_id: String(cur.agent_id),
+              type: s === 'ISSUED' ? 'POLICY_ISSUED' : s === 'REJECTED' ? 'POLICY_REJECTED' : 'ORDER_UPDATE',
+              title: `Order ${newLabel}`,
+              body: `Order ${cur.order_number ?? ''} (${cur.client_name ?? ''}) telah ${newLabel}.${params.reviewer_notes ? ` Catatan: ${String(params.reviewer_notes).slice(0, 200)}` : ''}`,
+              read: false,
+              metadata: { order_id: cur.id, status: s, reviewer_notes: params.reviewer_notes ?? null },
+            }).then(() => {}, () => {});
+          }
+
+          // For REJECTED/CANCELLED, also insert an admin notification so it shows up in the operations feed
+          if (s === 'REJECTED' || s === 'CANCELLED') {
+            db.from('sp_admin_notifications').insert({
+              type: s === 'REJECTED' ? 'ORDER_REJECTED' : 'ORDER_CANCELLED',
+              title: `Order ${newLabel}`,
+              body: `Order ${cur.order_number ?? ''} (${cur.client_name ?? ''}) telah ${newLabel} oleh ${caller.spUser?.name ?? 'admin'}.`,
+              read: false,
+              metadata: { order_id: cur.id, status: s, actor_id: caller.authId },
+            }).then(() => {}, () => {});
+          }
+        }
         return json({ data });
       }
 
@@ -241,6 +287,13 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
     case 'create_policy_order': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
         const p = params as Record<string, any>;
+
+        // FIX: agents must be verified before they can create orders.
+        // Previously this check was missing — unverified agents could submit orders
+        // and they would sit in the operator queue (verification was cosmetic).
+        if (caller.spUser.role === 'AGENT' && caller.spUser.verified === false) {
+          return json({ error: 'Akun agen Anda belum diverifikasi. Tunggu konfirmasi dari operator atau hubungi tim SurePath.' }, 403);
+        }
 
         // Required fields.
         if (!p.client_name || !p.product_code || !p.product_name || !p.coverage_type || !p.status) {

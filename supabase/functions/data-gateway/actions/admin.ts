@@ -195,6 +195,74 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
         if (params.status === 'PAID') updates.paid_at = new Date().toISOString();
         const { data, error } = await db.from('sp_commissions').update(updates).eq('id', params.commission_id).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
+
+        // FIX: when admin marks commission as PAID, also credit the agent wallet (previously skipped)
+        if (params.status === 'PAID' && data) {
+          const c = data as any;
+          if (c.agent_id && c.commission_amount) {
+            db.rpc('credit_agent_wallet', {
+              p_agent_id: c.agent_id,
+              p_amount: Number(c.commission_amount),
+              p_reference_id: String(c.id),
+              p_reference_type: 'COMMISSION',
+              p_description: `Komisi ${c.product_type ?? ''} — ${c.client_name ?? 'Nasabah'}`,
+            }).then(() => {}, (e: any) => console.warn('credit_agent_wallet failed:', e?.message));
+          }
+        }
+        return json({ data });
+      }
+
+    // ─── New: admin_create_commission (fixes RLS block when admin credits commission) ──
+    // Service_role bypasses RLS so admin can credit commission to ANY agent.
+    // Mirrors the Xendit webhook's full side-effect set (commission row + wallet credit + notification).
+    case 'admin_create_commission': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.agent_id) return json({ error: 'agent_id required' }, 400);
+        if (!params.commission_amount) return json({ error: 'commission_amount required' }, 400);
+
+        const insertRow: Record<string, unknown> = {
+          agent_id:         String(params.agent_id),
+          client_name:      params.client_name      ? String(params.client_name).slice(0, 200)    : null,
+          client_id:        params.client_id        ? String(params.client_id)                    : null,
+          policy_id:        params.policy_id        ? String(params.policy_id)                    : null,
+          order_id:         params.order_id         ? String(params.order_id)                     : null,
+          product_type:     params.product_type     ? String(params.product_type).slice(0, 50)    : 'CAR',
+          premium_amount:   Number(params.premium_amount ?? 0),
+          commission_amount:Number(params.commission_amount),
+          commission_rate:  Number(params.commission_rate ?? 0),
+          status:           String(params.status ?? 'PENDING'),
+          created_at:       new Date().toISOString(),
+          updated_at:       new Date().toISOString(),
+        };
+        if (params.status === 'PAID') insertRow.paid_at = new Date().toISOString();
+
+        const { data, error } = await db.from('sp_commissions').insert(insertRow).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+
+        // If status PAID, credit the wallet
+        if (params.status === 'PAID' && data) {
+          const c = data as any;
+          db.rpc('credit_agent_wallet', {
+            p_agent_id: c.agent_id,
+            p_amount: Number(c.commission_amount),
+            p_reference_id: String(c.id),
+            p_reference_type: 'COMMISSION',
+            p_description: `Komisi ${c.product_type ?? ''} — ${c.client_name ?? 'Nasabah'}`,
+          }).then(() => {}, (e: any) => console.warn('credit_agent_wallet failed:', e?.message));
+        }
+
+        // Notify the agent
+        if (data) {
+          const c = data as any;
+          db.from('sp_notifications').insert({
+            agent_id: String(c.agent_id),
+            type: 'COMMISSION_EARNED',
+            title: 'Komisi Diperoleh',
+            body: `Komisi Rp ${Number(c.commission_amount ?? 0).toLocaleString('id-ID')} untuk polis ${c.product_type ?? ''} ${c.client_name ?? ''} telah ditambahkan ke dompet Anda.`,
+            read: false,
+            metadata: { commission_id: c.id, amount: c.commission_amount, status: c.status },
+          }).then(() => {}, () => {});
+        }
         return json({ data });
       }
 

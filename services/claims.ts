@@ -16,12 +16,21 @@ export async function getAgentClaims(agentId: string): Promise<SpClaim[]> {
 }
 
 export async function submitClaim(claimData: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'>): Promise<SpClaim | null> {
-  // Routed through the gateway (service_role bypasses RLS on sp_claims)
+  // FIX: previously this dropped 7 of 10 fields the UI sends.
+  // Now forwards the FULL payload to the gateway (which derives agent_id from linked policy).
   const { data, error } = await callGateway('submit_claim', {
-    claim_type: (claimData as any).claim_type,
-    description: (claimData as any).description,
-    location: (claimData as any).location,
-    amount_estimated: (claimData as any).amount_estimated,
+    claim_type:      (claimData as any).claim_type,
+    description:     (claimData as any).description,
+    location:        (claimData as any).location,
+    amount_estimated:(claimData as any).amount_estimated,
+    // Fields previously dropped:
+    client_name:     (claimData as any).client_name,
+    policy_number:   (claimData as any).policy_number,
+    policy_id:       (claimData as any).policy_id,
+    product_type:    (claimData as any).product_type,
+    chronology:      (claimData as any).chronology,
+    photos:          (claimData as any).photos,
+    incident_date:   (claimData as any).incident_date ?? (claimData as any).date,
   });
   if (error) { console.error('submitClaim:', error); return null; }
   return data as SpClaim;

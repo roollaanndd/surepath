@@ -19,11 +19,21 @@ export async function getAgentCommissions(agentId: string): Promise<SpCommission
 }
 
 export async function addCommission(data: Omit<SpCommission, 'id' | 'created_at'>): Promise<SpCommission | null> {
-  const { data: result, error } = await supabase
-    .from('sp_commissions')
-    .insert(data)
-    .select()
-    .single();
+  // FIX: previously used supabase (user-JWT) client which fails RLS when admin credits
+  // commission to an agent (RLS requires auth.uid() = agent_id).
+  // Now routes through gateway admin_create_commission (service_role bypasses RLS).
+  const { data: result, error } = await callGateway('admin_create_commission', {
+    agent_id:         data.agent_id,
+    client_name:      (data as any).client_name,
+    client_id:        (data as any).client_id,
+    policy_id:        (data as any).policy_id,
+    order_id:         (data as any).order_id,
+    product_type:     data.product_type,
+    premium_amount:   data.premium_amount,
+    commission_amount:data.commission_amount,
+    commission_rate:  (data as any).commission_rate,
+    status:           data.status,
+  });
   if (error) {
     console.error('addCommission error:', error);
     return null;

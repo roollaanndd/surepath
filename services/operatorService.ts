@@ -243,18 +243,28 @@ export async function rejectWithdrawal(
   if (error) throw new Error(error);
 }
 
+// ─── New: status-aware agent list (fixes Operator agent visibility bug) ──
+// Returns agents filtered by status (PENDING | VERIFIED | ALL) + agreement info.
+export async function listAgents(
+  status: 'PENDING' | 'VERIFIED' | 'ALL' = 'ALL',
+): Promise<OperatorAgent[]> {
+  const { data, error } = await callGateway('admin_list_agents', { status, limit: 200 });
+  if (error) throw new Error(error);
+  return (data ?? []) as OperatorAgent[];
+}
+
+// Backward-compat alias — dashboard preview still wants pending only.
 export async function listPendingAgents(): Promise<OperatorAgent[]> {
-  // Use the new richer endpoint that returns agreement info too.
   try {
-    const { data, error } = await callGateway('admin_list_pending_agents', { limit: 100 });
+    const { data, error } = await callGateway('admin_list_agents', { status: 'PENDING', limit: 100 });
     if (!error && data) return data as OperatorAgent[];
   } catch (e) {
-    console.warn('admin_list_pending_agents failed, falling back to admin_list_users', e);
+    console.warn('listAgents PENDING failed, falling back to legacy admin_list_pending_agents', e);
   }
-  // Fallback to old behavior (no agreement info)
-  const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 200 });
+  // Last-resort fallback: legacy action (pending only, no agreement info)
+  const { data, error } = await callGateway('admin_list_pending_agents', { limit: 100 });
   if (error) throw new Error(error);
-  return ((data ?? []) as OperatorAgent[]).filter(a => !a.verified);
+  return (data ?? []) as OperatorAgent[];
 }
 
 export interface AgentDetail {

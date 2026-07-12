@@ -7,8 +7,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { UserCheck, CheckCircle2, XCircle, Eye, FileText, ImageIcon, Phone, MapPin, CreditCard, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotProfile, AgentEmpty } from '../agent/AgentArt';
-import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
-import { listPendingAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
+import { SectionLabel } from '../shared/cards';
+import { UnderlineTabs, EmptyState, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { listAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
 import { resolveDocumentUrl } from '../../services/storage';
 
 interface Props {
@@ -45,15 +46,10 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listPendingAgents();
-      // Status filter happens client-side because listPendingAgents returns pending only.
-      if (activeStatus === 'PENDING') {
-        setAgents(data.filter(a => !a.verified));
-      } else if (activeStatus === 'VERIFIED') {
-        setAgents(data.filter(a => a.verified));
-      } else {
-        setAgents(data);
-      }
+      // Pass the active tab to the API so the gateway filters server-side.
+      // This fixes the bug where VERIFIED and ALL tabs were always empty.
+      const data = await listAgents(activeStatus as 'PENDING' | 'VERIFIED' | 'ALL');
+      setAgents(data);
     } catch (e: any) {
       console.error('OperatorAgents load:', e);
       toast.error(`Gagal memuat agen: ${e.message}`);

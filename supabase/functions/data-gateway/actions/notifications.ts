@@ -40,11 +40,36 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
 
     case 'create_notification': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        // FIX: previously this overwrote agent_id with caller.authId, which silently
+        // misrouted every admin→agent notification to the admin's own feed.
+        // Now: if caller is admin/staff AND params.agent_id is provided and points to someone else,
+        // use that target. Otherwise default to self (for user-self notifications).
+        const targetAgentId = (caller.isAdmin && params.agent_id && params.agent_id !== caller.authId)
+          ? String(params.agent_id)
+          : caller.authId;
         const { data, error } = await db.from('sp_notifications').insert({
-          agent_id: caller.authId,
+          agent_id: targetAgentId,
           type: String(params.type ?? 'SYSTEM'),
           title: String(params.title ?? ''),
           body: String(params.body ?? ''),
+          read: false,
+          metadata: params.metadata ?? null,
+          order_id: params.order_id ?? null,
+        }).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+    // ─── New: explicit admin→user notification (fixes mass-assignment + agent_id corruption) ──
+    // Admin/staff-only. Strict allowlist of fields. Always uses params.agent_id as target.
+    case 'admin_create_user_notification': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.agent_id) return json({ error: 'agent_id required' }, 400);
+        const { data, error } = await db.from('sp_notifications').insert({
+          agent_id: String(params.agent_id),
+          type: String(params.type ?? 'SYSTEM'),
+          title: String(params.title ?? '').slice(0, 200),
+          body: String(params.body ?? '').slice(0, 1000),
           read: false,
           metadata: params.metadata ?? null,
           order_id: params.order_id ?? null,
@@ -71,7 +96,15 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
 
     case 'admin_create_notification': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        const { data, error } = await db.from('sp_admin_notifications').insert({ ...params, read: false }).select().maybeSingle();
+        // FIX: previously spread {...params, read: false} — mass-assignment risk.
+        // Now use explicit allowlist (defense in depth).
+        const { data, error } = await db.from('sp_admin_notifications').insert({
+          type: String(params.type ?? 'SYSTEM'),
+          title: String(params.title ?? '').slice(0, 200),
+          body: String(params.body ?? '').slice(0, 1000),
+          read: false,
+          metadata: params.metadata ?? null,
+        }).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
       }

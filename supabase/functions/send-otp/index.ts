@@ -32,7 +32,13 @@ function normalizePhone(phone: string): string {
 }
 
 function generateOtp(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
+  // crypto.getRandomValues instead of Math.random() — not that a 6-digit
+  // space is brute-forceable given the rate limits/lockout below, but no
+  // reason to use a non-CSPRNG when the Web Crypto API is right there.
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  const n = buf[0] % 900000
+  return String(100000 + n)
 }
 
 function getClientIp(req: Request): string {

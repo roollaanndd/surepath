@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 // ─── STNK OCR Edge Function ──────────────────────────────────────────────────
 // Receives an STNK photo (base64), proxies it to the OpenRouter multimodal
@@ -77,10 +78,19 @@ Deno.serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
   const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
   // Auth: any authenticated user (customer or agent)
-  const { errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
+  const { caller, errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
   if (errorResponse) return errorResponse;
+
+  const rateLimitClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const allowed = await checkRateLimit(rateLimitClient, `user:${caller!.authId}`, 'stnk_ocr', 20);
+  if (!allowed) {
+    return new Response(JSON.stringify({ status: 'ERROR', confidence: 0, fields: {}, notes: 'Rate limit exceeded. Try again in an hour.' } satisfies StnkOcrResponse), {
+      status: 429, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { image_base64, mime_type } = await req.json() as {
@@ -108,11 +118,10 @@ Deno.serve(async (req) => {
     }
 
     // ── Look up OpenRouter key (Vault first, env fallback) ─────────────────
-    const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     let openRouterKey = Deno.env.get('OPENROUTER_KEY') ?? '';
 
     if (!openRouterKey && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const supabase = rateLimitClient;
       const { data } = await supabase.rpc('get_app_secret', { secret_name: 'OPENROUTER_KEY' });
       openRouterKey = data ?? '';
     }

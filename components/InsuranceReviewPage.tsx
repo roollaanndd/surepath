@@ -114,7 +114,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
       return;
     }
     setSubmitting(true);
-    const ok = await submitInsurerReview(tokenRecord.id, order.id, action, notes);
+    const ok = await submitInsurerReview(token, action, notes);
     if (ok) {
       setDone(true);
     } else {

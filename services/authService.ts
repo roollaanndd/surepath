@@ -88,38 +88,6 @@ export const verifyPassword = async (password: string, storedHash: string, store
   return hash === storedHash;
 };
 
-/**
- * Creates a mock JWT session token
- */
-export const createSessionToken = (user: any) => {
-  const payload = {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    nodeId: user.nodeId,
-    trustScore: user.trustScore,
-    exp: Date.now() + (24 * 60 * 60 * 1000) // 24 Hour validity
-  };
-  // Base64 encode to simulate a token
-  return btoa(JSON.stringify(payload));
-};
-
-/**
- * Verifies and parses a session token
- */
-export const parseSessionToken = (token: string) => {
-  try {
-    const payload = JSON.parse(atob(token));
-    if (payload.exp < Date.now()) {
-      return null; // Expired
-    }
-    return payload;
-  } catch (e) {
-    return null; // Invalid
-  }
-};
-
 export const validatePasswordStrength = (pass: string) => {
     const requirements = [
         { label: 'Min 8 characters', met: pass.length >= 8 },

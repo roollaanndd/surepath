@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth } from '../_shared/auth.ts';
+import { checkRateLimit as checkPersistentRateLimit } from '../_shared/rateLimit.ts';
 
 // ─── AI Proxy ────────────────────────────────────────────────────────────────
 //
@@ -82,10 +83,20 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Per-user rate limit
+  // Per-user rate limit — fast in-memory burst guard (per-minute + per-day,
+  // resets on cold start) layered with a persistent per-hour cap backed by
+  // sp_rate_limits, so a limit survives redeploys even if the in-memory
+  // counters don't.
   const rl = checkRateLimit(caller.authId);
   if (!rl.ok) {
     return new Response(JSON.stringify({ error: rl.reason }), {
+      status: 429, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+  const persistentClient = createClient(SUPABASE_URL, SERVICE_KEY);
+  const persistentAllowed = await checkPersistentRateLimit(persistentClient, `user:${caller.authId}`, 'ai_proxy', 200);
+  if (!persistentAllowed) {
+    return new Response(JSON.stringify({ error: 'Hourly AI request cap exceeded. Try again later.' }), {
       status: 429, headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
@@ -93,7 +104,7 @@ Deno.serve(async (req) => {
   try {
     let OPENROUTER_KEY = Deno.env.get('OPENROUTER_KEY') ?? '';
     if (!OPENROUTER_KEY && SUPABASE_URL && SERVICE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+      const supabase = persistentClient;
       const { data } = await supabase.rpc('get_app_secret', { secret_name: 'OPENROUTER_KEY' });
       OPENROUTER_KEY = data ?? '';
     }

@@ -335,10 +335,9 @@ Defined in `db.ts`. Stores local data client-side.
 
 ### Admin Login
 1. Navigate to `/admin` → `AdminLogin` renders
-2. Email + password submitted → Dexie lookup
-3. Role checked against `[MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR, INSURANCE_ADMIN]`
-4. Password verified with PBKDF2
-5. Session token created via `createSessionToken()`
+2. Email + password submitted → `supabase.auth.signInWithPassword()`, profile fetched via the data-gateway
+3. Role (or `allowed_apps`) checked against `[MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR, INSURANCE_ADMIN]`
+4. Session uses the real Supabase `access_token` — the legacy Dexie/PBKDF2 fallback and its unsigned mock-JWT generator (`createSessionToken()`) have been removed
 
 ### Session Persistence
 - Stored in `sessionStorage` (cleared on tab close)

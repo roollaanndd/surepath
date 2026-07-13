@@ -18,14 +18,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-cron-secret',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
+  // This function is cron-triggered (auth via x-cron-secret below), not
+  // meant for direct browser calls — but use the same origin allowlist as
+  // every other function instead of a wildcard, for consistency and so a
+  // stray browser probe doesn't get a blanket-allow response.
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
   // Auth: check CRON_SECRET header (set in Supabase secrets)

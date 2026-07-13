@@ -194,7 +194,7 @@ describe('Promo Code Service', () => {
 
 // ─── Tests: AuthService (synchronous) ────────────────────────────────────────
 
-import { checkRateLimit, recordFailedAttempt, clearRateLimit, createSessionToken } from '../authService';
+import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../authService';
 
 describe('AuthService', () => {
   beforeEach(() => {
@@ -218,21 +218,6 @@ describe('AuthService', () => {
     clearRateLimit('reset@example.com');
     const result = checkRateLimit('reset@example.com');
     expect(result.allowed).toBe(true);
-  });
-
-  it('createSessionToken returns decodable base64', () => {
-    const token = createSessionToken({ id: 'u1', email: 't@t.com', name: 'Test', role: 'CUSTOMER' });
-    expect(typeof token).toBe('string');
-    const decoded = JSON.parse(atob(token));
-    expect(decoded.id).toBe('u1');
-    expect(decoded.email).toBe('t@t.com');
-    expect(decoded.role).toBe('CUSTOMER');
-  });
-
-  it('createSessionToken includes expiration', () => {
-    const token = createSessionToken({ id: 'u2', email: 't2@t.com', name: 'T2', role: 'AGENT' });
-    const decoded = JSON.parse(atob(token));
-    expect(decoded.exp).toBeGreaterThan(Date.now());
   });
 });
 

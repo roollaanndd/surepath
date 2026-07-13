@@ -17,38 +17,10 @@ export enum UserRole {
   B2B_CLIENT = 'B2B_CLIENT'
 }
 
-export enum AgentTier {
-  STAR  = 'STAR',
-  ELITE = 'ELITE',
-}
-
-export const TIER_CONFIG = {
-  STAR: {
-    label:           'Mitra Bintang',
-    emoji:           '⭐',
-    color:           '#f59e0b',
-    coinBonusRate:   0.10,   // +10% extra coins on every sale
-    l1OverrideRate:  0.03,   // 3% of L1 downline's commission
-    l2OverrideRate:  0.01,   // 1% of L2 downline's commission
-  },
-  ELITE: {
-    label:           'Mitra Elite',
-    emoji:           '💎',
-    color:           '#8b5cf6',
-    coinBonusRate:   0.15,   // +15% extra coins on every sale
-    l1OverrideRate:  0.04,   // 4% of L1 downline's commission
-    l2OverrideRate:  0.02,   // 2% of L2 downline's commission
-  },
-  // Standard (no tier): fixed 2% L1 override, no L2, no coin bonus
-  STANDARD: {
-    label:           'Standard',
-    emoji:           null,
-    color:           '#6b7280',
-    coinBonusRate:   0,
-    l1OverrideRate:  0.02,
-    l2OverrideRate:  0,
-  },
-} as const;
+// Agent tiers are no longer hardcoded — they're defined in the `sp_agent_tiers`
+// table and managed from the admin CMS. See services/wallet.ts
+// (getTierDefinitions) and hooks/useTierDefinitions.ts for the runtime-fetched
+// equivalent of the old AgentTier enum / TIER_CONFIG constant.
 
 export enum InsuranceType {
   COMPREHENSIVE = 'COMPREHENSIVE',

@@ -126,11 +126,11 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         (commData ?? []).forEach((r: any) => { map[r.agent_id] = (map[r.agent_id] ?? 0) + (r.commission_amount ?? 0); });
         const agentIds = Object.keys(map);
         if (agentIds.length === 0) return json({ data: [] });
-        const { data: users } = await db.from('sp_users').select('id, name, agent_code').in('id', agentIds);
-        const userMap: Record<string, { name: string; agent_code: string }> = {};
-        (users ?? []).forEach((u: any) => { userMap[u.id] = { name: u.name, agent_code: u.agent_code ?? '' }; });
+        const { data: users } = await db.from('sp_users').select('id, name, agent_code, tier').in('id', agentIds);
+        const userMap: Record<string, { name: string; agent_code: string; tier: string | null }> = {};
+        (users ?? []).forEach((u: any) => { userMap[u.id] = { name: u.name, agent_code: u.agent_code ?? '', tier: u.tier ?? null }; });
         const result = agentIds
-          .map(id => ({ agent_id: id, agent_name: userMap[id]?.name ?? 'Agent', agent_code: userMap[id]?.agent_code ?? '', total_commission: map[id] }))
+          .map(id => ({ agent_id: id, agent_name: userMap[id]?.name ?? 'Agent', agent_code: userMap[id]?.agent_code ?? '', tier: userMap[id]?.tier ?? null, total_commission: map[id] }))
           .sort((a, b) => b.total_commission - a.total_commission)
           .slice(0, 10);
         return json({ data: result });

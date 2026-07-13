@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, ChevronRight, Target,
-  Gem, Star, Coins,
+  Star, Coins,
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
@@ -13,6 +13,7 @@ import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
 import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
 import { IcQuote, IcClients, IcClaims, IcPolicy, IcRank, IcNetwork, IcRenewal, IcEndorse, IcTarget } from './AgentIcons';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
   agent: any;
@@ -28,6 +29,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [coinBalance, setCoinBalance] = useState(0);
   const reduce = useReducedMotion();
+  const { tiers } = useTierDefinitions();
+  const myTierDef = getTierByCode(tiers, agentTier);
 
   useEffect(() => {
     if (agentId) {
@@ -105,14 +108,13 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            {agentTier && (
-              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                agentTier === 'ELITE'
-                  ? 'bg-ds-purple-lt text-ds-purple'
-                  : 'bg-amber-100 text-amber-700'
-              }`}>
-                {agentTier === 'ELITE' ? <Gem size={11} /> : <Star size={11} />}
-                {agentTier === 'ELITE' ? t('Elite', 'Elite') : t('Top Partner', 'Mitra Top')}
+            {myTierDef && !myTierDef.is_default && (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                style={{ background: `${myTierDef.color}22`, color: myTierDef.color }}
+              >
+                {myTierDef.emoji ? <span>{myTierDef.emoji}</span> : <Star size={11} />}
+                {myTierDef.name}
               </span>
             )}
             <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-sm shadow-ds-green">

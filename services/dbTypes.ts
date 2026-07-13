@@ -23,7 +23,7 @@ export interface SpUser {
   commission_rate?: number;
   upline_id?: string;
   referral_code?: string | null;
-  tier?: 'STAR' | 'ELITE' | null;
+  tier?: string; // FK to sp_agent_tiers.code — dynamic, admin-defined tier list
   tier_assigned_by?: string | null;
   tier_assigned_at?: string | null;
   profile_photo_url?: string | null;
@@ -556,15 +556,55 @@ export interface Withdrawal {
   updated_at: string;
 }
 
-// ─── Tier Config ─────────────────────────────────────────────────────────────
+// ─── Agent Tiers (CMS-configurable) ──────────────────────────────────────────
 
-export interface SpTierConfig {
-  tier: 'STANDARD' | 'STAR' | 'ELITE';
+export interface SpAgentTier {
+  id: string;
+  code: string;
+  name: string;
+  rank: number;
+  color: string;
+  emoji: string | null;
+  min_policies_count: number | null;
+  min_premium_amount: number | null;
   coin_bonus_rate: number;
   l1_override_rate: number;
   l2_override_rate: number;
-  updated_by?: string | null;
+  benefits: Record<string, unknown>;
+  requires_approval: boolean;
+  approval_roles: string[];
+  is_default: boolean;
+  is_active: boolean;
+  created_at?: string;
   updated_at?: string;
+  updated_by?: string | null;
+}
+
+export interface SpTierChangeRequest {
+  id: string;
+  agent_id: string;
+  requested_tier_code: string;
+  current_tier_code: string | null;
+  requested_by: string | null;
+  requested_at: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reason: string | null;
+  source: 'MANUAL_REQUEST' | 'AUTO_ELIGIBLE';
+  approved_by: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  updated_at: string;
+  // Joined via sp_users!agent_id(...) in admin_list_tier_requests
+  sp_users?: { name: string; email: string; agent_code?: string };
+}
+
+export interface TierProgress {
+  currentTier: SpAgentTier | null;
+  nextTier: SpAgentTier | null;
+  policiesCount: number;
+  totalPremium: number;
 }
 
 // ─── B2B ─────────────────────────────────────────────────────────────────────

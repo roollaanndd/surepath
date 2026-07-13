@@ -83,7 +83,7 @@ export async function updateQuoteStatus(id: string, status: SpQuote['status']): 
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
-export async function getLeaderboard(): Promise<Array<{ agent_id: string; agent_name: string; agent_code: string; total_commission: number }>> {
+export async function getLeaderboard(): Promise<Array<{ agent_id: string; agent_name: string; agent_code: string; tier: string | null; total_commission: number }>> {
   const { data, error } = await callGateway('get_leaderboard', {});
   if (error) { console.error('getLeaderboard:', error); return []; }
   return (data as any) ?? [];

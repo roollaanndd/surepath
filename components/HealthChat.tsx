@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import { CHAT_MODEL } from '../services/geminiService';
 import { PageTransition } from './car-wizard/WizardUI';
 import { Language } from '../types';
+import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from '../services/promptSafety';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -43,7 +44,7 @@ const HealthChat = ({ onBack, lang }: { onBack: () => void, lang?: Language }) =
     try {
       const history = [...messages, { role: 'user', text: userMsg }].map(m => ({
         role: (m.role === 'model' ? 'assistant' : 'user') as 'user' | 'assistant',
-        content: m.text,
+        content: m.role === 'model' ? m.text : wrapUserContent(m.text),
       }));
 
       const response = await chatClient.chat.completions.create({
@@ -56,7 +57,9 @@ Tugas Anda:
 1. Memberikan informasi kesehatan dasar secara umum.
 2. Membantu nasabah memahami istilah asuransi kesehatan mereka.
 3. Selalu ingatkan bahwa saran AI bukan diagnosa medis resmi dan mereka harus konsultasi ke dokter.
-Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan mudah dimengerti orang awam.`,
+Gunakan ${lang === Language.EN ? 'English' : 'Bahasa Indonesia'} yang santun dan mudah dimengerti orang awam.
+
+${UNTRUSTED_INPUT_NOTICE}`,
           },
           ...history,
         ],

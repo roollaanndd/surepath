@@ -1,7 +1,9 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth, adminOnly } from '../_shared/auth.ts';
+import { UNTRUSTED_INPUT_NOTICE } from '../_shared/promptSafety.ts';
 
 const SYSTEM_PROMPT = `You are an experienced CFO and financial controller at PT Ruang Proteksi Indonesia, an Indonesian insurtech company. You analyze financial data including GWP (Gross Written Premium), commissions, claim payouts, and transaction anomalies.
 
@@ -34,7 +36,9 @@ Always respond with ONLY valid JSON (no markdown) in this exact shape:
   "alerts": ["<critical items needing immediate attention in Indonesian>"]
 }
 
-Be thorough, conservative, and flag anything unusual. Use Bahasa Indonesia for all text fields.`;
+Be thorough, conservative, and flag anything unusual. Use Bahasa Indonesia for all text fields.
+
+${UNTRUSTED_INPUT_NOTICE}`;
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
@@ -62,6 +66,12 @@ Deno.serve(async (req) => {
     const { period_days = 30 } = await req.json().catch(() => ({}));
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+    const allowed = await checkRateLimit(supabase, `admin:${caller!.authId}`, 'ai_finance_review', 10);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again in an hour.' }), {
+        status: 429, headers: { ...CORS, 'Content-Type': 'application/json' }
+      });
+    }
 
     const since = new Date(Date.now() - period_days * 86400000).toISOString();
 

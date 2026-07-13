@@ -2,6 +2,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 type DocType = 'KTP' | 'STNK';
 
@@ -115,10 +116,19 @@ Deno.serve(async (req) => {
 
   const SUPABASE_URL  = Deno.env.get('SUPABASE_URL')             ?? '';
   const ANON_KEY      = Deno.env.get('SUPABASE_ANON_KEY')         ?? '';
+  const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
   // ── Auth: any authenticated user ──────────────────────────────────────────
-  const { errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
+  const { caller, errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, undefined, CORS);
   if (errorResponse) return errorResponse;
+
+  const rateLimitClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const allowed = await checkRateLimit(rateLimitClient, `user:${caller!.authId}`, 'ocr_scan', 20);
+  if (!allowed) {
+    return new Response(JSON.stringify({ status: 'ERROR', doc_type: 'KTP', fields: {}, message: 'Rate limit exceeded. Try again in an hour.' }), {
+      status: 429, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     const { image_base64, doc_type } = await req.json() as { image_base64: string; doc_type: DocType };
@@ -135,12 +145,10 @@ Deno.serve(async (req) => {
     }
 
     // Attempt to read Google Vision API key from Vault
-    const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
     let apiKey: string | null = null;
 
     if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const supabase = rateLimitClient;
       const { data } = await supabase.rpc('get_app_secret', { secret_name: 'GOOGLE_VISION_API_KEY' });
       apiKey = data ?? null;
     }

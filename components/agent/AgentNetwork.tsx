@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, Check, Share2, Users, ChevronDown, ChevronUp, ChevronRight, Coins } from 'lucide-react';
 import { Language } from '../../types';
-import { TIER_CONFIG } from '../../types';
 import {
   getAgentDownlineTree,
   getOverrideTransactions,
@@ -10,9 +9,11 @@ import {
   type WalletTransaction,
   type SpPolicyOrder,
   type DownlineNode,
+  type SpAgentTier,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotNetwork } from './AgentArt';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
   agentId: string;
@@ -32,15 +33,15 @@ function fmtDate(iso?: string): string {
   return new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function TierBadge({ tier }: { tier?: 'STAR' | 'ELITE' | null }) {
-  if (!tier) return null;
-  const cfg = TIER_CONFIG[tier];
+function TierBadge({ tier, tiers }: { tier?: string | null; tiers: SpAgentTier[] }) {
+  const cfg = getTierByCode(tiers, tier);
+  if (!cfg || cfg.is_default) return null;
   return (
     <span
       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest"
       style={{ background: cfg.color + '22', color: cfg.color, border: `1px solid ${cfg.color}44` }}
     >
-      {cfg.emoji} {cfg.label}
+      {cfg.emoji} {cfg.name}
     </span>
   );
 }
@@ -48,8 +49,10 @@ function TierBadge({ tier }: { tier?: 'STAR' | 'ELITE' | null }) {
 const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
 
-  const agentTier = agent?.tier as 'STAR' | 'ELITE' | undefined;
-  const tierCfg = agentTier ? TIER_CONFIG[agentTier] : TIER_CONFIG.STANDARD;
+  const { tiers } = useTierDefinitions();
+  const agentTierCode = agent?.tier as string | undefined;
+  const tierCfg = getTierByCode(tiers, agentTierCode) ?? tiers.find(x => x.is_default) ?? null;
+  const isDefaultTier = !tierCfg || tierCfg.is_default;
 
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [downlines, setDownlines] = useState<DownlineNode[]>([]);
@@ -137,7 +140,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       />
 
       {/* ── My Tier Card ─────────────────────────────────────────────────── */}
-      {agentTier ? (
+      {tierCfg && !isDefaultTier ? (
         <div
           className="rounded-[2rem] p-5 border"
           style={{
@@ -146,19 +149,19 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
           }}
         >
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl">{tierCfg.emoji}</span>
+            {tierCfg.emoji && <span className="text-3xl">{tierCfg.emoji}</span>}
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-0.5">
                 {t('Your Tier', 'Tier Anda')}
               </p>
-              <p className="font-black text-lg" style={{ color: tierCfg.color }}>{tierCfg.label}</p>
+              <p className="font-black text-lg" style={{ color: tierCfg.color }}>{tierCfg.name}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: t('Coin Bonus', 'Bonus Koin'), value: `+${(tierCfg.coinBonusRate * 100).toFixed(0)}%` },
-              { label: t('L1 Override', 'Override L1'), value: `${(tierCfg.l1OverrideRate * 100).toFixed(0)}%` },
-              { label: t('L2 Override', 'Override L2'), value: tierCfg.l2OverrideRate > 0 ? `${(tierCfg.l2OverrideRate * 100).toFixed(0)}%` : '—' },
+              { label: t('Coin Bonus', 'Bonus Koin'), value: `+${(tierCfg.coin_bonus_rate * 100).toFixed(0)}%` },
+              { label: t('L1 Override', 'Override L1'), value: `${(tierCfg.l1_override_rate * 100).toFixed(0)}%` },
+              { label: t('L2 Override', 'Override L2'), value: tierCfg.l2_override_rate > 0 ? `${(tierCfg.l2_override_rate * 100).toFixed(0)}%` : '—' },
             ].map(({ label, value }) => (
               <div
                 key={label}
@@ -183,9 +186,12 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
             <Users size={16} />
           </div>
           <div>
-            <p className="text-xs font-black text-ds-ink">Standard</p>
+            <p className="text-xs font-black text-ds-ink">{tierCfg?.name ?? 'Standard'}</p>
             <p className="text-[0.6rem] text-ds-ink3">
-              {t('2% override on L1 downline commission.', '2% override dari komisi downline L1.')}
+              {t(
+                `${((tierCfg?.l1_override_rate ?? 0.02) * 100).toFixed(0)}% override on L1 downline commission.`,
+                `${((tierCfg?.l1_override_rate ?? 0.02) * 100).toFixed(0)}% override dari komisi downline L1.`,
+              )}
             </p>
           </div>
         </div>
@@ -274,7 +280,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="font-black text-sm text-ds-ink truncate">{dl.name}</p>
-                          <TierBadge tier={dl.tier} />
+                          <TierBadge tier={dl.tier} tiers={tiers} />
                         </div>
                         <p className="text-[10px] font-bold text-ds-green">{dl.agent_code ?? '—'}</p>
                         <p className="text-[9px] text-ds-ink3">
@@ -319,7 +325,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1 flex-wrap">
                                     <p className="font-black text-[0.7rem] text-ds-ink truncate">{l2.name}</p>
-                                    <TierBadge tier={l2.tier} />
+                                    <TierBadge tier={l2.tier} tiers={tiers} />
                                   </div>
                                   <p className="text-[0.55rem] text-ds-ink3">{l2.agent_code ?? '—'} · {t('Joined', 'Bergabung')} {fmtDate(l2.created_at)}</p>
                                 </div>
@@ -405,18 +411,14 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ds-border">
-                  {[
-                    { name: 'Standard', emoji: null,  color: '#6b7280', coin: '—',    l1: '2%', l2: '—' },
-                    { name: TIER_CONFIG.STAR.label,  emoji: '⭐', color: TIER_CONFIG.STAR.color,  coin: '+10%', l1: '3%', l2: '1%' },
-                    { name: TIER_CONFIG.ELITE.label, emoji: '💎', color: TIER_CONFIG.ELITE.color, coin: '+15%', l1: '4%', l2: '2%' },
-                  ].map(row => (
-                    <tr key={row.name}>
+                  {tiers.map(row => (
+                    <tr key={row.code}>
                       <td className="py-2 pr-3 font-black" style={{ color: row.color }}>
                         {row.emoji} {row.name}
                       </td>
-                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.coin}</td>
-                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.l1}</td>
-                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.l2}</td>
+                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.coin_bonus_rate > 0 ? `+${(row.coin_bonus_rate * 100).toFixed(0)}%` : '—'}</td>
+                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.l1_override_rate > 0 ? `${(row.l1_override_rate * 100).toFixed(0)}%` : '—'}</td>
+                      <td className="py-2 px-2 text-center font-bold text-ds-ink2">{row.l2_override_rate > 0 ? `${(row.l2_override_rate * 100).toFixed(0)}%` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

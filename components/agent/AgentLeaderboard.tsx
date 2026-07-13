@@ -4,86 +4,40 @@ import { Language } from '../../types';
 import { getLeaderboard, getAgentStats, type AgentStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotTrophy, AgentEmpty } from './AgentArt';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import type { SpAgentTier } from '../../services/dbTypes';
 
 interface Props {
   agentId: string;
   agentName: string;
   lang: Language;
+  agentTier?: string | null;
 }
-
-type Tier = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
 
 interface LeaderEntry {
   agent_id: string;
   agent_name: string;
   agent_code: string;
+  tier: string | null;
   total_commission: number;
 }
 
-const getTier = (commission: number): Tier => {
-  if (commission >= 30000000) return 'PLATINUM';
-  if (commission >= 15000000) return 'GOLD';
-  if (commission >= 5000000) return 'SILVER';
-  return 'BRONZE';
+// Tint helpers — tiers only carry a single brand hex color now, so
+// backgrounds/borders are derived with alpha suffixes instead of fixed
+// Tailwind classes (which assumed a fixed set of tier names).
+const tint = (hex: string, alpha: string) => `${hex}${alpha}`;
+
+const thresholdLabel = (tier: SpAgentTier, lang: Language): string => {
+  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const parts: string[] = [];
+  if (tier.min_premium_amount) parts.push(`≥ ${formatIDR(tier.min_premium_amount)}`);
+  if (tier.min_policies_count) parts.push(`≥ ${tier.min_policies_count} ${t('policies', 'polis')}`);
+  return parts.length > 0 ? parts.join(' · ') : t('Starting tier', 'Tier awal');
 };
 
-const tierConfig: Record<Tier, {
-  label: string;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  emoji: string;
-  svgColor: string;
-}> = {
-  BRONZE: {
-    label: 'Bronze',
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-    emoji: '🥉',
-    svgColor: '#b45309',
-  },
-  SILVER: {
-    label: 'Silver',
-    color: 'text-ds-ink2',
-    bgColor: 'bg-ds-card2',
-    borderColor: 'border-ds-border',
-    emoji: '🥈',
-    svgColor: '#94a3b8',
-  },
-  GOLD: {
-    label: 'Gold',
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-200',
-    emoji: '🥇',
-    svgColor: '#ca8a04',
-  },
-  PLATINUM: {
-    label: 'Platinum',
-    color: 'text-ds-purple',
-    bgColor: 'bg-ds-purple-lt',
-    borderColor: 'border-ds-purple/20',
-    emoji: '💎',
-    svgColor: '#7c3aed',
-  },
-};
+const initials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-const tierMotivation = (tier: Tier, lang: Language): string => {
-  const en: Record<Tier, string> = {
-    BRONZE: 'Every top agent started here. Keep pushing — Silver is within reach!',
-    SILVER: "You're on fire! A few more deals and you hit Gold tier!",
-    GOLD: 'Outstanding performance! Only the elite reach Platinum — you\'re almost there!',
-    PLATINUM: 'LEGENDARY! You\'re among the top performers in the entire network!',
-  };
-  const id: Record<Tier, string> = {
-    BRONZE: 'Setiap agen top mulai dari sini. Terus semangat — Silver sudah dekat!',
-    SILVER: 'Kamu lagi hot! Beberapa deal lagi dan kamu masuk Gold!',
-    GOLD: 'Performa luar biasa! Hanya yang terbaik yang mencapai Platinum — kamu hampir sampai!',
-    PLATINUM: 'LUAR BIASA! Kamu termasuk top performer di seluruh jaringan!',
-  };
-  return lang === Language.EN ? en[tier] : id[tier];
-};
+const rankMedal: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 // Circular SVG Progress
 const CircularProgress: React.FC<{ value: number; size?: number; color?: string }> = ({
@@ -114,16 +68,13 @@ const CircularProgress: React.FC<{ value: number; size?: number; color?: string 
   );
 };
 
-const initials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-
-const rankMedal: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
-
-const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
+const AgentLeaderboard: React.FC<Props> = ({ agentId, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>([]);
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { tiers } = useTierDefinitions();
 
   const MONTHLY_TARGET = 10000000;
 
@@ -145,12 +96,14 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
   useEffect(() => { loadData(); }, [loadData]);
 
   const myCommission = stats?.totalCommissionMonth ?? 0;
-  const myTier = getTier(myCommission);
-  const tierCfg = tierConfig[myTier];
+  const myTier = getTierByCode(tiers, agentTier) ?? tiers.find(t2 => t2.is_default) ?? tiers[0] ?? null;
+  const nextTier = myTier ? tiers.find(t2 => t2.rank === myTier.rank + 1) ?? null : null;
   const progress = Math.min((myCommission / MONTHLY_TARGET) * 100, 100);
 
   const myEntry = leaderboard.find(e => e.agent_id === agentId);
   const myRank = myEntry ? leaderboard.indexOf(myEntry) + 1 : null;
+
+  const color = myTier?.color ?? '#6b7280';
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
@@ -182,7 +135,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
           </p>
           <div className="flex items-center gap-5">
             <div className="relative flex-shrink-0">
-              <CircularProgress value={progress} size={110} color={tierCfg.svgColor} />
+              <CircularProgress value={progress} size={110} color={color} />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="font-black text-xl leading-none text-ds-ink">{Math.round(progress)}%</span>
                 <span className="text-[9px] text-ds-ink3 font-bold uppercase tracking-widest mt-0.5">
@@ -199,77 +152,87 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
                 <p className="text-[10px] text-ds-ink3 font-bold uppercase tracking-widest">{t('Target', 'Target')}</p>
                 <p className="font-bold text-sm text-ds-ink2">{formatIDR(MONTHLY_TARGET)}</p>
               </div>
-              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${tierCfg.bgColor} border ${tierCfg.borderColor}`}>
-                <span className="text-sm">{tierCfg.emoji}</span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${tierCfg.color}`}>
-                  {tierCfg.label}
-                </span>
-              </div>
+              {myTier && (
+                <div
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border"
+                  style={{ background: tint(color, '14'), borderColor: tint(color, '33') }}
+                >
+                  {myTier.emoji && <span className="text-sm">{myTier.emoji}</span>}
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color }}>
+                    {myTier.name}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* My Rank Card */}
-        <div className={`rounded-[2rem] border p-5 shadow-ds-sm ${tierCfg.bgColor} ${tierCfg.borderColor}`}>
+        <div className="rounded-[2rem] border p-5 shadow-ds-sm" style={{ background: tint(color, '0d'), borderColor: tint(color, '33') }}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className={`text-[10px] font-black uppercase tracking-widest ${tierCfg.color} mb-1`}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>
                 {t('My Rank', 'Peringkat Saya')}
               </p>
               {myRank ? (
                 <div className="flex items-baseline gap-2">
-                  <span className={`font-black text-5xl tracking-tighter ${tierCfg.color}`}>#{myRank}</span>
-                  <span className={`text-sm font-bold opacity-60 ${tierCfg.color}`}>/ {leaderboard.length}</span>
+                  <span className="font-black text-5xl tracking-tighter" style={{ color }}>#{myRank}</span>
+                  <span className="text-sm font-bold opacity-60" style={{ color }}>/ {leaderboard.length}</span>
                 </div>
               ) : (
-                <p className={`font-black text-2xl tracking-tight ${tierCfg.color}`}>
+                <p className="font-black text-2xl tracking-tight" style={{ color }}>
                   {loading ? '…' : t('Not ranked yet', 'Belum ada peringkat')}
                 </p>
               )}
-              <p className={`text-sm font-medium mt-2 leading-relaxed max-w-[220px] ${tierCfg.color} opacity-80`}>
-                {tierMotivation(myTier, lang)}
+              <p className="text-sm font-medium mt-2 leading-relaxed max-w-[220px] opacity-80" style={{ color }}>
+                {nextTier
+                  ? t(
+                      `Keep going — reach ${nextTier.name} for even better benefits!`,
+                      `Terus semangat — capai ${nextTier.name} untuk benefit lebih baik!`,
+                    )
+                  : t('You\'ve reached the top tier — amazing work!', 'Kamu sudah di tier tertinggi — kerja luar biasa!')}
               </p>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-white/40 flex items-center justify-center flex-shrink-0">
-              {myTier === 'PLATINUM'
-                ? <Crown size={28} className={tierCfg.color} />
-                : <Trophy size={28} className={tierCfg.color} />
+              {!nextTier
+                ? <Crown size={28} style={{ color }} />
+                : <Trophy size={28} style={{ color }} />
               }
             </div>
           </div>
         </div>
 
-        {/* Tier legend */}
-        <div className="sp-glass rounded-[2rem] p-5">
-          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">
-            {t('Tier Requirements', 'Syarat Tier')}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {([
-              ['BRONZE', '< Rp 5M'],
-              ['SILVER', 'Rp 5M – 15M'],
-              ['GOLD', 'Rp 15M – 30M'],
-              ['PLATINUM', '> Rp 30M'],
-            ] as [Tier, string][]).map(([tier, range]) => {
-              const cfg = tierConfig[tier];
-              const active = myTier === tier;
-              return (
-                <div
-                  key={tier}
-                  className={`rounded-xl px-3 py-2 border transition-all ${cfg.bgColor} ${cfg.borderColor} ${active ? 'ring-2 ring-offset-1' : ''}`}
-                  style={active ? ({ '--tw-ring-color': cfg.svgColor } as React.CSSProperties) : {}}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm">{cfg.emoji}</span>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.color}`}>{cfg.label}</span>
-                    {active && <Star size={10} className={`${cfg.color} ml-auto`} fill="currentColor" />}
+        {/* Tier legend — dynamic, admin-configured */}
+        {tiers.length > 0 && (
+          <div className="sp-glass rounded-[2rem] p-5">
+            <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">
+              {t('Tier Requirements', 'Syarat Tier')}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {tiers.map(tierDef => {
+                const active = myTier?.code === tierDef.code;
+                return (
+                  <div
+                    key={tierDef.code}
+                    className={`rounded-xl px-3 py-2 border transition-all ${active ? 'ring-2 ring-offset-1' : ''}`}
+                    style={{
+                      background: tint(tierDef.color, '0d'),
+                      borderColor: tint(tierDef.color, '33'),
+                      ...(active ? ({ '--tw-ring-color': tierDef.color } as React.CSSProperties) : {}),
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {tierDef.emoji && <span className="text-sm">{tierDef.emoji}</span>}
+                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: tierDef.color }}>{tierDef.name}</span>
+                      {active && <Star size={10} style={{ color: tierDef.color }} className="ml-auto" fill="currentColor" />}
+                    </div>
+                    <p className="text-[10px] font-bold mt-0.5 opacity-70" style={{ color: tierDef.color }}>{thresholdLabel(tierDef, lang)}</p>
                   </div>
-                  <p className={`text-[10px] font-bold mt-0.5 opacity-70 ${cfg.color}`}>{range}</p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Top Agents Leaderboard List */}
         <div className="sp-glass rounded-[2rem] overflow-hidden">
@@ -304,8 +267,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
               {leaderboard.map((entry, idx) => {
                 const rank = idx + 1;
                 const isMe = entry.agent_id === agentId;
-                const entryTier = getTier(entry.total_commission);
-                const entryCfg = tierConfig[entryTier];
+                const entryTier = getTierByCode(tiers, entry.tier);
                 const medal = rankMedal[rank];
 
                 return (
@@ -343,7 +305,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang }) => {
                         {entry.agent_code && (
                           <span className={`text-[9px] font-bold ${rank === 1 ? 'text-white/50' : 'text-ds-ink3'}`}>{entry.agent_code}</span>
                         )}
-                        <span className={`text-[9px] ${entryCfg.color}`}>{entryCfg.emoji}</span>
+                        {entryTier?.emoji && <span className="text-[9px]">{entryTier.emoji}</span>}
                       </div>
                     </div>
 

@@ -11,13 +11,13 @@ import {
   Car, Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
   UserPlus, ChevronDown, Pencil, Shield,
-  X, Clock, AlertCircle, Send,
+  X, Clock, AlertCircle, Send, Sparkles,
 } from 'lucide-react';
 import { getSecurityPulse } from '../../services/NeuralGuardService';
 import { db, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
-  updateAgentTier,
+  updateAgentTier, getTierChangeRequests, evaluateAgentTier,
   callGateway,
   getAllOrders, updateOrderStatus, type SpPolicyOrder,
   type SpUser, type SpClaim,
@@ -27,10 +27,10 @@ import {
   getSecurityStats, getSessionActivityByHour,
   getAdminPayments, getAdminFinancialReports,
 } from '../../services/supabaseService';
-import { TIER_CONFIG } from '../../types';
 import { useToast } from '../ui';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import type { BackupRecord } from '../../services/backupService';
 import { listBackups, performBackup, downloadBackup, getLastBackupTime } from '../../services/backupService';
 
@@ -1656,11 +1656,9 @@ export const AgentManagementView = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-
-  const adminId: string = (() => {
-    try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.supabaseId ?? ''; }
-    catch { return ''; }
-  })();
+  const [pendingTierAgentIds, setPendingTierAgentIds] = useState<Set<string>>(new Set());
+  const { tiers } = useTierDefinitions();
+  const toast = useToast();
 
   const adminRole: string = (() => {
     try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.role ?? ''; }
@@ -1671,6 +1669,7 @@ export const AgentManagementView = () => {
 
   useEffect(() => {
     getAllAgents().then(data => { setAgents(data); setLoading(false); });
+    getTierChangeRequests('PENDING').then(reqs => setPendingTierAgentIds(new Set(reqs.map(r => r.agent_id))));
   }, []);
 
   const handleVerify = async (agentId: string, verified: boolean) => {
@@ -1690,11 +1689,34 @@ export const AgentManagementView = () => {
     setSaving(null);
   };
 
-  const handleTierChange = async (agentId: string, tier: 'STAR' | 'ELITE' | null) => {
+  const handleTierChange = async (agentId: string, tierCode: string) => {
     setSaving(agentId + '_tier');
-    await updateAgentTier(agentId, tier, adminId);
-    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier } : a));
+    const result = await updateAgentTier(agentId, tierCode);
     setSaving(null);
+    if (!result.success) { toast.error(result.error ?? 'Gagal mengubah tier'); return; }
+    if (result.pending) {
+      setPendingTierAgentIds(prev => new Set(prev).add(agentId));
+      toast.success('Perubahan tier menunggu persetujuan level atas');
+    } else {
+      setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier: tierCode } : a));
+      toast.success('Tier agen diperbarui');
+    }
+  };
+
+  const handleEvaluateTier = async (agentId: string) => {
+    setSaving(agentId + '_tier');
+    const res = await evaluateAgentTier(agentId, true);
+    setSaving(null);
+    if (res.error) { toast.error(res.error); return; }
+    if (res.pending) {
+      setPendingTierAgentIds(prev => new Set(prev).add(agentId));
+      toast.success('Tier hasil evaluasi menunggu persetujuan level atas');
+    } else if (res.data?.tier) {
+      setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier: res.data.tier } : a));
+      toast.success(`Tier diperbarui ke ${res.data.tier}`);
+    } else {
+      toast.success('Tier agen sudah sesuai hasil evaluasi');
+    }
   };
 
   const pending = agents.filter(a => !(a as any).verified);
@@ -1706,15 +1728,15 @@ export const AgentManagementView = () => {
     </div>
   );
 
-  const TierBadge: React.FC<{ tier?: 'STAR' | 'ELITE' | null }> = ({ tier }) => {
-    if (!tier) return null;
-    const cfg = TIER_CONFIG[tier];
+  const TierBadge: React.FC<{ tier?: string | null }> = ({ tier }) => {
+    const cfg = getTierByCode(tiers, tier);
+    if (!cfg || cfg.is_default) return null;
     return (
       <span
         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-widest"
         style={{ background: cfg.color + '22', color: cfg.color, border: `1px solid ${cfg.color}44` }}
       >
-        {cfg.emoji} {cfg.label}
+        {cfg.emoji} {cfg.name}
       </span>
     );
   };
@@ -1754,32 +1776,33 @@ export const AgentManagementView = () => {
 
           {/* Tier selector — business manager only */}
           {canAssignTier && (
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {pendingTierAgentIds.has(a.id) && (
+                <span className="px-2 py-1 rounded-lg text-[0.55rem] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400">
+                  Menunggu Persetujuan
+                </span>
+              )}
               {isSavingTier ? (
                 <span className="text-[0.6rem] text-gray-400">…</span>
               ) : (
-                <>
-                  {(['STAR', 'ELITE'] as const).map(t => {
-                    const cfg = TIER_CONFIG[t];
-                    const active = agentTier === t;
-                    return (
-                      <button
-                        key={t}
-                        onClick={() => handleTierChange(a.id, active ? null : t)}
-                        title={active ? `Hapus tier ${cfg.label}` : `Atur sebagai ${cfg.label}`}
-                        className="px-2.5 py-1.5 rounded-xl text-[0.58rem] font-black uppercase tracking-widest transition-all"
-                        style={{
-                          background: active ? cfg.color + '22' : 'rgba(255,255,255,0.04)',
-                          color: active ? cfg.color : 'rgba(255,255,255,0.3)',
-                          border: `1px solid ${active ? cfg.color + '55' : 'rgba(255,255,255,0.08)'}`,
-                        }}
-                      >
-                        {cfg.emoji} {t}
-                      </button>
-                    );
-                  })}
-                </>
+                <select
+                  value={agentTier ?? ''}
+                  onChange={e => e.target.value && handleTierChange(a.id, e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-xl px-2 py-1.5 text-[0.6rem] font-black uppercase tracking-widest text-gray-300 focus:outline-none"
+                >
+                  {tiers.map(tier => (
+                    <option key={tier.code} value={tier.code}>{tier.emoji ? `${tier.emoji} ` : ''}{tier.name}</option>
+                  ))}
+                </select>
               )}
+              <button
+                onClick={() => handleEvaluateTier(a.id)}
+                disabled={isSavingTier}
+                title="Evaluasi tier otomatis dari jumlah polis & premi"
+                className="w-7 h-7 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+              >
+                <Sparkles size={12} />
+              </button>
             </div>
           )}
 
@@ -1835,8 +1858,9 @@ export const AgentManagementView = () => {
     );
   };
 
-  const starCount  = agents.filter(a => a.tier === 'STAR').length;
-  const eliteCount = agents.filter(a => a.tier === 'ELITE').length;
+  const tierCounts = tiers
+    .filter(tier => !tier.is_default)
+    .map(tier => ({ label: tier.name, value: agents.filter(a => a.tier === tier.code).length, color: 'text-amber-400' }));
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -1860,8 +1884,7 @@ export const AgentManagementView = () => {
           { label: 'Total Mitra',  value: agents.length, color: 'text-white' },
           { label: 'Aktif',        value: active.length, color: 'text-emerald-400' },
           { label: 'Pending',      value: pending.length, color: 'text-amber-400' },
-          { label: TIER_CONFIG.STAR.label,  value: starCount,  color: 'text-amber-400' },
-          { label: TIER_CONFIG.ELITE.label, value: eliteCount, color: 'text-violet-400' },
+          ...tierCounts,
         ].map(({ label, value, color }) => (
           <Card key={label} className="py-5 text-center">
             <p className={`text-2xl font-black ${color}`}>{value}</p>

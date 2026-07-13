@@ -56,8 +56,8 @@ const downloadCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-const Card: React.FC<{ children?: React.ReactNode, className?: string }> = ({ children, className = "" }) => (
-  <div className={`p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
+const Card: React.FC<{ children?: React.ReactNode, className?: string, onClick?: () => void }> = ({ children, className = "", onClick }) => (
+  <div onClick={onClick} className={`p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
     {children}
   </div>
 );
@@ -170,6 +170,132 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// ── Claim photo-fraud detail modal ───────────────────────────────────────────
+
+const CLAIM_FRAUD_VERDICT_META: Record<string, { label: string; color: string; Icon: any }> = {
+  CLEAN:           { label: 'Foto Bersih — Tidak Ada Indikasi Fraud', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Icon: ShieldCheck },
+  REVIEW_REQUIRED: { label: 'Perlu Tinjauan Manual',                  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',       Icon: AlertCircle },
+  REJECTED:        { label: 'Risiko Fraud Tinggi',                    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',          Icon: ShieldAlert },
+};
+
+const PHOTO_VERDICT_BADGE: Record<string, string> = {
+  CLEAN:     'bg-emerald-500/10 text-emerald-400',
+  FLAGGED:   'bg-amber-500/10 text-amber-400',
+  HIGH_RISK: 'bg-rose-500/10 text-rose-400',
+};
+
+const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: () => void; onSelectClaim: (c: SpClaim) => void }> = ({ claim, claims, onClose, onSelectClaim }) => {
+  const photos: string[] = (claim as any).photo_urls?.length ? (claim as any).photo_urls : ((claim as any).photos ?? []);
+  const reports: any[] = (claim as any).ai_photo_reports ?? [];
+  const verdictMeta = claim.ai_fraud_verdict ? CLAIM_FRAUD_VERDICT_META[claim.ai_fraud_verdict] : null;
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+      <div
+        className="relative z-10 w-full max-w-2xl bg-[#0e0e0e] border border-white/10 rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+          <div>
+            <h2 className="font-black text-sm uppercase tracking-widest text-white">{claim.claim_number ?? claim.id.slice(0, 8)}</h2>
+            <p className="text-[0.6rem] font-bold text-gray-500 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {verdictMeta && (
+            <div className={`p-5 rounded-2xl border flex items-center gap-4 ${verdictMeta.color}`}>
+              <verdictMeta.Icon size={26} className="shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-widest">{verdictMeta.label}</p>
+                <p className="text-[0.6rem] font-bold opacity-70 mt-0.5">
+                  Skor fraud: {claim.ai_fraud_score ?? '—'}/100
+                  {claim.ai_analyzed_at ? ` · Dianalisa ${new Date(claim.ai_analyzed_at).toLocaleString('id-ID')}` : ''}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {photos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Foto ({photos.length})</p>
+              <div className="grid grid-cols-3 gap-3">
+                {photos.map((url: string, i: number) => (
+                  <a key={i} href={url} target="_blank" rel="noreferrer">
+                    <img src={url} alt={`claim-photo-${i}`} className="w-full aspect-square object-cover rounded-2xl border border-white/10 hover:opacity-80 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {reports.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Laporan Forensik Per Foto</p>
+              <div className="space-y-3">
+                {reports.map((r: any, i: number) => {
+                  const badge = PHOTO_VERDICT_BADGE[r.verdict] ?? PHOTO_VERDICT_BADGE.CLEAN;
+                  const matched = r.duplicate?.isDuplicate ? claims.find(c => c.id === r.duplicate.matchedSourceId) : null;
+                  return (
+                    <div key={i} className="p-4 bg-white/[0.03] border border-white/5 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[0.65rem] font-black uppercase text-white">Foto {r.photoIndex + 1}</p>
+                        <span className={`px-2 py-0.5 rounded text-[0.45rem] font-black uppercase ${badge}`}>{r.verdict}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[0.55rem] text-gray-400 font-bold">
+                        <span>Skor Keaslian: {r.ai?.authenticityScore ?? '—'}/100</span>
+                        <span>Plat Terlihat: {r.ai?.plateVisible ? 'Ya' : 'Tidak'}</span>
+                        <span>Foto Layar: {r.ai?.isScreenPhoto ? 'Ya' : 'Tidak'}</span>
+                        <span>Foto Stok: {r.ai?.isStockOrDownloaded ? 'Ya' : 'Tidak'}</span>
+                        <span>Metadata EXIF: {r.exif?.hasExif ? 'Ada' : 'Tidak ada'}</span>
+                        {r.exif?.editingSoftware && <span className="text-rose-400">Software Editing: {r.exif.editingSoftware}</span>}
+                      </div>
+                      {r.duplicate?.isDuplicate && (
+                        <div className="p-2 bg-rose-500/10 rounded-xl text-[0.55rem] font-bold text-rose-400 flex items-center justify-between gap-2">
+                          <span>Mirip {r.duplicate.similarity}% dengan foto {r.duplicate.matchedSourceType === 'SURVEY' ? 'survei' : 'klaim'} lain{matched ? ` (${matched.claim_number ?? matched.id.slice(0, 8)})` : ''}</span>
+                          {matched && (
+                            <button onClick={() => onSelectClaim(matched)} className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 shrink-0">Lihat</button>
+                          )}
+                        </div>
+                      )}
+                      {r.flagReasons?.length > 0 && (
+                        <ul className="space-y-0.5">
+                          {r.flagReasons.map((reason: string, ri: number) => (
+                            <li key={ri} className="text-[0.55rem] text-amber-400">• {reason}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-white/5">
+            <div className="space-y-0.5">
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Status</p>
+              <p className="text-xs font-bold text-white">{STATUS_LABEL[claim.status] ?? claim.status}</p>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Estimasi</p>
+              <p className="text-xs font-bold text-white">{claim.amount_estimated ? formatIDR(claim.amount_estimated) : '—'}</p>
+            </div>
+            <div className="space-y-0.5 col-span-2">
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Kronologi</p>
+              <p className="text-xs font-bold text-white leading-relaxed">{claim.chronology || '—'}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1904,6 +2030,7 @@ export const ClaimsAdminView = () => {
   const [claims, setClaims] = useState<SpClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('ALL');
+  const [selectedClaim, setSelectedClaim] = useState<SpClaim | null>(null);
 
   useEffect(() => {
     getAllClaims().then(data => { setClaims(data); setLoading(false); });
@@ -1914,10 +2041,20 @@ export const ClaimsAdminView = () => {
     setClaims(prev => prev.map(c => c.id === id ? { ...c, status } : c));
   };
 
-  const visible = filter === 'ALL' ? claims : claims.filter(c => c.status === filter);
+  const needsReview = (c: SpClaim) => (c as any).ai_fraud_verdict === 'REVIEW_REQUIRED' || (c as any).ai_fraud_verdict === 'REJECTED';
+  const visible = filter === 'ALL' ? claims : filter === 'NEEDS_REVIEW' ? claims.filter(needsReview) : claims.filter(c => c.status === filter);
+  const needsReviewCount = claims.filter(needsReview).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {selectedClaim && (
+        <ClaimDetailModal
+          claim={selectedClaim}
+          claims={claims}
+          onClose={() => setSelectedClaim(null)}
+          onSelectClaim={c => setSelectedClaim(c)}
+        />
+      )}
       {/* Filter */}
       <div className="flex gap-2 flex-wrap">
         {['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'].map(f => (
@@ -1932,6 +2069,16 @@ export const ClaimsAdminView = () => {
             {f === 'ALL' ? ` (${claims.length})` : ` (${claims.filter(c => c.status === f).length})`}
           </button>
         ))}
+        {needsReviewCount > 0 && (
+          <button
+            onClick={() => setFilter('NEEDS_REVIEW')}
+            className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+              filter === 'NEEDS_REVIEW' ? 'bg-rose-500 text-white' : 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
+            }`}
+          >
+            <ShieldAlert size={12} /> Needs Review ({needsReviewCount})
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -1942,15 +2089,23 @@ export const ClaimsAdminView = () => {
         <Card className="text-center py-12 text-gray-500 text-sm font-bold">No claims found.</Card>
       ) : (
         <div className="space-y-3">
-          {visible.map(claim => (
-            <Card key={claim.id} className="py-5">
+          {visible.map(claim => {
+            const fraudVerdict = (claim as any).ai_fraud_verdict as string | undefined;
+            const fraudMeta = fraudVerdict ? CLAIM_FRAUD_VERDICT_META[fraudVerdict] : null;
+            return (
+            <Card key={claim.id} className="py-5 cursor-pointer" onClick={() => setSelectedClaim(claim)}>
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-black text-sm">{claim.client_name ?? '—'}</p>
                     <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${STATUS_COLOR[claim.status] ?? 'bg-white/5 text-gray-400'}`}>
                       {STATUS_LABEL[claim.status] ?? claim.status}
                     </span>
+                    {fraudMeta && (
+                      <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest border flex items-center gap-1 ${fraudMeta.color}`}>
+                        <fraudMeta.Icon size={10} /> {(claim as any).ai_fraud_score}/100
+                      </span>
+                    )}
                   </div>
                   <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">
                     {claim.claim_number ?? '-'} · {claim.product_type ?? '-'} · {claim.date ?? '-'}
@@ -1963,7 +2118,7 @@ export const ClaimsAdminView = () => {
                   )}
                 </div>
                 {/* Quick status actions */}
-                <div className="flex gap-2 flex-wrap flex-shrink-0">
+                <div className="flex gap-2 flex-wrap flex-shrink-0" onClick={e => e.stopPropagation()}>
                   {claim.status === 'SUBMITTED' && (
                     <button
                       onClick={() => handleStatus(claim.id, 'UNDER_REVIEW')}
@@ -1999,7 +2154,8 @@ export const ClaimsAdminView = () => {
                 </div>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

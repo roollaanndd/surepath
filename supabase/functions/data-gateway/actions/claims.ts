@@ -42,6 +42,39 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           incident_date:  params.incident_date ?? params.date ?? null,
         };
 
+        // ── Claim photo fraud analysis: pull TRUSTED, server-computed results ──
+        // We never trust fraud_score/fraud_verdict/photo_reports if the client
+        // sends them directly — that would let the exact fraudster this
+        // feature targets simply claim "CLEAN" regardless of what
+        // analyze-claim-photos actually found. Instead, the client only sends
+        // back the analysisId it got from that edge function; we look up the
+        // row it staged (service_role write), verify it belongs to this
+        // caller, hasn't expired, and hasn't already been consumed by another
+        // claim, then use ONLY the staged values.
+        let stagedAnalysis: Record<string, any> | null = null;
+        if (params.analysis_id) {
+          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+          const { data: staged } = await db
+            .from('sp_claim_photo_analyses')
+            .select('*')
+            .eq('id', String(params.analysis_id))
+            .eq('user_id', caller.authId)
+            .is('consumed_at', null)
+            .gte('created_at', oneHourAgo)
+            .maybeSingle();
+          if (staged) {
+            stagedAnalysis = staged;
+            insertRow.photo_urls = staged.photo_urls ?? null;
+            insertRow.ai_fraud_score = staged.fraud_score ?? null;
+            insertRow.ai_fraud_verdict = staged.fraud_verdict ?? null;
+            insertRow.ai_photo_reports = staged.photo_reports ?? null;
+            insertRow.ai_analyzed_at = staged.created_at ?? new Date().toISOString();
+            // photos (legacy jsonb column) mirrors photo_urls when present so
+            // old UI code paths that still read `photos` keep working.
+            if (!insertRow.photos && staged.photo_urls) insertRow.photos = staged.photo_urls;
+          }
+        }
+
         // Derive agent_id + policy_id from linked policy order (if policy_number or policy_id provided)
         if (params.policy_id) {
           insertRow.policy_id = String(params.policy_id);
@@ -72,6 +105,19 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           .single();
         if (error) return json({ error: error.message }, 400);
 
+        // ── Consume the staged photo analysis (prevents reuse across multiple
+        // claims) and record the perceptual hashes for future duplicate checks
+        if (stagedAnalysis) {
+          db.from('sp_claim_photo_analyses').update({ consumed_at: new Date().toISOString() }).eq('id', stagedAnalysis.id).then(() => {}, () => {});
+          const hashes: (string | null)[] = Array.isArray(stagedAnalysis.photo_hashes) ? stagedAnalysis.photo_hashes : [];
+          const urls: string[] = Array.isArray(stagedAnalysis.photo_urls) ? stagedAnalysis.photo_urls : [];
+          const hashRows = urls
+            .map((url, i) => ({ photo_hash: hashes[i], photo_url: url }))
+            .filter(r => r.photo_hash != null)
+            .map(r => ({ photo_hash: r.photo_hash, source_type: 'CLAIM', source_id: (data as any).id, photo_url: r.photo_url }));
+          if (hashRows.length > 0) db.from('sp_photo_hashes').insert(hashRows).then(() => {}, () => {});
+        }
+
         // ── Operator/admin in-app notification ──────────────────────────────
         db.from('sp_admin_notifications').insert({
           type: 'NEW_CLAIM',
@@ -80,6 +126,17 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           read: false,
           metadata: { claim_id: (data as any).id, user_id: caller.authId, agent_id: insertRow.agent_id ?? null },
         }).then(() => {}, () => {});
+
+        // NEW: distinct fraud-alert notification when photo verification wasn't clean
+        if (insertRow.ai_fraud_verdict && insertRow.ai_fraud_verdict !== 'CLEAN') {
+          db.from('sp_admin_notifications').insert({
+            type: 'CLAIM_FRAUD_ALERT',
+            title: insertRow.ai_fraud_verdict === 'REJECTED' ? 'Klaim Berisiko Tinggi — Foto Mencurigakan' : 'Klaim Perlu Tinjauan — Foto Ditandai',
+            body: `${String((data as any).client_name ?? 'Nasabah')} · Skor fraud: ${insertRow.ai_fraud_score}/100 · ${String((data as any).claim_number ?? (data as any).id)}`,
+            read: false,
+            metadata: { claim_id: (data as any).id, user_id: caller.authId, fraud_score: insertRow.ai_fraud_score, fraud_verdict: insertRow.ai_fraud_verdict },
+          }).then(() => {}, () => {});
+        }
 
         // NEW: Notify the agent (if linked) that one of their customers filed a claim
         if (insertRow.agent_id) {

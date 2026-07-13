@@ -26,7 +26,9 @@ import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts'
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
-const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+// Scoped to this account's Vercel team slug — see supabase/functions/_shared/cors.ts
+// for why an unscoped *.vercel.app pattern is too broad.
+const PREVIEW_RE = /^https:\/\/[a-z0-9-]+-roollaanndds-projects\.vercel\.app$/i;
 const LOCAL_RE = /^(https?|capacitor):\/\/localhost(:\d+)?$/i;
 function corsHeaders(origin: string | null): Record<string, string> {
   const allow = origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_RE.test(origin) || LOCAL_RE.test(origin)) ? origin : ALLOWED_ORIGINS[0];

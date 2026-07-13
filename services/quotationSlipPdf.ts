@@ -211,7 +211,7 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   });
 
   // ─── Save ───────────────────────────────────────────────────────────────
-  const filename = `${data.quotationNumber.replace(/[\/\s]/g, '_')}_Penawaran_${data.insurerShort}_${data.preparedForCompany.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}.pdf`;
+  const filename = `${data.quotationNumber.replace(/[/\s]/g, '_')}_Penawaran_${data.insurerShort}_${data.preparedForCompany.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}.pdf`;
   doc.save(filename);
 }
 

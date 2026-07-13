@@ -113,7 +113,12 @@ const App = () => {
   );
   const [oauthLoading, setOauthLoading] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.location.search.includes('code=') || window.location.hash.includes('access_token=');
+    // Exact param match — a naive substring check on the raw query string
+    // (previously `.includes('code=')`) false-positives on any unrelated
+    // param ending in "code" (promo_code, referral_code, agent_code, all
+    // used elsewhere in this app), leaving oauthLoading stuck true for
+    // users who never went through an OAuth redirect at all.
+    return new URLSearchParams(window.location.search).has('code') || window.location.hash.includes('access_token=');
   });
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang]           = useState<Language>(detectLang);
@@ -213,6 +218,11 @@ const App = () => {
     injectVercelAnalytics({ mode: 'auto' });
     seedDatabase().catch(console.error);
     const saved = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
+    // Tracks whether a cached session was restored successfully, so we know
+    // below whether to fall through to the fresh Supabase Auth listener
+    // (which is also what resolves oauthLoading — including its 10s safety
+    // timeout — for anyone who doesn't end up with a restored session).
+    let sessionRestored = false;
     if (saved) {
       try {
         const user = JSON.parse(saved);
@@ -226,8 +236,10 @@ const App = () => {
           console.info(`[SurePath] Session version mismatch (${savedVersion} → ${APP_VERSION}), clearing session for refresh.`);
           localStorage.removeItem(SESSION_KEY);
           sessionStorage.removeItem(SESSION_KEY);
-          // Don't set currentUser — fall through to Supabase Auth path below
+          // Don't set currentUser — fall through to the Supabase Auth
+          // listener below (sessionRestored stays false).
         } else {
+          sessionRestored = true;
           setCurrentUser(user);
           setAppMode(true);
           setOauthLoading(false);
@@ -257,12 +269,13 @@ const App = () => {
         localStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_KEY);
       }
-    } else {
+    }
+    if (!sessionRestored) {
       let resolved = false;
       const buildAndLogin = async (u: any) => {
         if (resolved) return;
         resolved = true;
-        if (window.location.search.includes('code=') || window.location.hash.includes('access_token=')) {
+        if (new URLSearchParams(window.location.search).has('code') || window.location.hash.includes('access_token=')) {
           window.history.replaceState({}, '', window.location.pathname);
         }
         const [byId, byEmail] = await Promise.allSettled([

@@ -1,9 +1,47 @@
 // Claims (sp_claims) — agent submission, admin review, customer-scoped reads.
 
 import { supabase, callGateway } from './db';
-import type { SpClaim } from './dbTypes';
+import type { SpClaim, ClaimPhotoForensicReport } from './dbTypes';
 
 // ─── Claims ───────────────────────────────────────────────────────────────────
+
+export interface ClaimPhotoAnalysisResult {
+  success: boolean;
+  error?: string;
+  analysisId?: string;
+  photoReports?: ClaimPhotoForensicReport[];
+  aggregate?: {
+    fraudScore: number;
+    fraudVerdict: 'CLEAN' | 'REVIEW_REQUIRED' | 'REJECTED';
+    severity: 'Ringan' | 'Sedang' | 'Berat' | 'Total Loss';
+    totalEstimasi: number;
+    rincianPart: { part: string; condition: string; action: 'Perbaiki' | 'Ganti'; estimasiBiaya: number }[];
+    aiInsight: string;
+    flagSummary: string[];
+  };
+}
+
+// Runs the merged damage + fraud-forensics analysis on already-uploaded
+// claim photos (see supabase/functions/analyze-claim-photos). Returns an
+// analysisId that must be passed to submitClaim — the gateway looks up the
+// server-computed results by that id rather than trusting anything echoed
+// back directly, since this is a fraud-detection feature and the fraudster
+// is exactly who'd otherwise spoof a "CLEAN" result.
+export async function analyzeClaimPhotos(photoUrls: string[]): Promise<ClaimPhotoAnalysisResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('analyze-claim-photos', {
+      body: { photo_urls: photoUrls },
+    });
+    if (error) {
+      console.error('analyzeClaimPhotos:', error);
+      return { success: false, error: error.message ?? 'Gagal menganalisa foto.' };
+    }
+    return data as ClaimPhotoAnalysisResult;
+  } catch (e: any) {
+    console.error('analyzeClaimPhotos threw:', e);
+    return { success: false, error: e?.message ?? 'Gagal menganalisa foto.' };
+  }
+}
 
 export async function getAgentClaims(agentId: string): Promise<SpClaim[]> {
   const { data, error } = await supabase
@@ -15,7 +53,7 @@ export async function getAgentClaims(agentId: string): Promise<SpClaim[]> {
   return (data ?? []) as SpClaim[];
 }
 
-export async function submitClaim(claimData: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'>): Promise<SpClaim | null> {
+export async function submitClaim(claimData: Omit<SpClaim, 'id' | 'created_at' | 'claim_number'> & { analysis_id?: string }): Promise<SpClaim | null> {
   // FIX: previously this dropped 7 of 10 fields the UI sends.
   // Now forwards the FULL payload to the gateway (which derives agent_id from linked policy).
   const { data, error } = await callGateway('submit_claim', {
@@ -31,6 +69,10 @@ export async function submitClaim(claimData: Omit<SpClaim, 'id' | 'created_at' |
     chronology:      (claimData as any).chronology,
     photos:          (claimData as any).photos,
     incident_date:   (claimData as any).incident_date ?? (claimData as any).date,
+    // Photo fraud analysis — the gateway looks this id up server-side and
+    // ignores any fraud fields sent directly (see submit_claim in
+    // data-gateway/actions/claims.ts for why).
+    analysis_id:     (claimData as any).analysis_id,
   });
   if (error) { console.error('submitClaim:', error); return null; }
   return data as SpClaim;

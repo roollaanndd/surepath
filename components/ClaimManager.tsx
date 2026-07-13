@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, BrainCircuit, CheckCircle2, Smartphone, ArrowRight, MapPin, FileText, AlertCircle, Loader2, ShieldCheck, ChevronRight, Rocket, Users, HeartPulse, Receipt, Building2, RefreshCw, Car, Activity, Zap, ClipboardList } from 'lucide-react';
-import { analyzeClaimPhoto, analyzeHealthReceipt, ClaimAnalysisData, HealthClaimData } from '../services/geminiService';
+import { Camera, BrainCircuit, CheckCircle2, Smartphone, ArrowRight, MapPin, FileText, AlertCircle, Loader2, ShieldCheck, ShieldAlert, ShieldQuestion, ChevronRight, Rocket, Users, HeartPulse, Receipt, Building2, RefreshCw, Car, Activity, Zap, ClipboardList, ImagePlus, X } from 'lucide-react';
+import { analyzeHealthReceipt, ClaimAnalysisData, HealthClaimData } from '../services/geminiService';
+import type { ClaimPhotoForensicReport } from '../services/dbTypes';
 import { db, Claim } from '../db';
 import { SmartProcessingView } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
-import { submitClaim } from '../services/supabaseService';
+import { submitClaim, uploadClaimPhoto, analyzeClaimPhotos, ClaimPhotoAnalysisResult } from '../services/supabaseService';
+
+const MAX_CLAIM_PHOTOS = 5;
+
+const VERDICT_META: Record<string, { label: string; color: string; Icon: any }> = {
+  CLEAN:           { label: 'Foto Terverifikasi',   color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', Icon: ShieldCheck },
+  REVIEW_REQUIRED: { label: 'Perlu Tinjauan Admin',  color: 'text-amber-500 bg-amber-500/10 border-amber-500/20',       Icon: ShieldQuestion },
+  REJECTED:        { label: 'Foto Berisiko Tinggi',  color: 'text-rose-500 bg-rose-500/10 border-rose-500/20',          Icon: ShieldAlert },
+};
+
+const PHOTO_VERDICT_META: Record<string, { label: string; color: string }> = {
+  CLEAN:     { label: 'OK', color: 'bg-emerald-500/10 text-emerald-500' },
+  FLAGGED:   { label: 'Ditandai', color: 'bg-amber-500/10 text-amber-500' },
+  HIGH_RISK: { label: 'Risiko Tinggi', color: 'bg-rose-500/10 text-rose-500' },
+};
 
 const formatIDR = (num: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -30,9 +45,15 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   const [step, setStep] = useState<'select' | 'upload' | 'analyzing' | 'result' | 'reporting' | 'success'>('select');
   const [claimResult, setClaimResult] = useState<ClaimAnalysisData | null>(null);
   const [healthResult, setHealthResult] = useState<HealthClaimData | null>(null);
-  const [activeTab, setActiveTab] = useState<'evidence' | 'reasoning' | 'steps'>('evidence');
+  const [activeTab, setActiveTab] = useState<'evidence' | 'reasoning' | 'steps' | 'verification'>('evidence');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [photoBase64, setPhotoBase64] = useState<string>('');
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [photoReports, setPhotoReports] = useState<ClaimPhotoForensicReport[]>([]);
+  const [fraudAggregate, setFraudAggregate] = useState<ClaimPhotoAnalysisResult['aggregate'] | null>(null);
+  const [analysisId, setAnalysisId] = useState<string | undefined>(undefined);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [reportForm, setReportForm] = useState<ReportForm>({
     policyNumber: '',
     contactInfo: '',
@@ -67,12 +88,16 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
         claimResult,
         healthResult,
         photoBase64,
+        photoUrls,
+        photoReports,
+        fraudAggregate,
+        analysisId,
         reportForm,
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
     }
-  }, [claimType, step, claimResult, healthResult, photoBase64, reportForm]);
+  }, [claimType, step, claimResult, healthResult, photoBase64, photoUrls, photoReports, fraudAggregate, analysisId, reportForm]);
 
   const loadDraft = () => {
     const draft = localStorage.getItem(DRAFT_KEY);
@@ -83,6 +108,10 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
       setClaimResult(data.claimResult);
       setHealthResult(data.healthResult);
       setPhotoBase64(data.photoBase64);
+      setPhotoUrls(data.photoUrls ?? []);
+      setPhotoReports(data.photoReports ?? []);
+      setFraudAggregate(data.fraudAggregate ?? null);
+      setAnalysisId(data.analysisId);
       setReportForm(data.reportForm);
       setHasDraft(false);
     }
@@ -94,7 +123,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     setStep('select');
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHealthUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setStep('analyzing');
@@ -102,28 +131,79 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     reader.onload = async () => {
       const base64 = reader.result as string;
       setPhotoBase64(base64);
-      
-      if (claimType === 'AUTO') {
-        const response = await analyzeClaimPhoto(base64);
-        if (response.success && response.data) {
-          setClaimResult(response.data);
-          setStep('result');
-        } else {
-          console.warn(t('Could not read the photo. Please try a clearer one.', 'Foto tidak terbaca. Coba foto yang lebih jelas ya.'));
-          setStep('upload');
-        }
-      } else if (claimType === 'HEALTH') {
-        const response = await analyzeHealthReceipt(base64);
-        if (response.success && response.data) {
-          setHealthResult(response.data);
-          setStep('result');
-        } else {
-          console.warn(t('Failed to read receipt.', 'Gagal membaca kuitansi.'));
-          setStep('upload');
-        }
+      const response = await analyzeHealthReceipt(base64);
+      if (response.success && response.data) {
+        setHealthResult(response.data);
+        setStep('result');
+      } else {
+        console.warn(t('Failed to read receipt.', 'Gagal membaca kuitansi.'));
+        setStep('upload');
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  // Vehicle claims: up to MAX_CLAIM_PHOTOS are uploaded to Storage immediately
+  // on selection (each gets its own slot), then analyzed together in one pass
+  // once the customer taps "Analisa Foto" — this lets the AI + duplicate-hash
+  // check reason across all angles instead of one photo in isolation.
+  const handleAddPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !currentUser?.id) return;
+    if (photoUrls.length >= MAX_CLAIM_PHOTOS) return;
+    const slot = photoUrls.length;
+    setUploadingSlot(slot);
+    setAnalyzeError(null);
+    try {
+      const url = await uploadClaimPhoto(file, currentUser.id, slot);
+      if (url) {
+        setPhotoUrls(prev => [...prev, url]);
+      } else {
+        setAnalyzeError(t('Failed to upload photo. Try again.', 'Gagal mengunggah foto. Coba lagi.'));
+      }
+    } finally {
+      setUploadingSlot(null);
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotoUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAnalyzePhotos = async () => {
+    if (photoUrls.length === 0) return;
+    setStep('analyzing');
+    setAnalyzeError(null);
+    try {
+      const response = await analyzeClaimPhotos(photoUrls);
+      if (response.success && response.aggregate) {
+        setClaimResult({
+          severity: response.aggregate.severity,
+          totalEstimasi: response.aggregate.totalEstimasi,
+          rincianPart: response.aggregate.rincianPart.map(p => ({
+            namaPart: p.part, kondisi: p.condition, tindakan: p.action, estimasiBiaya: p.estimasiBiaya,
+          })),
+          aiInsight: response.aggregate.aiInsight,
+          technicalReasoning: response.aggregate.flagSummary.join(' ') || t('No anomalies detected across the submitted photos.', 'Tidak ditemukan anomali pada foto yang diunggah.'),
+          rekomendasiBengkel: 'Partner',
+          nextSteps: [
+            t('Our team will verify the incident details.', 'Tim kami akan memverifikasi detail kejadian.'),
+            t('You will be contacted regarding the repair process.', 'Anda akan dihubungi terkait proses perbaikan.'),
+          ],
+        });
+        setPhotoReports(response.photoReports ?? []);
+        setFraudAggregate(response.aggregate);
+        setAnalysisId(response.analysisId);
+        setStep('result');
+      } else {
+        setAnalyzeError(response.error ?? t('Could not analyze the photos. Please try again.', 'Foto tidak dapat dianalisa. Coba lagi ya.'));
+        setStep('upload');
+      }
+    } catch {
+      setAnalyzeError(t('Could not analyze the photos. Please try again.', 'Foto tidak dapat dianalisa. Coba lagi ya.'));
+      setStep('upload');
+    }
   };
 
   const handleFinalReport = async (e: React.FormEvent) => {
@@ -138,7 +218,8 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
 
     try {
         const amount = claimType === 'AUTO' ? (claimResult?.totalEstimasi || 0) : (healthResult?.totalAmount || 0);
-        
+        const photosForRecord = claimType === 'AUTO' ? photoUrls : [photoBase64];
+
         const newClaim: Claim = {
             userId: currentUser.id,
             policyNumber: reportForm.policyNumber,
@@ -150,7 +231,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             thirdPartyInvolved: reportForm.thirdPartyInvolved,
             status: 'SUBMITTED',
             amountEstimated: amount,
-            photos: [photoBase64],
+            photos: photosForRecord,
             aiAnalysis: claimType === 'AUTO' ? claimResult : healthResult,
             createdAt: new Date().toISOString()
         };
@@ -158,7 +239,9 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
         await db.claims.add(newClaim);
         localStorage.removeItem(DRAFT_KEY);
 
-        // Sync to Supabase for admin visibility
+        // Sync to Supabase for admin visibility. For AUTO claims, analysisId
+        // tells the gateway to pull the trusted, server-computed fraud report
+        // onto the new claim row (see submit_claim in data-gateway/actions/claims.ts).
         submitClaim({
           user_id: currentUser?.id,
           client_name: currentUser?.name ?? reportForm.contactInfo,
@@ -169,7 +252,8 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           chronology: reportForm.chronology,
           status: 'SUBMITTED',
           amount_estimated: amount,
-          photos: [photoBase64],
+          photos: photosForRecord,
+          analysis_id: claimType === 'AUTO' ? analysisId : undefined,
         }).catch(() => {});
 
         setTimeout(() => {
@@ -246,23 +330,85 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     );
   }
 
-  if (step === 'upload') {
+  if (step === 'upload' && claimType === 'HEALTH') {
     return (
       <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center">
-        <Header title={claimType === 'AUTO' ? t("Vehicle Check", "Cek Kendaraan") : t("Receipt Check", "Cek Kuitansi")} />
+        <Header title={t("Receipt Check", "Cek Kuitansi")} />
         <div className="aspect-square relative rounded-[3rem] overflow-hidden bg-gray-50 dark:bg-white/5 border-2 border-dashed border-emerald-500/20 flex flex-col items-center justify-center group cursor-pointer shadow-inner">
           <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center text-emerald-500 mb-6 group-hover:scale-110 transition-transform shadow-xl">
             <Camera size={48} />
           </div>
           <p className="text-2xl font-black uppercase text-gray-400 group-hover:text-emerald-500 transition-colors tracking-tight">
-            {claimType === 'AUTO' ? t("Take Photo", "Ambil Foto") : t("Upload Image", "Upload Foto")}
+            {t("Upload Image", "Upload Foto")}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 font-bold uppercase tracking-widest text-center px-12 opacity-60">
-            {claimType === 'AUTO' ? t("Snap the damaged part clearly.", "Foto bagian yang rusak dengan jelas.") : t("Upload your hospital billing photo.", "Unggah foto tagihan rumah sakit.")}
+            {t("Upload your hospital billing photo.", "Unggah foto tagihan rumah sakit.")}
           </p>
-          <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleUpload} />
+          <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleHealthUpload} />
         </div>
         <button onClick={() => setStep('select')} className="w-full py-4 text-xs font-black uppercase text-gray-400">Kembali</button>
+      </div>
+    );
+  }
+
+  if (step === 'upload' && claimType === 'AUTO') {
+    const slots = Array.from({ length: MAX_CLAIM_PHOTOS });
+    return (
+      <div className="space-y-6 animate-fade-in flex flex-col h-full justify-center">
+        <Header title={t("Vehicle Check", "Cek Kendaraan")} />
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest text-center px-4 opacity-70">
+          {t(`Add up to ${MAX_CLAIM_PHOTOS} photos from different angles — more angles help us verify authenticity and estimate cost accurately.`, `Tambahkan hingga ${MAX_CLAIM_PHOTOS} foto dari berbagai sudut — semakin banyak sudut, semakin akurat verifikasi keaslian dan estimasi biaya.`)}
+        </p>
+        {analyzeError && (
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-600">{analyzeError}</div>
+        )}
+        <div className="grid grid-cols-3 gap-3">
+          {slots.map((_, i) => {
+            const url = photoUrls[i];
+            const isUploading = uploadingSlot === i;
+            const isNextEmptySlot = i === photoUrls.length && !isUploading;
+            if (url) {
+              return (
+                <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-md group">
+                  <img src={url} alt={`photo-${i}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => handleRemovePhoto(i)}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            }
+            if (isUploading) {
+              return (
+                <div key={i} className="aspect-square rounded-3xl bg-gray-50 dark:bg-white/5 border-2 border-dashed border-emerald-500/20 flex items-center justify-center">
+                  <Loader2 className="animate-spin text-emerald-500" size={24} />
+                </div>
+              );
+            }
+            if (isNextEmptySlot) {
+              return (
+                <div key={i} className="relative aspect-square rounded-3xl bg-gray-50 dark:bg-white/5 border-2 border-dashed border-emerald-500/30 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors">
+                  <ImagePlus size={24} className="text-emerald-500 mb-1" />
+                  <span className="text-[0.5rem] font-black uppercase text-gray-400">{t('Add', 'Tambah')}</span>
+                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleAddPhoto} />
+                </div>
+              );
+            }
+            return <div key={i} className="aspect-square rounded-3xl bg-gray-50/50 dark:bg-white/[0.02] border-2 border-dashed border-gray-200 dark:border-white/5" />;
+          })}
+        </div>
+        <div className="space-y-3">
+          <button
+            onClick={handleAnalyzePhotos}
+            disabled={photoUrls.length === 0 || uploadingSlot !== null}
+            className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-3"
+          >
+            <BrainCircuit size={20} /> {t('Analyze Photos', 'Analisa Foto')} {photoUrls.length > 0 && `(${photoUrls.length})`}
+          </button>
+          <button onClick={() => setStep('select')} className="w-full py-4 text-xs font-black uppercase text-gray-400">Kembali</button>
+        </div>
       </div>
     );
   }
@@ -304,11 +450,23 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             </div>
           </div>
 
+          {/* Photo Verification banner */}
+          {isAuto && fraudAggregate && (
+             <div className={`p-5 rounded-[2rem] border flex items-center gap-4 ${VERDICT_META[fraudAggregate.fraudVerdict].color}`}>
+                {React.createElement(VERDICT_META[fraudAggregate.fraudVerdict].Icon, { size: 28, className: 'shrink-0' })}
+                <div className="flex-1">
+                   <p className="text-xs font-black uppercase tracking-widest">{VERDICT_META[fraudAggregate.fraudVerdict].label}</p>
+                   <p className="text-[0.6rem] font-bold opacity-70 mt-0.5">{t(`Authenticity score: ${100 - fraudAggregate.fraudScore}/100`, `Skor keaslian: ${100 - fraudAggregate.fraudScore}/100`)}</p>
+                </div>
+             </div>
+          )}
+
           {/* Sub Navigation */}
           <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl shadow-inner border border-black/5">
              {[
                { id: 'evidence', label: t('Breakdown', 'Rincian'), icon: ClipboardList },
                { id: 'reasoning', label: t('AI Reasoning', 'Analisa'), icon: BrainCircuit },
+               ...(isAuto && photoReports.length > 0 ? [{ id: 'verification', label: t('Photos', 'Foto'), icon: ShieldCheck }] : []),
                { id: 'steps', label: t('Langkah Selanjutnya', 'Langkah Selanjutnya'), icon: Zap }
              ].map(tab => (
                <button 
@@ -381,6 +539,34 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
                         </div>
                      </div>
                    )}
+                </div>
+             )}
+
+             {activeTab === 'verification' && (
+                <div className="space-y-3 animate-fade-in">
+                   {photoReports.map((r) => {
+                      const meta = PHOTO_VERDICT_META[r.verdict] ?? PHOTO_VERDICT_META.CLEAN;
+                      return (
+                         <div key={r.photoIndex} className="p-4 bg-white dark:bg-white/5 rounded-[2rem] border border-black/5 flex gap-4 shadow-sm">
+                            <img src={r.photoUrl} alt={`verify-${r.photoIndex}`} className="w-16 h-16 rounded-2xl object-cover shrink-0" />
+                            <div className="flex-1 min-w-0">
+                               <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-[0.65rem] font-black uppercase text-slate-800 dark:text-white">{t(`Photo ${r.photoIndex + 1}`, `Foto ${r.photoIndex + 1}`)}</p>
+                                  <span className={`px-2 py-0.5 rounded text-[0.45rem] font-black uppercase ${meta.color}`}>{meta.label}</span>
+                               </div>
+                               {r.flagReasons.length > 0 ? (
+                                  <ul className="space-y-1">
+                                     {r.flagReasons.map((reason, i) => (
+                                        <li key={i} className="text-[0.6rem] text-gray-500 dark:text-gray-400 leading-snug">• {reason}</li>
+                                     ))}
+                                  </ul>
+                               ) : (
+                                  <p className="text-[0.6rem] text-gray-400 italic">{t('No issues found.', 'Tidak ada masalah ditemukan.')}</p>
+                               )}
+                            </div>
+                         </div>
+                      );
+                   })}
                 </div>
              )}
 

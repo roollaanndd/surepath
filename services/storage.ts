@@ -25,6 +25,17 @@ export async function uploadVehicleImage(file: File, orderId: string): Promise<s
   return data.publicUrl;
 }
 
+export async function uploadClaimPhoto(file: File, userId: string, index: number): Promise<string | null> {
+  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'jpg');
+  const path = `${userId}/${Date.now()}-${index}.${ext}`;
+  const { error } = await supabase.storage
+    .from('claim-photos')
+    .upload(path, file, { upsert: true });
+  if (error) { console.error('uploadClaimPhoto:', error); return null; }
+  const { data } = supabase.storage.from('claim-photos').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function uploadPolicyDocument(file: File, orderNumber: string): Promise<string | null> {
   const ext = safeExt(file.name, ALLOWED_PDF_TYPES, 'pdf');
   const path = `${orderNumber}/policy.${ext}`;

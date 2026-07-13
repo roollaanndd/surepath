@@ -236,24 +236,54 @@ export interface AdminStats {
 
 // ─── Claims ──────────────────────────────────────────────────────────────────
 
+export interface ClaimPhotoForensicReport {
+  photoIndex: number;
+  photoUrl: string;
+  exif: { hasExif: boolean; captureTimestamp?: string; gpsLocation?: { lat: number; lng: number }; editingSoftware?: string; deviceModel?: string };
+  duplicate: { isDuplicate: boolean; matchedSourceType?: 'CLAIM' | 'SURVEY'; matchedSourceId?: string; similarity?: number };
+  ai: {
+    authenticityScore: number;
+    tamperIndicators: string[];
+    damageAssessment: { part: string; condition: string; action: 'Perbaiki' | 'Ganti'; estimasiBiaya: number }[];
+    isScreenPhoto: boolean;
+    isStockOrDownloaded: boolean;
+    plateVisible: boolean;
+    confidence: number;
+    severity: 'Ringan' | 'Sedang' | 'Berat' | 'Total Loss';
+  };
+  verdict: 'CLEAN' | 'FLAGGED' | 'HIGH_RISK';
+  flagReasons: string[];
+}
+
 export interface SpClaim {
   id: string;
   policy_id?: string;
   user_id?: string;
   agent_id?: string;
+  client_id?: string;
   claim_number?: string;
+  claim_type?: string;
+  description?: string;
   client_name?: string;
   policy_number?: string;
   product_type?: string;
   date?: string;
+  incident_date?: string;
   location?: string;
   chronology?: string;
   status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'CLOSED';
   amount_estimated?: number;
   amount_approved?: number;
   photos?: string[];
+  photo_urls?: string[];
+  ai_fraud_score?: number;
+  ai_fraud_verdict?: 'CLEAN' | 'REVIEW_REQUIRED' | 'REJECTED';
+  ai_photo_reports?: ClaimPhotoForensicReport[];
+  ai_analyzed_at?: string;
   admin_notes?: string;
+  adjuster_notes?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 // ─── Notifications ───────────────────────────────────────────────────────────

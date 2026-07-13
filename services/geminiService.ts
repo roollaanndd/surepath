@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from './promptSafety';
 
 // ─── Model constants — swap any of these to change the model used ─────────────
 const VISION_MODEL  = 'openai/gpt-4o-mini';              // OCR, photo validation, damage
@@ -173,7 +174,8 @@ export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): 
       model: TEXT_MODEL,
       messages: [{
         role: 'user',
-        content: `You are the SurePath Lead Neural Architect. Explain the product "${productName}" to a high-end customer.
+        content: `You are the SurePath Lead Neural Architect. Explain the following product to a high-end customer:
+${wrapUserContent(productName)}
 Use compelling, futuristic, and technical language. Focus on Neural Underwriting, Computer Vision, and Zero-Trust data protocols.
 
 Return JSON only:
@@ -185,7 +187,9 @@ Return JSON only:
   "payoutLogic": "instant 60-second claim settlement explanation"
 }
 
-Language: ${lang === 'ID' ? 'Bahasa Indonesia' : 'English'}. Use vocabulary like 'Matriks', 'Heuristik', 'Enkripsi Kuantum', 'Visi Komputer'. Return JSON only.`,
+Language: ${lang === 'ID' ? 'Bahasa Indonesia' : 'English'}. Use vocabulary like 'Matriks', 'Heuristik', 'Enkripsi Kuantum', 'Visi Komputer'. Return JSON only.
+
+${UNTRUSTED_INPUT_NOTICE}`,
       }],
     });
     const text = res.choices[0]?.message?.content ?? '';

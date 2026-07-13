@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
-import { db } from '../../db';
-import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
+import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
 
 const ADMIN_ROLES = [
@@ -26,13 +25,11 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
   const [showPass, setShowPass]         = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState<string | null>(null);
-  const [legacyWarning, setLegacyWarning] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setLegacyWarning(false);
 
     const normalEmail = email.trim().toLowerCase();
     const rl = checkRateLimit(normalEmail);
@@ -93,44 +90,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         return;
       }
 
-      // ── Legacy IndexedDB fallback — DEV ONLY ─────────────────────────────
-      // SECURITY: Previously this ran in production, allowing anyone who
-      // extracted VITE_ADMIN_KEY from the client bundle to log in as
-      // master@surepath.ai via the local IndexedDB. Supabase Auth is now the
-      // only legitimate production login path. The legacy fallback is kept
-      // for local dev (where Supabase Auth may not be configured) but gated
-      // behind import.meta.env.DEV so it's stripped from production builds.
-      if (!import.meta.env.DEV) {
-        recordFailedAttempt(normalEmail);
-        setError('Kredensial salah atau akun tidak ditemukan.');
-        return;
-      }
-
-      const user = await db.users.where('email').equals(normalEmail).first();
-
-      if (user?.passwordHash && user?.salt) {
-        if (!ADMIN_ROLES.includes(user.role as UserRole)) {
-          recordFailedAttempt(normalEmail);
-          setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
-          return;
-        }
-
-        const isValid = await verifyPassword(password, user.passwordHash, user.salt);
-        if (isValid) {
-          clearRateLimit(normalEmail);
-          setLegacyWarning(true);
-          onLoginSuccess({ ...user, token: createSessionToken(user) });
-        } else {
-          recordFailedAttempt(normalEmail);
-          const remaining = checkRateLimit(normalEmail).remainingAttempts;
-          setError(remaining > 0
-            ? `Kredensial salah. Sisa percobaan: ${remaining}`
-            : 'Akun dikunci sementara. Coba lagi dalam 15 menit.');
-        }
-      } else {
-        recordFailedAttempt(normalEmail);
-        setError('Kredensial salah atau akun tidak ditemukan.');
-      }
+      // Supabase Auth is the only login path — the legacy IndexedDB fallback
+      // (previously reachable in production, allowing anyone who extracted
+      // VITE_ADMIN_KEY from the client bundle to log in as master@surepath.ai)
+      // has been removed rather than DEV-gated, since a gated insecure path
+      // is still a liability if the gate is ever refactored away.
+      recordFailedAttempt(normalEmail);
+      setError('Kredensial salah atau akun tidak ditemukan.');
     } catch {
       setError('Terjadi kesalahan sistem. Silakan coba lagi.');
     } finally {
@@ -220,16 +186,6 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
         {/* Card — gradient-border wrapper */}
         <div className="relative sp-glass rounded-2xl">
           <div className="rounded-2xl p-6 space-y-5">
-
-            {legacyWarning && (
-              <div className="p-3 rounded-xl flex items-start gap-2.5"
-                style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.18)' }}>
-                <AlertTriangle className="shrink-0 mt-0.5" size={13} style={{ color: '#f59e0b' }} />
-                <p style={{ fontSize: '0.67rem', fontWeight: 600, color: '#b45309', lineHeight: 1.5 }}>
-                  Akun ini belum terhubung ke Supabase Auth. Hubungi super admin untuk migrasi.
-                </p>
-              </div>
-            )}
 
             {error && (
               <div className="p-3 rounded-xl flex items-start gap-2.5"

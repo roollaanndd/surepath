@@ -37,3 +37,24 @@ export async function callGateway(
     return { error: String((e as Error)?.message ?? e) };
   }
 }
+
+// Like callGateway, but for the small set of PUBLIC_ACTIONS (data-gateway/index.ts)
+// that are reachable without a Supabase Auth session — e.g. the unauthenticated
+// insurer review-by-email-token flow. No Authorization header is sent; the
+// gateway itself only dispatches actions in its PUBLIC_ACTIONS allowlist when
+// no bearer token is present.
+export async function callPublicGateway(
+  action: string,
+  params?: Record<string, unknown>,
+): Promise<{ data?: any; error?: string }> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, params }),
+    });
+    return res.json();
+  } catch (e) {
+    return { error: String((e as Error)?.message ?? e) };
+  }
+}

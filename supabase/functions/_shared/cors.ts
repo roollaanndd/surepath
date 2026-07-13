@@ -9,8 +9,11 @@ const ALLOWED_ORIGINS = [
   'https://www.myinsurepath.com',
 ];
 
-// Vercel preview deployments: https://<project>-<hash>-<scope>.vercel.app
-const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+// Vercel preview deployments: https://<project>-<hash>-roollaanndds-projects.vercel.app
+// Scoped to this account's team slug — matching any *.vercel.app would let
+// someone else's Vercel project (any account can deploy one) satisfy this
+// allowlist, since preview subdomains aren't otherwise attacker-unguessable.
+const PREVIEW_RE = /^https:\/\/[a-z0-9-]+-roollaanndds-projects\.vercel\.app$/i;
 // Local development + Capacitor native app (Android uses https://localhost,
 // iOS uses capacitor://localhost — both must be allowed or the native app
 // gets CORS-blocked from every edge function except data-gateway which has

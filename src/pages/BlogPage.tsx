@@ -168,7 +168,10 @@ function SchemaScript({ a }: { a: Article }) {
     publisher: { '@type': 'Organization', name: 'SurePath', url: 'https://myinsurepath.com' },
     description: a.excerpt, inLanguage: 'id',
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;
+  // Escape '<' so a title/excerpt containing "</script>" can't break out of
+  // the JSON-LD block — JSON.stringify does not escape it by default.
+  const json = JSON.stringify(schema).replace(/</g, '\\u003c');
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }
 
 /* ── Article Detail ───────────────────────────────────────────────────────── */

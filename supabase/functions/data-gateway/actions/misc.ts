@@ -1,6 +1,7 @@
 // misc.ts — 4 actions
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
+import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from '../../_shared/promptSafety.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -15,6 +16,8 @@ export async function handleMiscAction(action: string, ctx: GatewayContext): Pro
         if (!ANTHROPIC_KEY) return json({ error: 'AI not configured' }, 503);
         const message = (params?.message as string | undefined)?.trim() ?? '';
         if (!message) return json({ error: 'No message provided' }, 400);
+        const chatAllowed = await checkRateLimit(`user:${caller.spUser.id}`, 20);
+        if (!chatAllowed) return json({ error: 'Terlalu banyak pesan. Coba lagi dalam 1 jam.' }, 429);
         const [ordersRes, claimsRes] = await Promise.all([
           db.from('sp_policy_orders').select('order_number,product_name,status,created_at').eq('client_id', caller.spUser.id).limit(10),
           db.from('sp_claims').select('claim_number,status,created_at').eq('user_id', caller.spUser.id).limit(5),
@@ -25,8 +28,11 @@ export async function handleMiscAction(action: string, ctx: GatewayContext): Pro
         const claimSummary = (claimsRes.data ?? [])
           .map((c: any) => `- ${c.claim_number}: ${c.status}`)
           .join('\n') || 'No claims.';
+        // The caller's own display name is user-editable, so it never goes
+        // into the system prompt — only the role (a fixed enum, not free
+        // text) is safe to interpolate here.
         const systemPrompt = `You are Pathy, a friendly AI assistant for SurePath, an Indonesian InsurTech platform.
-You are speaking with ${caller.spUser.name ?? 'a user'} (role: ${caller.role ?? 'CUSTOMER'}).
+You are speaking with a user with role: ${caller.role ?? 'CUSTOMER'}.
 You have READ-ONLY access to their data. You CANNOT modify, create, or delete anything.
 
 User's policies:
@@ -39,7 +45,9 @@ Guidelines:
 - Be warm, concise, helpful. Max 3 sentences unless detailed steps are needed.
 - Reply in the same language the user writes in (Bahasa Indonesia or English).
 - For billing changes, cancellations, or urgent matters, recommend contacting an agent via WhatsApp.
-- Never fabricate policy numbers, amounts, or dates not shown above.`;
+- Never fabricate policy numbers, amounts, or dates not shown above.
+
+${UNTRUSTED_INPUT_NOTICE}`;
         const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -51,7 +59,7 @@ Guidelines:
             model: 'claude-haiku-4-5-20251001',
             max_tokens: 512,
             system: systemPrompt,
-            messages: [{ role: 'user', content: message }],
+            messages: [{ role: 'user', content: wrapUserContent(message) }],
           }),
         });
         if (!aiRes.ok) return json({ error: `AI service error: ${aiRes.status}` }, 502);

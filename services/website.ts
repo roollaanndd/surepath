@@ -5,7 +5,7 @@
 // Anything customer- or portal-facing that isn't tied to a specific agent's
 // wallet/clients/orders ends up here.
 
-import { supabase, callGateway } from './db';
+import { supabase, callGateway, callPublicGateway } from './db';
 import { createAdminNotification } from './notifications';
 import type {
   SpWebsiteConfig,
@@ -223,101 +223,28 @@ export async function createReviewToken(orderId: string, createdBy?: string): Pr
   return (data as any).token as string;
 }
 
+// getOrderByToken/submitInsurerReview go through the data-gateway (service
+// role) instead of direct table access — sp_policy_orders has zero RLS
+// policies (deny-all except service_role), so the old direct-table-access
+// version of these two functions was silently broken for the unauthenticated
+// insurer review page. get_insurer_review/submit_insurer_decision are the
+// existing, more complete gateway equivalents (they also handle admin/agent
+// notifications, Telegram alerts, and activity logging).
 export async function getOrderByToken(
   token: string
 ): Promise<{ order: SpPolicyOrder; tokenRecord: SpReviewToken } | null> {
-  const { data: tokenData, error: tokenError } = await supabase
-    .from('sp_review_tokens')
-    .select('*')
-    .eq('token', token)
-    .maybeSingle();
-  if (tokenError || !tokenData) return null;
-  const tr = tokenData as SpReviewToken;
-  if (new Date(tr.expires_at) < new Date()) return null;
-
-  const { data: orderData, error: orderError } = await supabase
-    .from('sp_policy_orders')
-    .select('*')
-    .eq('id', tr.order_id)
-    .maybeSingle();
-  if (orderError || !orderData) return null;
-
-  supabase
-    .from('sp_review_tokens')
-    .update({ accessed_count: tr.accessed_count + 1, last_accessed_at: new Date().toISOString() })
-    .eq('id', tr.id)
-    .then(() => {});
-
-  return { order: orderData as SpPolicyOrder, tokenRecord: tr };
+  const { data, error } = await callPublicGateway('get_insurer_review', { token });
+  if (error || !data) return null;
+  return { order: data.order as SpPolicyOrder, tokenRecord: data.token as SpReviewToken };
 }
 
 export async function submitInsurerReview(
-  tokenId: string,
-  orderId: string,
+  token: string,
   action: 'APPROVED' | 'REQUEST_INFO' | 'DECLINED',
   notes: string
 ): Promise<boolean> {
-  const now = new Date().toISOString();
-  // Map insurer action to order status:
-  // APPROVED → APPROVED (order stays approved, ready for policy issuance)
-  // REQUEST_INFO → UNDER_REVIEW (order needs more info from customer)
-  // DECLINED → REJECTED (insurer declined)
-  const orderStatus = action === 'APPROVED' ? 'APPROVED'
-    : action === 'REQUEST_INFO' ? 'UNDER_REVIEW'
-    : 'REJECTED';
-
-  const [tokenRes, orderRes] = await Promise.all([
-    supabase.from('sp_review_tokens').update({
-      insurer_action: action,
-      insurer_notes: notes,
-      actioned_at: now,
-    }).eq('id', tokenId),
-    supabase.from('sp_policy_orders').update({
-      status: orderStatus,
-      reviewer_notes: notes,
-      reviewed_at: now,
-      updated_at: now,
-    }).eq('id', orderId),
-  ]);
-  if (tokenRes.error) { console.error('submitInsurerReview (token):', tokenRes.error); return false; }
-  if (orderRes.error) { console.error('submitInsurerReview (order):', orderRes.error); return false; }
-
-  // Fetch order details to notify agent and admin
-  const { data: order } = await supabase
-    .from('sp_policy_orders')
-    .select('agent_id, order_number, client_name')
-    .eq('id', orderId)
-    .maybeSingle();
-
-  const label = action === 'APPROVED' ? 'Disetujui Penanggung'
-    : action === 'REQUEST_INFO' ? 'Perlu Informasi Tambahan'
-    : 'Ditolak Penanggung';
-  const orderRef = order?.order_number ?? orderId;
-  const clientName = order?.client_name ?? 'Nasabah';
-
-  if (order?.agent_id) {
-    await supabase.from('sp_notifications').insert({
-      agent_id: order.agent_id,
-      type: `POLICY_${action}`,
-      title: `Polis ${label}: ${orderRef}`,
-      body: action === 'REQUEST_INFO'
-        ? `Penanggung meminta informasi tambahan untuk pengajuan ${clientName} (${orderRef}). Catatan: ${notes || '-'}`
-        : `Pengajuan polis ${clientName} (${orderRef}) telah ${label.toLowerCase()}.${notes ? ` Catatan: ${notes}` : ''}`,
-      order_id: orderId,
-      read: false,
-    });
-  }
-
-  await supabase.from('sp_admin_notifications').insert({
-    type: `POLICY_${action}`,
-    title: `Polis ${label}: ${orderRef}`,
-    body: action === 'REQUEST_INFO'
-      ? `Penanggung meminta informasi tambahan untuk ${clientName} (${orderRef}). Catatan: ${notes || '-'}`
-      : `Penanggung telah ${label.toLowerCase()} pengajuan polis ${clientName} (${orderRef}).${notes ? ` Catatan: ${notes}` : ''}`,
-    order_id: orderId,
-    read: false,
-  });
-
+  const { error } = await callPublicGateway('submit_insurer_decision', { token, action, notes });
+  if (error) { console.error('submitInsurerReview:', error); return false; }
   return true;
 }
 
@@ -397,7 +324,10 @@ export async function autoSendReviewLink(
 // ─── AI Policy Review ─────────────────────────────────────────────────────────
 
 export async function runAIPolicyReview(orderId: string): Promise<AIPolicyReview | null> {
-  const { data: order, error } = await supabase.from('sp_policy_orders').select('*').eq('id', orderId).single();
+  // sp_policy_orders has no direct-access RLS policies (service_role/gateway
+  // only) — fetch via the gateway instead of the anon-keyed client, which
+  // would otherwise be denied even for admins.
+  const { data: order, error } = await callGateway('admin_get_order', { order_id: orderId });
   if (error || !order) return null;
 
   const { data: fnData, error: fnError } = await supabase.functions.invoke('ai-policy-review', {

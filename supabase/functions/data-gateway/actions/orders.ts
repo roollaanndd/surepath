@@ -198,6 +198,15 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
         return json({ data });
       }
 
+    case 'admin_get_order': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (!params.order_id) return json({ error: 'order_id required' }, 400);
+        const { data, error } = await db.from('sp_policy_orders').select('*').eq('id', String(params.order_id)).maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: 'Order not found' }, 404);
+        return json({ data });
+      }
+
     case 'admin_update_order': {
         // FIX: removed `caller.role !== 'INSURER'` branch (no such role exists in sp_users).
         // Now strictly admin-only. Insurer mutations route through insurer_upload_policy / submit_insurer_decision.

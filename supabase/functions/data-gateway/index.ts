@@ -22,11 +22,14 @@ import { handleAgentsAction } from './actions/agents.ts';
 import { handleNotificationsAction } from './actions/notifications.ts';
 import { handleAdminAction } from './actions/admin.ts';
 import { handleMiscAction } from './actions/misc.ts';
+import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
 import { handleTiersAction } from './actions/tiers.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
-const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+// Scoped to this account's Vercel team slug — see supabase/functions/_shared/cors.ts
+// for why an unscoped *.vercel.app pattern is too broad.
+const PREVIEW_RE = /^https:\/\/[a-z0-9-]+-roollaanndds-projects\.vercel\.app$/i;
 const LOCAL_RE = /^(https?|capacitor):\/\/localhost(:\d+)?$/i;
 function corsHeaders(origin: string | null): Record<string, string> {
   const allow = origin && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_RE.test(origin) || LOCAL_RE.test(origin)) ? origin : ALLOWED_ORIGINS[0];
@@ -76,20 +79,10 @@ Deno.serve(async (req) => {
 
     const db = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Rate limiting helper
-    const checkRateLimit = async (identifier: string, limit: number): Promise<boolean> => {
-      const now = new Date();
-      const hourBucket = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,'0')}-${String(now.getUTCDate()).padStart(2,'0')}-${String(now.getUTCHours()).padStart(2,'0')}`;
-      try {
-        const { error: insErr } = await db.from('sp_rate_limits').insert({ identifier, action, hour_bucket: hourBucket, request_count: 1, last_request: now.toISOString() });
-        if (insErr) {
-          const { data, error: rpcErr } = await db.rpc('increment_rate_limit', { p_identifier: identifier, p_action: action, p_hour_bucket: hourBucket });
-          if (rpcErr) return false;
-          return (data ?? 1) <= limit;
-        }
-        return true;
-      } catch { return false; }
-    };
+    // Rate limiting helper — sourced from the shared module (also used by
+    // standalone AI/OCR edge functions outside this gateway).
+    const checkRateLimit = (identifier: string, limit: number): Promise<boolean> =>
+      sharedCheckRateLimit(db, identifier, action, limit);
 
     // Activity log helper
     const logActivity = (insurerId: string | null, orderId: string | null, logAction: string, details: Record<string, unknown> = {}): void => {

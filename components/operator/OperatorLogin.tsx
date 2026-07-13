@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
-import { verifyPassword, createSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
+import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
-import { db } from '../../db';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -97,34 +96,11 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
         return;
       }
 
-      if (!import.meta.env.DEV) {
-        recordFailedAttempt(normalEmail);
-        setError('Kredensial salah atau akun tidak ditemukan.');
-        setLoading(false);
-        return;
-      }
-
-      // DEV-only legacy IndexedDB fallback
-      const user = await db.users.where('email').equals(normalEmail).first();
-      if (user?.passwordHash && user?.salt) {
-        if (user.role !== UserRole.OPERATOR) {
-          recordFailedAttempt(normalEmail);
-          setError('Akses ditolak. Akun ini bukan Operator internal.');
-          setLoading(false);
-          return;
-        }
-        const isValid = await verifyPassword(password, user.passwordHash, user.salt);
-        if (isValid) {
-          clearRateLimit(normalEmail);
-          onLoginSuccess({ ...user, token: createSessionToken(user) });
-        } else {
-          recordFailedAttempt(normalEmail);
-          setError('Kredensial salah.');
-        }
-      } else {
-        recordFailedAttempt(normalEmail);
-        setError('Kredensial salah atau akun tidak ditemukan.');
-      }
+      // Supabase Auth is the only login path — the legacy IndexedDB fallback
+      // has been removed rather than DEV-gated, since a gated insecure token
+      // generator is still a liability if the gate is ever refactored away.
+      recordFailedAttempt(normalEmail);
+      setError('Kredensial salah atau akun tidak ditemukan.');
     } catch {
       setError('Terjadi kesalahan sistem. Silakan coba lagi.');
     } finally {

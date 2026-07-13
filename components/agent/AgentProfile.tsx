@@ -42,6 +42,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [ktpUploading, setKtpUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const ktpInputRef = useRef<HTMLInputElement>(null);
+  const { tiers } = useTierDefinitions();
 
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
 
@@ -157,7 +158,6 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     .toUpperCase();
 
   const tierCode = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
-  const { tiers } = useTierDefinitions();
   const tierDef = getTierByCode(tiers, tierCode);
 
   return (

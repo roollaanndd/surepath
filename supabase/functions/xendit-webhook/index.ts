@@ -232,12 +232,19 @@ Deno.serve(async (req) => {
               .eq('id', order.agent_id)
               .single();
 
-            // Tier config (mirrors types.ts TIER_CONFIG — kept inline to avoid import)
-            const TIER_CFG: Record<string, { coinBonusRate: number; l1OverrideRate: number; l2OverrideRate: number }> = {
-              STAR:  { coinBonusRate: 0.10, l1OverrideRate: 0.03, l2OverrideRate: 0.01 },
-              ELITE: { coinBonusRate: 0.15, l1OverrideRate: 0.04, l2OverrideRate: 0.02 },
-            };
-            const STANDARD_CFG = { coinBonusRate: 0, l1OverrideRate: 0.02, l2OverrideRate: 0 };
+            // Live tier rates from sp_agent_tiers (CMS-configurable) — fetch the
+            // full set once; cheap and keeps this in sync with the admin panel
+            // instead of a hardcoded duplicate that silently drifts.
+            const { data: tierRows } = await supabase
+              .from('sp_agent_tiers')
+              .select('code, coin_bonus_rate, l1_override_rate, l2_override_rate, is_default');
+            const TIER_CFG: Record<string, { coinBonusRate: number; l1OverrideRate: number; l2OverrideRate: number }> = {};
+            let defaultCode = 'STANDARD';
+            for (const r of (tierRows ?? []) as any[]) {
+              TIER_CFG[r.code] = { coinBonusRate: Number(r.coin_bonus_rate ?? 0), l1OverrideRate: Number(r.l1_override_rate ?? 0), l2OverrideRate: Number(r.l2_override_rate ?? 0) };
+              if (r.is_default) defaultCode = r.code;
+            }
+            const STANDARD_CFG = TIER_CFG[defaultCode] ?? { coinBonusRate: 0, l1OverrideRate: 0.02, l2OverrideRate: 0 };
 
             // 1. Credit selling agent's commission
             await supabase.rpc('credit_agent_wallet', {

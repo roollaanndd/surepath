@@ -26,6 +26,7 @@ vi.mock('../db', () => ({
     if (action === 'redeem_coins') return { data: { ok: true } };
     if (action === 'apply_referral') return { data: { ok: true } };
     if (action === 'admin_update_user') return { data: { ok: true } };
+    if (action === 'admin_assign_agent_tier') return { data: { agent_id: 'agent-1', tier: 'STAR' }, pending: false };
     return { data: null, error: 'Unknown' };
   }),
 }));
@@ -61,8 +62,9 @@ describe('Wallet Service', () => {
     expect(result).toBe(true);
   });
 
-  it('updateAgentTier returns true', async () => {
-    const result = await updateAgentTier('agent-1', 'STAR', 'admin-1');
-    expect(result).toBe(true);
+  it('updateAgentTier returns success', async () => {
+    const result = await updateAgentTier('agent-1', 'STAR');
+    expect(result.success).toBe(true);
+    expect(result.pending).toBe(false);
   });
 });

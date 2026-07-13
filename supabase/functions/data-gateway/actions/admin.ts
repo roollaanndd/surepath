@@ -102,17 +102,14 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           }
         }
 
-        // ── Tier assignment restriction ──────────────────────────────────
-        // Only MASTER_ADMIN, ADMIN, FINANCE_MANAGER can assign tiers.
-        if ('tier' in params) {
-          const callerRole = caller.role ?? '';
-          const TIER_ASSIGNERS = ['MASTER_ADMIN', 'ADMIN', 'FINANCE_MANAGER'];
-          if (!TIER_ASSIGNERS.includes(callerRole)) {
-            return json({ error: 'Your role is not permitted to assign tiers' }, 403);
-          }
+        // Tier changes go through the dedicated 'admin_assign_agent_tier' action
+        // (actions/tiers.ts) so they run through the approval-request workflow —
+        // block them here to prevent bypassing that gate.
+        if ('tier' in params || 'tier_assigned_by' in params || 'tier_assigned_at' in params) {
+          return json({ error: 'Use admin_assign_agent_tier to change an agent tier' }, 400);
         }
 
-        const ALLOWED = ['role', 'verified', 'tier', 'tier_assigned_by', 'tier_assigned_at', 'commission_rate', 'name', 'phone', 'allowed_apps', 'address', 'ktp', 'profile_photo_url', 'ktp_document_url'];
+        const ALLOWED = ['role', 'verified', 'commission_rate', 'name', 'phone', 'allowed_apps', 'address', 'ktp', 'profile_photo_url', 'ktp_document_url'];
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const k of ALLOWED) {
           if (k in params) updates[k] = params[k];

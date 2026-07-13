@@ -32,6 +32,7 @@ import AgentOrderStatus from './AgentOrderStatus';
 import PathyChat from '../shared/PathyChat';
 import { SectionLabel } from '../shared/cards';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
   agent: any;
@@ -91,6 +92,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [agentTier, setAgentTier] = useState<string | null>(null);
+  const { tiers } = useTierDefinitions();
+  const myTierDef = getTierByCode(tiers, agentTier);
   const [stats, setStats] = useState<AgentStats>({
     totalCommissionMonth: 0,
     totalCommissionAllTime: 0,
@@ -203,6 +206,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agentId={agent?.id ?? ''}
             agentName={agent?.name ?? ''}
             lang={lang}
+            agentTier={agentTier}
           />
         );
       case 'renewals':
@@ -285,11 +289,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5">
                 {agent?.agent_code ?? 'SP-AGT'}
               </div>
-              {agentTier && (
-                <div className={`text-[8px] font-black uppercase tracking-widest ${
-                  agentTier === 'ELITE' ? 'text-ds-purple' : 'text-ds-amber'
-                }`}>
-                  {agentTier === 'ELITE' ? '💎 Elite' : '⭐ Bintang'}
+              {myTierDef && !myTierDef.is_default && (
+                <div className="text-[8px] font-black uppercase tracking-widest" style={{ color: myTierDef.color }}>
+                  {myTierDef.emoji} {myTierDef.name}
                 </div>
               )}
             </div>

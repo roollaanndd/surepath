@@ -14,6 +14,7 @@ import {
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
+import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
   agent: any;
@@ -41,6 +42,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [ktpUploading, setKtpUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const ktpInputRef = useRef<HTMLInputElement>(null);
+  const { tiers } = useTierDefinitions();
 
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
 
@@ -155,7 +157,8 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     .join('')
     .toUpperCase();
 
-  const tier = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+  const tierCode = agentTier ?? (profile as any)?.tier ?? (profile as any)?.agent_tier ?? agent?.tier ?? agent?.agent_tier;
+  const tierDef = getTierByCode(tiers, tierCode);
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28 font-sora">
@@ -211,11 +214,12 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               {t('Verified Partner', 'Mitra Terverifikasi')}
             </span>
           )}
-          {tier && (
-            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black border border-white/15 ${
-              tier === 'ELITE' ? 'bg-white/10 text-purple-300' : 'bg-white/10 text-amber-300'
-            }`}>
-              {tier === 'ELITE' ? '💎 Mitra Elite' : '⭐ Mitra Bintang'}
+          {tierDef && !tierDef.is_default && (
+            <span
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black border border-white/15 bg-white/10"
+              style={{ color: tierDef.color }}
+            >
+              {tierDef.emoji} {tierDef.name}
             </span>
           )}
         </div>

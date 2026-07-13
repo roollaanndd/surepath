@@ -9,7 +9,9 @@ import type {
   AgentWallet,
   WalletTransaction,
   Withdrawal,
-  SpTierConfig,
+  SpAgentTier,
+  SpTierChangeRequest,
+  TierProgress,
 } from './dbTypes';
 
 // ─── Coin Ledger ──────────────────────────────────────────────────────────────
@@ -203,17 +205,12 @@ export async function getAgentDownlineTree(agentId: string): Promise<DownlineNod
 
 export async function updateAgentTier(
   agentId: string,
-  tier: 'STAR' | 'ELITE' | null,
-  assignedBy: string,
-): Promise<boolean> {
-  const { error } = await callGateway('admin_update_user', {
-    user_id: agentId,
-    tier,
-    tier_assigned_by: tier ? assignedBy : null,
-    tier_assigned_at: tier ? new Date().toISOString() : null,
-  });
-  if (error) { console.error('updateAgentTier:', error); return false; }
-  return true;
+  tierCode: string,
+  reason?: string,
+): Promise<{ success: boolean; pending?: boolean; error?: string }> {
+  const res = await callGateway('admin_assign_agent_tier', { agent_id: agentId, tier_code: tierCode, reason }) as { data?: any; error?: string; pending?: boolean };
+  if (res.error) { console.error('updateAgentTier:', res.error); return { success: false, error: res.error }; }
+  return { success: true, pending: !!res.pending };
 }
 
 export async function getAgentReferralCode(agentId: string): Promise<string | null> {
@@ -245,26 +242,72 @@ export async function getOverrideTransactions(agentId: string): Promise<WalletTr
   return (data ?? []) as WalletTransaction[];
 }
 
-// ─── Tier Config (DB-driven rates) ───────────────────────────────────────────
+// ─── Agent Tiers (CMS-configurable) ──────────────────────────────────────────
 
-export async function getTierConfig(): Promise<SpTierConfig[]> {
-  const { data, error } = await supabase
-    .from('sp_tier_config')
-    .select('*')
-    .order('tier', { ascending: true });
-  if (error) { console.error('getTierConfig:', error); return []; }
-  return (data ?? []) as SpTierConfig[];
+export async function getTierDefinitions(): Promise<SpAgentTier[]> {
+  const { data, error } = await callGateway('get_tier_definitions', {});
+  if (error) { console.error('getTierDefinitions:', error); return []; }
+  return (data ?? []) as SpAgentTier[];
 }
 
-export async function updateTierConfig(
-  tier: 'STANDARD' | 'STAR' | 'ELITE',
-  rates: Pick<SpTierConfig, 'coin_bonus_rate' | 'l1_override_rate' | 'l2_override_rate'>,
-  updatedBy: string,
-): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_tier_config')
-    .update({ ...rates, updated_by: updatedBy, updated_at: new Date().toISOString() })
-    .eq('tier', tier);
-  if (error) { console.error('updateTierConfig:', error); return false; }
+export async function getMyTierProgress(): Promise<TierProgress | null> {
+  const { data, error } = await callGateway('get_my_tier_progress', {});
+  if (error) { console.error('getMyTierProgress:', error); return null; }
+  return (data ?? null) as TierProgress | null;
+}
+
+export async function getAdminTiers(): Promise<SpAgentTier[]> {
+  const { data, error } = await callGateway('admin_list_tiers', {});
+  if (error) { console.error('getAdminTiers:', error); return []; }
+  return (data ?? []) as SpAgentTier[];
+}
+
+export async function createTier(tier: Partial<SpAgentTier>): Promise<SpAgentTier | null> {
+  const { data, error } = await callGateway('admin_create_tier', tier);
+  if (error) { console.error('createTier:', error); return null; }
+  return (data ?? null) as SpAgentTier | null;
+}
+
+export async function updateTier(code: string, updates: Partial<SpAgentTier>): Promise<boolean> {
+  const { error } = await callGateway('admin_update_tier', { code, ...updates });
+  if (error) { console.error('updateTier:', error); return false; }
   return true;
+}
+
+export async function deleteTier(code: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await callGateway('admin_delete_tier', { code });
+  if (error) return { success: false, error };
+  return { success: true };
+}
+
+export async function reorderTiers(order: Array<{ code: string; rank: number }>): Promise<boolean> {
+  const { error } = await callGateway('admin_reorder_tiers', { order });
+  if (error) { console.error('reorderTiers:', error); return false; }
+  return true;
+}
+
+export async function getTierChangeRequests(status?: 'PENDING' | 'APPROVED' | 'REJECTED'): Promise<SpTierChangeRequest[]> {
+  const { data, error } = await callGateway('admin_list_tier_requests', { status });
+  if (error) { console.error('getTierChangeRequests:', error); return []; }
+  return (data ?? []) as SpTierChangeRequest[];
+}
+
+export async function approveTierRequest(requestId: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await callGateway('admin_approve_tier_request', { request_id: requestId });
+  if (error) return { success: false, error };
+  return { success: true };
+}
+
+export async function rejectTierRequest(requestId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await callGateway('admin_reject_tier_request', { request_id: requestId, reason });
+  if (error) return { success: false, error };
+  return { success: true };
+}
+
+export async function evaluateAgentTier(agentId: string, apply = false): Promise<{ data?: any; error?: string; pending?: boolean }> {
+  return callGateway('admin_evaluate_agent_tier', { agent_id: agentId, apply });
+}
+
+export async function evaluateAllAgentTiers(): Promise<{ data?: any; error?: string }> {
+  return callGateway('admin_evaluate_all_agents', {});
 }

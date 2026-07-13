@@ -23,6 +23,7 @@ import { handleNotificationsAction } from './actions/notifications.ts';
 import { handleAdminAction } from './actions/admin.ts';
 import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
+import { handleTiersAction } from './actions/tiers.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
@@ -126,6 +127,7 @@ Deno.serve(async (req) => {
       await handleAgentsAction(action, ctx) ??
       await handleNotificationsAction(action, ctx) ??
       await handleAdminAction(action, ctx) ??
+      await handleTiersAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
     if (result) return json(result.body, result.status);

@@ -72,7 +72,11 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           address: params.address ?? meta.address ?? null,
           role,
           trust_score: role === 'AGENT' ? 80 : 85,
-          verified: role !== 'AGENT',
+          // Nobody is auto-verified anymore — every role goes through the
+          // identity_status workflow (UNSUBMITTED -> PENDING -> APPROVED/REJECTED)
+          // via submit_identity_verification + admin_review_identity_verification.
+          verified: false,
+          identity_status: 'UNSUBMITTED',
           agent_code: role === 'AGENT'
             ? 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000))
             : 'SP-' + String(Math.floor(Math.random() * 99999)).padStart(5, '0'),
@@ -209,6 +213,129 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           tnc_ref_number: refNumber,
         }).eq('id', caller.spUser.id);
         return json({ data: { reference_number: refNumber } });
+      }
+
+    // ── Identity verification (KYC) ────────────────────────────────────────
+    // Every role (customer + agent) now goes through the same workflow:
+    // UNSUBMITTED -> PENDING (KTP uploaded, submit_identity_verification) ->
+    // APPROVED/REJECTED (admin_review_identity_verification). `verified`
+    // stays the single flag the rest of the app reads; identity_status adds
+    // the missing PENDING state + audit trail.
+    case 'submit_identity_verification': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const ktpUrl = String(params.ktp_document_url ?? '').trim();
+        if (!ktpUrl) return json({ error: 'ktp_document_url required' }, 400);
+        const { data, error } = await db.from('sp_users').update({
+          ktp_document_url: ktpUrl,
+          identity_status: 'PENDING',
+          identity_submitted_at: new Date().toISOString(),
+          identity_reject_reason: null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', caller.spUser.id).select('id, name, email, role, identity_status').maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        db.from('sp_admin_notifications').insert({
+          type: 'IDENTITY_SUBMITTED',
+          title: 'Verifikasi Identitas Baru',
+          body: `${String(caller.spUser.name)} (${caller.email}) mengirim dokumen KTP untuk direview.`,
+          read: false,
+          metadata: { user_id: caller.spUser.id, role: caller.spUser.role },
+        }).then(() => {}, () => {});
+        return json({ data });
+      }
+
+    case 'mark_phone_verified': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const phone = String(params.phone ?? '').trim();
+        if (!/^62[0-9]{8,15}$/.test(phone)) return json({ error: 'Invalid phone' }, 400);
+        const { data, error } = await db.from('sp_users').update({
+          phone,
+          phone_verified_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq('id', caller.spUser.id).select('id, phone, phone_verified_at').maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+    case 'admin_list_identity_verifications': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const status = String(params.status ?? 'PENDING').toUpperCase();
+        let q = db.from('sp_users')
+          .select('id, name, email, phone, role, ktp, ktp_document_url, identity_status, identity_submitted_at, identity_reviewed_at, identity_reject_reason, phone_verified_at, tc_accepted, created_at')
+          .order('identity_submitted_at', { ascending: false, nullsFirst: false })
+          .limit(Number(params.limit ?? 200));
+        if (status !== 'ALL') q = q.eq('identity_status', status);
+        if (params.role) q = q.eq('role', String(params.role));
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+    case 'admin_review_identity_verification': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const targetId = String(params.user_id ?? '');
+        if (!targetId) return json({ error: 'user_id required' }, 400);
+        const approve = params.action === 'APPROVE';
+        const reject = params.action === 'REJECT';
+        if (!approve && !reject) return json({ error: 'action must be APPROVE or REJECT' }, 400);
+        const reason = String(params.reason ?? '').trim();
+        if (reject && !reason) return json({ error: 'reason required to reject' }, 400);
+
+        const { data, error } = await db.from('sp_users').update({
+          identity_status: approve ? 'APPROVED' : 'REJECTED',
+          verified: approve,
+          identity_reviewed_by: caller.authId,
+          identity_reviewed_at: new Date().toISOString(),
+          identity_reject_reason: reject ? reason : null,
+          updated_at: new Date().toISOString(),
+        }).eq('id', targetId).select('id, name, email, role, identity_status, verified').maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: 'User not found' }, 404);
+
+        db.from('sp_admin_notifications').insert({
+          type: approve ? 'IDENTITY_APPROVED' : 'IDENTITY_REJECTED',
+          title: approve ? 'Identitas Diverifikasi' : 'Identitas Ditolak',
+          body: `${String((data as any).name)} (${String((data as any).email)}) ${approve ? 'telah diverifikasi' : 'ditolak: ' + reason}.`,
+          read: false,
+          metadata: { user_id: targetId, approved: approve, reviewer_id: caller.authId },
+        }).then(() => {}, () => {});
+        db.from('sp_notifications').insert({
+          agent_id: targetId,
+          type: approve ? 'IDENTITY_APPROVED' : 'IDENTITY_REJECTED',
+          title: approve ? 'Identitas Anda Diverifikasi' : 'Verifikasi Identitas Ditolak',
+          body: approve
+            ? 'Selamat! Identitas Anda telah diverifikasi. Anda sekarang dapat membeli polis dan mengajukan klaim.'
+            : `Maaf, dokumen KTP Anda ditolak. Alasan: ${reason}. Silakan kirim ulang dokumen yang valid.`,
+          read: false,
+          metadata: { approved: approve, reviewer_id: caller.authId },
+        }).then(() => {}, () => {});
+        return json({ data });
+      }
+
+    // ── T&C acceptance records (audit visibility for admin/operator) ───────
+    case 'admin_list_tnc_records': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const search = String(params.search ?? '').trim().toLowerCase();
+        const { data: records, error } = await db.from('sp_tnc_records')
+          .select('id, user_id, reference_number, tnc_version, accepted_at, user_agent')
+          .order('accepted_at', { ascending: false })
+          .limit(Number(params.limit ?? 200));
+        if (error) return json({ error: error.message }, 400);
+        const userIds = [...new Set((records ?? []).map((r: any) => r.user_id))];
+        let users: any[] = [];
+        if (userIds.length > 0) {
+          const { data: userRows } = await db.from('sp_users').select('id, name, email, role').in('id', userIds);
+          users = userRows ?? [];
+        }
+        const userMap: Record<string, any> = {};
+        for (const u of users) userMap[u.id] = u;
+        let result = (records ?? []).map((r: any) => ({ ...r, user: userMap[r.user_id] ?? null }));
+        if (search) {
+          result = result.filter((r: any) =>
+            String(r.user?.name ?? '').toLowerCase().includes(search) ||
+            String(r.user?.email ?? '').toLowerCase().includes(search) ||
+            String(r.reference_number ?? '').toLowerCase().includes(search));
+        }
+        return json({ data: result });
       }
 
     default:

@@ -13,7 +13,7 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db
           .from('sp_users')
-          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, allowed_apps, tc_accepted, tc_accepted_at, tnc_ref_number, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target')
+          .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, allowed_apps, tc_accepted, tc_accepted_at, tnc_ref_number, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target, identity_status, identity_submitted_at, identity_reject_reason, phone_verified_at')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
         if (params.role) q = q.eq('role', params.role);

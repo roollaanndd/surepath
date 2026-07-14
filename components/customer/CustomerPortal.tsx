@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspens
 import {
   Zap, History,
   Sun, Moon, LogOut, ShieldCheck, Bell,
-  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
+  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw,
+  ShieldAlert, Clock,
 } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
@@ -23,7 +24,7 @@ const CustomInsuranceWizard = lazy(() => import('../CustomInsuranceWizard'));
 const HealthChat = lazy(() => import('../HealthChat'));
 const ContactPage = lazy(() => import('../ContactPage'));
 import { PageTransition } from '../car-wizard/WizardUI';
-import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
+import { getCustomerOrders, getCustomerClaims, getNotifications, getUserByEmail, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import { HeroProtected, EmptyStateSearch } from '../shared/Illustrations';
 import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
@@ -38,6 +39,37 @@ const WizardLoader = () => (
     <div className="w-10 h-10 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin" />
   </div>
 );
+
+// Blocks purchase/claim flows until identity verification (KTP) is APPROVED.
+// PENDING gets a distinct "under review" message rather than being lumped
+// in with UNSUBMITTED/REJECTED, since the user has already done their part.
+const VerificationGate: React.FC<{ status: string; lang: Language; onGoToProfile: () => void }> = ({ status, lang, onGoToProfile }) => {
+  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const pending = status === 'PENDING';
+  return (
+    <div className="pb-32 pt-4 flex flex-col items-center text-center px-6">
+      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-4 ${pending ? 'bg-blue-50 text-ds-blue' : 'bg-amber-50 text-ds-amber'}`}>
+        {pending ? <Clock size={30} /> : <ShieldAlert size={30} />}
+      </div>
+      <h3 className="text-lg font-black text-ds-ink mb-2">
+        {pending ? t('Verification in progress', 'Verifikasi sedang diproses') : t('Verify your identity first', 'Verifikasi identitas dulu')}
+      </h3>
+      <p className="text-xs text-ds-ink3 leading-relaxed max-w-xs mb-6">
+        {pending
+          ? t('Your KTP document is being reviewed. This usually takes up to 1x24 hours — you can buy or claim once approved.', 'Dokumen KTP Anda sedang direview. Biasanya sampai 1x24 jam — Anda bisa membeli atau klaim setelah disetujui.')
+          : t('For your protection and ours, please upload your KTP for a quick identity check before purchasing a policy or filing a claim.', 'Untuk keamanan Anda dan kami, mohon unggah KTP untuk verifikasi cepat sebelum membeli polis atau mengajukan klaim.')}
+      </p>
+      {!pending && (
+        <button
+          onClick={onGoToProfile}
+          className="px-6 py-3.5 bg-ds-green text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-ds-green active:scale-95 transition-all"
+        >
+          {t('Verify Now', 'Verifikasi Sekarang')}
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface Props {
   currentUser: any;
@@ -68,6 +100,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [showNotifications, setShowNotifications] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SpPolicyOrder | null>(null);
+  const [identityStatus, setIdentityStatus] = useState<'UNSUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED'>('UNSUBMITTED');
+
+  useEffect(() => {
+    getUserByEmail('').then(p => { if (p?.identity_status) setIdentityStatus(p.identity_status); }).catch(() => {});
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -127,6 +164,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const isFullscreen = activePage.startsWith('buy-') || activePage === 'bot';
 
   const renderContent = () => {
+    if (activePage.startsWith('buy-') && identityStatus !== 'APPROVED') {
+      return (
+        <PageTransition>
+          <VerificationGate status={identityStatus} lang={lang} onGoToProfile={() => navigate('profile')} />
+        </PageTransition>
+      );
+    }
     switch (activePage) {
       case 'home': {
         const coverageLabels = Array.from(new Set(customerPolicies.map(p => {
@@ -169,6 +213,28 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-ds-bg" style={{ background: '#00C896' }} />
                 </button>
               </div>
+
+              {/* Identity verification nudge */}
+              {(identityStatus === 'UNSUBMITTED' || identityStatus === 'REJECTED') && (
+                <button
+                  type="button"
+                  onClick={() => navigate('profile')}
+                  className="w-full flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left active:scale-[0.98] transition-transform"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-ds-amber flex items-center justify-center flex-shrink-0">
+                    <ShieldAlert size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-ds-ink">
+                      {identityStatus === 'REJECTED'
+                        ? t('KTP verification rejected — resubmit', 'Verifikasi KTP ditolak — unggah ulang')
+                        : t('Verify your identity to unlock purchases & claims', 'Verifikasi identitas untuk bisa beli & klaim')}
+                    </p>
+                    <p className="text-[10px] text-ds-ink3">{t('Takes less than a minute', 'Kurang dari semenit')}</p>
+                  </div>
+                  <ArrowRight size={16} className="text-ds-amber flex-shrink-0" />
+                </button>
+              )}
 
               {/* Protection Score Hero — with character illustration */}
               <HeroCard>
@@ -401,6 +467,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         );
 
       case 'claim':
+        if (identityStatus !== 'APPROVED') {
+          return (
+            <PageTransition>
+              <VerificationGate status={identityStatus} lang={lang} onGoToProfile={() => navigate('profile')} />
+            </PageTransition>
+          );
+        }
         return (
           <PageTransition>
             <div className="pb-32">

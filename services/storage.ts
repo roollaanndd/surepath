@@ -119,13 +119,17 @@ export async function uploadAgentAvatar(agentId: string, base64: string): Promis
   return cacheBustUrl;
 }
 
-export async function uploadAgentKtp(agentId: string, file: File): Promise<string | null> {
+// Uploads a KTP photo and submits it for identity review (identity_status ->
+// PENDING). Bucket RLS is keyed on the auth.uid() folder, not on role, so
+// this is shared by every role (agent, customer, ...) rather than being
+// agent-specific despite the bucket's legacy 'agent-docs' name.
+export async function uploadIdentityKtp(userId: string, file: File): Promise<string | null> {
   const ext = file.name.split('.').pop() ?? 'jpg';
-  const path = `${agentId}/ktp.${ext}`;
+  const path = `${userId}/ktp.${ext}`;
   const { error } = await supabase.storage.from('agent-docs').upload(path, file, { upsert: true, contentType: file.type });
-  if (error) { console.error('uploadAgentKtp:', error); return null; }
+  if (error) { console.error('uploadIdentityKtp:', error); return null; }
   const { data } = supabase.storage.from('agent-docs').getPublicUrl(path);
-  await callGateway('update_my_profile', { ktp_document_url: data.publicUrl }).catch(() => {});
+  await callGateway('submit_identity_verification', { ktp_document_url: data.publicUrl }).catch(() => {});
   return data.publicUrl;
 }
 

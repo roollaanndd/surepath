@@ -4,6 +4,7 @@ import {
   ToggleLeft, ToggleRight, Search, Database, Upload,
 } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
+import { useConfirmDialog, useToast } from '../ui';
 import { CAR_DATABASE } from '../../constants';
 import PricelistUploadModal from './PricelistUploadModal';
 
@@ -185,6 +186,8 @@ const OverrideModal: React.FC<OverrideModalProps> = ({ initial, onSave, onClose 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const VehiclePricelistAdmin: React.FC = () => {
+  const confirm = useConfirmDialog();
+  const toast = useToast();
   const [overrides, setOverrides] = useState<SpVehicleOverride[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -276,8 +279,15 @@ const VehiclePricelistAdmin: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Hapus override kendaraan ini?')) return;
+    const ok = await confirm({
+      title: 'Hapus Override?',
+      description: 'Override harga kendaraan ini akan dihapus permanen.',
+      confirmLabel: 'Hapus',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
     await supabase.from('sp_vehicle_overrides').delete().eq('id', id);
+    toast.success('Override dihapus');
     fetchOverrides();
   };
 

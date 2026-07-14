@@ -8,15 +8,17 @@ const AppUpdateNotification: React.FC = () => {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const handleControllerChange = () => {
       setUpdated(true);
       // Small delay so slide-up animation is visible
-      setTimeout(() => setVisible(true), 50);
+      timeoutId = setTimeout(() => setVisible(true), 50);
     };
 
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 

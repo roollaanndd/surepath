@@ -287,8 +287,11 @@ const App = () => {
           (byEmail.status === 'fulfilled' ? byEmail.value : null);
         setOauthLoading(false);
         if (profile) {
+          // FIX v1.42.0: fail-closed — if T&C status fetch errors, show the T&C modal.
+          // Previously this was fail-open (`.catch(() => true)`) which let users bypass
+          // legal consent on any network blip.
           const tcAccepted = isTcCachedLocally(profile.id)
-            || await getUserTcStatus(profile.id).catch(() => true);
+            || await getUserTcStatus(profile.id).catch(() => false);
           if (tcAccepted) { cacheTcLocally(profile.id); }
           else { setShowTc(true); }
           handleAuthSuccess({
@@ -406,7 +409,7 @@ const App = () => {
   // Token comes from URL param or localStorage (saved from previous login).
   if (pathname === '/insurerapp') {
     const urlToken = new URLSearchParams(window.location.search).get('token');
-    const savedToken = localStorage.getItem('SUREPATH_INSURER_TOKEN');
+    const savedToken = sessionStorage.getItem('SUREPATH_INSURER_TOKEN');
     const token = urlToken ?? savedToken;
     if (!token) {
       return (

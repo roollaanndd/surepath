@@ -70,8 +70,8 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
       variant: 'danger',
     });
     if (!ok) return;
-    localStorage.removeItem('SUREPATH_INSURER_TOKEN');
-    localStorage.removeItem('SUREPATH_INSURER_NAME');
+    sessionStorage.removeItem('SUREPATH_INSURER_TOKEN');
+    sessionStorage.removeItem('SUREPATH_INSURER_NAME');
     onLogout();
   };
 

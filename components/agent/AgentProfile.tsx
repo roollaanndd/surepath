@@ -48,8 +48,10 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   interface BankAccount { bank_code: string; account_number: string; account_holder_name: string; }
   const BANK_STORAGE_KEY = 'SUREPATH_SAVED_BANK';
+  // FIX v1.42.0: use sessionStorage instead of localStorage for bank PII.
+  const BANK_STORAGE: Storage | null = typeof sessionStorage !== 'undefined' ? sessionStorage : null;
   const [savedAccount, setSavedAccount] = useState<BankAccount | null>(() => {
-    try { return JSON.parse(localStorage.getItem(BANK_STORAGE_KEY) ?? 'null'); } catch { return null; }
+    try { return JSON.parse(BANK_STORAGE?.getItem(BANK_STORAGE_KEY) ?? 'null'); } catch { return null; }
   });
   const [showBankForm, setShowBankForm] = useState(false);
   const [bankForm, setBankForm] = useState({ bank_code: '', account_number: '', account_holder_name: '' });
@@ -58,14 +60,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   const saveBankAccount = () => {
     if (!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name) return;
-    localStorage.setItem(BANK_STORAGE_KEY, JSON.stringify(bankForm));
+    BANK_STORAGE?.setItem(BANK_STORAGE_KEY, JSON.stringify(bankForm));
     setSavedAccount(bankForm);
     setShowBankForm(false);
     setBankForm({ bank_code: '', account_number: '', account_holder_name: '' });
   };
 
   const deleteBankAccount = () => {
-    localStorage.removeItem(BANK_STORAGE_KEY);
+    BANK_STORAGE?.removeItem(BANK_STORAGE_KEY);
     setSavedAccount(null);
   };
 
@@ -179,7 +181,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
           >
             {(profile as any)?.profile_photo_url
-              ? <img src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
+              ? <img loading="lazy" src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
               : <span>{initials}</span>
             }
             {avatarUploading && (

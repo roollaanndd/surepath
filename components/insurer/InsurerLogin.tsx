@@ -38,8 +38,8 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
       // Validate by calling get_insurer_dashboard — if it works, token is valid
       const dashboard = await getInsurerDashboard(t);
       // Store token + insurer name for the session
-      localStorage.setItem('SUREPATH_INSURER_TOKEN', t);
-      localStorage.setItem('SUREPATH_INSURER_NAME', dashboard.insurer.name);
+      sessionStorage.setItem('SUREPATH_INSURER_TOKEN', t);
+      sessionStorage.setItem('SUREPATH_INSURER_NAME', dashboard.insurer.name);
       onLoginSuccess(t);
     } catch (e: any) {
       console.error('InsurerLogin error:', e);

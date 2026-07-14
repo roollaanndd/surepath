@@ -222,7 +222,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
                    {details.survey?.photos && Object.entries(details.survey.photos).map(([key, src]: any) => (
                       <div key={key} className="space-y-2 group cursor-pointer">
                          <div className="relative aspect-square rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 group-hover:border-emerald-500 transition-all">
-                            <img src={src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={key} />
+                            <img loading="lazy" src={src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={key} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
                                <Eye size={16} className="text-white"/>
                             </div>
@@ -439,7 +439,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
                   <div className="flex -space-x-2">
                      {c.photos?.slice(0, 3).map((p, i) => (
                         <div key={i} className="w-8 h-8 rounded-lg border-2 border-ds-card bg-ds-card2 overflow-hidden">
-                           <img src={p} className="w-full h-full object-cover" alt="claim" />
+                           <img loading="lazy" src={p} className="w-full h-full object-cover" alt="claim" />
                         </div>
                      ))}
                   </div>

@@ -160,7 +160,7 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
                 {/* Avatar */}
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-ds-green-tint flex items-center justify-center shrink-0">
                   {a.profile_photo_url ? (
-                    <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
+                    <img loading="lazy" src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="font-black text-ds-green">{(a.name?.charAt(0) ?? '?').toUpperCase()}</span>
                   )}
@@ -255,7 +255,7 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
                   <div className="flex items-center gap-3">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center shrink-0">
                       {detail.agent.profile_photo_url ? (
-                        <img src={detail.agent.profile_photo_url} alt={detail.agent.name} className="w-full h-full object-cover" />
+                        <img loading="lazy" src={detail.agent.profile_photo_url} alt={detail.agent.name} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
                           {(detail.agent.name?.charAt(0) ?? '?').toUpperCase()}
@@ -325,7 +325,7 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
                       onClick={() => setLightboxUrl(detail.agent.profile_photo_url)}
                       className={`mt-2 w-full flex items-center gap-3 p-3 rounded-xl border ${SHEET_BORDER} ${SHEET_INSET} active:scale-[0.98] transition-transform`}
                     >
-                      <img src={detail.agent.profile_photo_url} alt="Foto profil" className="w-10 h-10 rounded-full object-cover" />
+                      <img loading="lazy" src={detail.agent.profile_photo_url} alt="Foto profil" className="w-10 h-10 rounded-full object-cover" />
                       <div className="flex-1 text-left">
                         <p className={`text-xs font-bold ${SHEET_TEXT}`}>Foto Profil</p>
                         <p className={`text-[10px] ${SHEET_TEXT_MUTED}`}>Klik untuk perbesar</p>
@@ -401,7 +401,7 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
       {lightboxUrl && (
         <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white text-xl flex items-center justify-center" aria-label="Tutup">✕</button>
-          <img src={lightboxUrl} alt="Dokumen" className="max-w-full max-h-full object-contain rounded-xl" />
+          <img loading="lazy" src={lightboxUrl} alt="Dokumen" className="max-w-full max-h-full object-contain rounded-xl" />
         </div>
       )}
     </div>

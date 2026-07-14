@@ -269,7 +269,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
               <div key={slot.id} className={`group relative rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 text-center gap-2 overflow-hidden shadow-sm ${isLastSlot ? 'col-span-2 aspect-[3/1]' : 'aspect-video'} ${survey.photos[slot.id] ? (isInvalid ? 'border-rose-500 bg-rose-500/[0.03]' : 'border-emerald-500 bg-emerald-500/[0.03] border-solid') : 'border-black/10 dark:border-white/10 bg-white dark:bg-white/[0.03]'}`}>
                  {survey.photos[slot.id] ? (
                    <>
-                      <img src={survey.photos[slot.id]} className="absolute inset-0 w-full h-full object-cover rounded-[1.8rem]" alt={slot.label} />
+                      <img loading="lazy" src={survey.photos[slot.id]} className="absolute inset-0 w-full h-full object-cover rounded-[1.8rem]" alt={slot.label} />
 
                       {/* Loading & Status Overlay */}
                       <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-black/50 backdrop-blur-[4px] transition-all duration-300 z-20" style={{ opacity: isLoading || isInvalid ? 1 : 0 }}>

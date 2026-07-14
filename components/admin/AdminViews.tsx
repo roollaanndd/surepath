@@ -1885,7 +1885,7 @@ export const AgentManagementView = () => {
           >
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
               {a.profile_photo_url ? (
-                <img src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
+                <img loading="lazy" src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
               ) : (
                 a.name.charAt(0).toUpperCase()
               )}
@@ -2406,7 +2406,7 @@ export const UserManagementView = () => {
                       >
                         <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
                           {(u as any).profile_photo_url ? (
-                            <img src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
                           ) : (u.name?.[0] ?? '?').toUpperCase()}
                         </div>
                         <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>

@@ -22,16 +22,21 @@ export async function addCommission(data: Omit<SpCommission, 'id' | 'created_at'
   // FIX: previously used supabase (user-JWT) client which fails RLS when admin credits
   // commission to an agent (RLS requires auth.uid() = agent_id).
   // Now routes through gateway admin_create_commission (service_role bypasses RLS).
+  // FIX v1.42.0: forward ALL fields including discount_rate, coin_reward, order_number
+  // (previously dropped silently).
   const { data: result, error } = await callGateway('admin_create_commission', {
     agent_id:         data.agent_id,
     client_name:      (data as any).client_name,
     client_id:        (data as any).client_id,
     policy_id:        (data as any).policy_id,
     order_id:         (data as any).order_id,
+    order_number:     (data as any).order_number,
     product_type:     data.product_type,
     premium_amount:   data.premium_amount,
     commission_amount:data.commission_amount,
     commission_rate:  (data as any).commission_rate,
+    discount_rate:    (data as any).discount_rate,
+    coin_reward:      (data as any).coin_reward,
     status:           data.status,
   });
   if (error) {

@@ -74,6 +74,7 @@ const AnalyticsDashboard = () => {
   const [topAgents, setTopAgents] = useState<AgentBar[]>([]);
   const [paymentFunnel, setPaymentFunnel] = useState<PaymentFunnel | null>(null);
   const [pipeline, setPipeline] = useState<PipelineCounts | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -160,7 +161,11 @@ const AnalyticsDashboard = () => {
       setLoading(false);
     };
 
-    load().catch(() => setLoading(false));
+    load().catch((e) => {
+      console.error('AnalyticsDashboard load failed:', e);
+      setLoadError(e?.message ?? 'Gagal memuat data analytics');
+      setLoading(false);
+    });
   }, []);
 
   const maxPipeVal = pipeline ? Math.max(...Object.values(pipeline), 1) : 1;
@@ -178,14 +183,27 @@ const AnalyticsDashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[0,1,2,3].map(i => <Skeleton key={i} h="h-24" />)}
         </div>
-      ) : (
+      ) : loadError && !kpi ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard label="GWP YTD" value={formatM(kpi!.gwpYTD * 1_000_000 > 0 ? kpi!.gwpYTD : 0)} sub={formatIDR(kpi!.gwpYTD)} />
-          <KPICard label="Polis Diterbitkan" value={kpi!.policiesIssued.toLocaleString('id-ID')} sub="Status ISSUED" />
-          <KPICard label="Mitra Aktif" value={kpi!.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
-          <KPICard label="Claims Ratio" value={`${kpi!.claimsRatio}%`} sub="Klaim / Premi YTD" />
+          <div className="col-span-full p-8 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-center">
+            <p className="text-rose-600 dark:text-rose-400 font-bold text-sm mb-2">Gagal memuat data analytics</p>
+            <p className="text-rose-500 dark:text-rose-500/70 text-xs mb-4">{loadError}</p>
+            <button
+              onClick={() => { setLoading(true); setLoadError(null); window.location.reload(); }}
+              className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
+            >
+              Coba Lagi
+            </button>
+          </div>
         </div>
-      )}
+      ) : kpi ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard label="GWP YTD" value={formatM(kpi.gwpYTD * 1_000_000 > 0 ? kpi.gwpYTD : 0)} sub={formatIDR(kpi.gwpYTD)} />
+          <KPICard label="Polis Diterbitkan" value={kpi.policiesIssued.toLocaleString('id-ID')} sub="Status ISSUED" />
+          <KPICard label="Mitra Aktif" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
+          <KPICard label="Claims Ratio" value={`${kpi.claimsRatio}%`} sub="Klaim / Premi YTD" />
+        </div>
+      ) : null}
 
       {/* GWP Trend + Product Mix */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">

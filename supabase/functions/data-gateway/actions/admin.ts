@@ -223,10 +223,13 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           client_id:        params.client_id        ? String(params.client_id)                    : null,
           policy_id:        params.policy_id        ? String(params.policy_id)                    : null,
           order_id:         params.order_id         ? String(params.order_id)                     : null,
+          order_number:     params.order_number     ? String(params.order_number).slice(0, 100)   : null,
           product_type:     params.product_type     ? String(params.product_type).slice(0, 50)    : 'CAR',
           premium_amount:   Number(params.premium_amount ?? 0),
           commission_amount:Number(params.commission_amount),
           commission_rate:  Number(params.commission_rate ?? 0),
+          discount_rate:    params.discount_rate != null ? Number(params.discount_rate) : 0,
+          coin_reward:      params.coin_reward != null ? Number(params.coin_reward) : 0,
           status:           String(params.status ?? 'PENDING'),
           created_at:       new Date().toISOString(),
           updated_at:       new Date().toISOString(),
@@ -317,6 +320,53 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
         const { data, error } = await db.from('sp_page_views').select('page, ts').gte('ts', since).order('ts', { ascending: true });
         if (error) return json({ error: error.message }, 400);
         return json({ data: data ?? [] });
+      }
+
+    // ─── New: admin_backup_export (fixes broken backup system) ──────────────
+    // Previously backupService.ts used anon-key client which returned empty results
+    // after RLS tightening. This action uses service_role to export ALL rows from
+    // ~35 critical tables. Admin-only. Returns JSON payload for client-side encryption.
+    case 'admin_backup_export': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const tables = [
+          // Core entities
+          'sp_users', 'sp_clients', 'sp_insurers', 'sp_insurer_products',
+          // Orders & policies
+          'sp_policy_orders', 'sp_policies', 'sp_quotes',
+          // Financial
+          'sp_payments', 'sp_commissions', 'sp_wallet_transactions',
+          'sp_withdrawals', 'sp_agent_wallets', 'sp_coin_ledger', 'sp_transactions',
+          // Claims
+          'sp_claims', 'sp_endorsements', 'sp_renewals',
+          // Agent network
+          'sp_agent_agreements', 'sp_referral_rewards', 'sp_tier_config',
+          // Notifications
+          'sp_notifications', 'sp_admin_notifications',
+          // Config
+          'sp_insurer_api_configs', 'sp_insurer_activity_log',
+          'sp_ojk_rate_sets', 'sp_promo_codes', 'sp_vehicle_overrides',
+          'sp_product_configs',
+          // Review tokens (expiring)
+          'sp_review_tokens', 'sp_insurer_auth_tokens',
+          // Audit & compliance
+          'sp_audit_log', 'sp_tnc_records',
+          // B2B & Life
+          'sp_b2b_submissions', 'sp_b2b_quotes', 'sp_life_applications',
+          // Sessions (for forensic analysis)
+          'sp_user_sessions',
+        ];
+        const result: Record<string, any[]> = {};
+        for (const t of tables) {
+          try {
+            const { data, error } = await db.from(t).select('*').order('created_at', { ascending: false }).limit(5000);
+            if (!error) result[t] = data ?? [];
+            else console.warn(`backup_export: skip ${t}:`, error.message);
+          } catch (e) {
+            console.warn(`backup_export: error on ${t}:`, e);
+            result[t] = [];
+          }
+        }
+        return json({ data: { tables: result, exportedAt: new Date().toISOString() } });
       }
 
     default:

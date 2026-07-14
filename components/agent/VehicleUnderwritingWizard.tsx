@@ -1371,7 +1371,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                   >
                     <div className="flex items-center gap-2 mb-2">
                       {p.insurer_logo_url && (
-                        <img src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
+                        <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
                           className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
                       )}
                       <p className={`font-black text-sm ${selected ? 'text-[#16a34a]' : 'text-slate-700 dark:text-slate-200'}`}>
@@ -1467,7 +1467,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 >
                   {preview ? (
                     <>
-                      <img src={preview} className="absolute inset-0 w-full h-full object-cover" alt={slot.label} />
+                      <img loading="lazy" src={preview} className="absolute inset-0 w-full h-full object-cover" alt={slot.label} />
                       {(isLoading || isInvalid) && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm z-10">
                           {isLoading && <Loader2 className="w-6 h-6 text-white animate-spin" />}

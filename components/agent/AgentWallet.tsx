@@ -316,6 +316,10 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
 };
 
 const SAVED_BANKS_KEY = 'SUREPATH_SAVED_BANKS';
+// FIX v1.42.0: bank account PII moved from localStorage to sessionStorage.
+// sessionStorage is cleared when the tab closes, limiting XSS exfiltration window.
+// Previously bank account numbers + holder names persisted indefinitely in localStorage.
+const BANK_STORAGE: Storage | null = typeof sessionStorage !== 'undefined' ? sessionStorage : null;
 
 const AgentWalletView: React.FC = () => {
   const [wallet, setWallet] = useState<AgentWallet | null>(null);
@@ -332,7 +336,7 @@ const AgentWalletView: React.FC = () => {
   const [agentId, setAgentId] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>(() => {
     try {
-      const raw = localStorage.getItem(SAVED_BANKS_KEY);
+      const raw = BANK_STORAGE?.getItem(SAVED_BANKS_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       // migrate old single-account format
@@ -354,13 +358,13 @@ const AgentWalletView: React.FC = () => {
 
   const handleSaveAccount = (account: SavedAccount) => {
     const updated = [...savedAccounts, account];
-    localStorage.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
+    BANK_STORAGE?.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
     setSavedAccounts(updated);
   };
 
   const handleDeleteAccount = (idx: number) => {
     const updated = savedAccounts.filter((_, i) => i !== idx);
-    localStorage.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
+    BANK_STORAGE?.setItem(SAVED_BANKS_KEY, JSON.stringify(updated));
     setSavedAccounts(updated);
   };
 

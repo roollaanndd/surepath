@@ -5,6 +5,7 @@ import {
   RefreshCw, Upload, Loader2, KeyRound, Link2, Copy, Check, Ban,
 } from 'lucide-react';
 import { supabase, uploadInsurerLogo, callGateway } from '../../services/supabaseService';
+import { useConfirmDialog, useToast } from '../ui';
 import {
   CAR_COMP_MIN, CAR_COMP_MAX, CAR_TLO_MIN, CAR_TLO_MAX,
   NON_VEHICLE_RATES,
@@ -229,7 +230,7 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {logoUrl ? (
-                  <img src={logoUrl} alt={form.name} className="w-full h-full object-contain p-1.5" />
+                  <img loading="lazy" src={logoUrl} alt={form.name} className="w-full h-full object-contain p-1.5" />
                 ) : (
                   <Building2 size={20} className="text-slate-500" />
                 )}
@@ -675,6 +676,8 @@ interface ProductTableProps {
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({ insurerId, insurerName, onRequestAdd }) => {
+  const confirm = useConfirmDialog();
+  const toast = useToast();
   const [products, setProducts] = useState<ProductWithInsurer[]>([]);
   const [loading, setLoading] = useState(true);
   const [editTarget, setEditTarget] = useState<SpInsurerProduct | null>(null);
@@ -692,8 +695,15 @@ const ProductTable: React.FC<ProductTableProps> = ({ insurerId, insurerName, onR
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Hapus produk ini?')) return;
+    const ok = await confirm({
+      title: 'Hapus Produk?',
+      description: 'Produk asuransi ini akan dihapus permanen.',
+      confirmLabel: 'Hapus',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
     await callGateway('admin_delete_insurer_product', { product_id: id });
+    toast.success('Produk dihapus');
     fetchProducts();
   };
 
@@ -831,7 +841,7 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
       <div className="flex items-start gap-4">
         <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {insurer.logo_url ? (
-            <img src={insurer.logo_url} alt={insurer.name} className="w-full h-full object-contain p-1" />
+            <img loading="lazy" src={insurer.logo_url} alt={insurer.name} className="w-full h-full object-contain p-1" />
           ) : (
             <Building2 size={18} className="text-emerald-400" />
           )}
@@ -898,6 +908,8 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const InsurerAdmin: React.FC = () => {
+  const confirm = useConfirmDialog();
+  const toast = useToast();
   const [insurers, setInsurers] = useState<SpInsurer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -927,8 +939,15 @@ const InsurerAdmin: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Hapus perusahaan asuransi ini? Semua produk terkait juga akan terhapus.')) return;
+    const ok = await confirm({
+      title: 'Hapus Perusahaan Asuransi?',
+      description: 'Perusahaan asuransi ini akan dihapus. Semua produk terkait juga akan terhapus.',
+      confirmLabel: 'Hapus',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
     await callGateway('admin_delete_insurer', { insurer_id: id });
+    toast.success('Perusahaan asuransi dihapus');
     fetchInsurers();
   };
 
@@ -1065,6 +1084,8 @@ interface InsurerToken {
 }
 
 const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers }) => {
+  const confirm = useConfirmDialog();
+  const toast = useToast();
   const [tokens, setTokens] = useState<InsurerToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1087,10 +1108,17 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
   useEffect(() => { load(); }, [load]);
 
   const handleRevoke = async (tokenId: string, insurerName: string) => {
-    if (!window.confirm(`Hapus token akses untuk ${insurerName}? Insurer akan langsung logout dari dashboard.`)) return;
+    const ok = await confirm({
+      title: 'Hapus Token Akses?',
+      description: `Token akses untuk ${insurerName} akan dihapus. Insurer akan langsung logout dari dashboard.`,
+      confirmLabel: 'Hapus Token',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
     try {
       const { error } = await callGateway('admin_revoke_insurer_token', { token_id: tokenId });
       if (error) throw new Error(error);
+      toast.success('Token dihapus');
       load();
     } catch (e: any) {
       console.warn(`Gagal hapus token: ${e.message}`);

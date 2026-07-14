@@ -68,7 +68,7 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
 
       {/* Logo */}
       <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="flex items-center gap-2.5 group flex-shrink-0">
-        <img src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
+        <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         <span className="text-xl font-semibold tracking-tight" style={{ color: th.textMain }}>
           Sure<span style={{ color: ACCENT }}>Path</span>
@@ -193,7 +193,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
           {/* Brand column */}
           <div className="col-span-2 flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <img src="/surepath-logo.png" alt="SurePath" className="h-8 w-auto object-contain"
+              <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="h-8 w-auto object-contain"
                 onError={(e) => {
                   const tg = e.target as HTMLImageElement; tg.style.display = 'none';
                   const n = tg.nextElementSibling as HTMLElement | null; if (n) n.style.display = 'flex';
@@ -315,7 +315,7 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
         {/* SurePath badge — covers the Gemini watermark in the bottom-right corner */}
         {bgVideo && (
           <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
-            <img src="/surepath-logo.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
+            <img loading="lazy" src="/surepath-logo.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
               Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>

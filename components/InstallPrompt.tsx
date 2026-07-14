@@ -202,7 +202,7 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
             <X size={15} className="text-slate-500" />
           </button>
           <div className="w-16 h-16 mx-auto rounded-[1.4rem] bg-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/20 flex items-center justify-center mb-3">
-            <img src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
+            <img loading="lazy" src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
           </div>
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">SurePath</p>
           <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">

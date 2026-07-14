@@ -167,7 +167,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
             }} />
             {/* Shield icon tile with gradient border — enlarged icon fitted to box */}
             <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
-              <img src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
+              <img loading="lazy" src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
             </div>
           </div>
 

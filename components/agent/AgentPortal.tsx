@@ -114,11 +114,13 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     localStorage.setItem('sp_dark_mode', String(darkMode));
   }, [darkMode]);
 
-  // Check whether this agent has signed the current agreement version
+  // Check whether this agent has signed the current agreement version.
+  // FIX v1.42.0: fail-closed — if the fetch errors, treat as NOT signed.
+  // Previously this was fail-open (let agents bypass the legal gate on network blip).
   useEffect(() => {
     getMyAgreement()
       .then(rec => setAgreementOk(!!rec))
-      .catch(() => setAgreementOk(true)); // fail-open on transient error; recheck next load
+      .catch(() => setAgreementOk(false)); // fail-closed: require explicit acceptance
   }, []);
 
   const loadData = async () => {
@@ -249,7 +251,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   }
 
   return (
-    <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && agreementOk && (
         <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />

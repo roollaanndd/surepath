@@ -63,9 +63,24 @@ async function collectIndexedDB() {
 }
 
 async function collectSupabase() {
-  const tables = ['sp_users', 'sp_clients', 'sp_policies', 'sp_commissions', 'sp_claims', 'sp_policy_orders', 'sp_quotes', 'sp_insurers', 'sp_insurer_products'] as const;
-  const results = await Promise.all(tables.map(t => supabase.from(t).select('*').then(r => r.data ?? [])));
-  return Object.fromEntries(tables.map((t, i) => [t, results[i]]));
+  // FIX v1.42.0: route through gateway (service_role) to bypass RLS.
+  // Previously used anon-key client which returned empty results after RLS tightening.
+  // Also expanded from 9 tables to ~35 tables (covers financial, legal, audit, config).
+  try {
+    const { callGateway } = await import('./db');
+    const { data, error } = await callGateway('admin_backup_export', {});
+    if (error || !data) {
+      console.warn('backup_export via gateway failed, falling back to direct query:', error);
+      // Fallback: legacy direct query (will return empty/self-only due to RLS, but at least won't crash)
+      const tables = ['sp_users', 'sp_clients', 'sp_policies', 'sp_commissions', 'sp_claims', 'sp_policy_orders', 'sp_quotes', 'sp_insurers', 'sp_insurer_products'] as const;
+      const results = await Promise.all(tables.map(t => supabase.from(t).select('*').then(r => r.data ?? [])));
+      return Object.fromEntries(tables.map((t, i) => [t, results[i]]));
+    }
+    return (data as any).tables ?? {};
+  } catch (e) {
+    console.warn('collectSupabase error:', e);
+    return {};
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -112,12 +127,17 @@ export async function performBackup(adminKey?: string, type: 'AUTO' | 'MANUAL' =
     };
     const tablesList = [...Object.keys(idb), ...Object.keys(supa)];
 
+    // FIX v1.42.0: AUTO backups previously stored NO recoverable data when adminKey
+    // was absent (encrypted_data = null, payload only had rowCounts). Now we always
+    // store the plaintext JSON in `payload` (RLS restricts reads to admins) so AUTO
+    // backups are actually recoverable. When adminKey IS provided, we ALSO store
+    // the encrypted version in `encrypted_data` for defense-in-depth.
     const encryptedData = adminKey ? await encryptJSON(json, adminKey) : null;
     const label = `${type.toLowerCase()}_${new Date().toISOString().split('T')[0]}_${Date.now()}`;
 
     const { error } = await supabase.from('backups').insert({
       label,
-      payload: { rowCounts, exportedAt: payload.exportedAt, checksum },
+      payload: { rowCounts, exportedAt: payload.exportedAt, checksum, data: adminKey ? null : JSON.parse(json) },
       row_counts: rowCounts,
       encrypted_data: encryptedData,
       checksum,

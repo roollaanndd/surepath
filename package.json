@@ -20,7 +20,6 @@
   "dependencies": {
     "@capacitor/android": "^8.3.0",
     "@capacitor/core": "^8.3.0",
-    "@phosphor-icons/react": "^2.1.10",
     "@sentry/react": "^10.63.0",
     "@supabase/supabase-js": "^2.106.0",
     "@types/cors": "^2.8.19",
@@ -30,7 +29,6 @@
     "dexie": "^4.2.1",
     "esbuild": "^0.28.0",
     "express": "^5.2.1",
-    "gsap": "^3.15.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.562.0",
     "motion": "^12.39.0",

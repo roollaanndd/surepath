@@ -394,7 +394,7 @@ export const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }
       <div className="relative p-5 flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 animate-glow"
           style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.3)' }}>
-          <img src="/surepath-logo.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
+          <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white font-black text-sm">Install SurePath</p>

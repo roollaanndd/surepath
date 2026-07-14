@@ -5,6 +5,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { cancelMyOrder, type SpPolicyOrder } from '../../services/supabaseService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
+import { useToast, useConfirmDialog } from '../ui';
 
 interface Props {
   order: SpPolicyOrder;
@@ -27,6 +28,8 @@ const STATUS_FLOW = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED'];
 
 const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, onResubmit }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const toast = useToast();
+  const confirm = useConfirmDialog();
   const [cancelling, setCancelling] = useState(false);
   const [downloadingQuote, setDownloadingQuote] = useState(false);
 
@@ -36,9 +39,10 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
     try {
       const slipData = fromCustomerOrder(order as any);
       await generateQuotationSlipPDF(slipData);
-    } catch (e) {
+      toast.success(t('Quotation slip downloaded', 'Slip penawaran berhasil diunduh'));
+    } catch (e: any) {
       console.error('Quotation slip download failed:', e);
-      alert(t('Failed to generate quotation. Please try again.', 'Gagal membuat quotation. Coba lagi.'));
+      toast.error(t('Failed to generate quotation. Please try again.', 'Gagal membuat quotation. Coba lagi.'));
     } finally {
       setDownloadingQuote(false);
     }
@@ -50,20 +54,33 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
   const resubmitPage = order.vehicle_type === 'CAR' ? 'buy-car' : 'products';
 
   const handleCancel = async () => {
-    if (!window.confirm(t('Cancel this submission?', 'Batalkan pengajuan ini?'))) return;
+    const ok = await confirm({
+      title: t('Cancel Submission?', 'Batalkan Pengajuan?'),
+      description: t('This will cancel your current insurance submission.', 'Pengajuan asuransi Anda yang sedang berjalan akan dibatalkan.'),
+      confirmLabel: t('Yes, Cancel', 'Ya, Batalkan'),
+      cancelLabel: t('Keep', 'Tetap'),
+    });
+    if (!ok) return;
     setCancelling(true);
     const result = await cancelMyOrder(order.id);
     setCancelling(false);
     if (result) {
+      toast.success(t('Submission cancelled', 'Pengajuan dibatalkan'));
       onCancelled();
     } else {
-      console.warn(t('Failed to cancel submission.', 'Gagal membatalkan pengajuan.'));
+      toast.error(t('Failed to cancel submission.', 'Gagal membatalkan pengajuan.'));
     }
   };
 
   const handleResubmit = async () => {
     if (canCancel) {
-      if (!window.confirm(t('Cancel current submission and resubmit?', 'Batalkan pengajuan ini dan ajukan ulang?'))) return;
+      const ok = await confirm({
+        title: t('Cancel & Resubmit?', 'Batalkan & Ajukan Ulang?'),
+        description: t('This will cancel your current submission and start a new one.', 'Pengajuan saat ini akan dibatalkan dan Anda akan mengajukan ulang.'),
+        confirmLabel: t('Yes, Resubmit', 'Ya, Ajukan Ulang'),
+        cancelLabel: t('Cancel', 'Batal'),
+      });
+      if (!ok) return;
       setCancelling(true);
       await cancelMyOrder(order.id);
       setCancelling(false);

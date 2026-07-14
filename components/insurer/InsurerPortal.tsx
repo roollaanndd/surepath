@@ -41,7 +41,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
-  const [insurerName, setInsurerName] = useState(() => localStorage.getItem('SUREPATH_INSURER_NAME') ?? 'Insurer');
+  const [insurerName, setInsurerName] = useState(() => sessionStorage.getItem('SUREPATH_INSURER_NAME') ?? 'Insurer');
   void setInsurerName; // kept for future profile-name updates
 
   useEffect(() => {
@@ -103,7 +103,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-ds-bg text-ds-ink transition-colors duration-300 font-sora">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && (
         <OnboardingFlow role="INSURER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />

@@ -161,7 +161,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
           ) : kycData.photo ? (
             <div className="relative w-full h-full p-4 flex flex-col items-center animate-pop-in">
                 <div className="relative p-1.5 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl transition-transform duration-500 group-hover:rotate-0 rotate-1">
-                    <img src={kycData.photo} className="max-h-40 rounded-2xl object-contain" alt="Foto KTP" />
+                    <img loading="lazy" src={kycData.photo} className="max-h-40 rounded-2xl object-contain" alt="Foto KTP" />
                     <div className="absolute -top-3 -right-3 flex flex-col gap-2">
                       <button 
                           onClick={(e) => { e.stopPropagation(); setKycData({...kycData, photo: null}); setVerifiedFields(new Set()); }}

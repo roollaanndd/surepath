@@ -320,7 +320,7 @@ const AdminPortal = ({
               {logoUploading ? (
                 <Loader2 size={16} className="text-white animate-spin" />
               ) : logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img loading="lazy" src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
               ) : (
                 <SurePathLogo className="w-6 h-6 text-white" />
               )}

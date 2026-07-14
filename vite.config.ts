@@ -83,7 +83,9 @@ export default defineConfig(() => {
               'lucide': ['lucide-react'],
               // spline removed — @splinetool/* is installed but never imported anywhere.
               // Saves ~250 KB in node_modules and removes a confusing chunk from the build.
-              'phosphor': ['@phosphor-icons/react'],
+              // phosphor removed — ModernIcon.tsx was dead code, deleted in v1.42.0.
+              // recharts is heavy (~200KB) — chunk it separately so it only loads on admin analytics.
+              'recharts': ['recharts'],
             },
           },
         },

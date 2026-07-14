@@ -42,6 +42,8 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
   const [query, setQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<OperatorOrder | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  // FIX v1.42.0: replace native prompt() with in-app modal for policy number input
+  const [issueModal, setIssueModal] = useState<{ order: OperatorOrder; value: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,12 +121,22 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
     }
   };
 
-  const handleIssue = async (o: OperatorOrder) => {
-    const policyNumber = await prompt('Nomor polis dari insurer:');
-    if (!policyNumber) return;
+  const handleIssue = (o: OperatorOrder) => {
+    // Open in-app modal instead of native prompt()
+    setIssueModal({ order: o, value: '' });
+  };
+
+  const confirmIssue = async () => {
+    if (!issueModal) return;
+    const policyNumber = issueModal.value.trim();
+    if (!policyNumber) {
+      toast.error('Nomor polis wajib diisi');
+      return;
+    }
     try {
-      await updateOrderStatus(o.id, 'ISSUED', 'Polis diterbitkan', policyNumber);
+      await updateOrderStatus(issueModal.order.id, 'ISSUED', 'Polis diterbitkan', policyNumber);
       toast.success('Polis diterbitkan');
+      setIssueModal(null);
       load();
     } catch (e: any) {
       toast.error(`Gagal menerbitkan: ${e.message}`);
@@ -490,7 +502,46 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
       {lightboxUrl && (
         <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white text-xl flex items-center justify-center" aria-label="Tutup">✕</button>
-          <img src={lightboxUrl} alt="Foto kendaraan" className="max-w-full max-h-full object-contain rounded-xl" />
+          <img loading="lazy" src={lightboxUrl} alt="Foto kendaraan" className="max-w-full max-h-full object-contain rounded-xl" />
+        </div>
+      )}
+
+      {/* FIX v1.42.0: in-app modal for policy number input (replaces native prompt) */}
+      {issueModal && (
+        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className={`w-full sm:max-w-md ${SHEET_BG} ${SHEET_TEXT} rounded-2xl border ${SHEET_BORDER} shadow-2xl`}>
+            <div className="p-5">
+              <h3 className="text-base font-bold mb-1">Terbitkan Polis</h3>
+              <p className={`text-xs ${SHEET_TEXT_MUTED} mb-4`}>
+                Masukkan nomor polis dari insurer untuk order{' '}
+                <span className="font-mono font-bold">{issueModal.order.order_number ?? issueModal.order.id.slice(0, 8)}</span>
+              </p>
+              <input
+                type="text"
+                autoFocus
+                value={issueModal.value}
+                onChange={(e) => setIssueModal(prev => prev ? { ...prev, value: e.target.value } : null)}
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmIssue(); if (e.key === 'Escape') setIssueModal(null); }}
+                placeholder="cth: POL-2026-001234"
+                className={`w-full px-4 py-3 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500`}
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setIssueModal(null)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border ${SHEET_BORDER} ${SHEET_TEXT_MUTED} active:scale-95 transition-transform`}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmIssue}
+                  disabled={!issueModal.value.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform disabled:opacity-50"
+                >
+                  Terbitkan
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

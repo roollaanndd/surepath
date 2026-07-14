@@ -96,6 +96,10 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
 
     case 'redeem_coins': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        // FIX v1.42.0: add verified check (consistent with create_policy_order + agent_request_withdrawal)
+        if (caller.spUser.role === 'AGENT' && caller.spUser.verified === false) {
+          return json({ error: 'Akun agen Anda belum diverifikasi.' }, 403);
+        }
         const coins = Number(params.coins);
         if (!coins || coins <= 0) return json({ error: 'coins must be positive' }, 400);
         const { data: ledger } = await db.from('sp_coin_ledger').select('type, coins').eq('agent_id', caller.spUser.id);
@@ -134,6 +138,77 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
           .sort((a, b) => b.total_commission - a.total_commission)
           .slice(0, 10);
         return json({ data: result });
+      }
+
+    // ─── New: agent_request_withdrawal (fixes withdrawal bypass + verified check) ──
+    // Previously services/wallet.ts requestWithdrawal() called supabase directly with user JWT,
+    // bypassing the gateway entirely. RLS on sp_withdrawals only checks auth.uid() = agent_id,
+    // NOT verified status — so unverified agents could submit withdrawal requests.
+    // This action enforces: (1) caller is AGENT, (2) caller is verified, (3) amount > Xendit fee,
+    // (4) atomic wallet deduction via request_withdrawal_deduct RPC.
+    case 'agent_request_withdrawal': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        if (caller.spUser.role !== 'AGENT') return json({ error: 'Hanya agen yang dapat melakukan penarikan' }, 403);
+        if (caller.spUser.verified === false) {
+          return json({ error: 'Akun agen Anda belum diverifikasi. Penarikan tidak diizinkan.' }, 403);
+        }
+
+        const amount = Number(params.amount ?? 0);
+        const bankCode = String(params.bank_code ?? '').slice(0, 20);
+        const accountNumber = String(params.account_number ?? '').slice(0, 50);
+        const accountHolderName = String(params.account_holder_name ?? '').slice(0, 200);
+
+        if (amount <= 0) return json({ error: 'Jumlah harus lebih besar dari 0' }, 400);
+        if (!bankCode || !accountNumber || !accountHolderName) {
+          return json({ error: 'bank_code, account_number, account_holder_name wajib diisi' }, 400);
+        }
+
+        const XENDIT_FEE = 5000;
+        const net_amount = amount - XENDIT_FEE;
+        if (net_amount <= 0) return json({ error: 'Jumlah terlalu kecil setelah biaya transfer' }, 400);
+
+        // Determine required approval level
+        let initial_status: string;
+        if (amount >= 25_000_000) initial_status = 'PENDING_L3';
+        else if (amount >= 10_000_000) initial_status = 'PENDING_L2';
+        else initial_status = 'PENDING_L1';
+
+        const scheduled_disburse_at = amount >= 25_000_000
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : null;
+
+        const { data: wd, error: wdErr } = await db
+          .from('sp_withdrawals')
+          .insert({
+            agent_id: caller.authId,
+            amount,
+            bank_code: bankCode,
+            account_number: accountNumber,
+            account_holder_name: accountHolderName,
+            xendit_fee: XENDIT_FEE,
+            net_amount,
+            status: initial_status,
+            scheduled_disburse_at,
+          })
+          .select('id')
+          .single();
+
+        if (wdErr || !wd) return json({ error: wdErr?.message ?? 'Gagal membuat penarikan' }, 400);
+
+        // Atomically deduct wallet via RPC (SECURITY DEFINER)
+        const { error: deductErr } = await db.rpc('request_withdrawal_deduct', {
+          p_withdrawal_id: wd.id,
+          p_agent_id:      caller.authId,
+          p_amount:        amount,
+        });
+
+        if (deductErr) {
+          // Rollback withdrawal insert
+          await db.from('sp_withdrawals').update({ status: 'CANCELLED' }).eq('id', wd.id);
+          return json({ error: deductErr.message }, 400);
+        }
+
+        return json({ data: { success: true, withdrawal_id: wd.id } });
       }
 
     default:

@@ -41,5 +41,5 @@ export const SecureDocImage: React.FC<{
   }, [url]);
 
   if (!src) return <div className={className} />;
-  return <img src={src} alt={alt} className={className} />;
+  return <img loading="lazy" src={src} alt={alt} className={className} />;
 };

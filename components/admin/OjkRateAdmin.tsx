@@ -4,6 +4,7 @@ import {
   getAllOjkRateSets, createOjkRateSet, updateOjkRateSet, activateOjkRateSet, deleteOjkRateSet,
   type SpOjkRateSet,
 } from '../../services/supabaseService';
+import { useConfirmDialog, useToast } from '../ui';
 
 // ─── Shared UI primitives (mirrors InsurerAdmin.tsx conventions) ─────────────
 
@@ -108,6 +109,8 @@ const emptyDraft = (): Omit<SpOjkRateSet, 'id' | 'created_at' | 'updated_at'> =>
 });
 
 const OjkRateAdmin: React.FC = () => {
+  const confirm = useConfirmDialog();
+  const toastUi = useToast();
   const [sets, setSets] = useState<SpOjkRateSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<SpOjkRateSet | null>(null);
@@ -166,9 +169,15 @@ const OjkRateAdmin: React.FC = () => {
 
   const handleDelete = async () => {
     if (!form || form.is_active) return;
-    if (!confirm(`Hapus versi "${form.version}"?`)) return;
-    const ok = await deleteOjkRateSet(form.id);
-    if (ok) { flash('Dihapus.'); setSelectedId(null); load(); } else { flash('Gagal menghapus.'); }
+    const ok = await confirm({
+      title: 'Hapus Versi Rate?',
+      description: `Versi "${form.version}" akan dihapus permanen.`,
+      confirmLabel: 'Hapus',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
+    const deleted = await deleteOjkRateSet(form.id);
+    if (deleted) { toastUi.success('Dihapus.'); setSelectedId(null); load(); } else { toastUi.error('Gagal menghapus.'); }
   };
 
   const handleNewBlank = async () => {

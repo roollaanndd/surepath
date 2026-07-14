@@ -60,9 +60,22 @@ const AIAdminView: React.FC = () => {
   const analyzeAll = async () => {
     setRunningBatch(true);
     const pending = orders.filter(o => !o._aiReview && !o._analyzing);
-    for (const order of pending) {
-      await analyzeOrder(order);
+    // FIX v1.42.0: parallelize with concurrency limit of 5.
+    // Previously sequential — 50 orders × ~6s LLM call = 5 minutes.
+    // Now: 5 in flight at a time → ~1 minute for 50 orders.
+    const CONCURRENCY = 5;
+    const queue = [...pending];
+    const workers: Promise<void>[] = [];
+    for (let w = 0; w < CONCURRENCY; w++) {
+      workers.push((async () => {
+        while (queue.length > 0) {
+          const order = queue.shift();
+          if (!order) break;
+          await analyzeOrder(order);
+        }
+      })());
     }
+    await Promise.all(workers);
     setRunningBatch(false);
   };
 

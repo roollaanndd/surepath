@@ -92,53 +92,17 @@ export async function requestWithdrawal(params: {
   account_number: string;
   account_holder_name: string;
 }): Promise<{ success: boolean; withdrawal_id?: string; error?: string }> {
-  const XENDIT_FEE = 5000;
-  const net_amount = params.amount - XENDIT_FEE;
-  if (net_amount <= 0) return { success: false, error: 'Jumlah terlalu kecil setelah biaya transfer' };
-
-  // Determine required approval level
-  let initial_status: string;
-  if (params.amount >= 25_000_000) initial_status = 'PENDING_L3';
-  else if (params.amount >= 10_000_000) initial_status = 'PENDING_L2';
-  else initial_status = 'PENDING_L1';
-
-  // Schedule 24hr delay for >25M
-  const scheduled_disburse_at = params.amount >= 25_000_000
-    ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    : null;
-
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) return { success: false, error: 'Tidak terautentikasi' };
-
-  const { data: wd, error: wdErr } = await supabase
-    .from('sp_withdrawals')
-    .insert({
-      ...params,
-      agent_id: authUser.id,
-      xendit_fee: XENDIT_FEE,
-      net_amount,
-      status: initial_status,
-      scheduled_disburse_at,
-    })
-    .select('id')
-    .single();
-
-  if (wdErr || !wd) return { success: false, error: wdErr?.message ?? 'Gagal membuat penarikan' };
-
-  // Atomically deduct wallet via RPC (SECURITY DEFINER)
-  const { error: deductErr } = await supabase.rpc('request_withdrawal_deduct', {
-    p_withdrawal_id: wd.id,
-    p_agent_id:      authUser.id,
-    p_amount:        params.amount,
+  // FIX v1.42.0: route through gateway to enforce verified check.
+  // Previously called supabase directly with user JWT, bypassing the verified gate
+  // added in create_policy_order — unverified agents could drain their wallet.
+  const { data, error } = await callGateway('agent_request_withdrawal', {
+    amount: params.amount,
+    bank_code: params.bank_code,
+    account_number: params.account_number,
+    account_holder_name: params.account_holder_name,
   });
-
-  if (deductErr) {
-    // Rollback withdrawal insert
-    await supabase.from('sp_withdrawals').update({ status: 'CANCELLED' }).eq('id', wd.id);
-    return { success: false, error: deductErr.message };
-  }
-
-  return { success: true, withdrawal_id: wd.id };
+  if (error) return { success: false, error };
+  return (data as any) ?? { success: false, error: 'Gagal membuat penarikan' };
 }
 
 export async function getAdminWithdrawals(limit = 200): Promise<Array<Withdrawal & {

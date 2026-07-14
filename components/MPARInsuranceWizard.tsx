@@ -288,7 +288,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onCompl
              <div className="grid grid-cols-1 gap-4">
                 {photos.front ? (
                    <div className="relative aspect-video rounded-xl overflow-hidden group">
-                      <img src={photos.front} className="w-full h-full object-cover" />
+                      <img loading="lazy" src={photos.front} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-4">
                          <button onClick={() => setPhotos({})} className="p-3 bg-white text-rose-500 rounded-xl shadow-xl"><Trash2 size={20}/></button>
                          <button onClick={runAiAudit} className="px-5 py-2 bg-emerald-500 text-white rounded-xl font-semibold text-xs">Retest Audit</button>

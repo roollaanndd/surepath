@@ -83,8 +83,15 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             .eq('id', String(params.policy_id))
             .maybeSingle();
           if (linkedOrder) {
-            insertRow.agent_id = (linkedOrder as any).agent_id;
-            if ((linkedOrder as any).client_id) insertRow.client_id = (linkedOrder as any).client_id;
+            // FIX v1.42.0: verify the caller owns this policy (as agent_id OR client_id).
+            // Previously any authenticated user could link a claim to any policy.
+            const lo = linkedOrder as any;
+            const isOwner = lo.agent_id === caller.authId || lo.client_id === caller.authId;
+            if (!isOwner && !caller.isAdmin) {
+              return json({ error: 'Polis tidak ditemukan atau bukan milik Anda.' }, 403);
+            }
+            insertRow.agent_id = lo.agent_id;
+            if (lo.client_id) insertRow.client_id = lo.client_id;
           }
         } else if (params.policy_number) {
           const { data: linkedOrder } = await db.from('sp_policy_orders')
@@ -92,9 +99,15 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             .eq('order_number', String(params.policy_number))
             .maybeSingle();
           if (linkedOrder) {
-            insertRow.policy_id = (linkedOrder as any).id;
-            insertRow.agent_id  = (linkedOrder as any).agent_id;
-            if ((linkedOrder as any).client_id) insertRow.client_id = (linkedOrder as any).client_id;
+            // FIX v1.42.0: verify ownership here too
+            const lo = linkedOrder as any;
+            const isOwner = lo.agent_id === caller.authId || lo.client_id === caller.authId;
+            if (!isOwner && !caller.isAdmin) {
+              return json({ error: 'Polis tidak ditemukan atau bukan milik Anda.' }, 403);
+            }
+            insertRow.policy_id = lo.id;
+            insertRow.agent_id  = lo.agent_id;
+            if (lo.client_id) insertRow.client_id = lo.client_id;
           }
         }
 

@@ -100,18 +100,26 @@ export async function recordTcAcceptance(userId: string): Promise<string> {
 }
 
 export async function getUserTcStatus(userId: string): Promise<boolean> {
-  // Primary: sp_users flag
-  const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
-  if (data?.tc_accepted === true) return true;
-  // Fallback: a row in sp_tnc_records means they accepted even if sp_users update
-  // failed silently due to RLS (common when policies restrict self-UPDATE).
+  // Version-aware: a user is only considered "accepted" if their most recent
+  // sp_tnc_records row matches the currently-published TNC_VERSION. This is
+  // what makes a version bump (e.g. v2.0 -> v3.0) actually re-prompt
+  // existing users instead of silently grandfathering them into terms they
+  // never agreed to.
   const { data: rec } = await supabase
     .from('sp_tnc_records')
-    .select('id')
+    .select('tnc_version')
     .eq('user_id', userId)
+    .order('accepted_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  return !!rec;
+  if (rec?.tnc_version === TNC_VERSION) return true;
+  if (rec) return false; // accepted an older version — must re-accept
+
+  // Legacy fallback: accounts that predate sp_tnc_records only have the
+  // sp_users.tc_accepted flag with no version history at all. Trust it
+  // rather than force a surprise re-prompt with nothing to compare against.
+  const { data } = await supabase.from('sp_users').select('tc_accepted').eq('id', userId).single();
+  return data?.tc_accepted === true;
 }
 
 export async function getTncRecord(userId: string): Promise<TncRecord | null> {

@@ -9,22 +9,27 @@
 // - Human-in-the-loop for high-risk decisions (notifications only)
 // - Respects AI_BOUNDARIES from aiKnowledge.ts
 
-import { createClient } from '@supabase/supabase-js';
 // Note: z-ai-web-dev-sdk is imported in server.ts (server-side only)
 // aiAdminEngine uses rule-based logic + Supabase queries — no direct LLM calls needed
+// Supabase client is created dynamically to avoid import issues in Vercel build
 
 // ─── Configuration ───────────────────────────────────────────────────────────
-const SUPABASE_URL = import.meta?.env?.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+const SUPABASE_URL = (typeof process !== 'undefined' && process.env?.SUPABASE_URL) || '';
+const SERVICE_KEY = (typeof process !== 'undefined' && process.env?.SUPABASE_SERVICE_ROLE_KEY) || '';
 
 // Only initialize if we have credentials (server-side)
 let db: any = null;
 
 async function ensureInitialized() {
   if (!db && SUPABASE_URL && SERVICE_KEY) {
-    db = createClient(SUPABASE_URL, SERVICE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      db = createClient(SUPABASE_URL, SERVICE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+    } catch (e) {
+      console.error('[AI Admin] Failed to init Supabase:', e);
+    }
   }
 }
 

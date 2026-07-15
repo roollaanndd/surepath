@@ -2,9 +2,8 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import cors from 'cors';
-import ZAI from 'z-ai-web-dev-sdk';
 import crypto from 'crypto';
-import { startAIAdminEngine, runAIAdminTick } from './services/aiAdminEngine';
+import { runAIAdminTick } from './services/aiAdminEngine';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AI GATEWAY — 6-LAYER CONSISTENCY & ANTI-LEAK SYSTEM
@@ -21,10 +20,17 @@ let zaiInstance: any = null;
 
 async function initAI() {
   try {
-    zaiInstance = await ZAI.create();
-    console.log('✓ AI Gateway (z-ai SDK) initialized — 6-layer consistency active');
+    // Dynamic import — z-ai-web-dev-sdk is available in Z.ai runtime but not in npm
+    const ZAIModule = await import('z-ai-web-dev-sdk').catch(() => null);
+    if (ZAIModule?.default) {
+      zaiInstance = await ZAIModule.default.create();
+      console.log('✓ AI Gateway (z-ai SDK) initialized — 6-layer consistency active');
+    } else {
+      console.log('⚠ z-ai-web-dev-sdk not available — AI Gateway will use fallback mode');
+    }
   } catch (e) {
     console.error('Failed to init z-ai SDK:', e);
+    console.log('⚠ AI Gateway running in fallback mode (no LLM)');
   }
 }
 
@@ -338,7 +344,7 @@ async function startServer() {
       }
 
       if (!zaiInstance) {
-        return res.status(503).json({ error: 'AI service not initialized' });
+        return res.status(503).json({ error: 'AI service not available. z-ai SDK tidak ditemukan di environment ini.' });
       }
 
       // Rate limit

@@ -1,3 +1,4 @@
+import { getStatusMeta } from '../../lib/statusMeta';
 // OperatorOrders.tsx — Polis tab. List of policy orders, filter by status,
 // approve/reject/issue inline. Detail sheet includes document viewer.
 import React, { useEffect, useState, useCallback } from 'react';
@@ -5,6 +6,7 @@ import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, Externa
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { useT } from '../../src/i18n';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromOperatorOrder } from '../../services/quotationSlipAdapter';
@@ -33,7 +35,9 @@ const SHEET_TEXT_MUTED = 'text-gray-500 dark:text-gray-400';
 const SHEET_BORDER = 'border-gray-200 dark:border-[#1E2D3D]';
 const SHEET_INSET = 'bg-gray-50 dark:bg-[#162035]';
 
-const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
+const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const confirm = useConfirmDialog();
   const [activeStatus, setActiveStatus] = useState('SUBMITTED');
@@ -189,14 +193,8 @@ const OperatorOrders: React.FC<Props> = ({ refreshTick }) => {
       ) : (
         <div className="space-y-3">
           {filtered.map(o => {
-            const statusColor = {
-              SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-              UNDER_REVIEW:  'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-              APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-              ISSUED:        'bg-ds-green-tint text-ds-green',
-              REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
-              CANCELLED:     'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
-            }[o.status] ?? 'bg-ds-card2 text-ds-ink3';
+            // FIX v1.42.0: use shared STATUS_META for consistent colors across all apps
+            const statusColor = getStatusMeta(o.status).badgeClass;
             return (
               <div key={o.id} className="p-4 rounded-2xl border border-ds-border bg-ds-card">
                 <div className="flex items-start justify-between gap-3">

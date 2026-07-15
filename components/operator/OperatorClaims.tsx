@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, Eye } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { useT } from '../../src/i18n';
 import { listClaims, updateClaimStatus, type OperatorClaim } from '../../services/operatorService';
 
 interface Props {
@@ -23,7 +24,8 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
+const OperatorClaims: React.FC<Props> = ({ lang, refreshTick }) => {
+  const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const [activeStatus, setActiveStatus] = useState('SUBMITTED');
@@ -96,7 +98,7 @@ const OperatorClaims: React.FC<Props> = ({ refreshTick }) => {
       <AgentArtKeyframes />
       <AgentHero
         title="Antrian Klaim"
-        subtitle="Tinjau bukti klaim dan putuskan dengan cepat & adil."
+        subtitle={t('Review claim evidence and decide quickly & fairly.', 'Tinjau bukti klaim dan putuskan dengan cepat & adil.')}
         art={<SpotClaims size={72} />}
       />
 

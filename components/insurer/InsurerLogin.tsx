@@ -91,7 +91,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
       )}
 
       <div className="absolute top-6 right-6 flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#7c3aed', boxShadow: '0 0 6px rgba(124,58,237,0.7)', animation: 'ins-ping 2.4s ease-in-out infinite' }} />
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#059669', boxShadow: '0 0 6px rgba(5,150,105,0.7)', animation: 'ins-ping 2.4s ease-in-out infinite' }} />
         <span style={{ fontSize: '0.44rem', letterSpacing: '0.42em', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>Insurer Session</span>
       </div>
 
@@ -103,7 +103,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
               animation: 'ins-ping 3s ease-in-out infinite',
             }} />
             <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
-              <ShieldCheck size={32} style={{ color: '#7c3aed' }} />
+              <ShieldCheck size={32} style={{ color: '#059669' }} />
             </div>
           </div>
 
@@ -134,7 +134,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
                 Token Akses
               </label>
               <div className="relative">
-                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#7c3aed' }} />
+                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#059669' }} />
                 <input
                   type="text"
                   value={token}
@@ -154,20 +154,20 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
               disabled={loading || !token.trim()}
               className="w-full flex justify-center items-center gap-2.5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-40 hover:brightness-[1.08]"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                 color: '#fff',
                 boxShadow: loading ? 'none' : '0 8px 28px -10px rgba(124,58,237,0.55)',
               }}
             >
               {loading
-                ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-purple-200/20 border-t-purple-200/80 animate-spin" /> Memverifikasi…</>
+                ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-emerald-200/20 border-t-emerald-200/80 animate-spin" /> Memverifikasi…</>
                 : <>Masuk ke Dashboard <ArrowRight size={14} /></>
               }
             </button>
 
             <div className="pt-3 border-t border-slate-200/60">
               <div className="flex items-start gap-2 text-[0.6rem] text-slate-500 leading-relaxed">
-                <LinkIcon size={11} className="shrink-0 mt-0.5 text-purple-500" />
+                <LinkIcon size={11} className="shrink-0 mt-0.5 text-emerald-500" />
                 <span>
                   Token didapat dari email undangan SurePath atau hubungi tim SurePath untuk minta link akses baru. Token berlaku 7 hari dan auto-renew setiap login.
                 </span>

@@ -5,6 +5,7 @@ import { FileText, CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, Tre
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
+import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerDashboard as InsurerDashboardData } from '../../services/insurerService';
 
@@ -17,7 +18,9 @@ interface Props {
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick }) => {
+const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const [data, setData] = useState<InsurerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,10 +64,10 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Hero — bank-grade command card (purple identity) */}
+      {/* Hero — bank-grade command card (emerald identity) */}
       <AgentArtKeyframes />
       <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
-        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #2E1065 55%, #5B21B6 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #064e3b 55%, #065f46 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.30) 0%, transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
           <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />
@@ -85,7 +88,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
         </div>
         <div className="relative z-10 flex items-center gap-3 mt-4 pt-3.5 border-t border-white/10">
           <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-            <TrendingUp size={11} className="text-purple-300" />
+            <TrendingUp size={11} className="text-emerald-300" />
             <span className="text-[10px] font-bold">{data.kpi.total} total order</span>
           </div>
           <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
@@ -123,7 +126,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
       {/* Total premium */}
       <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
         <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">Total Premi (semua order)</p>
-        <p className="text-2xl font-black text-purple-500 mt-1">{fmtIdr(totalPremium)}</p>
+        <p className="text-2xl font-black text-emerald-500 mt-1">{fmtIdr(totalPremium)}</p>
       </div>
 
       {/* Recent orders */}
@@ -139,7 +142,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
                 onClick={() => onNavigate('orders')}
                 className="w-full p-3 rounded-2xl border border-ds-border bg-ds-card flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
               >
-                <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center font-black text-purple-500 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center font-black text-emerald-500 shrink-0">
                   <FileText size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -150,7 +153,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, onNavigate, refreshTick 
                       o.status === 'SUBMITTED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
                       : o.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                       : o.status === 'UNDER_REVIEW' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
-                      : o.status === 'ISSUED' ? 'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400'
+                      : o.status === 'ISSUED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                       : o.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
                       : 'bg-ds-card2 text-ds-ink3'
                     }`}>

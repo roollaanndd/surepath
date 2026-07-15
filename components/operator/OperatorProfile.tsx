@@ -4,6 +4,7 @@ import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, Al
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { useToast, useConfirmDialog } from '../ui';
+import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
 
 interface Props {
@@ -44,7 +45,8 @@ function usePwaInstall() {
   return { canInstall: !!installEvent, isStandalone, promptInstall };
 }
 
-const OperatorProfile: React.FC<Props> = ({ operator, onLogout }) => {
+const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
+  const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
@@ -68,7 +70,7 @@ const OperatorProfile: React.FC<Props> = ({ operator, onLogout }) => {
 
   const handleLogout = async () => {
     const ok = await confirm({
-      title: 'Keluar dari Operator App',
+      title: t('Exit Operator App', 'Keluar dari Operator App'),
       description: 'Anda akan keluar dari sesi operator. Notifikasi pop-up tidak akan aktif sampai Anda masuk kembali.',
       confirmLabel: 'Keluar',
       variant: 'danger',

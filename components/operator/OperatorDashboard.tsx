@@ -4,6 +4,7 @@ import { FileText, ShieldAlert, Wallet, UserCheck, Bell, TrendingUp, Clock, Eye 
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
+import { useT } from '../../src/i18n';
 import { getQueueSummary, listPendingAgents, type QueueSummary, type OperatorAgent } from '../../services/operatorService';
 import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
 
@@ -14,7 +15,9 @@ interface Props {
   refreshTick: number;
 }
 
-const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick }) => {
+const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const [summary, setSummary] = useState<QueueSummary | null>(null);
   const [pendingAgents, setPendingAgents] = useState<OperatorAgent[]>([]);
@@ -71,7 +74,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, onNavigate, refreshTick 
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Operator Command Center</p>
-            <h1 className="text-2xl font-black tracking-tight mt-1">Halo, {operator?.name?.split(' ')[0] ?? 'Operator'} 👋</h1>
+            <h1 className="text-2xl font-black tracking-tight mt-1">t('Hello', 'Halo'), {operator?.name?.split(' ')[0] ?? 'Operator'} 👋</h1>
             <p className="text-xs text-white/75 mt-1.5 leading-relaxed">
               {summary && summary.pendingOrders + summary.pendingClaims + summary.pendingWithdrawals + summary.pendingAgents > 0
                 ? `Ada ${summary.pendingOrders + summary.pendingClaims + summary.pendingWithdrawals + summary.pendingAgents} pengajuan menunggu konfirmasi Anda.`

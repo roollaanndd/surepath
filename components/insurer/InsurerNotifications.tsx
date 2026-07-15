@@ -27,7 +27,7 @@ const COLOR_MAP: Record<string, string> = {
   SUBMITTED:    'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
   UNDER_REVIEW: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
   APPROVED:     'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-  ISSUED:       'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400',
+  ISSUED:       'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
   REJECTED:     'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
 };
 
@@ -62,7 +62,7 @@ const InsurerNotifications: React.FC<Props> = ({ authToken, onClose, onNavigate 
 
         <div className="flex items-center justify-between p-4 border-b border-ds-border shrink-0">
           <div className="flex items-center gap-2">
-            <Bell size={18} className="text-purple-500" />
+            <Bell size={18} className="text-emerald-500" />
             <h3 className="text-base font-black text-ds-ink">Aktivitas Terbaru</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-ds-card2 text-ds-ink3 active:scale-95 transition-transform">✕</button>

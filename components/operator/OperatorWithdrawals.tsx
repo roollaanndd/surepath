@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle2, XCircle, Eye } from 'lucide-react';
 import { Language } from '../../types';
+import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, AgentHero, SpotWallet, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { listWithdrawals, approveWithdrawalL1, rejectWithdrawal, type OperatorWithdrawal } from '../../services/operatorService';
@@ -24,13 +25,16 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const OperatorWithdrawals: React.FC<Props> = ({ operator, refreshTick }) => {
+const OperatorWithdrawals: React.FC<Props> = ({ operator, lang, refreshTick }) => {
+  const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const [activeStatus, setActiveStatus] = useState('PENDING_L1');
   const [withdrawals, setWithdrawals] = useState<OperatorWithdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<OperatorWithdrawal | null>(null);
+  const [rejectModal, setRejectModal] = useState<OperatorWithdrawal | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,15 +69,23 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, refreshTick }) => {
     }
   };
 
-  const handleReject = async (w: OperatorWithdrawal) => {
-    const reason = await new Promise<string | null>((resolve) => {
-      const r = prompt('Alasan penolakan:');
-      resolve(r && r.trim() ? r.trim() : null);
-    });
-    if (!reason) return;
+  const handleReject = (w: OperatorWithdrawal) => {
+    // FIX v1.42.0: replace native prompt() with in-app modal
+    setRejectModal(w);
+    setRejectReason('');
+  };
+
+  const confirmReject = async () => {
+    if (!rejectModal) return;
+    const reason = rejectReason.trim();
+    if (!reason) {
+      toast.error(t('Reason required', 'Alasan wajib diisi'));
+      return;
+    }
     try {
-      await rejectWithdrawal(w.id, operator.id, reason);
-      toast.info('Penarikan ditolak');
+      await rejectWithdrawal(rejectModal.id, operator.id, reason);
+      toast.info(t('Withdrawal rejected', 'Penarikan ditolak'));
+      setRejectModal(null);
       load();
     } catch (e: any) {
       toast.error(`Gagal: ${e.message}`);
@@ -195,6 +207,43 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, refreshTick }) => {
               <Row label="Status" value={selected.status.replace('_', ' ')} />
               <Row label="Dijadwalkan" value={selected.scheduled_disburse_at ? new Date(selected.scheduled_disburse_at).toLocaleString('id-ID') : '-'} />
               <Row label="Dibuat" value={new Date(selected.created_at).toLocaleString('id-ID')} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FIX v1.42.0: in-app modal for rejection reason (replaces native prompt) */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full sm:max-w-md bg-white dark:bg-[#0F1829] text-gray-900 dark:text-white rounded-2xl border border-gray-200 dark:border-[#1E2D3D] shadow-2xl">
+            <div className="p-5">
+              <h3 className="text-base font-bold mb-1">{t('Reject Withdrawal?', 'Tolak Penarikan?')}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                {t('Provide a reason for rejecting this withdrawal request.', 'Berikan alasan penolakan untuk permintaan penarikan ini.')}
+              </p>
+              <textarea
+                autoFocus
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder={t('Rejection reason...', 'Alasan penolakan...')}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#1E2D3D] bg-white dark:bg-[#162035] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setRejectModal(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-gray-200 dark:border-[#1E2D3D] text-gray-500 dark:text-gray-400 active:scale-95 transition-transform"
+                >
+                  {t('Cancel', 'Batal')}
+                </button>
+                <button
+                  onClick={confirmReject}
+                  disabled={!rejectReason.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-rose-500 text-white active:scale-95 transition-transform disabled:opacity-50"
+                >
+                  {t('Reject', 'Tolak')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { CheckCircle2, Clock } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotWallet, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
+import { useT } from '../../src/i18n';
 import { listInsurerPayments, type InsurerPayment } from '../../services/insurerService';
 
 interface Props {
@@ -21,7 +22,9 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const InsurerPayments: React.FC<Props> = ({ authToken, refreshTick }) => {
+const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const [allPayments, setAllPayments] = useState<InsurerPayment[]>([]);
   const [activeStatus, setActiveStatus] = useState('PAID');
@@ -101,7 +104,7 @@ const InsurerPayments: React.FC<Props> = ({ authToken, refreshTick }) => {
     <div className="px-5 pt-5 space-y-4 pb-4">
       <AgentArtKeyframes />
       <AgentHero
-        tone="purple"
+        tone="emerald"
         title="Notifikasi Pembayaran"
         subtitle="Pantau pembayaran premi setiap polis yang Anda terbitkan."
         art={<SpotWallet size={72} />}
@@ -162,7 +165,7 @@ const InsurerPayments: React.FC<Props> = ({ authToken, refreshTick }) => {
                   <p className="text-xs font-mono text-ds-ink3">{p.order_number ?? p.order_id.slice(0, 8)}</p>
                   <p className="text-sm font-bold text-ds-ink mt-0.5 truncate">{p.client_name ?? '-'}</p>
                   <p className="text-xs text-ds-ink2 mt-0.5">{p.product_name ?? '-'}</p>
-                  <p className="text-sm font-black text-purple-500 mt-1">{fmtIdr(p.paid_amount ?? p.amount)}</p>
+                  <p className="text-sm font-black text-emerald-500 mt-1">{fmtIdr(p.paid_amount ?? p.amount)}</p>
                   <div className="flex items-center gap-2 mt-2 text-[10px] text-ds-ink3">
                     <span>{p.payment_method ?? '-'} {p.payment_channel ?? ''}</span>
                     {p.paid_at && <span>· {new Date(p.paid_at).toLocaleString('id-ID')}</span>}

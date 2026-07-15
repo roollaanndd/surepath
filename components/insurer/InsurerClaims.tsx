@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { ShieldAlert, Search } from 'lucide-react';
 import { Language } from '../../types';
 import { SkeletonCard, useToast } from '../ui';
+import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerOrder } from '../../services/insurerService';
 
@@ -14,7 +15,9 @@ interface Props {
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const InsurerClaims: React.FC<Props> = ({ authToken, refreshTick }) => {
+const InsurerClaims: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const [orders, setOrders] = useState<InsurerOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ const InsurerClaims: React.FC<Props> = ({ authToken, refreshTick }) => {
     <div className="px-5 pt-5 space-y-4 pb-4">
       <AgentArtKeyframes />
       <AgentHero
-        tone="purple"
+        tone="emerald"
         title="Klaim Polis"
         subtitle="Klaim dari nasabah atas polis yang Anda terbitkan muncul otomatis di sini."
         art={<SpotClaims size={72} />}
@@ -109,7 +112,7 @@ const InsurerClaims: React.FC<Props> = ({ authToken, refreshTick }) => {
                   )}
                 </div>
                 <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
-                  o.status === 'ISSUED' ? 'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400'
+                  o.status === 'ISSUED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                   : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                 }`}>
                   {o.status}

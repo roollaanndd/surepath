@@ -6,6 +6,7 @@ import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon,
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
+import { useT } from '../../src/i18n';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
@@ -34,7 +35,9 @@ const SHEET_TEXT_MUTED = 'text-gray-500 dark:text-gray-400';
 const SHEET_BORDER = 'border-gray-200 dark:border-[#1E2D3D]';
 const SHEET_INSET = 'bg-gray-50 dark:bg-[#162035]';
 
-const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
+const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
+  const t = useT(lang);
+  void t; // i18n helper — strings will be translated incrementally
   const toast = useToast();
   const [allOrders, setAllOrders] = useState<InsurerOrder[]>([]);
   const [activeStatus, setActiveStatus] = useState('SUBMITTED');
@@ -161,7 +164,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
     <div className="px-5 pt-5 space-y-4 pb-4">
       <AgentArtKeyframes />
       <AgentHero
-        tone="purple"
+        tone="emerald"
         title="Pengajuan Polis"
         subtitle="Review, putuskan, dan terbitkan polis dari penempatan SurePath."
         art={<SpotOrdersArt size={72} />}
@@ -174,7 +177,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Cari order / nasabah / produk…"
-          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-ds-card border border-ds-border text-sm text-ds-ink placeholder-ds-ink3 outline-none focus:border-purple-500"
+          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-ds-card border border-ds-border text-sm text-ds-ink placeholder-ds-ink3 outline-none focus:border-emerald-500"
         />
       </div>
 
@@ -196,7 +199,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
               SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
               UNDER_REVIEW:  'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
               APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-              ISSUED:        'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400',
+              ISSUED:        'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
               REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
             }[o.status] ?? 'bg-ds-card2 text-ds-ink3';
             return (
@@ -231,7 +234,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                   {o.status === 'APPROVED' && o.insurer_decision === 'APPROVED' && !o.policy_document_url && (
                     <button
                       onClick={() => { setSelectedOrder(o); setUploadMode(true); }}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-purple-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
                     >
                       <Upload size={12} /> Upload Polis
                     </button>
@@ -281,7 +284,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                       value={policyNumber}
                       onChange={e => setPolicyNumber(e.target.value)}
                       placeholder="cth: POL-2026-001234"
-                      className={`w-full px-3 py-2.5 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-sm outline-none focus:border-purple-500`}
+                      className={`w-full px-3 py-2.5 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-sm outline-none focus:border-emerald-500`}
                     />
                   </div>
                   <div>
@@ -299,7 +302,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                   <button
                     onClick={handlePolicyUpload}
                     disabled={submitting || !file || !policyNumber.trim()}
-                    className="w-full py-3 rounded-xl text-sm font-bold bg-purple-500 text-white active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {submitting ? <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Mengupload…</> : <><Upload size={14} /> Upload & Terbitkan Polis</>}
                   </button>
@@ -325,7 +328,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                         : decisionMode === 'REQUEST_INFO' ? 'Contoh: Foto STNK kurang jelas, mohon kirim ulang dengan resolusi lebih tinggi…'
                         : 'Alasan penolakan (wajib)…'
                       }
-                      className={`w-full px-3 py-2.5 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-sm outline-none focus:border-purple-500 resize-none`}
+                      className={`w-full px-3 py-2.5 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-sm outline-none focus:border-emerald-500 resize-none`}
                     />
                   </div>
                   <button
@@ -352,7 +355,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                       </div>
                       <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
                         selectedOrder.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                        : selectedOrder.status === 'ISSUED' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400'
+                        : selectedOrder.status === 'ISSUED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                         : selectedOrder.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
                         : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
                       }`}>
@@ -429,8 +432,8 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                         rel="noopener noreferrer"
                         className={`mt-2 flex items-center gap-3 p-3 rounded-xl border ${SHEET_BORDER} ${SHEET_INSET} active:scale-[0.98] transition-transform`}
                       >
-                        <div className="w-9 h-9 rounded-lg bg-purple-100 dark:bg-purple-950/40 flex items-center justify-center">
-                          <FileText size={16} className="text-purple-600 dark:text-purple-400" />
+                        <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                          <FileText size={16} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-bold ${SHEET_TEXT}`}>Polis PDF</p>
@@ -447,7 +450,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                     <DetailRow label="Sum Insured" value={fmtIdr(selectedOrder.sum_insured)} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                     <div className={`flex justify-between gap-3 py-2 mt-1 pt-3 border-t-2 ${SHEET_BORDER}`}>
                       <span className={`text-xs font-black uppercase tracking-widest ${SHEET_TEXT}`}>Total Premi</span>
-                      <span className="text-sm font-black text-purple-600 dark:text-purple-400">{fmtIdr(selectedOrder.total_premium)}</span>
+                      <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{fmtIdr(selectedOrder.total_premium)}</span>
                     </div>
                   </Section>
 
@@ -522,13 +525,13 @@ const InsurerOrders: React.FC<Props> = ({ authToken, refreshTick }) => {
                   {selectedOrder.status === 'APPROVED' && selectedOrder.insurer_decision === 'APPROVED' && !selectedOrder.policy_document_url && (
                     <button
                       onClick={() => setUploadMode(true)}
-                      className="flex-1 py-3 rounded-xl text-sm font-bold bg-purple-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/30"
+                      className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
                     >
                       <Upload size={14} /> Upload Polis PDF
                     </button>
                   )}
                   {selectedOrder.status === 'ISSUED' && (
-                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 flex items-center justify-center gap-1.5">
+                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
                       <CheckCircle size={14} /> Polis Diterbitkan
                     </div>
                   )}
@@ -572,7 +575,7 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md bg-purple-100 dark:bg-purple-950/40 flex items-center justify-center text-purple-600 dark:text-purple-400">
+        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
           {icon}
         </div>
         <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

@@ -8,6 +8,7 @@ import { UserCheck, CheckCircle2, XCircle, Eye, FileText, ImageIcon, Phone, MapP
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotProfile, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
+import { useT } from '../../src/i18n';
 import { listAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
 import { resolveDocumentUrl } from '../../services/storage';
 
@@ -30,7 +31,8 @@ const SHEET_TEXT_MUTED = 'text-gray-500 dark:text-gray-400';
 const SHEET_BORDER = 'border-gray-200 dark:border-[#1E2D3D]';
 const SHEET_INSET = 'bg-gray-50 dark:bg-[#162035]';
 
-const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
+const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
+  const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const [activeStatus, setActiveStatus] = useState('PENDING');
@@ -135,7 +137,7 @@ const OperatorAgents: React.FC<Props> = ({ refreshTick }) => {
       <AgentArtKeyframes />
       <AgentHero
         title="Verifikasi Agen"
-        subtitle="Pastikan hanya mitra terpercaya yang mewakili SurePath."
+        subtitle={t("Ensure only trusted partners represent SurePath.", "Pastikan hanya mitra terpercaya yang mewakili SurePath.")}
         art={<SpotProfile size={72} />}
       />
 

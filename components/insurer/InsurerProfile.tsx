@@ -5,6 +5,7 @@ import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, Al
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { useToast, useConfirmDialog } from '../ui';
+import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
 import { getInsurerDashboard, type InsurerProfile as InsurerProfileData } from '../../services/insurerService';
 
@@ -37,7 +38,8 @@ function usePwaInstall() {
   return { canInstall: !!installEvent, isStandalone, promptInstall };
 }
 
-const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) => {
+const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerName }) => {
+  const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
@@ -64,7 +66,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
 
   const handleLogout = async () => {
     const ok = await confirm({
-      title: 'Keluar dari Insurer Portal',
+      title: t('Exit Insurer Portal', 'Keluar dari Insurer Portal'),
       description: 'Anda akan keluar dari sesi insurer. Token disimpan di browser dan bisa dipakai lagi selama belum kedaluwarsa.',
       confirmLabel: 'Keluar',
       variant: 'danger',
@@ -77,9 +79,9 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Profile card — bank-style gradient banner (purple identity) */}
+      {/* Profile card — bank-style gradient banner (emerald identity) */}
       <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
-        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #2E1065 55%, #5B21B6 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #064e3b 55%, #065f46 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.30) 0%, transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 bottom-0 h-4/5 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
           <circle cx="185" cy="130" r="76" stroke="#fff" strokeWidth="1.2" />
@@ -87,7 +89,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
         </svg>
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-16 h-16 rounded-full flex items-center justify-center ring-4 ring-white/15"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}>
+            style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}>
             <Building2 size={28} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -159,8 +161,8 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
         <SectionLabel>Pasang Aplikasi (PWA)</SectionLabel>
         <div className="bg-ds-card border border-ds-border rounded-2xl p-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center shrink-0">
-              <Smartphone size={18} className="text-purple-500" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center shrink-0">
+              <Smartphone size={18} className="text-emerald-500" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-ds-ink">{isStandalone ? 'Aplikasi sudah terpasang' : 'Pasang Insurer Portal di perangkat'}</p>
@@ -171,7 +173,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
                 <button
                   onClick={handleInstall}
                   disabled={!canInstall}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-purple-500 text-white active:scale-95 transition-transform disabled:opacity-60"
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-white active:scale-95 transition-transform disabled:opacity-60"
                 >
                   <Download size={13} />{canInstall ? 'Pasang Sekarang' : 'Tambahkan ke Layar Utama'}
                 </button>
@@ -194,7 +196,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, onLogout, insurerName }) =
         <SectionLabel>Keamanan & Info</SectionLabel>
         <div className="bg-ds-card border border-ds-border rounded-2xl divide-y divide-ds-border overflow-hidden">
           <div className="flex items-center gap-3 p-4">
-            <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center"><Shield size={16} className="text-purple-500" /></div>
+            <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center"><Shield size={16} className="text-emerald-500" /></div>
             <div className="flex-1">
               <p className="text-sm font-bold text-ds-ink">Sesi Aman</p>
               <p className="text-xs text-ds-ink3">Token-based auth · rolling 7-day</p>

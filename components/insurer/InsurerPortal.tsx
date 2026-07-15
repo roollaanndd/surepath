@@ -117,15 +117,15 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center overflow-hidden">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center overflow-hidden">
               <SurePathLogo className="w-8 h-8 object-contain" />
             </div>
             <div>
               <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink">
-                Sure<span className="text-purple-500">Path</span>
+                Sure<span className="text-emerald-500">Path</span>
               </div>
               <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none mt-0.5">
-                Insurer · <span className="text-purple-500/70 normal-case">{insurerName}</span> <span className="text-ds-ink3/70">v{APP_VERSION}</span>
+                Insurer · <span className="text-emerald-500/70 normal-case">{insurerName}</span> <span className="text-ds-ink3/70">v{APP_VERSION}</span>
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
             >
               <Bell size={15} className="text-ds-ink2" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-purple-500 text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card animate-pulse">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-emerald-500 text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -154,8 +154,8 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
 
             <button
               onClick={() => handleTabChange('profile')}
-              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all ring-2 ring-purple-500/25"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)' }}
+              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all ring-2 ring-emerald-500/25"
+              style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}
               aria-label="Profil"
             >
               {(insurerName ?? 'I')[0].toUpperCase()}
@@ -171,7 +171,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
         </div>
       </main>
 
-      {/* Floating bottom tab nav — bank-style pills (purple identity) */}
+      {/* Floating bottom tab nav — bank-style pills (emerald identity) */}
       <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
         <div className="flex items-center justify-around px-1 py-2">
           {TABS.map(({ id, labelId, Icon }) => {
@@ -183,12 +183,12 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
                 className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
               >
                 <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
-                  style={active ? { background: 'rgba(124,58,237,0.12)', color: '#7c3aed' } : { color: 'var(--ds-ink3)' }}>
+                  style={active ? { background: 'rgba(124,58,237,0.12)', color: '#059669' } : { color: 'var(--ds-ink3)' }}>
                   <Icon size={20} strokeWidth={active ? 2.6 : 2} />
                 </span>
                 <span
                   className="text-[9px] font-black uppercase tracking-widest leading-none transition-colors"
-                  style={{ color: active ? '#7c3aed' : 'var(--ds-ink3)', opacity: active ? 1 : 0.8 }}
+                  style={{ color: active ? '#059669' : 'var(--ds-ink3)', opacity: active ? 1 : 0.8 }}
                 >
                   {labelId}
                 </span>

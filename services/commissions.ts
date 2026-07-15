@@ -62,16 +62,35 @@ export async function getAgentQuotes(agentId: string): Promise<SpQuote[]> {
 }
 
 export async function saveQuote(data: Omit<SpQuote, 'id' | 'created_at' | 'updated_at'>): Promise<SpQuote | null> {
-  const { data: result, error } = await supabase
-    .from('sp_quotes')
-    .insert(data)
-    .select()
-    .single();
-  if (error) {
-    console.error('saveQuote error:', error);
+  // FIX v1.49.1: route through gateway to bypass RLS issues
+  // Previously used supabase directly which could fail silently due to RLS
+  try {
+    const { callGateway } = await import('./db');
+    const { data: result, error } = await callGateway('save_quote', {
+      agent_id: data.agent_id,
+      client_id: data.client_id,
+      client_name: data.client_name,
+      product_type: data.product_type,
+      status: data.status,
+      premium_estimate: data.premium_estimate,
+      details: data.details,
+    });
+    if (error) {
+      console.error('saveQuote gateway error:', error);
+      // Fallback to direct insert
+      const { data: fallback, error: fbErr } = await supabase
+        .from('sp_quotes')
+        .insert(data)
+        .select()
+        .single();
+      if (fbErr) { console.error('saveQuote fallback error:', fbErr); return null; }
+      return fallback as SpQuote;
+    }
+    return result as SpQuote;
+  } catch (e) {
+    console.error('saveQuote error:', e);
     return null;
   }
-  return result as SpQuote;
 }
 
 export async function updateQuoteStatus(id: string, status: SpQuote['status']): Promise<boolean> {

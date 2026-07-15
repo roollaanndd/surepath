@@ -65,10 +65,13 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
           .update({
             verified: !!approve,
             trust_score: approve ? 85 : 50,
+            // FIX: set allowed_apps so routing works correctly after verification
+            // Without this, allowed_apps stays null and routing may fall back incorrectly
+            ...(approve ? { allowed_apps: ['AGENT'] as any } : {}),
             updated_at: new Date().toISOString(),
           })
           .eq('id', String(params.agent_id))
-          .select('id, name, email, verified, trust_score')
+          .select('id, name, email, verified, trust_score, role, allowed_apps')
           .maybeSingle();
         if (error) return json({ error: error.message }, 400);
         // Insert admin notification about the decision

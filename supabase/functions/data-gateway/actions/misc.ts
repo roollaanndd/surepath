@@ -106,6 +106,22 @@ ${UNTRUSTED_INPUT_NOTICE}`;
         return json({ data });
       }
 
+    // ─── save_quote — agent saves their quote ──────────────────────────────
+    case 'save_quote': {
+        if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        const { data, error } = await db.from('sp_quotes').insert({
+          agent_id: caller.authId,
+          client_id: params.client_id ?? null,
+          client_name: String(params.client_name ?? ''),
+          product_type: String(params.product_type ?? 'CAR'),
+          status: String(params.status ?? 'SENT'),
+          premium_estimate: Number(params.premium_estimate ?? 0),
+          details: params.details ?? {},
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
     default:
       return null; // Not handled by this module
   }

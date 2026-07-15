@@ -17,8 +17,8 @@ interface Props {
 
 const policyStatusMap: Record<string, { label: string; cls: string }> = {
   SUBMITTED:    { label: 'Menunggu Review',  cls: 'bg-amber-50 text-amber-700' },
-  UNDER_REVIEW: { label: 'Sedang Dikaji',    cls: 'bg-blue-50 text-blue-700' },
-  APPROVED:     { label: 'Disetujui',        cls: 'bg-blue-50 text-blue-700' },
+  UNDER_REVIEW: { label: 'Sedang Dikaji',    cls: 'bg-amber-50 text-amber-700' },
+  APPROVED:     { label: 'Disetujui',        cls: 'bg-amber-50 text-amber-700' },
   ISSUED:       { label: 'Polis Aktif',      cls: 'bg-emerald-50 text-emerald-700' },
   REJECTED:     { label: 'Ditolak',          cls: 'bg-rose-50 text-rose-700' },
   CANCELLED:    { label: 'Dibatalkan',       cls: 'bg-gray-100 text-gray-500' },

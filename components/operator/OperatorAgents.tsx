@@ -369,7 +369,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
 
                 {/* Sticky footer with action buttons */}
                 {!detail.agent.verified && (
-                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-5 safe-area-pb`}>
+                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleVerify(selected)}
@@ -387,7 +387,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                   </div>
                 )}
                 {detail.agent.verified && (
-                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-5 safe-area-pb`}>
+                  <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
                     <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
                       <CheckCircle2 size={14} /> Agen Sudah Diverifikasi
                     </div>

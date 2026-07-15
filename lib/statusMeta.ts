@@ -19,12 +19,12 @@ export const ORDER_STATUS_META: Record<string, StatusMeta> = {
   UNDER_REVIEW: {
     label: 'Ditinjau',
     labelEn: 'Under Review',
-    badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400',
+    badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400',
   },
   APPROVED: {
     label: 'Disetujui',
     labelEn: 'Approved',
-    badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400',
+    badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400',
   },
   ISSUED: {
     label: 'Polis Aktif',

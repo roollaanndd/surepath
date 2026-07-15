@@ -89,12 +89,18 @@ const AuthGate: React.FC<AuthGateProps> = ({
       // If ensureProfile fails, still log the user in with a fallback profile
       // rather than blocking them completely. The profile will be created
       // on the next call to ensureProfile (e.g. when they navigate).
+      // FIX: preserve the user's role from signup metadata — previously
+      // fallback always used CUSTOMER, causing agents to be routed to /custapp
       console.error('resolveAndLogin error:', e);
+      const metaRole = user.user_metadata?.role as string | undefined;
+      const fallbackRole = metaRole === 'AGENT' ? UserRole.AGENT
+        : metaRole === 'OPERATOR' ? UserRole.OPERATOR
+        : UserRole.CUSTOMER;
       const fallbackUser = {
         id: user.id,
         name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'User',
         email: user.email ?? '',
-        role: UserRole.CUSTOMER,
+        role: fallbackRole,
         supabaseId: user.id,
         nodeId: `SP-${user.id.slice(0, 8).toUpperCase()}`,
         trustScore: 85,

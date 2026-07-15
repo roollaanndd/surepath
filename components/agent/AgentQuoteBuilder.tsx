@@ -214,8 +214,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setSaving(false);
     if (q) {
       setSavedQuote(q);
+      toast.success(t('Quote saved!', 'Penawaran tersimpan!'));
     } else {
-      console.warn(t('Failed to save the quote. Please check your connection and try again.',
+      toast.error(t('Failed to save the quote. Please check your connection and try again.',
               'Gagal menyimpan penawaran. Periksa koneksi dan coba lagi.'));
     }
   };

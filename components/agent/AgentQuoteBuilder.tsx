@@ -12,6 +12,8 @@ import {
 import { generatePolicyCertPDF } from '../../services/pdfService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromAgentQuote } from '../../services/quotationSlipAdapter';
+import STNKAutoExtract from '../shared/STNKAutoExtract';
+import { useToast } from '../ui';
 import { calcPremium as calcOjkPremium, getZone, getBaseRateByBand, getVehicleCategory } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
@@ -77,6 +79,7 @@ const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.
 
 const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent, quoteOnly = false }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const toast = useToast();
 
   // All hooks must come before any conditional return (Rules of Hooks)
   const [quoteTab, setQuoteTab] = useState<QuoteTab>('new');
@@ -597,6 +600,24 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* ─── STEP 3: PRODUCT INPUTS ─── */}
       {step === 'inputs' && (
         <div className="space-y-4">
+          {/* STNK Auto-Extract — AI reads STNK and pre-fills vehicle data + recommends package */}
+          {(product === 'CAR' || product === 'MOTORCYCLE') && (
+            <STNKAutoExtract
+              onExtracted={(data) => {
+                // Auto-fill car inputs from STNK extraction
+                setCarInputs(v => ({
+                  ...v,
+                  brand: data.extraction.brand || v.brand,
+                  model: data.extraction.model || v.model,
+                  year: data.extraction.year || v.year,
+                  price: data.extraction.estimatedMarketValue || v.price,
+                }));
+                toast.success(`STNK terbaca: ${data.extraction.brand} ${data.extraction.model} ${data.extraction.year}. Premi estimasi: Rp ${data.recommendation.estimatedPremium.toLocaleString('id-ID')}`);
+              }}
+              compact
+            />
+          )}
+
           {/* CAR / MOTORCYCLE — dropdowns from vehicle database */}
           {(product === 'CAR' || product === 'MOTORCYCLE') && (
             <>

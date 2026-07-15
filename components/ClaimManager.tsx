@@ -7,6 +7,7 @@ import { SmartProcessingView } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
 import { submitClaim, uploadClaimPhoto, analyzeClaimPhotos, ClaimPhotoAnalysisResult } from '../services/supabaseService';
+import ClaimSensePanel from './shared/ClaimSensePanel';
 
 const MAX_CLAIM_PHOTOS = 5;
 
@@ -672,7 +673,22 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
           </div>
         </form>
 
-        <button 
+        {/* ClaimSense AI — estimate cost + working days + fraud risk before submit */}
+        {claimType === 'AUTO' && (
+          <div className="mt-4">
+            <ClaimSensePanel
+              claimData={{
+                description: reportForm.chronology || 'Claim description not provided',
+                vehicleBrand: 'Customer vehicle',
+                sumInsured: claimResult?.totalEstimasi ?? 0,
+                policyAgeDays: 0,
+                claimHistoryCount: 0,
+              }}
+            />
+          </div>
+        )}
+
+        <button
           onClick={handleFinalReport} disabled={isSubmitting}
           className="mt-6 w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 transition-all active:scale-95 group relative overflow-hidden"
         >

@@ -10,6 +10,7 @@ import { useT } from '../../src/i18n';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
 import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
+import InsurerAIPanel from '../shared/InsurerAIPanel';
 
 interface Props {
   authToken: string;
@@ -495,6 +496,30 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                 </>
               )}
             </div>
+
+            {/* InsurerAI — AI recommendation before insurer makes decision */}
+            {!uploadMode && !decisionMode && !selectedOrder.insurer_decision && (
+              <div className="px-5 pb-4">
+                <InsurerAIPanel
+                  orderData={{
+                    orderNumber: selectedOrder.order_number ?? selectedOrder.id,
+                    clientName: selectedOrder.client_name ?? '-',
+                    vehicleBrand: (selectedOrder as any).vehicle_details?.make ?? '-',
+                    vehicleModel: (selectedOrder as any).vehicle_details?.model ?? '',
+                    vehicleYear: (selectedOrder as any).vehicle_details?.year ?? new Date().getFullYear(),
+                    sumInsured: selectedOrder.sum_insured ?? 0,
+                    totalPremium: selectedOrder.total_premium ?? 0,
+                    coverageType: selectedOrder.coverage_type ?? 'COMPREHENSIVE',
+                    insurerName: (selectedOrder as any).insurer_name ?? 'Insurer',
+                    agentName: (selectedOrder as any).agent_name ?? 'Agent',
+                    agentVerified: true,
+                    promoCode: (selectedOrder as any).promo_code,
+                    discountRate: (selectedOrder as any).discount_rate,
+                    previousClaims: 0,
+                  }}
+                />
+              </div>
+            )}
 
             {/* Sticky action footer — only in detail view (not upload/decision mode) */}
             {!uploadMode && !decisionMode && (

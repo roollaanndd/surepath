@@ -1,9 +1,4 @@
 {
-  "security": {
-    "deploymentProtection": {
-      "enabled": false
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",

@@ -80,30 +80,32 @@
 }
 
 .dark {
-  /* ── Backgrounds ─────────────────────────────────────────────────────── */
-  --ds-bg:           #080B12;
-  --ds-surface:      #0F1829;
-  --ds-surface-2:    #162035;
+  /* ── Backgrounds — softer, warmer dark (not pitch black) ────────────── */
+  --ds-bg:           #1A1D29;
+  --ds-surface:      #242836;
+  --ds-surface-2:    #2C3142;
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
-  --ds-border:        #1E2D3D;
-  --ds-border-strong: #2D3F52;
+  --ds-border:        #3A3F52;
+  --ds-border-strong: #4A5066;
 
-  /* ── Text ────────────────────────────────────────────────────────────── */
-  --ds-text-primary:   #F1F5F9;
-  --ds-text-secondary: #94A3B8;
-  --ds-text-muted:     #94A3B8;   /* keep same as secondary in dark — both pass AA */
+  /* ── Text — brighter for readability ─────────────────────────────────── */
+  --ds-text-primary:   #FFFFFF;
+  --ds-text-secondary: #B8BFD0;
+  --ds-text-muted:     #8E95A8;
   --ds-text-inverse:   #0F172A;
 
-  /* ── Brand (same in dark) ───────────────────────────────────────────── */
-  /* --ds-primary / --ds-primary-hover unchanged */
+  /* ── Brand (brighter in dark for contrast) ──────────────────────────── */
+  --ds-primary:        #00E07A;
+  --ds-primary-hover:  #00C06A;
+  --ds-primary-tint:   #0D3328;
+  --ds-primary-hero:   #003B2F;
 
-  /* ── Semantic tints darken in dark mode ─────────────────────────────── */
-  --ds-primary-tint:   #052B1E;
-  --ds-success-tint:   #052B1E;
-  --ds-warning-tint:   #422006;
-  --ds-danger-tint:    #4C0519;
-  --ds-info-tint:      #0B1E3D;
+  /* ── Semantic tints — softer, less harsh ────────────────────────────── */
+  --ds-success-tint:   #0D3328;
+  --ds-warning-tint:   #3D2E0A;
+  --ds-danger-tint:    #3D0A1A;
+  --ds-info-tint:      #0A1E3D;
   --ds-accent-tint:    #1E1040;
 
   /* ── Legacy aliases follow the new values automatically ─────────────── */

@@ -38,6 +38,16 @@ type QuoteTab = 'new' | 'orders';
 type QuoteMode = 'penawaran' | 'beli' | null;
 
 interface CarInputs { brand: string; model: string; year: number; price: number; coverage: 'COMPREHENSIVE' | 'TLO'; }
+
+// Addon coverage options for quote builder
+interface AddonState {
+  flood: boolean;
+  earthquake: boolean;
+  riot: boolean;
+  tplLimit: number; // 0 = none, else IDR amount
+  paDriver: boolean;
+  paPassengerSeats: number;
+}
 interface TravelInputs { destination: string; startDate: string; endDate: string; adults: number; plan: 'PLATINUM' | 'GOLD'; }
 interface PAInputs { category: 'GENERAL' | 'STUDENT'; plan: 'BASIC' | 'PREMIUM' | 'ELITE'; }
 interface MPARInputs { category: 'ELECTRONIC' | 'GADGET'; itemName: string; price: number; period: 6 | 12; }
@@ -50,12 +60,29 @@ const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgC
   { type: 'MPAR',       icon: Smartphone, color: 'text-amber-500',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
 ];
 
-const calcPremium = (product: ProductType, inputs: any): number => {
+const calcPremium = (product: ProductType, inputs: any, addonState?: AddonState): number => {
   if (product === 'CAR' || product === 'MOTORCYCLE') {
-    // Official OJK rate (SEOJK 6/2017), zone-defaulted; MID band
+    const zone = getZone('');
+    // Use OJK calc with addons if provided
+    if (addonState) {
+      const breakdown = calcOjkPremium(
+        product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR',
+        inputs.coverage, inputs.price ?? 0, zone,
+        {
+          flood: addonState.flood,
+          earthquake: addonState.earthquake,
+          riot: addonState.riot,
+          tplLimit: addonState.tplLimit,
+          paDriver: addonState.paDriver,
+          paPassengerSeats: addonState.paPassengerSeats,
+        }
+      );
+      return breakdown.total;
+    }
+    // Fallback: base rate only
     const rate = getBaseRateByBand(
       product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR',
-      inputs.coverage, getZone(''), getVehicleCategory(inputs.price ?? 0), 'MID',
+      inputs.coverage, zone, getVehicleCategory(inputs.price ?? 0), 'MID',
     );
     return Math.round((inputs.price ?? 0) * rate);
   }
@@ -94,6 +121,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [quoteMode, setQuoteMode] = useState<QuoteMode>(null);
 
   const [carInputs, setCarInputs] = useState<CarInputs>({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
+  const [addons, setAddons] = useState<AddonState>({ flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 });
   const [travelInputs, setTravelInputs] = useState<TravelInputs>({ destination: '', startDate: '', endDate: '', adults: 1, plan: 'GOLD' });
   const [paInputs, setPAInputs] = useState<PAInputs>({ category: 'GENERAL', plan: 'BASIC' });
   const [mparInputs, setMPARInputs] = useState<MPARInputs>({ category: 'GADGET', itemName: '', price: 0, period: 12 });
@@ -145,7 +173,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     return {};
   };
 
-  const premium = product ? calcPremium(product, currentInputs()) : 0;
+  const premium = product ? calcPremium(product, currentInputs(), (product === 'CAR' || product === 'MOTORCYCLE') ? addons : undefined) : 0;
   const commission = product ? Math.round(premium * COMMISSION_RATE[product]) : 0;
 
   const canProceedClient = clientMode === 'select' ? !!selectedClientId : !!onetimeName.trim();
@@ -236,7 +264,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     try {
       const zone = getZone('');  // default zone 3 when no province
       const breakdown = calcOjkPremium('CAR', carInputs.coverage, carInputs.price, zone, {
-        flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0,
+        flood: addons.flood, earthquake: addons.earthquake, riot: addons.riot,
+        tplLimit: addons.tplLimit, paDriver: addons.paDriver, paPassengerSeats: addons.paPassengerSeats,
       });
       const addonsList = [
         ...(breakdown.addonsDetail.flood > 0      ? [{ label: 'Perluasan Banjir',     amount: breakdown.addonsDetail.flood }]      : []),
@@ -286,6 +315,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setProduct(null);
     setQuoteMode(null);
     setCarInputs({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
+    setAddons({ flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 });
     setTravelInputs({ destination: '', startDate: '', endDate: '', adults: 1, plan: 'GOLD' });
     setPAInputs({ category: 'GENERAL', plan: 'BASIC' });
     setMPARInputs({ category: 'GADGET', itemName: '', price: 0, period: 12 });
@@ -819,6 +849,71 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* ─── STEP QUOTE_SUMMARY: Penawaran-only for CAR/MOTORCYCLE ─── */}
       {step === 'quote_summary' && (product === 'CAR' || product === 'MOTORCYCLE') && (
         <div className="space-y-4">
+          {/* Addon Coverage Selection */}
+          <div className="bg-white dark:bg-[#242836] rounded-2xl p-4 border border-gray-200 dark:border-[#3A3F52] space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-[#B8BFD0]">Perluasan Jaminan</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setAddons(v => ({ ...v, flood: !v.flood }))}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.flood ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+              >
+                <p className="text-xs font-bold text-gray-800 dark:text-white">🌊 Banjir & Badai</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Perluasan bencana alam</p>
+              </button>
+              <button
+                onClick={() => setAddons(v => ({ ...v, earthquake: !v.earthquake }))}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.earthquake ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+              >
+                <p className="text-xs font-bold text-gray-800 dark:text-white">⚡ Gempa & Tsunami</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Perluasan gempa bumi</p>
+              </button>
+              <button
+                onClick={() => setAddons(v => ({ ...v, riot: !v.riot }))}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.riot ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+              >
+                <p className="text-xs font-bold text-gray-800 dark:text-white">🔥 Huru-Hara</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Kerusuhan & SRCC</p>
+              </button>
+              <button
+                onClick={() => setAddons(v => ({ ...v, paDriver: !v.paDriver }))}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.paDriver ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+              >
+                <p className="text-xs font-bold text-gray-800 dark:text-white">🧑‍✈️ PA Pengemudi</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Kecelakaan diri pengemudi</p>
+              </button>
+            </div>
+            {/* TPL selector */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#8E95A8]">TPL (Tanggung Jawab Pihak Ketiga)</label>
+              <div className="flex gap-2">
+                {[0, 10000000, 25000000, 50000000].map(limit => (
+                  <button
+                    key={limit}
+                    onClick={() => setAddons(v => ({ ...v, tplLimit: v.tplLimit === limit ? 0 : limit }))}
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.tplLimit === limit ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-[#2C3142] text-gray-500 dark:text-[#8E95A8]'}`}
+                  >
+                    {limit === 0 ? 'Tidak' : `${limit / 1000000}jt`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* PA Passenger seats */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#8E95A8]">PA Penumpang (jumlah kursi)</label>
+              <div className="flex gap-2">
+                {[0, 1, 2, 4].map(seats => (
+                  <button
+                    key={seats}
+                    onClick={() => setAddons(v => ({ ...v, paPassengerSeats: v.paPassengerSeats === seats ? 0 : seats }))}
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.paPassengerSeats === seats ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-[#2C3142] text-gray-500 dark:text-[#8E95A8]'}`}
+                  >
+                    {seats === 0 ? 'Tidak' : `${seats} kursi`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-6 text-white shadow-2xl">
             <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">Penawaran Kendaraan</p>
             <h2 className="font-black text-2xl tracking-tight">{clientName}</h2>

@@ -186,16 +186,47 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   };
 
   const buildWAText = () => {
-    const lines = [
-      `*PT Ruang Proteksi Indonesia Quote*`,
-      `─────────────────────`,
-      `Client: ${clientName}`,
-      `Product: ${product}`,
-      `Premium: ${formatIDR(premium)}/year`,
-      `Commission: ${formatIDR(commission)}`,
+    const lines: string[] = [
+      `*SUREPATH — Penawaran Asuransi*`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `Nama: ${clientName}`,
       ``,
-      `Contact your SurePath agent for more details.`,
+      `*Produk:* ${product}`,
     ];
+
+    // Add product-specific details
+    if (product === 'CAR' || product === 'MOTORCYCLE') {
+      lines.push(`*Kendaraan:* ${carInputs.brand} ${carInputs.model} (${carInputs.year})`);
+      lines.push(`*Coverage:* ${carInputs.coverage}`);
+      lines.push(`*Nilai Pertanggungan:* ${formatIDR(carInputs.price)}`);
+      if (addons.flood) lines.push(`✓ Perluasan Banjir`);
+      if (addons.earthquake) lines.push(`✓ Perluasan Gempa`);
+      if (addons.riot) lines.push(`✓ Perluasan Huru-Hara`);
+      if (addons.tplLimit > 0) lines.push(`✓ TPL: ${formatIDR(addons.tplLimit)}`);
+      if (addons.paDriver) lines.push(`✓ PA Pengemudi`);
+      if (addons.paPassengerSeats > 0) lines.push(`✓ PA Penumpang: ${addons.paPassengerSeats} kursi`);
+    } else if (product === 'PA') {
+      lines.push(`*Kategori:* ${paInputs.category}`);
+      lines.push(`*Plan:* ${paInputs.plan}`);
+    } else if (product === 'TRAVEL') {
+      lines.push(`*Tujuan:* ${travelInputs.destination}`);
+      lines.push(`*Peserta:* ${travelInputs.adults} dewasa`);
+      lines.push(`*Periode:* ${travelInputs.startDate} - ${travelInputs.endDate}`);
+    } else if (product === 'MPAR') {
+      lines.push(`*Barang:* ${mparInputs.itemName}`);
+      lines.push(`*Nilai:* ${formatIDR(mparInputs.price)}`);
+      lines.push(`*Periode:* ${mparInputs.period} bulan`);
+    }
+
+    lines.push(``);
+    lines.push(`*PREMI: ${formatIDR(premium)}/tahun*`);
+    lines.push(``);
+    lines.push(`Penawaran berlaku 30 hari.`);
+    lines.push(`Hubungi agen SurePath untuk konfirmasi.`);
+    lines.push(``);
+    lines.push(`_SurePath — Your Path to Protection_`);
+    lines.push(`myinsurepath.com`);
+
     return encodeURIComponent(lines.join('\n'));
   };
 
@@ -260,24 +291,48 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   };
 
   const handlePrintQuote = async () => {
-    if (!product || product !== 'CAR') return;
+    if (!product) return;
     setPrintingQuote(true);
     try {
-      const zone = getZone('');  // default zone 3 when no province
-      const breakdown = calcOjkPremium('CAR', carInputs.coverage, carInputs.price, zone, {
-        flood: addons.flood, earthquake: addons.earthquake, riot: addons.riot,
-        tplLimit: addons.tplLimit, paDriver: addons.paDriver, paPassengerSeats: addons.paPassengerSeats,
-      });
-      const addonsList = [
-        ...(breakdown.addonsDetail.flood > 0      ? [{ label: 'Perluasan Banjir',     amount: breakdown.addonsDetail.flood }]      : []),
-        ...(breakdown.addonsDetail.earthquake > 0 ? [{ label: 'Perluasan Gempa Bumi', amount: breakdown.addonsDetail.earthquake }] : []),
-        ...(breakdown.addonsDetail.riot > 0       ? [{ label: 'Perluasan Huru-Hara',  amount: breakdown.addonsDetail.riot }]       : []),
-        ...(breakdown.addonsDetail.tpl > 0        ? [{ label: 'TPL',                  amount: breakdown.addonsDetail.tpl }]        : []),
-        ...(breakdown.addonsDetail.paDriver > 0   ? [{ label: 'PA Pengemudi',         amount: breakdown.addonsDetail.paDriver }]   : []),
-        ...(breakdown.addonsDetail.paPassenger > 0? [{ label: 'PA Penumpang',         amount: breakdown.addonsDetail.paPassenger }]: []),
-      ];
+      // Build rows based on product type
+      let quoteRows: Array<{ label: string; amount: number }> = [];
+      let vehicleBrand = 'N/A';
+      let vehicleModel = '';
+      let vehicleYear = new Date().getFullYear();
+      let vehiclePrice = 0;
+      let coverageType: 'COMPREHENSIVE' | 'TLO' = 'COMPREHENSIVE';
 
-      // Generate the new 4-page professional Quotation Slip PDF
+      if (product === 'CAR' || product === 'MOTORCYCLE') {
+        const zone = getZone('');
+        const breakdown = calcOjkPremium(product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR', carInputs.coverage, carInputs.price, zone, {
+          flood: addons.flood, earthquake: addons.earthquake, riot: addons.riot,
+          tplLimit: addons.tplLimit, paDriver: addons.paDriver, paPassengerSeats: addons.paPassengerSeats,
+        });
+        quoteRows = [
+          { label: 'Premi Dasar', amount: breakdown.basePremium },
+          ...(breakdown.addonsDetail.flood > 0      ? [{ label: 'Perluasan Banjir',     amount: breakdown.addonsDetail.flood }]      : []),
+          ...(breakdown.addonsDetail.earthquake > 0 ? [{ label: 'Perluasan Gempa Bumi', amount: breakdown.addonsDetail.earthquake }] : []),
+          ...(breakdown.addonsDetail.riot > 0       ? [{ label: 'Perluasan Huru-Hara',  amount: breakdown.addonsDetail.riot }]       : []),
+          ...(breakdown.addonsDetail.tpl > 0        ? [{ label: 'TPL',                  amount: breakdown.addonsDetail.tpl }]        : []),
+          ...(breakdown.addonsDetail.paDriver > 0   ? [{ label: 'PA Pengemudi',         amount: breakdown.addonsDetail.paDriver }]   : []),
+          ...(breakdown.addonsDetail.paPassenger > 0? [{ label: 'PA Penumpang',         amount: breakdown.addonsDetail.paPassenger }]: []),
+          { label: 'Biaya Admin', amount: breakdown.adminFee },
+          { label: 'Materai', amount: breakdown.stampDuty },
+        ];
+        vehicleBrand = carInputs.brand;
+        vehicleModel = carInputs.model;
+        vehicleYear = carInputs.year;
+        vehiclePrice = carInputs.price;
+        coverageType = carInputs.coverage;
+      } else {
+        // PA, TRAVEL, MPAR — simple premium
+        quoteRows = [{ label: `Premi ${product}`, amount: premium }];
+        vehicleBrand = product;
+        vehicleModel = product === 'PA' ? `Plan: ${paInputs.plan}` : product === 'TRAVEL' ? `${travelInputs.adults} adult(s)` : mparInputs.itemName;
+        vehicleYear = new Date().getFullYear();
+        vehiclePrice = premium;
+      }
+
       const quoteNumber = `QS/SP/${new Date().getFullYear()}/${['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][new Date().getMonth()]}/${Math.floor(Math.random() * 9000 + 1000)}`;
       await generateQuotationSlipPDF(fromAgentQuote({
         quoteNumber,
@@ -286,23 +341,22 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         clientPhone: '',
         agentName: agent?.name ?? 'Mitra SurePath',
         agentCode: agent?.agent_code ?? '',
-        vehicleBrand: carInputs.brand,
-        vehicleModel: carInputs.model,
-        vehicleYear: carInputs.year,
-        vehiclePrice: carInputs.price,
-        coverageType: carInputs.coverage,
-        zone,
-        ojkRate: breakdown.rate,
+        vehicleBrand,
+        vehicleModel,
+        vehicleYear,
+        vehiclePrice,
+        coverageType,
+        zone: getZone(''),
+        ojkRate: product === 'CAR' || product === 'MOTORCYCLE' ? (premium > 0 && vehiclePrice > 0 ? premium / vehiclePrice : 0.025) : 0,
         rateBand: 'MID',
         providerName: 'PT Zurich Asuransi Indonesia Tbk',
-        rows: [
-          { label: 'Premi Dasar', amount: breakdown.basePremium },
-          ...addonsList,
-          { label: 'Biaya Admin', amount: breakdown.adminFee },
-          { label: 'Materai', amount: breakdown.stampDuty },
-        ],
-        totalPremium: breakdown.total,
+        rows: quoteRows,
+        totalPremium: premium,
       }));
+      toast.success(t('Quotation slip generated!', 'Slip penawaran berhasil dibuat!'));
+    } catch (e: any) {
+      console.error('Print quote error:', e);
+      toast.error(t('Failed to generate PDF: ', 'Gagal membuat PDF: ') + (e?.message ?? ''));
     } finally {
       setPrintingQuote(false);
     }
@@ -1022,16 +1076,15 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             {savedQuote ? t('Quote Saved!', 'Penawaran Tersimpan!') : t('Save Quote', 'Simpan Penawaran')}
           </button>
 
-          {product === 'CAR' && (
-            <button
-              onClick={handlePrintQuote}
-              disabled={printingQuote || !carInputs.brand || !carInputs.model || carInputs.price <= 0}
-              className="h-12 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
-            >
-              {printingQuote ? <RefreshCw size={14} className="animate-spin motion-reduce:animate-none" /> : <FileText size={14} />}
-              {t('Print Quotation Slip (4 pages)', 'Cetak Slip Penawaran (4 halaman)')}
-            </button>
-          )}
+          {/* PDF download — available for ALL products */}
+          <button
+            onClick={handlePrintQuote}
+            disabled={printingQuote}
+            className="h-12 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50 w-full flex items-center justify-center gap-2"
+          >
+            {printingQuote ? <RefreshCw size={14} className="animate-spin motion-reduce:animate-none" /> : <FileText size={14} />}
+            {t('Print Quotation Slip (4 pages)', 'Cetak Slip Penawaran (4 halaman)')}
+          </button>
 
           <a
             href={`https://wa.me/?text=${buildWAText()}`}

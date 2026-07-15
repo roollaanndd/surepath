@@ -15,6 +15,7 @@ import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 import { getTncRecord, type TncRecord } from '../services/supabaseService';
 import AccessibilitySettings from './customer/AccessibilitySettings';
+import IdentityVerificationCard from './shared/IdentityVerificationCard';
 
 interface UserProfileProps {
   currentUser: any;
@@ -513,6 +514,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
            </div>
            <p className="text-sm text-ds-ink3">{t('No acceptance record found', 'Belum ada rekaman persetujuan')}</p>
          </div>
+       )}
+
+       {/* Identity Verification */}
+       {(currentUser?.supabaseId ?? currentUser?.id) && (
+         <IdentityVerificationCard userId={currentUser.supabaseId ?? currentUser.id} lang={lang} />
        )}
 
        {/* Accessibility — Display Size */}

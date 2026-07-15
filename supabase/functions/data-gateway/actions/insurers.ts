@@ -5,6 +5,22 @@ import type { GatewayContext, ActionResult } from './types.ts';
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
+// Insurers must never see the customer's real name/phone/KTP, nor the
+// agent who wrote the policy (name/email/phone) — they underwrite on
+// vehicle/product/premium data only. `agent_id` is dropped rather than
+// resolved to agent_code since no insurer-facing screen currently needs
+// per-agent attribution; this can be added back deliberately if that changes.
+const ORDER_INSURER_SAFE_COLUMNS =
+  'id, order_number, product_name, product_code, coverage_type, sum_insured, ' +
+  'total_premium, net_premium, status, insurer_decision, insurer_decision_notes, ' +
+  'insurer_decision_at, policy_number, policy_document_url, vehicle_image_url, ' +
+  'vehicle_details, addons, created_at, reviewed_at, issued_at, insurer_id';
+
+function toInsurerSafeOrder(o: Record<string, any>): Record<string, any> {
+  const { client_name: _cn, client_phone: _cp, client_ktp: _ck, agent_id: _aid, ...rest } = o;
+  return { ...rest, client_name: `Nasabah ${o.order_number ?? o.id ?? ''}` };
+}
+
 export async function handleInsurersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
@@ -293,9 +309,9 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         // Increment accessed_count (non-blocking)
         db.from('sp_review_tokens').update({ accessed_count: (rt.accessed_count ?? 0) + 1, last_accessed_at: new Date().toISOString() })
           .eq('id', rt.id).then(() => {}, () => {});
-        // Load order
+        // Load order — explicit column allowlist (never client PII/agent identity; see toInsurerSafeOrder)
         const { data: order, error: ordErr } = await db.from('sp_policy_orders')
-          .select('*')
+          .select(ORDER_INSURER_SAFE_COLUMNS)
           .eq('id', rt.order_id)
           .maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
@@ -311,7 +327,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         }
         // ── Log activity (review page opened) ───────────────────────────────
         logActivity(order.insurer_id ?? null, rt.order_id, 'REVIEW_OPENED', { token_id: rt.id, accessed_count: (rt.accessed_count ?? 0) + 1 });
-        return json({ data: { token: rt, order, insurer } });
+        return json({ data: { token: rt, order: toInsurerSafeOrder(order), insurer } });
       }
 
     case 'submit_insurer_decision': {
@@ -423,27 +439,28 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         if (!insurer) return json({ error: 'Insurer not found' }, 404);
         // ── Log activity ────────────────────────────────────────────────────
         logActivity(authToken.insurer_id, null, 'DASHBOARD_VIEWED', { email: authToken.email });
-        // Load orders for this insurer
+        // Load orders for this insurer — safe columns only (no client/agent PII)
         const { data: orders, error: ordErr } = await db.from('sp_policy_orders')
-          .select('id, order_number, client_name, client_phone, product_name, product_code, coverage_type, sum_insured, total_premium, net_premium, status, insurer_decision, insurer_decision_notes, insurer_decision_at, policy_number, policy_document_url, vehicle_image_url, vehicle_details, created_at, reviewed_at, issued_at')
+          .select(ORDER_INSURER_SAFE_COLUMNS)
           .eq('insurer_id', insurer.id)
           .order('created_at', { ascending: false })
           .limit(200);
         if (ordErr) return json({ error: ordErr.message }, 400);
+        const safeOrders = (orders ?? []).map(toInsurerSafeOrder);
         // KPI counts
         const kpi = {
-          total: orders?.length ?? 0,
-          pending: (orders ?? []).filter((o: any) => !o.insurer_decision).length,
-          approved: (orders ?? []).filter((o: any) => o.insurer_decision === 'APPROVED').length,
-          request_info: (orders ?? []).filter((o: any) => o.insurer_decision === 'REQUEST_INFO').length,
-          declined: (orders ?? []).filter((o: any) => o.insurer_decision === 'DECLINED').length,
-          issued: (orders ?? []).filter((o: any) => o.status === 'ISSUED').length,
+          total: safeOrders.length,
+          pending: safeOrders.filter((o: any) => !o.insurer_decision).length,
+          approved: safeOrders.filter((o: any) => o.insurer_decision === 'APPROVED').length,
+          request_info: safeOrders.filter((o: any) => o.insurer_decision === 'REQUEST_INFO').length,
+          declined: safeOrders.filter((o: any) => o.insurer_decision === 'DECLINED').length,
+          issued: safeOrders.filter((o: any) => o.status === 'ISSUED').length,
         };
         // Auto-renew token (rolling 7-day) — non-blocking
         const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         db.from('sp_insurer_auth_tokens').update({ expires_at: newExpiry, used_at: new Date().toISOString() })
           .eq('id', authToken.id).then(() => {}, () => {});
-        return json({ data: { insurer, orders: orders ?? [], kpi, token_expires_at: newExpiry } });
+        return json({ data: { insurer, orders: safeOrders, kpi, token_expires_at: newExpiry } });
       }
 
     case 'insurer_submit_decision_authed': {
@@ -529,15 +546,16 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         if (authErr) return json({ error: authErr.message }, 400);
         if (!authToken) return json({ error: 'Invalid token' }, 404);
         if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
-        // Get all order IDs for this insurer
+        // Get all order IDs for this insurer — no client PII (payer_email
+        // below is the payer's own account email, dropped for the same reason)
         const { data: orders } = await db.from('sp_policy_orders')
-          .select('id, order_number, client_name, product_name, total_premium, insurer_id')
+          .select('id, order_number, product_name, total_premium, insurer_id')
           .eq('insurer_id', authToken.insurer_id);
         const orderIds = (orders ?? []).map((o: any) => o.id);
         if (orderIds.length === 0) return json({ data: { payments: [], orders: [] } });
         // Fetch payments for these orders
         const { data: payments, error: payErr } = await db.from('sp_payments')
-          .select('id, order_id, amount, currency, status, payment_method, payment_channel, paid_amount, paid_at, payer_email, created_at, updated_at')
+          .select('id, order_id, amount, currency, status, payment_method, payment_channel, paid_amount, paid_at, created_at, updated_at')
           .in('order_id', orderIds)
           .order('created_at', { ascending: false })
           .limit(200);
@@ -548,7 +566,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         const enrichedPayments = (payments ?? []).map((p: any) => ({
           ...p,
           order_number: orderMap[p.order_id]?.order_number ?? null,
-          client_name: orderMap[p.order_id]?.client_name ?? null,
+          client_name: `Nasabah ${orderMap[p.order_id]?.order_number ?? ''}`,
           product_name: orderMap[p.order_id]?.product_name ?? null,
           total_premium: orderMap[p.order_id]?.total_premium ?? null,
         }));
@@ -577,7 +595,9 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           .maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
         if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
-        // Update order
+        // Update order — select() intentionally scoped to safe columns only;
+        // an unscoped select() here would leak the full row (incl. client
+        // PII) back to the insurer caller via the response below.
         const ts = new Date().toISOString();
         const { data: updated, error: updErr } = await db.from('sp_policy_orders').update({
           policy_document_url: policyDocumentUrl,
@@ -585,7 +605,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           status: 'ISSUED',
           issued_at: ts,
           updated_at: ts,
-        }).eq('id', orderId).select().maybeSingle();
+        }).eq('id', orderId).select(ORDER_INSURER_SAFE_COLUMNS).maybeSingle();
         if (updErr) return json({ error: updErr.message }, 400);
         // Notifications
         db.from('sp_admin_notifications').insert({

@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, FileCheck,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -29,6 +29,8 @@ const ProductConfigAdmin = lazy(() => import('./ProductConfigAdmin'));
 const FinancialAdmin = lazy(() => import('./FinancialAdmin'));
 const CommissionLedger = lazy(() => import('./CommissionLedger'));
 const AgentAgreementsAdmin = lazy(() => import('./AgentAgreementsAdmin'));
+const IdentityVerificationAdmin = lazy(() => import('./IdentityVerificationAdmin'));
+const TncRecordsAdmin = lazy(() => import('./TncRecordsAdmin'));
 const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
 const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
 const VehiclePricelistAdmin = lazy(() => import('./VehiclePricelistAdmin'));
@@ -75,6 +77,8 @@ const MENU_ITEMS: MenuItem[] = [
   { id: '_sep2', isSeparator: true, groupLabel: 'Nasabah & Transaksi', roles: ALL_ROLES },
   { id: 'users',            label: 'Pengguna',            icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'user_mgmt',        label: 'Kelola Akun',         icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'identity_verification', label: 'Verifikasi Identitas', icon: ShieldCheck, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
+  { id: 'tnc_records',      label: 'Riwayat T&K',         icon: FileCheck,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'withdrawals',      label: 'Penarikan Mitra',     icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
@@ -619,6 +623,8 @@ const AdminPortal = ({
       case 'policy_orders':    return <PolicyOrdersAdmin />;
       case 'agents':           return <AgentManagementView />;
       case 'agent_agreements': return <AgentAgreementsAdmin />;
+      case 'identity_verification': return <IdentityVerificationAdmin />;
+      case 'tnc_records':      return <TncRecordsAdmin />;
       case 'claims_admin':     return <ClaimsAdminView />;
       case 'financial':        return <FinancialAdmin />;
       case 'insurers':         return <InsurerAdmin />;

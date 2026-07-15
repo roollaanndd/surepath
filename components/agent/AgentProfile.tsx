@@ -9,7 +9,7 @@ import { Language } from '../../types';
 import { APP_VERSION } from '../../src/version';
 import {
   getAgentProfile, updateAgentProfile, getAgentStats,
-  uploadAgentAvatar, uploadAgentKtp,
+  uploadAgentAvatar, uploadIdentityKtp,
   type SpUser, type AgentStats,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -138,7 +138,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     const file = e.target.files?.[0];
     if (!file) return;
     setKtpUploading(true);
-    const url = await uploadAgentKtp(agentId, file);
+    const url = await uploadIdentityKtp(agentId, file);
     if (url) setProfile(p => p ? { ...p, ktp_document_url: url } as any : p);
     setKtpUploading(false);
   };

@@ -19,6 +19,7 @@
 //   - website.ts       website CMS, traffic, online users, security stats,
 //                      insurer portal auth, review tokens, AI reviews, promo
 //                      codes, Pathy chat, B2B submissions/quotes
+//   - verification.ts  identity (KYC) verification + T&C acceptance audit
 //
 // Every existing `import { X } from '...services/supabaseService'` continues
 // to work because this file re-exports the union of all of the above.
@@ -36,3 +37,4 @@ export * from './insurers';
 export * from './wallet';
 export * from './agreements';
 export * from './website';
+export * from './verification';

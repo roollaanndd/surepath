@@ -29,6 +29,12 @@ export interface SpUser {
   profile_photo_url?: string | null;
   ktp_document_url?: string | null;
   is_suspended?: boolean;
+  // Identity verification (KYC) — see services/verification.ts
+  identity_status?: 'UNSUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  identity_submitted_at?: string | null;
+  identity_reviewed_at?: string | null;
+  identity_reject_reason?: string | null;
+  phone_verified_at?: string | null;
   // Multi-app access — NULL or single-element array = single-app routing
   // (uses role for legacy compat). Multi-element = AppSelector screen shown.
   // Values match UserRole enum: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN'.

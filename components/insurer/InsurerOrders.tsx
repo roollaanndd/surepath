@@ -2,7 +2,7 @@
 // 3 decision buttons (Setujui/Minta Info/Tolak) + policy PDF upload.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, Phone, ShieldCheck, Sparkles, Upload, CheckCircle, Download } from 'lucide-react';
+import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, ShieldCheck, Sparkles, Upload, CheckCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
@@ -375,10 +375,9 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     </div>
                   </div>
 
-                  {/* Customer info */}
-                  <Section icon={<User size={14} />} title="Data Nasabah" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
-                    <DetailRow label="Nama" value={selectedOrder.client_name} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
-                    <DetailRow label="Telepon" value={selectedOrder.client_phone ?? '-'} icon={<Phone size={11} />} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
+                  {/* Order reference — customer identity is intentionally not shared with insurers */}
+                  <Section icon={<User size={14} />} title="Referensi Pesanan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                    <DetailRow label="No. Pesanan" value={selectedOrder.order_number} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                   </Section>
 
                   {/* Vehicle info */}

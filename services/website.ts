@@ -403,11 +403,25 @@ export async function validatePromoCode(
 }
 
 // ─── Pathy AI Chat ────────────────────────────────────────────────────────────
+// FIX v1.46.0: Pathy now uses the AI Gateway with z-ai SDK + knowledge base.
+// Previously used gateway 'pathy_chat' action (Gemini-based, no SurePath knowledge).
+// Now uses askPathy() from aiGateway.ts which includes company info, products,
+// insurers, OJK rules, and AI boundaries.
 
-export async function pathyChat(message: string): Promise<string> {
-  const { data, error } = await callGateway('pathy_chat', { message });
-  if (error) throw new Error(error);
-  return (data as { reply: string }).reply;
+export async function pathyChat(
+  message: string,
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  try {
+    const { askPathy } = await import('./aiGateway');
+    return await askPathy(message, conversationHistory);
+  } catch (e: any) {
+    console.error('pathyChat error:', e);
+    // Fallback to old gateway path if AI Gateway is unavailable
+    const { data, error } = await callGateway('pathy_chat', { message });
+    if (error) throw new Error(error);
+    return (data as { reply: string }).reply;
+  }
 }
 
 // ─── B2B Submissions & Quotes ─────────────────────────────────────────────────

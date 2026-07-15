@@ -1,7 +1,6 @@
 // aiGateway.ts — Client-side wrapper for AI Gateway edge function.
 // All AI agents (Pathy, ClaimSense, InsurerAI, AgentPro) go through this.
 
-import { supabase } from './db';
 import {
   buildSystemPrompt,
   AI_BOUNDARIES,
@@ -30,7 +29,7 @@ export interface AIResponse {
   };
 }
 
-// ─── Core: Call AI Gateway ───────────────────────────────────────────────────
+// ─── Core: Call AI Gateway (via local server with z-ai SDK) ─────────────────
 async function callAIGateway(
   agentType: AgentType,
   userMessage: string,
@@ -38,21 +37,14 @@ async function callAIGateway(
 ): Promise<AIResponse> {
   const systemPrompt = buildSystemPrompt(agentType, context);
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error('Not authenticated');
-
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-  const response = await fetch(`${supabaseUrl}/functions/v1/ai-gateway`, {
+  // Call the local server's /api/ai-gateway endpoint (uses z-ai SDK)
+  const response = await fetch('/api/ai-gateway', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${session.access_token}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       agentType,
       systemPrompt,
       userMessage,
-      context,
     }),
   });
 

@@ -165,7 +165,12 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
     pushMessage('user', msg);
     setLoading(true);
     try {
-      const reply = await pathyChat(msg);
+      // FIX v1.46.0: pass conversation history for context-aware responses
+      const history = messages.map(m => ({
+        role: (m.from === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: m.text,
+      }));
+      const reply = await pathyChat(msg, history);
       pushMessage('bot', reply);
     } catch (e: any) {
       const notConfigured = String(e?.message ?? '').toLowerCase().includes('not configured');

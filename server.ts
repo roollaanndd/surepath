@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import cors from 'cors';
 import ZAI from 'z-ai-web-dev-sdk';
 import crypto from 'crypto';
+import { startAIAdminEngine, runAIAdminTick } from './services/aiAdminEngine';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AI GATEWAY — 6-LAYER CONSISTENCY & ANTI-LEAK SYSTEM
@@ -311,6 +312,9 @@ function hashText(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
 }
 
+// ─── AI Admin Engine Interval Handle ─────────────────────────────────────────
+let adminInterval: NodeJS.Timeout | null = null;
+
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN SERVER
 // ════════════════════════════════════════════════════════════════════════════
@@ -533,6 +537,33 @@ async function startServer() {
     res.json({ data: entries, totalCached: responseCache.size });
   });
 
+  // ─── AI Admin Engine — Manual trigger + status ────────────────────────────
+  app.post("/api/ai-admin/run", async (req, res) => {
+    try {
+      console.log('[API] AI Admin manual tick triggered');
+      const results = await runAIAdminTick();
+      const summary = {
+        totalAutoApproved: results.reduce((s, r) => s + r.autoApproved, 0),
+        totalFlagged: results.reduce((s, r) => s + r.flagged, 0),
+        totalNotified: results.reduce((s, r) => s + r.notified, 0),
+        tasks: results,
+      };
+      res.json({ success: true, data: summary });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/ai-admin/status", (req, res) => {
+    res.json({
+      running: adminInterval !== null,
+      intervalMinutes: 5,
+      lastRun: aiAuditLog.length > 0 ? aiAuditLog[aiAuditLog.length - 1].timestamp : null,
+      totalDecisions: aiAuditLog.length,
+      kbVersion: KB_VERSION,
+    });
+  });
+
   // Payment Gateway Proxy (Simulated Midtrans/Stripe)
   app.post("/api/payments/create", async (req, res) => {
     try {
@@ -581,6 +612,13 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Neural Backend running on port ${PORT}`);
+    // Start AI Admin Engine — runs every 5 minutes
+    adminInterval = setInterval(() => {
+      runAIAdminTick().catch(e => console.error('[AI Admin] Tick error:', e));
+    }, 5 * 60 * 1000);
+    // Run immediately on startup (after 10s delay to let DB warm up)
+    setTimeout(() => runAIAdminTick().catch(e => console.error('[AI Admin] Initial tick error:', e)), 10000);
+    console.log('[AI Admin] Engine started — running every 5 minutes');
   });
 }
 

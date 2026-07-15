@@ -24,6 +24,11 @@ export async function callGateway(
   if (!token) return { error: 'Not authenticated' };
 
   try {
+    // FIX v1.49.1: Add 15-second timeout to prevent infinite loading
+    // Edge functions can cold-start slowly, but 15s is more than enough
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const res = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
       method: 'POST',
       headers: {
@@ -31,10 +36,22 @@ export async function callGateway(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ action, params }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => 'Unknown error');
+      return { error: `Gateway error ${res.status}: ${errBody.slice(0, 200)}` };
+    }
+
     return res.json();
-  } catch (e) {
-    return { error: String((e as Error)?.message ?? e) };
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      return { error: 'Request timeout (15s). Server mungkin sedang sibuk. Coba lagi.' };
+    }
+    return { error: String(e?.message ?? e) };
   }
 }
 

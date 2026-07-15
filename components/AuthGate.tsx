@@ -132,25 +132,37 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setError(null);
     resolvedRef.current = false; // reset for new attempt
 
-    const { data, error: authErr } = await supabase.auth.signInWithPassword({
-      email:    formData.email,
-      password: formData.password,
-    });
+    try {
+      // FIX: Add timeout to prevent infinite loading
+      const loginPromise = supabase.auth.signInWithPassword({
+        email:    formData.email,
+        password: formData.password,
+      });
 
-    if (authErr || !data.user) {
-      const msg = authErr?.message ?? '';
-      const friendlyError = msg.includes('Email not confirmed')
-        ? t('Please confirm your email first. Check your inbox.', 'Konfirmasi email kamu dulu. Cek kotak masuk.')
-        : msg.includes('Invalid login credentials')
-        ? t('Email or password is incorrect.', 'Email atau password salah.')
-        : msg || t('Login failed. Please try again.', 'Login gagal. Coba lagi.');
-      setError(friendlyError);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout: server tidak merespons dalam 15 detik. Coba lagi.')), 15000)
+      );
+
+      const { data, error: authErr } = await Promise.race([loginPromise, timeoutPromise]);
+
+      if (authErr || !data.user) {
+        const msg = authErr?.message ?? '';
+        const friendlyError = msg.includes('Email not confirmed')
+          ? t('Please confirm your email first. Check your inbox.', 'Konfirmasi email kamu dulu. Cek kotak masuk.')
+          : msg.includes('Invalid login credentials')
+          ? t('Email or password is incorrect.', 'Email atau password salah.')
+          : msg || t('Login failed. Please try again.', 'Login gagal. Coba lagi.');
+        setError(friendlyError);
+        setLoading(false);
+        return;
+      }
+
+      // Resolve directly — onAuthStateChange may also fire but resolvedRef prevents double-call
+      await resolveAndLogin(data.user);
+    } catch (e: any) {
+      setError(e?.message || t('Login failed. Please try again.', 'Login gagal. Coba lagi.'));
       setLoading(false);
-      return;
     }
-
-    // Resolve directly — onAuthStateChange may also fire but resolvedRef prevents double-call
-    await resolveAndLogin(data.user);
   };
 
   // ── Supabase register ────────────────────────────────────────────────────────
@@ -164,36 +176,49 @@ const AuthGate: React.FC<AuthGateProps> = ({
     setError(null);
     resolvedRef.current = false;
 
-    // Referral code from a shared ?ref= link — travels in the signup metadata
-    // so the gateway links the upline even after email confirmation.
-    const refCode = localStorage.getItem('SUREPATH_REF') || undefined;
-    const { data, error: authErr } = await supabase.auth.signUp({
-      email:    formData.email,
-      password: formData.password,
-      options:  { data: { name: formData.name, role: UserRole.CUSTOMER, referral_code: refCode } },
-    });
+    try {
+      // Referral code from a shared ?ref= link — travels in the signup metadata
+      // so the gateway links the upline even after email confirmation.
+      const refCode = localStorage.getItem('SUREPATH_REF') || undefined;
 
-    if (authErr || !data.user) {
-      const msg = authErr?.message ?? '';
-      const friendlyError = msg.includes('already registered') || msg.includes('already been registered')
-        ? t('This email is already registered. Try signing in.', 'Email ini sudah terdaftar. Coba masuk.')
-        : msg.includes('Password should be')
-        ? t('Password must be at least 6 characters.', 'Password minimal 6 karakter.')
-        : msg || t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.');
-      setError(friendlyError);
+      // FIX: Add timeout to prevent infinite loading
+      const signupPromise = supabase.auth.signUp({
+        email:    formData.email,
+        password: formData.password,
+        options:  { data: { name: formData.name, role: UserRole.CUSTOMER, referral_code: refCode } },
+      });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout: server tidak merespons dalam 15 detik. Coba lagi.')), 15000)
+      );
+
+      const { data, error: authErr } = await Promise.race([signupPromise, timeoutPromise]);
+
+      if (authErr || !data.user) {
+        const msg = authErr?.message ?? '';
+        const friendlyError = msg.includes('already registered') || msg.includes('already been registered')
+          ? t('This email is already registered. Try signing in.', 'Email ini sudah terdaftar. Coba masuk.')
+          : msg.includes('Password should be')
+          ? t('Password must be at least 6 characters.', 'Password minimal 6 karakter.')
+          : msg || t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.');
+        setError(friendlyError);
+        setLoading(false);
+        return;
+      }
+
+      if (!data.session) {
+        // Email confirmation required
+        setMode('CHECK_EMAIL');
+        setLoading(false);
+        return;
+      }
+
+      // Immediate session (email confirmation disabled) — resolve directly
+      await resolveAndLogin(data.user);
+    } catch (e: any) {
+      setError(e?.message || t('Registration failed. Please try again.', 'Registrasi gagal. Coba lagi.'));
       setLoading(false);
-      return;
     }
-
-    if (!data.session) {
-      // Email confirmation required
-      setMode('CHECK_EMAIL');
-      setLoading(false);
-      return;
-    }
-
-    // Immediate session (email confirmation disabled) — resolve directly
-    await resolveAndLogin(data.user);
   };
 
   // ── Resend confirmation email ─────────────────────────────────────────────

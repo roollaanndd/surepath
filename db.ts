@@ -276,8 +276,14 @@ export const seedDatabase = async () => {
     // Only seed transactions on first-ever run, not when count is 0 (could be real empty state)
     const needsMigration = !localStorage.getItem('SP_DB_MIGRATED_v2') && !adminExists;
 
-    if (needsMigration || txCount === 0) {
-       await db.transactions.clear(); 
+    // Demo transactions are DEV-only, like the demo users above. In production
+    // this block used to run for every fresh visitor (txCount === 0), but with
+    // user seeding DEV-gated there are no local CUSTOMER rows — which made
+    // `activeUsers` empty below, so `currentRevenue` never advanced and the
+    // `while (currentRevenue < targetRevenue)` loop spun forever, freezing the
+    // whole app on the loading screen. Production must never enter this path.
+    if (import.meta.env.DEV && (needsMigration || txCount === 0)) {
+       await db.transactions.clear();
        const userDocs = await db.users.where('role').equals('CUSTOMER').toArray();
        const userIds = userDocs.map(u => u.id);
        
@@ -318,6 +324,11 @@ export const seedDatabase = async () => {
               // 120-160 active users this month
               const activeUserCount = 120 + Math.floor(Math.random() * 40);
               const activeUsers = [...userIds].sort(() => 0.5 - Math.random()).slice(0, activeUserCount);
+
+              // Hard guard: with no users the inner for-loop never advances
+              // currentRevenue, turning this while into an infinite loop that
+              // freezes the whole app at boot.
+              if (activeUsers.length === 0) break;
 
               // Distribute transactions to hit the target revenue
               while (currentRevenue < targetRevenue) {

@@ -19,7 +19,11 @@ if (SENTRY_DSN) {
 
 // Explicit SW registration — guarantees PWA install/offline works even if
 // the auto-injected registerSW.js script is blocked or dropped by a proxy.
-registerSW({ immediate: true });
+try {
+  registerSW({ immediate: true });
+} catch (e) {
+  console.warn('SW registration failed (non-blocking):', e);
+}
 
 // Auto-reload when a lazy-loaded chunk fails (happens when SW serves stale assets after deploy)
 window.addEventListener('vite:preloadError', () => {
@@ -30,6 +34,47 @@ window.addEventListener('vite:preloadError', () => {
   }
 });
 
+// ─── Error Boundary — catch any React crash and show error to user ───────────
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('App crashed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return React.createElement('div', {
+        style: {
+          padding: '40px', fontFamily: 'sans-serif', textAlign: 'center',
+          background: '#f6faf7', minHeight: '100vh', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        }
+      }, [
+        React.createElement('h1', { key: 'title', style: { color: '#059669', marginBottom: '16px' } }, 'SurePath'),
+        React.createElement('p', { key: 'msg', style: { color: '#666', marginBottom: '20px' } }, 'Terjadi kesalahan. Refresh halaman atau coba lagi.'),
+        React.createElement('p', { key: 'err', style: { color: '#999', fontSize: '12px', marginBottom: '20px', wordBreak: 'break-word' } }, this.state.error?.message || 'Unknown error'),
+        React.createElement('button', {
+          key: 'btn',
+          onClick: () => window.location.reload(),
+          style: { padding: '12px 24px', background: '#059669', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }
+        }, 'Refresh'),
+      ]);
+    }
+    return this.props.children;
+  }
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
@@ -38,8 +83,10 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <HashRouter>
-      <App />
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );

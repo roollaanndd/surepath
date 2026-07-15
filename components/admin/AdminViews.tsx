@@ -2790,7 +2790,7 @@ export const WithdrawalsAdminView: React.FC = () => {
     const level = approvalLevelForUser(adminUser.role);
     if (!level) return;
     setActionLoading(wd.id);
-    const res = await approveWithdrawal(wd.id, level, adminUser.id);
+    const res = await approveWithdrawal(wd.id, level);
     if (res.success) {
       const nextStatus = level === 1 && wd.amount < 10_000_000 ? 'APPROVED'
         : level === 2 && wd.amount < 25_000_000 ? 'APPROVED'
@@ -2807,7 +2807,7 @@ export const WithdrawalsAdminView: React.FC = () => {
   const handleReject = async () => {
     if (!rejectModal || !rejectReason.trim()) return;
     setActionLoading(rejectModal.id);
-    await rejectWithdrawal(rejectModal.id, adminUser.id, rejectReason.trim());
+    await rejectWithdrawal(rejectModal.id, rejectReason.trim());
     setRejectModal(null);
     setRejectReason('');
     setActionLoading(null);

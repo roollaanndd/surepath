@@ -34,22 +34,24 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
 
     case 'admin_approve_withdrawal': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        if (!params.withdrawal_id || !params.level || !params.approver_id) {
-          return json({ error: 'withdrawal_id, level, approver_id required' }, 400);
+        // FIX v1.44.0 (pentest M5): use caller.authId instead of client-supplied approver_id.
+        // Prevents audit-trail spoofing (admin framing another admin for the approval).
+        if (!params.withdrawal_id || !params.level) {
+          return json({ error: 'withdrawal_id, level required' }, 400);
         }
         const level = Number(params.level);
         const ts = new Date().toISOString();
         const updates: Record<string, unknown> = { updated_at: ts };
         if (level === 1) {
-          updates.l1_approved_by = params.approver_id; updates.l1_approved_at = ts;
+          updates.l1_approved_by = caller.authId; updates.l1_approved_at = ts;
           const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
           updates.status = (wd?.amount ?? 0) >= 10_000_000 ? 'PENDING_L2' : 'APPROVED';
         } else if (level === 2) {
-          updates.l2_approved_by = params.approver_id; updates.l2_approved_at = ts;
+          updates.l2_approved_by = caller.authId; updates.l2_approved_at = ts;
           const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
           updates.status = (wd?.amount ?? 0) >= 25_000_000 ? 'PENDING_L3' : 'APPROVED';
         } else {
-          updates.l3_approved_by = params.approver_id; updates.l3_approved_at = ts;
+          updates.l3_approved_by = caller.authId; updates.l3_approved_at = ts;
           updates.status = 'APPROVED';
         }
         const { data, error } = await db.from('sp_withdrawals').update(updates).eq('id', params.withdrawal_id).select().maybeSingle();
@@ -59,13 +61,14 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
 
     case 'admin_reject_withdrawal': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        if (!params.withdrawal_id || !params.rejector_id || !params.reason) {
-          return json({ error: 'withdrawal_id, rejector_id, reason required' }, 400);
+        // FIX v1.44.0 (pentest M5): use caller.authId instead of client-supplied rejector_id.
+        if (!params.withdrawal_id || !params.reason) {
+          return json({ error: 'withdrawal_id, reason required' }, 400);
         }
         const { data: wd, error: fetchErr } = await db.from('sp_withdrawals').select('agent_id, amount').eq('id', params.withdrawal_id).single();
         if (fetchErr || !wd) return json({ error: 'Withdrawal not found' }, 404);
         const { error: updErr } = await db.from('sp_withdrawals').update({
-          status: 'REJECTED', rejected_by: params.rejector_id,
+          status: 'REJECTED', rejected_by: caller.authId,
           rejected_at: new Date().toISOString(), rejection_reason: params.reason,
           updated_at: new Date().toISOString(),
         }).eq('id', params.withdrawal_id);

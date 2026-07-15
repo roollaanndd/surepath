@@ -25,7 +25,7 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-const OperatorWithdrawals: React.FC<Props> = ({ operator, lang, refreshTick }) => {
+const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
   const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
@@ -61,7 +61,7 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, lang, refreshTick }) =
     });
     if (!ok) return;
     try {
-      await approveWithdrawalL1(w.id, operator.id);
+      await approveWithdrawalL1(w.id);
       toast.success('Penarikan disetujui di L1');
       load();
     } catch (e: any) {
@@ -83,7 +83,7 @@ const OperatorWithdrawals: React.FC<Props> = ({ operator, lang, refreshTick }) =
       return;
     }
     try {
-      await rejectWithdrawal(rejectModal.id, operator.id, reason);
+      await rejectWithdrawal(rejectModal.id, reason);
       toast.info(t('Withdrawal rejected', 'Penarikan ditolak'));
       setRejectModal(null);
       load();

@@ -123,19 +123,19 @@ export async function getAdminWithdrawals(limit = 200): Promise<Array<Withdrawal
 export async function approveWithdrawal(
   withdrawal_id: string,
   level: 1 | 2 | 3,
-  approver_id: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { data, error } = await callGateway('admin_approve_withdrawal', { withdrawal_id, level, approver_id });
+  // FIX v1.44.0: approver_id removed — gateway uses caller.authId from JWT
+  const { data, error } = await callGateway('admin_approve_withdrawal', { withdrawal_id, level });
   if (error) return { success: false, error };
   return { success: true, ...data };
 }
 
 export async function rejectWithdrawal(
   withdrawal_id: string,
-  rejector_id: string,
   reason: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { data, error } = await callGateway('admin_reject_withdrawal', { withdrawal_id, rejector_id, reason });
+  // FIX v1.44.0: rejector_id removed — gateway uses caller.authId from JWT
+  const { data, error } = await callGateway('admin_reject_withdrawal', { withdrawal_id, reason });
   if (error) return { success: false, error };
   return { success: true, ...data };
 }

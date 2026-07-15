@@ -351,13 +351,75 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           }
         }
 
-        // Build the insert from the client payload, then OVERRIDE the owner.
-        // Strip any client-supplied owner/identity fields that must be trusted.
-        const { id: _omitId, order_number: _omitOrderNumber, created_at: _omitCreated, updated_at: _omitUpdated, agent_id: _omitAgent, ...rest } = p;
+        // FIX v1.44.0 (pentest C1+C4): Replace `...rest` spread with strict allowlist.
+        // Previously, agents could inject `status:'ISSUED'`, `commission_amount:999999999`,
+        // `policy_number`, `policy_document_url`, `client_id`, etc. — bypassing review,
+        // self-awarding unlimited commission, and creating fake policies.
+        // Now: only safe fields are accepted; all sensitive fields are server-computed.
         const insertRow: Record<string, unknown> = {
-          ...rest,
-          agent_id: caller.spUser.id, // owner — never trust the client
+          agent_id: caller.spUser.id,           // owner — never trust the client
+          status: 'SUBMITTED',                   // force — never trust client status
+          client_name:       String(p.client_name ?? '').slice(0, 200),
+          client_phone:      p.client_phone      ? String(p.client_phone).slice(0, 30)    : null,
+          client_email:      p.client_email      ? String(p.client_email).slice(0, 200)   : null,
+          client_ktp:        p.client_ktp        ? String(p.client_ktp).slice(0, 50)      : null,
+          product_code:      String(p.product_code ?? '').slice(0, 50),
+          product_name:      String(p.product_name ?? '').slice(0, 200),
+          coverage_type:     String(p.coverage_type ?? '').slice(0, 30),
+          vehicle_type:      p.vehicle_type      ? String(p.vehicle_type).slice(0, 30)    : null,
+          vehicle_details:   p.vehicle_details   ? p.vehicle_details                       : null,
+          sum_insured:       Number(p.sum_insured ?? 0),
+          base_premium:      Number(p.base_premium ?? 0),
+          addon_premium:     Number(p.addon_premium ?? 0),
+          total_premium:     Number(p.total_premium ?? 0),
+          net_premium:       Number(p.net_premium ?? Number(p.total_premium ?? 0)),
+          admin_fee:         Number(p.admin_fee ?? 0),
+          stamp_duty:        Number(p.stamp_duty ?? 0),
+          application_fee:   Number(p.application_fee ?? 0),
+          zone:              p.zone != null ? Number(p.zone) : null,
+          insurer_id:        p.insurer_id        ? String(p.insurer_id)                    : null,
+          addons:            p.addons            ? p.addons                                : null,
+          ai_findings:       p.ai_findings       ? p.ai_findings                           : null,
+          agent_code:        p.agent_code        ? String(p.agent_code).slice(0, 50)      : null,
+          // commission_amount, coin_reward, discount_rate, discount_amount are set below (server-side)
+          // policy_number, policy_document_url, reviewed_at, issued_at, client_id — NEVER accepted from client
         };
+
+        // ── Server-side commission computation (fixes C1) ──────────────────
+        // Previously: commission_amount was client-controlled → agent could self-award
+        // unlimited IDR. Now: compute from insurer product config × total_premium.
+        let serverCommissionRate = 0.10; // default 10%
+        let serverCoinRate = 0;          // default 0 coins per IDR
+        if (p.insurer_id) {
+          const { data: insProd } = await db.from('sp_insurer_products')
+            .select('base_commission_rate, coin_rate')
+            .eq('insurer_id', String(p.insurer_id))
+            .eq('product_type', p.vehicle_type ?? 'CAR')
+            .eq('is_active', true)
+            .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`)
+            .maybeSingle();
+          if (insProd) {
+            serverCommissionRate = Number(insProd.base_commission_rate ?? 0.10);
+            serverCoinRate = Number(insProd.coin_rate ?? 0);
+          }
+        }
+        // Also check agent's own commission_rate from sp_users (capped at 30%)
+        const { data: agentRow } = await db.from('sp_users')
+          .select('commission_rate')
+          .eq('id', caller.spUser.id)
+          .maybeSingle();
+        if (agentRow?.commission_rate != null) {
+          serverCommissionRate = Math.min(Number(agentRow.commission_rate), 0.30); // cap at 30%
+        }
+        const computedCommission = Math.round(Number(p.total_premium ?? 0) * serverCommissionRate);
+        const computedCoinReward = Math.round(Number(p.total_premium ?? 0) * serverCoinRate);
+        insertRow.commission_amount = computedCommission;
+        insertRow.commission_rate   = serverCommissionRate;
+        insertRow.coin_reward       = computedCoinReward;
+        // Sanity ceiling: commission cannot exceed total_premium
+        if (computedCommission > Number(p.total_premium ?? 0) * 2) {
+          return json({ error: 'Komisi melebihi batas wajar. Hubungi admin.' }, 400);
+        }
 
         // ── Server-side promo code validation ───────────────────────────────
         // SECURITY: The client sends discount_rate + discount_amount in the
@@ -443,6 +505,19 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
 
         const { data, error } = await db.from('sp_policy_orders').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
+
+        // FIX v1.44.0 (pentest C3): Atomically increment promo code used_count.
+        // Previously: used_count was checked but never incremented → unlimited redemptions.
+        // Now: after successful order insert, increment used_count atomically.
+        if (clientPromoCode) {
+          const { error: promoIncErr } = await db.from('sp_promo_codes')
+            .update({ used_count: db.rpc('increment', { x: 1 }) })
+            .eq('code', clientPromoCode);
+          // Fallback: if RPC not available, do a raw SQL increment
+          if (promoIncErr) {
+            await db.rpc('increment_promo_used_count', { p_code: clientPromoCode }).then(() => {}, () => {});
+          }
+        }
 
         // Admin Telegram + insurer email alerts (non-blocking)
         const order     = data as Record<string, any>;

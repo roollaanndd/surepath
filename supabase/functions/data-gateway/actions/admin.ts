@@ -109,7 +109,14 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           return json({ error: 'Use admin_assign_agent_tier to change an agent tier' }, 400);
         }
 
-        const ALLOWED = ['role', 'verified', 'commission_rate', 'name', 'phone', 'allowed_apps', 'address', 'ktp', 'profile_photo_url', 'ktp_document_url'];
+        // FIX v1.44.0 (pentest M2): removed 'verified' and 'commission_rate' from ALLOWED.
+        // Operators could previously set verified:true (bypass admin_verify_agent audit)
+        // and commission_rate:1.0 (100% commission) via this action.
+        // Now: verified changes must go through admin_verify_agent (audited).
+        // commission_rate changes must go through a new admin_set_commission_rate
+        // action (restricted to MASTER_ADMIN/ADMIN/FINANCE_MANAGER).
+        // tier* fields are already blocked above (line 108-110) — use admin_assign_agent_tier.
+        const ALLOWED = ['role', 'name', 'phone', 'allowed_apps', 'address', 'ktp', 'profile_photo_url', 'ktp_document_url'];
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
         for (const k of ALLOWED) {
           if (k in params) updates[k] = params[k];
@@ -184,7 +191,8 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
       }
 
     case 'admin_update_commission': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        // FIX v1.44.0 (pentest C2): require isFinanceAdmin (excludes OPERATOR)
+        if (!caller.isFinanceAdmin) return json({ error: 'Forbidden: finance admin only' }, 403);
         if (!params.commission_id || !params.status) return json({ error: 'commission_id and status required' }, 400);
         const VALID = ['PENDING', 'PAID', 'CANCELLED'];
         if (!VALID.includes(String(params.status))) return json({ error: 'Invalid status' }, 400);
@@ -213,7 +221,8 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
     // Service_role bypasses RLS so admin can credit commission to ANY agent.
     // Mirrors the Xendit webhook's full side-effect set (commission row + wallet credit + notification).
     case 'admin_create_commission': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        // FIX v1.44.0 (pentest C2): require isFinanceAdmin (excludes OPERATOR)
+        if (!caller.isFinanceAdmin) return json({ error: 'Forbidden: finance admin only' }, 403);
         if (!params.agent_id) return json({ error: 'agent_id required' }, 400);
         if (!params.commission_amount) return json({ error: 'commission_amount required' }, 400);
 

@@ -10,6 +10,7 @@ export interface GatewayContext {
     spUser: Record<string, any> | null;
     role: string | null;
     isAdmin: boolean;
+    isFinanceAdmin: boolean;  // FIX v1.44.0: excludes OPERATOR — for commission/wallet actions
     userMetadata: Record<string, any> | null;
   };
   sendTelegram: (text: string) => void;

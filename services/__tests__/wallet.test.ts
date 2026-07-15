@@ -48,12 +48,12 @@ describe('Wallet Service', () => {
   });
 
   it('approveWithdrawal returns success', async () => {
-    const result = await approveWithdrawal('wd-1', 1, 'admin-1');
+    const result = await approveWithdrawal('wd-1', 1);
     expect(result.success).toBe(true);
   });
 
   it('rejectWithdrawal returns success', async () => {
-    const result = await rejectWithdrawal('wd-1', 'admin-1', 'Test reason');
+    const result = await rejectWithdrawal('wd-1', 'Test reason');
     expect(result.success).toBe(true);
   });
 

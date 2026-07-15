@@ -37,8 +37,12 @@ function corsHeaders(origin: string | null): Record<string, string> {
 }
 
 const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR', 'INSURANCE_ADMIN', 'OPERATOR'];
+// FIX v1.44.0 (pentest C2): FINANCE_ROLES excludes OPERATOR — operators should not
+// create/update commissions or credit wallets. Previously OPERATOR was in ADMIN_ROLES
+// which gave them full financial access via admin_create_commission.
+const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR'];
 
-interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; userMetadata: Record<string, any> | null; }
+interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; }
 
 const PUBLIC_ACTIONS = new Set(['get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy']);
 
@@ -111,7 +115,7 @@ Deno.serve(async (req) => {
       const email = (userData.user.email ?? '').toLowerCase();
       const userMetadata = (userData.user.user_metadata ?? null) as Record<string, any> | null;
       const { data: spUser } = await db.from('sp_users').select('*').or(`id.eq.${authId},email.eq.${email}`).maybeSingle();
-      caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), userMetadata };
+      caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), isFinanceAdmin: FINANCE_ROLES.includes(spUser?.role ?? ''), userMetadata };
     }
 
     // Build context for modules

@@ -78,11 +78,11 @@ describe('Operator Service', () => {
   });
 
   it('approveWithdrawalL1 does not throw', async () => {
-    await expect(approveWithdrawalL1('w1', 'admin-1')).resolves.not.toThrow();
+    await expect(approveWithdrawalL1('w1')).resolves.not.toThrow();
   });
 
   it('rejectWithdrawal does not throw', async () => {
-    await expect(rejectWithdrawal('w1', 'admin-1', 'Test reason')).resolves.not.toThrow();
+    await expect(rejectWithdrawal('w1', 'Test reason')).resolves.not.toThrow();
   });
 
   it('listPendingAgents returns unverified agents', async () => {

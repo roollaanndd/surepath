@@ -59,7 +59,45 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
       }
 
     case 'ensure_profile': {
+        // FIX v1.49.2: Handle Google OAuth login for existing users.
+        // When a user registers with email/password, sp_users.id = auth.users.id.
+        // When they later login with Google, Supabase creates a NEW auth.users.id
+        // (different UUID). The .or(id, email) lookup in index.ts should find
+        // the existing row by email, but if it doesn't (case sensitivity, timing),
+        // we need to explicitly look up by email and UPDATE the id to match
+        // the new auth ID, rather than INSERTING a duplicate row.
         if (caller.spUser) return json({ data: caller.spUser });
+
+        // Explicit email lookup — case insensitive
+        const { data: existingByEmail } = await db.from('sp_users')
+          .select('*')
+          .ilike('email', caller.email)
+          .maybeSingle();
+
+        if (existingByEmail) {
+          // User already exists (registered with email/password, now logging
+          // in with Google). Update their auth ID to the new Google auth ID
+          // so future lookups work correctly. Preserve all existing data.
+          const { data: updated, error: updErr } = await db.from('sp_users')
+            .update({
+              id: caller.authId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingByEmail.id)
+            .select()
+            .maybeSingle();
+
+          if (updErr) {
+            // If update fails (e.g. FK constraint), return the existing profile
+            // with the old ID — the app will still work for this session
+            console.warn('ensure_profile: failed to update auth ID:', updErr.message);
+            return json({ data: existingByEmail });
+          }
+          if (updated) return json({ data: updated });
+          return json({ data: existingByEmail });
+        }
+
+        // No existing user — create new profile
         const meta = (caller.userMetadata ?? {}) as Record<string, unknown>;
         const reqRole = String(params.role ?? meta.role ?? 'CUSTOMER').toUpperCase();
         const role = reqRole === 'AGENT' ? 'AGENT' : 'CUSTOMER';

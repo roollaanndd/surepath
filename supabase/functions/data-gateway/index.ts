@@ -115,7 +115,10 @@ Deno.serve(async (req) => {
       const authId = userData.user.id;
       const email = (userData.user.email ?? '').toLowerCase();
       const userMetadata = (userData.user.user_metadata ?? null) as Record<string, any> | null;
-      const { data: spUser } = await db.from('sp_users').select('*').or(`id.eq.${authId},email.eq.${email}`).maybeSingle();
+      // FIX v1.49.2: Use ilike for case-insensitive email match.
+      // Previously used .or() with exact match — Google OAuth emails can have
+      // different casing than the original signup email.
+      const { data: spUser } = await db.from('sp_users').select('*').or(`id.eq.${authId},email.ilike.${email}`).maybeSingle();
       caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), isFinanceAdmin: FINANCE_ROLES.includes(spUser?.role ?? ''), userMetadata };
     }
 

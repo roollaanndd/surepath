@@ -10,10 +10,16 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
 
   switch (action) {
     case 'get_my_orders': {
+        // FIX v1.50.0: orders are written with agent_id = sp_users.id, but this
+        // filtered by auth id only — legacy accounts never saw their own orders.
+        // Match agent_id OR client_id against both possible owner ids.
+        const ownerFilter = caller.ownerIds
+          .flatMap((id) => [`agent_id.eq.${id}`, `client_id.eq.${id}`])
+          .join(',');
         const { data, error } = await db
           .from('sp_policy_orders')
           .select('*')
-          .eq('agent_id', caller.authId)
+          .or(ownerFilter)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(100);
@@ -23,11 +29,14 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
 
     case 'cancel_my_order': {
         if (!params.order_id) return json({ error: 'Missing order_id' }, 400);
+        const ownerFilter = caller.ownerIds
+          .flatMap((id) => [`agent_id.eq.${id}`, `client_id.eq.${id}`])
+          .join(',');
         const { data, error } = await db
           .from('sp_policy_orders')
           .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
           .eq('id', params.order_id)
-          .eq('agent_id', caller.authId)
+          .or(ownerFilter)
           .in('status', ['SUBMITTED', 'UNDER_REVIEW'])
           .select()
           .maybeSingle();
@@ -358,6 +367,10 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
         // Now: only safe fields are accepted; all sensitive fields are server-computed.
         const insertRow: Record<string, unknown> = {
           agent_id: caller.spUser.id,           // owner — never trust the client
+          // FIX v1.50.0: customer self-service orders also record client_id so
+          // payments/claims ownership checks (client_id = caller) work. Still
+          // server-derived — never taken from the request payload.
+          client_id: caller.spUser.role === 'CUSTOMER' ? caller.spUser.id : null,
           status: 'SUBMITTED',                   // force — never trust client status
           client_name:       String(p.client_name ?? '').slice(0, 200),
           client_phone:      p.client_phone      ? String(p.client_phone).slice(0, 30)    : null,
@@ -554,17 +567,34 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
 
     case 'get_my_payments': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
-        const { data: myOrders, error: ordErr } = await db
-          .from('sp_policy_orders')
-          .select('id')
-          .eq('client_id', caller.spUser.id);
-        if (ordErr) return json({ error: ordErr.message }, 400);
-        const orderIds = (myOrders ?? []).map((o: any) => o.id);
+        // FIX v1.50.0: previously matched client_id only (which was never set)
+        // → payments were invisible to everyone. Now: owned orders are those
+        // where the caller is the agent OR the client. Admins may pass
+        // order_ids to fetch payments for arbitrary orders.
+        let orderIds: string[];
+        const requestedIds = Array.isArray(params.order_ids)
+          ? (params.order_ids as unknown[]).map(String).slice(0, 200)
+          : null;
+        if (caller.isAdmin && requestedIds) {
+          orderIds = requestedIds;
+        } else {
+          const ownerFilter = caller.ownerIds
+            .flatMap((id) => [`agent_id.eq.${id}`, `client_id.eq.${id}`])
+            .join(',');
+          const { data: myOrders, error: ordErr } = await db
+            .from('sp_policy_orders')
+            .select('id')
+            .or(ownerFilter);
+          if (ordErr) return json({ error: ordErr.message }, 400);
+          orderIds = (myOrders ?? []).map((o: any) => String(o.id));
+          if (requestedIds) orderIds = orderIds.filter((id) => requestedIds.includes(id));
+        }
         if (orderIds.length === 0) return json({ data: [] });
         const { data, error } = await db
           .from('sp_payments')
           .select('*')
           .in('order_id', orderIds)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
         if (error) return json({ error: error.message }, 400);
         return json({ data });

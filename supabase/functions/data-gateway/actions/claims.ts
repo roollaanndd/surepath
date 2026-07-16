@@ -10,10 +10,12 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
 
   switch (action) {
     case 'get_my_claims': {
+        // FIX v1.50.0: match both owner ids (legacy accounts have
+        // sp_users.id ≠ auth id; older claims were written with auth id).
         const { data, error } = await db
           .from('sp_claims')
           .select('*')
-          .eq('user_id', caller.authId)
+          .in('user_id', caller.ownerIds)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .limit(100);
@@ -27,7 +29,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
         const claimType = String(params.claim_type ?? params.product_type ?? 'VEHICLE').toUpperCase();
         const description = String(params.description ?? params.chronology ?? '').slice(0, 5000);
         const insertRow: Record<string, unknown> = {
-          user_id: caller.authId,
+          user_id: caller.ownerId,
           claim_type: claimType,
           description,
           location: String(params.location ?? '').slice(0, 500),
@@ -58,7 +60,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             .from('sp_claim_photo_analyses')
             .select('*')
             .eq('id', String(params.analysis_id))
-            .eq('user_id', caller.authId)
+            .in('user_id', caller.ownerIds)
             .is('consumed_at', null)
             .gte('created_at', oneHourAgo)
             .maybeSingle();
@@ -86,7 +88,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             // FIX v1.42.0: verify the caller owns this policy (as agent_id OR client_id).
             // Previously any authenticated user could link a claim to any policy.
             const lo = linkedOrder as any;
-            const isOwner = lo.agent_id === caller.authId || lo.client_id === caller.authId;
+            const isOwner = caller.ownerIds.includes(lo.agent_id) || caller.ownerIds.includes(lo.client_id);
             if (!isOwner && !caller.isAdmin) {
               return json({ error: 'Polis tidak ditemukan atau bukan milik Anda.' }, 403);
             }
@@ -101,7 +103,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           if (linkedOrder) {
             // FIX v1.42.0: verify ownership here too
             const lo = linkedOrder as any;
-            const isOwner = lo.agent_id === caller.authId || lo.client_id === caller.authId;
+            const isOwner = caller.ownerIds.includes(lo.agent_id) || caller.ownerIds.includes(lo.client_id);
             if (!isOwner && !caller.isAdmin) {
               return json({ error: 'Polis tidak ditemukan atau bukan milik Anda.' }, 403);
             }

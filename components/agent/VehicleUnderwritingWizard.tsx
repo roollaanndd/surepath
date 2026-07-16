@@ -20,7 +20,7 @@ import {
 } from '../../services/vehicleDatabase';
 import {
   createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
-  getAvailableInsurerProducts, autoSendReviewLink, addClient,
+  getAvailableInsurerProducts, addClient,
   type SpClient, type SpProductConfig, type SpInsurerProduct,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
@@ -299,7 +299,6 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
-  const [reviewUrl, setReviewUrl] = useState('');
   const [orderError, setOrderError] = useState('');
   const orderStarted = useRef(false);
 
@@ -642,21 +641,15 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         setOrderId(order.id);
         setOrderNumber(num);
 
-        // Auto-generate review link and notify admin
-        autoSendReviewLink(
-          order.id,
-          num,
-          clientName,
-          selectedInsurerProduct ? undefined : undefined
-        ).then(reviewUrl => {
-          if (reviewUrl) setReviewUrl(reviewUrl);
-        }).catch(() => {});
-
+        // NOTE: review link ke insurer dikirim oleh operator saat approve
+        // (admin_send_insurer_review_link) — bukan dari sini. Panggilan
+        // autoSendReviewLink lama selalu gagal diam-diam untuk agent
+        // (sp_review_tokens gateway/admin-only) dan sudah dihapus.
         await addNotification({
           agent_id: agentId,
           type: 'SYSTEM',
           title: 'Order Diajukan',
-          body: `Order ${num} sedang dalam review. Link tinjauan telah dikirim ke admin.`,
+          body: `Order ${num} tersimpan dan masuk antrean persetujuan operator. Anda akan diberi tahu setiap perubahan status.`,
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -1972,31 +1965,6 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Nomor Order</p>
             <p className="text-2xl font-black text-[#16a34a]">{orderNumber}</p>
           </div>
-
-          {/* Review link auto-generated */}
-          {reviewUrl && (
-            <div className="w-full mb-4 p-4 bg-violet-500/10 border border-violet-500/20 rounded-2xl text-left space-y-2">
-              <p className="text-[9px] font-black uppercase tracking-widest text-violet-400">Link Tinjauan Penanggung</p>
-              <p className="text-xs text-slate-300 break-all">{reviewUrl}</p>
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText(reviewUrl).catch(() => {})}
-                  className="text-[10px] font-black uppercase tracking-widest bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 px-3 py-1.5 rounded-full transition-colors"
-                >
-                  Salin Link
-                </button>
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Tinjauan order polis ${orderNumber}:\n${reviewUrl}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 px-3 py-1.5 rounded-full transition-colors"
-                >
-                  Kirim WhatsApp
-                </a>
-              </div>
-            </div>
-          )}
 
           {/* Payment section */}
           {isPendingApprovalAgent ? (

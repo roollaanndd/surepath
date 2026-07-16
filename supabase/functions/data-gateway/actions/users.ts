@@ -24,7 +24,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         const { data: existing } = await db
           .from('sp_agent_agreements')
           .select('id')
-          .eq('agent_id', caller.authId)
+          .in('agent_id', caller.ownerIds)
           .eq('doc_version', 'v1.0-2026')
           .maybeSingle();
         if (existing) return json({ error: 'ALREADY_ACCEPTED' }, 409);
@@ -32,7 +32,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         const { data: agreement, error: agErr } = await db
           .from('sp_agent_agreements')
           .insert({
-            agent_id: caller.authId,
+            agent_id: caller.ownerId,
             doc_version: 'v1.0-2026',
             full_name: fullName,
             ktp_number: ktpNumber,
@@ -52,7 +52,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         const { data: ag } = await db
           .from('sp_agent_agreements')
           .select('*')
-          .eq('agent_id', caller.authId)
+          .in('agent_id', caller.ownerIds)
           .eq('doc_version', 'v1.0-2026')
           .maybeSingle();
         return json({ data: ag ?? null });

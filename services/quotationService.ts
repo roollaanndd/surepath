@@ -124,7 +124,7 @@ async function callPublicGateway<T = any>(action: string, params: Record<string,
     const out = await res.json();
     if (isUnknownAction(out?.error)) return await callBridge<T>(action, params);
     return out;
-  } catch (e: any) {
+  } catch {
     return await callBridge<T>(action, params);
   }
 }

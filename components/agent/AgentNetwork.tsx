@@ -5,7 +5,6 @@ import {
   getAgentDownlineTree,
   getOverrideTransactions,
   getAgentOrders,
-  type SpUser,
   type WalletTransaction,
   type SpPolicyOrder,
   type DownlineNode,
@@ -78,15 +77,12 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
     }).finally(() => setLoading(false));
   }, [agentId]);
 
-  // Fetch issued orders for all agents in tree (L1 + L2)
+  // Fetch issued orders (gateway scopes to the caller's own orders — downline
+  // order details are private; downline stats come from override transactions)
   useEffect(() => {
     if (downlines.length === 0) return;
-    const allAgents: SpUser[] = downlines.flatMap(d => [d, ...d.l2]);
-    const unique = [...new Map(allAgents.map(a => [a.id, a])).values()];
-    Promise.all(unique.map(a => getAgentOrders(a.id))).then(results => {
-      setAllOrders(results.flat());
-    });
-  }, [downlines]);
+    getAgentOrders(agentId).then(setAllOrders);
+  }, [downlines, agentId]);
 
   const referralLink = `https://myinsurepath.com?ref=${referralCode ?? ''}`;
   const totalOverride = overrideTxns.reduce((s, tx) => s + tx.amount, 0);

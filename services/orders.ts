@@ -106,12 +106,12 @@ export async function createPolicyOrder(data: Omit<SpPolicyOrder, 'id' | 'order_
   return (result as SpPolicyOrder) ?? null;
 }
 
-export async function getAgentOrders(agentId: string): Promise<SpPolicyOrder[]> {
-  const { data, error } = await supabase
-    .from('sp_policy_orders')
-    .select('*')
-    .eq('agent_id', agentId)
-    .order('created_at', { ascending: false });
+export async function getAgentOrders(_agentId: string): Promise<SpPolicyOrder[]> {
+  // FIX v1.50.0: sp_policy_orders is deny-all (gateway only) — the old direct
+  // read always returned an empty list, so agents never saw their own orders
+  // ("pengajuan tidak tersimpan"). Ownership is derived server-side; the
+  // param is kept for signature stability.
+  const { data, error } = await callGateway('get_my_orders');
   if (error) { console.error('getAgentOrders:', error); return []; }
   return (data ?? []) as SpPolicyOrder[];
 }
@@ -152,24 +152,18 @@ export async function updateOrderStatus(
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
 export async function getOrderPayment(orderId: string): Promise<SpPayment | null> {
-  const { data, error } = await supabase
-    .from('sp_payments')
-    .select('*')
-    .eq('order_id', orderId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // FIX v1.50.0: sp_payments is deny-all (gateway only) — direct reads always
+  // returned nothing. The gateway scopes results to the caller's own orders
+  // (admins may pass arbitrary order_ids).
+  const { data, error } = await callGateway('get_my_payments', { order_ids: [orderId] });
   if (error) { console.error('getOrderPayment:', error); return null; }
-  return data as SpPayment | null;
+  const rows = (data ?? []) as SpPayment[];
+  return rows[0] ?? null;
 }
 
 export async function getPaymentsByOrderIds(orderIds: string[]): Promise<SpPayment[]> {
   if (orderIds.length === 0) return [];
-  const { data, error } = await supabase
-    .from('sp_payments')
-    .select('*')
-    .in('order_id', orderIds)
-    .order('created_at', { ascending: false });
+  const { data, error } = await callGateway('get_my_payments', { order_ids: orderIds });
   if (error) { console.error('getPaymentsByOrderIds:', error); return []; }
   return (data ?? []) as SpPayment[];
 }
@@ -204,7 +198,9 @@ export async function getAdminFinancialReports(year: number): Promise<{
 
 // ─── Renewal Engine ───────────────────────────────────────────────────────────
 
-export async function getExpiringOrders(agentId: string, days: number): Promise<SpPolicyOrder[]> {
+export async function getExpiringOrders(_agentId: string, days: number): Promise<SpPolicyOrder[]> {
+  // FIX v1.50.0: sp_policy_orders is deny-all (gateway only) — fetch own
+  // orders via the gateway and filter the expiry window client-side.
   const today = new Date();
   const future = new Date(today);
   future.setDate(today.getDate() + days);
@@ -212,17 +208,11 @@ export async function getExpiringOrders(agentId: string, days: number): Promise<
   const todayStr  = today.toISOString().split('T')[0];
   const futureStr = future.toISOString().split('T')[0];
 
-  const { data, error } = await supabase
-    .from('sp_policy_orders')
-    .select('*')
-    .eq('agent_id', agentId)
-    .eq('status', 'ISSUED')
-    .gte('end_date', todayStr)
-    .lte('end_date', futureStr)
-    .order('end_date', { ascending: true });
-
+  const { data, error } = await callGateway('get_my_orders');
   if (error) { console.error('getExpiringOrders:', error); return []; }
-  return (data ?? []) as SpPolicyOrder[];
+  return ((data ?? []) as SpPolicyOrder[])
+    .filter(o => o.status === 'ISSUED' && !!o.end_date && o.end_date >= todayStr && o.end_date <= futureStr)
+    .sort((a, b) => (a.end_date ?? '').localeCompare(b.end_date ?? ''));
 }
 
 export async function upsertRenewal(data: {

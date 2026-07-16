@@ -9,11 +9,14 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
   switch (action) {
+    // FIX v1.50.0: notifications are inserted with agent_id = sp_users.id
+    // (order flows) — reads/updates must match both owner ids or legacy
+    // accounts never see their notifications.
     case 'get_my_notifications': {
         const { data, error } = await db
           .from('sp_notifications')
           .select('*')
-          .eq('agent_id', caller.authId)
+          .in('agent_id', caller.ownerIds)
           .order('created_at', { ascending: false })
           .limit(50);
         if (error) return json({ error: error.message }, 400);
@@ -25,7 +28,7 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
         const notifId = String(params.notification_id ?? '');
         if (!notifId) return json({ error: 'notification_id required' }, 400);
         const { error } = await db.from('sp_notifications')
-          .update({ read: true }).eq('id', notifId).eq('agent_id', caller.authId);
+          .update({ read: true }).eq('id', notifId).in('agent_id', caller.ownerIds);
         if (error) return json({ error: error.message }, 400);
         return json({ data: { success: true } });
       }
@@ -33,7 +36,7 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
     case 'mark_all_my_notifications_read': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
         const { error } = await db.from('sp_notifications')
-          .update({ read: true }).eq('agent_id', caller.authId).eq('read', false);
+          .update({ read: true }).in('agent_id', caller.ownerIds).eq('read', false);
         if (error) return json({ error: error.message }, 400);
         return json({ data: { success: true } });
       }
@@ -44,9 +47,9 @@ export async function handleNotificationsAction(action: string, ctx: GatewayCont
         // misrouted every admin→agent notification to the admin's own feed.
         // Now: if caller is admin/staff AND params.agent_id is provided and points to someone else,
         // use that target. Otherwise default to self (for user-self notifications).
-        const targetAgentId = (caller.isAdmin && params.agent_id && params.agent_id !== caller.authId)
+        const targetAgentId = (caller.isAdmin && params.agent_id && !caller.ownerIds.includes(String(params.agent_id)))
           ? String(params.agent_id)
-          : caller.authId;
+          : caller.ownerId;
         const { data, error } = await db.from('sp_notifications').insert({
           agent_id: targetAgentId,
           type: String(params.type ?? 'SYSTEM'),

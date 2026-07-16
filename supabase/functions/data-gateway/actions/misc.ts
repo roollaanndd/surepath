@@ -109,8 +109,10 @@ ${UNTRUSTED_INPUT_NOTICE}`;
     // ─── save_quote — agent saves their quote ──────────────────────────────
     case 'save_quote': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
+        // FIX v1.50.0: use canonical sp_users.id so the quote shows up in the
+        // agent's own list (which queries by sp_users.id).
         const { data, error } = await db.from('sp_quotes').insert({
-          agent_id: caller.authId,
+          agent_id: caller.ownerId,
           client_id: params.client_id ?? null,
           client_name: String(params.client_name ?? ''),
           product_type: String(params.product_type ?? 'CAR'),

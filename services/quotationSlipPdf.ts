@@ -502,6 +502,7 @@ function drawDataPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFillColor(...COLOR.white);
   doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+  drawWatermark(doc, logoDataUrl);
 
   drawLightHeader(doc, logoDataUrl, 'PENAWARAN ASURANSI', 2);
 
@@ -625,6 +626,7 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFillColor(...COLOR.white);
   doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+  drawWatermark(doc, logoDataUrl);
 
   drawLightHeader(doc, logoDataUrl, 'PENAWARAN ASURANSI', 3);
 
@@ -946,6 +948,24 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 // ═══════════════════════════════════════════════════════════════════════════
 // SHARED DRAWING HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Faint SurePath logo watermark, centered on light pages. Drawn right after
+// the page background so all content renders above it. The logo data URL is
+// JPEG on a white background, so at low opacity it blends into white pages.
+function drawWatermark(doc: any, logoDataUrl: string | null) {
+  if (!logoDataUrl) return;
+  try {
+    const wmW = 380;
+    const wmH = 114; // keeps logo-full.png's 600×180 aspect ratio
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.05 }));
+    const fmt = logoDataUrl.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+    doc.addImage(logoDataUrl, fmt, (PAGE_W - wmW) / 2, (PAGE_H - wmH) / 2, wmW, wmH, undefined, 'FAST');
+    doc.restoreGraphicsState();
+  } catch (e) {
+    console.warn('QuotationSlip: watermark skipped', e);
+  }
+}
 
 // Light-page header: logo left, page meta right
 function drawLightHeader(doc: any, logoDataUrl: string | null, label: string, pageNum: number) {

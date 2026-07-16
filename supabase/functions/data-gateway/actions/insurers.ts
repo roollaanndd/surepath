@@ -5,6 +5,11 @@ import type { GatewayContext, ActionResult } from './types.ts';
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
+// SLA upload softcopy polis setelah insurer APPROVED (jam). Dipakai untuk
+// mengisi sp_policy_orders.policy_upload_deadline; reminder popup (insurer
+// app) dan email cron membaca kolom itu.
+const POLICY_UPLOAD_SLA_HOURS = 72;
+
 export async function handleInsurersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
@@ -346,7 +351,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         const orderStatus = action === 'APPROVED' ? 'APPROVED'
           : action === 'REQUEST_INFO' ? 'UNDER_REVIEW'
           : 'REJECTED'; // DECLINED → REJECTED
-        // Update order
+        // Update order — APPROVED memulai SLA upload polis (72 jam)
         const { data: order, error: ordErr } = await db.from('sp_policy_orders').update({
           status: orderStatus,
           insurer_decision: action,
@@ -356,6 +361,9 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           reviewer_notes: `Insurer ${action}: ${notes}`,
           reviewed_at: ts,
           updated_at: ts,
+          ...(action === 'APPROVED'
+            ? { policy_upload_deadline: new Date(Date.now() + POLICY_UPLOAD_SLA_HOURS * 3600 * 1000).toISOString() }
+            : {}),
         }).eq('id', rt.order_id).select('id, order_number, client_name, agent_id, product_name, insurer_id').maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
         // Insert admin notification
@@ -425,12 +433,14 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         logActivity(authToken.insurer_id, null, 'DASHBOARD_VIEWED', { email: authToken.email });
         // Load orders for this insurer
         const { data: orders, error: ordErr } = await db.from('sp_policy_orders')
-          .select('id, order_number, client_name, client_phone, product_name, product_code, coverage_type, sum_insured, total_premium, net_premium, status, insurer_decision, insurer_decision_notes, insurer_decision_at, policy_number, policy_document_url, vehicle_image_url, vehicle_details, created_at, reviewed_at, issued_at')
+          .select('id, order_number, client_name, client_phone, product_name, product_code, coverage_type, sum_insured, total_premium, net_premium, status, insurer_decision, insurer_decision_notes, insurer_decision_at, policy_number, policy_document_url, policy_upload_deadline, vehicle_image_url, vehicle_details, created_at, reviewed_at, issued_at')
           .eq('insurer_id', insurer.id)
           .order('created_at', { ascending: false })
           .limit(200);
         if (ordErr) return json({ error: ordErr.message }, 400);
         // KPI counts
+        const awaitingPolicyOrders = (orders ?? []).filter((o: any) =>
+          o.insurer_decision === 'APPROVED' && !o.policy_document_url && o.status !== 'ISSUED' && o.status !== 'CANCELLED');
         const kpi = {
           total: orders?.length ?? 0,
           pending: (orders ?? []).filter((o: any) => !o.insurer_decision).length,
@@ -438,6 +448,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           request_info: (orders ?? []).filter((o: any) => o.insurer_decision === 'REQUEST_INFO').length,
           declined: (orders ?? []).filter((o: any) => o.insurer_decision === 'DECLINED').length,
           issued: (orders ?? []).filter((o: any) => o.status === 'ISSUED').length,
+          awaiting_policy: awaitingPolicyOrders.length,
         };
         // Auto-renew token (rolling 7-day) — non-blocking
         const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -486,6 +497,9 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           reviewer_notes: `Insurer ${action}: ${notes}`,
           reviewed_at: ts,
           updated_at: ts,
+          ...(action === 'APPROVED'
+            ? { policy_upload_deadline: new Date(Date.now() + POLICY_UPLOAD_SLA_HOURS * 3600 * 1000).toISOString() }
+            : {}),
         }).eq('id', orderId);
         if (updErr) return json({ error: updErr.message }, 400);
         // Notifications

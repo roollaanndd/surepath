@@ -218,6 +218,109 @@ Deno.serve(async (req) => {
         }
       }
     }
+    // ── 3. Reminder SLA upload polis (insurer APPROVED tapi polis belum ada) ──
+    // Stage 0→1: due dalam <24 jam ATAU sudah lewat → email pertama
+    // Stage 1→2: sudah lewat deadline → email kedua + alert admin
+    // Maks 2 email per order; cooldown 12 jam antar reminder.
+    const { data: awaitingUpload, error: auErr } = await db.from('sp_policy_orders')
+      .select('id, order_number, client_name, product_name, total_premium, insurer_id, insurer_decision_at, policy_upload_deadline, policy_upload_reminder_count, policy_upload_last_reminded_at')
+      .eq('insurer_decision', 'APPROVED')
+      .eq('status', 'APPROVED')
+      .is('policy_document_url', null)
+      .lt('policy_upload_reminder_count', 2)
+      .limit(500);
+
+    if (auErr) {
+      results.errors.push(`awaiting-upload query: ${auErr.message}`);
+    }
+
+    if (awaitingUpload && awaitingUpload.length > 0) {
+      const insurerIds2 = [...new Set(awaitingUpload.map((o: any) => o.insurer_id).filter(Boolean))];
+      const { data: insurers2 } = await db.from('sp_insurers')
+        .select('id, name, pic_email, admin_email, pic_name')
+        .in('id', insurerIds2);
+      const insurerMap2: Record<string, any> = {};
+      for (const ins of (insurers2 ?? [])) insurerMap2[ins.id] = ins;
+
+      for (const order of awaitingUpload) {
+        const insurer = order.insurer_id ? insurerMap2[order.insurer_id] : null;
+        const email = insurer?.pic_email || insurer?.admin_email;
+
+        const deadline = order.policy_upload_deadline
+          ? new Date(order.policy_upload_deadline)
+          : new Date(new Date(order.insurer_decision_at ?? now).getTime() + 72 * 3600000);
+        const hoursLeft = (deadline.getTime() - now.getTime()) / 3600000;
+        const reminderCount = order.policy_upload_reminder_count ?? 0;
+        const lastReminded = order.policy_upload_last_reminded_at ? new Date(order.policy_upload_last_reminded_at) : null;
+        const cooledDown = !lastReminded || (now.getTime() - lastReminded.getTime()) >= 12 * 3600000;
+
+        let shouldSend = false;
+        let overdue = false;
+        if (reminderCount === 0 && hoursLeft <= 24 && cooledDown) {
+          shouldSend = true;
+          overdue = hoursLeft <= 0;
+        } else if (reminderCount === 1 && hoursLeft <= 0 && cooledDown) {
+          shouldSend = true;
+          overdue = true;
+        }
+        if (!shouldSend) continue;
+
+        if (RESEND_KEY && email) {
+          const esc = (s: string) => String(s).replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
+          const deadlineFmt = deadline.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' });
+          const subject = overdue
+            ? `[TERLAMBAT] Upload Polis ${order.order_number} melewati batas waktu`
+            : `[Reminder] Upload polis ${order.order_number} sebelum ${deadlineFmt} WIB`;
+          const html = `<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;background:#f4f4f5;padding:32px;">
+<table width="560" style="background:#fff;border-radius:16px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<tr><td style="background:${overdue ? '#be123c' : '#b45309'};padding:24px 32px;color:#fff;">
+  <span style="font-size:20px;font-weight:900;">Sure<span style="opacity:0.7;">Path</span></span>
+  <span style="display:block;font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:0.8;margin-top:2px;">${overdue ? 'SLA Terlewati' : 'Reminder Upload Polis'}</span>
+</td></tr>
+<tr><td style="padding:32px;">
+  <h1 style="font-size:22px;color:#0f172a;margin:0 0 16px;">${overdue ? 'Upload polis melewati batas waktu' : 'Polis belum diupload'}</h1>
+  <p style="font-size:14px;color:#64748b;margin:0 0 24px;">Pengajuan berikut sudah Anda setujui, namun softcopy polis (PDF) belum diupload. Batas waktu: <strong>${deadlineFmt} WIB</strong>.</p>
+  <table style="background:#f8fafc;border-radius:12px;width:100%;margin-bottom:24px;"><tr><td style="padding:20px;">
+    <p style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin:0 0 4px;">No. Order</p>
+    <p style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 12px;font-family:monospace;">${esc(order.order_number ?? order.id)}</p>
+    <p style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin:0 0 4px;">Nasabah</p>
+    <p style="font-size:14px;font-weight:700;color:#0f172a;margin:0;">${esc(order.client_name ?? '-')}</p>
+  </td></tr></table>
+  <a href="https://myinsurepath.com/insurerapp" style="display:block;background:#059669;color:#fff;font-size:14px;font-weight:800;text-decoration:none;text-align:center;padding:16px;border-radius:12px;text-transform:uppercase;letter-spacing:1.5px;">Buka Insurer App & Upload Polis</a>
+</td></tr>
+<tr><td style="background:#f8fafc;padding:16px 32px;text-align:center;">
+  <span style="font-size:10px;color:#94a3b8;">PT Ruang Proteksi Indonesia · myinsurepath.com</span>
+</td></tr>
+</table>
+</body></html>`;
+          fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: 'SurePath <noreply@myinsurepath.com>', to: [email], subject, html }),
+          }).then(() => {}, () => {});
+        }
+
+        await db.from('sp_policy_orders').update({
+          policy_upload_reminder_count: reminderCount + 1,
+          policy_upload_last_reminded_at: now.toISOString(),
+        }).eq('id', order.id);
+        results.reminders_sent++;
+
+        // Saat sudah lewat SLA → alert tim operasional (admin/operator apps)
+        if (overdue) {
+          await db.from('sp_admin_notifications').insert({
+            type: 'POLICY_UPLOAD_OVERDUE',
+            title: 'Insurer Terlambat Upload Polis',
+            body: `${order.order_number ?? order.id} — ${order.client_name ?? '-'}: sudah disetujui insurer ${insurer?.name ?? '-'} tapi polis belum diupload hingga lewat SLA. Hubungi insurer.`,
+            order_id: order.id,
+            read: false,
+            metadata: { order_id: order.id, insurer_id: order.insurer_id, deadline: deadline.toISOString() },
+          });
+          results.admin_alerts++;
+        }
+      }
+    }
   } catch (e: any) {
     results.errors.push(`unexpected: ${e.message}`);
   }

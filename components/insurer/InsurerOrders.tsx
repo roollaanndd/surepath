@@ -211,6 +211,17 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     <p className="text-sm font-bold text-ds-ink mt-0.5 truncate">{o.client_name}</p>
                     <p className="text-xs text-ds-ink2 mt-0.5">{o.product_name}</p>
                     <p className="text-xs text-ds-ink3 mt-1">{o.coverage_type} · {fmtIdr(o.total_premium)}</p>
+                    {o.status === 'APPROVED' && o.insurer_decision === 'APPROVED' && !o.policy_document_url && (() => {
+                      const deadline = o.policy_upload_deadline
+                        ? new Date(o.policy_upload_deadline)
+                        : new Date(new Date(o.insurer_decision_at ?? o.created_at).getTime() + 72 * 3600000);
+                      const hoursLeft = (deadline.getTime() - Date.now()) / 3600000;
+                      return (
+                        <p className={`text-[10px] font-bold mt-1 ${hoursLeft <= 0 ? 'text-rose-500' : hoursLeft < 24 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                          ⏱ Upload polis {hoursLeft <= 0 ? 'TERLAMBAT' : `sebelum ${deadline.toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
                     {o.status.replace('_', ' ')}

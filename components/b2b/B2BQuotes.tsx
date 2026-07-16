@@ -3,7 +3,7 @@ import { Loader2, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromB2BQuote } from '../../services/quotationSlipAdapter';
 
 interface Props {
@@ -43,7 +43,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
     if (downloading) return;
     setDownloading(true);
     try {
-      await generateQuotationSlipPDF(fromB2BQuote(quote, companyName));
+      await publishAndDownloadQuotation(fromB2BQuote(quote, companyName), { sourceApp: 'B2B', totalPremiumNumeric: quote.premium_amount ?? undefined });
     } catch (e) {
       console.error('Quotation slip download failed:', e);
     } finally {

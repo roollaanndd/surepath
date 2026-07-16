@@ -10,7 +10,7 @@ import {
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
 import { generatePolicyCertPDF } from '../../services/pdfService';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromAgentQuote } from '../../services/quotationSlipAdapter';
 import STNKAutoExtract from '../shared/STNKAutoExtract';
 import { useToast } from '../ui';
@@ -334,13 +334,15 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       }
 
       const quoteNumber = `QS/SP/${new Date().getFullYear()}/${['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'][new Date().getMonth()]}/${Math.floor(Math.random() * 9000 + 1000)}`;
-      await generateQuotationSlipPDF(fromAgentQuote({
+      await publishAndDownloadQuotation(fromAgentQuote({
         quoteNumber,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         clientName,
         clientPhone: '',
         agentName: agent?.name ?? 'Mitra SurePath',
         agentCode: agent?.agent_code ?? '',
+        agentPhone: agent?.phone ?? agent?.whatsapp ?? '',
+        product,
         vehicleBrand,
         vehicleModel,
         vehicleYear,
@@ -352,7 +354,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         providerName: 'PT Zurich Asuransi Indonesia Tbk',
         rows: quoteRows,
         totalPremium: premium,
-      }));
+      }), { sourceApp: 'AGENT', totalPremiumNumeric: premium });
       toast.success(t('Quotation slip generated!', 'Slip penawaran berhasil dibuat!'));
     } catch (e: any) {
       console.error('Print quote error:', e);

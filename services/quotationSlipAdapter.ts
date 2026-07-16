@@ -42,6 +42,102 @@ const generateQuoteNumber = (): string => {
   return `QS/SP/${year}/${romanMonths[month - 1]}/${seq}`;
 };
 
+// ─── Product mapping (app product codes → generic quotation product) ───────
+// App codes: CAR | MOTORCYCLE | TRAVEL | PA | MPAR (+ custom products)
+type SlipProductType = NonNullable<QuotationSlipData['productType']>;
+
+const mapProductType = (code?: string): SlipProductType => {
+  switch ((code ?? '').toUpperCase()) {
+    case 'CAR': case 'MOTORCYCLE': case 'MOTOR': return 'MOTOR';
+    case 'PA': return 'PA';
+    case 'TRAVEL': return 'TRAVEL';
+    case 'MPAR': case 'PROPERTY': return 'PROPERTY';
+    case 'HEALTH': case 'LIFE': return 'HEALTH';
+    default: return (code ?? '') === '' ? 'MOTOR' : 'OTHER';
+  }
+};
+
+const PRODUCT_NAMES: Record<SlipProductType, string> = {
+  MOTOR:    'Asuransi Kendaraan Bermotor',
+  PA:       'Asuransi Kecelakaan Diri (Personal Accident)',
+  TRAVEL:   'Asuransi Perjalanan (Travel Insurance)',
+  PROPERTY: 'Asuransi Harta Benda (Property All Risk)',
+  HEALTH:   'Asuransi Kesehatan',
+  OTHER:    'Produk Asuransi',
+};
+
+const PRODUCT_TITLE_ACCENTS: Record<SlipProductType, string> = {
+  MOTOR:    'Kendaraan.',
+  PA:       'Kecelakaan Diri.',
+  TRAVEL:   'Perjalanan.',
+  PROPERTY: 'Properti.',
+  HEALTH:   'Kesehatan.',
+  OTHER:    'Anda.',
+};
+
+// Coverage boilerplate per product line, used when the source has no richer data
+const PRODUCT_COVERAGE: Record<SlipProductType, { condition: string; additional: string; deductible: string }> = {
+  MOTOR: {
+    condition: 'Comprehensive — menjamin kerugian/kerusakan sebagian maupun total akibat tabrakan, benturan, terbalik, tergelincir, perbuatan jahat, pencurian, dan kebakaran, sesuai Polis Standar Asuransi Kendaraan Bermotor Indonesia (PSAKBI).',
+    additional: 'Tanggung Jawab Hukum terhadap Pihak Ketiga (TPL) — sesuai limit yang dipilih',
+    deductible: 'Comprehensive: IDR 300.000,00 untuk setiap kejadian (any one accident)',
+  },
+  PA: {
+    condition: 'Kecelakaan Diri (Personal Accident) — santunan meninggal dunia akibat kecelakaan, cacat tetap total/sebagian, dan penggantian biaya perawatan/pengobatan akibat kecelakaan, sesuai wording polis Penanggung.',
+    additional: 'Santunan rawat inap & biaya pemakaman — sesuai plan yang dipilih',
+    deductible: 'Tidak ada (nil) — sesuai ketentuan polis Penanggung',
+  },
+  TRAVEL: {
+    condition: 'Asuransi Perjalanan — jaminan kecelakaan diri, biaya medis darurat, evakuasi medis, pembatalan/keterlambatan perjalanan, dan kehilangan bagasi, sesuai plan dan wording polis Penanggung.',
+    additional: 'Perlindungan COVID-19 & olahraga rekreasi — sesuai plan yang dipilih',
+    deductible: 'Sesuai ketentuan plan pada polis Penanggung',
+  },
+  PROPERTY: {
+    condition: 'Property All Risk / Harta Benda — menjamin kerugian atau kerusakan fisik atas harta benda yang dipertanggungkan akibat risiko yang tidak dikecualikan polis (kebakaran, petir, ledakan, dsb.), sesuai wording polis Penanggung.',
+    additional: 'Perluasan RSMDCC, banjir & angin topan — sesuai kesepakatan',
+    deductible: 'Sesuai ketentuan polis Penanggung',
+  },
+  HEALTH: {
+    condition: 'Asuransi Kesehatan — penggantian biaya rawat inap, rawat jalan, dan manfaat kesehatan lain sesuai plan dan wording polis Penanggung.',
+    additional: 'Manfaat tambahan sesuai plan yang dipilih',
+    deductible: 'Sesuai ketentuan plan pada polis Penanggung',
+  },
+  OTHER: {
+    condition: 'Sesuai syarat dan kondisi polis standar yang berlaku pada Penanggung.',
+    additional: 'Sesuai kesepakatan penutupan',
+    deductible: 'Sesuai ketentuan polis Penanggung',
+  },
+};
+
+const PRODUCT_KLAUSUL: Record<SlipProductType, string[]> = {
+  MOTOR:    ['Klausul Penggantian Suku Cadang', 'Klausul Bengkel Authorized', 'Klausul Kendaraan CBU/CKD'],
+  PA:       ['Klausul 24 Jam di Seluruh Dunia', 'Klausul Ahli Waris (Beneficiary)', 'Klausul sesuai wording polis Penanggung'],
+  TRAVEL:   ['Klausul Wilayah Perjalanan', 'Klausul Evakuasi Medis Darurat', 'Klausul sesuai wording polis Penanggung'],
+  PROPERTY: ['Klausul Premium Payment Warranty', 'Klausul 72 Jam (72 Hours Clause)', 'Klausul sesuai wording polis Penanggung'],
+  HEALTH:   ['Klausul Masa Tunggu (Waiting Period)', 'Klausul Jaringan Provider', 'Klausul sesuai wording polis Penanggung'],
+  OTHER:    ['Klausul Premium Payment Warranty', 'Klausul Cancellation (30 hari)', 'Klausul sesuai wording polis Penanggung'],
+};
+
+const MOTOR_SUBJECTIVITY = [
+  'Foto kendaraan terkini (tampak depan, belakang, samping kiri-kanan, interior, odometer, dan nomor rangka/mesin).',
+  'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
+  'SPPA (Surat Permintaan Penutupan Asuransi) diisi lengkap dan ditandatangani, dilampiri fotokopi STNK & KTP Tertanggung.',
+  'Survey/inspeksi fisik kendaraan oleh surveyor yang ditunjuk Penanggung — jaminan efektif setelah hasil survey disetujui.',
+  'Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer\'s acceptance).',
+];
+
+const GENERIC_SUBJECTIVITY = [
+  'Formulir permintaan penutupan asuransi (SPPA) diisi lengkap, ditandatangani, dan dilampiri fotokopi identitas (KTP) Tertanggung.',
+  'Kelengkapan data dan dokumen pendukung yang dipersyaratkan Penanggung diterima sebelum tanggal mulai pertanggungan.',
+  'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
+  'Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer\'s acceptance).',
+];
+
+const productSubjectivity = (t: SlipProductType): string[] =>
+  t === 'MOTOR' ? MOTOR_SUBJECTIVITY : GENERIC_SUBJECTIVITY;
+
+const plus30DaysISO = (): string => new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+
 // ─── Adapter: OperatorOrder → QuotationSlipData ────────────────────────────
 export interface OperatorOrderSource {
   order_number?: string;
@@ -76,7 +172,16 @@ export interface OperatorOrderSource {
   discount_amount?: number;
   net_premium?: number;
   insurer_name?: string;
+  insurer_logo_url?: string;
   addons?: Record<string, any>;
+  // Product context (CAR | MOTORCYCLE | TRAVEL | PA | MPAR | …)
+  product_code?: string;
+  product_type?: string;
+  product_name?: string;
+  // Agent context (when the order came through an agent)
+  agent_name?: string;
+  agent_phone?: string;
+  agent_code?: string;
   // Optional: renewal context
   previous_policy_number?: string;
   period_start?: string;
@@ -85,6 +190,10 @@ export interface OperatorOrderSource {
 
 export function fromOperatorOrder(o: OperatorOrderSource): QuotationSlipData {
   const vd = o.vehicle_details ?? {};
+  const productType = mapProductType(o.product_code ?? o.product_type);
+  const isMotor = productType === 'MOTOR';
+  const productName = o.product_name || PRODUCT_NAMES[productType];
+  const coverage = PRODUCT_COVERAGE[productType];
   const plate = (vd.plate ?? `${vd.plateCode ?? ''} ${vd.plateNum ?? ''} ${vd.plateSuffix ?? ''}`.trim()) || 'TBA';
   const insurerName = o.insurer_name || 'PT Zurich Asuransi Indonesia Tbk';
   const insurerShort = insurerName
@@ -118,12 +227,31 @@ export function fromOperatorOrder(o: OperatorOrderSource): QuotationSlipData {
     slipType: 'PENUTUPAN ASURANSI',
     issueDate: todayID(),
     yearTag: String(new Date().getFullYear()),
+    validUntil: plus30DaysISO(),
+
+    productType,
+    productName: isMotor ? `${productName} — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}` : productName,
+    objectSummary: isMotor ? `${vd.make ?? ''} ${vd.model ?? ''} ${vd.year ?? ''}`.trim() : productName,
+    ...(!isMotor && {
+      objectDetails: [
+        { label: 'PRODUK', value: productName },
+        { label: 'TERTANGGUNG', value: o.client_name || 'Nasabah SurePath' },
+        { label: 'KONTAK', value: o.client_phone || '-', mono: true },
+        { label: 'JENIS PERTANGGUNGAN', value: o.coverage_type || '-' },
+        { label: 'NILAI PERTANGGUNGAN', value: o.sum_insured ? `IDR ${fmtIDR(o.sum_insured)}` : '-' },
+      ],
+    }),
 
     preparedForCompany: o.client_name || 'Nasabah SurePath',
     preparedForPerson: o.client_phone || '',
     previousPolicyNumber: o.previous_policy_number || '-',
     insurer: insurerName,
     insurerShort,
+    insurerLogoUrl: o.insurer_logo_url,
+
+    agentName: o.agent_name || undefined,
+    agentPhone: o.agent_phone || undefined,
+    agentCode: o.agent_code || undefined,
 
     periodStart: periodStart.includes('T') ? new Date(periodStart).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : periodStart,
     periodEnd: periodEnd.includes('T') ? new Date(periodEnd).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : periodEnd,
@@ -132,8 +260,10 @@ export function fromOperatorOrder(o: OperatorOrderSource): QuotationSlipData {
 
     titleMain: 'Penawaran',
     titleMid: 'Asuransi',
-    titleAccent: 'Kendaraan.',
-    ledeHtml: `Asuransi Kendaraan Bermotor — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}. Penutupan proteksi kendaraan ${vd.make ?? ''} ${vd.model ?? ''} Anda, ditempatkan melalui ${insurerShort}.`,
+    titleAccent: PRODUCT_TITLE_ACCENTS[productType],
+    ledeHtml: isMotor
+      ? `Asuransi Kendaraan Bermotor — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}. Penutupan proteksi kendaraan ${vd.make ?? ''} ${vd.model ?? ''} Anda, ditempatkan melalui ${insurerShort}.`
+      : `${productName}. Penutupan proteksi untuk ${o.client_name || 'Anda'}, ditempatkan melalui ${insurerShort}.`,
 
     insuredName: o.client_name || 'Nasabah SurePath',
     insuredAddress: '-',
@@ -147,20 +277,18 @@ export function fromOperatorOrder(o: OperatorOrderSource): QuotationSlipData {
     color: vd.color || '-',
     usage: vd.usage || 'Pribadi',
 
-    coverageCondition: `Comprehensive — menjamin kerugian/kerusakan sebagian maupun total akibat tabrakan, benturan, terbalik, tergelincir, perbuatan jahat, pencurian, dan kebakaran, sesuai Polis Standar Asuransi Kendaraan Bermotor Indonesia (PSAKBI).`,
-    additionalCoverage: 'Tanggung Jawab Hukum terhadap Pihak Ketiga (TPL) — sesuai limit yang dipilih',
-    deductible: 'Comprehensive: IDR 300.000,00 untuk setiap kejadian (any one accident)',
-    klausulList: [
-      'Klausul Penggantian Suku Cadang',
-      'Klausul Bengkel Authorized',
-      'Klausul Kendaraan CBU/CKD',
-    ],
+    coverageCondition: coverage.condition,
+    additionalCoverage: coverage.additional,
+    deductible: coverage.deductible,
+    klausulList: PRODUCT_KLAUSUL[productType],
 
-    sumInsuredItems: [
-      { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
-      { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
-    ],
-    totalSumInsured: fmtIDR(sumInsured + (addonPremium || 0)),
+    sumInsuredItems: isMotor
+      ? [
+          { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
+          { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
+        ]
+      : [{ no: '1', desc: productName, amount: fmtIDR(sumInsured) }],
+    totalSumInsured: fmtIDR(isMotor ? sumInsured + (addonPremium || 0) : sumInsured),
 
     premiumComponents,
     subtotalPremium: fmtIDR(basePremium + addonPremium),
@@ -171,23 +299,23 @@ export function fromOperatorOrder(o: OperatorOrderSource): QuotationSlipData {
     stampDuty: fmtIDR(o.stamp_duty || 10000),
     totalPremium: fmtIDR(o.total_premium || 0),
 
-    subjectivityList: [
-      'Foto kendaraan terkini (tampak depan, belakang, samping kiri-kanan, interior, odometer, dan nomor rangka/mesin).',
-      'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
-      'SPPA (Surat Permintaan Penutupan Asuransi) diisi lengkap dan ditandatangani, dilampiri fotokopi STNK & KTP Tertanggung.',
-      'Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer\'s acceptance).',
-    ],
+    subjectivityList: productSubjectivity(productType),
 
     termsList: [
-      `Penawaran ini untuk penutupan asuransi atas kendaraan ${vd.make ?? ''} ${vd.model ?? ''} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`,
+      isMotor
+        ? `Penawaran ini untuk penutupan asuransi atas kendaraan ${vd.make ?? ''} ${vd.model ?? ''} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`
+        : `Penawaran ini untuk penutupan ${productName} dengan penempatan pada ${insurerName}, mengikuti syarat, kondisi, dan wording polis standar Penanggung beserta klausul terlampir.`,
       'Penawaran berlaku selama 30 (tiga puluh) hari sejak tanggal penerbitan. Untuk menghindari terputusnya jaminan, konfirmasi dan pembayaran disarankan sebelum tanggal mulai pertanggungan.',
       'Rate premi menggunakan acuan tarif OJK (SEOJK); premi final mengikuti konfirmasi tertulis dari Penanggung.',
       'Polis diterbitkan setelah subjectivity terpenuhi, konfirmasi penutupan, dan pembayaran premi diterima.',
+      'Dokumen ini bukan surat konfirmasi penutupan; seluruh konfirmasi dan akseptasi merupakan kewenangan penuh Penanggung.',
     ],
 
-    closingTitle: 'Lindungi Kendaraan Anda,',
+    closingTitle: isMotor ? 'Lindungi Kendaraan Anda,' : 'Lindungi Diri Anda,',
     closingAccent: 'Sekarang Juga.',
-    closingDesc: `Konfirmasi penutupan, jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
+    closingDesc: isMotor
+      ? `Konfirmasi penutupan, jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`
+      : `Konfirmasi penutupan, lengkapi dokumen, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
 
     bankName: 'BANK BCA',
     bankNameShort: 'BCA',
@@ -204,8 +332,13 @@ export interface SpPolicyOrderSource {
   order_number?: string;
   product_name?: string;
   product_type?: string;
+  product_code?: string;
   client_name?: string;
   insurer_name?: string;
+  insurer_logo_url?: string;
+  agent_name?: string;
+  agent_phone?: string;
+  agent_code?: string;
   coverage_type?: string;
   sum_insured?: number;
   base_premium?: number;
@@ -226,6 +359,11 @@ export interface SpPolicyOrderSource {
 
 export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string, customerAddress?: string): QuotationSlipData {
   const vd = o.vehicle_details ?? {};
+  const productType = mapProductType(o.product_code ?? o.product_type ?? o.vehicle_type);
+  const isMotor = productType === 'MOTOR';
+  const productName = o.product_name || PRODUCT_NAMES[productType];
+  const coverage = PRODUCT_COVERAGE[productType];
+  const clientName = customerName || o.client_name || 'Nasabah SurePath';
   const insurerName = o.insurer_name || 'PT Zurich Asuransi Indonesia Tbk';
   const insurerShort = insurerName
     .replace(/^PT\.?\s*/i, '')
@@ -244,12 +382,30 @@ export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string,
     slipType: 'PENUTUPAN ASURANSI',
     issueDate: todayID(),
     yearTag: String(new Date().getFullYear()),
+    validUntil: plus30DaysISO(),
 
-    preparedForCompany: customerName || o.client_name || 'Nasabah SurePath',
+    productType,
+    productName: isMotor ? `${productName} — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}` : productName,
+    objectSummary: isMotor ? `${vd.make ?? vd.brand ?? ''} ${vd.model ?? ''} ${vd.year ?? ''}`.trim() : productName,
+    ...(!isMotor && {
+      objectDetails: [
+        { label: 'PRODUK', value: productName },
+        { label: 'TERTANGGUNG', value: clientName },
+        { label: 'JENIS PERTANGGUNGAN', value: o.coverage_type || '-' },
+        { label: 'NILAI PERTANGGUNGAN', value: sumInsured ? `IDR ${fmtIDR(sumInsured)}` : '-' },
+      ],
+    }),
+
+    preparedForCompany: clientName,
     preparedForPerson: '',
     previousPolicyNumber: '-',
     insurer: insurerName,
     insurerShort,
+    insurerLogoUrl: o.insurer_logo_url,
+
+    agentName: o.agent_name || undefined,
+    agentPhone: o.agent_phone || undefined,
+    agentCode: o.agent_code || undefined,
 
     periodStart: periodStart.includes('T') ? new Date(periodStart).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : periodStart,
     periodEnd: periodEnd.includes('T') ? new Date(periodEnd).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : periodEnd,
@@ -258,10 +414,12 @@ export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string,
 
     titleMain: 'Penawaran',
     titleMid: 'Asuransi',
-    titleAccent: 'Kendaraan.',
-    ledeHtml: `Asuransi Kendaraan Bermotor — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}. Penawaran proteksi kendaraan ${vd.make ?? ''} ${vd.model ?? ''} Anda, ditempatkan melalui ${insurerShort}.`,
+    titleAccent: PRODUCT_TITLE_ACCENTS[productType],
+    ledeHtml: isMotor
+      ? `Asuransi Kendaraan Bermotor — ${o.coverage_type === 'TLO' ? 'TLO' : 'Comprehensive'}. Penawaran proteksi kendaraan ${vd.make ?? ''} ${vd.model ?? ''} Anda, ditempatkan melalui ${insurerShort}.`
+      : `${productName}. Penawaran proteksi untuk ${clientName}, ditempatkan melalui ${insurerShort}.`,
 
-    insuredName: customerName || o.client_name || 'Nasabah SurePath',
+    insuredName: clientName,
     insuredAddress: customerAddress || '-',
     vehicleBrand: vd.make || vd.brand || '-',
     vehicleType: vd.model || '-',
@@ -273,23 +431,21 @@ export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string,
     color: vd.color || '-',
     usage: vd.usage || 'Pribadi',
 
-    coverageCondition: `Comprehensive — menjamin kerugian/kerusakan sebagian maupun total akibat tabrakan, benturan, terbalik, tergelincir, perbuatan jahat, pencurian, dan kebakaran, sesuai Polis Standar Asuransi Kendaraan Bermotor Indonesia (PSAKBI).`,
-    additionalCoverage: 'Tanggung Jawab Hukum terhadap Pihak Ketiga (TPL) — sesuai limit yang dipilih',
-    deductible: 'Comprehensive: IDR 300.000,00 untuk setiap kejadian (any one accident)',
-    klausulList: [
-      'Klausul Penggantian Suku Cadang',
-      'Klausul Bengkel Authorized',
-      'Klausul Kendaraan CBU/CKD',
-    ],
+    coverageCondition: coverage.condition,
+    additionalCoverage: coverage.additional,
+    deductible: coverage.deductible,
+    klausulList: PRODUCT_KLAUSUL[productType],
 
-    sumInsuredItems: [
-      { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
-      { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
-    ],
-    totalSumInsured: fmtIDR(sumInsured + (addonPremium || 0)),
+    sumInsuredItems: isMotor
+      ? [
+          { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
+          { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
+        ]
+      : [{ no: '1', desc: productName, amount: fmtIDR(sumInsured) }],
+    totalSumInsured: fmtIDR(isMotor ? sumInsured + (addonPremium || 0) : sumInsured),
 
     premiumComponents: [
-      { component: 'Casco — Comprehensive', basis: `IDR ${fmtIDR(sumInsured)}`, rate, premium: fmtIDR(basePremium) },
+      { component: isMotor ? 'Casco — Comprehensive' : `Premi ${productName}`, basis: `IDR ${fmtIDR(sumInsured)}`, rate, premium: fmtIDR(basePremium) },
       ...(addonPremium > 0 ? [{ component: 'Tambahan Jaminan', basis: `IDR ${fmtIDR(sumInsured)}`, rate: '—', premium: fmtIDR(addonPremium) }] : []),
     ],
     subtotalPremium: fmtIDR(basePremium + addonPremium),
@@ -300,30 +456,30 @@ export function fromCustomerOrder(o: SpPolicyOrderSource, customerName?: string,
     stampDuty: fmtIDR(o.stamp_duty || 10000),
     totalPremium: fmtIDR(o.total_premium || 0),
 
-    subjectivityList: [
-      'Foto kendaraan terkini (tampak depan, belakang, samping kiri-kanan, interior, odometer, dan nomor rangka/mesin).',
-      'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
-      'SPPA (Surat Permintaan Penutupan Asuransi) diisi lengkap dan ditandatangani, dilampiri fotokopi STNK & KTP Tertanggung.',
-      'Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer\'s acceptance).',
-    ],
+    subjectivityList: productSubjectivity(productType),
 
     termsList: [
-      `Penawaran ini untuk penutupan asuransi atas kendaraan ${vd.make ?? ''} ${vd.model ?? ''} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`,
+      isMotor
+        ? `Penawaran ini untuk penutupan asuransi atas kendaraan ${vd.make ?? ''} ${vd.model ?? ''} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`
+        : `Penawaran ini untuk penutupan ${productName} dengan penempatan pada ${insurerName}, mengikuti syarat, kondisi, dan wording polis standar Penanggung beserta klausul terlampir.`,
       'Penawaran berlaku selama 30 (tiga puluh) hari sejak tanggal penerbitan. Untuk menghindari terputusnya jaminan, konfirmasi dan pembayaran disarankan sebelum tanggal mulai pertanggungan.',
       'Rate premi menggunakan acuan tarif OJK (SEOJK); premi final mengikuti konfirmasi tertulis dari Penanggung.',
       'Polis diterbitkan setelah subjectivity terpenuhi, konfirmasi penutupan, dan pembayaran premi diterima.',
+      'Dokumen ini bukan surat konfirmasi penutupan; seluruh konfirmasi dan akseptasi merupakan kewenangan penuh Penanggung.',
     ],
 
-    closingTitle: 'Lindungi Kendaraan Anda,',
+    closingTitle: isMotor ? 'Lindungi Kendaraan Anda,' : 'Lindungi Diri Anda,',
     closingAccent: 'Sekarang Juga.',
-    closingDesc: `Konfirmasi penutupan, jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
+    closingDesc: isMotor
+      ? `Konfirmasi penutupan, jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`
+      : `Konfirmasi penutupan, lengkapi dokumen, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
 
     bankName: 'BANK BCA',
     bankNameShort: 'BCA',
     bankAccount: '5730 - 807 - 807',
     bankAccountName: 'PT. Ruang Proteksi Indonesia',
     paymentDueDate: dateShortID(periodStart),
-    transferMemo: `${o.order_number || 'QS'} — ${vd.make ?? ''} ${vd.model ?? ''} ${customerName ?? ''}`.trim(),
+    transferMemo: `${o.order_number || 'QS'} — ${isMotor ? `${vd.make ?? ''} ${vd.model ?? ''}` : productName} ${clientName}`.trim(),
   };
 }
 
@@ -363,6 +519,17 @@ export function fromB2BQuote(q: B2BQuoteSource, companyName?: string): Quotation
     slipType: 'PENUTUPAN ASURANSI KORPORASI',
     issueDate: q.created_at ? dateShortID(q.created_at) : todayID(),
     yearTag: String(new Date().getFullYear()),
+    validUntil: q.valid_until ? q.valid_until.slice(0, 10) : plus30DaysISO(),
+
+    productType: 'OTHER',
+    productName: 'Asuransi Korporasi',
+    objectSummary: `Asuransi Korporasi — ${company}`,
+    objectDetails: [
+      { label: 'TERTANGGUNG', value: company },
+      { label: 'JENIS', value: 'Korporasi / Bisnis' },
+      { label: 'PENGGUNAAN', value: 'Komersial' },
+      ...coverageEntries.slice(0, 4).map(([k, v]) => ({ label: coverageLabel(k).toUpperCase(), value: String(v) })),
+    ],
 
     preparedForCompany: company,
     preparedForPerson: '',
@@ -451,6 +618,11 @@ export interface AgentQuoteSource {
   clientPhone?: string;
   agentName: string;
   agentCode?: string;
+  agentPhone?: string;
+  // App product code (CAR | MOTORCYCLE | TRAVEL | PA | MPAR). Defaults to CAR.
+  // For non-vehicle products the vehicleBrand/vehicleModel fields carry the
+  // product label & plan description (legacy behaviour of AgentQuoteBuilder).
+  product?: string;
   vehicleBrand: string;
   vehicleModel: string;
   vehicleYear?: number | string;
@@ -469,6 +641,10 @@ export interface AgentQuoteSource {
 }
 
 export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
+  const productType = mapProductType(q.product);
+  const isMotor = productType === 'MOTOR';
+  const productName = PRODUCT_NAMES[productType];
+  const coverage = PRODUCT_COVERAGE[productType];
   const insurerName = q.providerName || 'PT Zurich Asuransi Indonesia Tbk';
   const insurerShort = insurerName
     .replace(/^PT\.?\s*/i, '')
@@ -492,12 +668,29 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
     slipType: 'PENUTUPAN ASURANSI',
     issueDate: todayID(),
     yearTag: String(today.getFullYear()),
+    validUntil: q.validUntil ? q.validUntil.slice(0, 10) : plus30DaysISO(),
+
+    productType,
+    productName: isMotor ? `${productName} — ${q.coverageType === 'TLO' ? 'TLO' : 'Comprehensive'}` : productName,
+    objectSummary: isMotor ? `${q.vehicleBrand} ${q.vehicleModel} ${q.vehicleYear ?? ''}`.trim() : `${productName} — ${q.vehicleModel}`,
+    ...(!isMotor && {
+      objectDetails: [
+        { label: 'PRODUK', value: productName },
+        { label: 'TERTANGGUNG', value: q.clientName },
+        { label: 'RINCIAN / PLAN', value: q.vehicleModel },
+        { label: 'NILAI PERTANGGUNGAN', value: sumInsured ? `IDR ${fmtIDR(sumInsured)}` : '-' },
+      ],
+    }),
 
     preparedForCompany: q.clientName,
     preparedForPerson: q.clientPhone || '',
     previousPolicyNumber: '-',
     insurer: insurerName,
     insurerShort,
+
+    agentName: q.agentName,
+    agentPhone: q.agentPhone,
+    agentCode: q.agentCode,
 
     periodStart: today.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
     periodEnd,
@@ -506,8 +699,10 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
 
     titleMain: 'Penawaran',
     titleMid: 'Asuransi',
-    titleAccent: 'Kendaraan.',
-    ledeHtml: `Asuransi Kendaraan Bermotor — ${q.coverageType === 'TLO' ? 'TLO' : 'Comprehensive'}. Penawaran proteksi kendaraan ${q.vehicleBrand} ${q.vehicleModel} untuk ${q.clientName}, disiapkan oleh ${q.agentName}${q.agentCode ? ` (${q.agentCode})` : ''}.`,
+    titleAccent: PRODUCT_TITLE_ACCENTS[productType],
+    ledeHtml: isMotor
+      ? `Asuransi Kendaraan Bermotor — ${q.coverageType === 'TLO' ? 'TLO' : 'Comprehensive'}. Penawaran proteksi kendaraan ${q.vehicleBrand} ${q.vehicleModel} untuk ${q.clientName}, disiapkan oleh ${q.agentName}${q.agentCode ? ` (${q.agentCode})` : ''}.`
+      : `${productName}. Penawaran proteksi untuk ${q.clientName}, disiapkan oleh ${q.agentName}${q.agentCode ? ` (${q.agentCode})` : ''}, ditempatkan melalui ${insurerShort}.`,
 
     insuredName: q.clientName,
     insuredAddress: '-',
@@ -521,23 +716,29 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
     color: '-',
     usage: 'Pribadi',
 
-    coverageCondition: `${q.coverageType === 'TLO' ? 'TLO (Total Loss Only)' : 'Comprehensive'} — menjamin kerugian/kerusakan sebagian maupun total akibat tabrakan, benturan, terbalik, tergelincir, perbuatan jahat, pencurian, dan kebakaran, sesuai Polis Standar Asuransi Kendaraan Bermotor Indonesia (PSAKBI).`,
-    additionalCoverage: addonRows.length > 0 ? addonRows.map(r => r.label).join(', ') : 'Tanggung Jawab Hukum terhadap Pihak Ketiga (TPL) — sesuai limit yang dipilih',
-    deductible: 'Comprehensive: IDR 300.000,00 untuk setiap kejadian (any one accident)',
-    klausulList: [
-      'Klausul Penggantian Suku Cadang',
-      'Klausul Bengkel Authorized',
-      `Klausul Rate Band: ${q.rateBand || 'MID'} (OJK SEOJK 6/2017)`,
-    ],
+    coverageCondition: isMotor
+      ? `${q.coverageType === 'TLO' ? 'TLO (Total Loss Only)' : 'Comprehensive'} — menjamin kerugian/kerusakan sebagian maupun total akibat tabrakan, benturan, terbalik, tergelincir, perbuatan jahat, pencurian, dan kebakaran, sesuai Polis Standar Asuransi Kendaraan Bermotor Indonesia (PSAKBI).`
+      : coverage.condition,
+    additionalCoverage: addonRows.length > 0 ? addonRows.map(r => r.label).join(', ') : coverage.additional,
+    deductible: isMotor ? 'Comprehensive: IDR 300.000,00 untuk setiap kejadian (any one accident)' : coverage.deductible,
+    klausulList: isMotor
+      ? [
+          'Klausul Penggantian Suku Cadang',
+          'Klausul Bengkel Authorized',
+          `Klausul Rate Band: ${q.rateBand || 'MID'} (OJK SEOJK 6/2017)`,
+        ]
+      : PRODUCT_KLAUSUL[productType],
 
-    sumInsuredItems: [
-      { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
-      { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
-    ],
-    totalSumInsured: fmtIDR(sumInsured + (addonPremium || 0)),
+    sumInsuredItems: isMotor
+      ? [
+          { no: '1', desc: 'Casco — kendaraan bermotor', amount: fmtIDR(sumInsured) },
+          { no: '2', desc: 'Tanggung Jawab Hukum Pihak Ketiga (TPL)', amount: fmtIDR(addonPremium || 0) },
+        ]
+      : [{ no: '1', desc: `${productName} — ${q.vehicleModel}`, amount: fmtIDR(sumInsured) }],
+    totalSumInsured: fmtIDR(isMotor ? sumInsured + (addonPremium || 0) : sumInsured),
 
     premiumComponents: [
-      { component: `Casco — ${q.coverageType}`, basis: `IDR ${fmtIDR(sumInsured)}`, rate, premium: fmtIDR(basePremium) },
+      { component: isMotor ? `Casco — ${q.coverageType}` : `Premi ${productName}`, basis: `IDR ${fmtIDR(sumInsured)}`, rate, premium: fmtIDR(basePremium) },
       ...addonRows.map(r => ({ component: r.label, basis: `IDR ${fmtIDR(sumInsured)}`, rate: '—', premium: fmtIDR(r.amount) })),
     ],
     subtotalPremium: fmtIDR(basePremium + addonPremium),
@@ -548,29 +749,37 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
     stampDuty: fmtIDR(stampDuty),
     totalPremium: fmtIDR(q.totalPremium),
 
-    subjectivityList: [
-      'Foto kendaraan terkini (tampak depan, belakang, samping kiri-kanan, interior, odometer, dan nomor rangka/mesin).',
-      'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
-      'SPPA (Surat Permintaan Penutupan Asuransi) diisi lengkap dan ditandatangani, dilampiri fotokopi STNK & KTP Tertanggung.',
-      `Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer's acceptance). Zone: ${q.zone ?? 3}.`,
-    ],
+    subjectivityList: isMotor
+      ? [
+          'Foto kendaraan terkini (tampak depan, belakang, samping kiri-kanan, interior, odometer, dan nomor rangka/mesin).',
+          'Tidak ada kerugian/klaim yang diketahui atau dilaporkan (no known or reported losses) hingga tanggal mulai pertanggungan.',
+          'SPPA (Surat Permintaan Penutupan Asuransi) diisi lengkap dan ditandatangani, dilampiri fotokopi STNK & KTP Tertanggung.',
+          `Penutupan tunduk pada akseptasi dan persetujuan penuh dari Penanggung (subject to insurer's acceptance). Zone: ${q.zone ?? 3}.`,
+        ]
+      : productSubjectivity(productType),
 
     termsList: [
-      `Penawaran ini untuk penutupan asuransi atas kendaraan ${q.vehicleBrand} ${q.vehicleModel} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`,
+      isMotor
+        ? `Penawaran ini untuk penutupan asuransi atas kendaraan ${q.vehicleBrand} ${q.vehicleModel} dengan penempatan pada ${insurerName}, mengikuti syarat dan kondisi Polis Standar Asuransi Kendaraan Bermotor Indonesia beserta klausul terlampir.`
+        : `Penawaran ini untuk penutupan ${productName} dengan penempatan pada ${insurerName}, mengikuti syarat, kondisi, dan wording polis standar Penanggung beserta klausul terlampir.`,
       `Penawaran berlaku sampai ${q.validUntil ? dateShortID(q.validUntil) : '30 hari sejak tanggal penerbitan'}. Untuk menghindari terputusnya jaminan, konfirmasi dan pembayaran disarankan sebelum tanggal mulai pertanggungan.`,
-      `Rate premi menggunakan acuan tarif OJK (SEOJK 6/2017); rate ${rate}, band ${q.rateBand || 'MID'}, zone ${q.zone ?? 3}. Premi final mengikuti konfirmasi tertulis dari Penanggung.`,
+      ...(isMotor ? [`Rate premi menggunakan acuan tarif OJK (SEOJK 6/2017); rate ${rate}, band ${q.rateBand || 'MID'}, zone ${q.zone ?? 3}. Premi final mengikuti konfirmasi tertulis dari Penanggung.`]
+                  : ['Premi mengikuti tarif dan ketentuan produk Penanggung; premi final mengikuti konfirmasi tertulis dari Penanggung.']),
       'Polis diterbitkan setelah subjectivity terpenuhi, konfirmasi penutupan, dan pembayaran premi diterima.',
+      'Dokumen ini bukan surat konfirmasi penutupan; seluruh konfirmasi dan akseptasi merupakan kewenangan penuh Penanggung.',
     ],
 
-    closingTitle: 'Lindungi Kendaraan Anda,',
+    closingTitle: isMotor ? 'Lindungi Kendaraan Anda,' : 'Lindungi Diri Anda,',
     closingAccent: 'Sekarang Juga.',
-    closingDesc: `Konfirmasi penutupan ke agen SurePath (${q.agentName}), jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
+    closingDesc: isMotor
+      ? `Konfirmasi penutupan ke agen SurePath (${q.agentName}), jadwalkan survey kendaraan, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`
+      : `Konfirmasi penutupan ke agen SurePath (${q.agentName}), lengkapi dokumen, dan lakukan pembayaran sebelum tanggal mulai pertanggungan agar perlindungan berjalan tanpa terputus.`,
 
     bankName: 'BANK BCA',
     bankNameShort: 'BCA',
     bankAccount: '5730 - 807 - 807',
     bankAccountName: 'PT. Ruang Proteksi Indonesia',
     paymentDueDate: today.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-    transferMemo: `${q.quoteNumber || 'QS'} — ${q.vehicleBrand} ${q.vehicleModel} ${q.clientName}`.trim(),
+    transferMemo: `${q.quoteNumber || 'QS'} — ${isMotor ? `${q.vehicleBrand} ${q.vehicleModel}` : productName} ${q.clientName}`.trim(),
   };
 }

@@ -8,7 +8,7 @@ import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty }
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import InsurerAIPanel from '../shared/InsurerAIPanel';
 
@@ -109,7 +109,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
     if (downloadingSlip) return;
     setDownloadingSlip(true);
     try {
-      await generateQuotationSlipPDF(fromCustomerOrder({ ...o, insurer_name: insurerName || undefined } as any));
+      await publishAndDownloadQuotation(fromCustomerOrder({ ...o, insurer_name: insurerName || undefined } as any), { sourceApp: 'INSURER', orderId: o.id, totalPremiumNumeric: o.total_premium ?? undefined });
     } catch (e: any) {
       console.error('Quotation slip download failed:', e);
       toast.error('Gagal membuat quotation slip. Coba lagi.');

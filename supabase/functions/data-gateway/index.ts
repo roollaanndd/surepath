@@ -25,6 +25,7 @@ import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
 import { handleTiersAction } from './actions/tiers.ts';
 import { handleMigrationAction } from './actions/migration-apply.ts';
+import { handleQuotationsAction } from './actions/quotations.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
@@ -45,7 +46,7 @@ const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'F
 
 interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; }
 
-const PUBLIC_ACTIONS = new Set(['get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy']);
+const PUBLIC_ACTIONS = new Set(['get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation']);
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
@@ -99,7 +100,7 @@ Deno.serve(async (req) => {
     // Auth
     let caller: Caller;
     if (PUBLIC_ACTIONS.has(action)) {
-      if (action.startsWith('get_insurer_') || action.startsWith('insurer_') || action.startsWith('submit_insurer_')) {
+      if (action.startsWith('get_insurer_') || action.startsWith('insurer_') || action.startsWith('submit_insurer_') || action.endsWith('_public_quotation')) {
         const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
         const ipAllowed = await checkRateLimit(`ip:${clientIp}`, 60);
         if (!ipAllowed) return json({ error: 'Rate limit exceeded. Coba lagi dalam 1 jam.' }, 429);
@@ -137,6 +138,7 @@ Deno.serve(async (req) => {
       await handleAdminAction(action, ctx) ??
       await handleTiersAction(action, ctx) ??
       await handleMigrationAction(action, ctx) ??
+      await handleQuotationsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
     if (result) return json(result.body, result.status);

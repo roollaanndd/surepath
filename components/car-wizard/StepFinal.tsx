@@ -5,7 +5,7 @@ import {
   BrainCircuit, Zap, FileDown } from 'lucide-react';
 import { formatIDR, PageTransition } from './WizardUI';
 import { Language } from '../../types';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromAgentQuote } from '../../services/quotationSlipAdapter';
 
 interface StepFinalProps {
@@ -42,7 +42,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
       rows.push({ label: 'Biaya Pengiriman Polis', amount: premiumBreakdown.policyDeliveryFee || 20000 });
 
       const romanMonths = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
-      await generateQuotationSlipPDF(fromAgentQuote({
+      await publishAndDownloadQuotation(fromAgentQuote({
         quoteNumber: `QS/SP/${new Date().getFullYear()}/${romanMonths[new Date().getMonth()]}/${String(Date.now()).slice(-4)}`,
         validUntil: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
         clientName: stnkResult?.ownerName || vehicle.ownerName || t('Customer', 'Nasabah'),
@@ -59,7 +59,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
         rows,
         discountAmount: Math.round(premiumBreakdown.discountAmount || 0),
         totalPremium: Math.round(premiumBreakdown.totalPayable),
-      }));
+      }), { sourceApp: 'CUSTOMER', totalPremiumNumeric: Math.round(premiumBreakdown.totalPayable) });
     } finally {
       setPrinting(false);
     }

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone, Bike,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, Download, ClipboardList, Heart, FileText
+  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, UserPlus, Download, ClipboardList, Heart, FileText
 } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
-  saveQuote, createPolicy, addCommission,
+  saveQuote, createPolicy, addCommission, addClient,
   type SpClient, type SpQuote, type SpPolicy
 } from '../../services/supabaseService';
 import { generatePolicyCertPDF } from '../../services/pdfService';
@@ -33,9 +33,12 @@ interface Props {
 }
 
 type ProductType = 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
-type Step = 'client' | 'product' | 'inputs' | 'quote_summary' | 'summary' | 'success';
+// UX v1.50.0: product-first flow — pilih produk dulu, data klien belakangan
+// (step 'client' pindah ke setelah 'inputs', dengan quick-add klien inline).
+type Step = 'product' | 'inputs' | 'client' | 'quote_summary' | 'summary' | 'success';
 type QuoteTab = 'new' | 'orders';
 type QuoteMode = 'penawaran' | 'beli' | null;
+type ClientMode = 'select' | 'new' | 'onetime';
 
 interface CarInputs { brand: string; model: string; year: number; price: number; coverage: 'COMPREHENSIVE' | 'TLO'; }
 
@@ -113,12 +116,20 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [vehicleWizardType, setVehicleWizardType] = useState<'CAR' | 'MOTORCYCLE' | null>(null);
   const [activeProduct, setActiveProduct] = useState<string | null>(null);
 
-  const [step, setStep] = useState<Step>('client');
-  const [clientMode, setClientMode] = useState<'select' | 'onetime'>('select');
+  const [step, setStep] = useState<Step>('product');
+  const [clientMode, setClientMode] = useState<ClientMode>(clients.length > 0 ? 'select' : 'new');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [onetimeName, setOnetimeName] = useState('');
+  // Quick-add klien inline — tersimpan otomatis ke sp_clients (CRM) tanpa
+  // harus keluar ke tab Klien dulu.
+  const [localClients, setLocalClients] = useState<SpClient[]>(clients);
+  const [newClient, setNewClient] = useState({ name: '', phone: '' });
+  const [createdClientId, setCreatedClientId] = useState<string>('');
+  const [addingClient, setAddingClient] = useState(false);
   const [product, setProduct] = useState<ProductType | null>(null);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>(null);
+
+  useEffect(() => { setLocalClients(clients); }, [clients]);
 
   const [carInputs, setCarInputs] = useState<CarInputs>({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
   const [addons, setAddons] = useState<AddonState>({ flood: false, earthquake: false, riot: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 });
@@ -138,7 +149,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       <VehicleUnderwritingWizard
         agentId={agentId}
         agent={agent}
-        clients={clients}
+        clients={localClients}
         lang={lang}
         initialVehicleType={vehicleWizardType}
         onBack={() => setVehicleWizardType(null)}
@@ -160,10 +171,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   }
 
   const clientName = clientMode === 'select'
-    ? (clients.find(c => c.id === selectedClientId)?.name ?? '')
-    : onetimeName;
+    ? (localClients.find(c => c.id === selectedClientId)?.name ?? '')
+    : clientMode === 'new' ? newClient.name : onetimeName;
 
-  const clientId = clientMode === 'select' ? selectedClientId : undefined;
+  const clientId = clientMode === 'select'
+    ? selectedClientId
+    : clientMode === 'new' ? (createdClientId || undefined) : undefined;
 
   const currentInputs = (): any => {
     if (product === 'CAR' || product === 'MOTORCYCLE') return carInputs;
@@ -176,7 +189,43 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const premium = product ? calcPremium(product, currentInputs(), (product === 'CAR' || product === 'MOTORCYCLE') ? addons : undefined) : 0;
   const commission = product ? Math.round(premium * COMMISSION_RATE[product]) : 0;
 
-  const canProceedClient = clientMode === 'select' ? !!selectedClientId : !!onetimeName.trim();
+  const canProceedClient = clientMode === 'select'
+    ? !!selectedClientId
+    : clientMode === 'new'
+      ? !!newClient.name.trim() && !!newClient.phone.trim()
+      : !!onetimeName.trim();
+
+  // Lanjut dari step client → ringkasan. Mode 'new' menyimpan klien ke CRM
+  // dulu (non-blocking untuk UX: kalau gagal simpan, penawaran tetap lanjut
+  // dengan nama yang diisi).
+  const proceedAfterClient = () => {
+    if ((product === 'CAR' || product === 'MOTORCYCLE') && quoteMode === 'penawaran') {
+      setStep('quote_summary');
+    } else {
+      setStep('summary');
+    }
+  };
+
+  const handleClientNext = async () => {
+    if (clientMode === 'new' && !createdClientId) {
+      setAddingClient(true);
+      const c = await addClient({
+        agent_id: agentId,
+        name: newClient.name.trim(),
+        phone: newClient.phone.trim(),
+        status: 'PROSPECT',
+      });
+      setAddingClient(false);
+      if (c) {
+        setLocalClients(prev => [c, ...prev]);
+        setCreatedClientId(c.id);
+        toast.success(t('Client saved to your client list', 'Klien otomatis tersimpan di daftar Klien Anda'));
+      } else {
+        toast.error(t('Could not save client — continuing as one-time client.', 'Gagal menyimpan klien — penawaran tetap dilanjutkan.'));
+      }
+    }
+    proceedAfterClient();
+  };
   const canProceedInputs = (): boolean => {
     if (product === 'CAR' || product === 'MOTORCYCLE') return !!carInputs.brand && !!carInputs.model && carInputs.price > 0;
     if (product === 'TRAVEL') return !!travelInputs.destination && !!travelInputs.startDate && !!travelInputs.endDate;
@@ -365,10 +414,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   };
 
   const reset = () => {
-    setStep('client');
-    setClientMode('select');
+    setStep('product');
+    setClientMode(localClients.length > 0 ? 'select' : 'new');
     setSelectedClientId('');
     setOnetimeName('');
+    setNewClient({ name: '', phone: '' });
+    setCreatedClientId('');
     setProduct(null);
     setQuoteMode(null);
     setCarInputs({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
@@ -380,8 +431,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     setCreatedPolicy(null);
   };
 
-  const stepIndex = ['client', 'product', 'inputs', 'summary'].indexOf(
-    step === 'quote_summary' ? 'inputs' : step
+  const stepIndex = ['product', 'inputs', 'client', 'summary'].indexOf(
+    step === 'quote_summary' ? 'summary' : step
   );
 
   const inputClass = "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/60 transition-all";
@@ -468,11 +519,11 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {quoteTab === 'new' && (<>
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={step === 'client' ? onBack : () => {
-          if (step === 'product') { setStep('client'); setQuoteMode(null); }
-          else if (step === 'inputs') { setStep('product'); setQuoteMode(null); }
-          else if (step === 'quote_summary') setStep('inputs');
-          else if (step === 'summary') setStep('inputs');
+        <button onClick={step === 'product' ? onBack : () => {
+          if (step === 'inputs') { setStep('product'); setQuoteMode(null); }
+          else if (step === 'client') setStep('inputs');
+          else if (step === 'quote_summary') setStep('client');
+          else if (step === 'summary') setStep('client');
         }} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 active:bg-gray-200 transition-colors flex-shrink-0">
           <ChevronLeft size={18} />
         </button>
@@ -492,13 +543,20 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         />
       </div>
 
-      {/* ─── STEP 1: SELECT CLIENT ─── */}
+      {/* ─── STEP 3: CLIENT (setelah produk & input — tidak wajib buat data klien duluan) ─── */}
       {step === 'client' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mx-0 rounded-2xl bg-white border border-gray-100 p-4 text-sm font-medium text-gray-500">
+            {t('Who is this quote for?', 'Penawaran ini untuk siapa?')}
+            <p className="text-xs text-gray-400 mt-1 font-normal">
+              {t('Pick an existing client, add a new one instantly, or just type a name.',
+                 'Pilih klien lama, tambah klien baru langsung di sini, atau cukup ketik nama.')}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setClientMode('select')}
-              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 clientMode === 'select'
                   ? 'bg-emerald-500 text-white shadow-lg'
                   : 'bg-white border border-gray-200 text-gray-500'
@@ -507,8 +565,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               <Users size={14} />{t('My Clients', 'Klien Saya')}
             </button>
             <button
+              onClick={() => setClientMode('new')}
+              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                clientMode === 'new'
+                  ? 'bg-emerald-500 text-white shadow-lg'
+                  : 'bg-white border border-gray-200 text-gray-500'
+              }`}
+            >
+              <UserPlus size={14} />{t('New Client', 'Klien Baru')}
+            </button>
+            <button
               onClick={() => setClientMode('onetime')}
-              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+              className={`py-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 clientMode === 'onetime'
                   ? 'bg-emerald-500 text-white shadow-lg'
                   : 'bg-white border border-gray-200 text-gray-500'
@@ -518,12 +586,20 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             </button>
           </div>
 
-          {clientMode === 'select' ? (
+          {clientMode === 'select' && (
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-              {clients.length === 0 && (
-                <p className="text-center text-slate-400 text-sm py-6 font-medium">{t('No clients yet. Add clients in the Clients tab.', 'Belum ada klien. Tambahkan di tab Klien.')}</p>
+              {localClients.length === 0 && (
+                <div className="text-center py-6 space-y-2">
+                  <p className="text-slate-400 text-sm font-medium">{t('No clients yet.', 'Belum ada klien.')}</p>
+                  <button
+                    onClick={() => setClientMode('new')}
+                    className="inline-flex items-center gap-1.5 text-emerald-600 text-sm font-bold"
+                  >
+                    <UserPlus size={14} /> {t('Add a new client here', 'Tambah klien baru di sini')}
+                  </button>
+                </div>
               )}
-              {clients.map(c => (
+              {localClients.map(c => (
                 <button
                   key={c.id}
                   onClick={() => setSelectedClientId(c.id)}
@@ -544,7 +620,38 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 </button>
               ))}
             </div>
-          ) : (
+          )}
+
+          {clientMode === 'new' && (
+            <div className="space-y-3">
+              <div>
+                <label className={labelClass}>{t('Client Name', 'Nama Klien')} *</label>
+                <input
+                  type="text"
+                  placeholder={t('Enter client name…', 'Masukkan nama klien…')}
+                  value={newClient.name}
+                  onChange={e => { setNewClient(v => ({ ...v, name: e.target.value })); setCreatedClientId(''); }}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{t('Phone (WhatsApp)', 'No. HP (WhatsApp)')} *</label>
+                <input
+                  type="tel"
+                  placeholder="08xxxxxxxxxx"
+                  value={newClient.phone}
+                  onChange={e => { setNewClient(v => ({ ...v, phone: e.target.value })); setCreatedClientId(''); }}
+                  className={inputClass}
+                />
+              </div>
+              <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5">
+                <CheckCircle2 size={12} />
+                {t('Saved automatically to your client list.', 'Otomatis tersimpan ke daftar Klien Anda.')}
+              </p>
+            </div>
+          )}
+
+          {clientMode === 'onetime' && (
             <div>
               <label className={labelClass}>{t('Client Name', 'Nama Klien')}</label>
               <input
@@ -558,21 +665,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           )}
 
           <button
-            disabled={!canProceedClient}
-            onClick={() => setStep('product')}
+            disabled={!canProceedClient || addingClient}
+            onClick={handleClientNext}
             className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {t('Next', 'Lanjut')} <ChevronRight size={16} />
+            {addingClient ? <RefreshCw size={16} className="animate-spin" /> : <>{t('See Quote', 'Lihat Penawaran')} <ChevronRight size={16} /></>}
           </button>
         </div>
       )}
 
-      {/* ─── STEP 2: SELECT PRODUCT ─── */}
+      {/* ─── STEP 1: SELECT PRODUCT ─── */}
       {step === 'product' && (
         <div className="space-y-4">
-          <div className="mx-5 mt-4 rounded-2xl bg-white border border-gray-100 p-4 text-sm font-medium text-gray-500">
-            {t('Quote for:', 'Penawaran untuk:')} <span className="text-gray-900 font-semibold">{clientName}</span>
-          </div>
           <div className="grid grid-cols-2 gap-3">
             {PRODUCTS.map(p => {
               const Icon = p.icon;
@@ -684,7 +788,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         </div>
       )}
 
-      {/* ─── STEP 3: PRODUCT INPUTS ─── */}
+      {/* ─── STEP 2: PRODUCT INPUTS ─── */}
       {step === 'inputs' && (
         <div className="space-y-4">
           {/* STNK Auto-Extract — AI reads STNK and pre-fills vehicle data + recommends package */}
@@ -889,16 +993,10 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
           <button
             disabled={!canProceedInputs()}
-            onClick={() => {
-              if ((product === 'CAR' || product === 'MOTORCYCLE') && quoteMode === 'penawaran') {
-                setStep('quote_summary');
-              } else {
-                setStep('summary');
-              }
-            }}
+            onClick={() => setStep('client')}
             className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {t('See Quote', 'Lihat Penawaran')} <ChevronRight size={16} />
+            {t('Next: Client Info', 'Lanjut: Data Klien')} <ChevronRight size={16} />
           </button>
         </div>
       )}

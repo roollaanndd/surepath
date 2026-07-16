@@ -20,7 +20,7 @@ import {
 } from '../../services/vehicleDatabase';
 import {
   createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
-  getAvailableInsurerProducts, autoSendReviewLink,
+  getAvailableInsurerProducts, autoSendReviewLink, addClient,
   type SpClient, type SpProductConfig, type SpInsurerProduct,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
@@ -547,6 +547,23 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           ? manualClient.ktp
           : (selectedClient?.ktp ?? '');
 
+        // UX v1.50.0: data klien baru yang diketik manual otomatis tersimpan
+        // ke CRM (sp_clients) — agent tidak perlu membuat data klien duluan.
+        // Non-blocking: kegagalan simpan tidak menghambat pembuatan order.
+        if (useManualClient && clientName.trim() && clientPhone.trim()) {
+          const normalize = (s: string) => s.replace(/\D/g, '');
+          const already = clients.some(c => normalize(c.phone ?? '') === normalize(clientPhone));
+          if (!already) {
+            addClient({
+              agent_id: agentId,
+              name: clientName.trim(),
+              phone: clientPhone.trim(),
+              ktp: clientKtp?.trim() || undefined,
+              status: 'PROSPECT',
+            }).catch(() => {});
+          }
+        }
+
         const breakdown = calcPremium(vehicleType, coverageType, sumInsured, zone, addons);
         const { code: productCode, name: productName } = productInfo(vehicleType, coverageType);
 
@@ -835,6 +852,10 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 maxLength={16}
               />
             </div>
+            <p className="text-xs text-[#16a34a] font-semibold flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5" />
+              Data klien baru otomatis tersimpan ke daftar Klien Anda.
+            </p>
           </div>
         </SectionCard>
       )}

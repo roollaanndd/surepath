@@ -5,10 +5,27 @@
 // snapshots the quotation via the data-gateway (save_quotation), and
 // exposes the public fetch/confirm calls used by EQuotationPage.
 
-import { callGateway } from './db';
+import { callGateway, supabase } from './db';
 import { generateQuotationSlipPDF, type QuotationSlipData } from './quotationSlipPdf';
 
 const GATEWAY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/data-gateway`;
+// Standalone bridge that serves the quotation actions until the main
+// data-gateway is redeployed with its quotations module — the client falls
+// back here whenever data-gateway answers "Unknown action".
+const BRIDGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/quotations-gateway`;
+
+const isUnknownAction = (err?: string): boolean => /unknown action/i.test(err ?? '');
+
+async function callBridge<T = any>(action: string, params: Record<string, unknown>, authToken?: string): Promise<{ data?: T; error?: string }> {
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+    const res = await fetch(BRIDGE_URL, { method: 'POST', headers, body: JSON.stringify({ action, params }) });
+    return await res.json();
+  } catch (e: any) {
+    return { error: e?.message ?? 'Network error' };
+  }
+}
 
 export const E_QUOTE_BASE_URL = 'https://myinsurepath.com/q/';
 
@@ -47,7 +64,7 @@ export interface SaveQuotationInput {
 export async function saveQuotationSnapshot(input: SaveQuotationInput): Promise<boolean> {
   try {
     const { code, data, sourceApp, orderId, totalPremiumNumeric } = input;
-    const { error } = await callGateway('save_quotation', {
+    const params = {
       code,
       quotation_number: data.quotationNumber,
       product_type: data.productType ?? 'MOTOR',
@@ -61,7 +78,12 @@ export async function saveQuotationSnapshot(input: SaveQuotationInput): Promise<
       valid_until: data.validUntil ?? null,
       source_app: sourceApp,
       order_id: orderId ?? null,
-    });
+    };
+    let { error } = await callGateway('save_quotation', params);
+    if (isUnknownAction(error)) {
+      const { data: { session } } = await supabase.auth.getSession();
+      ({ error } = await callBridge('save_quotation', params, session?.access_token));
+    }
     if (error) {
       console.warn('quotationService: save_quotation failed —', error);
       return false;
@@ -99,9 +121,11 @@ async function callPublicGateway<T = any>(action: string, params: Record<string,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, params }),
     });
-    return await res.json();
+    const out = await res.json();
+    if (isUnknownAction(out?.error)) return await callBridge<T>(action, params);
+    return out;
   } catch (e: any) {
-    return { error: e?.message ?? 'Network error' };
+    return await callBridge<T>(action, params);
   }
 }
 

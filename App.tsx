@@ -52,6 +52,7 @@ const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
 const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
 const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
 const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
+const EQuotationPage    = lazy(() => import('./components/public/EQuotationPage'));
 // Old InsurerPortal (legacy) — kept for reference but not routed anymore
 // const OldInsurerPortal     = lazy(() => import('./components/InsurerPortal'));
 const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPortal'));
@@ -432,6 +433,12 @@ const App = () => {
   const reviewMatch = pathname.match(/^\/review\/([0-9a-f-]{36})$/i);
   if (reviewMatch) {
     return <Suspense fallback={<PortalLoader />}><InsuranceReviewPage token={reviewMatch[1]} /></Suspense>;
+  }
+
+  // ── Public e-quotation page (QR target on quotation slip PDFs) ────────────
+  const eQuoteMatch = pathname.match(/^\/q\/([A-Za-z0-9_-]{8,40})$/);
+  if (eQuoteMatch) {
+    return <Suspense fallback={<PortalLoader />}><EQuotationPage code={eQuoteMatch[1]} /></Suspense>;
   }
 
   const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health)$/);

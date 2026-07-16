@@ -8,7 +8,7 @@ import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from '../agent/A
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromOperatorOrder } from '../../services/quotationSlipAdapter';
 
 interface Props {
@@ -77,7 +77,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
     try {
       toast.info('Membuat Slip Penawaran PDF (4 halaman)...');
       const slipData = fromOperatorOrder(o as any);
-      await generateQuotationSlipPDF(slipData);
+      await publishAndDownloadQuotation(slipData, { sourceApp: 'OPERATOR', orderId: o.id, totalPremiumNumeric: (o as any).total_premium ?? undefined });
       toast.success('Slip Penawaran berhasil dibuat!');
     } catch (e: any) {
       toast.error(`Gagal membuat PDF: ${e.message}`);

@@ -13,7 +13,7 @@ import {
 import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
@@ -55,7 +55,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     if (downloadingSlip) return;
     setDownloadingSlip(true);
     try {
-      await generateQuotationSlipPDF(fromCustomerOrder(order as any));
+      await publishAndDownloadQuotation(fromCustomerOrder(order as any), { sourceApp: 'ADMIN', orderId: (order as any).id, totalPremiumNumeric: (order as any).total_premium ?? undefined });
     } catch (e) {
       console.error('Quotation slip download failed:', e);
     } finally {

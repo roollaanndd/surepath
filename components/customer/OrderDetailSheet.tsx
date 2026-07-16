@@ -3,7 +3,7 @@ import { X, Car, ShieldCheck, CheckCircle, Circle, XCircle, Download } from 'luc
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { cancelMyOrder, type SpPolicyOrder } from '../../services/supabaseService';
-import { generateQuotationSlipPDF } from '../../services/quotationSlipPdf';
+import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import { useToast, useConfirmDialog } from '../ui';
 
@@ -38,7 +38,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
     setDownloadingQuote(true);
     try {
       const slipData = fromCustomerOrder(order as any);
-      await generateQuotationSlipPDF(slipData);
+      await publishAndDownloadQuotation(slipData, { sourceApp: 'CUSTOMER', orderId: (order as any).id, totalPremiumNumeric: (order as any).total_premium ?? undefined });
       toast.success(t('Quotation slip downloaded', 'Slip penawaran berhasil diunduh'));
     } catch (e: any) {
       console.error('Quotation slip download failed:', e);

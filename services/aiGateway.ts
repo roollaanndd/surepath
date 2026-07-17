@@ -30,6 +30,9 @@ export interface AIResponse {
 }
 
 // ─── Core: Call AI Gateway (via local server with z-ai SDK) ─────────────────
+// On Vercel production the local /api/ai-gateway endpoint has no z-ai SDK and
+// returns 503/404, so we fall back to the ai-proxy edge function (OpenRouter,
+// authenticated with the user's Supabase JWT) with the same system prompt.
 async function callAIGateway(
   agentType: AgentType,
   userMessage: string,
@@ -37,24 +40,74 @@ async function callAIGateway(
 ): Promise<AIResponse> {
   const systemPrompt = buildSystemPrompt(agentType, context);
 
-  // Call the local server's /api/ai-gateway endpoint (uses z-ai SDK)
-  const response = await fetch('/api/ai-gateway', {
+  try {
+    // Call the local server's /api/ai-gateway endpoint (uses z-ai SDK)
+    const response = await fetch('/api/ai-gateway', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agentType,
+        systemPrompt,
+        userMessage,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'AI Gateway error' }));
+      throw new Error(err.error || `HTTP ${response.status}`);
+    }
+
+    const { data } = await response.json();
+    return data as AIResponse;
+  } catch (e) {
+    console.warn(`AI Gateway unavailable for ${agentType}, falling back to ai-proxy:`, e);
+    return await callAiProxyFallback(systemPrompt, userMessage);
+  }
+}
+
+// ─── Fallback: ai-proxy edge function (OpenRouter) ──────────────────────────
+async function callAiProxyFallback(systemPrompt: string, userMessage: string): Promise<AIResponse> {
+  const { supabase } = await import('./db');
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error('Silakan login terlebih dahulu untuk menggunakan asisten AI.');
+
+  const started = Date.now();
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-proxy`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({
-      agentType,
-      systemPrompt,
-      userMessage,
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      max_tokens: 1500,
+      temperature: 0.5,
     }),
   });
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'AI Gateway error' }));
-    throw new Error(err.error || `HTTP ${response.status}`);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body?.error ?? `AI proxy error (HTTP ${res.status})`);
   }
 
-  const { data } = await response.json();
-  return data as AIResponse;
+  const content: string = body?.choices?.[0]?.message?.content ?? '';
+  if (!content) throw new Error('AI tidak memberikan jawaban. Coba lagi.');
+
+  return {
+    content,
+    model: body?.model ?? 'openai/gpt-4o-mini',
+    usage: {
+      inputTokens: body?.usage?.prompt_tokens ?? 0,
+      outputTokens: body?.usage?.completion_tokens ?? 0,
+      cost: 0,
+      latencyMs: Date.now() - started,
+    },
+  };
 }
 
 // ════════════════════════════════════════════════════════════════════════════

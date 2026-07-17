@@ -2,6 +2,26 @@
 
 ---
 
+## v1.50.0 — 2026-07-17
+
+### Website Speed Optimization + PWA Direct-Install Popup
+Audit Lighthouse (mobile, production build): skor performa **64 → 82**, FCP 3.8s → 2.4s, LCP 5.1s → 3.6s, Speed Index 25s → 6.6s, total bytes first load 3,7MB → 2,1MB.
+
+**Performa:**
+- **Hero video tidak lagi di-download 2×** — `HeroVideo` sebelumnya di-mount dua kali (varian desktop + mobile, disembunyikan CSS) sehingga `hero.mp4` 1,1MB terunduh ganda; kini satu `<video>` dengan `desktopPosition` responsif via matchMedia
+- **Hero video lazy** — `preload="none"` + IntersectionObserver; poster (`promo-poster.jpg`, di-preload `fetchpriority=high`) tampil seketika sebagai LCP, mp4 menyusul setelah paint
+- **Background video (`promo.mp4` dkk.) ditunda** — dimuat saat browser idle setelah `load`, tidak bersaing dengan resource kritis
+- **Google Fonts non-render-blocking** — pola `media="print" onload` + fallback `<noscript>`; teks tampil langsung dengan font fallback (display=swap)
+- **Precache service worker 4,2MB → ~1,5MB** — chunk portal berat (Agent/Admin/Operator/Insurer/Customer/B2B, jspdf, AnalyticsDashboard, stnkOcr, geminiService, dst.) dikeluarkan dari precache; di-cache on-demand via runtimeCaching (CacheFirst untuk asset ber-hash, SWR untuk gambar + Google Fonts)
+- **Manual chunk `pdf` + `recharts` dihapus** — manual chunk menyerap dependency bersama sehingga entry utama meng-import statis ±240KB jspdf+recharts di SEMUA halaman termasuk homepage; code-splitting alami kini mengisolasi keduanya ke halaman yang memakainya
+- **Logo dioptimalkan** — `surepath-logo-sm.png` (3KB, dari 102KB) untuk navbar/badge; `logo-sm.png` (11KB, dari 73KB) untuk splash/install prompt/app selector; file asli tetap ada untuk og:image
+
+**PWA:**
+- **Popup install langsung, hanya mobile view** — `InstallPrompt` + popup marketing site kini hanya muncul otomatis di mobile (viewport ≤768px / pointer coarse) dan HANYA saat browser menyediakan `beforeinstallprompt` (Android/Chromium) → tombol "Pasang Sekarang" memicu dialog install native satu ketuk
+- **Sheet instruksi "cara pasang" dihapus** dari popup otomatis (iOS Safari tidak punya API install langsung, jadi tidak ada auto-popup di iOS); tombol Install di navbar tetap tersedia di desktop
+
+---
+
 ## v1.40.0 — 2026-07-12
 
 ### Agent App World-Class Refinement (Stitch-driven, visual only)

@@ -58,12 +58,15 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-const isIOS = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-
 const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (window.navigator as any).standalone === true;
+
+// Mobile view = small viewport OR touch-first device. The auto install popup
+// only appears here; desktop users install via the browser UI / navbar button.
+export const isMobileView = () =>
+  window.matchMedia('(max-width: 768px)').matches ||
+  window.matchMedia('(pointer: coarse)').matches;
 
 interface Props {
   lang: string | 'EN' | 'ID';
@@ -75,8 +78,6 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [show, setShow] = useState(false);
-  const [ios, setIos] = useState(false);
-  const [manualMode, setManualMode] = useState(false);
   const [mode, setMode] = useState<'install' | 'update'>('install');
   const shownRef = useRef(false);
 
@@ -97,59 +98,31 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
     // Not standalone — check if dismissed
     if (isDismissed()) return;
 
-    const installedVer = getInstalledVersion();
-    if (installedVer) {
-      // Previously installed but not running standalone — maybe uninstalled
-      // or opened in a new browser. Show install prompt with "reinstall" copy.
-      setMode('install');
-    }
+    // Auto popup only on mobile view. Desktop keeps the browser's own install
+    // affordance + the navbar Install button; no unsolicited modal.
+    if (!isMobileView()) return;
 
-    const iosDevice = isIOS();
-    setIos(iosDevice);
-
-    if (iosDevice) {
-      setTimeout(() => { if (!shownRef.current) { shownRef.current = true; setShow(true); } }, 2500);
-      return;
-    }
-
-    let fired = false;
+    // Only offer DIRECT install: the popup appears exclusively when the browser
+    // hands us `beforeinstallprompt` (Android/Chromium), so the button installs
+    // in one tap — never a "how to install" instruction sheet. iOS Safari has no
+    // programmatic-install API, so no auto popup there.
     const handler = (e: any) => {
       e.preventDefault();
-      fired = true;
       setDeferredPrompt(e);
-      setTimeout(() => { if (!shownRef.current) { shownRef.current = true; setShow(true); } }, 2000);
+      setTimeout(() => { if (!shownRef.current) { shownRef.current = true; setShow(true); } }, 1500);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
-    // Fallback — Chrome withholds the event when install criteria are pending
-    const fallback = setTimeout(() => {
-      if (!fired && !isStandalone() && !shownRef.current) {
-        setManualMode(true);
-        shownRef.current = true;
-        setShow(true);
-      }
-    }, 4000);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      clearTimeout(fallback);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstall = async () => {
-    if (ios) { handleDismiss(); return; }
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setInstalledVersion(APP_VERSION);
-        setShow(false);
-        setDeferredPrompt(null);
-      }
-    } else {
-      // Manual mode — user will install via browser menu
+    if (!deferredPrompt) { handleDismiss(); return; }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
       setInstalledVersion(APP_VERSION);
-      handleDismiss();
+      setShow(false);
+      setDeferredPrompt(null);
     }
   };
 
@@ -202,7 +175,7 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
             <X size={15} className="text-slate-500" />
           </button>
           <div className="w-16 h-16 mx-auto rounded-[1.4rem] bg-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/20 flex items-center justify-center mb-3">
-            <img loading="lazy" src="/logo.png" alt="SurePath" className="w-11 h-12 object-contain" />
+            <img loading="lazy" src="/logo-sm.png" alt="SurePath" className="w-11 h-12 object-contain" />
           </div>
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">SurePath</p>
           <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
@@ -225,47 +198,24 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
               <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-snug">{b}</p>
             </div>
           ))}
-
-          {(ios || manualMode) && (
-            <div className="mt-1 rounded-2xl bg-white/70 dark:bg-white/5 border border-emerald-900/10 dark:border-white/10 p-3.5 space-y-2">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                {ios ? t('Cara Pasang di iPhone / iPad', 'How to install on iPhone / iPad') : t('Cara Pasang', 'How to install')}
-              </p>
-              {(ios ? [
-                t('Ketuk ikon Share (kotak panah ke atas) di Safari', 'Tap the Share icon (box with arrow) in Safari'),
-                t('Pilih "Tambahkan ke Layar Utama"', 'Choose "Add to Home Screen"'),
-                t('Ketuk "Tambahkan"', 'Tap "Add"'),
-              ] : [
-                t('Buka menu browser (ikon ⋮ di kanan atas)', 'Open the browser menu (⋮ icon, top right)'),
-                t('Pilih "Instal aplikasi" / "Tambahkan ke Layar Utama"', 'Choose "Install app" / "Add to Home Screen"'),
-                t('Konfirmasi pemasangan', 'Confirm the install'),
-              ]).map((step, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black text-white bg-emerald-500">{i + 1}</span>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-snug">{step}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Actions */}
+        {/* Actions — one-tap native install (popup only renders when the browser
+            provided beforeinstallprompt, so this always installs directly) */}
         <div className="p-6 pt-4 flex gap-2.5">
-          {!ios && !manualMode && (
-            <button
-              onClick={handleInstall}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white uppercase tracking-widest active:scale-[0.98] transition-transform"
-              style={{ background: 'linear-gradient(135deg, #059669, #047857)', boxShadow: '0 14px 30px -12px rgba(5,150,105,0.6)' }}
-            >
-              <Download size={16} />
-              {t('Pasang Sekarang', 'Install Now')}
-            </button>
-          )}
+          <button
+            onClick={handleInstall}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white uppercase tracking-widest active:scale-[0.98] transition-transform"
+            style={{ background: 'linear-gradient(135deg, #059669, #047857)', boxShadow: '0 14px 30px -12px rgba(5,150,105,0.6)' }}
+          >
+            <Download size={16} />
+            {t('Pasang Sekarang', 'Install Now')}
+          </button>
           <button
             onClick={handleDismiss}
-            className={`${(ios || manualMode) ? 'flex-1' : ''} flex items-center justify-center px-5 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-500 bg-emerald-900/[0.06] dark:bg-white/5 active:scale-[0.98] transition-transform`}
+            className="flex items-center justify-center px-5 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-500 bg-emerald-900/[0.06] dark:bg-white/5 active:scale-[0.98] transition-transform"
           >
-            {(ios || manualMode) ? t('Mengerti', 'Got it') : t('Nanti', 'Later')}
+            {t('Nanti', 'Later')}
           </button>
         </div>
       </div>

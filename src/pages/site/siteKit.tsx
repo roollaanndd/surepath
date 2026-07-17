@@ -229,23 +229,51 @@ export const AnimatedCounter: React.FC<{ target: number; suffix: string; duratio
 };
 
 // ─── Hero video ───────────────────────────────────────────────────────────────
-export const HeroVideo: React.FC<{ position?: string }> = ({ position }) => {
+// Mounted ONCE per page. The poster paints immediately (LCP); the 1.1 MB mp4 is
+// attached only after the element is on screen, so it never blocks first load —
+// and never downloads twice for hidden desktop/mobile variants.
+// `desktopPosition` applies object-position at ≥1024px without a second <video>.
+export const HeroVideo: React.FC<{ position?: string; desktopPosition?: string }> = ({ position, desktopPosition }) => {
   const ref = useRef<HTMLVideoElement>(null);
+  const [srcReady, setSrcReady] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  );
+
   useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    const v = ref.current; if (!v) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setSrcReady(true); obs.disconnect(); }
+    }, { rootMargin: '200px' });
+    obs.observe(v);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!srcReady) return;
     const v = ref.current; if (!v) return;
     // Some browsers silently block autoplay even with muted. Retry once on visibility.
     const tryPlay = () => { v.play().catch(() => {}); };
     tryPlay();
     document.addEventListener('visibilitychange', tryPlay);
     return () => document.removeEventListener('visibilitychange', tryPlay);
-  }, []);
+  }, [srcReady]);
+
+  const objectPosition = (isDesktop && desktopPosition) ? desktopPosition : position;
   return (
-    <video ref={ref} autoPlay muted loop playsInline preload="metadata"
+    <video ref={ref} autoPlay muted loop playsInline preload="none"
       poster="/promo-poster.jpg"
+      src={srcReady ? '/hero.mp4' : undefined}
       className="absolute inset-0 w-full h-full object-cover"
-      style={position ? { objectPosition: position } : undefined}>
-      <source src="/hero.mp4" type="video/mp4" />
-    </video>
+      style={objectPosition ? { objectPosition } : undefined}
+    />
   );
 };
 
@@ -394,7 +422,7 @@ export const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }
       <div className="relative p-5 flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 animate-glow"
           style={{ background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.3)' }}>
-          <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
+          <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" className="w-10 h-10 object-contain" onError={(e)=>{(e.target as HTMLImageElement).style.display='none';}} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white font-black text-sm">Install SurePath</p>

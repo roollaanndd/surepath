@@ -47,9 +47,10 @@ const HomePage: React.FC<SitePageProps> = (props) => {
       <section className="relative min-h-screen min-h-[100dvh] flex items-end overflow-hidden"
         style={{ background: 'linear-gradient(135deg, hsl(130 60% 4%) 0%, hsl(0 0% 5%) 50%, hsl(220 30% 6%) 100%)' }}>
         {/* Video full-bleed; object-position pushes the subject right on desktop so the
-            left side is still video content — no seam, colors always blend */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden hidden lg:block"><HeroVideo position="78% center" /></div>
-        <div className="absolute inset-0 pointer-events-none overflow-hidden lg:hidden"><HeroVideo /></div>
+            left side is still video content — no seam, colors always blend.
+            Single mounted <video> — desktop position handled inside HeroVideo so the
+            1.1 MB mp4 is downloaded once, not once per hidden breakpoint variant. */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden"><HeroVideo desktopPosition="78% center" /></div>
         {/* Desktop: subtle left scrim for copy legibility — translucent so video shows through */}
         <div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 30%, rgba(0,0,0,0.08) 52%, transparent 68%)', zIndex: 1 }} />
         {/* Light bottom gradient for legibility — much thinner than before */}

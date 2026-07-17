@@ -7,6 +7,7 @@ import {
   SectionBackground, PWAPopup, InstallModal, SiteChromeContext, useSiteChrome, isStandaloneMode, ACCENT,
 } from './siteKit';
 import { FloatingWhatsApp } from '../../../components/ui';
+import { isMobileView } from '../../../components/InstallPrompt';
 
 // ─── PWA install state hook ───────────────────────────────────────────────────
 const usePwa = () => {
@@ -16,7 +17,9 @@ const usePwa = () => {
   const [installModalOpen, setInstallModalOpen] = useState(false);
 
   useEffect(() => {
-    const handler = (e: Event) => { e.preventDefault(); setPwaPrompt(e); setTimeout(() => setPwaVisible(true), 4000); };
+    // Store the prompt for the navbar Install button everywhere, but only
+    // auto-open the popup on mobile view — one-tap direct install, no how-to.
+    const handler = (e: Event) => { e.preventDefault(); setPwaPrompt(e); if (isMobileView()) setTimeout(() => setPwaVisible(true), 4000); };
     window.addEventListener('beforeinstallprompt', handler);
     window.addEventListener('appinstalled', () => setPwaInstalled(true));
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -68,7 +71,7 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
 
       {/* Logo */}
       <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="flex items-center gap-2.5 group flex-shrink-0">
-        <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="h-7 w-auto object-contain"
+        <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" className="h-7 w-auto object-contain"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         <span className="text-xl font-semibold tracking-tight" style={{ color: th.textMain }}>
           Sure<span style={{ color: ACCENT }}>Path</span>
@@ -193,7 +196,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
           {/* Brand column */}
           <div className="col-span-2 flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <img loading="lazy" src="/surepath-logo.png" alt="SurePath" className="h-8 w-auto object-contain"
+              <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" className="h-8 w-auto object-contain"
                 onError={(e) => {
                   const tg = e.target as HTMLImageElement; tg.style.display = 'none';
                   const n = tg.nextElementSibling as HTMLElement | null; if (n) n.style.display = 'flex';
@@ -299,13 +302,33 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
   const th = useSiteTheme(page.darkMode);
   const pwa = usePwa();
 
+  // The background video sits at zIndex -1 behind the hero, so it is invisible
+  // during first paint — defer its ~0.7-1 MB download until the page has loaded
+  // and the browser is idle, instead of competing with critical resources.
+  const [bgReady, setBgReady] = useState(false);
+  useEffect(() => {
+    if (!bgVideo) return;
+    let idleId: number | undefined;
+    const schedule = () => {
+      const ric = (window as any).requestIdleCallback as undefined | ((cb: () => void, opts?: { timeout: number }) => number);
+      idleId = ric ? ric(() => setBgReady(true), { timeout: 4000 }) : window.setTimeout(() => setBgReady(true), 1500) as unknown as number;
+    };
+    if (document.readyState === 'complete') schedule();
+    else window.addEventListener('load', schedule, { once: true });
+    return () => {
+      window.removeEventListener('load', schedule);
+      const cic = (window as any).cancelIdleCallback;
+      if (idleId !== undefined) (cic ? cic(idleId) : clearTimeout(idleId));
+    };
+  }, [bgVideo]);
+
   return (
     <SiteChromeContext.Provider value={{ onInstall: pwa.handleInstallClick, installed: pwa.pwaInstalled }}>
       <div className="min-h-screen font-sora"
         style={{ background: bgVideo ? 'transparent' : th.sectionBg1, color: th.textMain }}>
 
         {/* Fixed looping video background — sits behind all page content */}
-        {bgVideo && (
+        {bgVideo && bgReady && (
           <video autoPlay muted loop playsInline preload="auto"
             style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
             <source src={bgVideo} type="video/mp4" />
@@ -315,7 +338,7 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
         {/* SurePath badge — covers the Gemini watermark in the bottom-right corner */}
         {bgVideo && (
           <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
-            <img loading="lazy" src="/surepath-logo.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
+            <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
               Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>

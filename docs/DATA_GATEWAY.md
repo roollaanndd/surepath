@@ -40,6 +40,15 @@ Origin yang diizinkan:
 | `get_my_orders` / `get_my_claims` / `get_my_payments` | Data customer sendiri (scoped client_id / user_id / order milik sendiri) |
 | `cancel_my_order` | Batalkan order sendiri (status SUBMITTED/UNDER_REVIEW); kepemilikan diverifikasi server-side via `client_id` |
 
+### E-Quotation (v1.51.0 — runtime kanonik: edge function `quotations-gateway`)
+| Action | Fungsi |
+|---|---|
+| `save_quotation` (authed) | Snapshot quotation saat PDF digenerate; set `link_expires_at = now()+14 hari` (refresh tiap regenerate) |
+| `get_public_quotation` (public) | Muat halaman `/q/{code}`; status jadi `EXPIRED` bila `valid_until` ATAU `link_expires_at` lewat |
+| `confirm_public_quotation` (public) | Konfirmasi intent nasabah; 410 bila link kedaluwarsa |
+
+> Client (`services/quotationService.ts`) memanggil **`quotations-gateway` DULU** untuk 3 action ini — data-gateway hanya fallback jaringan, karena bundle data-gateway production dideploy manual dan bisa tertinggal. Jaga `data-gateway/actions/quotations.ts` tetap sinkron dengan `quotations-gateway/index.ts`.
+
 ### Admin-only (role di ADMIN_ROLES)
 `admin_list_users`, `admin_get_user`, `admin_update_user`, `admin_register_agent`,
 `admin_invite_user` (khusus MASTER_ADMIN), `admin_list_clients`, `admin_list_claims`,

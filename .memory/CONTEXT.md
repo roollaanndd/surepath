@@ -1,8 +1,14 @@
 # SurePath Session Context
-**Updated:** 2026-07-17
+**Updated:** 2026-07-17 (sesi QR e-quotation)
 
 ## Current State
-- **Branch kerja:** `claude/claude-md-docs-oq5okn` — PR #86 (draft) berisi CLAUDE.md + optimasi performa v1.50.0
+- **Branch kerja:** `claude/claude-md-docs-oq5okn` — PR #86 berisi CLAUDE.md + perf v1.50.0 + QR e-quotation fix v1.51.0 (user minta merge ke main + deploy)
+
+## v1.51.0 — QR E-Quotation Fix (2026-07-17)
+- **Akar masalah "QR ke apps":** redirect pasca-login di App.tsx (`handleAuthSuccess` → `navigate(rolePath)`) membajak `/q/{code}`; kini di-guard via `isPublicStandalonePath` (`/q/`, `/review/`, `/payment/`)
+- **14 hari:** `sp_quotations.link_expires_at` default `now()+14d` — migrasi `20260717_quotation_link_expiry.sql` SUDAH diapply production, row lama di-backfill
+- **`quotations-gateway` = runtime kanonik** (v2 deployed, verify_jwt=false) — client memanggil bridge DULU; data-gateway hanya fallback. PENTING: bundle data-gateway production (v3, minified single-file) BELUM di-redeploy — modul quotations di dalamnya stale tapi tidak dipakai client; kalau nanti redeploy data-gateway, bundle dgn `npx esbuild supabase/functions/data-gateway/index.ts --bundle --format=esm --platform=neutral --external:npm:* --minify` lalu deploy single file
+- PDF QR fallback diperkuat: pakai `eQuoteCode` sebelum jatuh ke homepage
 - **main:** v1.49.0 (APP_VERSION di `src/version.ts`; package.json 1.40.0 — lagging, jangan dipercaya)
 - **Build:** passing ✅ — tsc clean, 72/72 unit test pass
 - **Catatan sandbox:** egress policy memblokir `myinsurepath.com:443` — speed test/QA live harus lewat build lokal (`vite build` + `vite preview` + Lighthouse dgn chromium `/opt/pw-browsers`); `.env.development` TIDAK terbaca `vite build` (production mode) — export env dulu

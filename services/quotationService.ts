@@ -9,9 +9,11 @@ import { callGateway, supabase } from './db';
 import { generateQuotationSlipPDF, type QuotationSlipData } from './quotationSlipPdf';
 
 const GATEWAY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/data-gateway`;
-// Standalone bridge that serves the quotation actions until the main
-// data-gateway is redeployed with its quotations module — the client falls
-// back here whenever data-gateway answers "Unknown action".
+// quotations-gateway is the CANONICAL runtime for the quotation actions: it is
+// small, self-contained, and redeployed on every quotation change. The copy of
+// the quotations module inside the deployed data-gateway bundle can lag behind
+// (it is deployed manually and less often), so the client calls the bridge
+// FIRST and only falls back to data-gateway if the bridge is unreachable.
 const BRIDGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/quotations-gateway`;
 
 const isUnknownAction = (err?: string): boolean => /unknown action/i.test(err ?? '');
@@ -79,10 +81,11 @@ export async function saveQuotationSnapshot(input: SaveQuotationInput): Promise<
       source_app: sourceApp,
       order_id: orderId ?? null,
     };
-    let { error } = await callGateway('save_quotation', params);
-    if (isUnknownAction(error)) {
-      const { data: { session } } = await supabase.auth.getSession();
-      ({ error } = await callBridge('save_quotation', params, session?.access_token));
+    // Bridge first (canonical, always current); data-gateway as fallback.
+    const { data: { session } } = await supabase.auth.getSession();
+    let { error } = await callBridge('save_quotation', params, session?.access_token);
+    if (error) {
+      ({ error } = await callGateway('save_quotation', params));
     }
     if (error) {
       console.warn('quotationService: save_quotation failed —', error);
@@ -114,18 +117,24 @@ export async function publishAndDownloadQuotation(
 }
 
 // ── Public fetch/confirm (no auth — e-quotation page) ──────────────────────
+// Bridge first (canonical, enforces the 14-day link expiry); data-gateway as
+// network fallback only.
 async function callPublicGateway<T = any>(action: string, params: Record<string, unknown>): Promise<{ data?: T; error?: string }> {
+  const viaBridge = await callBridge<T>(action, params);
+  // Domain answers (data, 404 "not found", 410 "expired", …) are final.
+  // Only fall back when the bridge could not answer at all.
+  const bridgeUnavailable = !!viaBridge.error
+    && (isUnknownAction(viaBridge.error) || /fetch|network|load failed/i.test(viaBridge.error));
+  if (!bridgeUnavailable) return viaBridge;
   try {
     const res = await fetch(GATEWAY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, params }),
     });
-    const out = await res.json();
-    if (isUnknownAction(out?.error)) return await callBridge<T>(action, params);
-    return out;
-  } catch {
-    return await callBridge<T>(action, params);
+    return await res.json();
+  } catch (e: any) {
+    return { error: e?.message ?? 'Network error' };
   }
 }
 
@@ -141,6 +150,8 @@ export interface PublicQuotation {
   agent_phone: string | null;
   total_premium: number | null;
   valid_until: string | null;
+  /** QR link expiry — 14 days from generation; page shows EXPIRED after this. */
+  link_expires_at?: string | null;
   confirmed_at: string | null;
   created_at: string;
   payload: Partial<QuotationSlipData>;

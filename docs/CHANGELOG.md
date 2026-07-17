@@ -2,6 +2,18 @@
 
 ---
 
+## v1.51.0 — 2026-07-17
+
+### Fix QR E-Quotation di PDF — 1 Quotation = 1 QR Unik, Berlaku 14 Hari
+QR pada PDF quotation sebelumnya "nyasar ke aplikasi": user yang sudah login (agen/admin yang menguji QR-nya sendiri) di-redirect paksa ke portalnya, sehingga halaman `/q/{code}` tidak pernah tampil.
+
+- **Redirect pasca-login tidak lagi membajak halaman publik** — `App.tsx` kini melewatkan `navigate(rolePath)` bila pathname adalah `/q/`, `/review/`, atau `/payment/`; siapa pun (login ataupun tidak, punya app ataupun tidak) yang scan QR mendarat di halaman e-quotation HTML khusus quotation tsb.
+- **Masa berlaku link 14 hari** — kolom baru `sp_quotations.link_expires_at` (default `now() + 14 hari`, di-refresh setiap PDF digenerate ulang; migrasi `20260717_quotation_link_expiry.sql` sudah diapply ke production, row lama di-backfill dari `created_at`). Setelah lewat, halaman menampilkan status *Kedaluwarsa* dan konfirmasi ditolak (HTTP 410). Halaman publik kini menampilkan "Tautan aktif s/d …".
+- **`quotations-gateway` jadi runtime kanonik** — client memanggil bridge ini DULU untuk semua action quotation (data-gateway hanya fallback jaringan), karena bundle data-gateway di production dideploy manual dan bisa tertinggal. Bridge v2 sudah dideploy dengan penegakan expiry; modul `data-gateway/actions/quotations.ts` di repo ikut disinkronkan.
+- **QR PDF tidak pernah fallback ke homepage** selama `eQuoteCode` ada — 1 quotation, 1 QR unik ke `https://myinsurepath.com/q/{code}`.
+
+---
+
 ## v1.50.0 — 2026-07-17
 
 ### Website Speed Optimization + PWA Direct-Install Popup

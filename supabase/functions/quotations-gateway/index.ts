@@ -1,13 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// quotations-gateway — standalone bridge for the e-quotation actions.
+// quotations-gateway — CANONICAL runtime for the e-quotation actions.
 //
-// The canonical implementation lives in data-gateway/actions/quotations.ts
-// and is dispatched by data-gateway once that function is redeployed
-// (`supabase functions deploy data-gateway`). This bridge exists so QR links
-// on generated quotation PDFs work immediately without redeploying the whole
-// gateway; services/quotationService.ts calls data-gateway first and falls
-// back here on "Unknown action". Safe to delete after the next data-gateway
-// deploy.
+// services/quotationService.ts calls this function FIRST for all quotation
+// actions (data-gateway is only a network fallback), because this file is
+// small, self-contained, and redeployed on every quotation change while the
+// data-gateway bundle is deployed manually and can lag. Keep the sibling
+// implementation in data-gateway/actions/quotations.ts in sync.
+//
+// QR link policy: 1 quotation = 1 unique code = 1 QR; the public link lives
+// 14 days (link_expires_at, refreshed when the PDF is regenerated).
 //
 // Actions:
 //   save_quotation            (authed, Supabase JWT)
@@ -136,6 +137,9 @@ Deno.serve(async (req) => {
           source_app: params.source_app ? String(params.source_app).slice(0, 20) : null,
           created_by: spUser.id,
           order_id: params.order_id ? String(params.order_id) : null,
+          // QR link lives 14 days from (re)generation — keep in sync with
+          // data-gateway/actions/quotations.ts.
+          link_expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           updated_at: new Date().toISOString(),
         };
 
@@ -155,7 +159,7 @@ Deno.serve(async (req) => {
 
         const { data: q, error } = await db
           .from('sp_quotations')
-          .select('code, quotation_number, product_type, product_name, status, payload, customer_name, insurer_name, agent_name, agent_phone, total_premium, valid_until, confirmed_at, created_at')
+          .select('code, quotation_number, product_type, product_name, status, payload, customer_name, insurer_name, agent_name, agent_phone, total_premium, valid_until, link_expires_at, confirmed_at, created_at')
           .eq('code', code)
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
@@ -168,7 +172,9 @@ Deno.serve(async (req) => {
             .then(() => {}, () => {});
         }
 
-        const expired = q.valid_until ? new Date(q.valid_until + 'T23:59:59') < new Date() : false;
+        const expired =
+          (q.valid_until ? new Date(q.valid_until + 'T23:59:59') < new Date() : false) ||
+          (q.link_expires_at ? new Date(q.link_expires_at) < new Date() : false);
         return json({
           data: {
             code: q.code,
@@ -182,6 +188,7 @@ Deno.serve(async (req) => {
             agent_phone: q.agent_phone,
             total_premium: q.total_premium,
             valid_until: q.valid_until,
+            link_expires_at: q.link_expires_at,
             confirmed_at: q.confirmed_at,
             created_at: q.created_at,
             payload: publicPayload(q.payload),
@@ -203,13 +210,16 @@ Deno.serve(async (req) => {
 
         const { data: q, error } = await db
           .from('sp_quotations')
-          .select('id, code, quotation_number, status, customer_name, agent_name, total_premium, valid_until')
+          .select('id, code, quotation_number, status, customer_name, agent_name, total_premium, valid_until, link_expires_at')
           .eq('code', code)
           .maybeSingle();
         if (error) return json({ error: error.message }, 500);
         if (!q) return json({ error: 'Quotation not found' }, 404);
         if (q.status === 'PAID') return json({ error: 'Quotation sudah dibayar' }, 409);
-        if (q.valid_until && new Date(q.valid_until + 'T23:59:59') < new Date()) {
+        if (
+          (q.valid_until && new Date(q.valid_until + 'T23:59:59') < new Date()) ||
+          (q.link_expires_at && new Date(q.link_expires_at) < new Date())
+        ) {
           return json({ error: 'Quotation sudah kedaluwarsa. Hubungi agen/tim SurePath untuk penawaran baru.' }, 410);
         }
 

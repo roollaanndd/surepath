@@ -37,6 +37,13 @@ const rolePath = (user: any) => {
     : role === UserRole.AGENT ? '/agapps' : '/custapp';
 };
 
+// Public standalone pages that must NEVER be hijacked by the post-login
+// portal redirect. A logged-in agent scanning the QR on their own quotation
+// PDF lands on /q/{code} — redirecting them to their portal breaks the QR
+// flow entirely (the reported "QR goes to the app" bug).
+const isPublicStandalonePath = (path: string) =>
+  /^\/(q|review)\//.test(path) || path.startsWith('/payment/');
+
 const AuthGate          = lazy(() => import('./components/AuthGate'));
 const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
 const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
@@ -205,7 +212,11 @@ const App = () => {
       setCurrentUser(userWithVersion);
       localStorage.setItem(SESSION_KEY, JSON.stringify(userWithVersion));
       setAppMode(true);
-      navigate(rolePath(userWithVersion));
+      // Keep the visitor on public standalone pages (/q/, /review/, /payment/)
+      // — only route to the portal from regular entry points.
+      if (!isPublicStandalonePath(window.location.pathname)) {
+        navigate(rolePath(userWithVersion));
+      }
     }, 1400);
   }, [navigate]);
 

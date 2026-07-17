@@ -23,9 +23,10 @@
     <meta name="author" content="SurePath" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://myinsurepath.com/" />
-    <!-- Hero video: do NOT preload — 12 MB on 3G blocks first paint for 6+ seconds.
-         The video element itself uses preload="none" and loads on viewport intersection. -->
-    <link rel="preload" as="image" href="/surepath-logo.png" />
+    <!-- Hero video: do NOT preload — 1+ MB blocks first paint on 3G.
+         The video element uses preload="none" and loads on viewport intersection.
+         The hero POSTER is the LCP image on the homepage — fetch it at high priority. -->
+    <link rel="preload" as="image" href="/promo-poster.jpg" fetchpriority="high" />
     <meta name="geo.region" content="ID" />
     <meta name="geo.country" content="Indonesia" />
     <meta name="language" content="Indonesian" />
@@ -227,7 +228,13 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Fonts load async (media=print → all on load) so they never block first paint;
+         display=swap keeps text visible with the fallback font meanwhile. -->
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+          rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    </noscript>
     <style>
       html { scroll-behavior: smooth; }
       body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: #fafaf9; color: #1e293b; }

@@ -54,7 +54,7 @@ export const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
       ))}
 
       {/* floating official logo */}
-      <img loading="lazy" src="/logo.png" alt="SurePath" width={104} height={120}
+      <img loading="lazy" src="/logo-sm.png" alt="SurePath" width={104} height={120}
         style={{ objectFit: 'contain', animation: 'pl-float 3s ease-in-out infinite',
           filter: 'drop-shadow(0 18px 28px rgba(5,150,105,0.28))' }} />
       {/* ground shadow */}
@@ -411,7 +411,7 @@ export const AppEntryScreen = ({ name, onDone, lang, darkMode }: { name: string;
           ))}
           <div className="relative w-full h-full rounded-[2.6rem] sp-glass flex items-center justify-center"
             style={{ animation: 'entry-bob 2.6s ease-in-out infinite' }}>
-            <img loading="lazy" src="/logo.png" alt="SurePath" width={76} height={88} style={{ objectFit: 'contain' }} />
+            <img loading="lazy" src="/logo-sm.png" alt="SurePath" width={76} height={88} style={{ objectFit: 'contain' }} />
           </div>
           {/* check badge — draws in */}
           <div className="absolute -bottom-1.5 -right-1.5 w-11 h-11 rounded-2xl flex items-center justify-center"

@@ -154,6 +154,11 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
             <div>
               <p className="text-[10px] font-bold text-gray-400 tracking-wide">BERLAKU SAMPAI</p>
               <p className="font-semibold text-emerald-950 text-xs">{q.valid_until ?? '30 hari sejak penerbitan'}</p>
+              {q.link_expires_at && (
+                <p className="mt-0.5 text-[10px] text-gray-400">
+                  Tautan aktif s/d {new Date(q.link_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              )}
             </div>
             {p.objectSummary && (
               <div className="col-span-2">

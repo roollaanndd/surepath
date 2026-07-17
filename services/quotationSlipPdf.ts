@@ -227,8 +227,10 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
     } catch { /* insurer logo is decorative — never blocks generation */ }
   }
 
-  // Unique QR — dark ink on white so any scanner reads it.
-  const eQuoteUrl = data.eQuoteUrl || 'https://myinsurepath.com';
+  // Unique QR — dark ink on white so any scanner reads it. NEVER fall back to
+  // the bare homepage while a code exists: 1 quotation = 1 unique QR link.
+  const eQuoteUrl = data.eQuoteUrl
+    || (data.eQuoteCode ? `https://myinsurepath.com/q/${data.eQuoteCode}` : 'https://myinsurepath.com');
   const qrDataUrl = await makeQrDataUrl(eQuoteUrl, '#0E2A1C', '#FFFFFF');
 
   // Auto-extract year tag from quotation number if missing

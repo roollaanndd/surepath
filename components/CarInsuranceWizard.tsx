@@ -60,6 +60,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState({
     brand: '', model: '', year: new Date().getFullYear(), isOther: false,
@@ -322,6 +323,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const handlePendingApprovalCheckout = async () => {
     if (!premiumBreakdown || !selectedProduct) return;
     setLoading(true);
+    setSubmitError(null);
     try {
       const commissionAmount = Math.round(
         (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
@@ -384,7 +386,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       setIsSuccess(true);
     } catch (e) {
       console.error('handlePendingApprovalCheckout:', e);
-      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
+      setSubmitError('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -420,6 +422,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const handlePaymentResult = async (_method: string, resultStatus: 'SUCCESS' | 'PENDING_PAYMENT') => {
     if (!premiumBreakdown || !selectedProduct) return;
     setLoading(true);
+    setSubmitError(null);
     try {
       const payLaterMode = resultStatus === 'PENDING_PAYMENT';
       setIsPayLater(payLaterMode);
@@ -514,7 +517,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
       setShowBurst(true);
     } catch (e) {
       console.error('handlePaymentResult:', e);
-      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
+      setSubmitError('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -649,6 +652,12 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
           {step === 5 && <StepSurvey survey={survey} setSurvey={setSurvey} stnkResult={stnkResult} setStnkResult={setStnkResult} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} photoValidation={photoValidation} setPhotoValidation={setPhotoValidation} vehicle={vehicle} />}
           {step === 6 && <StepFinal vehicle={vehicle} stnkResult={stnkResult} coverage={coverage} survey={survey} premiumBreakdown={premiumBreakdown} handleFinalPayment={handleNext} setStep={setStep} lang={lang} />}
           {step === 7 && <StepPayment premiumBreakdown={premiumBreakdown} onPaymentSuccess={handlePaymentResult} loading={loading} />}
+
+          {submitError && (
+            <div className="mt-4 bg-rose-50 p-4 rounded-xl border border-rose-200 flex gap-3 items-center">
+              <p className="text-xs text-rose-700 leading-relaxed">{submitError}</p>
+            </div>
+          )}
        </div>
 
        {/* FOOTER */}

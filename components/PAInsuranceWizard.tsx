@@ -35,6 +35,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [period, setPeriod] = useState<'1' | '12'>('12');
 
@@ -47,6 +48,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
   const handleActivate = async () => {
     if (isProcessing || !selectedPlanData) return;
     setIsProcessing(true);
+    setSubmitError(null);
     try {
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',
@@ -98,7 +100,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
       setIsSuccess(true);
     } catch (e) {
       console.error('handleActivate PA:', e);
-      console.warn('Gagal memproses pesanan. Silakan coba lagi.');
+      setSubmitError('Gagal memproses pesanan. Silakan coba lagi.');
     } finally {
       setIsProcessing(false);
     }
@@ -318,6 +320,12 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
              <span className="text-base font-bold text-emerald-600 font-mono">{formatIDR(selectedPlanData?.premium || 0)}</span>
           </div>
        </div>
+
+       {submitError && (
+         <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 flex gap-3 items-center">
+           <p className="text-xs text-rose-700 leading-relaxed">{submitError}</p>
+         </div>
+       )}
 
        <button
          onClick={handleActivate}

@@ -7,6 +7,7 @@
 
 import { supabase, callGateway, callPublicGateway } from './db';
 import { createAdminNotification } from './notifications';
+import { cachedFetch, invalidatePublicCache } from './publicCache';
 import type {
   SpWebsiteConfig,
   SpPolicyOrder,
@@ -24,14 +25,20 @@ import type {
 
 // ─── Website CMS Config (sp_website_config) ──────────────────────────────────
 
+// Public marketing copy — cached 5 min per client (SWR) so 100 concurrent
+// visitors don't fire 100× the same row reads. Admin edits below invalidate.
+const WEBSITE_CACHE_TTL = 5 * 60 * 1000;
+
 export async function fetchWebsiteSection(sectionKey: string): Promise<SpWebsiteConfig | null> {
-  const { data, error } = await supabase
-    .from('sp_website_config')
-    .select('*')
-    .eq('section_key', sectionKey)
-    .single();
-  if (error) return null;
-  return data as SpWebsiteConfig;
+  return cachedFetch(`website:${sectionKey}`, WEBSITE_CACHE_TTL, async () => {
+    const { data, error } = await supabase
+      .from('sp_website_config')
+      .select('*')
+      .eq('section_key', sectionKey)
+      .single();
+    if (error) return null;
+    return data as SpWebsiteConfig;
+  });
 }
 
 export async function fetchAllWebsiteSections(): Promise<SpWebsiteConfig[]> {
@@ -50,6 +57,7 @@ export async function upsertWebsiteSection(payload: Partial<SpWebsiteConfig> & {
     .select()
     .single();
   if (error) { console.error('upsertWebsiteSection:', error); return null; }
+  invalidatePublicCache('website:');
   return data as SpWebsiteConfig;
 }
 
@@ -58,6 +66,7 @@ export async function resetWebsiteSection(sectionKey: string): Promise<void> {
     .from('sp_website_config')
     .update({ headline: null, subtitle: null, cta_text: null, cta_secondary_text: null, bg_type: 'none', bg_value: null, is_visible: true, extra_json: {}, updated_at: new Date().toISOString() })
     .eq('section_key', sectionKey);
+  invalidatePublicCache('website:');
 }
 
 // ─── Page views / traffic ─────────────────────────────────────────────────────
@@ -419,7 +428,7 @@ export async function pathyChat(
     console.error('pathyChat error:', e);
     // Fallback to old gateway path if AI Gateway is unavailable
     const { data, error } = await callGateway('pathy_chat', { message });
-    if (error) throw new Error(error);
+    if (error) throw new Error(error, { cause: e });
     return (data as { reply: string }).reply;
   }
 }

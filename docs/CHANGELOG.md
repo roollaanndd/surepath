@@ -2,6 +2,18 @@
 
 ---
 
+## v1.52.0 — 2026-07-18
+
+### Database Readiness — Pooling, Indexes, Caching, Load Test
+Kesiapan skala untuk lonjakan pengguna (100+ user baru signup + pemakaian bersamaan).
+
+- **Connection pooling diverifikasi** — dikonfirmasi tidak ada satu pun koneksi Postgres mentah di codebase (client, semua edge function, `scripts/apply-migration.js`) — semuanya lewat PostgREST/HTTPS yang sudah di-pool otomatis oleh Supabase (Supavisor). `max_connections=60`, terpakai 12 saat idle — tidak ada risiko kehabisan koneksi dari pola trafik saat ini. Didokumentasikan di `docs/LOAD_TESTING.md` termasuk connection string pooler transaksi untuk tooling langsung di masa depan.
+- **Index hot-path baru** (migrasi `20260718_hot_path_indexes.sql`, sudah diapply production) — menutup 11 foreign key tanpa index yang berada di jalur query per-request: `sp_policy_orders.client_id/.insurer_id`, `sp_notifications.agent_id`, `sp_claims.user_id/.policy_id`, `sp_wallet_transactions.agent_id`, `sp_withdrawals.agent_id`, `sp_commissions.policy_id`, `sp_users.upline_id`, `sp_quotes.client_id`, `sp_policies.user_id`; plus hapus index duplikat di `sp_agent_agreements`.
+- **Caching baru** (`services/publicCache.ts`) — TTL cache (memory + localStorage, stale-while-revalidate) khusus data publik read-heavy: `fetchWebsiteSection` (5 menit) dan `getActiveOjkRateSet` (10 menit, dibaca tiap app boot). Tidak dipakai untuk data sensitif/per-user — jalur `callGateway` tetap tanpa cache client.
+- **Load test** — homepage + 4 halaman publik diuji `autocannon` 100 koneksi bersamaan: **~3.400 req/detik rata-rata, p99 di bawah 85ms, 0 error**. Query DB pola `get_my_orders`/`admin_list_orders` diuji 200× berturut-turut: 0.17ms per query (`EXPLAIN ANALYZE`), bukan bottleneck. Skrip **k6 nyata** (`tests/load/k6-100-users.js`) ditambahkan untuk uji signup+pemakaian 100 user sungguhan terhadap production (sandbox pengembangan tidak bisa menjangkau `myinsurepath.com`/`*.supabase.co` langsung) — lengkap dengan skrip pembersihan akun uji (`tests/load/cleanup-loadtest-accounts.sql`). Detail & cara jalan di `docs/LOAD_TESTING.md`.
+
+---
+
 ## v1.51.0 — 2026-07-17
 
 ### Fix QR E-Quotation di PDF — 1 Quotation = 1 QR Unik, Berlaku 14 Hari

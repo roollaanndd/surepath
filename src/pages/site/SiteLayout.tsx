@@ -317,8 +317,9 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
     else window.addEventListener('load', schedule, { once: true });
     return () => {
       window.removeEventListener('load', schedule);
+      if (idleId === undefined) return;
       const cic = (window as any).cancelIdleCallback;
-      if (idleId !== undefined) (cic ? cic(idleId) : clearTimeout(idleId));
+      if (cic) cic(idleId); else clearTimeout(idleId);
     };
   }, [bgVideo]);
 

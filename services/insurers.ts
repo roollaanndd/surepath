@@ -2,6 +2,7 @@
 // vehicle market-value overrides.
 
 import { supabase, callGateway } from './db';
+import { cachedFetch, invalidatePublicCache } from './publicCache';
 import type {
   SpInsurer,
   SpInsurerProduct,
@@ -147,14 +148,18 @@ export async function deleteInsurerProduct(id: string): Promise<boolean> {
 
 // ─── OJK Rate Set CRUD (services/ojkRates.ts CMS) ─────────────────────────────
 
+// Read on every app start (App.tsx) — cached 10 min per client (SWR). Rate
+// tables change a few times a year; admin mutations below invalidate.
 export async function getActiveOjkRateSet(): Promise<SpOjkRateSet | null> {
-  const { data, error } = await supabase
-    .from('sp_ojk_rate_sets')
-    .select('*')
-    .eq('is_active', true)
-    .maybeSingle();
-  if (error) { console.error('getActiveOjkRateSet:', error); return null; }
-  return data as SpOjkRateSet | null;
+  return cachedFetch('ojk:active_rate_set', 10 * 60 * 1000, async () => {
+    const { data, error } = await supabase
+      .from('sp_ojk_rate_sets')
+      .select('*')
+      .eq('is_active', true)
+      .maybeSingle();
+    if (error) { console.error('getActiveOjkRateSet:', error); return null; }
+    return data as SpOjkRateSet | null;
+  });
 }
 
 export async function getAllOjkRateSets(): Promise<SpOjkRateSet[]> {
@@ -185,6 +190,7 @@ export async function updateOjkRateSet(id: string, payload: Partial<SpOjkRateSet
 export async function activateOjkRateSet(id: string): Promise<boolean> {
   const { error } = await callGateway('admin_activate_ojk_rate_set', { rate_set_id: id });
   if (error) { console.error('activateOjkRateSet:', error); return false; }
+  invalidatePublicCache('ojk:');
   return true;
 }
 

@@ -347,10 +347,10 @@ Kedua keputusan ini mengunci fondasi Phase 2 (Keyword Map) — siap dilanjutkan 
 | 1 | Complete Website Structure (dokumen ini) | ✅ Selesai |
 | 2 | Keyword Map (`docs/SEO_KEYWORD_MAP.md`) | ✅ Selesai (estimasi — verifikasi ulang via Semrush/GSC saat unit tersedia) |
 | 3 | Landing Pages (100) | 🔶 38 dari 100 live: semua 5 vertikal punya hub + sub-halaman Klaim & Premi, Mobil All Risk/TLO + 3 Zona OJK, Perjalanan Internasional, 4 perbandingan, glosarium (index + 12 istilah), 1 halaman FAQ konsolidasi, Panduan Klaim (index + 4 panduan darurat lintas vertikal), Regulasi (index + 1 halaman SEOJK). |
-| 4 | Programmatic SEO (kota/provinsi/merek/model/perusahaan asuransi/dst) | 🔶 Dimulai: `/asuransi-mobil/merek` (index) + 6 halaman merek (Toyota, Honda, Daihatsu, Suzuki, Mitsubishi, Wuling), tiap halaman berisi konten unik per merek (bukan mail-merge). Sisa: halaman per model mobil, per kota/provinsi (via Zona OJK yang sudah ada), per perusahaan asuransi mitra. |
-| 5 | Blog Content (500 topik) | Belum mulai |
+| 4 | Programmatic SEO (kota/provinsi/merek/model/perusahaan asuransi/dst) | 🔶 Dimulai: `/asuransi-mobil/merek` (index + 6 merek: Toyota, Honda, Daihatsu, Suzuki, Mitsubishi, Wuling) + `/asuransi-mobil/model` (index + 3 model: Avanza, Brio, Xpander) — tiap halaman konten unik, bukan mail-merge. Kota/provinsi sudah ditangani via 3 halaman Zona OJK (Phase 3) sesuai keputusan anti-thin-content di §1.5 — TIDAK akan dibuat halaman per kota individual. Sisa: lebih banyak model/merek, halaman per perusahaan asuransi mitra (**catatan risiko**: butuh fakta terverifikasi soal produk masing-masing mitra bernama — Zurich/Tugu/Sinar Mas/Sompo/Intra Asia — supaya tidak salah representasi entitas riil; belum dieksekusi karena sesi ini tidak punya sumber data terverifikasi untuk klaim spesifik per perusahaan). |
+| 5 | Blog Content (500 topik) | 🔶 Dimulai: 3 artikel baru (8 total), infrastruktur cross-link `relatedLinks` ditambahkan ke `BlogPage.tsx` supaya artikel bisa link balik ke halaman silo. |
 | 6 | Technical SEO polish (security.txt, humans.txt, hreflang audit, dst.) | Belum mulai |
 | 7 | Conversion Optimization | Belum mulai |
-| 8 | Authority Building | Belum mulai |
-| 9 | Backlink Strategy | Belum mulai |
-| 10 | AI Search Optimization lanjutan | Belum mulai (dasar sudah di §14) |
+| 8 | Authority Building | ⚠️ Di luar cakupan kerja kode — butuh aksi bisnis riil (outreach media, partnership, PR) yang tidak bisa dieksekusi lewat commit. Bisa dibuatkan *strategi*/rencana tertulis kalau diminta, tapi eksekusinya perlu manusia. |
+| 9 | Backlink Strategy | ⚠️ Sama seperti Phase 8 — bisa dibuatkan rencana tertulis, tapi outreach/negosiasi backlink riil tidak bisa dieksekusi lewat sesi ini. |
+| 10 | AI Search Optimization lanjutan | Dasar sudah di §14; `llms.txt` bisa diperbarui lebih lanjut seiring halaman baru bertambah. |

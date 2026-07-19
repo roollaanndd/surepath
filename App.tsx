@@ -71,6 +71,8 @@ const ComparisonPage    = lazy(() => import('./src/pages/comparison/ComparisonPa
 const GlossaryPage      = lazy(() => import('./src/pages/glossary/GlossaryPage'));
 const FaqPage           = lazy(() => import('./src/pages/faq/FaqPage'));
 const GuidesPage        = lazy(() => import('./src/pages/guides/GuidesPage'));
+const CarBrandPage      = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandPage })));
+const CarBrandIndex     = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandIndex })));
 const PanduanKlaimIndex = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.PanduanKlaimIndex })));
 const RegulasiIndex     = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.RegulasiIndex })));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
@@ -567,6 +569,23 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <GuidesPage page={guidePage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO programmatic — car brands (docs/SEO_ARCHITECTURE.md Phase 4) ──────
+  if (pathname === '/asuransi-mobil/merek') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarBrandIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const carBrandMatch = pathname.match(/^\/asuransi-mobil\/merek\/([a-z0-9-]+)$/);
+  if (carBrandMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarBrandPage brand={carBrandMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

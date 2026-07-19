@@ -108,6 +108,50 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Car brands (Phase 4 programmatic) -->
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/toyota</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/honda</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/daihatsu</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/suzuki</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/mitsubishi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/merek/wuling</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Other vertical silos (Phase 3, P1) -->
   <url>
     <loc>https://myinsurepath.com/asuransi-kesehatan</loc>

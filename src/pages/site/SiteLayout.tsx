@@ -174,6 +174,8 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Blog', 'Blog'),                  path: '/blog' },
       { label: t('FAQ', 'FAQ'),                    path: '/faq' },
       { label: t('Glosarium', 'Glossary'),         path: '/glosarium' },
+      { label: t('Panduan Klaim', 'Claim Guides'), path: '/panduan-klaim' },
+      { label: t('Regulasi & OJK', 'Regulation & OJK'), path: '/regulasi' },
       { label: t('Program Mitra', 'Partner Program'), path: '/agents' },
     ]},
     { title: t('Legal', 'Legal'), links: [

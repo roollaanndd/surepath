@@ -70,6 +70,9 @@ const OtherVerticalsPage = lazy(() => import('./src/pages/silo/OtherVerticalsPag
 const ComparisonPage    = lazy(() => import('./src/pages/comparison/ComparisonPage'));
 const GlossaryPage      = lazy(() => import('./src/pages/glossary/GlossaryPage'));
 const FaqPage           = lazy(() => import('./src/pages/faq/FaqPage'));
+const GuidesPage        = lazy(() => import('./src/pages/guides/GuidesPage'));
+const PanduanKlaimIndex = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.PanduanKlaimIndex })));
+const RegulasiIndex     = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.RegulasiIndex })));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
@@ -532,6 +535,35 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <FaqPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — Panduan Klaim & Regulasi guides ─────────────────────────────
+  if (pathname === '/panduan-klaim') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <PanduanKlaimIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  if (pathname === '/regulasi') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <RegulasiIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const GUIDE_ROUTES: Record<string, 'panduan-kecelakaan-mobil' | 'panduan-klaim-ditolak' | 'regulasi-seojk-6-2017'> = {
+    '/panduan-klaim/kecelakaan-mobil': 'panduan-kecelakaan-mobil',
+    '/panduan-klaim/klaim-ditolak': 'panduan-klaim-ditolak',
+    '/regulasi/seojk-6-2017-tarif-premi': 'regulasi-seojk-6-2017',
+  };
+  const guidePage = GUIDE_ROUTES[pathname];
+  if (guidePage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <GuidesPage page={guidePage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

@@ -390,11 +390,112 @@ export const mobilPremi: SiloPageContent = {
     { q: 'Apakah tarif 2026 berbeda dari tahun sebelumnya?', a: 'Batas tarif resmi OJK (SEOJK No.06/SEOJK.05/2017) relatif stabil dari tahun ke tahun kecuali ada pembaruan regulasi baru — selalu cek kalkulator untuk angka paling terkini.' },
     { q: 'Apakah ada biaya tambahan selain premi?', a: 'Bisa ada biaya polis/materai kecil dan biaya perluasan jaminan tambahan (banjir, gempa, dst.) yang dipilih terpisah dari premi dasar.' },
   ],
-  internalLinksTitle: 'Jelajahi Asuransi Mobil',
-  internalLinks: internalNavAll,
+  internalLinksTitle: 'Premi per Wilayah',
+  internalLinks: [
+    ...internalNavAll,
+    { label: 'Premi Wilayah 1 (Sumatera, Papua, dst.)', path: '/asuransi-mobil/premi/zona-1' },
+    { label: 'Premi Wilayah 2 (Jakarta, Jabar, Banten)', path: '/asuransi-mobil/premi/zona-2' },
+    { label: 'Premi Wilayah 3 (Jateng, Jatim, Bali, dst.)', path: '/asuransi-mobil/premi/zona-3' },
+  ],
   relatedArticlesTitle: 'Baca Juga',
   relatedArticles: [relatedBlog.premi, relatedBlog.allRiskVsTlo],
   ctaTitle: 'Hitung Premi Pastimu Sekarang',
   ctaSubtitle: 'Masukkan nilai kendaraan dan wilayahmu — hasil langsung muncul, gratis.',
   extraJsonLd: [serviceJsonLd('Premi Asuransi Mobil', 'Informasi tarif resmi OJK untuk premi asuransi mobil All Risk dan TLO per wilayah.', '/asuransi-mobil/premi')],
 };
+
+// ─── ZONA OJK — /asuransi-mobil/premi/zona-{1,2,3} ───────────────────────────
+// Local-intent keyword coverage (docs/SEO_KEYWORD_MAP.md §1.5): grouped by the
+// 3 official OJK tariff zones rather than per-city pages — individual city
+// search volume outside Jakarta/Surabaya/Medan/Bandung is too thin to justify
+// a standalone page each, and per-city pages at that volume would risk the
+// thin/duplicate-content problem the brief explicitly warns against.
+const premiCrumb = { name: 'Premi', path: '/asuransi-mobil/premi' };
+
+interface ZonaDef {
+  slug: 'zona-1' | 'zona-2' | 'zona-3';
+  label: string;
+  provinces: string[];
+  allRisk: string;
+  tlo: string;
+}
+
+const ZONA_DEFS: ZonaDef[] = [
+  {
+    slug: 'zona-1',
+    label: 'Wilayah 1',
+    provinces: ['Seluruh provinsi di Sumatera', 'Kepulauan Bangka Belitung', 'Papua & Papua Barat', 'Maluku & Maluku Utara', 'Nusa Tenggara Timur (NTT)'],
+    allRisk: '1,05% – 4,20%',
+    tlo: '0,20% – 0,69%',
+  },
+  {
+    slug: 'zona-2',
+    label: 'Wilayah 2',
+    provinces: ['DKI Jakarta', 'Jawa Barat', 'Banten'],
+    allRisk: '1,05% – 3,59%',
+    tlo: '0,20% – 0,78%',
+  },
+  {
+    slug: 'zona-3',
+    label: 'Wilayah 3',
+    provinces: ['Jawa Tengah & DI Yogyakarta', 'Jawa Timur', 'Bali & Nusa Tenggara Barat', 'Seluruh provinsi di Kalimantan', 'Seluruh provinsi di Sulawesi', 'Gorontalo'],
+    allRisk: '1,05% – 2,96%',
+    tlo: '0,20% – 0,56%',
+  },
+];
+
+const zonaContent = (z: ZonaDef): SiloPageContent => ({
+  breadcrumb: [...rootCrumbs, hubCrumb, premiCrumb, { name: z.label, path: `/asuransi-mobil/premi/${z.slug}` }],
+  seoTitle: `Premi Asuransi Mobil ${z.label} — Tarif Resmi OJK | SurePath`,
+  seoDescription: `Tarif premi asuransi mobil ${z.label} sesuai OJK: All Risk ${z.allRisk}, TLO ${z.tlo} per tahun. Cek daftar provinsi yang termasuk zona ini dan hitung estimasi premi mobilmu.`,
+  category: `Premi Asuransi Mobil — ${z.label}`,
+  h1: `Premi Asuransi Mobil ${z.label}`,
+  heroSubtitle: `Tarif resmi OJK untuk kendaraan dengan plat/domisili di ${z.label} — cek provinsi mana saja yang termasuk dan berapa kisaran preminya.`,
+  heroHighlights: ['Tarif Resmi OJK', z.label, 'Update 2026'],
+  bodyIntro: `Tarif premi asuransi mobil di Indonesia dibagi menjadi 3 wilayah oleh OJK, dan besarannya berbeda antar wilayah karena mencerminkan data klaim historis di masing-masing area. Halaman ini merangkum provinsi mana saja yang termasuk ${z.label} beserta kisaran tarif All Risk dan TLO resmi yang berlaku.`,
+  benefitsTitle: `Kenapa Tarif ${z.label} Berbeda`,
+  benefits: [
+    { title: 'Berdasarkan Data Klaim Historis', desc: 'OJK menetapkan batas tarif per wilayah berdasarkan riwayat klaim di area tersebut, bukan angka yang dipilih sembarangan.' },
+    { title: 'Berlaku Sama di Semua Perusahaan Asuransi', desc: 'Untuk kendaraan dan kategori harga yang sama di wilayah ini, semua perusahaan asuransi terikat kisaran tarif yang sama.' },
+    { title: 'Transparan di SurePath', desc: 'Kalkulator SurePath otomatis menyesuaikan tarif berdasarkan wilayah yang kamu pilih — tidak perlu hitung manual.' },
+  ],
+  coverageTitle: `Provinsi yang Termasuk ${z.label}`,
+  coverageIntro: 'Daftar berikut mengikuti pengelompokan wilayah tarif OJK standar yang berlaku industri — untuk kepastian administratif penuh, konfirmasikan dengan perusahaan asuransi terkait saat membeli polis.',
+  coverageItems: z.provinces.map(p => ({ title: p, desc: `Kendaraan dengan plat/domisili di ${p} dikenakan tarif ${z.label}.` })),
+  priceTitle: `Tarif Resmi OJK — ${z.label}`,
+  priceIntro: 'Persentase tahunan dari harga pertanggungan kendaraan, sesuai SEOJK No.06/SEOJK.05/2017.',
+  priceTable: [
+    { label: 'All Risk', value: `${z.allRisk} /tahun` },
+    { label: 'TLO', value: `${z.tlo} /tahun` },
+  ],
+  showCalculator: true,
+  bodySections: [
+    { h: 'Cara Tarif Wilayah Ditentukan', p: 'OJK menetapkan batas tarif berdasarkan data klaim historis di tiap wilayah — kepadatan lalu lintas, tingkat pencurian kendaraan, dan frekuensi kejadian lain yang memengaruhi risiko rata-rata di area tersebut.' },
+    { h: 'Apakah Bisa Pindah Wilayah Tarif?', p: 'Tarif mengikuti domisili/plat kendaraan yang terdaftar di polis, bukan lokasi kamu berkendara sehari-hari. Jika kendaraan pindah domisili secara permanen, informasikan ke perusahaan asuransi untuk penyesuaian data polis.' },
+  ],
+  claimProcessTitle: 'Setelah Beli, Bagaimana Kalau Perlu Klaim?',
+  claimIntro: 'Proses klaim sama di semua wilayah — panduan lengkap ada di halaman Klaim Asuransi Mobil.',
+  claimSteps: [
+    { title: 'Laporkan via app', desc: 'Foto kejadian dan ajukan laporan dalam 3×24 jam.' },
+    { title: 'Survei & approval', desc: 'Verifikasi kerusakan oleh surveyor asuransi.' },
+    { title: 'Perbaikan di bengkel rekanan', desc: 'Rata-rata 3–5 hari kerja untuk kerusakan ringan-sedang.' },
+  ],
+  faqTitle: `Pertanyaan Seputar Premi ${z.label}`,
+  faq: [
+    { q: `Kenapa tarif ${z.label} berbeda dari wilayah lain?`, a: 'Tarif OJK per wilayah mencerminkan data klaim historis area tersebut — kepadatan lalu lintas dan tingkat risiko yang berbeda menghasilkan batas tarif yang berbeda pula.' },
+    { q: 'Apakah tarif ini berlaku sama di semua perusahaan asuransi?', a: 'Ya — batas atas dan bawah tarif ditetapkan OJK dan berlaku untuk semua perusahaan asuransi yang menjual produk di wilayah dan kategori kendaraan yang sama.' },
+    { q: 'Apa yang menentukan saya masuk wilayah mana?', a: 'Domisili/plat kendaraan yang terdaftar di STNK dan polis — bukan tempat kamu paling sering mengemudi.' },
+    { q: 'Apakah tarif ini berbeda untuk All Risk dan TLO?', a: 'Ya, signifikan — All Risk mencakup rentang yang jauh lebih tinggi karena cakupannya juga jauh lebih luas dibanding TLO.' },
+  ],
+  internalLinksTitle: 'Jelajahi Asuransi Mobil',
+  internalLinks: internalNavAll,
+  relatedArticlesTitle: 'Baca Juga',
+  relatedArticles: [relatedBlog.premi, relatedBlog.allRiskVsTlo],
+  ctaTitle: `Hitung Premi Mobilmu di ${z.label}`,
+  ctaSubtitle: 'Masukkan nilai kendaraan — hasil langsung muncul, gratis.',
+  extraJsonLd: [serviceJsonLd(`Premi Asuransi Mobil ${z.label}`, `Tarif resmi OJK untuk premi asuransi mobil All Risk dan TLO di ${z.label}.`, `/asuransi-mobil/premi/${z.slug}`)],
+});
+
+export const mobilPremiZona1 = zonaContent(ZONA_DEFS[0]);
+export const mobilPremiZona2 = zonaContent(ZONA_DEFS[1]);
+export const mobilPremiZona3 = zonaContent(ZONA_DEFS[2]);

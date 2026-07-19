@@ -41,7 +41,7 @@ Setiap keyword diberi label intent (bisa lebih dari satu — mis. "asuransi mobi
 | asuransi jiwa terbaik indonesia | 9,900 | PA/Jiwa | `/asuransi-kecelakaan-diri` |
 | asuransi perjalanan ke luar negeri | 8,100 | Perjalanan | `/asuransi-perjalanan/internasional` |
 | asuransi mobil all risk terbaik | 5,400 | Mobil | `/asuransi-mobil/all-risk` |
-| asuransi properti rumah | 4,400 | Properti | `/asuransi-properti` |
+| asuransi hp / proteksi gadget | 4,400 | Proteksi Barang | `/proteksi-barang` |
 | asuransi mobil online bayar bulanan | 2,900 | Mobil | `/asuransi-mobil/premi` |
 
 ### 1.3 Transactional (siap beli)
@@ -127,7 +127,7 @@ Setiap keyword diberi label intent (bisa lebih dari satu — mis. "asuransi mobi
 | asuransi perjalanan ke luar negeri | 8,100 | P1 | `/asuransi-perjalanan/internasional` |
 | harga asuransi mobil all risk | 5,400 | P1 | `/asuransi-mobil/all-risk` |
 | asuransi mobil all risk terbaik | 5,400 | P1 | `/asuransi-mobil/all-risk` |
-| asuransi properti rumah | 4,400 | P2 | `/asuransi-properti` |
+| asuransi hp / proteksi gadget | 4,400 | P2 | `/proteksi-barang` |
 
 ---
 
@@ -150,11 +150,11 @@ Berdasarkan volume + intent komersial + kesiapan produk (5 lini existing) + kese
 10. `/glosarium` (index) + 10 istilah teratas (all-risk, tlo, premi, deductible, uang-pertanggungan, srcc, dst.)
 
 **P2 — batch ketiga:**
-11. `/asuransi-properti` (hub)
+11. `/proteksi-barang` (hub — proteksi gadget & elektronik, **bukan** asuransi rumah/properti fisik; lihat koreksi di `docs/SEO_ARCHITECTURE.md` §1)
 12. Sisa halaman sub-kategori 4 vertikal non-mobil (klaim/premi masing-masing)
 13. Halaman Zona OJK (`/asuransi-mobil/premi/zona-1|2|3`)
 
-Sesi ini mengeksekusi **P0 batch pertama** (5 halaman) sebagai reference implementation — pola/template yang sama dipakai untuk P1/P2 di sesi lanjutan.
+Progres eksekusi: **P0 batch pertama** (5 halaman flagship Asuransi Mobil) dan **P1** (Kesehatan hub, Kecelakaan Diri hub, Perjalanan hub + Internasional, 1 perbandingan, glosarium 8 istilah) sudah live — 11 dari 100 landing page. P2 sedang berjalan.
 
 ---
 

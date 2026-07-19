@@ -164,7 +164,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Asuransi Kesehatan', 'Health Insurance'),  path: '/asuransi-kesehatan' },
       { label: t('Asuransi Kecelakaan Diri', 'Personal Accident'), path: '/asuransi-kecelakaan-diri' },
       { label: t('Asuransi Perjalanan', 'Travel Insurance'), path: '/asuransi-perjalanan' },
-      { label: t('Proteksi Barang', 'Property Protection'),  path: '/product/property' },
+      { label: t('Proteksi Barang (Gadget)', 'Device Protection'), path: '/proteksi-barang' },
     ]},
     { title: t('Perusahaan', 'Company'), links: [
       { label: t('Tentang Kami', 'About Us'),      path: '/about' },

@@ -65,8 +65,8 @@ Beranda (/)
 │   ├── 🧍 Asuransi Kecelakaan Diri / PA (/asuransi-kecelakaan-diri)
 │   │   ├── Klaim · Premi · Panduan (pola sama)
 │   │
-│   └── 🏠 Asuransi Properti (/asuransi-properti)
-│       ├── Rumah Tinggal · Ruko/Bisnis (sub-hub)
+│   └── 📱 Proteksi Barang (/proteksi-barang) — Gadget & Elektronik
+│       ├── Kerusakan Fisik · Kerusakan Cairan · Pencurian (sub-hub)
 │       ├── Klaim · Premi · Panduan (pola sama)
 │
 ├── Blog / Edukasi (/blog) ─── silo horizontal, cross-link ke semua vertikal produk
@@ -86,6 +86,8 @@ Beranda (/)
 │
 └── Legal (/privacy, /terms, /security)
 ```
+
+> **Koreksi (2026-07-19, saat eksekusi Phase 3):** vertikal ke-5 semula diasumsikan "Asuransi Properti" (rumah/ruko) mengikuti template generik. Setelah cek `src/pages/productInfoContent.ts`, produk riil di balik slug `/product/property` adalah **Proteksi Barang / Item Shield — proteksi gadget & elektronik** (HP, laptop: kerusakan fisik, cairan, pencurian, komponen internal), BUKAN asuransi rumah/properti fisik. Silo & keyword map diperbarui ke `/proteksi-barang` supaya tidak membangun halaman yang mengklaim cakupan produk yang tidak benar-benar dijual SurePath — ini murni soal akurasi/EEAT, bukan preferensi penamaan.
 
 **Prinsip silo:** setiap child hanya link ke parent-nya, sibling-nya, dan hub horizontal (blog/glosarium/kalkulator) yang relevan — TIDAK sembarang link ke halaman tidak berkaitan. Ini menjaga "topical relevance flow" per Google's siloing best practice.
 

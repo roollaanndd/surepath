@@ -462,12 +462,15 @@ const App = () => {
   }
 
   // ── SEO silo — Asuransi Mobil (docs/SEO_ARCHITECTURE.md Phase 3) ──────────
-  const MOBIL_SILO_ROUTES: Record<string, 'hub' | 'all-risk' | 'tlo' | 'klaim' | 'premi'> = {
+  const MOBIL_SILO_ROUTES: Record<string, 'hub' | 'all-risk' | 'tlo' | 'klaim' | 'premi' | 'premi-zona-1' | 'premi-zona-2' | 'premi-zona-3'> = {
     '/asuransi-mobil': 'hub',
     '/asuransi-mobil/all-risk': 'all-risk',
     '/asuransi-mobil/tlo': 'tlo',
     '/asuransi-mobil/klaim': 'klaim',
     '/asuransi-mobil/premi': 'premi',
+    '/asuransi-mobil/premi/zona-1': 'premi-zona-1',
+    '/asuransi-mobil/premi/zona-2': 'premi-zona-2',
+    '/asuransi-mobil/premi/zona-3': 'premi-zona-3',
   };
   const mobilSiloPage = MOBIL_SILO_ROUTES[pathname];
   if (mobilSiloPage) {
@@ -479,11 +482,12 @@ const App = () => {
   }
 
   // ── SEO silo — other verticals (docs/SEO_ARCHITECTURE.md Phase 3, P1) ─────
-  const OTHER_VERTICAL_ROUTES: Record<string, 'kesehatan-hub' | 'kecelakaan-diri-hub' | 'perjalanan-hub' | 'perjalanan-internasional'> = {
+  const OTHER_VERTICAL_ROUTES: Record<string, 'kesehatan-hub' | 'kecelakaan-diri-hub' | 'perjalanan-hub' | 'perjalanan-internasional' | 'proteksi-barang-hub'> = {
     '/asuransi-kesehatan': 'kesehatan-hub',
     '/asuransi-kecelakaan-diri': 'kecelakaan-diri-hub',
     '/asuransi-perjalanan': 'perjalanan-hub',
     '/asuransi-perjalanan/internasional': 'perjalanan-internasional',
+    '/proteksi-barang': 'proteksi-barang-hub',
   };
   const otherVerticalPage = OTHER_VERTICAL_ROUTES[pathname];
   if (otherVerticalPage) {

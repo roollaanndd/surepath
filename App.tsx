@@ -66,6 +66,9 @@ const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPort
 const InsurerLogin         = lazy(() => import('./components/insurer/InsurerLogin'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
 const AsuransiMobilPage = lazy(() => import('./src/pages/silo/AsuransiMobilPage'));
+const OtherVerticalsPage = lazy(() => import('./src/pages/silo/OtherVerticalsPage'));
+const ComparisonPage    = lazy(() => import('./src/pages/comparison/ComparisonPage'));
+const GlossaryPage      = lazy(() => import('./src/pages/glossary/GlossaryPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
@@ -471,6 +474,42 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <AsuransiMobilPage page={mobilSiloPage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — other verticals (docs/SEO_ARCHITECTURE.md Phase 3, P1) ─────
+  const OTHER_VERTICAL_ROUTES: Record<string, 'kesehatan-hub' | 'kecelakaan-diri-hub' | 'perjalanan-hub' | 'perjalanan-internasional'> = {
+    '/asuransi-kesehatan': 'kesehatan-hub',
+    '/asuransi-kecelakaan-diri': 'kecelakaan-diri-hub',
+    '/asuransi-perjalanan': 'perjalanan-hub',
+    '/asuransi-perjalanan/internasional': 'perjalanan-internasional',
+  };
+  const otherVerticalPage = OTHER_VERTICAL_ROUTES[pathname];
+  if (otherVerticalPage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <OtherVerticalsPage page={otherVerticalPage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — comparison pages ────────────────────────────────────────────
+  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo)$/);
+  if (comparisonMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <ComparisonPage slug={comparisonMatch[1] as 'asuransi-all-risk-vs-tlo'} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — glossary ─────────────────────────────────────────────────────
+  const glossaryMatch = pathname.match(/^\/glosarium(?:\/([a-z0-9-]+))?$/);
+  if (glossaryMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <GlossaryPage slug={glossaryMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

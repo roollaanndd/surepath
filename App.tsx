@@ -624,7 +624,7 @@ const App = () => {
 
   const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
   if (pathname === '/blog' || blogSlugMatch) {
-    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
+    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} navigate={navigate} /></Suspense>;
   }
 
   const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];

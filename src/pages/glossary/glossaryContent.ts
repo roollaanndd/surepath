@@ -102,6 +102,28 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     ctaPath: '/asuransi-mobil/all-risk',
     ctaLabel: 'Pelajari Perluasan Jaminan All Risk',
   },
+  {
+    slug: 'polis',
+    term: 'Polis Asuransi',
+    category: 'Umum',
+    shortDef: 'Dokumen resmi berisi perjanjian antara pemegang polis dan perusahaan asuransi, termasuk cakupan, pengecualian, dan kewajiban masing-masing pihak.',
+    longDef: 'Polis adalah kontrak tertulis yang mengikat secara hukum antara pemegang polis dan perusahaan asuransi. Di dalamnya tercantum apa saja yang ditanggung, pengecualian (apa yang tidak ditanggung), besaran premi dan risiko sendiri, uang pertanggungan, serta hak dan kewajiban kedua belah pihak. Membaca ringkasan polis sebelum membeli — bukan setelah butuh klaim — adalah kebiasaan yang bisa mencegah banyak kekecewaan di kemudian hari.',
+    example: 'Sebelum membeli asuransi mobil, cek polis untuk memastikan perluasan jaminan banjir sudah termasuk jika kamu tinggal di area rawan banjir — bukan mengasumsikan itu otomatis ditanggung.',
+    relatedSlugs: ['premi', 'risiko-sendiri', 'uang-pertanggungan'],
+    ctaPath: '/asuransi-mobil',
+    ctaLabel: 'Bandingkan Asuransi Mobil',
+  },
+  {
+    slug: 'cashless',
+    term: 'Cashless',
+    category: 'Asuransi Kesehatan',
+    shortDef: 'Metode klaim di mana pemegang polis tidak perlu membayar dulu — biaya diselesaikan langsung antara rumah sakit dan perusahaan asuransi.',
+    longDef: 'Cashless adalah mekanisme klaim asuransi kesehatan di mana pemegang polis cukup menunjukkan kartu digital atau nomor polis di rumah sakit rekanan — tanpa perlu membayar dulu dan menunggu proses reimbursement. Rumah sakit memverifikasi manfaat langsung dengan sistem perusahaan asuransi. Ini hanya berlaku di jaringan rumah sakit rekanan; di luar jaringan, pemegang polis tetap perlu membayar dulu lalu mengajukan reimbursement.',
+    example: 'Saat rawat inap di rumah sakit rekanan, kamu tinggal tunjukkan kartu digital SurePath — tidak perlu menyiapkan uang muka seperti pasien umum.',
+    relatedSlugs: ['polis', 'premi'],
+    ctaPath: '/asuransi-kesehatan',
+    ctaLabel: 'Pelajari Asuransi Kesehatan',
+  },
 ];
 
 export const glossaryTermBySlug = (slug: string) => GLOSSARY_TERMS.find(t => t.slug === slug);

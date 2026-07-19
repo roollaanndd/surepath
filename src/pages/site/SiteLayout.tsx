@@ -172,6 +172,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Hubungi Kami', 'Contact Us'),    path: '/contact' },
       { label: t('Karir', 'Careers'),              path: '/careers' },
       { label: t('Blog', 'Blog'),                  path: '/blog' },
+      { label: t('FAQ', 'FAQ'),                    path: '/faq' },
       { label: t('Glosarium', 'Glossary'),         path: '/glosarium' },
       { label: t('Program Mitra', 'Partner Program'), path: '/agents' },
     ]},

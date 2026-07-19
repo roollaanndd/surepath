@@ -69,6 +69,7 @@ const AsuransiMobilPage = lazy(() => import('./src/pages/silo/AsuransiMobilPage'
 const OtherVerticalsPage = lazy(() => import('./src/pages/silo/OtherVerticalsPage'));
 const ComparisonPage    = lazy(() => import('./src/pages/comparison/ComparisonPage'));
 const GlossaryPage      = lazy(() => import('./src/pages/glossary/GlossaryPage'));
+const FaqPage           = lazy(() => import('./src/pages/faq/FaqPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
@@ -507,11 +508,11 @@ const App = () => {
   }
 
   // ── SEO silo — comparison pages ────────────────────────────────────────────
-  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo)$/);
+  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo|asuransi-kesehatan-vs-bpjs|personal-accident-vs-asuransi-jiwa)$/);
   if (comparisonMatch) {
     return (
       <Suspense fallback={<PortalLoader />}>
-        <ComparisonPage slug={comparisonMatch[1] as 'asuransi-all-risk-vs-tlo'} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+        <ComparisonPage slug={comparisonMatch[1] as import('./src/pages/comparison/ComparisonPage').ComparisonSlug} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }
@@ -522,6 +523,15 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <GlossaryPage slug={glossaryMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — FAQ index ────────────────────────────────────────────────────
+  if (pathname === '/faq') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <FaqPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

@@ -96,9 +96,9 @@ export const kesehatanHub: SiloPageContent = {
   internalLinks: [
     { label: 'Cara Klaim Asuransi Kesehatan', path: '/asuransi-kesehatan/klaim' },
     { label: 'Premi Asuransi Kesehatan', path: '/asuransi-kesehatan/premi' },
+    { label: 'Asuransi Kesehatan vs BPJS', path: '/perbandingan/asuransi-kesehatan-vs-bpjs' },
     { label: 'Asuransi Kecelakaan Diri', path: '/asuransi-kecelakaan-diri' },
     { label: 'Asuransi Perjalanan', path: '/asuransi-perjalanan' },
-    { label: 'Cara Kerja SurePath', path: '/how-it-works' },
   ],
   relatedArticlesTitle: 'Baca Juga',
   relatedArticles: [crossLinks.kecelakaanDiri, crossLinks.perjalanan],
@@ -171,6 +171,7 @@ export const kecelakaanDiriHub: SiloPageContent = {
   internalLinks: [
     { label: 'Cara Klaim Kecelakaan Diri', path: '/asuransi-kecelakaan-diri/klaim' },
     { label: 'Premi Kecelakaan Diri', path: '/asuransi-kecelakaan-diri/premi' },
+    { label: 'Personal Accident vs Asuransi Jiwa', path: '/perbandingan/personal-accident-vs-asuransi-jiwa' },
     asNavLink(crossLinks.kesehatan), asNavLink(crossLinks.perjalanan),
   ],
   relatedArticlesTitle: 'Baca Juga',

@@ -5,14 +5,16 @@ import SiteLayout from '../site/SiteLayout';
 import { SEO } from '../site/SEO';
 import { Breadcrumb, breadcrumbJsonLd } from '../site/Breadcrumb';
 import { SitePageProps, useSiteTheme, Reveal, SectionLabel } from '../site/siteKit';
-import { panduanKecelakaanMobil, panduanKlaimDitolak } from './panduanKlaimContent';
+import { panduanKecelakaanMobil, panduanKlaimDitolak, panduanHpHilang, panduanRawatInapMendadak } from './panduanKlaimContent';
 import { seojkTarifPremi } from './regulasiContent';
 
-export type GuidePage = 'panduan-kecelakaan-mobil' | 'panduan-klaim-ditolak' | 'regulasi-seojk-6-2017';
+export type GuidePage = 'panduan-kecelakaan-mobil' | 'panduan-klaim-ditolak' | 'panduan-hp-hilang' | 'panduan-rawat-inap-mendadak' | 'regulasi-seojk-6-2017';
 
 const CONTENT = {
   'panduan-kecelakaan-mobil': panduanKecelakaanMobil,
   'panduan-klaim-ditolak': panduanKlaimDitolak,
+  'panduan-hp-hilang': panduanHpHilang,
+  'panduan-rawat-inap-mendadak': panduanRawatInapMendadak,
   'regulasi-seojk-6-2017': seojkTarifPremi,
 } as const;
 
@@ -29,6 +31,8 @@ export const GuidesPage: React.FC<Props> = ({ page, ...rest }) => (
 
 const PANDUAN_KLAIM_ITEMS = [
   { title: 'Baru Saja Kecelakaan Mobil?', excerpt: 'Urutan langkah darurat — keselamatan, dokumentasi, lapor polisi, klaim.', path: '/panduan-klaim/kecelakaan-mobil' },
+  { title: 'HP Hilang atau Dicuri?', excerpt: 'Amankan akun dulu, blokir IMEI, baru lapor polisi dan klaim.', path: '/panduan-klaim/hp-hilang-dicuri' },
+  { title: 'Rawat Inap Mendadak?', excerpt: 'Cara aktifkan cashless di IGD dan kapan harus reimbursement.', path: '/panduan-klaim/rawat-inap-mendadak' },
   { title: 'Kenapa Klaim Asuransi Ditolak?', excerpt: 'Penyebab penolakan per kategori produk dan cara mengajukan banding.', path: '/panduan-klaim/klaim-ditolak' },
 ];
 

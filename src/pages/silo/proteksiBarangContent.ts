@@ -142,6 +142,7 @@ export const proteksiBarangKlaim: SiloPageContent = {
   ],
   internalLinksTitle: 'Jelajahi Proteksi Barang',
   internalLinks: [
+    { label: 'HP Hilang atau Dicuri? Baca Ini Dulu', path: '/panduan-klaim/hp-hilang-dicuri' },
     { label: 'Proteksi Barang (Hub)', path: '/proteksi-barang' },
     { label: 'Premi Proteksi Barang', path: '/proteksi-barang/premi' },
   ],

@@ -384,7 +384,10 @@ export const kesehatanKlaim: SiloPageContent = {
     { q: 'Kenapa klaim rawat inap saya hanya dibayar sebagian?', a: 'Kemungkinan sebagian biaya melebihi plafon per manfaat pada plan yang kamu pilih — cek rincian plafon di ringkasan polis.' },
   ],
   internalLinksTitle: 'Jelajahi Asuransi Kesehatan',
-  internalLinks: [asNavLink(crossLinks.kesehatan), { label: 'Premi Asuransi Kesehatan', path: '/asuransi-kesehatan/premi' }, asNavLink(crossLinks.kecelakaanDiri)],
+  internalLinks: [
+    { label: 'Rawat Inap Mendadak? Baca Ini Dulu', path: '/panduan-klaim/rawat-inap-mendadak' },
+    asNavLink(crossLinks.kesehatan), { label: 'Premi Asuransi Kesehatan', path: '/asuransi-kesehatan/premi' }, asNavLink(crossLinks.kecelakaanDiri),
+  ],
   relatedArticlesTitle: 'Baca Juga',
   relatedArticles: [crossLinks.kecelakaanDiri],
   ctaTitle: 'Belum Punya Asuransi Kesehatan?',

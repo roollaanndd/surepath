@@ -554,9 +554,11 @@ const App = () => {
       </Suspense>
     );
   }
-  const GUIDE_ROUTES: Record<string, 'panduan-kecelakaan-mobil' | 'panduan-klaim-ditolak' | 'regulasi-seojk-6-2017'> = {
+  const GUIDE_ROUTES: Record<string, import('./src/pages/guides/GuidesPage').GuidePage> = {
     '/panduan-klaim/kecelakaan-mobil': 'panduan-kecelakaan-mobil',
     '/panduan-klaim/klaim-ditolak': 'panduan-klaim-ditolak',
+    '/panduan-klaim/hp-hilang-dicuri': 'panduan-hp-hilang',
+    '/panduan-klaim/rawat-inap-mendadak': 'panduan-rawat-inap-mendadak',
     '/regulasi/seojk-6-2017-tarif-premi': 'regulasi-seojk-6-2017',
   };
   const guidePage = GUIDE_ROUTES[pathname];

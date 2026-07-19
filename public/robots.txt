@@ -3,6 +3,12 @@ Allow: /
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/
+Disallow: /agapps
+Disallow: /operatorapp
+Disallow: /insurerapp
+Disallow: /custapp
+Disallow: /b2b
+Disallow: /select-app
 Disallow: /.supabase/
 Disallow: /insurer-portal
 Disallow: /review/

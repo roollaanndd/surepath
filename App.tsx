@@ -65,6 +65,18 @@ const EQuotationPage    = lazy(() => import('./components/public/EQuotationPage'
 const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPortal'));
 const InsurerLogin         = lazy(() => import('./components/insurer/InsurerLogin'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
+const AsuransiMobilPage = lazy(() => import('./src/pages/silo/AsuransiMobilPage'));
+const OtherVerticalsPage = lazy(() => import('./src/pages/silo/OtherVerticalsPage'));
+const ComparisonPage    = lazy(() => import('./src/pages/comparison/ComparisonPage'));
+const GlossaryPage      = lazy(() => import('./src/pages/glossary/GlossaryPage'));
+const FaqPage           = lazy(() => import('./src/pages/faq/FaqPage'));
+const GuidesPage        = lazy(() => import('./src/pages/guides/GuidesPage'));
+const CarBrandPage      = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandPage })));
+const CarBrandIndex     = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandIndex })));
+const CarModelPage      = lazy(() => import('./src/pages/programmatic/CarModelPage').then(m => ({ default: m.CarModelPage })));
+const CarModelIndex     = lazy(() => import('./src/pages/programmatic/CarModelPage').then(m => ({ default: m.CarModelIndex })));
+const PanduanKlaimIndex = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.PanduanKlaimIndex })));
+const RegulasiIndex     = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.RegulasiIndex })));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
@@ -457,6 +469,144 @@ const App = () => {
     return <Suspense fallback={<PortalLoader />}><ProductInfoPage productId={productMatch[1]} lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
   }
 
+  // ── SEO silo — Asuransi Mobil (docs/SEO_ARCHITECTURE.md Phase 3) ──────────
+  const MOBIL_SILO_ROUTES: Record<string, 'hub' | 'all-risk' | 'tlo' | 'klaim' | 'premi' | 'premi-zona-1' | 'premi-zona-2' | 'premi-zona-3'> = {
+    '/asuransi-mobil': 'hub',
+    '/asuransi-mobil/all-risk': 'all-risk',
+    '/asuransi-mobil/tlo': 'tlo',
+    '/asuransi-mobil/klaim': 'klaim',
+    '/asuransi-mobil/premi': 'premi',
+    '/asuransi-mobil/premi/zona-1': 'premi-zona-1',
+    '/asuransi-mobil/premi/zona-2': 'premi-zona-2',
+    '/asuransi-mobil/premi/zona-3': 'premi-zona-3',
+  };
+  const mobilSiloPage = MOBIL_SILO_ROUTES[pathname];
+  if (mobilSiloPage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AsuransiMobilPage page={mobilSiloPage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — other verticals (docs/SEO_ARCHITECTURE.md Phase 3, P1) ─────
+  const OTHER_VERTICAL_ROUTES: Record<string, import('./src/pages/silo/OtherVerticalsPage').OtherVerticalPage> = {
+    '/asuransi-kesehatan': 'kesehatan-hub',
+    '/asuransi-kesehatan/klaim': 'kesehatan-klaim',
+    '/asuransi-kesehatan/premi': 'kesehatan-premi',
+    '/asuransi-kecelakaan-diri': 'kecelakaan-diri-hub',
+    '/asuransi-kecelakaan-diri/klaim': 'kecelakaan-diri-klaim',
+    '/asuransi-kecelakaan-diri/premi': 'kecelakaan-diri-premi',
+    '/asuransi-perjalanan': 'perjalanan-hub',
+    '/asuransi-perjalanan/internasional': 'perjalanan-internasional',
+    '/asuransi-perjalanan/klaim': 'perjalanan-klaim',
+    '/asuransi-perjalanan/premi': 'perjalanan-premi',
+    '/proteksi-barang': 'proteksi-barang-hub',
+    '/proteksi-barang/klaim': 'proteksi-barang-klaim',
+    '/proteksi-barang/premi': 'proteksi-barang-premi',
+  };
+  const otherVerticalPage = OTHER_VERTICAL_ROUTES[pathname];
+  if (otherVerticalPage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <OtherVerticalsPage page={otherVerticalPage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — comparison pages ────────────────────────────────────────────
+  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo|asuransi-kesehatan-vs-bpjs|personal-accident-vs-asuransi-jiwa|surepath-vs-beli-langsung)$/);
+  if (comparisonMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <ComparisonPage slug={comparisonMatch[1] as import('./src/pages/comparison/ComparisonPage').ComparisonSlug} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — glossary ─────────────────────────────────────────────────────
+  const glossaryMatch = pathname.match(/^\/glosarium(?:\/([a-z0-9-]+))?$/);
+  if (glossaryMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <GlossaryPage slug={glossaryMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — FAQ index ────────────────────────────────────────────────────
+  if (pathname === '/faq') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <FaqPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO silo — Panduan Klaim & Regulasi guides ─────────────────────────────
+  if (pathname === '/panduan-klaim') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <PanduanKlaimIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  if (pathname === '/regulasi') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <RegulasiIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const GUIDE_ROUTES: Record<string, import('./src/pages/guides/GuidesPage').GuidePage> = {
+    '/panduan-klaim/kecelakaan-mobil': 'panduan-kecelakaan-mobil',
+    '/panduan-klaim/klaim-ditolak': 'panduan-klaim-ditolak',
+    '/panduan-klaim/hp-hilang-dicuri': 'panduan-hp-hilang',
+    '/panduan-klaim/rawat-inap-mendadak': 'panduan-rawat-inap-mendadak',
+    '/panduan-klaim/delay-pesawat': 'panduan-delay-pesawat',
+    '/regulasi/seojk-6-2017-tarif-premi': 'regulasi-seojk-6-2017',
+  };
+  const guidePage = GUIDE_ROUTES[pathname];
+  if (guidePage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <GuidesPage page={guidePage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
+  // ── SEO programmatic — car brands (docs/SEO_ARCHITECTURE.md Phase 4) ──────
+  if (pathname === '/asuransi-mobil/merek') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarBrandIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const carBrandMatch = pathname.match(/^\/asuransi-mobil\/merek\/([a-z0-9-]+)$/);
+  if (carBrandMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarBrandPage brand={carBrandMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  if (pathname === '/asuransi-mobil/model') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarModelIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const carModelMatch = pathname.match(/^\/asuransi-mobil\/model\/([a-z0-9-]+)$/);
+  if (carModelMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarModelPage model={carModelMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+
   if (pathname === '/kalkulator') {
     return <Suspense fallback={<PortalLoader />}><PremiumCalculatorPage lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
   }
@@ -474,7 +624,7 @@ const App = () => {
 
   const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
   if (pathname === '/blog' || blogSlugMatch) {
-    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
+    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} navigate={navigate} /></Suspense>;
   }
 
   const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];

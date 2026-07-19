@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, Clock, Calendar } from 'lucide-react';
 
-interface Props { slug?: string; onBack: () => void; onSignIn: () => void; }
+interface Props { slug?: string; onBack: () => void; onSignIn: () => void; navigate?: (path: string) => void; }
 
 type IlloKey = 'shieldCar' | 'claim' | 'tariff' | 'agent' | 'travel';
 
@@ -9,6 +9,7 @@ interface Article {
   slug: string; title: string; category: string; readTime: string;
   date: string; excerpt: string; illo: IlloKey; tint: string;
   sections: { h: string; p: string }[];
+  relatedLinks?: { label: string; path: string }[];
 }
 
 const GREEN = 'hsl(119,99%,46%)';
@@ -134,6 +135,54 @@ const ARTICLES: Article[] = [
       { h: 'Beli di SurePath — Semudah Itu', p: 'Bisa dibeli menit terakhir sebelum berangkat. Pilih destinasi, durasi, lalu bayar — polis langsung dikirim ke email. Tidak perlu antri atau print.' },
     ],
   },
+  {
+    slug: 'asuransi-mobil-untuk-ojek-online',
+    title: 'Asuransi Mobil untuk Ojek/Taksi Online: Yang Wajib Diketahui',
+    category: 'Edukasi', readTime: '4 menit', date: '19 Jul 2026', illo: 'shieldCar', tint: 'rgba(22,163,74,0.34)',
+    excerpt: 'Mobilmu dipakai narik Grab/Gojek? Ada satu hal soal polis asuransi yang sering terlewat dan bisa bikin klaim ditolak kalau tidak diketahui dari awal.',
+    sections: [
+      { h: 'Kenapa Ini Penting Dibahas', p: 'Avanza, Xpander, dan sejenisnya adalah mobil paling umum dipakai untuk layanan transportasi online di Indonesia. Tapi banyak pemilik tidak sadar bahwa polis asuransi mobil pribadi standar umumnya dirancang untuk penggunaan non-komersial.' },
+      { h: 'Apa Risikonya Kalau Tidak Diungkapkan?', p: 'Jika kendaraan dipakai rutin untuk ride-hailing tapi polis dibeli sebagai kendaraan pribadi biasa, perusahaan asuransi berpotensi menolak klaim karena penggunaan aktual berbeda dari risiko yang dinilai saat polis diterbitkan.' },
+      { h: 'Apa yang Harus Dilakukan', p: 'Sampaikan secara terbuka ke agen atau saat mendaftar polis bahwa kendaraan dipakai untuk ride-hailing. Tanyakan apakah ada produk atau ketentuan khusus yang sesuai — beberapa perusahaan asuransi punya opsi untuk kendaraan berpenggunaan komersial ringan seperti ini.' },
+      { h: 'Baca Detail Lengkapnya', p: 'Kami sudah bahas ini lebih detail khusus untuk pemilik Toyota Avanza — model paling umum dipakai ride-hailing — lengkap dengan pertimbangan All Risk vs TLO untuk kasus ini.' },
+    ],
+    relatedLinks: [
+      { label: 'Asuransi Mobil Toyota Avanza — Panduan Lengkap', path: '/asuransi-mobil/model/toyota-avanza' },
+      { label: 'Asuransi Mobil (Hub)', path: '/asuransi-mobil' },
+    ],
+  },
+  {
+    slug: 'cashless-vs-reimbursement-asuransi-kesehatan',
+    title: 'Cashless vs Reimbursement: Cara Klaim Asuransi Kesehatan yang Benar',
+    category: 'Panduan', readTime: '4 menit', date: '19 Jul 2026', illo: 'claim', tint: 'rgba(16,185,129,0.32)',
+    excerpt: 'Dua cara klaim asuransi kesehatan yang sering bikin bingung — ini bedanya, dan kenapa penting tahu sebelum kamu benar-benar butuh rawat inap.',
+    sections: [
+      { h: 'Apa Itu Cashless?', p: 'Cashless berarti kamu tidak perlu bayar dulu — cukup tunjukkan kartu digital di rumah sakit rekanan, dan biaya diselesaikan langsung antara rumah sakit dan perusahaan asuransi.' },
+      { h: 'Apa Itu Reimbursement?', p: 'Kalau kamu berobat di rumah sakit non-rekanan, kamu bayar dulu di tempat, lalu ajukan penggantian biaya lewat aplikasi dengan kuitansi asli dan dokumen medis lengkap.' },
+      { h: 'Mana yang Harus Dipilih?', p: 'Bukan soal pilihan — tergantung rumah sakit tempat kamu berobat. Kalau rekanan, otomatis cashless. Kalau bukan, otomatis jalur reimbursement. Dalam keadaan darurat, prioritaskan RS terdekat, jangan menunda demi mencari RS rekanan.' },
+      { h: 'Tips Supaya Reimbursement Lancar', p: 'Simpan kuitansi asli (bukan fotokopi), minta rincian tagihan lengkap, dan minta resume medis dari dokter sebelum pulang — tiga dokumen ini yang paling sering diminta saat verifikasi klaim.' },
+    ],
+    relatedLinks: [
+      { label: 'Cara Klaim Asuransi Kesehatan (Panduan Lengkap)', path: '/asuransi-kesehatan/klaim' },
+      { label: 'Rawat Inap Mendadak? Baca Ini Dulu', path: '/panduan-klaim/rawat-inap-mendadak' },
+    ],
+  },
+  {
+    slug: 'istilah-asuransi-wajib-dipahami',
+    title: '10 Istilah Asuransi yang Wajib Kamu Pahami Sebelum Beli Polis',
+    category: 'Edukasi', readTime: '5 menit', date: '19 Jul 2026', illo: 'agent', tint: 'rgba(34,197,94,0.32)',
+    excerpt: 'Risiko sendiri, uang pertanggungan, no claim bonus — istilah-istilah ini sering muncul di polis tapi jarang benar-benar dijelaskan. Ini rangkumannya.',
+    sections: [
+      { h: 'Kenapa Istilah Ini Penting', p: 'Polis asuransi penuh dengan istilah teknis yang menentukan apa yang sebenarnya kamu dapatkan — dan apa yang tidak. Memahaminya sebelum membeli mencegah kekecewaan saat harus klaim.' },
+      { h: 'Yang Paling Sering Bikin Bingung', p: 'Risiko sendiri (own risk) — bagian biaya yang kamu tanggung sendiri per klaim. Uang pertanggungan — batas maksimum santunan. Masa tunggu — periode sebelum manfaat tertentu bisa diklaim. No Claim Bonus — insentif kalau tidak pernah klaim setahun penuh.' },
+      { h: 'All Risk, TLO, dan Kawan-Kawannya', p: 'Untuk asuransi mobil khususnya, All Risk dan TLO adalah dua istilah paling fundamental yang menentukan seberapa luas cakupan polismu — beda jauh dari sekadar "asuransi mobil" secara umum.' },
+      { h: 'Selengkapnya di Glosarium', p: 'Kami kumpulkan 12 istilah paling penting lengkap dengan contoh nyata di halaman Glosarium — bookmark untuk referensi cepat kapan pun kamu baca polis baru.' },
+    ],
+    relatedLinks: [
+      { label: 'Glosarium Asuransi Lengkap', path: '/glosarium' },
+      { label: 'Asuransi All Risk vs TLO', path: '/perbandingan/asuransi-all-risk-vs-tlo' },
+    ],
+  },
 ];
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
@@ -175,7 +224,7 @@ function SchemaScript({ a }: { a: Article }) {
 }
 
 /* ── Article Detail ───────────────────────────────────────────────────────── */
-function ArticleView({ a, onBack, onSignIn }: { a: Article; onBack: () => void; onSignIn: () => void }) {
+function ArticleView({ a, onBack, onSignIn, navigate }: { a: Article; onBack: () => void; onSignIn: () => void; navigate?: (path: string) => void }) {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e5e7eb', fontFamily: 'Inter, sans-serif' }}>
       <style>{BLOG_CSS}</style>
@@ -211,6 +260,19 @@ function ArticleView({ a, onBack, onSignIn }: { a: Article; onBack: () => void; 
             <p style={{ color: '#d1d5db', lineHeight: 1.78, fontSize: 15, paddingLeft: 36 }}>{s.p}</p>
           </div>
         ))}
+        {a.relatedLinks && a.relatedLinks.length > 0 && navigate && (
+          <div style={{ marginTop: 8, marginBottom: 40, paddingTop: 24, borderTop: '1px solid #1f2937' }}>
+            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6b7280', marginBottom: 14 }}>Baca Juga</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {a.relatedLinks.map(l => (
+                <button key={l.path} onClick={() => navigate(l.path)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left', padding: '14px 18px', borderRadius: 12, background: '#101511', border: '1px solid #1f2937', color: '#e5e7eb', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                  {l.label} <ArrowRight size={14} style={{ color: GREEN, flexShrink: 0 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* CTA */}
         <div style={{ marginTop: 48, background: 'linear-gradient(135deg,rgba(1,235,2,0.14),rgba(1,235,2,0.04))', border: '1px solid rgba(1,235,2,0.25)', borderRadius: 18, padding: 36, textAlign: 'center' }}>
           <h3 style={{ color: '#fff', fontSize: 22, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.02em' }}>Mau coba hitung premi kamu?</h3>
@@ -309,12 +371,12 @@ function BlogListing({ onBack, onSelect }: { onBack: () => void; onSelect: (slug
 }
 
 /* ── Main Export ──────────────────────────────────────────────────────────── */
-const BlogPage: React.FC<Props> = ({ slug, onBack, onSignIn }) => {
+const BlogPage: React.FC<Props> = ({ slug, onBack, onSignIn, navigate }) => {
   const [currentSlug, setCurrentSlug] = React.useState<string | undefined>(slug);
   const article = currentSlug ? ARTICLES.find(a => a.slug === currentSlug) : undefined;
 
   if (article) {
-    return <ArticleView a={article} onBack={() => setCurrentSlug(undefined)} onSignIn={onSignIn} />;
+    return <ArticleView a={article} onBack={() => setCurrentSlug(undefined)} onSignIn={onSignIn} navigate={navigate} />;
   }
   return <BlogListing onBack={onBack} onSelect={setCurrentSlug} />;
 };

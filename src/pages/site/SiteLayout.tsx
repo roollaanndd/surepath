@@ -160,11 +160,11 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
   const t = useT(lang);
   const columns = [
     { title: t('Produk', 'Products'), links: [
-      { label: t('Asuransi Kendaraan', 'Car Insurance'),    path: '/product/car' },
-      { label: t('Asuransi Perjalanan', 'Travel Insurance'), path: '/product/travel' },
-      { label: t('Kecelakaan Diri', 'Personal Accident'),    path: '/product/pa' },
-      { label: t('Proteksi Barang', 'Property Protection'),  path: '/product/property' },
-      { label: t('Kesehatan', 'Health'),                     path: '/product/health' },
+      { label: t('Asuransi Mobil (All Risk & TLO)', 'Car Insurance (All Risk & TLO)'), path: '/asuransi-mobil' },
+      { label: t('Asuransi Kesehatan', 'Health Insurance'),  path: '/asuransi-kesehatan' },
+      { label: t('Asuransi Kecelakaan Diri', 'Personal Accident'), path: '/asuransi-kecelakaan-diri' },
+      { label: t('Asuransi Perjalanan', 'Travel Insurance'), path: '/asuransi-perjalanan' },
+      { label: t('Proteksi Barang (Gadget)', 'Device Protection'), path: '/proteksi-barang' },
     ]},
     { title: t('Perusahaan', 'Company'), links: [
       { label: t('Tentang Kami', 'About Us'),      path: '/about' },
@@ -172,6 +172,10 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Hubungi Kami', 'Contact Us'),    path: '/contact' },
       { label: t('Karir', 'Careers'),              path: '/careers' },
       { label: t('Blog', 'Blog'),                  path: '/blog' },
+      { label: t('FAQ', 'FAQ'),                    path: '/faq' },
+      { label: t('Glosarium', 'Glossary'),         path: '/glosarium' },
+      { label: t('Panduan Klaim', 'Claim Guides'), path: '/panduan-klaim' },
+      { label: t('Regulasi & OJK', 'Regulation & OJK'), path: '/regulasi' },
       { label: t('Program Mitra', 'Partner Program'), path: '/agents' },
     ]},
     { title: t('Legal', 'Legal'), links: [

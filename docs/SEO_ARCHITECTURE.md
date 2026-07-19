@@ -324,14 +324,17 @@ Proyek ini sudah punya progres nyata (v1.50.0, Lighthouse mobile 64→82 — lih
 
 ---
 
-## 15. Keputusan Arsitektur yang Perlu Diputuskan Sebelum Phase 2
+## 15. Keputusan Arsitektur — FINALIZED (2026-07-19)
 
-Dokumen ini (Phase 1) adalah architecture & strategy — belum ada kode yang diubah. Sebelum lanjut ke Phase 2 (Keyword Map) dan terutama Phase 3-4 (produksi ratusan halaman), ada 2 keputusan yang berdampak besar ke effort & kualitas, dan sebaiknya diputuskan oleh user/product owner, bukan diasumsikan:
+1. **Model penyimpanan konten: Hybrid.** Phase 3 (100 landing page) dan awal Phase 5 (blog) dibangun **hardcoded TS/TSX** mengikuti pola existing (`BlogPage.tsx`/`productInfoContent.ts`) — tervalidasi cepat, tidak butuh migration/RLS baru, konsisten dengan konvensi "jangan bangun abstraksi sebelum terbukti perlu" di `CLAUDE.md`. Migrasi ke tabel Supabase (`sp_blog_posts`/`sp_landing_pages` + data-gateway actions + admin UI) dipicu oleh **traksi terbukti** (volume/edit frequency), bukan diasumsikan di depan — jadi ini keputusan re-evaluasi di Phase 6, bukan keputusan sekali jalan sekarang. Struktur data hardcoded (interface `Article`/dst.) tetap dirancang supaya field-nya 1:1 dengan kolom tabel yang akan dipakai kalau migrasi terjadi (id/slug/title/meta/body/updatedAt/category) — supaya migrasi nanti adalah data-copy, bukan re-modeling.
+2. **Prerendering/SSR: build-time prerendering, di-scope hanya untuk public SEO content routes** (silo produk, blog, glosarium, perbandingan, panduan) — **bukan** SSR penuh atau migrasi framework. Rasional:
+   - App ini adalah SPA produksi dengan 5 portal berautentikasi (`/custapp`, `/agapps`, `/operatorapp`, `/insurerapp`, `/admin`) yang punya logic auth/session kompleks (`App.tsx`) — full SSR/framework rewrite adalah proyek besar dengan risiko tinggi terhadap fungsi transaksional (login, checkout, klaim) yang jadi revenue path utama. Itu bukan trade-off yang sepadan hanya demi SEO.
+   - Halaman publik SEO (silo/blog/glosarium) sebaliknya **statis secara konten** (tidak butuh session/auth) — kandidat ideal untuk prerender di build time (`vite build` step tambahan yang render tiap route publik ke HTML statis, mis. via headless Chromium yang sudah tersedia di environment build, atau plugin prerender Vite) tanpa menyentuh runtime portal sama sekali.
+   - Ini juga alasan keamanan: prerender scoped-ke-publik tidak mengekspos state/data auth apa pun ke build artifact — halaman portal tetap 100% client-rendered post-auth seperti sekarang.
+   - Efek samping positif: LCP membaik (konten sudah ada di initial HTML, bukan cuma di JS bundle) — selaras dengan kerja optimasi v1.50.0 yang sudah jalan.
+   - Implementasi konkret dijadwalkan di **Phase 6 (Technical SEO)** setelah silo/URL Phase 3-4 stabil — prerender step butuh route list final, jadi built setelah kontennya ada, bukan sebelum.
 
-1. **Model penyimpanan konten:** lanjutkan pola existing (hardcoded TS/TSX per halaman, seperti `BlogPage.tsx`/`productInfoContent.ts` sekarang) — cepat untuk puluhan halaman tapi tidak scalable/tidak bisa diedit non-engineer untuk 700+ halaman — **vs** investasi tabel Supabase baru + data-gateway actions + (opsional) admin UI untuk kelola konten, yang jauh lebih scalable tapi effort engineering signifikan (migration + RLS + gateway module + docs update per konvensi CLAUDE.md).
-2. **Prerendering/SSR:** tetap SPA murni (berisiko under-indexed untuk AI crawler non-JS & Googlebot render-budget di skala 1000+ halaman) **vs** tambah build-time prerendering (mis. `vite-plugin-ssg`/prerender step di `npm run build`) supaya setiap route punya HTML statis crawlable — ini juga akan mempercepat LCP karena konten sudah ada di initial HTML, bukan cuma dampak SEO.
-
-Saya akan tanyakan langsung ke user sebelum mengeksekusi Phase 2, supaya Phase 3/4 dibangun di atas fondasi yang benar dan tidak perlu dirombak ulang setelah 700 halaman terlanjur dibuat.
+Kedua keputusan ini mengunci fondasi Phase 2 (Keyword Map) — siap dilanjutkan begitu ada instruksi lanjut.
 
 ---
 

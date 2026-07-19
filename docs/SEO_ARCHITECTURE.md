@@ -346,7 +346,7 @@ Kedua keputusan ini mengunci fondasi Phase 2 (Keyword Map) — siap dilanjutkan 
 |---|---|---|
 | 1 | Complete Website Structure (dokumen ini) | ✅ Selesai |
 | 2 | Keyword Map (`docs/SEO_KEYWORD_MAP.md`) | ✅ Selesai (estimasi — verifikasi ulang via Semrush/GSC saat unit tersedia) |
-| 3 | Landing Pages (100) | 🔶 27 dari 100 live: semua 5 vertikal punya hub + sub-halaman Klaim & Premi, Mobil All Risk/TLO + 3 Zona OJK, Perjalanan Internasional, 3 perbandingan (All Risk vs TLO, Kesehatan vs BPJS, PA vs Asuransi Jiwa), glosarium (index + 10 istilah), 1 halaman FAQ konsolidasi (`/faq`, agregasi bukan duplikat). Sisa: halaman Panduan per vertikal, lebih banyak perbandingan & glosarium. |
+| 3 | Landing Pages (100) | 🔶 32 dari 100 live: semua 5 vertikal punya hub + sub-halaman Klaim & Premi, Mobil All Risk/TLO + 3 Zona OJK, Perjalanan Internasional, 3 perbandingan, glosarium (index + 10 istilah), 1 halaman FAQ konsolidasi, Panduan Klaim (index + 2 panduan darurat), Regulasi (index + 1 halaman SEOJK). Sisa: lebih banyak panduan klaim per skenario, lebih banyak perbandingan & glosarium. |
 | 4 | Programmatic SEO (kota/provinsi/merek/model/perusahaan asuransi/dst) | Belum mulai |
 | 5 | Blog Content (500 topik) | Belum mulai |
 | 6 | Technical SEO polish (security.txt, humans.txt, hreflang audit, dst.) | Belum mulai |

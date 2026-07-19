@@ -482,12 +482,20 @@ const App = () => {
   }
 
   // ── SEO silo — other verticals (docs/SEO_ARCHITECTURE.md Phase 3, P1) ─────
-  const OTHER_VERTICAL_ROUTES: Record<string, 'kesehatan-hub' | 'kecelakaan-diri-hub' | 'perjalanan-hub' | 'perjalanan-internasional' | 'proteksi-barang-hub'> = {
+  const OTHER_VERTICAL_ROUTES: Record<string, import('./src/pages/silo/OtherVerticalsPage').OtherVerticalPage> = {
     '/asuransi-kesehatan': 'kesehatan-hub',
+    '/asuransi-kesehatan/klaim': 'kesehatan-klaim',
+    '/asuransi-kesehatan/premi': 'kesehatan-premi',
     '/asuransi-kecelakaan-diri': 'kecelakaan-diri-hub',
+    '/asuransi-kecelakaan-diri/klaim': 'kecelakaan-diri-klaim',
+    '/asuransi-kecelakaan-diri/premi': 'kecelakaan-diri-premi',
     '/asuransi-perjalanan': 'perjalanan-hub',
     '/asuransi-perjalanan/internasional': 'perjalanan-internasional',
+    '/asuransi-perjalanan/klaim': 'perjalanan-klaim',
+    '/asuransi-perjalanan/premi': 'perjalanan-premi',
     '/proteksi-barang': 'proteksi-barang-hub',
+    '/proteksi-barang/klaim': 'proteksi-barang-klaim',
+    '/proteksi-barang/premi': 'proteksi-barang-premi',
   };
   const otherVerticalPage = OTHER_VERTICAL_ROUTES[pathname];
   if (otherVerticalPage) {

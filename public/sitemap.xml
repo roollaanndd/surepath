@@ -140,6 +140,54 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://myinsurepath.com/asuransi-kesehatan/klaim</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-kesehatan/premi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-kecelakaan-diri/klaim</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-kecelakaan-diri/premi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-perjalanan/klaim</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-perjalanan/premi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/proteksi-barang/klaim</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/proteksi-barang/premi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://myinsurepath.com/asuransi-mobil/premi/zona-1</loc>
     <lastmod>2026-07-19</lastmod>
     <changefreq>monthly</changefreq>

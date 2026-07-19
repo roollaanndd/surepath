@@ -160,6 +160,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
   const t = useT(lang);
   const columns = [
     { title: t('Produk', 'Products'), links: [
+      { label: t('Asuransi Mobil (All Risk & TLO)', 'Car Insurance (All Risk & TLO)'), path: '/asuransi-mobil' },
       { label: t('Asuransi Kendaraan', 'Car Insurance'),    path: '/product/car' },
       { label: t('Asuransi Perjalanan', 'Travel Insurance'), path: '/product/travel' },
       { label: t('Kecelakaan Diri', 'Personal Accident'),    path: '/product/pa' },

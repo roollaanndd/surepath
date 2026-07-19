@@ -75,11 +75,37 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Asuransi Mobil silo (docs/SEO_ARCHITECTURE.md Phase 3, batch P0) -->
   <url>
-    <loc>https://myinsurepath.com/contact</loc>
-    <lastmod>2026-06-03</lastmod>
+    <loc>https://myinsurepath.com/asuransi-mobil</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/all-risk</loc>
+    <lastmod>2026-07-19</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/tlo</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/klaim</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/asuransi-mobil/premi</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
   <!-- Product pages -->

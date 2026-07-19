@@ -65,6 +65,7 @@ const EQuotationPage    = lazy(() => import('./components/public/EQuotationPage'
 const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPortal'));
 const InsurerLogin         = lazy(() => import('./components/insurer/InsurerLogin'));
 const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
+const AsuransiMobilPage = lazy(() => import('./src/pages/silo/AsuransiMobilPage'));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
 const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
 const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
@@ -455,6 +456,23 @@ const App = () => {
   const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health)$/);
   if (productMatch) {
     return <Suspense fallback={<PortalLoader />}><ProductInfoPage productId={productMatch[1]} lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
+  }
+
+  // ── SEO silo — Asuransi Mobil (docs/SEO_ARCHITECTURE.md Phase 3) ──────────
+  const MOBIL_SILO_ROUTES: Record<string, 'hub' | 'all-risk' | 'tlo' | 'klaim' | 'premi'> = {
+    '/asuransi-mobil': 'hub',
+    '/asuransi-mobil/all-risk': 'all-risk',
+    '/asuransi-mobil/tlo': 'tlo',
+    '/asuransi-mobil/klaim': 'klaim',
+    '/asuransi-mobil/premi': 'premi',
+  };
+  const mobilSiloPage = MOBIL_SILO_ROUTES[pathname];
+  if (mobilSiloPage) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <AsuransiMobilPage page={mobilSiloPage} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
   }
 
   if (pathname === '/kalkulator') {

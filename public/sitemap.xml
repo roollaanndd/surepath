@@ -225,6 +225,12 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://myinsurepath.com/perbandingan/surepath-vs-beli-langsung</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 
   <!-- FAQ -->
   <url>
@@ -266,6 +272,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://myinsurepath.com/panduan-klaim/delay-pesawat</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://myinsurepath.com/regulasi</loc>
     <lastmod>2026-07-19</lastmod>
     <changefreq>monthly</changefreq>
@@ -293,6 +305,18 @@
   </url>
   <url>
     <loc>https://myinsurepath.com/glosarium/cashless</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/glosarium/masa-tunggu</loc>
+    <lastmod>2026-07-19</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://myinsurepath.com/glosarium/evakuasi-medis</loc>
     <lastmod>2026-07-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>

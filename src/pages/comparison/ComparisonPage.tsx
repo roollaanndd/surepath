@@ -2,14 +2,15 @@ import React from 'react';
 import SiloLandingTemplate from '../site/SiloLandingTemplate';
 import { SitePageProps } from '../site/siteKit';
 import { allRiskVsTlo } from './allRiskVsTloContent';
-import { kesehatanVsBpjs, paVsAsuransiJiwa } from './moreComparisonsContent';
+import { kesehatanVsBpjs, paVsAsuransiJiwa, surepathVsBeliLangsung } from './moreComparisonsContent';
 
-export type ComparisonSlug = 'asuransi-all-risk-vs-tlo' | 'asuransi-kesehatan-vs-bpjs' | 'personal-accident-vs-asuransi-jiwa';
+export type ComparisonSlug = 'asuransi-all-risk-vs-tlo' | 'asuransi-kesehatan-vs-bpjs' | 'personal-accident-vs-asuransi-jiwa' | 'surepath-vs-beli-langsung';
 
 const CONTENT = {
   'asuransi-all-risk-vs-tlo': allRiskVsTlo,
   'asuransi-kesehatan-vs-bpjs': kesehatanVsBpjs,
   'personal-accident-vs-asuransi-jiwa': paVsAsuransiJiwa,
+  'surepath-vs-beli-langsung': surepathVsBeliLangsung,
 } as const;
 
 interface Props extends SitePageProps {

@@ -9,7 +9,8 @@ import { mobilHub, mobilAllRisk, mobilTlo, mobilKlaim, mobilPremi } from '../sil
 import { kesehatanHub, kecelakaanDiriHub, perjalananHub, perjalananInternasional } from '../silo/otherVerticalsContent';
 import { proteksiBarangHub } from '../silo/proteksiBarangContent';
 import { allRiskVsTlo } from '../comparison/allRiskVsTloContent';
-import { kesehatanVsBpjs, paVsAsuransiJiwa } from '../comparison/moreComparisonsContent';
+import { kesehatanVsBpjs, paVsAsuransiJiwa, surepathVsBeliLangsung } from '../comparison/moreComparisonsContent';
+import { panduanKecelakaanMobil, panduanKlaimDitolak, panduanHpHilang, panduanRawatInapMendadak, panduanDelayPesawat } from '../guides/panduanKlaimContent';
 
 // Consolidated FAQ directory (docs/SEO_ARCHITECTURE.md Phase 3) — pulls the
 // existing `faq` array already visible on each silo/comparison page rather
@@ -36,6 +37,12 @@ const SOURCES: FaqGroup[] = [
   { sourceTitle: 'All Risk vs TLO', sourcePath: allRiskVsTlo.breadcrumb.at(-1)!.path, faq: allRiskVsTlo.faq },
   { sourceTitle: 'Asuransi Kesehatan vs BPJS', sourcePath: kesehatanVsBpjs.breadcrumb.at(-1)!.path, faq: kesehatanVsBpjs.faq },
   { sourceTitle: 'Personal Accident vs Asuransi Jiwa', sourcePath: paVsAsuransiJiwa.breadcrumb.at(-1)!.path, faq: paVsAsuransiJiwa.faq },
+  { sourceTitle: 'Beli Lewat SurePath vs Langsung', sourcePath: surepathVsBeliLangsung.breadcrumb.at(-1)!.path, faq: surepathVsBeliLangsung.faq },
+  { sourceTitle: 'Baru Kecelakaan Mobil?', sourcePath: panduanKecelakaanMobil.breadcrumb.at(-1)!.path, faq: panduanKecelakaanMobil.faq },
+  { sourceTitle: 'HP Hilang atau Dicuri?', sourcePath: panduanHpHilang.breadcrumb.at(-1)!.path, faq: panduanHpHilang.faq },
+  { sourceTitle: 'Rawat Inap Mendadak?', sourcePath: panduanRawatInapMendadak.breadcrumb.at(-1)!.path, faq: panduanRawatInapMendadak.faq },
+  { sourceTitle: 'Penerbangan Delay?', sourcePath: panduanDelayPesawat.breadcrumb.at(-1)!.path, faq: panduanDelayPesawat.faq },
+  { sourceTitle: 'Kenapa Klaim Ditolak?', sourcePath: panduanKlaimDitolak.breadcrumb.at(-1)!.path, faq: panduanKlaimDitolak.faq },
 ];
 
 const FaqPage: React.FC<SitePageProps> = (page) => {

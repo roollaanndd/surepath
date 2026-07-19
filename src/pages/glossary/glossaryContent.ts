@@ -124,6 +124,28 @@ export const GLOSSARY_TERMS: GlossaryTerm[] = [
     ctaPath: '/asuransi-kesehatan',
     ctaLabel: 'Pelajari Asuransi Kesehatan',
   },
+  {
+    slug: 'masa-tunggu',
+    term: 'Masa Tunggu (Waiting Period)',
+    category: 'Umum',
+    shortDef: 'Periode setelah polis aktif di mana manfaat tertentu belum bisa diklaim — berbeda dari kondisi darurat yang biasanya langsung ditanggung.',
+    longDef: 'Masa tunggu adalah jangka waktu yang harus dilewati sejak polis aktif sebelum manfaat tertentu bisa diklaim. Ini umum diterapkan untuk manfaat non-darurat seperti melahirkan pada asuransi kesehatan, mencegah orang mendaftar polis hanya setelah tahu akan butuh manfaat tertentu dalam waktu dekat. Kondisi darurat medis biasanya dikecualikan dari masa tunggu dan langsung ditanggung sejak polis aktif.',
+    example: 'Manfaat melahirkan pada asuransi kesehatan biasanya punya masa tunggu beberapa bulan — mendaftar saat sudah hamil besar tidak akan langsung menanggung biaya persalinan tersebut.',
+    relatedSlugs: ['polis', 'cashless'],
+    ctaPath: '/asuransi-kesehatan',
+    ctaLabel: 'Pelajari Asuransi Kesehatan',
+  },
+  {
+    slug: 'evakuasi-medis',
+    term: 'Evakuasi Medis',
+    category: 'Asuransi Perjalanan',
+    shortDef: 'Pemindahan pasien ke fasilitas kesehatan yang lebih memadai, ditanggung sebagai bagian dari manfaat asuransi perjalanan dalam kondisi darurat.',
+    longDef: 'Evakuasi medis adalah manfaat yang menanggung biaya pemindahan pasien dari lokasi kejadian ke fasilitas kesehatan yang lebih memadai — bisa dalam kota yang sama atau lintas negara untuk polis perjalanan internasional — ketika fasilitas terdekat tidak mampu menangani kondisi darurat yang dialami. Biaya evakuasi medis, terutama lintas negara, bisa sangat tinggi tanpa proteksi asuransi.',
+    example: 'Wisatawan yang mengalami kecelakaan serius di daerah terpencil mungkin perlu dievakuasi ke rumah sakit kota besar terdekat — biaya evakuasi ini yang ditanggung manfaat evakuasi medis.',
+    relatedSlugs: ['uang-pertanggungan'],
+    ctaPath: '/asuransi-perjalanan/internasional',
+    ctaLabel: 'Pelajari Asuransi Perjalanan Internasional',
+  },
 ];
 
 export const glossaryTermBySlug = (slug: string) => GLOSSARY_TERMS.find(t => t.slug === slug);

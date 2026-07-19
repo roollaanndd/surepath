@@ -107,7 +107,7 @@ export const mobilHub: SiloPageContent = {
     { q: 'Apakah premi bisa dicicil?', a: 'Beberapa mitra asuransi menawarkan skema cicilan bulanan; ketersediaannya tergantung produk dan perusahaan asuransi yang dipilih.' },
   ],
   internalLinksTitle: 'Jelajahi Asuransi Mobil',
-  internalLinks: internalNavAll,
+  internalLinks: [...internalNavAll, { label: 'Beli Lewat SurePath vs Langsung', path: '/perbandingan/surepath-vs-beli-langsung' }],
   relatedArticlesTitle: 'Baca Juga',
   relatedArticles: [relatedBlog.allRiskVsTlo, relatedBlog.klaim, relatedBlog.premi],
   ctaTitle: 'Siap Bandingkan Premi Mobilmu?',

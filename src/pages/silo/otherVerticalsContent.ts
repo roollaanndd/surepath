@@ -607,7 +607,10 @@ export const perjalananKlaim: SiloPageContent = {
     { q: 'Bagaimana jika butuh perawatan medis darurat di tengah malam?', a: 'Hotline darurat SurePath aktif 24 jam — hubungi kapan saja tanpa perlu menunggu jam kerja.' },
   ],
   internalLinksTitle: 'Jelajahi Asuransi Perjalanan',
-  internalLinks: [asNavLink(crossLinks.perjalanan), { label: 'Premi Asuransi Perjalanan', path: '/asuransi-perjalanan/premi' }, asNavLink(crossLinks.perjalananIntl)],
+  internalLinks: [
+    { label: 'Penerbangan Delay? Baca Ini Dulu', path: '/panduan-klaim/delay-pesawat' },
+    asNavLink(crossLinks.perjalanan), { label: 'Premi Asuransi Perjalanan', path: '/asuransi-perjalanan/premi' }, asNavLink(crossLinks.perjalananIntl),
+  ],
   relatedArticlesTitle: 'Baca Juga',
   relatedArticles: [crossLinks.manfaatPerjalananBlog],
   ctaTitle: 'Siap Berangkat dengan Tenang?',

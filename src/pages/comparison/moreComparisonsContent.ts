@@ -179,3 +179,79 @@ export const paVsAsuransiJiwa: SiloPageContent = {
     '/perbandingan/personal-accident-vs-asuransi-jiwa',
   )],
 };
+
+// Positioning note (docs/SEO_KEYWORD_MAP.md §1.6): SurePath's insurer
+// partners (Zurich, Tugu, Sinar Mas, Sompo, Intra Asia — per index.html
+// JSON-LD) are NOT competitors, they're the underwriters whose products
+// SurePath distributes. This page frames the choice correctly: platform
+// convenience vs going direct to one insurer, NOT "SurePath's product is
+// cheaper/better than theirs" — the premium is the same OJK-regulated rate
+// either way. Misframing this as a head-to-head product comparison would
+// misrepresent the relationship with underwriting partners.
+export const surepathVsBeliLangsung: SiloPageContent = {
+  breadcrumb: [
+    { name: 'Beranda', path: '/' },
+    { name: 'Produk', path: '/products' },
+    { name: 'Beli Lewat SurePath vs Langsung', path: '/perbandingan/surepath-vs-beli-langsung' },
+  ],
+  seoTitle: 'Beli Asuransi Lewat SurePath vs Langsung ke Perusahaan Asuransi | SurePath',
+  seoDescription: 'Premi sama — tarif diatur OJK. Bedanya di kemudahan bandingkan, proses digital, dan dukungan klaim. Ini yang sebenarnya berubah kalau beli lewat platform vs langsung.',
+  category: 'Cara Membeli Asuransi',
+  h1: 'Beli Lewat SurePath vs Langsung ke Perusahaan Asuransi',
+  heroSubtitle: 'Penting dipahami dulu: SurePath bukan perusahaan asuransi — kami platform yang menyalurkan produk dari perusahaan asuransi berizin OJK seperti Zurich, Tugu, Sinar Mas, Sompo, dan Intra Asia. Preminya sama. Yang beda adalah prosesnya.',
+  heroHighlights: ['Premi Sama (Tarif OJK)', 'Bandingkan 10+ Insurer Sekaligus', 'Bukan Kompetitor, Tapi Mitra'],
+  bodyIntro: 'Ini pertanyaan yang wajar: kalau tarifnya sama-sama diatur OJK, kenapa harus beli lewat SurePath dan bukan langsung ke perusahaan asuransi? Jawabannya bukan soal harga — karena memang tidak ada selisih harga dari sisi tarif dasar. Bedanya ada di pengalaman: seberapa mudah kamu membandingkan opsi, seberapa cepat prosesnya, dan seberapa terbantu kamu saat harus klaim.',
+  benefitsTitle: 'Apa yang Sebenarnya Berubah',
+  benefits: [
+    { title: 'Bandingkan Tanpa Hubungi Satu-Satu', desc: 'Lihat penawaran dari berbagai perusahaan asuransi sekaligus, alih-alih menghubungi masing-masing secara terpisah.' },
+    { title: 'Proses Digital Penuh', desc: 'Foto STNK, isi data otomatis, bayar online — dibanding proses manual yang sering masih dilakukan langsung ke insurer.' },
+    { title: 'Pendampingan Klaim', desc: 'Tim SurePath membantu memastikan dokumen klaim lengkap sebelum diajukan ke perusahaan asuransi, mengurangi risiko penolakan karena dokumen kurang.' },
+    { title: 'Satu Akun untuk Semua Polis', desc: 'Kelola beberapa jenis asuransi (mobil, kesehatan, PA, perjalanan) dari berbagai insurer dalam satu aplikasi.' },
+  ],
+  coverageTitle: 'Yang Tidak Berubah',
+  coverageIntro: 'Beberapa hal tetap sama di kedua jalur — penting untuk ekspektasi yang tepat.',
+  coverageItems: [
+    { title: 'Tarif Premi', desc: 'Sama-sama mengikuti batas resmi OJK — tidak ada markup dari SurePath maupun diskon rahasia dari membeli langsung.' },
+    { title: 'Penerbit Polis', desc: 'Polis tetap diterbitkan oleh perusahaan asuransi mitra, bukan oleh SurePath — SurePath adalah platform teknologi yang memfasilitasi.' },
+    { title: 'Ketentuan & Cakupan Polis', desc: 'Syarat, pengecualian, dan cakupan mengikuti ketentuan yang ditetapkan perusahaan asuransi penerbit, sama seperti jika kamu beli langsung.' },
+  ],
+  priceTitle: 'Soal Harga',
+  priceIntro: 'Tidak ada perbedaan harga dasar — ini yang perlu dipahami dengan jelas.',
+  priceTable: [{ label: 'Premi lewat SurePath vs langsung', value: 'Sama — mengikuti tarif resmi OJK yang berlaku untuk semua saluran' }],
+  showCalculator: false,
+  bodySections: [
+    { h: 'Kenapa Tidak Ada Selisih Harga', p: 'Karena tarif premi asuransi kendaraan diatur resmi oleh OJK (SEOJK No.06/SEOJK.05/2017) dan berlaku sama untuk semua saluran distribusi — baik kamu beli langsung ke kantor cabang, lewat agen, atau lewat platform digital seperti SurePath. Platform digital tidak menambah biaya, dan juga tidak bisa memberi "diskon rahasia" di luar tarif resmi.' },
+    { h: 'Kapan Beli Langsung Mungkin Lebih Masuk Akal', p: 'Jika kamu sudah punya hubungan lama dengan agen atau kantor cabang tertentu, sudah tahu persis produk yang diinginkan tanpa perlu membandingkan, dan tidak keberatan dengan proses yang lebih manual — beli langsung tetap opsi yang valid.' },
+    { h: 'Kapan Platform Lebih Membantu', p: 'Jika kamu ingin membandingkan opsi sebelum memutuskan, lebih suka proses digital tanpa harus datang ke kantor cabang, atau menginginkan pendampingan saat proses klaim — platform seperti SurePath memberi nilai tambah nyata di luar sekadar harga.' },
+  ],
+  claimProcessTitle: 'Klaim — Bedanya di Sini',
+  claimIntro: 'Proses inti klaim sama-sama ditentukan perusahaan asuransi, tapi pendampingannya beda.',
+  claimSteps: [
+    { title: 'Lewat SurePath', desc: 'Ajukan lewat app, tim SurePath membantu memastikan dokumen lengkap sebelum diteruskan ke insurer.' },
+    { title: 'Langsung ke insurer', desc: 'Ajukan langsung sesuai prosedur masing-masing perusahaan asuransi, tanpa lapisan pendampingan tambahan.' },
+  ],
+  faqTitle: 'Pertanyaan Seputar Beli Lewat Platform',
+  faq: [
+    { q: 'Apakah SurePath adalah perusahaan asuransi?', a: 'Bukan — SurePath adalah platform teknologi yang memasarkan produk dari perusahaan asuransi berizin dan diawasi OJK. Polis diterbitkan oleh perusahaan asuransi mitra, bukan oleh SurePath.' },
+    { q: 'Apakah premi lewat SurePath lebih murah?', a: 'Tidak lebih murah maupun lebih mahal — tarif premi asuransi kendaraan diatur resmi OJK dan berlaku sama di semua saluran distribusi.' },
+    { q: 'Kalau ada masalah klaim, siapa yang bertanggung jawab?', a: 'Keputusan klaim tetap berada di tangan perusahaan asuransi penerbit polis — SurePath berperan membantu proses pengajuan dan pendampingan dokumen, bukan sebagai pemutus keputusan klaim.' },
+    { q: 'Apakah saya bisa beli dari perusahaan asuransi tertentu lewat SurePath?', a: 'Bisa — SurePath menampilkan penawaran dari berbagai mitra asuransi, dan kamu bebas memilih penawaran dari perusahaan asuransi yang kamu inginkan.' },
+  ],
+  internalLinksTitle: 'Jelajahi Produk',
+  internalLinks: [
+    { label: 'Asuransi Mobil', path: '/asuransi-mobil' },
+    { label: 'Tentang SurePath', path: '/about' },
+    { label: 'Cara Kerja SurePath', path: '/how-it-works' },
+  ],
+  relatedArticlesTitle: 'Baca Juga',
+  relatedArticles: [
+    { title: 'SEOJK No.06/SEOJK.05/2017', excerpt: 'Regulasi OJK yang mengatur batas tarif premi asuransi kendaraan bermotor.', path: '/regulasi/seojk-6-2017-tarif-premi' },
+  ],
+  ctaTitle: 'Bandingkan Sebelum Memutuskan',
+  ctaSubtitle: 'Lihat penawaran dari 10+ perusahaan asuransi sekaligus — gratis, tanpa komitmen.',
+  extraJsonLd: [articleJsonLd(
+    'Beli Lewat SurePath vs Langsung ke Perusahaan Asuransi',
+    'Penjelasan perbedaan membeli asuransi lewat platform SurePath dibanding langsung ke perusahaan asuransi.',
+    '/perbandingan/surepath-vs-beli-langsung',
+  )],
+};

@@ -511,7 +511,7 @@ const App = () => {
   }
 
   // ── SEO silo — comparison pages ────────────────────────────────────────────
-  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo|asuransi-kesehatan-vs-bpjs|personal-accident-vs-asuransi-jiwa)$/);
+  const comparisonMatch = pathname.match(/^\/perbandingan\/(asuransi-all-risk-vs-tlo|asuransi-kesehatan-vs-bpjs|personal-accident-vs-asuransi-jiwa|surepath-vs-beli-langsung)$/);
   if (comparisonMatch) {
     return (
       <Suspense fallback={<PortalLoader />}>
@@ -559,6 +559,7 @@ const App = () => {
     '/panduan-klaim/klaim-ditolak': 'panduan-klaim-ditolak',
     '/panduan-klaim/hp-hilang-dicuri': 'panduan-hp-hilang',
     '/panduan-klaim/rawat-inap-mendadak': 'panduan-rawat-inap-mendadak',
+    '/panduan-klaim/delay-pesawat': 'panduan-delay-pesawat',
     '/regulasi/seojk-6-2017-tarif-premi': 'regulasi-seojk-6-2017',
   };
   const guidePage = GUIDE_ROUTES[pathname];

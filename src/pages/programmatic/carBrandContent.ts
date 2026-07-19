@@ -206,3 +206,10 @@ export const CAR_BRANDS = BRAND_FACTS.map(f => ({ slug: f.slug, name: f.name, po
 export const CAR_BRAND_CONTENT: Record<string, SiloPageContent> = Object.fromEntries(
   BRAND_FACTS.map(f => [f.slug, generateBrandContent(f)]),
 );
+
+// Cross-link to the model pages that exist for this brand (Phase 4 batch 2) —
+// keeps CAR_BRAND_CONTENT the single source brand pages import from, so
+// this file doesn't need to import carModelContent.ts and risk a cycle.
+CAR_BRAND_CONTENT.toyota.internalLinks.unshift({ label: 'Asuransi Mobil Toyota Avanza', path: '/asuransi-mobil/model/toyota-avanza' });
+CAR_BRAND_CONTENT.honda.internalLinks.unshift({ label: 'Asuransi Mobil Honda Brio', path: '/asuransi-mobil/model/honda-brio' });
+CAR_BRAND_CONTENT.mitsubishi.internalLinks.unshift({ label: 'Asuransi Mobil Mitsubishi Xpander', path: '/asuransi-mobil/model/mitsubishi-xpander' });

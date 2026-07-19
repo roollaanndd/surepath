@@ -73,6 +73,8 @@ const FaqPage           = lazy(() => import('./src/pages/faq/FaqPage'));
 const GuidesPage        = lazy(() => import('./src/pages/guides/GuidesPage'));
 const CarBrandPage      = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandPage })));
 const CarBrandIndex     = lazy(() => import('./src/pages/programmatic/CarBrandPage').then(m => ({ default: m.CarBrandIndex })));
+const CarModelPage      = lazy(() => import('./src/pages/programmatic/CarModelPage').then(m => ({ default: m.CarModelPage })));
+const CarModelIndex     = lazy(() => import('./src/pages/programmatic/CarModelPage').then(m => ({ default: m.CarModelIndex })));
 const PanduanKlaimIndex = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.PanduanKlaimIndex })));
 const RegulasiIndex     = lazy(() => import('./src/pages/guides/GuidesPage').then(m => ({ default: m.RegulasiIndex })));
 const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
@@ -586,6 +588,21 @@ const App = () => {
     return (
       <Suspense fallback={<PortalLoader />}>
         <CarBrandPage brand={carBrandMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  if (pathname === '/asuransi-mobil/model') {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarModelIndex onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Suspense>
+    );
+  }
+  const carModelMatch = pathname.match(/^\/asuransi-mobil\/model\/([a-z0-9-]+)$/);
+  if (carModelMatch) {
+    return (
+      <Suspense fallback={<PortalLoader />}>
+        <CarModelPage model={carModelMatch[1]} onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

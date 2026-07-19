@@ -110,6 +110,7 @@ export const mobilHub: SiloPageContent = {
   internalLinks: [
     ...internalNavAll,
     { label: 'Asuransi Mobil per Merek', path: '/asuransi-mobil/merek' },
+    { label: 'Asuransi Mobil per Model', path: '/asuransi-mobil/model' },
     { label: 'Beli Lewat SurePath vs Langsung', path: '/perbandingan/surepath-vs-beli-langsung' },
   ],
   relatedArticlesTitle: 'Baca Juga',

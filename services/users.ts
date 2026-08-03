@@ -35,6 +35,12 @@ export async function getAgentByEmail(_email: string): Promise<SpUser | null> {
 
 // Returns the current user's profile, creating it server-side (from the
 // verified JWT identity) if it doesn't exist yet. Safe to call repeatedly.
+//
+// ROLE STICKINESS: the gateway ignores `role` if a profile already exists —
+// once picked, the user's role is immutable through this endpoint. The `existed`
+// flag on the return tells the caller whether the profile was pre-existing
+// (so they can respect it) or freshly created (so the caller's requested role
+// was honored).
 export async function ensureProfile(params?: {
   name?: string;
   phone?: string;
@@ -42,14 +48,41 @@ export async function ensureProfile(params?: {
   ktp?: string | null;
   address?: string | null;
   referral_code?: string | null;
-}): Promise<SpUser | null> {
-  const { data, error } = await callGateway('ensure_profile', params);
-  if (error) {
-    console.error('ensureProfile error:', error);
+}): Promise<(SpUser & { __existed?: boolean }) | null> {
+  const res = await callGateway('ensure_profile', params);
+  if (res.error) {
+    console.error('ensureProfile error:', res.error);
     return null;
   }
-  if (!data) return null;
-  return data as SpUser;
+  if (!res.data) return null;
+  return { ...(res.data as SpUser), __existed: res.existed === true };
+}
+
+// Fetch-only variant used on login. Distinguishes:
+//   - profile found         → { profile }
+//   - server says no profile → { noProfile: true }         (safe to show role picker)
+//   - transient failure      → { transientError: true }    (do NOT create a wrong-role row)
+// Retries transient errors with exponential backoff up to `retries` attempts.
+export async function fetchMyProfileForLogin(
+  retries = 3,
+): Promise<
+  | { profile: SpUser; noProfile?: false; transientError?: false }
+  | { profile?: null; noProfile: true; transientError?: false }
+  | { profile?: null; noProfile?: false; transientError: true; lastError?: string }
+> {
+  let lastError: string | undefined;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const res = await callGateway('get_my_profile');
+    if (res.data) return { profile: res.data as SpUser };
+    // 404 with the specific "no profile" body → genuinely new user
+    if (res.status === 404) return { noProfile: true };
+    // Anything else — 401 (auth), 5xx (server), network abort — is transient.
+    lastError = res.error;
+    if (attempt < retries - 1) {
+      await new Promise(r => setTimeout(r, 800 * (attempt + 1))); // 0.8s, 1.6s, 2.4s
+    }
+  }
+  return { transientError: true, lastError };
 }
 
 export async function getUserByEmail(_email: string): Promise<SpUser | null> {

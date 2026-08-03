@@ -15,12 +15,19 @@ interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
   initialLang?: Language;
   initialMode?: 'LOGIN' | 'REGISTER';
+  // Surface an error the parent produced (e.g. profile-fetch failed transiently
+  // during OAuth callback so we sent the user back here instead of the role
+  // picker). We display it in the same error slot as our own login errors.
+  externalError?: string | null;
+  onDismissExternalError?: () => void;
 }
 
 const AuthGate: React.FC<AuthGateProps> = ({
   onAuthSuccess,
   initialLang = Language.ID,
   initialMode = 'LOGIN',
+  externalError = null,
+  onDismissExternalError,
 }) => {
   type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'EMAIL_OTP_VERIFY' | 'RESET_PASSWORD';
   const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
@@ -136,6 +143,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     e.preventDefault();
     setLoading(true);
     setError(null);
+    onDismissExternalError?.(); // clear stale banner once user retries
     resolvedRef.current = false; // reset for new attempt
 
     try {
@@ -577,10 +585,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </div>
               )}
 
-              {error && (
+              {(error || externalError) && (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
                   <AlertCircle size={14} className="flex-shrink-0" />
-                  <span>{error}</span>
+                  <span>{error ?? externalError}</span>
                 </div>
               )}
 

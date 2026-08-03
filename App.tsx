@@ -3,7 +3,7 @@ import PromoBanner from './components/PromoBanner';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentProfile, getAgentByEmail, getUserByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet } from './services/supabaseService';
+import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
 import TermsModal from './components/TermsModal';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -134,6 +134,7 @@ const App = () => {
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [pendingOAuthUser, setPendingOAuthUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [showTc, setShowTc] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('sp_dark_mode', darkMode.toString());
@@ -290,15 +291,14 @@ const App = () => {
         if (new URLSearchParams(window.location.search).has('code') || window.location.hash.includes('access_token=')) {
           window.history.replaceState({}, '', window.location.pathname);
         }
-        const [byId, byEmail] = await Promise.allSettled([
-          getAgentProfile(u.id),
-          getUserByEmail(u.email!),
-        ]);
-        const profile =
-          (byId.status === 'fulfilled' ? byId.value : null) ??
-          (byEmail.status === 'fulfilled' ? byEmail.value : null);
+        // Single retrying fetch that distinguishes "no profile" (404) from
+        // transient failures (5xx / network). This is the guard that prevents
+        // the "loading → back to login" loop that could otherwise send an
+        // existing partner through the role picker after a network hiccup.
+        const result = await fetchMyProfileForLogin();
         setOauthLoading(false);
-        if (profile) {
+        if ('profile' in result && result.profile) {
+          const profile = result.profile;
           // FIX v1.42.0: fail-closed — if T&C status fetch errors, show the T&C modal.
           // Previously this was fail-open (`.catch(() => true)`) which let users bypass
           // legal consent on any network blip.
@@ -313,12 +313,24 @@ const App = () => {
             trustScore: profile.trust_score ?? 85,
             allowed_apps: (profile as any).allowed_apps ?? null,
           });
-        } else {
+        } else if (result.noProfile) {
+          // Server explicitly confirmed no sp_users row for this auth ID.
+          // Safe to route through role selection for a genuinely new signup.
           setPendingOAuthUser({
             id: u.id,
             name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email!.split('@')[0],
             email: u.email!,
           });
+        } else {
+          // Transient error (5xx, network, timeout). Do NOT show the role
+          // picker — that would risk creating a wrong-role profile for an
+          // existing user. Sign them out of the failed session so they can
+          // retry cleanly, and surface an error on the login screen.
+          console.error('Profile lookup failed transiently:', (result as { lastError?: string }).lastError);
+          setLoginError(
+            'Tidak bisa memuat profil kamu. Cek koneksi lalu coba masuk lagi.'
+          );
+          await supabase.auth.signOut().catch(() => {});
         }
       };
 
@@ -484,7 +496,7 @@ const App = () => {
   }
 
   if (['/login', '/custapp', '/agapps'].includes(pathname) && !currentUser) {
-    return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>;
+    return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} /></Suspense>;
   }
 
   // Allow direct navigation to /operatorapp when not signed in (will hit OperatorLogin below).
@@ -629,7 +641,7 @@ const App = () => {
 
   // Default: render AuthGate (login screen)
   return (
-    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} /></Suspense>
+    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} /></Suspense>
   );
 };
 

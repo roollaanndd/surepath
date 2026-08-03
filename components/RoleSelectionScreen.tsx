@@ -85,7 +85,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
     setError('');
 
     try {
-      let profile = null;
+      let profile: any = null;
 
       if (selected === 'CUSTOMER') {
         // referral_code links this user to the upline who shared the ?ref= link
@@ -106,7 +106,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         // Fallback: if the profile already existed (ensure_profile no-op),
         // apply the referral via the gateway so the upline still links.
         if (profile && refCode) {
-          if (!(profile as any).upline_id) await applyReferralCode(profile.id, refCode);
+          if (!profile.upline_id) await applyReferralCode(profile.id, refCode);
           localStorage.removeItem('SUREPATH_REF');
         }
       } else {
@@ -125,6 +125,21 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         return;
       }
 
+      // ROLE STICKINESS: the server may have returned an EXISTING profile with
+      // a different role than the user just clicked (e.g. this OAuth login is
+      // for an account that already registered as AGENT — we must never
+      // downgrade them to CUSTOMER just because they picked wrong here).
+      // `__existed` is set by ensureProfile from the server's `existed` flag.
+      // For B2B (createB2BClientProfile) it's undefined; that path always
+      // inserts a fresh row so the picked role is the created role.
+      if (profile.__existed && selected !== 'B2B_CLIENT' && profile.role !== selected) {
+        const wasLabel = profile.role === 'AGENT' ? 'Mitra' : profile.role === 'CUSTOMER' ? 'Nasabah' : profile.role;
+        setError(`Akun ini sudah terdaftar sebagai ${wasLabel}. Kami masukkan kamu ke aplikasi ${wasLabel}.`);
+        // Small pause so the user sees WHY they're going somewhere other than
+        // what they clicked. Then honor the server's stored role.
+        await new Promise(r => setTimeout(r, 1200));
+      }
+
       onComplete({
         id: profile.id,
         name: profile.name,
@@ -133,6 +148,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         supabaseId: profile.id,
         nodeId: profile.agent_code ?? `SP-${profile.id.slice(0, 8).toUpperCase()}`,
         trustScore: profile.trust_score ?? 85,
+        allowed_apps: profile.allowed_apps ?? null,
       });
     } catch {
       setError('Terjadi kesalahan. Silakan coba lagi.');

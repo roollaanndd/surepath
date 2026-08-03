@@ -18,7 +18,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export async function callGateway(
   action: string,
   params?: Record<string, unknown>,
-): Promise<{ data?: any; error?: string }> {
+): Promise<{ data?: any; error?: string; status?: number; existed?: boolean }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) return { error: 'Not authenticated' };
@@ -42,11 +42,23 @@ export async function callGateway(
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      const errBody = await res.text().catch(() => 'Unknown error');
-      return { error: `Gateway error ${res.status}: ${errBody.slice(0, 200)}` };
+      // Preserve status so callers can distinguish "no profile" (404) from
+      // transient failures (5xx / network) — critical for the login flow so
+      // an ordinary hiccup can't route an existing user through role selection.
+      let errBody = '';
+      let parsedError: string | undefined;
+      try {
+        const body = await res.json();
+        parsedError = typeof body?.error === 'string' ? body.error : undefined;
+        errBody = JSON.stringify(body).slice(0, 200);
+      } catch {
+        errBody = (await res.text().catch(() => 'Unknown error')).slice(0, 200);
+      }
+      return { error: parsedError ?? `Gateway error ${res.status}: ${errBody}`, status: res.status };
     }
 
-    return res.json();
+    const body = await res.json();
+    return { ...body, status: res.status };
   } catch (e: any) {
     if (e?.name === 'AbortError') {
       return { error: 'Request timeout (15s). Server mungkin sedang sibuk. Coba lagi.' };

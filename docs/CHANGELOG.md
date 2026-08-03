@@ -2,6 +2,24 @@
 
 ---
 
+## v1.52.0 — 2026-08-03
+
+### Fix Login Gagal untuk Mitra Baru + Role Stickiness Guarantee
+Bug lapangan (Stephen Cheng): user OAuth Google yang baru daftar sebagai Mitra kadang stuck di layar loading lalu balik ke halaman login setelah OAuth callback. Root cause: `buildAndLogin` di `App.tsx` menjalankan dua panggilan gateway paralel (`get_user_profile` + `get_my_profile`) dan bila **kedua**-nya gagal transient (5xx / network / cold-start), `profile` = null → RoleSelectionScreen. Jika user mengklik "Batal" → logout paksa → balik ke login screen tanpa error yang bisa ditindaklanjuti.
+
+**Perilaku yang dijamin sekarang** — siapapun yang pilih *Mitra* akan tetap *Mitra*, siapapun yang pilih *Nasabah* akan tetap *Nasabah*, tidak peduli apa yang terjadi sesudahnya:
+
+- **`fetchMyProfileForLogin(retries=3)` (services/users.ts)** — panggilan tunggal ke `get_my_profile` dengan retry backoff (0.8s / 1.6s / 2.4s). Membedakan **404 (server memastikan tidak ada profil)** dari **transient error (5xx/network/timeout)**. RoleSelectionScreen hanya muncul untuk kasus 404.
+- **`callGateway` mengekspos HTTP status** (services/db.ts) — dulu semuanya dilebur ke `error: string`; sekarang caller bisa membedakan 404 dari 5xx.
+- **Transient error → login screen dengan pesan Indonesia** — kalau retry mentok, `buildAndLogin` `signOut()` sesi yang gagal + tampilkan banner "Tidak bisa memuat profil kamu. Cek koneksi lalu coba masuk lagi." di AuthGate (props baru `externalError`/`onDismissExternalError`). Tidak pernah membuat profil dengan role salah karena jaringan bergejolak.
+- **RoleSelectionScreen selalu percaya role dari server** (components/RoleSelectionScreen.tsx) — bila server balikkan `existed: true` dan role yang tersimpan berbeda dari yang di-klik, tampilkan pesan "Akun ini sudah terdaftar sebagai X" lalu tetap masuk ke portal X. User klik salah pun tidak bisa mengubah role.
+- **Server: `ensure_profile` role-immutability guard** (supabase/functions/data-gateway/actions/users.ts) — bila `caller.spUser` sudah ada, param `role` yang berbeda **diabaikan** (log warning `[ensure_profile] role-change attempt ignored`). Sama untuk lookup by-email. Response menyertakan `existed: true/false`.
+- **DB trigger: `trg_sp_users_role_change_audit`** (migration `20260803_role_change_audit.sql`, sudah diapply production) — setiap `UPDATE` pada `sp_users.role` menulis baris `ROLE_CHANGE` ke `sp_audit_log` (old & new role + allowed_apps). Jejak audit ada bahkan bila application layer entah-bagaimana bypass `ensure_profile`.
+
+**Catatan deploy:** bundle production data-gateway (v3 lama, single-file minified) belum di-redeploy dari sesi ini — perubahan `ensure_profile` di source akan aktif ketika data-gateway di-redeploy berikutnya (`npx esbuild supabase/functions/data-gateway/index.ts --bundle --format=esm --platform=neutral --external:npm:* --minify`). Fix client + trigger DB sudah cukup untuk menghilangkan gejala; server-side hardening bersifat defense-in-depth (perilaku "return existing profile as-is" untuk user yang sudah punya row sudah ada di bundle production, jadi role stickiness pasti aktif).
+
+---
+
 ## v1.51.0 — 2026-07-17
 
 ### Fix QR E-Quotation di PDF — 1 Quotation = 1 QR Unik, Berlaku 14 Hari

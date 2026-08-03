@@ -59,6 +59,12 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
       }
 
     case 'ensure_profile': {
+        // ROLE STICKINESS INVARIANT (v1.52.0):
+        // Once a user has a profile row, their role is IMMUTABLE through this
+        // endpoint. If the client sends a role param that disagrees with the
+        // stored role, we ignore the param and return the stored profile.
+        // The only path to change a role is admin_update_user (audited).
+        //
         // FIX v1.49.2: Handle Google OAuth login for existing users.
         // When a user registers with email/password, sp_users.id = auth.users.id.
         // When they later login with Google, Supabase creates a NEW auth.users.id
@@ -66,7 +72,17 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         // the existing row by email, but if it doesn't (case sensitivity, timing),
         // we need to explicitly look up by email and UPDATE the id to match
         // the new auth ID, rather than INSERTING a duplicate row.
-        if (caller.spUser) return json({ data: caller.spUser });
+        const reqRoleRaw = String(params.role ?? '').toUpperCase();
+
+        if (caller.spUser) {
+          if (reqRoleRaw && reqRoleRaw !== String(caller.spUser.role ?? '').toUpperCase()) {
+            console.warn(
+              `[ensure_profile] role-change attempt ignored — user=${caller.authId} ` +
+              `stored=${caller.spUser.role} requested=${reqRoleRaw} email=${caller.email}`
+            );
+          }
+          return json({ data: caller.spUser, existed: true });
+        }
 
         // Explicit email lookup — case insensitive
         const { data: existingByEmail } = await db.from('sp_users')
@@ -75,9 +91,16 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           .maybeSingle();
 
         if (existingByEmail) {
+          if (reqRoleRaw && reqRoleRaw !== String(existingByEmail.role ?? '').toUpperCase()) {
+            console.warn(
+              `[ensure_profile] role-change attempt ignored (by-email) — user=${caller.authId} ` +
+              `stored=${existingByEmail.role} requested=${reqRoleRaw} email=${caller.email}`
+            );
+          }
           // User already exists (registered with email/password, now logging
           // in with Google). Update their auth ID to the new Google auth ID
-          // so future lookups work correctly. Preserve all existing data.
+          // so future lookups work correctly. Preserve all existing data,
+          // ESPECIALLY the role — never touch it here.
           const { data: updated, error: updErr } = await db.from('sp_users')
             .update({
               id: caller.authId,
@@ -91,15 +114,15 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
             // If update fails (e.g. FK constraint), return the existing profile
             // with the old ID — the app will still work for this session
             console.warn('ensure_profile: failed to update auth ID:', updErr.message);
-            return json({ data: existingByEmail });
+            return json({ data: existingByEmail, existed: true });
           }
-          if (updated) return json({ data: updated });
-          return json({ data: existingByEmail });
+          if (updated) return json({ data: updated, existed: true });
+          return json({ data: existingByEmail, existed: true });
         }
 
         // No existing user — create new profile
         const meta = (caller.userMetadata ?? {}) as Record<string, unknown>;
-        const reqRole = String(params.role ?? meta.role ?? 'CUSTOMER').toUpperCase();
+        const reqRole = (reqRoleRaw || String(meta.role ?? 'CUSTOMER')).toUpperCase();
         const role = reqRole === 'AGENT' ? 'AGENT' : 'CUSTOMER';
         const insertRow: Record<string, unknown> = {
           id: caller.authId,
@@ -162,7 +185,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           `Waktu: ${tgTime} WIB\n\n` +
           `Buka Admin Panel: https://myinsurepath.com/admin`
         );
-        return json({ data });
+        return json({ data, existed: false });
       }
 
     case 'apply_referral': {

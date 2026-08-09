@@ -24,7 +24,9 @@ import { handleAdminAction } from './actions/admin.ts';
 import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
 import { handleTiersAction } from './actions/tiers.ts';
-import { handleMigrationAction } from './actions/migration-apply.ts';
+// migration-apply removed v1.53.0 — the migration it applied has been
+// deployed and a MASTER_ADMIN-only SQL executor via HTTP is unnecessary
+// attack surface.
 import { handleQuotationsAction } from './actions/quotations.ts';
 
 // CORS allowlist
@@ -144,7 +146,6 @@ Deno.serve(async (req) => {
       await handleNotificationsAction(action, ctx) ??
       await handleAdminAction(action, ctx) ??
       await handleTiersAction(action, ctx) ??
-      await handleMigrationAction(action, ctx) ??
       await handleQuotationsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 

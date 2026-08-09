@@ -117,6 +117,16 @@ export default defineConfig(() => {
         })
       ],
       build: {
+        // FIX v1.53.0: strip console.log/debug/info in production so 331
+        // debug statements don't ship (they can leak PII, tokens, or noise
+        // that helps attackers). console.error/warn kept for Sentry.
+        minify: 'terser' as const,
+        terserOptions: {
+          compress: {
+            drop_console: ['log', 'debug', 'info'] as (keyof Console)[],
+            drop_debugger: true,
+          },
+        },
         rollupOptions: {
           output: {
             manualChunks: {

@@ -2,6 +2,36 @@
 
 ---
 
+## v1.53.0 — 2026-08-03
+
+### Full audit hardening (P0 + P1 fixes)
+Hasil audit lengkap 2026-08-03 (skor keseluruhan B, 7.4/10): 19 npm vuln, 30+ Supabase linter warnings, 331 raw `console.*` di prod bundle, Playwright e2e mengarah ke prod. Rilis ini menutup semua P0 dan quick-win P1.
+
+**Dependency (11 vulnerabilities eliminated: 19 → 8):**
+- `react-router-dom` bumped ke `^7.18.2` (CSRF fix GHSA-qwww-vcr4-c8h2) — app pakai HashRouter jadi exposure rendah tapi patch trivial.
+- `overrides` di `package.json` untuk force-resolve transitive vulns: `nanoid ^3.3.16` (GHSA-28wg-ghj8-5hjv infinite loop), `dompurify ^3.4.13` (GHSA-55q2-fjhq-7xh7 XSS), `@xmldom/xmldom ^0.8.13` (GHSA-2v35-w6hq-6mfw DoS), `picomatch ^4.0.4`, `brace-expansion ^2.0.3`, `fast-uri ^3.1.1`, `body-parser ^2.3.0`, `serialize-javascript ^7.0.3` (RCE fix).
+- Sisa 8 vulns semua build-time (esbuild, postcss, vite, tar, undici, babel/*) — tidak ship ke user, dijadikan P2 backlog.
+
+**Database security (migration `20260803_security_hardening_v1_53.sql`, sudah diapply prod):**
+- **Deny-all RLS policies** eksplisit pada 7 tabel gateway-only (`admin_audit_logs`, `admin_sessions`, `sp_bot_config`, `sp_otp_codes`, `sp_payments`, `sp_policy_orders`, `sp_wa_logs`) — sebelumnya RLS on tanpa policy (implicit deny). Sekarang eksplisit dengan `USING(false) WITH CHECK(false)` untuk `anon` + `authenticated`. Tidak mengubah perilaku (gateway pakai service_role), tapi mendokumentasikan intent dan menghilangkan linter 0008.
+- **REVOKE EXECUTE** dari `anon` + `authenticated` pada 6 SECURITY DEFINER helper yang seharusnya hanya dipanggil dari trigger/service_role: `force_delete`, `soft_delete`, `notify_new_withdrawal`, `notify_paid_payment`, `log_sp_users_role_change`, `increment_rate_limit`. Sebelumnya semua exposed via `/rest/v1/rpc/*` (walau ada admin check internal).
+- **REVOKE EXECUTE dari `anon`** (bukan authenticated — masih dibutuhkan RLS policies) pada `is_admin`, `is_operator`, `is_staff`.
+- **SET search_path** pada 3 SECURITY DEFINER function: `gen_agent_agreement_no`, `block_hard_delete`, `audit_critical_update` — mencegah search_path hijacking.
+
+**Client & build:**
+- **`console.log`/`debug`/`info` di-strip di production build** (`vite.config.ts` → terser `drop_console`) — 331 statement di 91 file tidak lagi ship. `console.error`/`warn` dipertahankan untuk Sentry breadcrumbs.
+- **`playwright.config.ts` tidak lagi mengarah ke prod secara default** — sekarang baca `PLAYWRIGHT_BASE_URL` (biasanya URL Vercel preview di CI), fallback ke `http://localhost:3000`. Opt-in eksplisit ke prod via env `UNSAFE_E2E_AGAINST_PROD=1`.
+
+**Edge function (data-gateway):**
+- **`admin_apply_migration` action dihapus** — SQL executor via HTTP (bahkan dengan MASTER_ADMIN gate) adalah attack surface yang tidak perlu. Migration yang di-apply-nya sudah live sejak v1.42; source removed.
+
+**Catatan deploy:**
+- Migration DB: sudah diapply ke production via Supabase MCP.
+- Client v1.53.0: auto-deploy dari Vercel setelah merge.
+- Edge function bundle: masih perlu manual redeploy — hanya perubahan ini adalah remove `handleMigrationAction`; efeknya sama (kalau action ini dipanggil tanpa redeploy, tetap dijaga oleh MASTER_ADMIN check yang belum berubah di bundle lama).
+
+---
+
 ## v1.52.0 — 2026-08-03
 
 ### Fix Login Gagal untuk Mitra Baru + Role Stickiness Guarantee

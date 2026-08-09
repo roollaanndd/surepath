@@ -1,11 +1,25 @@
+# SurePath — robots.txt
+# Marketing + product + blog pages are indexable. App/portal and private
+# token pages are disallowed (they also carry noindex — see src/seo/seo.ts).
+
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /admin
-Disallow: /admin/
-Disallow: /.supabase/
+
+# App & portal shells (thin, auth-gated — no SEO value)
+Disallow: /login
+Disallow: /custapp
+Disallow: /agapps
+Disallow: /operatorapp
+Disallow: /insurerapp
 Disallow: /insurer-portal
+Disallow: /admin
+Disallow: /select-app
+
+# Private, single-use / tokenized pages
 Disallow: /review/
-Disallow: /payment/
+Disallow: /q/
+Disallow: /payment
+Disallow: /api/
+Disallow: /.supabase/
 
 Sitemap: https://myinsurepath.com/sitemap.xml

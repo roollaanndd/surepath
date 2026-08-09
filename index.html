@@ -3,7 +3,9 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <!-- Zoom left enabled for accessibility (WCAG 1.4.4) — user-scalable=no was an
+         a11y + Lighthouse SEO/best-practices fail. viewport-fit=cover kept for notch. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Brand theme color — dark emerald for status bar when installed as PWA -->
     <meta name="theme-color" content="#003B2F" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#080B12" media="(prefers-color-scheme: dark)" />
@@ -59,9 +61,10 @@
     <meta name="revisit-after" content="7 days" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- hreflang for multi-language support -->
+    <!-- hreflang: the site serves a single Indonesian URL set (the EN toggle is
+         client-side only, no separate /en/ URLs). A phantom hreflang to /en/
+         pointed at a soft-404 — removed. Declare id + x-default only. -->
     <link rel="alternate" hreflang="id" href="https://myinsurepath.com/" />
-    <link rel="alternate" hreflang="en" href="https://myinsurepath.com/en/" />
     <link rel="alternate" hreflang="x-default" href="https://myinsurepath.com/" />
 
     <!-- JSON-LD Structured Data -->
@@ -76,9 +79,15 @@
           "url": "https://myinsurepath.com",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://myinsurepath.com/logo.png"
+            "url": "https://myinsurepath.com/logo.png",
+            "width": 512,
+            "height": 512
           },
-          "sameAs": [],
+          "legalName": "PT Ruang Proteksi Indonesia",
+          "slogan": "Asuransi Digital Terpercaya Indonesia",
+          "sameAs": [
+            "https://twitter.com/SurePathID"
+          ],
           "address": { "@type": "PostalAddress", "addressLocality": "Jakarta", "addressCountry": "ID" },
           "telephone": "+62-800-1234-5678",
           "email": "info@myinsurepath.com",

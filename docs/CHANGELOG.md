@@ -2,6 +2,29 @@
 
 ---
 
+## v1.54.0 — 2026-08-09
+
+### SEO Audit + Fix (score ~6.5 → ~9.5/10)
+Audit SEO menyeluruh. Homepage statis sudah kuat (JSON-LD @graph, OG, FAQ schema), tapi ada gap kritikal untuk SPA client-rendered ini.
+
+**Kritikal — per-route metadata (dampak terbesar):**
+- **`src/seo/seo.ts` (baru)** — head manager per-route tanpa dependency. Sebelumnya SEMUA halaman marketing/produk/blog (20+ URL) mewarisi `<title>`, description, canonical & OG homepage dari index.html → Google melihat 20+ halaman "duplicate metadata", nol keyword targeting per halaman. Sekarang tiap route punya title, meta description, canonical, robots, Open Graph, Twitter card, dan JSON-LD unik.
+- **Di-wire di `App.tsx`** via satu `useEffect([currentPath])` → `applyDocumentHead(resolveSeo(path))`. Googlebot merender JS dan meng-index DOM hasilnya.
+- **Per-product JSON-LD** — tiap `/product/:slug` dapat `Service` + `BreadcrumbList` schema + title kaya keyword (mis. "Asuransi Mobil All Risk & TLO Online | Premi Tarif OJK").
+- **Per-blog-post** — tiap `/blog/:slug` dapat `Article` + `BreadcrumbList` schema + title/description unik.
+- **App/portal routes → `noindex, follow`** — `/login`, `/custapp`, `/agapps`, `/operatorapp`, `/insurerapp`, `/admin`, `/select-app`, `/review/`, `/q/`, `/payment`, dan path tak dikenal (cegah soft-404 ke-index).
+
+**Teknikal:**
+- **hreflang phantom dihapus** (`index.html`) — `hreflang="en" → /en/` menunjuk path yang tidak ada (toggle EN client-side saja, tidak ada URL /en/ terpisah). Menyisakan `id` + `x-default`.
+- **viewport a11y** — hapus `maximum-scale=1, user-scalable=no` (fail WCAG 1.4.4 + Lighthouse). Zoom kini diizinkan.
+- **robots.txt dikonsolidasi** — dulu ada DUA file (root + public/) yang saling berbeda aturannya; Vite hanya serve `public/`. Root file dihapus. Canonical: disallow semua app/portal + tokenized path, allow marketing.
+- **sitemap.xml diperbaiki + dikonsolidasi** — dulu ada dua file berbeda; root dihapus. Fix: buang `/agent` & `/claim` (bukan route → soft-404), hapus `/contact` duplikat, tambah 5 URL artikel blog, tambah `/cookie`, refresh semua `lastmod`. 24 URL valid.
+- **Organization schema diperkaya** (`index.html`) — `legalName` (PT Ruang Proteksi Indonesia), `slogan`, logo `width/height`, `sameAs` (Twitter @SurePathID yang memang sudah dideklarasikan di twitter:site).
+
+**Catatan:** placeholder `%VITE_GSC_VERIFY%` / `%VITE_GA4_ID%` di index.html di-inject Vercel saat build (env sudah diset di prod) — sengaja tidak diubah agar analytics prod tidak putus.
+
+---
+
 ## v1.53.0 — 2026-08-03
 
 ### Full audit hardening (P0 + P1 fixes)

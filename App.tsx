@@ -13,6 +13,7 @@ import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
 import { SplashScreen, AppEntryScreen, PortalLoader } from './src/routes/splash';
 import AppUpdateNotification from './components/AppUpdateNotification';
 import { APP_VERSION } from './src/version';
+import { resolveSeo, applyDocumentHead } from './src/seo/seo';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
@@ -362,6 +363,13 @@ const App = () => {
     window.addEventListener('popstate', fn);
     return () => window.removeEventListener('popstate', fn);
   }, []);
+
+  // SEO: apply per-route <title>/description/canonical/OG/JSON-LD on every route
+  // change. Without this every marketing/product/blog page inherited the
+  // homepage metadata from index.html (duplicate-content signal). See src/seo/seo.ts.
+  useEffect(() => {
+    applyDocumentHead(resolveSeo(currentPath));
+  }, [currentPath]);
 
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {

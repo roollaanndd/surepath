@@ -218,6 +218,17 @@ npm run dev          # Vite dev server on :5173
 npm run build        # Production build (TypeScript checked)
 ```
 
+### AI coding agent
+
+Repo ini dikonfigurasi untuk dipakai dengan [Freebuff](https://github.com/CodebuffAI/freebuff):
+
+```bash
+npm install -g freebuff   # sekali saja
+npm run agent             # jalankan dari root repo
+```
+
+Konteks proyek dibaca dari `AGENTS.md` di root. Setup lengkap, aturan main, dan catatan privasi: `docs/FREEBUFF.md`.
+
 ---
 
 ## Demo Accounts

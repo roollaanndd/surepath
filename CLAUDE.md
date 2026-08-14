@@ -83,6 +83,7 @@ Changing anything under `supabase/functions/` without deploying it does nothing 
 
 - **Version bumps**: `src/version.ts` (`APP_VERSION`) is the source of truth and drives the PWA update toast; add a matching entry at the top of `docs/CHANGELOG.md`. `package.json` version and older docs lag behind — don't trust them for the current version.
 - **Docs live in `docs/`** — root-level `DATA_GATEWAY.md`, `DATABASE_STATE.md`, `DEPLOYMENT.md`, `HANDOVER.md` are stubs pointing there. Key references: `docs/ARCHITECTURE.md`, `docs/DATA_GATEWAY.md` (gateway action list), `docs/DATABASE_STATE.md` (live vs repo schema), `docs/AUTH_FLOW.md`. Update the relevant doc when changing what it describes.
+- **`AGENTS.md`** is the same guidance for agents that use the `AGENTS.md` convention (Freebuff, Codex, Cursor, …). It mirrors this file — **change both together**. Both are in `.gitignore` but committed with `git add -f`. Freebuff setup and guardrails: `docs/FREEBUFF.md`.
 - **`.memory/CONTEXT.md`** is printed by the SessionStart hook as session context — refresh it after significant sessions (current state, what was done, backlog).
 - New gateway actions: add to the right `actions/*.ts` domain module, enforce role checks there, document in `docs/DATA_GATEWAY.md`, and remember to deploy.
 - Supabase project ref: `uyjgeteelnswphyzkjwi`. The same project hosts another app's objects (`public.profiles`, `handle_new_user` trigger, `generate-daily-renungan`/`backup-daily` functions) — do not drop them; breaking the trigger breaks all signups.

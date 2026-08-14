@@ -271,7 +271,8 @@ Helpers: `sp_api_enqueue_webhook()` (fan-out), `sp_api_orders_webhook_trg()` /
 `sp_api_payments_webhook_trg()` (triggers), `sp_api_gc()` (retention — 24h
 idempotency, 90d request log, 30d settled deliveries).
 
-Migration: `supabase/migrations/20260812_public_api.sql`.
+Migration: `supabase/migrations/20260812_public_api.sql` (applied). A second migration,
+`20260812_fix_audit_critical_update.sql`, is present but **not applied** — see §8.
 
 ---
 
@@ -287,7 +288,43 @@ branch covering all three.
 
 ---
 
-## 8. Known gaps
+## 8. ⚠️ Pre-existing bug found during testing: `payment.paid` cannot fire yet
+
+Smoke-testing the new triggers surfaced an unrelated, **pre-existing** production
+bug that blocks the payment path:
+
+`audit_critical_update()` is attached to both `sp_policy_orders` and
+`sp_payments`, but dereferences `OLD.total_premium`, `OLD.commission_amount`
+and `OLD.discount_amount` unconditionally. `sp_payments` has none of those
+columns, and a missing record field is a run-time error in PL/pgSQL, so:
+
+```
+ERROR: 42703: record "old" has no field "total_premium"
+```
+
+**Every UPDATE to `sp_payments` currently aborts.** Inserts are fine — the
+trigger is UPDATE-only — which is why `create-xendit-invoice` works and nothing
+has broken so far. `sp_payments` has 0 rows in production, so no real customer
+has ever completed a payment and stepped on it.
+
+The first one would fail: `xendit-webhook` could not mark the payment `PAID`,
+so the order would not advance and the agent's commission would not be
+credited. The `payment.paid` webhook in this API is downstream of that same
+update, so it cannot fire either.
+
+A fix is written and ready but **deliberately not applied** —
+`supabase/migrations/20260812_fix_audit_critical_update.sql`. It makes the
+guard column-agnostic via `to_jsonb()`, leaving `sp_policy_orders` behaviour
+identical and reducing the `sp_payments` guard to `status`. It sits on the
+money path, so it wants a human review before it goes out.
+
+Everything else in the trigger set is verified: `order.created`,
+`order.status_changed` and `payment.created` all enqueue correctly, and a key
+belonging to a different agent receives nothing.
+
+---
+
+## 9. Known gaps
 
 - **No sandbox environment.** `environment: "test"` is stored on the key and
   echoed in `/v1/me`, but test keys hit the same database as live ones. A real

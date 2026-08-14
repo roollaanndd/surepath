@@ -41,6 +41,11 @@ Item P0 "Embedded insurance API (B2B2C)" di `docs/PRD.md` / no. 15 di `docs/ROAD
 - `docs/openapi/partner-api.yaml`, `insurer-api.yaml`, `data-gateway.yaml` — OpenAPI 3.1. Yang terakhir mendokumentasikan 105 action gateway berikut tiga band otorisasinya; internal, bukan untuk mitra.
 - `.github/workflows/deploy-edge-functions.yml` — `partner-api` + `insurer-api` ikut auto-deploy, dan masuk cabang `--no-verify-jwt` (keduanya autentikasi di dalam kode).
 
+**⚠️ Temuan saat smoke test — bug production yang SUDAH ADA sebelumnya (bukan dari perubahan ini):**
+`audit_critical_update()` terpasang di `sp_policy_orders` **dan** `sp_payments`, tapi men-dereference `OLD.total_premium`, `OLD.commission_amount`, `OLD.discount_amount` tanpa syarat. `sp_payments` tidak punya ketiga kolom itu, dan field record yang hilang adalah **runtime error** di PL/pgSQL, bukan NULL → `42703: record "old" has no field "total_premium"`. Akibatnya **setiap UPDATE ke `sp_payments` gagal**. INSERT aman (trigger UPDATE-only), jadi `create-xendit-invoice` jalan; yang gagal adalah `xendit-webhook` saat menandai pembayaran PAID → order tidak maju dan komisi agen tidak dikredit. `sp_payments` masih 0 baris di production, jadi belum pernah ada yang menginjaknya. Konsekuensi untuk API ini: event `payment.paid` ikut tidak bisa terbit karena ada di hilir update yang sama.
+Perbaikan sudah ditulis tapi **sengaja belum diapply** — `supabase/migrations/20260812_fix_audit_critical_update.sql` (guard dibuat column-agnostic lewat `to_jsonb()`; perilaku di `sp_policy_orders` tidak berubah). Ada di jalur uang, jadi perlu review manusia dulu.
+Trigger baru sendiri sudah diverifikasi lewat smoke test transaksional (rollback, tanpa meninggalkan data): `order.created`, `order.status_changed`, `payment.created` semua ter-enqueue benar, dan key milik agen lain menerima **nol** event.
+
 **Gap yang diketahui:** belum ada sandbox terpisah (`environment: "test"` tersimpan tapi memakai DB yang sama), belum ada renewal/endorsement, produk baru motor (CAR + MOTORCYCLE), `sp_api_gc()` belum dijadwalkan, dan tabel tarif seed terduplikasi antara `services/ojkRates.ts` dan `supabase/functions/_shared/ojkRating.ts`.
 
 ---

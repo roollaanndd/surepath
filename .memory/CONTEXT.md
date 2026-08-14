@@ -31,9 +31,16 @@ Menjalankan item P0 `docs/PRD.md` / no.15 `docs/ROADMAP.md` ("Embedded insurance
 - Rate limiter **fail-closed**.
 - **Deploy wajib `--no-verify-jwt`** untuk keduanya (autentikasi di dalam kode). Workflow sudah diupdate.
 
+### ⚠️ TEMUAN PENTING — bug production pre-existing di jalur pembayaran
+`audit_critical_update()` dipasang di `sp_policy_orders` DAN `sp_payments`, tapi dereference `OLD.total_premium` / `OLD.commission_amount` / `OLD.discount_amount` tanpa syarat. `sp_payments` tidak punya kolom itu → PL/pgSQL runtime error `42703` → **setiap UPDATE ke `sp_payments` gagal**. INSERT aman (trigger UPDATE-only). Artinya `xendit-webhook` tidak bisa menandai payment PAID → order tidak maju, komisi agen tidak dikredit. Belum ketahuan karena `sp_payments` masih 0 baris.
+- **BUKAN** disebabkan perubahan v1.55.0 — ditemukan olehnya.
+- Fix siap tapi **BELUM diapply**: `supabase/migrations/20260812_fix_audit_critical_update.sql`. Ada di jalur uang → butuh review + idealnya tes bayar sungguhan sebelum diapply.
+- Efek ke Public API: event `payment.paid` tidak akan pernah terbit sampai ini diperbaiki.
+
 ### Status deploy
 - Migrasi `20260812_public_api.sql` → **SUDAH diapply ke production** (via MCP `apply_migration`, nama `public_api_keys_and_webhooks`).
-- Edge function `partner-api` + `insurer-api` → lihat catatan deploy di PR; `.github/workflows/deploy-edge-functions.yml` kini ikut men-deploy keduanya pada push ke `main`.
+- Edge function `partner-api` + `insurer-api` → **BELUM ter-deploy**. Workflow `deploy-edge-functions.yml` sudah di-dispatch di branch ini tapi step deploy **skipped**: repo secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` belum diset (guard-nya no-op). Sandbox ini tidak bisa deploy manual: egress ke `*.supabase.co` dan `api.supabase.com` diblokir proxy (CONNECT 403), jadi hasil deploy juga tidak bisa di-smoke-test dari sini.
+- **Cara menyelesaikan:** set kedua secret itu di Settings → Secrets → Actions, lalu jalankan workflow "Deploy Edge Functions" (`functions: partner-api insurer-api`). Atau manual: `supabase functions deploy partner-api --project-ref uyjgeteelnswphyzkjwi --no-verify-jwt` (idem `insurer-api`). **`--no-verify-jwt` wajib.**
 
 ### Catatan teknis
 - `sp_policy_orders` **tidak punya** kolom `client_email`, `agent_code`, `promo_code` di production (walau `create_policy_order` di repo mengirimnya). `zone` + `vehicle_category` NOT NULL tanpa default — partner-api mengisi keduanya.

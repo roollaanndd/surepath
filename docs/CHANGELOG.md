@@ -2,6 +2,49 @@
 
 ---
 
+## v1.55.0 — 2026-08-12
+
+### Public API — partner + insurer REST, dan spec OpenAPI untuk semua surface
+Item P0 "Embedded insurance API (B2B2C)" di `docs/PRD.md` / no. 15 di `docs/ROADMAP.md` sekarang jalan. Dua edge function baru, plus data-gateway akhirnya punya kontrak tertulis.
+
+**`partner-api` (baru) — REST untuk mitra distribusi**
+- `POST /v1/quotes` → harga dihitung **server-side** dari tabel tarif OJK aktif, mengembalikan satu opsi per insurer yang eligible (insurer yang tidak eligible tetap dikembalikan dengan `ineligible_reason`, mis. umur kendaraan lewat batas).
+- `POST /v1/orders` → konversi quote ke order. **Re-pricing dari input quote yang tersimpan**, bukan dari angka di request atau dari premi cache di baris quote. Tidak ada satu pun field di API ini yang bisa dipakai caller untuk menetapkan premi.
+- `POST /v1/orders/{id}/payment-link` → invoice Xendit (nominal selalu dari order di DB); invoice pending yang sudah ada dikembalikan lagi, bukan bikin invoice kedua.
+- Plus `GET /v1/products`, `/v1/reference/provinces`, `/v1/orders`, `/v1/orders/{id}`, `/v1/orders/{id}/cancel`, `/v1/orders/{id}/payments`, `/v1/me`, dan manajemen webhook.
+- Order dari API masuk sebagai `SUBMITTED` dan menempuh alur review operator → insurer yang sudah ada. API tidak bisa approve atau menerbitkan polis.
+- Komisi mengikuti aturan `create_policy_order`: rate produk insurer, dioverride rate agen, **hard cap 30%**.
+
+**`insurer-api` (baru) — M2M untuk insurer partner**
+- `GET /v1/orders?decision=none` (antrean kerja), `POST /v1/orders/{id}/decision`, `POST /v1/orders/{id}/policy`, `GET /v1/payments`.
+- Semantik disalin persis dari `insurer_submit_decision_authed` / `insurer_upload_policy` — mapping status sama (`REQUEST_INFO` → `UNDER_REVIEW`, `DECLINED` → `REJECTED`), notifikasi admin + agen sama, `sp_insurer_activity_log` sama — supaya API dan `/insurerapp` tidak drift.
+- `insurer_id` diambil dari API key, **tidak pernah** dari request → satu key mustahil menyentuh order insurer lain. KTP & alamat nasabah tidak diekspos ke insurer (hanya nama + telepon).
+
+**Auth & keamanan**
+- Key disimpan **hash SHA-256 saja** di `sp_api_keys`; plaintext ditampilkan sekali saat pembuatan dan tidak bisa dipulihkan. Ada `key_prefix` display-safe untuk CMS.
+- Scope per endpoint, `expires_at`/`revoked_at` dicek tiap request, allowlist IP opsional, rate limit per key (default 1000/jam) dengan **fail-closed** — counter tidak terjangkau = ditolak, bukan diloloskan.
+- Tidak ada header CORS sama sekali di kedua fungsi: ini kredensial server-to-server.
+- Penerbitan key: `POST /partner-api/admin/v1/keys` (Supabase JWT + role admin). Sengaja ditaruh di fungsi baru, bukan di data-gateway, supaya fitur ini deployable tanpa menyentuh bundle gateway.
+
+**Idempotency, error, webhook**
+- Header `Idempotency-Key` di semua POST; respons pertama disimpan 24 jam dan diputar ulang untuk retry. Key sama + body berbeda → `409` (bug klien harus berisik, bukan disembunyikan).
+- Error terstruktur `{ error: { type, code, message, param? }, request_id }` — beda dari envelope `{data}`/`{error:string}` data-gateway, yang sengaja dibekukan demi kompatibilitas klien terpasang (termasuk APK).
+- Webhook di-enqueue oleh **trigger database**, bukan kode aplikasi, jadi perubahan order/payment lewat jalur mana pun (UI operator, dashboard insurer, webhook Xendit, API) menghasilkan event yang sama. Fungsi enqueue menelan errornya sendiri — masalah webhook tidak boleh me-rollback write pembayaran.
+- Payload ditandatangani `HMAC-SHA256(secret, "<timestamp>.<body>")`; timestamp ikut ditandatangani supaya delivery yang tertangkap tidak bisa di-replay. Retry 1m/5m/15m/1h/3h/12h.
+
+**Skema (`supabase/migrations/20260812_public_api.sql`, SUDAH diapply ke production)**
+- `sp_api_keys`, `sp_api_requests` (log akses append-only), `sp_api_idempotency`, `sp_api_webhook_deliveries` — keempatnya **deny-all** (RLS on, nol policy).
+- Fungsi `sp_api_enqueue_webhook()`, trigger di `sp_policy_orders` + `sp_payments`, dan `sp_api_gc()` untuk retensi (24 jam idempotency, 90 hari log, 30 hari delivery selesai).
+
+**Dokumentasi**
+- `docs/PUBLIC_API.md` — panduan lengkap termasuk contoh curl end-to-end dan daftar gap yang diketahui.
+- `docs/openapi/partner-api.yaml`, `insurer-api.yaml`, `data-gateway.yaml` — OpenAPI 3.1. Yang terakhir mendokumentasikan 105 action gateway berikut tiga band otorisasinya; internal, bukan untuk mitra.
+- `.github/workflows/deploy-edge-functions.yml` — `partner-api` + `insurer-api` ikut auto-deploy, dan masuk cabang `--no-verify-jwt` (keduanya autentikasi di dalam kode).
+
+**Gap yang diketahui:** belum ada sandbox terpisah (`environment: "test"` tersimpan tapi memakai DB yang sama), belum ada renewal/endorsement, produk baru motor (CAR + MOTORCYCLE), `sp_api_gc()` belum dijadwalkan, dan tabel tarif seed terduplikasi antara `services/ojkRates.ts` dan `supabase/functions/_shared/ojkRating.ts`.
+
+---
+
 ## v1.54.0 — 2026-08-09
 
 ### SEO Audit + Fix (score ~6.5 → ~9.5/10)

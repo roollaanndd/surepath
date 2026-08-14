@@ -1,5 +1,12 @@
 # SurePath Data Gateway — API Reference
 
+> **Internal API.** This is the RPC endpoint the SurePath portals and the
+> Android APK call. Third-party integrations use the **Partner API** or
+> **Insurer API** instead — see [`PUBLIC_API.md`](PUBLIC_API.md), with machine-readable
+> specs in [`openapi/`](openapi/). A formal spec for *this* endpoint, including
+> the full action enum and the three authorisation bands, lives at
+> [`openapi/data-gateway.yaml`](openapi/data-gateway.yaml).
+
 > Base URL: `https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/data-gateway`
 > Method: `POST` for all actions
 > Auth: `Authorization: Bearer <JWT>` (except PUBLIC_ACTIONS)

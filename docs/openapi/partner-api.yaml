@@ -1,0 +1,1043 @@
+openapi: 3.1.0
+
+info:
+  title: SurePath Partner API
+  version: "1.0.0"
+  summary: Embedded motor insurance for distribution partners in Indonesia.
+  description: |
+    Quote and sell SurePath motor policies from inside your own product.
+
+    **Base URL**
+    `https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/partner-api`
+
+    **Authentication.** Every `/v1/*` request needs a partner API key, sent as
+    `Authorization: Bearer sp_live_…` (or `X-API-Key`). Keys are issued by the
+    SurePath team and shown exactly once — SurePath stores only a SHA-256 hash
+    and cannot recover a lost key. Keys are server-side credentials: never ship
+    one in a browser or mobile bundle.
+
+    **Pricing is ours, not yours.** You send risk facts (vehicle, sum insured,
+    province, add-ons); SurePath prices them against the active OJK rate tables
+    (SEOJK No. 6/SEOJK.05/2017). There is no field anywhere in this API that
+    lets a caller set a premium. `POST /v1/orders` re-prices from the stored
+    quote inputs rather than trusting the quote row.
+
+    **The normal flow**
+    1. `POST /v1/quotes` — price a risk, get `code` plus one option per eligible insurer.
+    2. `POST /v1/orders` — convert a quote into an order by picking an `insurer_id`.
+    3. `POST /v1/orders/{id}/payment-link` — get a Xendit invoice URL for the customer.
+    4. Listen for `payment.paid` and `order.status_changed` webhooks, or poll `GET /v1/orders/{id}`.
+
+    Orders always enter at `SUBMITTED` and move through SurePath's existing
+    operator and insurer review. The API never issues a policy by itself.
+
+    **Idempotency.** Send `Idempotency-Key: <unique string>` on any POST. The
+    first call's response is stored for 24 hours and replayed for retries with
+    the same key and body; the same key with a different body returns `409`.
+
+    **Rate limits.** Per-key hourly budget (default 1000 req/hour). Every
+    response carries `X-RateLimit-Limit` and `X-RateLimit-Remaining`; a `429`
+    also carries `Retry-After`.
+
+    **Errors** are always `{ "error": { type, code, message, param? }, "request_id": "…" }`.
+    Quote `request_id` when contacting support — it is in every response header
+    as `X-Request-ID` and in SurePath's access log.
+  contact:
+    name: SurePath Partnerships
+    url: https://myinsurepath.com/partnership
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/partner-api
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Reference
+    description: Static data you need to build a request.
+  - name: Quotes
+    description: Price a risk and get per-insurer options.
+  - name: Orders
+    description: Convert quotes into policy applications and track them.
+  - name: Payments
+    description: Xendit invoices for a submitted order.
+  - name: Webhooks
+    description: Push notifications for order and payment events.
+
+paths:
+  /health:
+    get:
+      tags: [Reference]
+      summary: Service health
+      description: Unauthenticated liveness probe.
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, examples: [ok] }
+                  service: { type: string, examples: [partner-api] }
+                  version: { type: string }
+                  api_version: { type: string }
+                  timestamp: { type: string, format: date-time }
+
+  /v1/me:
+    get:
+      tags: [Reference]
+      summary: Inspect the calling key
+      description: Confirms which key, scopes and SurePath account a credential maps to.
+      responses:
+        "200":
+          description: Key details.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiKeyInfo" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/reference/provinces:
+    get:
+      tags: [Reference]
+      summary: Provinces and their OJK zones
+      description: |
+        The accepted values for `province`, each with the OJK tariff zone it
+        maps to. Pass either `province` or `zone` when quoting.
+      responses:
+        "200":
+          description: Province list plus the active rate-set metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        province: { type: string, examples: ["DKI Jakarta"] }
+                        zone: { type: integer, enum: [1, 2, 3] }
+                  rate_set:
+                    type: object
+                    properties:
+                      version: { type: string }
+                      source: { type: string, examples: ["SEOJK No. 6/SEOJK.05/2017"] }
+                      effective_date: { type: string, format: date }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/products:
+    get:
+      tags: [Reference]
+      summary: Available insurer products
+      description: |
+        Every active insurer/product combination, with the vehicle-age ceiling
+        and fee schedule that applies. Useful for building a filter UI before
+        quoting; the per-insurer *prices* come from `POST /v1/quotes`.
+      responses:
+        "200":
+          description: Product list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/quotes:
+    post:
+      tags: [Quotes]
+      summary: Create a quote
+      description: |
+        Prices a risk server-side and returns one option per insurer that can
+        write it. Ineligible insurers are returned too, with
+        `ineligible_reason`, so you can explain a missing option to the customer.
+
+        The quote is persisted and stays valid for 14 days. Its `code` is what
+        you pass to `POST /v1/orders`; `quotation_url` is a customer-facing page
+        you may share directly.
+
+        Requires the `quotes:write` scope.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuoteRequest" }
+            examples:
+              car_comprehensive:
+                summary: Comprehensive cover on a 2022 Avanza in Jakarta
+                value:
+                  product_type: CAR
+                  coverage_type: COMPREHENSIVE
+                  sum_insured: 250000000
+                  province: DKI Jakarta
+                  vehicle:
+                    make: Toyota
+                    model: Avanza 1.5 G
+                    year: 2022
+                    plate_number: B1234XYZ
+                  addons:
+                    flood: true
+                    earthquake: true
+                    tpl_limit: 25000000
+                    pa_driver: true
+                    pa_passenger_seats: 4
+                  customer:
+                    name: Budi Santoso
+      responses:
+        "201":
+          description: Quote created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quote" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    get:
+      tags: [Quotes]
+      summary: List your quotes
+      description: Quotes created by this key's account, newest first. Requires `quotes:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Quote list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Quote" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/quotes/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema: { type: string }
+        description: The quote `code` returned at creation.
+    get:
+      tags: [Quotes]
+      summary: Retrieve a quote
+      description: Requires `quotes:read`.
+      responses:
+        "200":
+          description: Quote.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quote" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/orders:
+    post:
+      tags: [Orders]
+      summary: Create an order from a quote
+      description: |
+        Converts a quote into a policy application against one of its insurer
+        options. The premium is recomputed from the quote's stored risk facts —
+        the request body carries no monetary fields at all.
+
+        The order is created with status `SUBMITTED` and enters SurePath's
+        normal operator/insurer review queue. Requires `orders:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderRequest" }
+            examples:
+              from_quote:
+                value:
+                  quote_code: QK7M2PX9RT4VBNH
+                  insurer_id: 0f4b2c1e-9a3d-4c7e-8b21-5d6e7f8a9b0c
+                  customer:
+                    name: Budi Santoso
+                    phone: "081234567890"
+                    ktp: "3171012509900002"
+                  vehicle:
+                    chassis_number: MHKA1234567890123
+                    engine_number: 1NR9876543
+                    color: Silver
+      responses:
+        "201":
+          description: Order created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: The quote code does not exist for this key.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: The quote was already converted, or the Idempotency-Key was reused with a different body.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "410":
+          description: The quote has expired. Create a new one.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: The chosen insurer cannot cover this risk (e.g. vehicle too old).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    get:
+      tags: [Orders]
+      summary: List your orders
+      description: Orders belonging to this key's account, newest first. Requires `orders:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/OrderStatus" }
+          description: Filter by order status.
+        - name: created_before
+          in: query
+          schema: { type: string, format: date-time }
+          description: Cursor for paging — pass the `created_at` of the last row you saw.
+      responses:
+        "200":
+          description: Order list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+    get:
+      tags: [Orders]
+      summary: Retrieve an order
+      description: Accepts either the order UUID or its `order_number`. Requires `orders:read`.
+      responses:
+        "200":
+          description: Order.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/orders/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+    post:
+      tags: [Orders]
+      summary: Cancel an order
+      description: |
+        Only `SUBMITTED` and `UNDER_REVIEW` orders can be cancelled. Once an
+        insurer has approved or issued, cancellation is an endorsement matter
+        and has to go through SurePath operations. Requires `orders:write`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Order cancelled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: The order is past the point where it can be cancelled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/orders/{id}/payment-link:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+      - $ref: "#/components/parameters/IdempotencyKey"
+    post:
+      tags: [Payments]
+      summary: Create a payment link
+      description: |
+        Opens a Xendit invoice for the order's total premium and returns its
+        `invoice_url`. The amount always comes from the stored order — it can
+        never be supplied by the caller.
+
+        If an unpaid invoice already exists for the order, that same payment is
+        returned instead of a second invoice being opened. Invoices expire after
+        24 hours. Requires `payments:write`.
+      responses:
+        "200":
+          description: An existing pending or paid invoice was returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+        "201":
+          description: Invoice created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: The order is not in a payable state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "502":
+          description: The payment provider rejected the request.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/orders/{id}/payments:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+    get:
+      tags: [Payments]
+      summary: List payments for an order
+      description: Requires `payments:read`.
+      responses:
+        "200":
+          description: Payment list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Payment" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/webhook:
+    get:
+      tags: [Webhooks]
+      summary: Get your webhook endpoint
+      description: Requires `webhooks:manage`.
+      responses:
+        "200":
+          description: Endpoint configuration.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      tags: [Webhooks]
+      summary: Set or rotate your webhook endpoint
+      description: |
+        Sets the https URL SurePath posts events to. The first time you set a
+        URL — or whenever you pass `rotate_secret: true` — the response includes
+        a `signing_secret`. It is shown once and never again.
+
+        Send an empty `url` to disable delivery. Requires `webhooks:manage`.
+
+        **Verifying a delivery.** Compute
+        `HMAC-SHA256(signing_secret, "<X-SurePath-Timestamp>.<raw body>")` and
+        compare the hex digest against `X-SurePath-Signature` with a
+        constant-time comparison. Reject timestamps older than five minutes.
+        Respond `2xx` within 10 seconds; anything else is retried with backoff
+        (1m, 5m, 15m, 1h, 3h, 12h) up to six attempts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: An https endpoint. Empty string disables delivery.
+                rotate_secret:
+                  type: boolean
+                  description: Issue a new signing secret and invalidate the old one.
+      responses:
+        "200":
+          description: Endpoint updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/webhook/test:
+    post:
+      tags: [Webhooks]
+      summary: Send a test event
+      description: Queues and immediately attempts a `ping` delivery. Requires `webhooks:manage`.
+      responses:
+        "202":
+          description: Test event queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: webhook_delivery }
+                  id: { type: string, format: uuid }
+                  event: { type: string, const: ping }
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: No webhook URL configured yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/webhook/deliveries:
+    get:
+      tags: [Webhooks]
+      summary: List recent deliveries
+      description: Delivery attempts for this key, newest first — for debugging a failing endpoint. Requires `webhooks:manage`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Delivery list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/WebhookDelivery" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+webhooks:
+  order.created:
+    post:
+      summary: An order was created
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+  order.status_changed:
+    post:
+      summary: An order changed status
+      description: Fires on every transition, including `APPROVED`, `REJECTED` and `ISSUED`.
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+  payment.created:
+    post:
+      summary: An invoice was opened
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+  payment.paid:
+    post:
+      summary: An invoice was paid
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      description: |
+        `Authorization: Bearer sp_live_…`. `X-API-Key: sp_live_…` is accepted as
+        an equivalent. Server-side only.
+
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: Order UUID or `order_number` (e.g. `ORD-1A2B3C4D`).
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      description: Page size.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 255 }
+      description: |
+        A unique string per logical operation. Retries with the same key and
+        body replay the stored response (marked `Idempotent-Replay: true`)
+        instead of acting twice.
+
+  responses:
+    BadRequest:
+      description: The request was malformed or a field failed validation.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing, invalid, revoked or expired API key.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: The key is valid but lacks the required scope, or the caller's IP is not allowlisted.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such resource for this API key.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Hourly request budget exhausted.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Seconds until the budget resets.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [error, request_id]
+      properties:
+        error:
+          type: object
+          required: [type, code, message]
+          properties:
+            type:
+              type: string
+              enum:
+                - invalid_request_error
+                - authentication_error
+                - permission_error
+                - not_found_error
+                - conflict_error
+                - rate_limit_error
+                - api_error
+            code:
+              type: string
+              description: Stable machine-readable code, e.g. `missing_field`, `insufficient_scope`, `quote_expired`.
+            message: { type: string }
+            param:
+              type: string
+              description: The offending field, when the error is about one.
+        request_id: { type: string, format: uuid }
+      examples:
+        - error:
+            type: invalid_request_error
+            code: missing_field
+            message: '"sum_insured" is required.'
+            param: sum_insured
+          request_id: 6f1c8e2a-0b44-4a1e-9f3d-2c5b7a1d8e90
+
+    ApiKeyInfo:
+      type: object
+      properties:
+        object: { type: string, const: api_key }
+        id: { type: string, format: uuid }
+        name: { type: string }
+        key_prefix: { type: string, examples: [sp_live_9f2ac1b4] }
+        environment: { type: string, enum: [live, test] }
+        scopes:
+          type: array
+          items: { $ref: "#/components/schemas/Scope" }
+        rate_limit_per_hour: { type: integer }
+        webhook_url: { type: [string, "null"] }
+        account:
+          type: [object, "null"]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            role: { type: string }
+        api_version: { type: string }
+
+    Scope:
+      type: string
+      enum:
+        - quotes:read
+        - quotes:write
+        - orders:read
+        - orders:write
+        - payments:read
+        - payments:write
+        - webhooks:manage
+
+    Product:
+      type: object
+      properties:
+        object: { type: string, const: product }
+        insurer_id: { type: string, format: uuid }
+        insurer_code: { type: string }
+        insurer_name: { type: string }
+        insurer_logo_url: { type: [string, "null"] }
+        product_type: { $ref: "#/components/schemas/VehicleType" }
+        coverage: { type: string, enum: [COMPREHENSIVE, TLO, ALL] }
+        product_code: { type: string, examples: [CAR_COMPREHENSIVE] }
+        max_vehicle_age_years:
+          type: [integer, "null"]
+          description: Null means the insurer sets no age ceiling for this product.
+        admin_fee: { type: integer }
+        stamp_duty: { type: integer }
+
+    VehicleType:
+      type: string
+      enum: [CAR, MOTORCYCLE]
+
+    CoverageType:
+      type: string
+      enum: [COMPREHENSIVE, TLO]
+      description: |
+        `COMPREHENSIVE` — All Risk. `TLO` — Total Loss Only.
+
+    OrderStatus:
+      type: string
+      enum: [SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, ISSUED, CANCELLED]
+
+    AddOns:
+      type: object
+      description: Optional extensions, priced per OJK Lampiran II/III and IV.B.
+      properties:
+        flood: { type: boolean, default: false, description: Banjir — flood, windstorm, landslide. }
+        earthquake: { type: boolean, default: false, description: Gempa bumi, tsunami, letusan gunung berapi. }
+        riot: { type: boolean, default: false, description: SRCC — huru-hara dan kerusuhan. }
+        terrorism: { type: boolean, default: false, description: Terorisme dan sabotase. }
+        tpl_limit:
+          type: integer
+          default: 0
+          maximum: 100000000
+          description: Third-party liability limit in IDR. Priced progressively; 0 disables the cover.
+        pa_driver: { type: boolean, default: false, description: Personal accident cover for the driver. }
+        pa_passenger_seats:
+          type: integer
+          default: 0
+          minimum: 0
+          maximum: 7
+          description: Number of passenger seats to cover for personal accident.
+
+    Vehicle:
+      type: object
+      required: [year]
+      properties:
+        make: { type: string, examples: [Toyota] }
+        model: { type: string, examples: ["Avanza 1.5 G"] }
+        year: { type: integer, examples: [2022] }
+        plate_number: { type: string, examples: [B1234XYZ] }
+        usage:
+          type: string
+          enum: [PERSONAL, COMMERCIAL, SOCIAL]
+          default: PERSONAL
+
+    QuoteRequest:
+      type: object
+      required: [product_type, coverage_type, sum_insured, vehicle]
+      properties:
+        product_type: { $ref: "#/components/schemas/VehicleType" }
+        coverage_type: { $ref: "#/components/schemas/CoverageType" }
+        sum_insured:
+          type: integer
+          minimum: 1000000
+          description: Market value of the vehicle in IDR (harga pertanggungan).
+        province:
+          type: string
+          description: Province name from `GET /v1/reference/provinces`. Required unless `zone` is given.
+        zone:
+          type: integer
+          enum: [1, 2, 3]
+          description: OJK tariff zone, if you would rather set it directly than derive it from a province.
+        vehicle: { $ref: "#/components/schemas/Vehicle" }
+        addons: { $ref: "#/components/schemas/AddOns" }
+        customer:
+          type: object
+          description: Optional at quote time; required when the order is created.
+          properties:
+            name: { type: string }
+
+    PremiumBreakdown:
+      type: object
+      properties:
+        base: { type: integer, description: Sum insured × OJK base rate. }
+        addons: { type: integer }
+        addon_breakdown:
+          type: object
+          properties:
+            flood: { type: integer }
+            earthquake: { type: integer }
+            riot: { type: integer }
+            terrorism: { type: integer }
+            tpl: { type: integer }
+            pa_driver: { type: integer }
+            pa_passenger: { type: integer }
+        admin_fee: { type: integer }
+        stamp_duty: { type: integer }
+        total: { type: integer }
+        rate: { type: number, description: The OJK base rate applied, as a decimal fraction. }
+        band: { type: string, enum: [MIN, MID, MAX] }
+        rate_set_version: { type: string }
+
+    InsurerOption:
+      type: object
+      description: One insurer's price for the quoted risk.
+      properties:
+        insurer_id: { type: string, format: uuid }
+        insurer_code: { type: string }
+        insurer_name: { type: string }
+        eligible:
+          type: boolean
+          description: False when the insurer's underwriting rules exclude this risk.
+        ineligible_reason: { type: [string, "null"] }
+        band: { type: string, enum: [MIN, MID, MAX] }
+        rate: { type: number }
+        base_premium: { type: integer }
+        addon_premium: { type: integer }
+        admin_fee: { type: integer }
+        stamp_duty: { type: integer }
+        total_premium: { type: integer }
+
+    Quote:
+      type: object
+      properties:
+        object: { type: string, const: quote }
+        id: { type: string, format: uuid }
+        code:
+          type: string
+          description: Pass this as `quote_code` when creating an order.
+          examples: [QK7M2PX9RT4VBNH]
+        quotation_number: { type: string, examples: [QT-API-260812-4KX9PM] }
+        status: { type: string, enum: [SENT, VIEWED, CONFIRMED, PAID, EXPIRED] }
+        product_type: { $ref: "#/components/schemas/VehicleType" }
+        coverage_type: { $ref: "#/components/schemas/CoverageType" }
+        sum_insured: { type: integer }
+        province: { type: [string, "null"] }
+        zone: { type: integer, enum: [1, 2, 3] }
+        vehicle: { $ref: "#/components/schemas/Vehicle" }
+        addons: { $ref: "#/components/schemas/AddOns" }
+        currency: { type: string, const: IDR }
+        premium:
+          allOf: [{ $ref: "#/components/schemas/PremiumBreakdown" }]
+          description: Reference pricing at the platform default band, before an insurer is chosen.
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/InsurerOption" }
+        total_premium: { type: integer }
+        valid_until: { type: string, format: date }
+        expires_at: { type: string, format: date-time }
+        order_id: { type: [string, "null"], format: uuid }
+        quotation_url:
+          type: string
+          format: uri
+          description: Customer-facing quotation page — shareable as-is.
+        created_at: { type: string, format: date-time }
+
+    OrderRequest:
+      type: object
+      required: [quote_code, insurer_id, customer]
+      properties:
+        quote_code: { type: string }
+        insurer_id:
+          type: string
+          format: uuid
+          description: Must be an `insurer_id` from the quote's eligible options.
+        customer:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string, maxLength: 200 }
+            phone: { type: string, maxLength: 30, examples: ["081234567890"] }
+            ktp: { type: string, pattern: '^\d{16}$', description: 16-digit Indonesian national ID. }
+        vehicle:
+          type: object
+          description: Registration details needed for issuance, added on top of the quoted vehicle.
+          properties:
+            chassis_number: { type: string, description: Nomor rangka. }
+            engine_number: { type: string, description: Nomor mesin. }
+            plate_number: { type: string }
+            color: { type: string }
+
+    Order:
+      type: object
+      properties:
+        object: { type: string, const: order }
+        id: { type: string, format: uuid }
+        order_number: { type: string, examples: [ORD-1A2B3C4D] }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        product_code: { type: string }
+        product_name: { type: string }
+        coverage_type: { $ref: "#/components/schemas/CoverageType" }
+        vehicle_type: { $ref: "#/components/schemas/VehicleType" }
+        vehicle_details: { type: object, additionalProperties: true }
+        sum_insured: { type: integer }
+        zone: { type: integer }
+        vehicle_category: { type: integer, minimum: 1, maximum: 5 }
+        addons: { type: object, additionalProperties: true }
+        currency: { type: string, const: IDR }
+        premium:
+          type: object
+          properties:
+            base: { type: integer }
+            addons: { type: integer }
+            admin_fee: { type: integer }
+            stamp_duty: { type: integer }
+            total: { type: integer }
+        ojk_rate: { type: [number, "null"] }
+        customer:
+          type: object
+          properties:
+            name: { type: string }
+            phone: { type: [string, "null"] }
+            ktp: { type: [string, "null"] }
+        insurer:
+          type: object
+          properties:
+            id: { type: [string, "null"], format: uuid }
+            name: { type: [string, "null"] }
+        insurer_decision:
+          type: [string, "null"]
+          enum: [APPROVED, REQUEST_INFO, DECLINED, null]
+        insurer_decision_notes: { type: [string, "null"] }
+        policy_number: { type: [string, "null"] }
+        policy_document_url: { type: [string, "null"] }
+        reviewer_notes: { type: [string, "null"] }
+        issued_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Payment:
+      type: object
+      properties:
+        object: { type: string, const: payment }
+        id: { type: string, format: uuid }
+        order_id: { type: string, format: uuid }
+        status: { type: string, enum: [PENDING, PAID, EXPIRED, FAILED] }
+        amount: { type: integer }
+        paid_amount: { type: [integer, "null"] }
+        currency: { type: string, const: IDR }
+        invoice_url:
+          type: [string, "null"]
+          format: uri
+          description: Send the customer here to pay. Expires 24 hours after creation.
+        external_id: { type: string }
+        payment_method: { type: [string, "null"] }
+        payment_channel: { type: [string, "null"] }
+        paid_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        object: { type: string, const: webhook_endpoint }
+        url: { type: [string, "null"], format: uri }
+        configured: { type: boolean }
+        events:
+          type: array
+          items: { type: string }
+        signing_secret:
+          type: string
+          description: Present only in the response that creates or rotates it.
+        signing_secret_note: { type: string }
+
+    WebhookDelivery:
+      type: object
+      properties:
+        object: { type: string, const: webhook_delivery }
+        id: { type: string, format: uuid }
+        event: { type: string }
+        status: { type: string, enum: [PENDING, DELIVERED, FAILED] }
+        attempts: { type: integer }
+        last_status_code: { type: [integer, "null"] }
+        last_error: { type: [string, "null"] }
+        delivered_at: { type: [string, "null"], format: date-time }
+        order_id: { type: [string, "null"], format: uuid }
+        created_at: { type: string, format: date-time }
+
+    WebhookEvent:
+      type: object
+      description: |
+        The body SurePath POSTs to your endpoint. Headers accompany it:
+        `X-SurePath-Event`, `X-SurePath-Timestamp`, `X-SurePath-Signature`,
+        `X-SurePath-Delivery`.
+      properties:
+        id: { type: string, format: uuid, description: Delivery id — use it to deduplicate. }
+        event:
+          type: string
+          enum: [ping, order.created, order.status_changed, payment.created, payment.paid]
+        created_at: { type: string, format: date-time }
+        api_version: { type: string }
+        data:
+          type: object
+          additionalProperties: true
+          description: Event-specific identifiers. Fetch the resource for its full current state.
+      examples:
+        - id: 3b9f1c02-77ad-4e51-9a6b-1d2e3f4a5b6c
+          event: payment.paid
+          created_at: "2026-08-12T04:15:22.881Z"
+          api_version: "2026-08-12"
+          data:
+            payment_id: 8c2d5e19-4a6b-47c8-9e01-2f3a4b5c6d7e
+            order_id: 1f0a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8
+            status: PAID
+            amount: 6742500
+            paid_amount: 6742500
+            paid_at: "2026-08-12T04:15:20.000Z"
+            external_id: ORD-1A2B3C4D-1755000000000

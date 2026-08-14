@@ -49,6 +49,23 @@ Ditambahkan oleh rangkaian rilis Operator App + Insurer App + rate limiting. Sem
 | `sp_review_tokens` | `last_reminded_at` (`timestamptz`) | v1.22.0 | Timestamp email pengingat terakhir (anti-spam, 24h cooldown) |
 | `sp_insurers` | `pic_email` (`text`) | v1.21.1 | Email PIC insurer — penerima default review-link + reminder |
 
+### Tabel baru v1.55.0 — Public API (12 Agustus 2026)
+
+Migrasi `supabase/migrations/20260812_public_api.sql` — **SUDAH diapply ke production**. Semuanya **deny-all** (RLS on, nol policy) → hanya `service_role` lewat edge function `partner-api` / `insurer-api`.
+
+| Tabel | Isi |
+|---|---|
+| `sp_api_keys` | Kredensial Public API. Menyimpan **hash SHA-256 saja** (`key_hash`, unique) + `key_prefix` display-safe. `key_type` PARTNER/INSURER, `agent_id` atau `insurer_id` sebagai pemilik, `scopes text[]`, `rate_limit_per_hour`, `allowed_ips`, `webhook_url`/`webhook_secret`, `expires_at`/`revoked_at` |
+| `sp_api_requests` | Log akses append-only — satu baris per request termasuk yang ditolak (`request_id`, method, path, status, durasi, error_code, IP, UA) |
+| `sp_api_idempotency` | Respons POST tersimpan, TTL 24 jam. Unique `(api_key_id, idempotency_key)`; `request_hash` dipakai menolak key yang sama dengan body berbeda |
+| `sp_api_webhook_deliveries` | Outbox webhook: event, payload, `attempts`/`max_attempts`, `next_attempt_at`, backoff |
+
+Fungsi + trigger baru:
+
+- `sp_api_enqueue_webhook(event, order_id, agent_id, insurer_id, payload)` — SECURITY DEFINER, fan-out ke tiap key aktif yang berhak. **Menelan exception-nya sendiri** supaya masalah webhook tidak pernah me-rollback transaksi order/payment yang memicunya.
+- Trigger `sp_api_orders_webhook` pada `sp_policy_orders` (AFTER INSERT OR UPDATE OF status) dan `sp_api_payments_webhook` pada `sp_payments` (AFTER INSERT OR UPDATE OF status). Karena event lahir dari DB, perubahan lewat jalur mana pun — UI operator, dashboard insurer, webhook Xendit, API — menghasilkan event yang sama.
+- `sp_api_gc()` — retensi: idempotency 24 jam, log request 90 hari, delivery selesai 30 hari. **Belum dijadwalkan** ke cron.
+
 ## Status RLS live (per 15 Juni 2026)
 
 - **17 scoped policies** applied via migration `rls_clear_policies_and_demo_passwords` (11 Juni 2026).

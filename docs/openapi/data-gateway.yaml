@@ -1,0 +1,352 @@
+openapi: 3.1.0
+
+info:
+  title: SurePath Data Gateway (internal)
+  version: "1.30.0"
+  summary: The first-party RPC endpoint behind every SurePath portal.
+  description: |
+    **Internal API — not for partners.** If you are integrating SurePath from
+    outside, use the Partner API (`docs/openapi/partner-api.yaml`) or the
+    Insurer API (`docs/openapi/insurer-api.yaml`) instead. This spec documents
+    the endpoint the SurePath web apps themselves talk to, so the contract is
+    written down and testable rather than living only in the client code.
+
+    **Shape.** One POST endpoint, RPC style: `{ "action": "...", "params": {...} }`.
+    It is not REST and is not trying to be — the client is a single SPA and the
+    action list evolves with it.
+
+    **Why it exists.** Sensitive tables (`sp_users`, `sp_policy_orders`,
+    `sp_payments`, `sp_claims`, wallets, tokens) are deny-all under RLS. The
+    browser never queries them. Everything goes through this function, which
+    holds the service_role key and enforces authorisation per action in code.
+
+        client ──(Bearer JWT)──▶ data-gateway ──(service_role)──▶ Postgres
+
+    **Authorisation.** Actions fall into three bands:
+
+    | Band | Who | How |
+    |---|---|---|
+    | Public | anyone | must appear in the `PUBLIC_ACTIONS` allowlist; carries its own token in `params` |
+    | User | any signed-in account | Supabase JWT; the caller's own rows only |
+    | Admin | `MASTER_ADMIN`, `ADMIN`, `FINANCE*`, `INSURANCE_ADMIN`, `OPERATOR` | Supabase JWT + role check |
+
+    `OPERATOR` is deliberately excluded from the finance band, so operators
+    cannot create commissions or credit wallets.
+
+    **Trust rule.** Ownership fields (`agent_id`, `client_id`) are always
+    derived from the verified caller and never read from `params`. Money
+    figures — commission, discount — are recomputed server-side.
+
+    **Rate limits.** 60 requests/hour per IP on public actions, 200/hour per
+    insurer token. Exceeding either returns `429`.
+
+    **Response envelope.** `{ "data": ... }` on success, `{ "error": "..." }` on
+    failure. Note this differs from the partner/insurer APIs, which use a
+    structured error object — the difference is intentional and this envelope is
+    frozen for backward compatibility with shipped clients, including the
+    Android APK.
+
+    The authoritative per-action parameter list is `docs/API_REFERENCE.md`.
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/data-gateway
+    description: Production
+
+tags:
+  - name: Gateway
+
+paths:
+  /:
+    get:
+      tags: [Gateway]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, examples: [ok] }
+                  service: { type: string, examples: [data-gateway] }
+                  version: { type: string }
+                  timestamp: { type: string, format: date-time }
+
+    post:
+      tags: [Gateway]
+      summary: Dispatch an action
+      description: |
+        Routes to a domain module (`users`, `orders`, `claims`, `wallet`,
+        `insurers`, `agents`, `notifications`, `admin`, `tiers`, `quotations`,
+        `misc`) — the first module that recognises the action handles it.
+
+        Send `Authorization: Bearer <supabase-jwt>` for everything except the
+        public actions listed in `PublicAction`.
+      security:
+        - SupabaseJWT: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GatewayRequest" }
+            examples:
+              own_orders:
+                summary: List the caller's own orders
+                value: { action: get_my_orders, params: {} }
+              admin_order:
+                summary: Fetch one order as an admin
+                value: { action: admin_get_order, params: { order_id: 1f0a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8 } }
+              public_quotation:
+                summary: Load a public e-quotation (no JWT)
+                value: { action: get_public_quotation, params: { code: QK7M2PX9RT4VBNH } }
+      responses:
+        "200":
+          description: |
+            Action succeeded. `data` is action-specific — a row, an array of
+            rows, or a small result object.
+          headers:
+            X-Request-ID:
+              schema: { type: string, format: uuid }
+              description: Present on every response, including errors. Quote it in bug reports.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewaySuccess" }
+        "400":
+          description: Missing/unknown action, or the action rejected its parameters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "401":
+          description: Missing or invalid bearer token on a non-public action.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "403":
+          description: Authenticated but not permitted — wrong role, or no `sp_users` profile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "404":
+          description: The target row does not exist or is not visible to the caller.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "405":
+          description: Method not allowed — only GET (health) and POST are served.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "409":
+          description: Conflicting state, e.g. a review token already acted on.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "410":
+          description: Expired — review token, insurer token or quotation link past its window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "429":
+          description: Rate limit exceeded (60/hour per IP, 200/hour per insurer token).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+        "500":
+          description: Server misconfiguration or an unhandled error.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GatewayError" }
+
+components:
+  securitySchemes:
+    SupabaseJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Supabase Auth access token for the signed-in user.
+
+  schemas:
+    GatewayRequest:
+      type: object
+      required: [action]
+      properties:
+        action: { $ref: "#/components/schemas/Action" }
+        params:
+          type: object
+          additionalProperties: true
+          default: {}
+          description: Action-specific arguments. See `docs/API_REFERENCE.md`.
+
+    GatewaySuccess:
+      type: object
+      properties:
+        data:
+          description: Action-specific payload.
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: { type: object, additionalProperties: true }
+            - type: "null"
+
+    GatewayError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable message. Many are in Bahasa Indonesia — they are surfaced to end users.
+          examples: ["Rate limit exceeded. Coba lagi dalam 1 jam."]
+        existing_action:
+          type: string
+          description: Present on some 409s, naming the action already recorded.
+
+    PublicAction:
+      type: string
+      description: |
+        Actions in the `PUBLIC_ACTIONS` allowlist — callable without a Supabase
+        JWT. Each authenticates with its own token passed in `params` (an
+        insurer auth token, a single-use review token, or a quotation code) and
+        is rate-limited by IP.
+      enum:
+        - get_insurer_review
+        - submit_insurer_decision
+        - get_insurer_dashboard
+        - insurer_submit_decision_authed
+        - insurer_list_payments
+        - insurer_upload_policy
+        - get_public_quotation
+        - confirm_public_quotation
+
+    Action:
+      type: string
+      description: |
+        Every dispatchable action. Names prefixed `admin_` require an admin
+        role; the rest operate on the caller's own data unless listed in
+        `PublicAction`.
+      enum:
+        # ── Public (no JWT; token in params) ──────────────────────────────
+        - get_insurer_review
+        - submit_insurer_decision
+        - get_insurer_dashboard
+        - insurer_submit_decision_authed
+        - insurer_list_payments
+        - insurer_upload_policy
+        - get_public_quotation
+        - confirm_public_quotation
+        # ── Profile & account ─────────────────────────────────────────────
+        - get_my_profile
+        - ensure_profile
+        - update_my_profile
+        - get_user_profile
+        - update_fcm_token
+        - record_tc_acceptance
+        - get_my_agreement
+        - accept_agreement
+        - apply_referral
+        # ── Orders, claims, payments ──────────────────────────────────────
+        - create_policy_order
+        - get_my_orders
+        - cancel_my_order
+        - get_my_payments
+        - submit_claim
+        - get_my_claims
+        # ── Quotes & quotations ───────────────────────────────────────────
+        - save_quote
+        - save_quotation
+        # ── Notifications ─────────────────────────────────────────────────
+        - get_my_notifications
+        - create_notification
+        - mark_my_notification_read
+        - mark_all_my_notifications_read
+        # ── Agent: clients, stats, rewards, wallet, tiers ─────────────────
+        - list_my_clients
+        - get_agent_stats
+        - get_leaderboard
+        - award_coins
+        - redeem_coins
+        - agent_request_withdrawal
+        - get_my_tier_progress
+        - get_tier_definitions
+        # ── AI ────────────────────────────────────────────────────────────
+        - pathy_chat
+        # ── Admin: users & agents ─────────────────────────────────────────
+        - admin_list_users
+        - admin_get_user
+        - admin_update_user
+        - admin_invite_user
+        - admin_register_agent
+        - admin_list_agents
+        - admin_list_pending_agents
+        - admin_get_agent_detail
+        - admin_verify_agent
+        - admin_list_clients
+        # ── Admin: orders, claims, policies, payments ─────────────────────
+        - admin_list_orders
+        - admin_get_order
+        - admin_update_order
+        - admin_queue_summary
+        - admin_list_claims
+        - admin_update_claim
+        - admin_list_policies
+        - admin_list_payments
+        - admin_transaksi_overview
+        - admin_send_insurer_review_link
+        # ── Admin: money (FINANCE roles only — OPERATOR excluded) ─────────
+        - admin_list_commissions
+        - admin_create_commission
+        - admin_update_commission
+        - admin_list_withdrawals
+        - admin_approve_withdrawal
+        - admin_reject_withdrawal
+        - admin_financial_reports
+        - admin_financial_detail
+        # ── Admin: insurers ───────────────────────────────────────────────
+        - admin_create_insurer
+        - admin_update_insurer
+        - admin_delete_insurer
+        - admin_save_insurer_product
+        - admin_delete_insurer_product
+        - admin_get_insurer_api_config
+        - admin_save_insurer_api_config
+        - admin_list_insurer_tokens
+        - admin_generate_insurer_token
+        - admin_revoke_insurer_token
+        - admin_list_review_tokens
+        - admin_list_insurer_activity
+        # ── Admin: agent tiers ────────────────────────────────────────────
+        - admin_list_tiers
+        - admin_create_tier
+        - admin_update_tier
+        - admin_delete_tier
+        - admin_reorder_tiers
+        - admin_assign_agent_tier
+        - admin_evaluate_agent_tier
+        - admin_evaluate_all_agents
+        - admin_list_tier_requests
+        - admin_approve_tier_request
+        - admin_reject_tier_request
+        # ── Admin: OJK rate CMS ───────────────────────────────────────────
+        - admin_save_ojk_rate_set
+        - admin_activate_ojk_rate_set
+        - admin_delete_ojk_rate_set
+        # ── Admin: notifications, analytics, ops ──────────────────────────
+        - admin_list_notifications
+        - admin_create_notification
+        - admin_create_user_notification
+        - admin_mark_notification_read
+        - admin_mark_all_notifications_read
+        - admin_stats
+        - admin_analytics_data
+        - admin_traffic_stats
+        - admin_security_stats
+        - admin_backup_export
+        # ── Admin: B2B & life ─────────────────────────────────────────────
+        - admin_create_b2b_quote
+        - admin_update_b2b_submission
+        - admin_update_life_application

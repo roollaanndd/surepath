@@ -1,6 +1,10 @@
 # SurePath — Data Gateway (Edge Function)
 
 > Referensi `supabase/functions/data-gateway/index.ts`. Versi deploy saat ini: **v11** (15 Juni 2026).
+>
+> **Gateway ini internal** — dipakai SPA + APK sendiri. Integrasi pihak ketiga
+> memakai `partner-api` / `insurer-api`; lihat [`PUBLIC_API.md`](PUBLIC_API.md).
+> Spec OpenAPI untuk ketiga surface ada di [`openapi/`](openapi/).
 
 ## Konsep
 

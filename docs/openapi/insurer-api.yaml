@@ -1,0 +1,629 @@
+openapi: 3.1.0
+
+info:
+  title: SurePath Insurer API
+  version: "1.0.0"
+  summary: Machine-to-machine access to your SurePath order book.
+  description: |
+    For partner insurers who want to integrate SurePath into their own
+    underwriting systems instead of working through the browser dashboard.
+
+    **Base URL**
+    `https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/insurer-api`
+
+    **Why this exists.** Insurers already have two ways in — the emailed
+    `/review/{token}` link and the `/insurerapp` dashboard. Both are built for a
+    person with a browser and both use short-lived tokens. This API is the same
+    order book behind a long-lived API key, suitable for a scheduled job or an
+    underwriting workflow engine.
+
+    **Authentication.** `Authorization: Bearer ins_live_…` (or `X-API-Key`).
+    Keys are issued by the SurePath team and shown exactly once — only a
+    SHA-256 hash is stored, so a lost key must be replaced, not recovered.
+
+    **Scoping is not optional.** The insurer identity comes from the key, never
+    from the request. There is no parameter anywhere in this API that selects a
+    different insurer, so a key cannot read or act on another insurer's
+    business even by accident.
+
+    Decision and issuance semantics are identical to the dashboard: `APPROVED`
+    moves an order to `APPROVED`, `REQUEST_INFO` sends it back to
+    `UNDER_REVIEW` for the SurePath operator, `DECLINED` moves it to `REJECTED`.
+    Every call is written to the insurer activity log and notifies the SurePath
+    team and the selling agent, exactly as a dashboard action would.
+
+    **Errors** are always `{ "error": { type, code, message, param? }, "request_id": "…" }`.
+  contact:
+    name: SurePath Insurer Relations
+    url: https://myinsurepath.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/insurer-api
+    description: Production
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Orders
+    description: The applications assigned to your company.
+  - name: Underwriting
+    description: Record a decision and attach the issued policy.
+  - name: Payments
+    description: Premium collection status.
+  - name: Webhooks
+    description: Push notifications instead of polling.
+
+paths:
+  /health:
+    get:
+      tags: [Orders]
+      summary: Service health
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, examples: [ok] }
+                  service: { type: string, examples: [insurer-api] }
+                  version: { type: string }
+                  api_version: { type: string }
+                  timestamp: { type: string, format: date-time }
+
+  /v1/me:
+    get:
+      tags: [Orders]
+      summary: Inspect the calling key
+      responses:
+        "200":
+          description: Key and insurer details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: api_key }
+                  id: { type: string, format: uuid }
+                  name: { type: string }
+                  key_prefix: { type: string, examples: [ins_live_3c8de201] }
+                  environment: { type: string, enum: [live, test] }
+                  scopes:
+                    type: array
+                    items: { $ref: "#/components/schemas/Scope" }
+                  rate_limit_per_hour: { type: integer }
+                  webhook_url: { type: [string, "null"] }
+                  insurer:
+                    type: [object, "null"]
+                    properties:
+                      id: { type: string, format: uuid }
+                      code: { type: string }
+                      name: { type: string }
+                      logo_url: { type: [string, "null"] }
+                      pic_name: { type: [string, "null"] }
+                      pic_email: { type: [string, "null"] }
+                  api_version: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/orders:
+    get:
+      tags: [Orders]
+      summary: List orders assigned to you
+      description: |
+        Newest first. To poll a work queue, use `decision=none` — that is
+        everything still waiting on your underwriting call.
+
+        Requires the `orders:read` scope.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/OrderStatus" }
+        - name: decision
+          in: query
+          schema:
+            type: string
+            enum: [none, APPROVED, REQUEST_INFO, DECLINED]
+          description: '`none` returns orders with no decision recorded yet.'
+        - name: created_before
+          in: query
+          schema: { type: string, format: date-time }
+          description: Cursor for paging — pass the `created_at` of the last row you saw.
+      responses:
+        "200":
+          description: Order list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Order" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+    get:
+      tags: [Orders]
+      summary: Retrieve an order
+      description: Accepts the order UUID or its `order_number`. Requires `orders:read`.
+      responses:
+        "200":
+          description: Order.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/orders/{id}/decision:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+      - $ref: "#/components/parameters/IdempotencyKey"
+    post:
+      tags: [Underwriting]
+      summary: Record an underwriting decision
+      description: |
+        One decision per order — a second call returns `409`. `notes` is
+        mandatory (min 5 characters) for `REQUEST_INFO` and `DECLINED`, since
+        both are relayed to the SurePath operator and the selling agent.
+
+        Requires the `orders:decide` scope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [APPROVED, REQUEST_INFO, DECLINED]
+                notes:
+                  type: string
+                  maxLength: 2000
+                  description: Required (min 5 chars) for REQUEST_INFO and DECLINED.
+            examples:
+              approve:
+                value: { action: APPROVED, notes: "Risiko standar, disetujui." }
+              request_info:
+                value: { action: REQUEST_INFO, notes: "Mohon lampirkan foto STNK dan nomor rangka." }
+      responses:
+        "200":
+          description: Decision recorded; the updated order is returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: A decision was already recorded for this order.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/orders/{id}/policy:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+      - $ref: "#/components/parameters/IdempotencyKey"
+    post:
+      tags: [Underwriting]
+      summary: Attach the issued policy
+      description: |
+        Records the policy document and number, and moves the order to
+        `ISSUED`. This notifies the customer-facing side of the platform, so
+        only call it once the policy is genuinely in force.
+
+        Requires the `policies:write` scope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [policy_document_url]
+              properties:
+                policy_document_url:
+                  type: string
+                  format: uri
+                  description: https URL of the policy PDF.
+                policy_number:
+                  type: string
+                  maxLength: 100
+            examples:
+              issue:
+                value:
+                  policy_document_url: https://cdn.example-insurer.co.id/policies/POL-2026-004512.pdf
+                  policy_number: POL-2026-004512
+      responses:
+        "200":
+          description: Policy attached; the order is now ISSUED.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: A rejected or cancelled order cannot be issued.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/payments:
+    get:
+      tags: [Payments]
+      summary: List payments across your orders
+      description: Requires `payments:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema: { type: string, enum: [PENDING, PAID, EXPIRED, FAILED] }
+      responses:
+        "200":
+          description: Payment list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Payment" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/orders/{id}/payments:
+    parameters:
+      - $ref: "#/components/parameters/OrderId"
+    get:
+      tags: [Payments]
+      summary: List payments for one order
+      description: Requires `payments:read`.
+      responses:
+        "200":
+          description: Payment list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Payment" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/webhook:
+    get:
+      tags: [Webhooks]
+      summary: Get your webhook endpoint
+      description: Requires `webhooks:manage`.
+      responses:
+        "200":
+          description: Endpoint configuration.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      tags: [Webhooks]
+      summary: Set or rotate your webhook endpoint
+      description: |
+        Same contract as the Partner API. The signing secret is returned once,
+        on creation or rotation.
+
+        Verify a delivery by computing
+        `HMAC-SHA256(signing_secret, "<X-SurePath-Timestamp>.<raw body>")` and
+        comparing the hex digest to `X-SurePath-Signature` in constant time.
+        Reject timestamps older than five minutes. Respond `2xx` within 10
+        seconds; failures retry with backoff (1m, 5m, 15m, 1h, 3h, 12h).
+
+        Requires `webhooks:manage`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url: { type: string, format: uri, description: An https endpoint. Empty string disables delivery. }
+                rotate_secret: { type: boolean }
+      responses:
+        "200":
+          description: Endpoint updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /v1/webhook/test:
+    post:
+      tags: [Webhooks]
+      summary: Send a test event
+      description: Requires `webhooks:manage`.
+      responses:
+        "202":
+          description: Test event queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: webhook_delivery }
+                  id: { type: string, format: uuid }
+                  event: { type: string, const: ping }
+                  status: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: No webhook URL configured yet.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /v1/webhook/deliveries:
+    get:
+      tags: [Webhooks]
+      summary: List recent deliveries
+      description: Requires `webhooks:manage`.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Delivery list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/WebhookDelivery" }
+                  has_more: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+webhooks:
+  order.created:
+    post:
+      summary: An order was assigned to you
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+  order.status_changed:
+    post:
+      summary: One of your orders changed status
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+  payment.paid:
+    post:
+      summary: A premium was collected
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEvent" }
+      responses:
+        "200": { description: Acknowledged. }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      description: '`Authorization: Bearer ins_live_…`. `X-API-Key` is accepted as an equivalent.'
+
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+      description: Order UUID or `order_number`.
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 255 }
+      description: Retries with the same key and body replay the stored response instead of acting twice.
+
+  responses:
+    BadRequest:
+      description: The request was malformed or a field failed validation.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing, invalid, revoked or expired API key.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Valid key, but it lacks the required scope or its IP allowlist rejected the caller.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such order is assigned to your insurer.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Hourly request budget exhausted.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Scope:
+      type: string
+      enum: [orders:read, orders:decide, policies:write, payments:read, webhooks:manage]
+
+    OrderStatus:
+      type: string
+      enum: [SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, ISSUED, CANCELLED]
+
+    Error:
+      type: object
+      required: [error, request_id]
+      properties:
+        error:
+          type: object
+          required: [type, code, message]
+          properties:
+            type:
+              type: string
+              enum:
+                - invalid_request_error
+                - authentication_error
+                - permission_error
+                - not_found_error
+                - conflict_error
+                - rate_limit_error
+                - api_error
+            code: { type: string }
+            message: { type: string }
+            param: { type: string }
+        request_id: { type: string, format: uuid }
+
+    Order:
+      type: object
+      properties:
+        object: { type: string, const: order }
+        id: { type: string, format: uuid }
+        order_number: { type: string, examples: [ORD-1A2B3C4D] }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        product_code: { type: string }
+        product_name: { type: string }
+        coverage_type: { type: string, enum: [COMPREHENSIVE, TLO] }
+        vehicle_type: { type: string, enum: [CAR, MOTORCYCLE] }
+        vehicle_details:
+          type: object
+          additionalProperties: true
+          description: Make, model, year, plate, chassis and engine numbers as captured at submission.
+        vehicle_image_url: { type: [string, "null"] }
+        sum_insured: { type: integer }
+        zone: { type: integer, enum: [1, 2, 3] }
+        vehicle_category: { type: integer, minimum: 1, maximum: 5 }
+        addons: { type: object, additionalProperties: true }
+        currency: { type: string, const: IDR }
+        premium:
+          type: object
+          properties:
+            base: { type: integer }
+            addons: { type: integer }
+            admin_fee: { type: integer }
+            stamp_duty: { type: integer }
+            total: { type: integer }
+            net: { type: [integer, "null"] }
+        ojk_rate: { type: [number, "null"] }
+        customer:
+          type: object
+          description: Name and phone only — KTP and address are not exposed over this API.
+          properties:
+            name: { type: string }
+            phone: { type: [string, "null"] }
+        decision:
+          type: [string, "null"]
+          enum: [APPROVED, REQUEST_INFO, DECLINED, null]
+        decision_notes: { type: [string, "null"] }
+        decision_at: { type: [string, "null"], format: date-time }
+        policy_number: { type: [string, "null"] }
+        policy_document_url: { type: [string, "null"] }
+        reviewed_at: { type: [string, "null"], format: date-time }
+        issued_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Payment:
+      type: object
+      properties:
+        object: { type: string, const: payment }
+        id: { type: string, format: uuid }
+        order_id: { type: string, format: uuid }
+        status: { type: string, enum: [PENDING, PAID, EXPIRED, FAILED] }
+        amount: { type: integer }
+        paid_amount: { type: [integer, "null"] }
+        currency: { type: string, const: IDR }
+        paid_at: { type: [string, "null"], format: date-time }
+        payment_method: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        object: { type: string, const: webhook_endpoint }
+        url: { type: [string, "null"], format: uri }
+        configured: { type: boolean }
+        events:
+          type: array
+          items: { type: string }
+        signing_secret:
+          type: string
+          description: Present only in the response that creates or rotates it.
+        signing_secret_note: { type: string }
+
+    WebhookDelivery:
+      type: object
+      properties:
+        object: { type: string, const: webhook_delivery }
+        id: { type: string, format: uuid }
+        event: { type: string }
+        status: { type: string, enum: [PENDING, DELIVERED, FAILED] }
+        attempts: { type: integer }
+        last_status_code: { type: [integer, "null"] }
+        last_error: { type: [string, "null"] }
+        delivered_at: { type: [string, "null"], format: date-time }
+        order_id: { type: [string, "null"], format: uuid }
+        created_at: { type: string, format: date-time }
+
+    WebhookEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid, description: Delivery id — use it to deduplicate. }
+        event:
+          type: string
+          enum: [ping, order.created, order.status_changed, payment.created, payment.paid]
+        created_at: { type: string, format: date-time }
+        api_version: { type: string }
+        data: { type: object, additionalProperties: true }

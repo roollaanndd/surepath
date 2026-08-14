@@ -23,9 +23,9 @@ on:
   workflow_dispatch:
     inputs:
       functions:
-        description: 'Space-separated function names to deploy (blank = data-gateway)'
+        description: 'Space-separated function names to deploy (blank = the default set)'
         required: false
-        default: 'data-gateway'
+        default: 'data-gateway partner-api insurer-api'
 
 jobs:
   deploy:
@@ -56,17 +56,20 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          # On manual dispatch, deploy the requested set; on push, deploy data-gateway
-          # (the only function that carries app logic reached from the browser).
-          FUNCTIONS: ${{ github.event.inputs.functions || 'data-gateway' }}
+          # On manual dispatch, deploy the requested set; on push, deploy the
+          # functions that carry app logic reached from outside Supabase.
+          FUNCTIONS: ${{ github.event.inputs.functions || 'data-gateway partner-api insurer-api' }}
         run: |
           set -euo pipefail
           for fn in $FUNCTIONS; do
             echo "Deploying $fn to $PROJECT_REF ..."
-            # data-gateway authenticates internally (Bearer JWT verified in code
-            # for private actions; PUBLIC_ACTIONS allowlist for the rest), so it
-            # runs with --no-verify-jwt exactly as the manual deploys did.
-            if [ "$fn" = "data-gateway" ] || [ "$fn" = "quotations-gateway" ]; then
+            # These four authenticate in code — data-gateway/quotations-gateway
+            # verify a Supabase JWT (or match the PUBLIC_ACTIONS allowlist), and
+            # partner-api/insurer-api verify a hashed API key. Supabase's own JWT
+            # gate would reject their callers before that code ever runs, so they
+            # deploy with --no-verify-jwt.
+            if [ "$fn" = "data-gateway" ] || [ "$fn" = "quotations-gateway" ] \
+               || [ "$fn" = "partner-api" ] || [ "$fn" = "insurer-api" ]; then
               supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --no-verify-jwt
             else
               supabase functions deploy "$fn" --project-ref "$PROJECT_REF"

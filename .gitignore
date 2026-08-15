@@ -35,8 +35,6 @@ dist-ssr
 
 # AI dev tooling — excluded from client handover
 .agents/
-.freebuff/
-.codebuff/
 .claude-flow/
 .claude/
 .swarm/

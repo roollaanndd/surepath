@@ -220,14 +220,7 @@ npm run build        # Production build (TypeScript checked)
 
 ### AI coding agent
 
-Repo ini dikonfigurasi untuk dipakai dengan [Freebuff](https://github.com/CodebuffAI/freebuff):
-
-```bash
-npm install -g freebuff   # sekali saja
-npm run agent             # jalankan dari root repo
-```
-
-Konteks proyek dibaca dari `AGENTS.md` di root. Setup lengkap, aturan main, dan catatan privasi: `docs/FREEBUFF.md`.
+Konteks proyek untuk AI coding agent ada di `AGENTS.md` (root repo) — dibaca otomatis oleh agent yang memakai konvensi `AGENTS.md`. Claude Code memakai `CLAUDE.md`. Keduanya harus diubah bersamaan.
 
 ---
 

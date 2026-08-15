@@ -13,7 +13,6 @@
     "lint:ts": "tsc --noEmit",
     "lint:es": "eslint .",
     "test": "vitest run && playwright test",
-    "agent": "freebuff",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:unit": "vitest run"

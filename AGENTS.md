@@ -1,9 +1,7 @@
 # AGENTS.md
 
-Project instructions for AI coding agents that read `AGENTS.md` (Freebuff, Codex, Cursor, Amp, …).
+Project instructions for AI coding agents that read `AGENTS.md` (Codex, Cursor, Amp, …).
 Claude Code reads `CLAUDE.md`; the two are kept in sync — if you change one, change the other.
-
-Setup and guardrails for Freebuff specifically: `docs/FREEBUFF.md`.
 
 ## What This Is
 

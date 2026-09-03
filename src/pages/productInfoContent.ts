@@ -81,7 +81,7 @@ export const PRODUCT_CONTENT: Record<string, ProductContent> = {
       'Accidents can happen anytime, anywhere. SurePath Personal Accident insurance provides fast financial benefits for you and your family, so life can go on even in the face of the unexpected.',
     ],
     features: [
-      ['Pendaftaran online selesai hanya dalam 60 detik', 'Online registration completed in just 60 seconds'],
+      ['Pendaftaran online singkat, cukup dari HP tanpa dokumen fisik', 'A short online sign-up, straight from your phone with no physical paperwork'],
       ['Santunan meninggal dunia akibat kecelakaan', 'Death benefit due to an accident'],
       ['Penggantian biaya perawatan medis akibat kecelakaan', 'Reimbursement of medical treatment costs from accidents'],
       ['Santunan cacat tetap total maupun sebagian', 'Benefits for total or partial permanent disability'],
@@ -94,7 +94,7 @@ export const PRODUCT_CONTENT: Record<string, ProductContent> = {
       { title: ['Biaya Perawatan Medis', 'Medical Treatment Costs'], desc: ['Penggantian biaya rumah sakit dan tindakan medis akibat kecelakaan', 'Reimbursement of hospital and medical treatment costs from accidents'] },
     ],
     startingPrice: ['Rp 50.000/bulan', 'Rp 50,000/month'],
-    highlights: [['Daftar 60 Detik', 'Register in 60s'], ['Global Coverage', 'Global Coverage'], ['Instant Approval', 'Instant Approval']],
+    highlights: [['Daftar Online', 'Online Sign-Up'], ['Global Coverage', 'Global Coverage'], ['Proses Digital', 'Fully Digital']],
   },
 
   property: {
@@ -108,7 +108,7 @@ export const PRODUCT_CONTENT: Record<string, ProductContent> = {
     features: [
       ['Klaim mudah cukup unggah foto kerusakan via aplikasi', 'Easy claims — just upload a damage photo via the app'],
       ['Perlindungan dari jatuh, terkena cairan, dan kerusakan fisik', 'Protection from drops, liquid exposure, and physical damage'],
-      ['Garansi perbaikan dengan teknisi tersertifikasi', 'Repair guarantee with certified technicians'],
+      ['Perbaikan dikerjakan oleh teknisi rekanan kami', 'Repairs handled by our partner technicians'],
       ['Pengiriman perangkat pinjaman sementara saat perbaikan', 'A temporary loaner device delivered during repairs'],
       ['Perlindungan hingga 2 tahun untuk setiap perangkat', 'Protection of up to 2 years per device'],
     ],

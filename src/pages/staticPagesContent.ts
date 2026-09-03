@@ -266,14 +266,14 @@ export const STATIC_CONTENT: Record<string, StaticContent> = {
           ['Autentikasi multi-faktor (MFA) tersedia dan sangat direkomendasikan untuk semua akun', 'Multi-factor authentication (MFA) is available and strongly recommended for all accounts'],
           ['PBKDF2-HMAC-SHA256 dengan salt unik per pengguna untuk hashing password', 'PBKDF2-HMAC-SHA256 with a unique per-user salt for password hashing'],
           ['Token sesi dengan kedaluwarsa otomatis dan deteksi anomali aktivitas', 'Session tokens with automatic expiry and activity anomaly detection'],
-          ['Arsitektur Zero-Trust — setiap permintaan akses diverifikasi secara independen', 'Zero-Trust architecture — every access request is independently verified'],
+          ['Tabel data sensitif tidak dapat diakses langsung dari browser — setiap permintaan diverifikasi ulang di server, per aksi', 'Sensitive data tables cannot be reached directly from the browser — every request is re-verified server-side, per action'],
         ],
       },
       {
         heading: ['Infrastruktur Cloud', 'Cloud Infrastructure'],
         body: [
-          'Platform SurePath di-host di Supabase (infrastruktur AWS ap-southeast-1, Singapura) dengan SLA uptime 99,9%. Backup otomatis setiap hari dengan retensi 30 hari dan point-in-time recovery. Infrastruktur bersertifikasi SOC 2 Type II.',
-          'The SurePath platform is hosted on Supabase (AWS ap-southeast-1, Singapore) with a 99.9% uptime SLA. Automated daily backups with 30-day retention and point-in-time recovery. SOC 2 Type II certified infrastructure.',
+          'Platform SurePath di-host di Supabase dengan infrastruktur AWS region ap-southeast-1 (Singapura), sehingga data Anda berada di kawasan Asia Tenggara. Backup basis data dan pemulihan data dikelola melalui penyedia infrastruktur tersebut. Sertifikasi kepatuhan yang berlaku pada lapisan infrastruktur adalah milik penyedia infrastruktur, bukan sertifikasi atas nama SurePath.',
+          'The SurePath platform is hosted on Supabase with AWS infrastructure in the ap-southeast-1 region (Singapore), so your data resides within Southeast Asia. Database backup and recovery are managed through that infrastructure provider. Any compliance certifications at the infrastructure layer belong to the infrastructure provider, and are not certifications held by SurePath.',
         ],
       },
       {

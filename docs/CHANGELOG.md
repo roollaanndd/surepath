@@ -30,6 +30,10 @@ Sebelumnya website publik praktis tidak menceritakan AI sama sekali (hanya ~6 fr
 - `seo.ts` — descriptor `/product/climate` (+ `Service` & `BreadcrumbList` JSON-LD) dan `/ai`. **Dua** regex slug produk harus diperbarui: di `App.tsx` (routing) dan di `seo.ts` `resolveSeo()` (metadata) — kalau hanya satu, halaman render tapi memakai title fallback.
 - `sitemap.xml` +2 URL (24 → 26), `llms.txt` menambah bagian "Penggunaan AI" beserta batasannya dan produk climate dengan status "belum dapat dibeli".
 
+**5. Klaim tak terverifikasi di halaman /security & produk (lanjutan dari poin 3)**
+- `staticPagesContent.ts` — halaman **Keamanan Data**: klaim **"SLA uptime 99,9%"** dan **"Infrastruktur bersertifikasi SOC 2 Type II"** dihapus. Kalimatnya kini menyebut lokasi hosting (AWS ap-southeast-1) dan secara eksplisit menyatakan bahwa sertifikasi kepatuhan di lapisan infrastruktur adalah milik penyedia infrastruktur, **bukan sertifikasi atas nama SurePath** — perbedaan yang penting kalau klaim ini dipertanyakan. Istilah pemasaran **"Arsitektur Zero-Trust"** diganti deskripsi mekanisme yang benar-benar ada di kode: tabel sensitif tidak dapat diakses langsung dari browser, setiap permintaan diverifikasi ulang di server per aksi (pola data-gateway + deny-all RLS).
+- `productInfoContent.ts` — produk **Kecelakaan Diri**: janji **"Pendaftaran online selesai hanya dalam 60 detik"** dan chip **"Daftar 60 Detik"** / **"Instant Approval"** diganti "Pendaftaran online singkat" / "Daftar Online" / "Proses Digital". Produk **Proteksi Barang**: **"Garansi perbaikan dengan teknisi tersertifikasi"** → "Perbaikan dikerjakan oleh teknisi rekanan kami" (menghapus klaim garansi sekaligus klaim sertifikasi teknisi).
+
 **Verifikasi:** `tsc --noEmit` bersih · 72/72 unit test pass · `npm run build` sukses · ESLint 2 error, keduanya pre-existing (identik sebelum perubahan) · halaman `/ai`, `/product/climate`, `/products`, `/` di-render dan diperiksa lewat build produksi lokal + Chromium.
 
 **Catatan:** tidak ada edge function yang berubah, jadi tidak ada yang perlu di-deploy ke Supabase.

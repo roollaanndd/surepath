@@ -129,6 +129,18 @@ const PRODUCTS: Record<string, SeoDescriptor> = {
       breadcrumb([{ name: 'Beranda', path: '/' }, { name: 'Produk', path: '/products' }, { name: 'Asuransi Kesehatan', path: '/product/health' }]),
     ],
   },
+  climate: {
+    path: '/product/climate',
+    ogType: 'product',
+    title: 'Asuransi Iklim & Banjir (Climate Shield) — Segera Hadir | SurePath',
+    description:
+      'Climate Shield: proteksi iklim parametrik untuk banjir, angin kencang & cuaca ekstrem — untuk rumah, UMKM, pertanian & bisnis. Dalam pengembangan, daftar minat gratis.',
+    keywords: 'asuransi banjir, asuransi iklim, asuransi cuaca ekstrem, asuransi parametrik, proteksi banjir rumah, asuransi bencana alam',
+    jsonLd: [
+      service('Proteksi Iklim (Climate Shield)', 'Rencana produk proteksi iklim parametrik untuk risiko banjir, angin kencang, dan cuaca ekstrem di Indonesia. Dalam tahap pengembangan bersama mitra asuransi berizin OJK.'),
+      breadcrumb([{ name: 'Beranda', path: '/' }, { name: 'Produk', path: '/products' }, { name: 'Proteksi Iklim', path: '/product/climate' }]),
+    ],
+  },
 };
 
 // Blog posts (/blog/:slug) — mirrors src/pages/BlogPage.tsx post list.
@@ -166,9 +178,17 @@ const PAGES: Record<string, SeoDescriptor> = {
     path: '/products',
     title: 'Produk Asuransi Online — Mobil, Jiwa, Perjalanan, Properti | SurePath',
     description:
-      'Jelajahi produk asuransi SurePath: mobil (All Risk & TLO), kecelakaan diri, perjalanan, properti, dan kesehatan. Premi tarif OJK, beli online, klaim via AI.',
+      'Jelajahi produk asuransi SurePath: mobil (All Risk & TLO), kecelakaan diri, perjalanan, properti, kesehatan, dan proteksi iklim. Premi tarif OJK, beli online.',
     keywords: 'produk asuransi, asuransi online, beli asuransi, jenis asuransi',
     jsonLd: breadcrumb([{ name: 'Beranda', path: '/' }, { name: 'Produk Asuransi', path: '/products' }]),
+  },
+  '/ai': {
+    path: '/ai',
+    title: 'Teknologi AI SurePath — Cara Kami Memakai AI di Asuransi',
+    description:
+      'Bagaimana SurePath memakai AI: baca STNK dari foto, pemeriksaan keaslian foto klaim, estimasi biaya perbaikan, dan survei kendaraan. Keputusan final tetap di tangan manusia.',
+    keywords: 'asuransi AI, teknologi asuransi, insurtech indonesia, klaim asuransi AI, OCR STNK',
+    jsonLd: breadcrumb([{ name: 'Beranda', path: '/' }, { name: 'Teknologi AI', path: '/ai' }]),
   },
   '/how-it-works': {
     path: '/how-it-works',
@@ -274,7 +294,7 @@ const NOINDEX_PREFIXES = [
 export function resolveSeo(pathname: string): SeoDescriptor {
   if (pathname === '/' || pathname === '') return HOME;
 
-  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health)$/);
+  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health|climate)$/);
   if (productMatch) return PRODUCTS[productMatch[1]];
 
   const blogMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);

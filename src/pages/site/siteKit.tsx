@@ -338,12 +338,32 @@ const IconHealth: React.FC<{ color?: string; size?: number; className?: string }
   </svg>
 );
 
-export const PRODUCTS = [
+const IconClimate: React.FC<{ color?: string; size?: number; className?: string }> = ({ color = '#0891b2', size = 28, className }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M11 20 Q6 20 6 15.5 Q6 11 10.5 11 Q11.5 6 16.5 6 Q21.5 6 22.5 10.5 Q27 9.5 29.5 12.5 Q34 13 34 17 Q34 20 30 20 Z" stroke={color} strokeWidth="1.5" fill={`${color}15`} strokeLinejoin="round"/>
+    <path d="M13 24 L11 29 M20 24 L18 29 M27 24 L25 29" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.75"/>
+    <path d="M28.5 37 Q22 33 22 27.5 Q22 24.5 25 22.5 Q28.5 25 28.5 27.5 Q28.5 25 32 22.5 Q35 24.5 35 27.5 Q35 33 28.5 37 Z" stroke={color} strokeWidth="1.4" fill={`${color}22`} strokeLinejoin="round"/>
+  </svg>
+);
+
+export interface SiteProduct {
+  Icon: React.FC<{ color?: string; size?: number; className?: string }>;
+  slug: string;
+  name: string;
+  sub: string;
+  color: string;
+  desc: string;
+  /** Pre-launch products render a "Segera Hadir" badge and route to a waitlist CTA. */
+  comingSoon?: boolean;
+}
+
+export const PRODUCTS: SiteProduct[] = [
   { Icon: IconVehicle,          slug: 'car',      name: 'Asuransi Kendaraan', sub: 'Komprehensif & TLO', color: '#16a34a', desc: 'Perlindungan menyeluruh dari tabrakan hingga pencurian' },
   { Icon: IconTravel,           slug: 'travel',   name: 'Asuransi Perjalanan', sub: 'Dalam & Luar Negeri', color: '#2563eb', desc: 'Terlindungi di setiap perjalanan, ke mana pun tujuanmu' },
   { Icon: IconPersonalAccident, slug: 'pa',       name: 'Kecelakaan Diri',    sub: 'Personal Accident',   color: '#7c3aed', desc: 'Santunan tepat untuk kejadian tak terduga dalam hidup' },
   { Icon: IconProperty,         slug: 'property', name: 'Proteksi Barang',    sub: 'Gadget & Elektronik', color: '#d97706', desc: 'Lindungi perangkat kerasmu dari kerusakan & kehilangan' },
   { Icon: IconHealth,           slug: 'health',   name: 'Kesehatan',          sub: 'Individu & Keluarga', color: '#dc2626', desc: 'Akses layanan kesehatan terbaik tanpa khawatir biaya' },
+  { Icon: IconClimate,          slug: 'climate',  name: 'Proteksi Iklim',     sub: 'Climate Shield',      color: '#0891b2', desc: 'Perlindungan dari banjir dan cuaca ekstrem — segera hadir', comingSoon: true },
 ];
 
 // ─── Promo banners ────────────────────────────────────────────────────────────

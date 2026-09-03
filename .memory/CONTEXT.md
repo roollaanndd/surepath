@@ -1,17 +1,29 @@
 # SurePath Session Context
-**Updated:** 2026-07-17 (sesi QR e-quotation)
+**Updated:** 2026-09-03 (sesi Climate Shield + halaman Teknologi AI)
 
 ## Current State
-- **Branch kerja:** `claude/claude-md-docs-oq5okn` — PR #86 berisi CLAUDE.md + perf v1.50.0 + QR e-quotation fix v1.51.0 (user minta merge ke main + deploy)
+- **Branch kerja:** `claude/surepath-climate-ai-content-cerwtk` — v1.55.0: produk Climate Shield (pre-launch) + halaman `/ai` + perbaikan klaim berlebihan
+- **main:** v1.54.0 (SEO audit). `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya
 
-## v1.51.0 — QR E-Quotation Fix (2026-07-17)
-- **Akar masalah "QR ke apps":** redirect pasca-login di App.tsx (`handleAuthSuccess` → `navigate(rolePath)`) membajak `/q/{code}`; kini di-guard via `isPublicStandalonePath` (`/q/`, `/review/`, `/payment/`)
-- **14 hari:** `sp_quotations.link_expires_at` default `now()+14d` — migrasi `20260717_quotation_link_expiry.sql` SUDAH diapply production, row lama di-backfill
-- **`quotations-gateway` = runtime kanonik** (v2 deployed, verify_jwt=false) — client memanggil bridge DULU; data-gateway hanya fallback. PENTING: bundle data-gateway production (v3, minified single-file) BELUM di-redeploy — modul quotations di dalamnya stale tapi tidak dipakai client; kalau nanti redeploy data-gateway, bundle dgn `npx esbuild supabase/functions/data-gateway/index.ts --bundle --format=esm --platform=neutral --external:npm:* --minify` lalu deploy single file
-- PDF QR fallback diperkuat: pakai `eQuoteCode` sebelum jatuh ke homepage
-- **main:** v1.49.0 (APP_VERSION di `src/version.ts`; package.json 1.40.0 — lagging, jangan dipercaya)
-- **Build:** passing ✅ — tsc clean, 72/72 unit test pass
-- **Catatan sandbox:** egress policy memblokir `myinsurepath.com:443` — speed test/QA live harus lewat build lokal (`vite build` + `vite preview` + Lighthouse dgn chromium `/opt/pw-browsers`); `.env.development` TIDAK terbaca `vite build` (production mode) — export env dulu
+## v1.55.0 — Climate Shield + Teknologi AI (2026-09-03)
+- **Produk `climate` pre-launch** — masuk `PRODUCTS` (siteKit), `productInfoContent.ts`, route `App.tsx`, SEO, sitemap, llms.txt, footer. CTA "Daftar Minat", BUKAN beli — belum ada rating engine/wizard/insurer untuk produk ini. Copy sengaja tidak mengikat ("rencana santunan", "ambang yang disepakati"), ada blok disclaimer wajib.
+- **Halaman `/ai` baru** (`src/pages/AITechPage.tsx`) + navbar (kini 6 item) + section AI di homepage. Isinya HANYA kemampuan yang live & wired.
+- **PENTING — dua regex slug produk:** `App.tsx` (routing) DAN `src/seo/seo.ts` `resolveSeo()` (metadata). Menambah produk baru tanpa memperbarui keduanya = halaman render tapi title-nya fallback homepage.
+- **`PRODUCTS` kini bertipe `SiteProduct[]`** — tanpa anotasi eksplisit, TS menyimpulkan union tanpa `comingSoon` dan akses properti itu gagal.
+
+### Audit AI (dipakai sebagai sumber copy — jangan diulang dari nol)
+Jalur AI produksi = edge function **`ai-proxy`** (whitelist 3 model, kunci di Vault). `supabase/functions/ai-gateway` (Gemini) **TIDAK punya pemanggil** — dead code. `services/geminiService.ts` namanya menyesatkan: **tidak ada panggilan Gemini di jalur mana pun yang live**. Gateway AI lokal di `server.ts` (cache, redaksi PII, penahan halusinasi) hanya jalan di dev/self-hosted — di Vercel jatuh ke ai-proxy.
+- **Live & wired:** STNK OCR (+validasi silang plat/merek/model/VIN), forensik foto klaim (EXIF + perceptual hash anti foto daur-ulang + vision), ClaimSense, survei kendaraan 6 dimensi, validator foto, KTP OCR, kuitansi medis, Pathy, Health Chat, AI Policy Review, AI Finance Review, InsurerAI.
+- **JANGAN dipasarkan:** `extractSTNKAndRecommend` (agent quote builder) — hanya mengirim 100 karakter pertama data-URL, gambar tidak pernah sampai ke model vision; `ocr-scan` (tanpa pemanggil, mengembalikan data palsu bila key kosong); `analyzeClaimPhoto` & `summarizeClaimDocument` (tanpa pemanggil); `aiAdminEngine` = rule engine, bukan LLM, dan tidak jalan di topologi Vercel.
+
+### Klaim berlebihan yang DIPERBAIKI di rilis ini
+- `explainProductAI` — prompt lama menyuruh model mengarang "Enkripsi Kuantum"/"Zero-Trust"/"klaim 60 detik" (kode sendiri bilang 3-10 hari kerja). Prompt ditulis ulang, `impactScore` dihapus.
+- `services/NeuralGuardService.ts` **dihapus** — angka keamanan 100% acak. StatCard "Uptime Server" → `N/A`.
+- `AboutPage` tidak lagi menjanjikan "instant approval".
+
+### Masih perlu ditinjau (BELUM diubah — butuh keputusan user)
+- `staticPagesContent.ts:269,276` — halaman `/security` mengklaim **"Arsitektur Zero-Trust"**, **"99.9% uptime SLA"**, dan **"SOC 2 Type II certified infrastructure"**. Klaim sertifikasi/SLA tidak dapat diverifikasi dari kode dan berisiko kalau ditanyakan.
+- `productInfoContent.ts:97` — highlight produk PA: **"Instant Approval"** + "Daftar 60 Detik"; `:111` "Garansi perbaikan".
 
 ## What Was Done (recent sessions)
 

@@ -44,6 +44,7 @@ const usePwa = () => {
 const NAV_LINKS = [
   { path: '/',             id: 'home',         label: ['Home', 'Home'] as const },
   { path: '/products',     id: 'products',     label: ['Produk', 'Products'] as const },
+  { path: '/ai',           id: 'ai',           label: ['Teknologi AI', 'AI Technology'] as const },
   { path: '/how-it-works', id: 'how-it-works', label: ['Cara Kerja', 'How It Works'] as const },
   { path: '/about',        id: 'about',        label: ['Tentang', 'About'] as const },
   { path: '/blog',         id: 'blog',         label: ['Blog', 'Blog'] as const },
@@ -165,10 +166,12 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Kecelakaan Diri', 'Personal Accident'),    path: '/product/pa' },
       { label: t('Proteksi Barang', 'Property Protection'),  path: '/product/property' },
       { label: t('Kesehatan', 'Health'),                     path: '/product/health' },
+      { label: t('Proteksi Iklim', 'Climate Shield'),        path: '/product/climate' },
     ]},
     { title: t('Perusahaan', 'Company'), links: [
       { label: t('Tentang Kami', 'About Us'),      path: '/about' },
       { label: t('Cara Kerja', 'How It Works'),    path: '/how-it-works' },
+      { label: t('Teknologi AI', 'AI Technology'), path: '/ai' },
       { label: t('Hubungi Kami', 'Contact Us'),    path: '/contact' },
       { label: t('Karir', 'Careers'),              path: '/careers' },
       { label: t('Blog', 'Blog'),                  path: '/blog' },

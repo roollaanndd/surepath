@@ -12,6 +12,13 @@ export interface ProductContent {
   coverageItems: { title: Loc; desc: Loc }[];
   startingPrice: Loc;
   highlights: Loc[];
+  /** Pre-launch product: renders a "Segera Hadir" badge and a waitlist CTA
+   *  instead of a purchase CTA, plus a mandatory disclaimer block. */
+  comingSoon?: boolean;
+  /** Target segments, rendered as an extra section above Coverage. */
+  segments?: { title: Loc; desc: Loc }[];
+  /** Shown verbatim under the CTA when comingSoon is set. */
+  disclaimer?: Loc;
 }
 
 export const PRODUCT_CONTENT: Record<string, ProductContent> = {
@@ -138,5 +145,42 @@ export const PRODUCT_CONTENT: Record<string, ProductContent> = {
     ],
     startingPrice: ['Rp 200.000/bulan', 'Rp 200,000/month'],
     highlights: [['AI Health Bot', 'AI Health Bot'], ['3000+ RS', '3000+ Hospitals'], ['Cashless', 'Cashless']],
+  },
+
+  climate: {
+    name: ['Proteksi Iklim', 'Climate Shield'],
+    tagline: ['Climate Shield — Segera Hadir', 'Climate Shield — Coming Soon'],
+    color: '#0891b2',
+    comingSoon: true,
+    description: [
+      'Banjir, angin kencang, dan cuaca ekstrem makin sering terjadi di Indonesia — dan proses klaim konvensional sering kali paling lambat justru saat Anda paling butuh. Climate Shield adalah produk proteksi iklim yang sedang kami siapkan bersama mitra asuransi berizin OJK, dengan pendekatan parametrik: santunan dihitung dari data cuaca terukur, bukan dari penilaian kerugian di lokasi.',
+      'Floods, high winds, and extreme weather are increasingly frequent in Indonesia — and conventional claims tend to be slowest exactly when you need them most. Climate Shield is a climate protection product we are preparing together with OJK-licensed insurance partners, using a parametric approach: benefits are calculated from measured weather data rather than an on-site loss assessment.',
+    ],
+    features: [
+      ['Pendekatan parametrik — santunan dihitung dari data indeks cuaca, bukan survei lokasi', 'Parametric approach — benefits calculated from weather index data, not a site survey'],
+      ['Ambang pemicu tertulis jelas di polis, sehingga Anda tahu persis kapan santunan berlaku', 'Trigger thresholds stated plainly in the policy, so you know exactly when a benefit applies'],
+      ['Dirancang untuk premi terjangkau dan periode perlindungan yang fleksibel', 'Designed for affordable premiums and flexible protection periods'],
+      ['Rencana notifikasi peringatan dini cuaca ekstrem untuk pemegang polis', 'Planned early-warning notifications for extreme weather to policyholders'],
+      ['Terintegrasi dengan dompet dan riwayat polis SurePath yang sudah Anda pakai', 'Integrated with the SurePath wallet and policy history you already use'],
+      ['Untuk kendaraan, perluasan risiko banjir dan angin topan sudah tersedia hari ini', 'For vehicles, flood and windstorm extensions are already available today'],
+    ],
+    segments: [
+      { title: ['Rumah & UMKM', 'Home & Small Business'], desc: ['Untuk rumah tinggal, warung, toko, dan gudang kecil di wilayah rawan genangan', 'For homes, kiosks, shops, and small warehouses in flood-prone areas'] },
+      { title: ['Pertanian & Perikanan', 'Agriculture & Fisheries'], desc: ['Untuk petani, pekebun, dan pembudidaya tambak yang terdampak kekeringan atau hujan ekstrem', 'For farmers, growers, and aquaculture operators affected by drought or extreme rainfall'] },
+      { title: ['Bisnis & Korporat', 'Business & Corporate'], desc: ['Untuk usaha yang operasionalnya terganggu cuaca ekstrem — logistik, acara, dan ritel', 'For businesses whose operations are disrupted by extreme weather — logistics, events, and retail'] },
+      { title: ['Kendaraan', 'Vehicles'], desc: ['Perluasan banjir dan angin topan pada polis kendaraan — sudah bisa dibeli sekarang', 'Flood and windstorm extensions on vehicle policies — available to buy today'] },
+    ],
+    coverageItems: [
+      { title: ['Banjir & Genangan', 'Flood & Inundation'], desc: ['Rencana santunan saat curah hujan atau ketinggian genangan di wilayah tertanggung melewati ambang yang disepakati', 'Planned benefit when rainfall or inundation depth in the insured area passes an agreed threshold'] },
+      { title: ['Angin Kencang & Badai', 'High Winds & Storms'], desc: ['Rencana santunan saat kecepatan angin di wilayah tertanggung melewati ambang yang disepakati', 'Planned benefit when wind speed in the insured area passes an agreed threshold'] },
+      { title: ['Curah Hujan Ekstrem & Kekeringan', 'Extreme Rainfall & Drought'], desc: ['Indeks curah hujan musiman untuk segmen pertanian dan perikanan', 'Seasonal rainfall index for the agriculture and fisheries segment'] },
+      { title: ['Gangguan Operasional', 'Business Interruption'], desc: ['Opsi tambahan untuk pelaku usaha yang terhenti operasionalnya akibat kejadian cuaca ekstrem', 'Optional add-on for businesses whose operations halt due to an extreme weather event'] },
+    ],
+    startingPrice: ['Belum tersedia', 'Not yet available'],
+    highlights: [['Segera Hadir', 'Coming Soon'], ['Parametrik', 'Parametric'], ['Mitra Berizin OJK', 'OJK-Licensed Partners']],
+    disclaimer: [
+      'Climate Shield masih dalam tahap pengembangan dan belum dapat dibeli. Cakupan, ambang pemicu, besaran santunan, dan premi di halaman ini bersifat rencana dan dapat berubah, serta belum mengikat. Produk baru akan dipasarkan setelah bekerja sama dengan perusahaan asuransi berizin OJK dan memenuhi ketentuan yang berlaku. Dengan mendaftar minat, Anda hanya akan kami hubungi saat produk tersedia — tanpa biaya dan tanpa kewajiban apa pun.',
+      'Climate Shield is still in development and cannot be purchased yet. The coverage, trigger thresholds, benefit amounts, and premiums on this page are indicative plans, subject to change, and not binding. The product will only be marketed after we partner with an OJK-licensed insurance company and meet the applicable requirements. By joining the waitlist you will only be contacted once the product is available — at no cost and with no obligation.',
+    ],
   },
 };

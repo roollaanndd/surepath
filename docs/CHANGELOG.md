@@ -2,6 +2,40 @@
 
 ---
 
+## v1.55.0 — 2026-09-03
+
+### Produk baru: Climate Shield (pre-launch) + halaman Teknologi AI
+
+**1. Produk `climate` — "Proteksi Iklim / Climate Shield" (`/product/climate`)**
+Produk keenam di grid, berstatus **pre-launch**: tidak ada alur beli, CTA-nya "Daftar Minat".
+- `siteKit.tsx` — ikon SVG `IconClimate`, entri `PRODUCTS` baru, dan `PRODUCTS` kini diberi tipe eksplisit `SiteProduct[]` dengan flag opsional `comingSoon` (tanpa ini, akses `p.comingSoon` gagal karena TS menyimpulkan union tanpa properti tersebut).
+- `productInfoContent.ts` — konten bilingual: 6 fitur, 4 segmen (Rumah & UMKM, Pertanian & Perikanan, Bisnis & Korporat, Kendaraan), 4 item cakupan, dan `disclaimer` wajib. Interface `ProductContent` diperluas: `comingSoon`, `segments`, `disclaimer`.
+- `ProductInfoPage.tsx` — badge "Dalam pengembangan — belum dapat dibeli", section "Untuk Siapa", label "Rencana cakupan" di atas Jaminan Perlindungan, CTA "Daftar Minat" (navbar + hero + footer CTA), dan blok disclaimer di bawah CTA.
+- Grid produk (`ProductsPage`, `HomePage`) menampilkan badge "Segera Hadir" dan CTA "Pelajari & Daftar Minat". Grid homepage diubah dari `xl:grid-cols-5` → `lg:grid-cols-3` karena produk kini 6.
+- **Bahasa dijaga agar tidak mengikat**: "rencana santunan", "ambang yang disepakati", "belum dapat dibeli". Tidak ada premi, angka santunan, atau nama insurer yang disebut.
+
+**2. Halaman baru `/ai` — "Teknologi AI SurePath"** (`src/pages/AITechPage.tsx`)
+Sebelumnya website publik praktis tidak menceritakan AI sama sekali (hanya ~6 frasa lepas di file konten). Halaman ini memuat 8 kemampuan yang **sudah live dan wired** di kode, section "Bedanya di Mana" (dulu vs kini), 6 pengaman, dan catatan jujur + tautan ke T&C/Privasi.
+- Masuk **navbar utama** (`SiteLayout` → 6 item) + kolom footer Perusahaan.
+- Section AI baru di homepage (antara grid produk & kalkulator) dengan 4 kartu ringkas → link ke `/ai`.
+- **Aturan penulisan halaman ini** (didokumentasikan sebagai komentar di file): tidak menyebut vendor model mana pun — AI diposisikan sebagai teknologi SurePath; tidak ada angka karangan; tidak ada janji durasi penyelesaian klaim; tidak memuat kemampuan yang kodenya ada tapi tak punya pemanggil.
+
+**3. Perbaikan klaim berlebihan yang sudah tayang (temuan audit)**
+- **`explainProductAI` (`services/geminiService.ts`)** — prompt lama menyuruh model memakai kosakata *"Enkripsi Kuantum"*, *"Zero-Trust"*, *"Matriks"*, *"Heuristik"* dan menjelaskan *"instant 60-second claim settlement"*, padahal `aiKnowledge.ts` sendiri menyebut klaim `3-10 hari kerja`. Prompt ditulis ulang: bahasa biasa, **dilarang** menyebut angka/premi/durasi/limit, dilarang menjanjikan hasil, dilarang mengarang fitur atau sertifikasi, dan wajib menyatakan ketentuan mengikuti polis. Interface `ProductExplanation` diganti dari `technicalSummary/neuralBenefits/securityProtocol/impactScore/payoutLogic` → `summary/benefits/dataProtection/claimProcess`; **`impactScore` dihapus** karena skor 0-100 karangan model ditampilkan ke publik.
+- **`ProductAIExplainer.tsx`** — ditulis ulang: label palsu (`SECURE_SESSION_ACTIVE`, "Security Grade", progress bar diagnostik simulasi) dihapus, ditambah disclaimer wajib bahwa ringkasan dibuat otomatis, bukan penawaran harga dan bukan jaminan pertanggungan.
+- **`services/NeuralGuardService.ts` DIHAPUS** — seluruh isinya data fiktif: `threatsBlocked24h: 12401 + Math.random()*50`, "Neural WAF v4", "Quantum-Resistant Layer", uptime "99.999%", dan 3 baris ancaman hardcoded. Satu-satunya pemakainya (`AdminViews.tsx` → StatCard "Uptime Server") kini menampilkan `N/A`, konsisten dengan StatCard "Latensi Server" di sebelahnya. `generateLiveThreat`/`getRecentThreats` memang sudah tidak punya pemanggil.
+- **`AboutPage.tsx`** — nilai "Inovatif" tidak lagi menjanjikan *"instant approval"*.
+
+**4. SEO**
+- `seo.ts` — descriptor `/product/climate` (+ `Service` & `BreadcrumbList` JSON-LD) dan `/ai`. **Dua** regex slug produk harus diperbarui: di `App.tsx` (routing) dan di `seo.ts` `resolveSeo()` (metadata) — kalau hanya satu, halaman render tapi memakai title fallback.
+- `sitemap.xml` +2 URL (24 → 26), `llms.txt` menambah bagian "Penggunaan AI" beserta batasannya dan produk climate dengan status "belum dapat dibeli".
+
+**Verifikasi:** `tsc --noEmit` bersih · 72/72 unit test pass · `npm run build` sukses · ESLint 2 error, keduanya pre-existing (identik sebelum perubahan) · halaman `/ai`, `/product/climate`, `/products`, `/` di-render dan diperiksa lewat build produksi lokal + Chromium.
+
+**Catatan:** tidak ada edge function yang berubah, jadi tidak ada yang perlu di-deploy ke Supabase.
+
+---
+
 ## v1.54.0 — 2026-08-09
 
 ### SEO Audit + Fix (score ~6.5 → ~9.5/10)

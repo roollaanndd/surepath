@@ -22,7 +22,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
   const VALUES = [
     { title: t('Transparansi', 'Transparency'), desc: t('Tidak ada biaya tersembunyi, tidak ada klausul yang membingungkan.', 'No hidden fees, no confusing clauses.') },
     { title: t('Humanis', 'Human-Centered'),    desc: t('Di balik teknologi canggih, ada agen nyata yang siap mendampingi.', 'Behind advanced technology, real agents ready to support you.') },
-    { title: t('Inovatif', 'Innovative'),        desc: t('AI-powered claims, instant approval, pengalaman digital-first.', 'AI-powered claims, instant approval, digital-first experience.') },
+    { title: t('Inovatif', 'Innovative'),        desc: t('Klaim dibantu AI, proses digital dari awal sampai akhir.', 'AI-assisted claims, digital from start to finish.') },
     { title: t('Terpercaya', 'Trusted'),         desc: t('Bekerja sama dengan perusahaan asuransi berijin OJK.', 'Partnered with insurers fully registered and supervised by OJK.') },
   ];
 

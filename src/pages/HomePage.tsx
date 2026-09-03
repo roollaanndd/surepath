@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ArrowRight, ChevronRight, ChevronDown,
   Zap, Users, Search, BarChart2,
+  ScanLine, ImageOff, Calculator, UserCheck,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
 import PremiumCalcWidget from './site/PremiumCalcWidget';
@@ -153,7 +154,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               </button>
             </div>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
                 <button className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left flex flex-col h-full"
@@ -167,7 +168,15 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                   <div style={{ height: 2, background: p.color, flexShrink: 0 }} />
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-bold text-sm mb-1 leading-tight" style={{ color: textMain }}>{p.name}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-bold text-sm leading-tight" style={{ color: textMain }}>{p.name}</h3>
+                      {p.comingSoon && (
+                        <span className="shrink-0 text-[0.5rem] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full"
+                          style={{ background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}35` }}>
+                          {t('Segera Hadir', 'Coming Soon')}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[0.65rem] font-semibold mb-2" style={{ color: p.color }}>{p.sub}</p>
                     <p className="text-xs leading-relaxed mb-4 flex-1" style={{ color: textMuted }}>{p.desc}</p>
                     <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: p.color }}>
@@ -175,6 +184,52 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                     </div>
                   </div>
                 </button>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ AI TECHNOLOGY ═══════════════ */}
+      <section className="py-24 px-6" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
+        <div className="max-w-6xl mx-auto">
+          <Reveal>
+            <div className="flex items-end justify-between mb-10 flex-wrap gap-6">
+              <div className="max-w-2xl">
+                <SectionLabel darkMode={props.darkMode}>{t('Teknologi AI', 'AI Technology')}</SectionLabel>
+                <h2 className="font-bold leading-tight tracking-tight mb-4" style={{ fontSize: 'clamp(1.75rem,4vw,2.75rem)', color: textMain }}>
+                  {t('AI yang bekerja di ', 'AI that works in the ')}
+                  <span style={{ color: accent }}>{t('balik layar', 'background')}</span>
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+                  {t(
+                    'Kami memakai AI untuk menghapus pekerjaan yang membosankan dan mudah salah — mengetik ulang dokumen, menunggu survei, menebak biaya perbaikan. Keputusan atas polis dan klaim tetap di tangan manusia.',
+                    'We use AI to remove tedious, error-prone work — retyping documents, waiting for surveys, guessing at repair costs. Decisions on policies and claims stay with people.',
+                  )}
+                </p>
+              </div>
+              <button onClick={() => navigate('/ai')} className="flex items-center gap-2 text-sm font-semibold transition-colors" style={{ color: accent }}>
+                {t('Pelajari Teknologinya', 'Explore the Technology')} <ChevronRight size={16} />
+              </button>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { Icon: ScanLine, title: t('Isi data dari satu foto', 'Data from one photo'), desc: t('Foto STNK dibaca jadi data kendaraan, lalu dicocokkan ke daftar wilayah dan kendaraan kami. Semua kolom tetap bisa Anda koreksi.', 'A registration photo becomes vehicle data, cross-checked against our region and vehicle lists. Every field stays editable.') },
+              { Icon: ImageOff, title: t('Foto klaim diperiksa', 'Claim photos verified'), desc: t('Metadata foto, sidik gambar, dan tanda manipulasi diperiksa — foto yang pernah dipakai di klaim lain akan tertandai.', 'Photo metadata, image fingerprints, and manipulation signs are checked — photos reused from other claims get flagged.') },
+              { Icon: Calculator, title: t('Estimasi biaya lebih awal', 'Cost estimates earlier'), desc: t('Perkiraan biaya perbaikan disusun dari tabel harga suku cadang yang kami kelola. Sifatnya indikatif untuk membantu Anda bersiap.', 'Repair estimates are built from parts price tables we maintain. Indicative, to help you prepare.') },
+              { Icon: UserCheck, title: t('Manusia yang memutuskan', 'Humans decide'), desc: t('AI tidak pernah membuat keputusan finansial final. Penerbitan polis dan persetujuan klaim selalu melewati manusia.', 'AI never makes a final financial decision. Policy issuance and claim approval always pass through a person.') },
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={i * 60}>
+                <div className="rounded-2xl p-6 h-full" style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: `${accent}14`, border: `1px solid ${accent}28` }}>
+                    <item.Icon size={18} style={{ color: accent }} />
+                  </div>
+                  <h3 className="font-bold text-sm mb-2 leading-tight" style={{ color: textMain }}>{item.title}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{item.desc}</p>
+                </div>
               </Reveal>
             ))}
           </div>

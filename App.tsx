@@ -55,6 +55,7 @@ const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
 const HomePage          = lazy(() => import('./src/pages/HomePage'));
 const ProductsPage      = lazy(() => import('./src/pages/ProductsPage'));
+const AITechPage        = lazy(() => import('./src/pages/AITechPage'));
 const HowItWorksPage    = lazy(() => import('./src/pages/HowItWorksPage'));
 const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
 const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
@@ -472,7 +473,7 @@ const App = () => {
     return <Suspense fallback={<PortalLoader />}><EQuotationPage code={eQuoteMatch[1]} /></Suspense>;
   }
 
-  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health)$/);
+  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health|climate)$/);
   if (productMatch) {
     return <Suspense fallback={<PortalLoader />}><ProductInfoPage productId={productMatch[1]} lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
   }
@@ -483,6 +484,7 @@ const App = () => {
 
   const MARKETING_PAGES: Record<string, React.FC<any>> = {
     '/products': ProductsPage,
+    '/ai': AITechPage,
     '/how-it-works': HowItWorksPage,
     '/about': AboutPage,
     '/contact': ContactPage,

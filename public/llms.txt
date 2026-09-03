@@ -22,7 +22,7 @@ SurePath (PT Ruang Proteksi Indonesia) adalah platform asuransi digital pertama 
 ## Products
 1. **Asuransi Mobil** — Comprehensive & TLO dengan tarif OJK, survey foto AI, claim cepat
 2. **Asuransi Perjalanan** — Proteksi medis & keterlambatan pesawat domestik/internasional
-3. **Asuransi Kecelakaan Diri** — Santunan cepat, pendaftaran 60 detik
+3. **Asuransi Kecelakaan Diri** — Santunan kecelakaan diri, pendaftaran online singkat
 4. **Proteksi Barang (MPAR)** — Gadget, elektronik, furnitur
 5. **Konsultasi Kesehatan** — Chat AI medis gratis
 6. **Proteksi Iklim (Climate Shield)** — Proteksi parametrik banjir & cuaca ekstrem untuk rumah, UMKM, pertanian, dan bisnis. **Status: dalam pengembangan, belum dapat dibeli** — tersedia pendaftaran minat.

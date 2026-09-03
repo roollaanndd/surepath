@@ -47,11 +47,20 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                   <div style={{ height: 2, background: p.color, flexShrink: 0 }} />
                   {/* Card body */}
                   <div className="p-6 flex flex-col flex-1">
-                    <h3 className="font-bold text-base mb-1 leading-tight" style={{ color: textMain }}>{p.name}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-bold text-base leading-tight" style={{ color: textMain }}>{p.name}</h3>
+                      {p.comingSoon && (
+                        <span className="shrink-0 text-[0.55rem] font-bold uppercase tracking-[0.15em] px-2 py-1 rounded-full"
+                          style={{ background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}35` }}>
+                          {t('Segera Hadir', 'Coming Soon')}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs font-semibold mb-3" style={{ color: p.color }}>{p.sub}</p>
                     <p className="text-sm leading-relaxed mb-5 flex-1" style={{ color: textMuted }}>{p.desc}</p>
                     <div className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: p.color }}>
-                      {t('Pelajari & Beli', 'Learn & Buy')} <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                      {p.comingSoon ? t('Pelajari & Daftar Minat', 'Learn & Join Waitlist') : t('Pelajari & Beli', 'Learn & Buy')}
+                      <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </button>

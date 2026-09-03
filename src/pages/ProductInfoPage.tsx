@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Car, Plane, Shield, Smartphone, Heart, CheckCircle, ArrowRight, ShieldCheck, Star } from 'lucide-react';
+import { ArrowLeft, Car, Plane, Shield, Smartphone, Heart, CloudRain, CheckCircle, ArrowRight, ShieldCheck, Star, Info } from 'lucide-react';
 import { SurePathLogo } from '../../components/Navbar';
 import { Language } from '../../types';
 import { PRODUCT_CONTENT, Loc } from './productInfoContent';
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const ICONS: Record<string, React.FC<{ size?: number; style?: React.CSSProperties }>> = {
-  car: Car, travel: Plane, pa: Shield, property: Smartphone, health: Heart,
+  car: Car, travel: Plane, pa: Shield, property: Smartphone, health: Heart, climate: CloudRain,
 };
 
 // Page-scoped animation CSS — respects prefers-reduced-motion.
@@ -51,7 +51,10 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
     );
   }
 
-  const { name, tagline, color, description, features, coverageItems, startingPrice, highlights } = product;
+  const { name, tagline, color, description, features, coverageItems, startingPrice, highlights, comingSoon, segments, disclaimer } = product;
+  const ctaLabel = comingSoon
+    ? (isEN ? 'Join the Waitlist' : 'Daftar Minat')
+    : (isEN ? 'Buy Now' : 'Beli Sekarang');
 
   return (
     <div className="min-h-screen font-sora text-white" style={{ background: 'hsl(0 0% 8%)' }}>
@@ -76,7 +79,7 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
         <button onClick={onSignIn}
           className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all hover:opacity-80 active:scale-95"
           style={{ background: color }}>
-          {isEN ? 'Buy Now' : 'Beli Sekarang'}
+          {ctaLabel}
         </button>
       </nav>
 
@@ -90,6 +93,14 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
               style={{ background: `${color}14`, border: `1px solid ${color}30`, boxShadow: `0 16px 44px -18px ${color}90` }}>
               <Icon size={36} style={{ color }} />
             </div>
+            {comingSoon && (
+              <div className="mb-4">
+                <span className="inline-block px-4 py-1.5 rounded-full text-[0.6rem] font-black uppercase tracking-[0.25em]"
+                  style={{ background: `${color}18`, border: `1px solid ${color}45`, color }}>
+                  {isEN ? 'In development — not yet available for purchase' : 'Dalam pengembangan — belum dapat dibeli'}
+                </span>
+              </div>
+            )}
             <span className="block text-[0.6rem] font-black uppercase tracking-[0.35em] mb-3" style={{ color }}>
               {L(tagline)}
             </span>
@@ -112,10 +123,12 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
               <button onClick={onSignIn}
                 className="flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-black text-white transition-all hover:scale-[1.03] active:scale-95"
                 style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 8px 30px ${color}40` }}>
-                {isEN ? 'Buy Now' : 'Beli Sekarang'} <ArrowRight size={16} />
+                {ctaLabel} <ArrowRight size={16} />
               </button>
               <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {isEN ? 'Starting from' : 'Mulai dari'} {L(startingPrice)}
+                {comingSoon
+                  ? (isEN ? 'Premium to be announced' : 'Premi diumumkan menyusul')
+                  : `${isEN ? 'Starting from' : 'Mulai dari'} ${L(startingPrice)}`}
               </span>
             </div>
           </div>
@@ -135,9 +148,33 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
           </div>
         </div>
 
+        {/* Segments — only for products that declare them */}
+        {segments && segments.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-xl font-black mb-2 text-center tracking-tight">{isEN ? 'Who It Is For' : 'Untuk Siapa'}</h2>
+            <p className="text-xs text-center mb-8" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {isEN ? 'Segments we are designing this protection for' : 'Segmen yang sedang kami rancang untuk perlindungan ini'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {segments.map((sg, i) => (
+                <div key={i} className="p-5 rounded-2xl pip-card pip-rise"
+                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', animationDelay: `${60 + i * 60}ms` }}>
+                  <h3 className="text-sm font-black mb-2" style={{ color }}>{L(sg.title)}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{L(sg.desc)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Coverage */}
         <div className="mb-16">
-          <h2 className="text-xl font-black mb-8 text-center tracking-tight">{isEN ? 'Coverage' : 'Jaminan Perlindungan'}</h2>
+          <h2 className={`text-xl font-black text-center tracking-tight ${comingSoon ? 'mb-2' : 'mb-8'}`}>{isEN ? 'Coverage' : 'Jaminan Perlindungan'}</h2>
+          {comingSoon && (
+            <p className="text-xs text-center mb-8" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {isEN ? 'Planned coverage — final terms follow the issued policy' : 'Rencana cakupan — ketentuan final mengikuti polis yang diterbitkan'}
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {coverageItems.map((c, i) => (
               <div key={i} className="p-5 rounded-2xl pip-card pip-rise"
@@ -153,18 +190,37 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
         <div className="text-center py-14 px-8 rounded-3xl pip-rise"
           style={{ background: `${color}08`, border: `1px solid ${color}18` }}>
           <ShieldCheck size={40} className="mx-auto mb-5" style={{ color }} />
-          <h2 className="text-2xl font-black mb-3 tracking-tight">{isEN ? 'Ready to Get Protected?' : 'Siap Terlindungi?'}</h2>
+          <h2 className="text-2xl font-black mb-3 tracking-tight">
+            {comingSoon
+              ? (isEN ? 'Want to Know When It Launches?' : 'Ingin Tahu Saat Produk Ini Rilis?')
+              : (isEN ? 'Ready to Get Protected?' : 'Siap Terlindungi?')}
+          </h2>
           <p className="text-sm mb-8 max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {isEN
-              ? 'Register now and get active protection in minutes. No survey, no hassle.'
-              : 'Daftar sekarang dan dapatkan perlindungan aktif dalam hitungan menit. Tanpa survei, tanpa kerumitan.'}
+            {comingSoon
+              ? (isEN
+                  ? 'Leave your details and our team will reach out once the product is available. Free, and with no obligation to buy.'
+                  : 'Tinggalkan data Anda dan tim kami akan menghubungi begitu produk tersedia. Gratis, tanpa kewajiban membeli.')
+              : (isEN
+                  ? 'Register now and get active protection in minutes. No survey, no hassle.'
+                  : 'Daftar sekarang dan dapatkan perlindungan aktif dalam hitungan menit. Tanpa survei, tanpa kerumitan.')}
           </p>
           <button onClick={onSignIn}
             className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl text-sm font-black text-white transition-all hover:scale-[1.03] active:scale-95"
             style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 8px 30px ${color}40` }}>
-            {isEN ? 'Get Started' : 'Mulai Sekarang'} <ArrowRight size={16} />
+            {comingSoon ? ctaLabel : (isEN ? 'Get Started' : 'Mulai Sekarang')} <ArrowRight size={16} />
           </button>
         </div>
+
+        {/* Mandatory disclaimer for pre-launch products */}
+        {disclaimer && (
+          <div className="mt-8 flex items-start gap-3 p-5 rounded-2xl"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <Info size={16} className="flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }} />
+            <p className="text-[0.7rem] leading-relaxed" style={{ color: 'rgba(255,255,255,0.42)' }}>
+              {L(disclaimer)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

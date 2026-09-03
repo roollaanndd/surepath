@@ -65,11 +65,10 @@ export interface HealthClaimData {
 }
 
 export interface ProductExplanation {
-  technicalSummary: string;
-  neuralBenefits: { title: string; desc: string }[];
-  securityProtocol: string;
-  impactScore: number;
-  payoutLogic: string;
+  summary: string;
+  benefits: { title: string; desc: string }[];
+  dataProtection: string;
+  claimProcess: string;
 }
 
 export interface DocumentSummary {
@@ -168,26 +167,41 @@ Gunakan Bahasa Indonesia. Jika data tidak ada, gunakan null. Kembalikan JSON saj
   }
 };
 
+// Generates a plain-language product overview for the landing page explainer.
+//
+// This output is shown to the public, so the prompt is deliberately constrained:
+// no invented numbers, prices, settlement times, coverage limits or security
+// claims. Anything a customer could act on financially must come from the
+// policy, not from a generated paragraph — the UI labels the result as an
+// automatically generated summary and points to the product page for terms.
 export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): Promise<{ success: boolean; data?: ProductExplanation; error?: string }> => {
   try {
     const res = await getClient().chat.completions.create({
       model: TEXT_MODEL,
       messages: [{
         role: 'user',
-        content: `You are the SurePath Lead Neural Architect. Explain the following product to a high-end customer:
+        content: `You write plain, honest product summaries for SurePath, an Indonesian insurance platform that distributes policies from OJK-licensed insurers. Summarise this product for a prospective customer:
 ${wrapUserContent(productName)}
-Use compelling, futuristic, and technical language. Focus on Neural Underwriting, Computer Vision, and Zero-Trust data protocols.
+
+Write in clear, everyday language. No marketing hype, no futuristic or technical jargon.
+
+HARD RULES — a violation makes the output unusable:
+- Do NOT state any number: no prices, premiums, percentages, coverage limits, processing times, or settlement durations.
+- Do NOT promise or guarantee an outcome, an approval, or a payout.
+- Do NOT invent product features, partners, certifications, or security technologies.
+- Do NOT claim SurePath is an insurer. SurePath distributes policies issued by OJK-licensed insurance companies.
+- Describe only what is generally true of this type of insurance product. If you are unsure about a detail, leave it out.
+- State that the actual terms, benefits and exclusions follow the issued policy.
 
 Return JSON only:
 {
-  "technicalSummary": "high-fidelity product overview",
-  "neuralBenefits": [{ "title": "benefit name", "desc": "technical explanation" }],
-  "securityProtocol": "encryption and data privacy description",
-  "impactScore": number (0-100),
-  "payoutLogic": "instant 60-second claim settlement explanation"
+  "summary": "2-3 sentences on what this product protects and who it suits",
+  "benefits": [{ "title": "short benefit name", "desc": "one plain sentence, no numbers" }],
+  "dataProtection": "one sentence: data is sent over an encrypted connection, access is restricted, and it is used only to process the policy or claim",
+  "claimProcess": "2 sentences on how a claim is generally submitted and reviewed, stating that the insurer makes the final decision"
 }
 
-Language: ${lang === 'ID' ? 'Bahasa Indonesia' : 'English'}. Use vocabulary like 'Matriks', 'Heuristik', 'Enkripsi Kuantum', 'Visi Komputer'. Return JSON only.
+Language: ${lang === 'ID' ? 'Bahasa Indonesia' : 'English'}. Return JSON only.
 
 ${UNTRUSTED_INPUT_NOTICE}`,
       }],
@@ -197,7 +211,7 @@ ${UNTRUSTED_INPUT_NOTICE}`,
     return { success: true, data: parseJSON(text) };
   } catch (e) {
     console.error('explainProductAI error:', e);
-    return { success: false, error: 'Neural Engine failure.' };
+    return { success: false, error: 'Ringkasan produk tidak dapat dimuat saat ini.' };
   }
 };
 

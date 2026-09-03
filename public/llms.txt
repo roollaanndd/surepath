@@ -13,6 +13,7 @@ SurePath (PT Ruang Proteksi Indonesia) adalah platform asuransi digital pertama 
 - [Kalkulator Premi](https://myinsurepath.com/kalkulator) — Hitung premi asuransi mobil berdasarkan tarif OJK
 - [Tentang Kami](https://myinsurepath.com/about) — Informasi perusahaan
 - [Cara Kerja](https://myinsurepath.com/how-it-works) — Proses pembelian asuransi
+- [Teknologi AI](https://myinsurepath.com/ai) — Bagaimana SurePath menggunakan AI dan batasannya
 - [Blog](https://myinsurepath.com/blog) — Artikel edukasi asuransi
 - [Kontak](https://myinsurepath.com/contact) — Hubungi tim SurePath
 - [Privacy Policy](https://myinsurepath.com/privacy)
@@ -24,6 +25,17 @@ SurePath (PT Ruang Proteksi Indonesia) adalah platform asuransi digital pertama 
 3. **Asuransi Kecelakaan Diri** — Santunan cepat, pendaftaran 60 detik
 4. **Proteksi Barang (MPAR)** — Gadget, elektronik, furnitur
 5. **Konsultasi Kesehatan** — Chat AI medis gratis
+6. **Proteksi Iklim (Climate Shield)** — Proteksi parametrik banjir & cuaca ekstrem untuk rumah, UMKM, pertanian, dan bisnis. **Status: dalam pengembangan, belum dapat dibeli** — tersedia pendaftaran minat.
+
+## Penggunaan AI
+SurePath memakai AI untuk pekerjaan yang berulang dan mudah salah, bukan untuk mengambil keputusan finansial:
+- **Smart Scan STNK** — membaca data kendaraan dari foto STNK, lalu memvalidasi silang plat/merek/model/nomor rangka. Semua kolom tetap dapat dikoreksi pengguna.
+- **Pemeriksaan keaslian foto klaim** — metadata foto, sidik gambar untuk mendeteksi foto yang dipakai ulang, dan indikasi manipulasi.
+- **ClaimSense** — estimasi indikatif biaya perbaikan berbasis tabel harga suku cadang internal.
+- **Survei kendaraan berbasis foto** — penilaian enam aspek sebagai bahan pertimbangan penelaah.
+- **Pathy** — asisten digital untuk pertanyaan produk, status polis, dan proses klaim (hanya membaca data, tidak dapat mengubah).
+- **Asisten informasi kesehatan** — bukan diagnosa medis.
+Batasan: AI SurePath tidak pernah membuat keputusan finansial final. Penerbitan polis dan persetujuan klaim selalu melewati manusia, dan keputusan final berada pada perusahaan asuransi berizin OJK penerbit polis. Data pribadi disaring sebelum dan sesudah pemrosesan.
 
 ## Apps
 - Customer App (/custapp) — Beli polis, klaim, lacak proteksi

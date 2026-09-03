@@ -13,7 +13,6 @@ import {
   UserPlus, ChevronDown, Pencil, Shield,
   X, Clock, AlertCircle, Send, Sparkles,
 } from 'lucide-react';
-import { getSecurityPulse } from '../../services/NeuralGuardService';
 import { db, AuditLog, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
@@ -479,7 +478,6 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
 )};
 
 export const SecurityView = () => {
-  const [pulse] = useState(getSecurityPulse());
   const [sessionActivity, setSessionActivity] = useState<Array<{ hour: number; count: number }>>([]);
   const [secStats, setSecStats] = useState<{ failedLogins24h: number; activeSessionsCount: number; lastLoginAt: string | null; blockedEntries: Array<{ email: string; attempts: number; until: number }> } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -501,7 +499,6 @@ export const SecurityView = () => {
   }, [load]);
 
   const maxActivity = Math.max(...sessionActivity.map(s => s.count), 1);
-  const uptimeStr = pulse.globalUptime;
 
   return (
     <div className="space-y-8 animate-fade-in relative">
@@ -526,7 +523,7 @@ export const SecurityView = () => {
           />
           <StatCard
             label="Uptime Server"
-            value={uptimeStr}
+            value="N/A"
             icon={Globe}
             color="bg-emerald-500/10 text-emerald-500"
           />

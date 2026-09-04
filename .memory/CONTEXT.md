@@ -2,8 +2,8 @@
 **Updated:** 2026-09-03 (sesi Climate Shield + halaman Teknologi AI)
 
 ## Current State
-- **Branch kerja:** `claude/surepath-climate-ai-content-cerwtk` — v1.55.0: produk Climate Shield (pre-launch) + halaman `/ai` + perbaikan klaim berlebihan
-- **main:** v1.54.0 (SEO audit). `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya
+- **main:** v1.55.0 — SUDAH MERGED & LIVE di myinsurepath.com (PR #97 `fecc3a6` + PR #98 `b0c1247`). Diverifikasi langsung dari situs live: `/sitemap.xml` memuat `/ai` + `/product/climate`, `/llms.txt` memuat bagian "Penggunaan AI".
+- `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya
 
 ## v1.55.0 — Climate Shield + Teknologi AI (2026-09-03)
 - **Produk `climate` pre-launch** — masuk `PRODUCTS` (siteKit), `productInfoContent.ts`, route `App.tsx`, SEO, sitemap, llms.txt, footer. CTA "Daftar Minat", BUKAN beli — belum ada rating engine/wizard/insurer untuk produk ini. Copy sengaja tidak mengikat ("rencana santunan", "ambang yang disepakati"), ada blok disclaimer wajib.
@@ -21,9 +21,14 @@ Jalur AI produksi = edge function **`ai-proxy`** (whitelist 3 model, kunci di Va
 - `services/NeuralGuardService.ts` **dihapus** — angka keamanan 100% acak. StatCard "Uptime Server" → `N/A`.
 - `AboutPage` tidak lagi menjanjikan "instant approval".
 
-### Masih perlu ditinjau (BELUM diubah — butuh keputusan user)
-- `staticPagesContent.ts:269,276` — halaman `/security` mengklaim **"Arsitektur Zero-Trust"**, **"99.9% uptime SLA"**, dan **"SOC 2 Type II certified infrastructure"**. Klaim sertifikasi/SLA tidak dapat diverifikasi dari kode dan berisiko kalau ditanyakan.
-- `productInfoContent.ts:97` — highlight produk PA: **"Instant Approval"** + "Daftar 60 Detik"; `:111` "Garansi perbaikan".
+### Klaim tak terverifikasi — SUDAH diperbaiki juga (atas persetujuan user)
+- `/security`: **"99,9% SLA"** dan **"SOC 2 Type II"** dihapus; kalimatnya kini menyatakan sertifikasi infrastruktur itu **milik penyedia, bukan sertifikasi atas nama SurePath**. Istilah **"Zero-Trust"** diganti deskripsi mekanisme nyata (data-gateway + deny-all RLS).
+- Produk PA: "60 detik" / "Daftar 60 Detik" / "Instant Approval" → "Pendaftaran online singkat" / "Daftar Online" / "Proses Digital". Produk Proteksi Barang: "Garansi perbaikan dengan teknisi tersertifikasi" → "teknisi rekanan kami".
+- **Pelajaran:** `llms.txt` menyimpan SALINAN klaim produk yang terpisah dari `productInfoContent.ts` — perbaikan pertama luput di sana dan baru ketahuan saat memverifikasi produksi (perlu PR #98 susulan). Kalau mengubah klaim produk, **selalu sapu `public/llms.txt` juga.**
+
+### Masih perlu ditinjau (BELUM diubah — di luar cakupan yang disetujui)
+- `components/TravelInsuranceWizard.tsx:300` — menjanjikan *"Polis digital dikirim ke Email & WhatsApp dalam 60 detik setelah pembayaran divalidasi"*. Janji waktu di dalam alur pembelian; sifatnya sama dengan klaim yang sudah dibersihkan. Sudah dilaporkan ke user, menunggu keputusan.
+- `/security` masih memuat komitmen lain yang sekelas dan belum diverifikasi: "Program bug bounty terbuka", "Komitmen respons insiden < 4 jam", "Deteksi anomali real-time dan alerting 24/7", rotasi kunci enkripsi periodik, "MFA tersedia".
 
 ## What Was Done (recent sessions)
 
@@ -49,7 +54,6 @@ Lighthouse mobile (build produksi lokal): **skor 64 → 82**, FCP 3.8→2.4s, LC
 | Admin | demo.admin@myinsurepath.com | Demo1234! |
 
 ## Backlog
-- [ ] Merge PR #86 → Vercel auto-deploy v1.50.0
 - [ ] `styles.css` ada komentar berisi `*/` yang bikin warning css-syntax-error saat minify (pre-existing, non-blocking)
 - [ ] Chunk `index.es-*` (~156KB) + `html2canvas.esm` masih ikut build — audit siapa importer-nya
 - [ ] Agent portal: AgentCommission "Total Withdrawn" hardcoded 0 (needs wallet data)

@@ -49,6 +49,14 @@ export interface ToolOutcome {
 const AGENT_ROLES = new Set(['AGENT', 'AGENT_LEADER', 'MASTER_ADMIN', 'ADMIN']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Order/policy numbers are alphanumeric with separators. This value is
+// model-supplied and gets interpolated into a PostgREST filter string, where a
+// comma or parenthesis would change the shape of the OR group it sits in. The
+// owner scope is a separately AND-ed filter so nothing can escape the caller's
+// own rows either way, but the reference itself is still validated rather than
+// trusted.
+const ORDER_REF_RE = /^[A-Za-z0-9][A-Za-z0-9/_-]{0,59}$/;
+
 const isAgentSide = (role: string) => AGENT_ROLES.has(role);
 const safeIds = (ids: string[]) => ids.filter(id => UUID_RE.test(id));
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -281,11 +289,18 @@ const ORDER_COLUMNS =
   'order_number,policy_number,product_name,status,insurer_name,coverage_type,' +
   'sum_insured,total_premium,start_date,end_date,created_at,client_name';
 
+// Scopes a query to the caller's own rows. `.or()` is used only when the
+// customer side genuinely spans two columns (sp_claims keys some rows by
+// client_id and some by user_id); with a single column `.in()` is equivalent
+// and avoids stacking a second `or=` param on a request that already carries
+// one (get_policy_detail).
 // deno-lint-ignore no-explicit-any
 function ownerFilter(query: any, ctx: ToolContext, agentCol: string, clientCols: string[]) {
   const ids = safeIds(ctx.caller.ownerIds);
+  // No resolvable identity: match nothing rather than fall through unscoped.
   if (ids.length === 0) return query.eq(agentCol, '00000000-0000-0000-0000-000000000000');
   if (isAgentSide(ctx.caller.role)) return query.in(agentCol, ids);
+  if (clientCols.length === 1) return query.in(clientCols[0], ids);
   const list = ids.join(',');
   return query.or(clientCols.map(c => `${c}.in.(${list})`).join(','));
 }
@@ -311,6 +326,9 @@ async function getMyPolicies(args: Record<string, unknown>, ctx: ToolContext): P
 async function getPolicyDetail(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
   const ref = str(args.order_number, 60);
   if (!ref) return { result: { error: 'Nomor order wajib diisi.' } };
+  if (!ORDER_REF_RE.test(ref)) {
+    return { result: { error: 'Format nomor order tidak valid. Minta pengguna menyalin nomornya persis dari daftar polis.' } };
+  }
 
   let q = ctx.db.from('sp_policy_orders')
     .select(`${ORDER_COLUMNS},vehicle_details,base_premium,addon_premium,admin_fee,stamp_duty,ojk_rate,zone,reviewer_notes`)

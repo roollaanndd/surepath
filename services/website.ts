@@ -403,24 +403,124 @@ export async function validatePromoCode(
 }
 
 // ─── Pathy AI Chat ────────────────────────────────────────────────────────────
-// FIX v1.46.0: Pathy now uses the AI Gateway with z-ai SDK + knowledge base.
-// Previously used gateway 'pathy_chat' action (Gemini-based, no SurePath knowledge).
-// Now uses askPathy() from aiGateway.ts which includes company info, products,
-// insurers, OJK rules, and AI boundaries.
+// Pathy runs on the `pathy-agent` edge function: a tool-calling assistant that
+// reads the caller's own policies, claims and quotes, prices motor premiums off
+// the active OJK rate set, and can save a draft penawaran — all server-side,
+// scoped to the verified JWT (see supabase/functions/pathy-agent/).
+//
+// History: v1.46.0 pointed Pathy at askPathy() (knowledge base only, no user
+// data, no tools) and wrapped it in a catch that fell through to the
+// `pathy_chat` gateway action. That action needs ANTHROPIC_API_KEY, which is
+// not configured, so it answers 503 "AI not configured" — and the UI turned
+// *every* failure, including "please log in" and rate limits, into a
+// "coming soon" message. That is why Pathy looked permanently dead.
+// askPathy() is now only a degraded fallback for when pathy-agent itself is
+// unreachable, and real errors are surfaced with their own code.
+
+export type PathyErrorCode = 'AUTH' | 'RATE_LIMIT' | 'NOT_CONFIGURED' | 'UNAVAILABLE';
+
+export class PathyError extends Error {
+  code: PathyErrorCode;
+  constructor(code: PathyErrorCode, message: string) {
+    super(message);
+    this.name = 'PathyError';
+    this.code = code;
+  }
+}
+
+/** Structured block the chat renders instead of trusting the model to retype numbers. */
+export interface PathyCard {
+  type:
+    | 'policies' | 'policy_detail' | 'claims' | 'quotes'
+    | 'premium' | 'quote_created' | 'sales_report' | 'products';
+  data: any;
+}
+
+export interface PathyReply {
+  reply: string;
+  cards: PathyCard[];
+  toolsUsed: string[];
+  /** True when the tool-capable agent was unreachable and we answered from the knowledge base only. */
+  degraded?: boolean;
+}
+
+// A tool round-trip is several model calls, so this is deliberately longer
+// than the 15s data-gateway timeout.
+const PATHY_TIMEOUT_MS = 45_000;
 
 export async function pathyChat(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
-): Promise<string> {
+): Promise<PathyReply> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new PathyError('AUTH', 'Silakan login dulu supaya aku bisa melihat data polismu.');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), PATHY_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ message, history: conversationHistory ?? [] }),
+      signal: controller.signal,
+    });
+  } catch (e: any) {
+    clearTimeout(timeoutId);
+    console.error('pathyChat: pathy-agent unreachable:', e);
+    return await pathyKnowledgeFallback(message, conversationHistory);
+  }
+  clearTimeout(timeoutId);
+
+  if (res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const data = body?.data;
+    const reply = typeof data?.reply === 'string' ? data.reply.trim() : '';
+    if (reply) {
+      return {
+        reply,
+        cards: Array.isArray(data.cards) ? data.cards : [],
+        toolsUsed: Array.isArray(data.toolsUsed) ? data.toolsUsed : [],
+      };
+    }
+    return await pathyKnowledgeFallback(message, conversationHistory);
+  }
+
+  const errBody = await res.json().catch(() => ({}));
+  const detail = typeof errBody?.error === 'string' ? errBody.error : '';
+
+  if (res.status === 401) throw new PathyError('AUTH', detail || 'Sesi kamu sudah berakhir. Silakan login ulang.');
+  if (res.status === 429) throw new PathyError('RATE_LIMIT', detail || 'Terlalu banyak pesan. Coba lagi dalam satu jam ya.');
+  // 404 = function not deployed yet in this environment; 5xx = transient.
+  // Both are worth a knowledge-base answer rather than a dead end.
+  if (res.status === 404 || res.status >= 500) {
+    return await pathyKnowledgeFallback(message, conversationHistory);
+  }
+  throw new PathyError('UNAVAILABLE', detail || 'Asisten Pathy sedang bermasalah. Coba lagi.');
+}
+
+/**
+ * Knowledge-base-only answer (products, OJK rules, claim process). No access
+ * to the user's own data and no tools — hence `degraded: true`, which the UI
+ * surfaces so nobody mistakes a generic answer for a personalised one.
+ */
+async function pathyKnowledgeFallback(
+  message: string,
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<PathyReply> {
   try {
     const { askPathy } = await import('./aiGateway');
-    return await askPathy(message, conversationHistory);
+    const reply = await askPathy(message, conversationHistory);
+    return { reply, cards: [], toolsUsed: [], degraded: true };
   } catch (e: any) {
-    console.error('pathyChat error:', e);
-    // Fallback to old gateway path if AI Gateway is unavailable
-    const { data, error } = await callGateway('pathy_chat', { message });
-    if (error) throw new Error(error);
-    return (data as { reply: string }).reply;
+    const msg = String(e?.message ?? '');
+    if (/not configured|belum dikonfigurasi/i.test(msg)) {
+      throw new PathyError('NOT_CONFIGURED', msg);
+    }
+    throw new PathyError('UNAVAILABLE', msg || 'Asisten Pathy sedang bermasalah. Coba lagi.');
   }
 }
 

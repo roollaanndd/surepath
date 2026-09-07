@@ -66,7 +66,9 @@ Wallet balances are mutated exclusively via SECURITY DEFINER SQL functions (`cre
 
 ### server.ts (local dev only)
 
-`npm run dev` runs an Express server with Vite middleware plus a local "AI Gateway" (caching, PII-leak/hallucination validation layers) for the AI agents (Pathy chat, ClaimSense, etc.). In production the equivalent lives in the `ai-proxy`/`ai-gateway` edge functions. It is excluded from tsconfig/ESLint.
+`npm run dev` runs an Express server with Vite middleware plus a local "AI Gateway" (caching, PII-leak/hallucination validation layers) for the AI agents (ClaimSense, etc.). Its `/api/ai-gateway` route exists **only in dev** — `vercel.json` excludes `api/` from the SPA rewrite and there is no `api/` directory, so in production that path is always a 404; `services/aiGateway.ts` therefore only tries it when `import.meta.env.DEV`. In production the equivalent lives in the `ai-proxy` edge function. It is excluded from tsconfig/ESLint.
+
+**Pathy** does not go through either of those: it runs on its own `pathy-agent` edge function — a tool-calling assistant that reads the caller's own policies/claims/quotes, prices motor premiums off the active OJK rate set, and can save a draft quote. See `docs/PATHY_AGENT.md`. Its rate tables in `supabase/functions/_shared/ojk.ts` mirror `services/ojkRates.ts`; change one and you must change the other (`services/__tests__/pathy.test.ts` asserts parity).
 
 ## Deployment (three independent surfaces)
 

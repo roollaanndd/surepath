@@ -6,7 +6,10 @@ import type { GatewayContext, ActionResult } from './types.ts';
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
 export async function handleUsersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
-  const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
+  // Only the context fields this module actually uses. The generated split
+  // destructured all of them; the unused names are dead weight (and tsc flags
+  // them now that the unit tests pull this module into the type program).
+  const { db, params, caller, sendTelegram } = ctx;
 
   switch (action) {
     case 'get_my_profile': {
@@ -120,9 +123,25 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           return json({ data: existingByEmail, existed: true });
         }
 
-        // No existing user — create new profile
+        // No existing user — create new profile.
+        //
+        // The account type must be stated, never assumed. This used to fall
+        // back to 'CUSTOMER' when neither the caller nor the signup metadata
+        // named a role, so any client that called ensure_profile without one
+        // silently minted a customer — which is exactly how brand-new Google/
+        // OTP signups skipped the account-type picker and landed in the
+        // customer app. Refusing here keeps that from being reintroduced by a
+        // future caller; the client is expected to answer with a role
+        // (RoleSelectionScreen) and call again.
         const meta = (caller.userMetadata ?? {}) as Record<string, unknown>;
-        const reqRole = (reqRoleRaw || String(meta.role ?? 'CUSTOMER')).toUpperCase();
+        const metaRoleRaw = String(meta.role ?? '').toUpperCase();
+        const reqRole = reqRoleRaw || metaRoleRaw;
+        if (!reqRole) {
+          return json({
+            error: 'ROLE_REQUIRED: account type must be chosen before a profile can be created',
+            code: 'ROLE_REQUIRED',
+          }, 409);
+        }
         const role = reqRole === 'AGENT' ? 'AGENT' : 'CUSTOMER';
         const insertRow: Record<string, unknown> = {
           id: caller.authId,

@@ -1,34 +1,55 @@
 # SurePath Session Context
-**Updated:** 2026-09-03 (sesi Climate Shield + halaman Teknologi AI)
+**Updated:** 2026-09-07 (Pathy agent + perbaikan pemilihan tipe akun)
 
 ## Current State
-- **main:** v1.55.0 — SUDAH MERGED & LIVE di myinsurepath.com (PR #97 `fecc3a6` + PR #98 `b0c1247`). Diverifikasi langsung dari situs live: `/sitemap.xml` memuat `/ai` + `/product/climate`, `/llms.txt` memuat bagian "Penggunaan AI".
-- `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya
+- **main:** v1.55.0. Branch `claude/pathy-chatbot-debug-offers-igs9g0` = **v1.57.0** (PR #100): Pathy agent + fix signup role.
+- `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya.
+- **`pathy-agent` DEPLOYED (v2)**, sumber diverifikasi identik byte-per-byte dengan repo.
+- **`data-gateway` HARUS di-deploy** — `actions/users.ts` (409 ROLE_REQUIRED) dan `actions/misc.ts` (`save_quote` → `quote_data`) sudah berubah di repo.
+  ⚠️ **Urutan penting:** merge → tunggu Vercel live → baru deploy data-gateway. Bundle web lama memanggil `ensureProfile()` tanpa role; kalau gateway di-deploy duluan, pendaftar baru di bundle basi kena 409 dan gagal bikin profil.
 
-## v1.55.0 — Climate Shield + Teknologi AI (2026-09-03)
-- **Produk `climate` pre-launch** — masuk `PRODUCTS` (siteKit), `productInfoContent.ts`, route `App.tsx`, SEO, sitemap, llms.txt, footer. CTA "Daftar Minat", BUKAN beli — belum ada rating engine/wizard/insurer untuk produk ini. Copy sengaja tidak mengikat ("rencana santunan", "ambang yang disepakati"), ada blok disclaimer wajib.
-- **Halaman `/ai` baru** (`src/pages/AITechPage.tsx`) + navbar (kini 6 item) + section AI di homepage. Isinya HANYA kemampuan yang live & wired.
-- **PENTING — dua regex slug produk:** `App.tsx` (routing) DAN `src/seo/seo.ts` `resolveSeo()` (metadata). Menambah produk baru tanpa memperbarui keduanya = halaman render tapi title-nya fallback homepage.
-- **`PRODUCTS` kini bertipe `SiteProduct[]`** — tanpa anotasi eksplisit, TS menyimpulkan union tanpa `comingSoon` dan akses properti itu gagal.
+## v1.57.0 — Tipe akun wajib dipilih (2026-09-07)
+### Akar masalah "user baru selalu masuk aplikasi customer"
+Layar `RoleSelectionScreen` sudah ada, tapi **kalah cepat**. `AuthGate.buildUserObj` memanggil `ensureProfile()` **tanpa argumen**; server default ke `CUSTOMER`; profil tercipta duluan; `App.tsx` hanya menampilkan pemilih role kalau profil **belum** ada.
+Tiga pintu masuknya:
+1. **APK Android** — deep link OAuth tanpa `?code=` → penjaga `oauthLoading` tak aktif → `AuthGate` yang menangani sesi. Pengguna Android **selalu** jadi nasabah.
+2. **Web lambat** — timeout 10 detik menurunkan `oauthLoading` selagi lookup jalan.
+3. **Error sementara** — `resolveAndLogin` fallback login dengan role `CUSTOMER`.
 
-### Audit AI (dipakai sebagai sumber copy — jangan diulang dari nol)
-Jalur AI produksi = edge function **`ai-proxy`** (whitelist 3 model, kunci di Vault). `supabase/functions/ai-gateway` (Gemini) **TIDAK punya pemanggil** — dead code. `services/geminiService.ts` namanya menyesatkan: **tidak ada panggilan Gemini di jalur mana pun yang live**. Gateway AI lokal di `server.ts` (cache, redaksi PII, penahan halusinasi) hanya jalan di dev/self-hosted — di Vercel jatuh ke ai-proxy.
-- **Live & wired:** STNK OCR (+validasi silang plat/merek/model/VIN), forensik foto klaim (EXIF + perceptual hash anti foto daur-ulang + vision), ClaimSense, survei kendaraan 6 dimensi, validator foto, KTP OCR, kuitansi medis, Pathy, Health Chat, AI Policy Review, AI Finance Review, InsurerAI.
-- **JANGAN dipasarkan:** `extractSTNKAndRecommend` (agent quote builder) — hanya mengirim 100 karakter pertama data-URL, gambar tidak pernah sampai ke model vision; `ocr-scan` (tanpa pemanggil, mengembalikan data palsu bila key kosong); `analyzeClaimPhoto` & `summarizeClaimDocument` (tanpa pemanggil); `aiAdminEngine` = rule engine, bukan LLM, dan tidak jalan di topologi Vercel.
+### Perbaikan
+- `AuthGate.buildUserObj` **read-only**; buat profil hanya kalau role diketahui dari `user_metadata`; selain itu prop baru **`onNeedsRoleSelection`** → pemilih role.
+- `App.tsx`: teruskan prop itu ke kedua render `AuthGate`; `pendingOAuthUser` → **`pendingRoleUser`**; prop `RoleSelectionScreen` `oauthUser` → **`authUser`**; timeout `oauthLoading` tidak menyalip lookup yang berjalan.
+- Konfirmasi email: `App.tsx` membaca `user_metadata.role` dan langsung membuat profil — **tidak menanyakan ulang** (kalau ditanya ulang, pilihan Mitra bisa berubah jadi Nasabah).
+- `signUp` mengirim `regRole`, bukan hardcode `CUSTOMER`.
+- Error sementara → tampilkan pesan, **jangan** login dengan role tebakan.
+- **Server:** `ensure_profile` menolak membuat profil tanpa role → **409 `ROLE_REQUIRED`**, tidak menulis baris. Ini backstop supaya bug ini tidak bisa lahir lagi dari klien mana pun.
+- Uji: `services/__tests__/signupRole.test.ts` (8 kasus).
+- Catatan: mengimpor modul edge function ke vitest menarik file itu ke program tsconfig → `noUnusedLocals` menyala. `actions/users.ts` destructuring-nya dirapikan.
 
-### Klaim berlebihan yang DIPERBAIKI di rilis ini
-- `explainProductAI` — prompt lama menyuruh model mengarang "Enkripsi Kuantum"/"Zero-Trust"/"klaim 60 detik" (kode sendiri bilang 3-10 hari kerja). Prompt ditulis ulang, `impactScore` dihapus.
-- `services/NeuralGuardService.ts` **dihapus** — angka keamanan 100% acak. StatCard "Uptime Server" → `N/A`.
-- `AboutPage` tidak lagi menjanjikan "instant approval".
+## v1.56.0 — Pathy agent (2026-09-07)
+### Akar masalah "Pathy ga jalan" (infrastruktur ternyata sehat)
+`ai-proxy` v5 ACTIVE, `OPENROUTER_KEY` ada di Vault, `sp_rate_limits` + `increment_rate_limit` lengkap. Yang rusak jalur klien:
+1. `pathyChat()` `catch`-nya jatuh ke gateway action `pathy_chat` → butuh `ANTHROPIC_API_KEY` yang **tidak diset** → selalu 503 "AI not configured".
+2. `PathyChat.tsx` memetakan pesan itu jadi *"Fitur AI Pathy akan segera hadir!"* → **semua** kegagalan (sesi habis, rate limit, jaringan) tampil sebagai "coming soon". Ini penyebab kesan "mati permanen".
+3. `/api/ai-gateway` hanya ada di dev (`server.ts`); di Vercel selalu 404 → satu round-trip gagal per pesan.
+4. WhatsApp quick action memakai placeholder `6280000000000`.
+5. Banner "Pathy dapat melihat data kamu" bohong — jalur `askPathy` tidak mengirim data pengguna sama sekali.
 
-### Klaim tak terverifikasi — SUDAH diperbaiki juga (atas persetujuan user)
-- `/security`: **"99,9% SLA"** dan **"SOC 2 Type II"** dihapus; kalimatnya kini menyatakan sertifikasi infrastruktur itu **milik penyedia, bukan sertifikasi atas nama SurePath**. Istilah **"Zero-Trust"** diganti deskripsi mekanisme nyata (data-gateway + deny-all RLS).
-- Produk PA: "60 detik" / "Daftar 60 Detik" / "Instant Approval" → "Pendaftaran online singkat" / "Daftar Online" / "Proses Digital". Produk Proteksi Barang: "Garansi perbaikan dengan teknisi tersertifikasi" → "teknisi rekanan kami".
-- **Pelajaran:** `llms.txt` menyimpan SALINAN klaim produk yang terpisah dari `productInfoContent.ts` — perbaikan pertama luput di sana dan baru ketahuan saat memverifikasi produksi (perlu PR #98 susulan). Kalau mengubah klaim produk, **selalu sapu `public/llms.txt` juga.**
+### Yang dibangun
+- **`supabase/functions/pathy-agent/`** — loop tool-calling (OpenRouter `openai/gpt-4o-mini`, maks 4 ronde), 8 tool: `get_my_policies`, `get_policy_detail`, `get_my_claims`, `get_my_quotes`, `list_products`, `estimate_premium`, `create_quote` (**satu-satunya tool tulis** → `sp_quotes` DRAFT 14 hari), `get_sales_report` (agen).
+- **`supabase/functions/_shared/ojk.ts`** — mesin rate OJK versi Deno, baca `sp_ojk_rate_sets` aktif + fallback bawaan. **Kembar dengan `services/ojkRates.ts` — ubah satu, ubah keduanya**; `services/__tests__/pathy.test.ts` menguji paritasnya.
+- **UI kartu** di `PathyChat.tsx` — angka dari hasil tool, bukan prosa model.
+- **`PathyError`** kode `AUTH`/`RATE_LIMIT`/`NOT_CONFIGURED`/`UNAVAILABLE`; fallback knowledge-base ditandai `degraded`.
+- Dokumen: **`docs/PATHY_AGENT.md`**.
 
-### Masih perlu ditinjau (BELUM diubah — di luar cakupan yang disetujui)
-- `components/TravelInsuranceWizard.tsx:300` — menjanjikan *"Polis digital dikirim ke Email & WhatsApp dalam 60 detik setelah pembayaran divalidasi"*. Janji waktu di dalam alur pembelian; sifatnya sama dengan klaim yang sudah dibersihkan. Sudah dilaporkan ke user, menunggu keputusan.
-- `/security` masih memuat komitmen lain yang sekelas dan belum diverifikasi: "Program bug bounty terbuka", "Komitmen respons insiden < 4 jam", "Deteksi anomali real-time dan alerting 24/7", rotasi kunci enkripsi periodik, "MFA tersedia".
+### Bug lain yang ketemu di jalan
+- **`sp_quotes` tidak punya kolom `details`** — payload-nya `quote_data` (NOT NULL). `SpQuote`/`saveQuote`/`AgentQuoteBuilder`/`save_quote` semuanya salah nama, jadi **Agent Quote Builder tidak pernah bisa menyimpan penawaran**. Sudah diperbaiki.
+- `SUREPATH_WHATSAPP` dipusatkan di `constants.ts`.
+- `aiKnowledge.ts` produk PA masih "instant approval 60 detik" (luput dari sapuan v1.55.0) → sudah diselaraskan.
+
+### Belum dikerjakan / catatan
+- `src/pages/site/SiteLayout.tsx:324` — satu-satunya **error** ESLint di repo (`no-unused-expressions`), pre-existing sejak v1.50.0, membuat `npm run lint` tidak pernah hijau. Non-blocking di CI (ESLint `continue-on-error`). Tidak disentuh karena di luar cakupan.
+- Belum ada uji end-to-end langsung ke `pathy-agent` dari sesi ini: egress ke `*.supabase.co` diblokir proxy, jadi verifikasi live harus dilakukan dari browser setelah web deploy.
 
 ## What Was Done (recent sessions)
 

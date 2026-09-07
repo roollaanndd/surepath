@@ -2,6 +2,73 @@
 
 ---
 
+## v1.57.0 — 2026-09-07
+
+### Tipe akun wajib dipilih — pendaftar baru tidak lagi otomatis jadi nasabah
+
+**Gejalanya:** setiap pendaftar baru langsung masuk ke aplikasi nasabah. Layar pemilihan tipe akun (Nasabah / Mitra / Klien Korporat) yang sudah ada di kode praktis tidak pernah muncul.
+
+**Akar masalahnya bukan layar itu, tapi siapa yang membuat profil lebih dulu.**
+`AuthGate.buildUserObj` memanggil `ensureProfile()` **tanpa argumen**. Di sisi server, `ensure_profile` waktu itu jatuh ke `'CUSTOMER'` kalau tidak ada role dari pemanggil maupun dari metadata signup. Jadi begitu `AuthGate` melihat sesi hidup, ia langsung mencetak baris `sp_users` ber-role `CUSTOMER` — dan `RoleSelectionScreen` di `App.tsx` hanya tampil kalau profil **belum** ada. Profilnya sudah keburu ada. Pemilihan tipe akun kalah cepat dari kodenya sendiri.
+
+Ada tiga jalan masuk ke kondisi itu:
+1. **APK Android** — OAuth deep link (`com.myinsurepath.os://auth-callback`) tidak membawa `?code=` di URL, jadi penjaga `oauthLoading` di `App.tsx` tidak pernah aktif. `AuthGate` tetap ter-render dan ikut menangkap `SIGNED_IN`. Pengguna Android **selalu** berakhir sebagai nasabah.
+2. **Web, koneksi lambat** — timeout 10 detik menurunkan `oauthLoading` walaupun pencarian profil masih berjalan, `AuthGate` mount di tengah jalan, lalu membuat profil `CUSTOMER` di bawah kaki pemilih role.
+3. **Kegagalan sementara** — `resolveAndLogin` menangkap error apa pun lalu tetap login memakai objek fallback ber-role `CUSTOMER`.
+
+**Perbaikannya — role dinyatakan, tidak pernah diasumsikan:**
+- **`AuthGate.buildUserObj` sekarang read-only** (`get_my_profile` via `fetchMyProfileForLogin`). Ia hanya membuat profil kalau rolenya sudah diketahui dari `user_metadata` (ditanam saat `signUp`). Kalau tidak ada role sama sekali → prop baru `onNeedsRoleSelection` menyerahkan pengguna ke `RoleSelectionScreen`.
+- **`App.tsx`** meneruskan `onNeedsRoleSelection` ke `AuthGate`, sehingga pemilih role bisa dipanggil dari jalur mana pun — bukan cuma dari alur OAuth web. State-nya diganti nama `pendingOAuthUser` → `pendingRoleUser` (dan prop `RoleSelectionScreen` `oauthUser` → `authUser`) karena layar ini bukan milik OAuth saja.
+- **Timeout `oauthLoading` 10 detik** tidak lagi berlaku selagi pencarian profil berjalan.
+- **Konfirmasi email tetap menghormati pilihan awal.** Saat pengguna kembali dari tautan email, `App.tsx` membaca `user_metadata.role` dan membuat profil dengan role itu — tidak menanyakan ulang. Menanyakan ulang berarti pilihan "Mitra" bisa berubah jadi "Nasabah".
+- **Toggle Nasabah/Mitra di form registrasi akhirnya terpakai.** `options.data.role` di-hardcode `UserRole.CUSTOMER` dan mengabaikan `regRole`; sekarang mengirim pilihan pengguna. (Cabang AGENT memang dialihkan ke `AgentOnboarding`, jadi ini laten — tapi metadata itulah yang harus bertahan melewati konfirmasi email.)
+- **Kegagalan sementara tidak lagi berujung login sebagai nasabah** — tampilkan error dan minta coba lagi. Role yang salah menulis baris yang salah dan tidak memperbaiki diri sendiri.
+
+**Pertahanan di server (agar tidak terulang):** `ensure_profile` menolak membuat profil kalau tidak ada role dari `params.role` maupun `user_metadata.role` → **409 `ROLE_REQUIRED`**, tanpa menulis baris apa pun. Satu-satunya pemanggil tanpa role adalah `AuthGate` yang baru saja diperbaiki, jadi tidak ada jalur sah yang terdampak. Aturan "role immutable setelah profil ada" (v1.52.0) tetap berlaku.
+
+Uji: `services/__tests__/signupRole.test.ts` (8 kasus) mengunci kontraknya — penolakan tanpa role tanpa menulis baris, pembuatan AGENT/CUSTOMER sesuai pilihan, fallback ke metadata signup, penolakan penurunan role, penautan upline referral, dan 404 `get_my_profile` yang menjadi sinyal "tampilkan pemilih role".
+
+Dokumen: `docs/AUTH_FLOW.md` diperbarui menyeluruh.
+
+---
+
+## v1.56.0 — 2026-09-07
+
+### Pathy hidup lagi + bisa membuat penawaran & membaca laporan polis
+
+**1. Kenapa Pathy "tidak jalan" (akar masalahnya, bukan konfigurasi)**
+Infrastrukturnya sehat sejak awal: `ai-proxy` v5 ACTIVE dan `OPENROUTER_KEY` ada di Vault. Yang rusak ada di jalur klien:
+- `pathyChat()` memanggil `askPathy()` di dalam `try`, lalu `catch`-nya jatuh ke gateway action `pathy_chat`. Action itu butuh `ANTHROPIC_API_KEY` yang **tidak diset**, jadi selalu balas `503 "AI not configured"`.
+- `PathyChat.tsx` menerjemahkan pesan itu menjadi *"Fitur AI Pathy akan segera hadir!"*. Akibatnya **setiap** kegagalan — sesi kedaluwarsa, kena rate limit, gangguan jaringan, model down — tampil sebagai "coming soon". Chatbot terlihat mati permanen padahal penyebabnya berbeda-beda.
+- Setiap pesan juga membakar satu round-trip gagal ke `/api/ai-gateway`. Endpoint itu hanya ada di `server.ts` (dev); `vercel.json` mengecualikan `api/` dari rewrite SPA dan tidak ada direktori `api/`, jadi di produksi pasti 404.
+- Tombol "Chat WhatsApp agen" membuka `wa.me/6280000000000` — **nomor placeholder yang tidak ada**.
+- Banner "Pathy dapat melihat data kamu" tidak benar: jalur `askPathy` tidak mengirim data pengguna sama sekali. Konteks polis/klaim hanya ada di action `pathy_chat` yang sudah mati itu.
+
+**2. Edge function baru `pathy-agent` (DEPLOYED v1)** — `supabase/functions/pathy-agent/`
+Pathy sekarang asisten ber-*tools* yang jalan di server dengan `service_role`, di-scope ke JWT pemanggil. 8 tool: `get_my_policies`, `get_policy_detail`, `get_my_claims`, `get_my_quotes`, `list_products`, `estimate_premium`, `create_quote`, dan `get_sales_report` (khusus agen).
+- **Membuat penawaran via chat** — `create_quote` menulis ke `sp_quotes` status `DRAFT`, berlaku 14 hari. Satu-satunya tool tulis. Untuk CUSTOMER, `agent_id` diambil dari agen pada order terakhirnya supaya penawaran masuk pipeline agen tersebut.
+- **Laporan polis pengguna** — `get_my_policies` / `get_policy_detail` / `get_my_claims` membaca baris milik caller sendiri; AGENT lewat `agent_id`, CUSTOMER lewat `client_id`, memakai `ownerIds` kanonik (FIX v1.50.0) agar akun lama tetap kebaca.
+- **Laporan penjualan agen** — order, premi bruto/terbayar, komisi, dan saldo dompet (read-only).
+- Batas: 4 ronde tool, 60 pesan/jam/user via `sp_rate_limits`, argumen di-clamp di server, identitas tidak pernah diambil dari argumen model, teks pengguna tidak pernah masuk system prompt.
+- Dokumentasi lengkap: **`docs/PATHY_AGENT.md`**.
+
+**3. Mesin rate OJK untuk edge function** — `supabase/functions/_shared/ojk.ts`
+Cerminan Deno dari `services/ojkRates.ts` supaya premi yang dikutip Pathy sama persis dengan angka wizard beli. Membaca baris aktif `sp_ojk_rate_sets`, dengan tabel bawaan sebagai fallback. `services/__tests__/pathy.test.ts` menguji paritas kedua mesin (rate, premi dasar, add-on, total, mobil & motor) — kalau salah satu tabel diubah tanpa yang lain, tes merah.
+
+**4. UI chat: kartu terstruktur, bukan prosa model**
+Hasil tool dirender sebagai kartu (polis, detail polis, klaim, penawaran, rincian premi, penawaran tersimpan, laporan penjualan, produk). Angka datang langsung dari hasil tool, jadi nomor polis atau premi tidak bisa melenceng saat model menceritakannya ulang. Quick-reply diganti dari paragraf kalengan ("buka tab Riwayat…") menjadi pertanyaan sungguhan ke Pathy; chip "Laporan penjualan" hanya muncul untuk akun agen.
+
+**5. Pesan error jujur**
+`PathyError` dengan kode `AUTH` / `RATE_LIMIT` / `NOT_CONFIGURED` / `UNAVAILABLE`. Sesi habis → "login ulang", kena kuota → "coba lagi sebentar", fungsi tidak terjangkau → jawaban knowledge-base yang **ditandai** "jawaban umum, aku belum bisa membaca data akunmu".
+
+**6. Bug yang ikut ketemu & diperbaiki**
+- **`sp_quotes` tidak punya kolom `details`.** Kolom payload-nya `quote_data` (NOT NULL). `SpQuote`, `saveQuote()`, `AgentQuoteBuilder`, dan action `save_quote` semuanya menulis `details` — jadi **setiap penyimpanan penawaran dari Agent Quote Builder ditolak Postgres**, baik lewat gateway maupun lewat fallback insert langsung. Sekarang memakai `quote_data` (action gateway masih menerima `details` demi klien lama). ⚠️ **`data-gateway` belum di-deploy ulang** — perbaikan sisi klien sudah cukup untuk menyimpan lewat gateway, tetapi deploy tetap disarankan.
+- **Nomor WhatsApp** dipusatkan sebagai `SUREPATH_WHATSAPP` di `constants.ts` (`6282199920300`, sama dengan tombol floating di situs); PathyChat tidak lagi memakai placeholder.
+- **`askPathy` riwayat percakapan** dikirim sebagai giliran chat sungguhan, bukan satu blob "Riwayat percakapan: …" di dalam pesan user.
+- **`aiKnowledge.ts` produk PA** masih memuat klaim "instant approval 60 detik" yang sudah dibersihkan di tempat lain pada v1.55.0 — kini "pendaftaran online singkat", konsisten dengan halaman produk dan `llms.txt`.
+
+---
+
 ## v1.55.0 — 2026-09-03
 
 ### Produk baru: Climate Shield (pre-launch) + halaman Teknologi AI

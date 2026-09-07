@@ -7,7 +7,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
-import { supabase, ensureProfile } from '../services/supabaseService';
+import { supabase, ensureProfile, fetchMyProfileForLogin } from '../services/supabaseService';
 import AgentOnboarding from './agent/AgentOnboarding';
 import { OjkBadge, EncryptionBadge } from './ui';
 
@@ -20,6 +20,13 @@ interface AuthGateProps {
   // picker). We display it in the same error slot as our own login errors.
   externalError?: string | null;
   onDismissExternalError?: () => void;
+  // Called when an authenticated user has NO profile yet and we cannot tell
+  // which kind of account they meant to open (Google OAuth, email OTP — no
+  // role travels with those). The parent shows the role picker.
+  // Without this, AuthGate used to create the profile itself with no role,
+  // which the gateway defaulted to CUSTOMER — so every such signup silently
+  // landed in the customer app and the picker never ran.
+  onNeedsRoleSelection?: (user: { id: string; name: string; email: string }) => void;
 }
 
 const AuthGate: React.FC<AuthGateProps> = ({
@@ -28,6 +35,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
   initialMode = 'LOGIN',
   externalError = null,
   onDismissExternalError,
+  onNeedsRoleSelection,
 }) => {
   type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'EMAIL_OTP_VERIFY' | 'RESET_PASSWORD';
   const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
@@ -48,39 +56,59 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   useEffect(() => { setMode(initialMode as AuthMode); }, [initialMode]);
 
+  // The account type the signup flow already established for this user, if any.
+  // Email/password registration puts it in the Supabase Auth metadata, so it
+  // survives the email-confirmation round trip (possibly on another device).
+  // Google OAuth and email OTP carry no role — those users must pick one.
+  const intendedRoleOf = (user: any): 'CUSTOMER' | 'AGENT' | null => {
+    const meta = String(user?.user_metadata?.role ?? '').toUpperCase();
+    if (meta === 'AGENT') return 'AGENT';
+    if (meta === 'CUSTOMER') return 'CUSTOMER';
+    return null;
+  };
+
+  const shapeUser = (profile: any, user: any) => ({
+    id:           profile.id,
+    name:         profile.name,
+    email:        profile.email,
+    role:         profile.role as UserRole,
+    supabaseId:   profile.id,
+    nodeId:       profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
+    trustScore:   profile.trust_score ?? 85,
+    allowed_apps: (profile as any).allowed_apps ?? null,
+  });
+
   // ── Build user object from Supabase user ──────────────────────────────────
-  const buildUserObj = async (user: any) => {
-    // Fetch the caller's profile via the gateway, creating it from the signup
-    // metadata if missing (e.g. email-confirmation flow where the profile
-    // couldn't be created at registration time).
-    // Retry once after 1.5 s — on new email/password signups the Supabase
-    // database trigger that creates the sp_users row may not have committed yet.
-    let profile = await ensureProfile().catch(() => null);
-    if (!profile) {
-      await new Promise(r => setTimeout(r, 1500));
-      profile = await ensureProfile().catch(() => null);
+  // FIX: this used to call ensureProfile() with no arguments, which CREATES a
+  // profile — and with no role supplied the gateway defaulted it to CUSTOMER.
+  // Any brand-new user who reached AuthGate with a live session (Google OAuth
+  // on the native app, email OTP, or the web OAuth return once the parent's
+  // 10s loading guard expired) was therefore turned into a customer before the
+  // role picker ever had a chance to run. Now the lookup is read-only, and we
+  // only create a profile when the signup flow already told us which kind of
+  // account this is.
+  const buildUserObj = async (
+    user: any,
+  ): Promise<{ user: any } | { needsRoleSelection: true } | { transientError: string }> => {
+    const res = await fetchMyProfileForLogin();
+    if (res.profile) return { user: shapeUser(res.profile, user) };
+    if (res.transientError) {
+      return { transientError: res.lastError ?? 'profile lookup failed' };
     }
 
-    return profile
-      ? {
-          id:           profile.id,
-          name:         profile.name,
-          email:        profile.email,
-          role:         profile.role as UserRole,
-          supabaseId:   profile.id,
-          nodeId:       profile.agent_code ?? `SP-${user.id.slice(0, 8).toUpperCase()}`,
-          trustScore:   profile.trust_score ?? 85,
-          allowed_apps: (profile as any).allowed_apps ?? null,
-        }
-      : {
-          id:         user.id,
-          name:       user.user_metadata?.name ?? user.email!.split('@')[0],
-          email:      user.email!,
-          role:       UserRole.CUSTOMER,
-          supabaseId: user.id,
-          nodeId:     `SP-${user.id.slice(0, 8).toUpperCase()}`,
-          trustScore: 85,
-        };
+    // Server confirmed there is no profile for this account yet.
+    const intended = intendedRoleOf(user);
+    if (!intended) return { needsRoleSelection: true };
+
+    const refCode = localStorage.getItem('SUREPATH_REF') || null;
+    const profile = await ensureProfile({
+      name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Pengguna',
+      role: intended,
+      referral_code: refCode,
+    }).catch(() => null);
+    if (!profile) return { transientError: 'profile creation failed' };
+    if (refCode) localStorage.removeItem('SUREPATH_REF');
+    return { user: shapeUser(profile, user) };
   };
 
   // ── Resolve and login — deduplicated via ref ──────────────────────────────
@@ -88,31 +116,45 @@ const AuthGate: React.FC<AuthGateProps> = ({
     if (resolvedRef.current) return;
     resolvedRef.current = true; // claim immediately — JS is single-threaded
     try {
-      const userObj = await buildUserObj(user);
-      onAuthSuccess(userObj);
+      const outcome = await buildUserObj(user);
+
+      if ('user' in outcome) { onAuthSuccess(outcome.user); return; }
+
+      if ('needsRoleSelection' in outcome) {
+        // Brand-new account with no role attached. Hand it to the parent's
+        // role picker rather than guessing — guessing is what produced the
+        // "everyone becomes a customer" bug.
+        resolvedRef.current = false;
+        setLoading(false);
+        if (onNeedsRoleSelection) {
+          onNeedsRoleSelection({
+            id: user.id,
+            name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'Pengguna',
+            email: user.email ?? '',
+          });
+        } else {
+          setError(t('Could not finish sign-up. Please try again.', 'Pendaftaran belum selesai. Coba lagi ya.'));
+        }
+        return;
+      }
+
+      // Transient failure. Never sign the user in under a guessed role —
+      // a wrong role here writes the wrong row and is not self-correcting.
+      console.error('resolveAndLogin: profile unavailable:', outcome.transientError);
+      resolvedRef.current = false;
+      setLoading(false);
+      setError(t(
+        'Could not load your profile. Check your connection and try again.',
+        'Tidak bisa memuat profilmu. Cek koneksi lalu coba lagi.',
+      ));
     } catch (e: any) {
       resolvedRef.current = false;
       setLoading(false);
-      // If ensureProfile fails, still log the user in with a fallback profile
-      // rather than blocking them completely. The profile will be created
-      // on the next call to ensureProfile (e.g. when they navigate).
-      // FIX: preserve the user's role from signup metadata — previously
-      // fallback always used CUSTOMER, causing agents to be routed to /custapp
       console.error('resolveAndLogin error:', e);
-      const metaRole = user.user_metadata?.role as string | undefined;
-      const fallbackRole = metaRole === 'AGENT' ? UserRole.AGENT
-        : metaRole === 'OPERATOR' ? UserRole.OPERATOR
-        : UserRole.CUSTOMER;
-      const fallbackUser = {
-        id: user.id,
-        name: user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'User',
-        email: user.email ?? '',
-        role: fallbackRole,
-        supabaseId: user.id,
-        nodeId: `SP-${user.id.slice(0, 8).toUpperCase()}`,
-        trustScore: 85,
-      };
-      onAuthSuccess(fallbackUser);
+      setError(t(
+        'Could not load your profile. Check your connection and try again.',
+        'Tidak bisa memuat profilmu. Cek koneksi lalu coba lagi.',
+      ));
     }
   };
 
@@ -199,7 +241,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
       const signupPromise = supabase.auth.signUp({
         email:    formData.email,
         password: formData.password,
-        options:  { data: { name: formData.name, role: UserRole.CUSTOMER, referral_code: refCode } },
+        // FIX: this hardcoded CUSTOMER regardless of the Nasabah/Mitra toggle.
+        // The AGENT branch above diverts to AgentOnboarding today, so it was
+        // latent — but it meant the chosen role was not what actually travelled
+        // with the signup, which is the one thing that must survive the
+        // email-confirmation round trip.
+        options:  { data: { name: formData.name, role: regRole, referral_code: refCode } },
       });
 
       const timeoutPromise = new Promise<never>((_, reject) =>

@@ -289,7 +289,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       product_type: product,
       status: 'SENT',
       premium_estimate: premium,
-      details: currentInputs(),
+      quote_data: currentInputs(),
     });
     setSaving(false);
     if (q) {

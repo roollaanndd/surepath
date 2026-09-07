@@ -61,7 +61,7 @@ export async function getAgentQuotes(agentId: string): Promise<SpQuote[]> {
   return (data ?? []) as SpQuote[];
 }
 
-export async function saveQuote(data: Omit<SpQuote, 'id' | 'created_at' | 'updated_at'>): Promise<SpQuote | null> {
+export async function saveQuote(data: Omit<SpQuote, 'id' | 'created_at'>): Promise<SpQuote | null> {
   // FIX v1.49.1: route through gateway to bypass RLS issues
   // Previously used supabase directly which could fail silently due to RLS
   try {
@@ -73,7 +73,7 @@ export async function saveQuote(data: Omit<SpQuote, 'id' | 'created_at' | 'updat
       product_type: data.product_type,
       status: data.status,
       premium_estimate: data.premium_estimate,
-      details: data.details,
+      quote_data: data.quote_data,
     });
     if (error) {
       console.error('saveQuote gateway error:', error);

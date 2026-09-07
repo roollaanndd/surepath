@@ -4,7 +4,8 @@
 ## Current State
 - **main:** v1.55.0 live. Branch kerja `claude/pathy-chatbot-debug-offers-igs9g0` membawa **v1.56.0** (Pathy agent) — belum merge.
 - `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya.
-- **Edge function `pathy-agent` SUDAH DI-DEPLOY (v1, verify_jwt true)** dan sumbernya identik byte-per-byte dengan repo. Web build-nya belum tayang sampai PR merge → Vercel.
+- **Edge function `pathy-agent` SUDAH DI-DEPLOY (v2, verify_jwt true)** dan sumbernya diverifikasi identik byte-per-byte dengan repo. Web build-nya belum tayang sampai PR merge → Vercel.
+- **PR #100 hijau** (quality-check ✅, unit-tests ✅, Vercel preview ✅), tanpa konflik dan tanpa review thread terbuka — tinggal menunggu review/merge user.
 - **`data-gateway` BELUM di-deploy ulang** padahal `actions/misc.ts` berubah (`save_quote` → `quote_data`). Perbaikan sisi klien sudah cukup, tapi deploy tetap disarankan: `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`.
 
 ## v1.56.0 — Pathy agent (2026-09-07)

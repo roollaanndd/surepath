@@ -2,7 +2,7 @@
 
 > Edge function: `supabase/functions/pathy-agent/`. Deploy manual:
 > `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-> Versi deploy saat ini: **v1** (7 September 2026). Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
+> Versi deploy saat ini: **v2** (7 September 2026). Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
 
 ## Kenapa fungsi sendiri, bukan action di data-gateway
 

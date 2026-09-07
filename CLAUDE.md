@@ -83,7 +83,7 @@ Changing anything under `supabase/functions/` without deploying it does nothing 
 
 ## Conventions
 
-- **Version bumps**: `src/version.ts` (`APP_VERSION`) is the source of truth and drives the PWA update toast; add a matching entry at the top of `docs/CHANGELOG.md`. `package.json` version and older docs lag behind — don't trust them for the current version.
+- **Version bumps**: `src/version.ts` (`APP_VERSION`) is the source of truth and drives the PWA update toast; add a matching entry at the top of `docs/CHANGELOG.md`. `package.json` version and older docs lag behind — don't trust them for the current version. The `1.x` series ended at v1.57.0; numbering continues from **2.1.0** (owner's decision, 2026-09-07).
 - **Docs live in `docs/`** — root-level `DATA_GATEWAY.md`, `DATABASE_STATE.md`, `DEPLOYMENT.md`, `HANDOVER.md` are stubs pointing there. Key references: `docs/ARCHITECTURE.md`, `docs/DATA_GATEWAY.md` (gateway action list), `docs/DATABASE_STATE.md` (live vs repo schema), `docs/AUTH_FLOW.md`. Update the relevant doc when changing what it describes.
 - **`.memory/CONTEXT.md`** is printed by the SessionStart hook as session context — refresh it after significant sessions (current state, what was done, backlog).
 - New gateway actions: add to the right `actions/*.ts` domain module, enforce role checks there, document in `docs/DATA_GATEWAY.md`, and remember to deploy.

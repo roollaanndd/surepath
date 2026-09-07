@@ -23,6 +23,21 @@ export interface PathyCaller {
   role: string;
   name: string;
   email: string;
+  phone?: string;
+  agentCode?: string;
+}
+
+/**
+ * A document the user attached to this turn. OCR runs on the CLIENT (it already
+ * owns stnk-ocr, the KTP reader and the 2.500-line vehicle price database), so
+ * what arrives here is already extracted and normalised — no image ever passes
+ * through this function. The model can only see it by calling read_attachment,
+ * which keeps the "every fact comes from a tool" discipline intact.
+ */
+export interface PathyDocument {
+  type: 'STNK' | 'KTP';
+  fields: Record<string, unknown>;
+  confidence?: number;
 }
 
 export interface ToolContext {
@@ -30,12 +45,16 @@ export interface ToolContext {
   db: any;
   caller: PathyCaller;
   rateSet?: RateSet;
+  documents?: PathyDocument[];
 }
 
 // A card is structured data the chat UI renders as a rich block instead of
 // leaving the model to re-type numbers into prose (where it can drift).
 export interface PathyCard {
-  type: 'policies' | 'policy_detail' | 'claims' | 'quotes' | 'premium' | 'quote_created' | 'sales_report' | 'products';
+  type:
+    | 'policies' | 'policy_detail' | 'claims' | 'quotes'
+    | 'premium' | 'quote_created' | 'sales_report' | 'products'
+    | 'document_read' | 'offers' | 'quotation_ready';
   // deno-lint-ignore no-explicit-any
   data: any;
 }
@@ -214,6 +233,75 @@ export function toolSchemas(role: string) {
             notes: { type: 'string', description: 'Catatan singkat opsional.' },
           },
           required: ['product_type', 'coverage', 'sum_insured', 'premium_estimate'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'read_attachment',
+        description:
+          'Baca dokumen yang dilampirkan pengguna di percakapan ini (STNK atau KTP). ' +
+          'Isinya sudah diekstrak dan divalidasi. Panggil ini SEBELUM menghitung apa pun ' +
+          'kalau pengguna menyebut ada lampiran — jangan menebak isi dokumen.',
+        parameters: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', enum: ['STNK', 'KTP'], description: 'Jenis dokumen yang mau dibaca.' },
+          },
+          required: ['type'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'compare_offers',
+        description:
+          'Hitung TIGA opsi penawaran kendaraan sekaligus dengan tarif OJK yang aktif: ' +
+          'Comprehensive polos, Comprehensive + perluasan lengkap, dan TLO. ' +
+          'Pakai ini saat pengguna minta "beberapa opsi" atau "bandingkan". ' +
+          'Semua angka dihitung di server — jangan pernah menghitung sendiri.',
+        parameters: {
+          type: 'object',
+          properties: {
+            vehicle_type: { type: 'string', enum: ['CAR', 'MOTORCYCLE'] },
+            sum_insured: { type: 'number', description: 'Nilai pertanggungan dalam Rupiah (dari read_attachment atau dari pengguna).' },
+            province: { type: 'string', description: 'Provinsi pemilik kendaraan — menentukan zona OJK.' },
+            brand: { type: 'string' },
+            model: { type: 'string' },
+            year: { type: 'integer' },
+            plate: { type: 'string' },
+          },
+          required: ['vehicle_type', 'sum_insured'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'build_quotation',
+        description:
+          'Susun proposal penawaran resmi (format slip SurePath yang sama dengan menu beli asuransi ' +
+          'kendaraan) untuk SATU opsi hasil compare_offers, lalu simpan sebagai draf. ' +
+          'Antarmuka akan menampilkan tombol unduh PDF. Panggil HANYA setelah pengguna memilih opsi.',
+        parameters: {
+          type: 'object',
+          properties: {
+            option_id: { type: 'string', enum: ['comprehensive', 'comprehensive_plus', 'tlo'], description: 'Opsi yang dipilih pengguna.' },
+            vehicle_type: { type: 'string', enum: ['CAR', 'MOTORCYCLE'] },
+            sum_insured: { type: 'number' },
+            province: { type: 'string' },
+            client_name: { type: 'string', description: 'Nama tertanggung — dari KTP kalau ada, kalau tidak dari pengguna.' },
+            client_address: { type: 'string', description: 'Alamat tertanggung sesuai KTP.' },
+            client_phone: { type: 'string' },
+            brand: { type: 'string' },
+            model: { type: 'string' },
+            year: { type: 'integer' },
+            plate: { type: 'string' },
+            insurer_name: { type: 'string', description: 'Nama insurer bila pengguna sudah memilih. Kosongkan kalau belum.' },
+          },
+          required: ['option_id', 'vehicle_type', 'sum_insured', 'client_name'],
         },
       },
     },
@@ -570,6 +658,275 @@ async function getSalesReport(args: Record<string, unknown>, ctx: ToolContext): 
   return { result: report, card: { type: 'sales_report', data: report } };
 }
 
+// ─── Attachments, offers and the quotation proposal ──────────────────────────
+
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+
+/** QS/SP/2026/IX/0092 — the same series the buy-wizard mints. */
+function quotationNumber(): string {
+  const d = new Date();
+  return `QS/SP/${d.getUTCFullYear()}/${ROMAN[d.getUTCMonth()]}/${String(Date.now()).slice(-4)}`;
+}
+
+function readAttachment(args: Record<string, unknown>, ctx: ToolContext): ToolOutcome {
+  const want = str(args.type, 10).toUpperCase();
+  const docs = ctx.documents ?? [];
+  if (docs.length === 0) {
+    return { result: { error: 'Belum ada dokumen yang dilampirkan. Minta pengguna melampirkan foto STNK atau KTP lewat tombol kamera.' } };
+  }
+  const doc = docs.find(d => d.type === want);
+  if (!doc) {
+    return {
+      result: {
+        error: `Tidak ada lampiran ${want}.`,
+        available: docs.map(d => d.type),
+      },
+    };
+  }
+  return {
+    result: { type: doc.type, confidence: doc.confidence ?? null, fields: doc.fields },
+    card: { type: 'document_read', data: { type: doc.type, confidence: doc.confidence ?? null, fields: doc.fields } },
+  };
+}
+
+/** The three coverage shapes the buy-wizard offers, priced off one rate set. */
+const OFFER_SHAPES: Array<{
+  id: 'comprehensive' | 'comprehensive_plus' | 'tlo';
+  label: string;
+  coverage: CoverageType;
+  addons: AddOns;
+  blurb: string;
+}> = [
+  {
+    id: 'comprehensive',
+    label: 'Comprehensive',
+    coverage: 'COMPREHENSIVE',
+    addons: { flood: false, earthquake: false, riot: false, terrorism: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 },
+    blurb: 'Kerugian sebagian dan total, tanpa perluasan.',
+  },
+  {
+    id: 'comprehensive_plus',
+    label: 'Comprehensive + perluasan',
+    coverage: 'COMPREHENSIVE',
+    addons: { flood: true, earthquake: true, riot: true, terrorism: false, tplLimit: 25_000_000, paDriver: true, paPassengerSeats: 4 },
+    blurb: 'Ditambah banjir, gempa, huru-hara, TPL Rp 25 juta, dan kecelakaan diri sopir + 4 penumpang.',
+  },
+  {
+    id: 'tlo',
+    label: 'TLO',
+    coverage: 'TLO',
+    addons: { flood: false, earthquake: false, riot: false, terrorism: false, tplLimit: 0, paDriver: false, paPassengerSeats: 0 },
+    blurb: 'Hanya kerugian total (kehilangan atau kerusakan ≥75%).',
+  },
+];
+
+/** Premium rows in the order the quotation slip prints them. */
+function offerRows(b: ReturnType<typeof calcPremium>, addons: AddOns) {
+  const rows: Array<{ label: string; amount: number }> = [
+    { label: 'Premi Dasar', amount: b.basePremium },
+  ];
+  const d = b.addonsDetail;
+  if (d.flood)       rows.push({ label: 'Perluasan Banjir', amount: d.flood });
+  if (d.earthquake)  rows.push({ label: 'Perluasan Gempa Bumi', amount: d.earthquake });
+  if (d.riot)        rows.push({ label: 'Perluasan Huru-hara (SRCC)', amount: d.riot });
+  if (d.terrorism)   rows.push({ label: 'Perluasan Terorisme & Sabotase', amount: d.terrorism });
+  if (d.tpl)         rows.push({ label: `TPL (Tanggung Jawab Pihak Ketiga) — ${formatIdr(addons.tplLimit)}`, amount: d.tpl });
+  if (d.paDriver)    rows.push({ label: 'Kecelakaan Diri — Pengemudi', amount: d.paDriver });
+  if (d.paPassenger) rows.push({ label: `Kecelakaan Diri — Penumpang (${addons.paPassengerSeats} kursi)`, amount: d.paPassenger });
+  rows.push({ label: 'Biaya Admin', amount: b.adminFee });
+  rows.push({ label: 'Materai', amount: b.stampDuty });
+  return rows;
+}
+
+function formatIdr(n: number): string {
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+}
+
+interface OfferInputs {
+  vehicleType: VehicleType;
+  sumInsured: number;
+  province: string;
+  zone: Zone;
+}
+
+/** Validates the shared inputs of compare_offers / build_quotation. */
+function readOfferInputs(args: Record<string, unknown>, rs: RateSet): OfferInputs | { error: string } {
+  const vehicleType: VehicleType = str(args.vehicle_type, 20).toUpperCase() === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR';
+  const sumInsured = Math.round(num(args.sum_insured, 0));
+  if (sumInsured < 5_000_000 || sumInsured > 20_000_000_000) {
+    return { error: 'Nilai pertanggungan harus antara Rp 5 juta dan Rp 20 miliar. Tanyakan harga kendaraannya ke pengguna.' };
+  }
+  const province = str(args.province, 60);
+  return { vehicleType, sumInsured, province, zone: province ? getZone(rs, province) : 3 };
+}
+
+async function compareOffers(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
+  const rs = ctx.rateSet ?? await loadRateSet(ctx.db);
+  ctx.rateSet = rs;
+
+  const input = readOfferInputs(args, rs);
+  if ('error' in input) return { result: { error: input.error } };
+
+  // MIN band = tarif batas bawah OJK, the same conservative figure the public
+  // calculator and the buy-wizard quote.
+  const band: OjkBand = 'MIN';
+  const options = OFFER_SHAPES.map(shape => {
+    const b = calcPremium(rs, input.vehicleType, shape.coverage, input.sumInsured, input.zone, shape.addons, band);
+    return {
+      id: shape.id,
+      label: shape.label,
+      coverage: shape.coverage,
+      blurb: shape.blurb,
+      ratePercent: b.ratePercent,
+      basePremium: b.basePremium,
+      addonPremium: b.addonPremium,
+      adminFee: b.adminFee,
+      stampDuty: b.stampDuty,
+      total: b.total,
+      rows: offerRows(b, shape.addons),
+    };
+  });
+
+  const vehicle = {
+    brand: str(args.brand, 60) || null,
+    model: str(args.model, 80) || null,
+    year: Math.round(num(args.year, 0)) || null,
+    plate: str(args.plate, 20) || null,
+  };
+
+  const data = {
+    vehicle,
+    vehicleType: input.vehicleType,
+    sumInsured: input.sumInsured,
+    province: input.province || null,
+    zone: input.zone,
+    band,
+    rateSetVersion: rs.version,
+    options,
+    disclaimer: 'Estimasi indikatif berdasarkan tarif OJK. Premi final ditentukan insurer setelah underwriting.',
+  };
+
+  return { result: data, card: { type: 'offers', data } };
+}
+
+async function buildQuotation(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
+  const rs = ctx.rateSet ?? await loadRateSet(ctx.db);
+  ctx.rateSet = rs;
+
+  const input = readOfferInputs(args, rs);
+  if ('error' in input) return { result: { error: input.error } };
+
+  const optionId = str(args.option_id, 30).toLowerCase();
+  const shape = OFFER_SHAPES.find(o => o.id === optionId);
+  if (!shape) {
+    return { result: { error: 'Opsi tidak dikenal. Jalankan compare_offers dulu, lalu pakai salah satu option_id-nya.' } };
+  }
+
+  const clientName = str(args.client_name, 120);
+  if (!clientName) return { result: { error: 'Nama tertanggung wajib diisi — ambil dari KTP atau tanyakan ke pengguna.' } };
+
+  // Recomputed here rather than trusting any figure the model carried over from
+  // compare_offers: the premium printed on the proposal must come from the rate
+  // engine on this request, not from the conversation.
+  const band: OjkBand = 'MIN';
+  const b = calcPremium(rs, input.vehicleType, shape.coverage, input.sumInsured, input.zone, shape.addons, band);
+  const rows = offerRows(b, shape.addons);
+
+  const agentSide = isAgentSide(ctx.caller.role);
+  const quoteNo = quotationNumber();
+  const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const vehicleBrand = str(args.brand, 60) || 'Kendaraan';
+  const vehicleModel = str(args.model, 80) || '-';
+
+  // Shape matches services/quotationSlipAdapter.ts → AgentQuoteSource, so the
+  // client can hand it straight to fromAgentQuote() + the existing slip
+  // generator. Same PDF the buy-wizard produces.
+  const quotation = {
+    quoteNumber: quoteNo,
+    validUntil,
+    clientName,
+    clientPhone: str(args.client_phone, 32) || undefined,
+    clientAddress: str(args.client_address, 300) || undefined,
+    agentName: agentSide ? (ctx.caller.name || 'Mitra SurePath') : 'SurePath Digital',
+    agentCode: agentSide ? (ctx.caller.agentCode || undefined) : undefined,
+    agentPhone: agentSide ? (ctx.caller.phone || undefined) : undefined,
+    product: input.vehicleType === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR',
+    vehicleBrand,
+    vehicleModel,
+    vehicleYear: Math.round(num(args.year, 0)) || undefined,
+    vehiclePlate: str(args.plate, 20) || undefined,
+    vehiclePrice: input.sumInsured,
+    coverageType: shape.coverage,
+    zone: input.zone,
+    ojkRate: b.rate,
+    rateBand: band,
+    providerName: str(args.insurer_name, 120) || undefined,
+    rows,
+    totalPremium: b.total,
+  };
+
+  // Persist as a DRAFT quote so it shows up in the user's/agent's quote list.
+  // agent_id is NOT NULL — same resolution rule as create_quote.
+  let agentId = ctx.caller.ownerId;
+  if (!agentSide) {
+    const ids = safeIds(ctx.caller.ownerIds);
+    if (ids.length > 0) {
+      const { data: lastOrder } = await ctx.db
+        .from('sp_policy_orders')
+        .select('agent_id')
+        .in('client_id', ids)
+        .not('agent_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastOrder?.agent_id) agentId = lastOrder.agent_id;
+    }
+  }
+
+  const { data: saved, error } = await ctx.db.from('sp_quotes').insert({
+    agent_id: agentId,
+    client_id: agentSide ? null : ctx.caller.ownerId,
+    client_name: clientName,
+    product_type: input.vehicleType === 'MOTORCYCLE' ? 'MOTOR' : 'CAR',
+    quote_data: { source: 'pathy', kind: 'quotation', option: shape.id, quotation },
+    premium_estimate: b.total,
+    status: 'DRAFT',
+    expires_at: validUntil,
+  }).select('id').single();
+
+  if (error) {
+    return { result: { error: 'Penawaran gagal disimpan. Coba lagi atau hubungi tim SurePath.' } };
+  }
+
+  const data = {
+    quoteId: saved.id,
+    quotationNumber: quoteNo,
+    optionLabel: shape.label,
+    coverage: shape.coverage,
+    clientName,
+    clientAddress: quotation.clientAddress ?? null,
+    vehicle: `${vehicleBrand} ${vehicleModel}`.trim(),
+    plate: quotation.vehiclePlate ?? null,
+    sumInsured: input.sumInsured,
+    totalPremium: b.total,
+    validUntil,
+    /** Handed to fromAgentQuote() on the client to render the PDF. */
+    quotation,
+  };
+
+  return {
+    result: {
+      ok: true,
+      quotationNumber: quoteNo,
+      optionLabel: shape.label,
+      totalPremium: b.total,
+      note: 'Proposal siap. Antarmuka sudah menampilkan tombol unduh PDF — ini penawaran indikatif, belum penerbitan polis.',
+    },
+    card: { type: 'quotation_ready', data },
+  };
+}
+
 function listProducts(): ToolOutcome {
   return {
     result: { products: PRODUCT_CATALOGUE },
@@ -590,6 +947,9 @@ export async function runTool(
     case 'get_my_claims':    return await getMyClaims(args, ctx);
     case 'get_my_quotes':    return await getMyQuotes(args, ctx);
     case 'estimate_premium': return await estimatePremium(args, ctx);
+    case 'read_attachment':  return readAttachment(args, ctx);
+    case 'compare_offers':   return await compareOffers(args, ctx);
+    case 'build_quotation':  return await buildQuotation(args, ctx);
     case 'create_quote':     return await createQuote(args, ctx);
     case 'get_sales_report': return await getSalesReport(args, ctx);
     case 'list_products':    return listProducts();

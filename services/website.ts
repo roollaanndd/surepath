@@ -432,8 +432,20 @@ export class PathyError extends Error {
 export interface PathyCard {
   type:
     | 'policies' | 'policy_detail' | 'claims' | 'quotes'
-    | 'premium' | 'quote_created' | 'sales_report' | 'products';
+    | 'premium' | 'quote_created' | 'sales_report' | 'products'
+    | 'document_read' | 'offers' | 'quotation_ready';
   data: any;
+}
+
+/**
+ * A document the user attached to a Pathy turn. OCR runs here on the client —
+ * it already owns stnk-ocr, the KTP reader and the vehicle price database — so
+ * only extracted fields travel to the agent, never the image itself.
+ */
+export interface PathyDocument {
+  type: 'STNK' | 'KTP';
+  fields: Record<string, unknown>;
+  confidence?: number;
 }
 
 export interface PathyReply {
@@ -451,6 +463,7 @@ const PATHY_TIMEOUT_MS = 45_000;
 export async function pathyChat(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  documents?: PathyDocument[],
 ): Promise<PathyReply> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
@@ -465,7 +478,11 @@ export async function pathyChat(
     res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ message, history: conversationHistory ?? [] }),
+      body: JSON.stringify({
+        message,
+        history: conversationHistory ?? [],
+        documents: documents ?? [],
+      }),
       signal: controller.signal,
     });
   } catch (e: any) {

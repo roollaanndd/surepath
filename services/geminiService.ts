@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from './promptSafety';
+import { supabase } from './db';
 
 // ─── Model constants — swap any of these to change the model used ─────────────
 const VISION_MODEL  = 'openai/gpt-4o-mini';              // OCR, photo validation, damage
@@ -11,12 +12,30 @@ export const CHAT_MODEL = 'anthropic/claude-3.5-haiku-20241022'; // health chatb
 const AI_PROXY_URL  = `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/ai-proxy`;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-const getClient = () => new OpenAI({
-  baseURL: AI_PROXY_URL,
-  apiKey:  SUPABASE_ANON,
-  defaultHeaders: { apikey: SUPABASE_ANON },
-  dangerouslyAllowBrowser: true,
-});
+/**
+ * FIX v2.1.0 — every vision/text call in this file was authenticating with the
+ * ANON KEY. The ai-proxy edge function verifies the bearer token with
+ * `auth.getUser()`, and the anon key is a project JWT with no `sub` claim, so
+ * that check failed and every request came back 401. Each caller swallowed the
+ * error and returned `{ success: false }`, which is why KTP scanning (and photo
+ * validation, claim analysis, the vehicle survey…) silently did nothing.
+ *
+ * ai-proxy wants the signed-in user's access token. Fetching it is async, so
+ * this is now async too — every call site awaits it.
+ */
+const getClient = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) {
+    throw new Error('Silakan login terlebih dahulu untuk memakai fitur AI.');
+  }
+  return new OpenAI({
+    baseURL: AI_PROXY_URL,
+    apiKey: token,
+    defaultHeaders: { apikey: SUPABASE_ANON },
+    dangerouslyAllowBrowser: true,
+  });
+};
 
 // Strip markdown code-fences that some models add around JSON
 function parseJSON(text: string): any {
@@ -136,7 +155,7 @@ async function compressImageBase64(base64: string, maxWidthPx = 1024): Promise<s
 
 export const analyzeHealthReceipt = async (base64Image: string): Promise<{ success: boolean; data?: HealthClaimData; error?: string }> => {
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',
@@ -176,7 +195,7 @@ Gunakan Bahasa Indonesia. Jika data tidak ada, gunakan null. Kembalikan JSON saj
 // automatically generated summary and points to the product page for terms.
 export const explainProductAI = async (productName: string, lang: 'ID' | 'EN'): Promise<{ success: boolean; data?: ProductExplanation; error?: string }> => {
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: TEXT_MODEL,
       messages: [{
         role: 'user',
@@ -217,7 +236,7 @@ ${UNTRUSTED_INPUT_NOTICE}`,
 
 export const analyzeClaimPhoto = async (base64Image: string): Promise<{ success: boolean; data?: ClaimAnalysisData; error?: string }> => {
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',
@@ -255,7 +274,7 @@ Return JSON only:
 
 export const summarizeClaimDocument = async (base64Doc: string): Promise<{ success: boolean; data?: DocumentSummary; error?: string }> => {
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',
@@ -276,7 +295,7 @@ export const summarizeClaimDocument = async (base64Doc: string): Promise<{ succe
 export const extractStnkData = async (base64: string, mimeType: string = 'image/jpeg'): Promise<{ success: boolean; data?: any }> => {
   try {
     const compressed = await compressImageBase64(base64, 1200);
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',
@@ -311,7 +330,7 @@ Return JSON only: { "owner": string, "plate": string, "brand": string, "model": 
 export const validateVehiclePhoto = async (base64: string, slotLabel: string): Promise<{ valid: boolean; issue?: string }> => {
   try {
     const compressed = await compressImageBase64(base64, 800);
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',
@@ -429,7 +448,7 @@ Return JSON only (tidak ada teks di luar JSON):
     })));
     const imagesParts = compressedImages.map(img => imageContent(img.data));
 
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: SURVEY_MODEL,
       messages: [{
         role: 'user',
@@ -456,7 +475,7 @@ Return JSON only (tidak ada teks di luar JSON):
 
 export const extractKtpData = async (base64: string): Promise<{ success: boolean; data?: any }> => {
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await (await getClient()).chat.completions.create({
       model: VISION_MODEL,
       messages: [{
         role: 'user',

@@ -1,19 +1,29 @@
 # SurePath Session Context
-**Updated:** 2026-09-07 (Pathy agent + perbaikan pemilihan tipe akun)
+**Updated:** 2026-09-07 (v2.1.0 — KTP + proposal penawaran lewat Pathy)
 
 ## Current State
-- **main = v1.57.0, SUDAH LIVE** di myinsurepath.com (squash `5ce3bee`, PR #100 merged 2026-09-07). Vercel production READY, bundle memuat `1.57.0`.
-- `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya.
-- **`pathy-agent` DEPLOYED (v2)** — sumber diverifikasi identik byte-per-byte dengan repo.
-- ⚠️ **`data-gateway` BELUM di-deploy** padahal `actions/users.ts` + `actions/misc.ts` sudah berubah di repo. Jalankan dari mesin yang punya source:
+- **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
+- **main = v2.1.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
+- **`pathy-agent` deployed** — cek versinya sebelum mengubah; sumber harus identik byte-per-byte dengan repo.
+- ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
+  `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
+  Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
 
-  ```
-  supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi
-  ```
+## v2.1.0 — KTP + proposal penawaran (2026-09-07)
+### Akar masalah KTP: salah kredensial
+`services/geminiService.ts` `getClient()` memakai **anon key** sebagai bearer ke `ai-proxy`. `ai-proxy` memverifikasi dengan `auth.getUser()`; anon key = JWT proyek **tanpa klaim `sub`** → **401 di setiap panggilan**. Pemanggil menelan error → `{success:false}` → formulir kosong tanpa pesan.
+**Ini mematikan SEMUA fungsi di file itu**, bukan cuma KTP: validasi foto, analisis klaim, survei kendaraan, kuitansi medis, penjelas produk.
+- `getClient()` kini **async + access token sesi**.
+- **`services/ktpOcr.ts` (baru)** — NIK dibersihkan lalu wajib 16 digit (kalau tidak → `null`, jangan prefill nomor salah). Status OK/PARTIAL/UNCLEAR + catatan Indonesia. `StepKYC` menampilkan catatannya.
 
-  **Situs tidak rusak tanpa ini** — bundle baru hanya memanggil `ensure_profile` dengan role eksplisit, yang ditangani baik oleh gateway lama. Yang belum aktif: (a) backstop 409 `ROLE_REQUIRED`, (b) perbaikan `save_quote` → `quote_data`, jadi **Agent Quote Builder masih gagal menyimpan penawaran** (sudah rusak sejak lama, bukan regresi baru).
-
-  Alasan tidak di-deploy dari sesi Claude: MCP `deploy_edge_function` menuntut seluruh 17 berkas (~200 KB) di-inline dalam satu tool call. Menyalin-ulang dispatcher inti platform — termasuk `orders.ts` dan `wallet.ts` yang menyentuh uang — lewat string JSON tanpa bisa memverifikasi byte-parity **sebelum** live, risikonya tidak sepadan. `pathy-agent` aman karena fungsi baru tanpa pemanggil.
+### Pathy → proposal penawaran (format = menu beli kendaraan)
+- **OCR di klien**, bukan di edge function (browser sudah punya stnk-ocr + ktpOcr + vehicleDatabase 2.500 baris). Hanya kolom hasil yang dikirim; **gambar tidak pernah melewati `pathy-agent`**.
+- Tool baru: `read_attachment`, `compare_offers` (3 opsi sekaligus), `build_quotation`.
+- `build_quotation` mengembalikan payload berbentuk **`AgentQuoteSource`** → klien `fromAgentQuote()` → `publishAndDownloadQuotation()`. **Pipeline identik dengan `components/car-wizard/StepFinal.tsx`.**
+- **Premi dihitung ulang di `build_quotation`**, tidak dibawa dari `compare_offers` — angka di dokumen komersial tidak boleh berasal dari percakapan. Ada tesnya.
+- `AgentQuoteSource.clientAddress` baru; `fromAgentQuote` dulu hardcode `insuredAddress: '-'`.
+- UI: tombol Foto STNK / Foto KTP, chip lampiran, kartu `document_read` / `offers` / `quotation_ready` (tombol Unduh PDF).
+- Uji: `services/__tests__/pathyQuotation.test.ts` (15 kasus).
 
 ## v1.57.0 — Tipe akun wajib dipilih (2026-09-07)
 ### Akar masalah "user baru selalu masuk aplikasi customer"

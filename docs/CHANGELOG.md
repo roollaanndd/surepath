@@ -2,6 +2,47 @@
 
 ---
 
+> **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
+
+## v2.1.0 — 2026-09-07
+
+### KTP kembali berfungsi, dan Pathy bisa menerbitkan proposal penawaran
+
+**1. Akar masalah KTP: salah kredensial, bukan salah prompt**
+`services/geminiService.ts` mengautentikasi ke `ai-proxy` memakai **anon key** sebagai bearer token. `ai-proxy` memverifikasi token itu dengan `auth.getUser()`, dan anon key adalah JWT proyek tanpa klaim `sub` — jadi verifikasinya gagal dan **setiap permintaan dijawab 401**. Tiap pemanggil menelan error itu dan mengembalikan `{ success: false }`, sehingga pemindaian KTP diam saja: formulir tetap kosong tanpa satu pun pesan.
+
+Ini bukan cuma soal KTP — **semua** panggilan di file itu ikut mati: validasi foto, analisis klaim, survei kendaraan, pembaca kuitansi medis, dan penjelas produk.
+
+- `getClient()` kini async dan memakai **access token sesi**; tanpa sesi ia melempar pesan yang jelas, bukan gagal diam-diam.
+- **`services/ktpOcr.ts` (baru)** — pembaca KTP tervalidasi, sebangun dengan `stnkOcr.ts`. NIK dibersihkan dari spasi/titik/strip lalu **wajib 16 digit**; kalau tidak, dikembalikan `null` daripada mengisi formulir dengan nomor salah. Nama dan alamat dinormalkan. Statusnya `OK` / `PARTIAL` / `UNCLEAR` dengan catatan berbahasa Indonesia yang memberi tahu apa yang harus dilakukan.
+- **`StepKYC`** memakai layanan itu dan **menampilkan catatannya**. Sebelumnya kegagalan tidak menghasilkan apa pun di layar.
+
+**2. Pathy menerbitkan proposal penawaran — format yang sama dengan menu beli asuransi kendaraan**
+
+Lampiran diproses **di klien**, bukan di edge function: browser sudah memiliki `stnk-ocr`, pembaca KTP, dan database harga kendaraan 2.500 baris. Yang dikirim ke server hanya kolom hasil ekstraksi — **gambar tidak pernah melewati `pathy-agent`**.
+
+Tiga tool baru:
+- **`read_attachment({ type })`** — membaca lampiran STNK/KTP milik giliran ini. Isinya hanya bisa dijangkau lewat tool, tidak pernah masuk system prompt.
+- **`compare_offers(...)`** — menghitung **tiga opsi sekaligus** dengan tarif OJK aktif: Comprehensive, Comprehensive + perluasan (banjir, gempa, huru-hara, TPL 25 juta, PA sopir + 4 penumpang), dan TLO. Tiap opsi membawa rincian baris premi yang jumlahnya persis sama dengan totalnya.
+- **`build_quotation({ option_id, … })`** — menyusun proposal untuk opsi terpilih dan menyimpannya sebagai draf. Payload-nya berbentuk `AgentQuoteSource`, jadi klien meneruskannya ke `fromAgentQuote()` → `publishAndDownloadQuotation()` — **pipeline yang sama persis dengan `StepFinal.tsx` di wizard beli kendaraan**. PDF-nya slip SurePath 4 halaman ber-QR ke `/q/{code}`, bukan dokumen tiruan.
+
+**Premi dihitung ulang saat proposal dibangun**, bukan dibawa dari hasil `compare_offers` beberapa giliran sebelumnya. Angka yang tercetak di dokumen komersial tidak boleh berasal dari percakapan.
+
+**3. UI chat**
+- Dua tombol kamera di composer: **Foto STNK** dan **Foto KTP**. Lampiran tampil sebagai chip yang bisa dihapus; kegagalan baca memberi tahu apa yang harus diperbaiki.
+- Melampirkan foto **saja sudah cukup** — tidak perlu mengetik kalimat untuk menjelaskan foto STNK sendiri.
+- Kartu baru: `document_read` (hasil baca + keyakinan), `offers` (tiga opsi berdampingan), dan `quotation_ready` dengan tombol **Unduh PDF penawaran**.
+- Chip cepat baru: "Proposal dari STNK".
+
+**4. Proposal kini mencantumkan alamat tertanggung**
+`AgentQuoteSource` menerima `clientAddress`; `fromAgentQuote()` dulu menulis `insuredAddress: '-'` mati. Alamat dari KTP sekarang tercetak di slip.
+
+**5. Skema versi** — `1.57.0` → **`2.1.0`**.
+
+Uji: `services/__tests__/pathyQuotation.test.ts` (15 kasus) — normalisasi NIK, penolakan lampiran yang tidak ada, paritas harga tiga opsi dengan mesin browser, penjumlahan baris premi, penolakan nilai pertanggungan tak masuk akal, bentuk payload proposal, dan **pengabaian premi palsu yang disodorkan ke `build_quotation`**.
+
+---
+
 ## v1.57.0 — 2026-09-07
 
 ### Tipe akun wajib dipilih — pendaftar baru tidak lagi otomatis jadi nasabah

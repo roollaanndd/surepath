@@ -2,7 +2,7 @@
 
 > Edge function: `supabase/functions/pathy-agent/`. Deploy manual:
 > `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-> Versi deploy saat ini: **v2** (7 September 2026). Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
+> Versi deploy saat ini: **v3** (7 September 2026). Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
 
 ## Kenapa fungsi sendiri, bukan action di data-gateway
 
@@ -55,6 +55,31 @@ Klien memetakan status itu ke `PathyError.code` (`AUTH` / `RATE_LIMIT` / `NOT_CO
 | `estimate_premium` | semua | Hitung premi kendaraan dari rate set OJK aktif (`sp_ojk_rate_sets`), band **MIN** (tarif batas bawah). |
 | `create_quote` | semua | **Satu-satunya tool tulis.** Simpan penawaran ke `sp_quotes` status `DRAFT`, berlaku 14 hari. |
 | `get_sales_report` | AGENT/ADMIN | Ringkasan order, premi bruto/terbayar, komisi, saldo dompet (read-only). |
+| `read_attachment` | semua | Baca lampiran STNK/KTP giliran ini (sudah di-OCR di klien). |
+| `compare_offers` | semua | Tiga opsi sekaligus: Comprehensive, Comprehensive + perluasan, TLO. |
+| `build_quotation` | semua | **Tool tulis kedua.** Menyusun proposal + menyimpan draf; klien merender PDF slip. |
+
+## Lampiran & proposal penawaran
+
+**OCR berjalan di klien, bukan di sini.** Browser sudah memiliki `stnk-ocr`, `services/ktpOcr.ts`, dan `services/vehicleDatabase.ts` (2.500 baris harga kendaraan — terlalu besar untuk dikirim ke edge function). Klien mengekstrak, menormalkan, dan meresolusi nilai pertanggungan, lalu mengirim **hanya kolom hasilnya**:
+
+```jsonc
+{
+  "message": "Buatkan penawaran, beberapa opsi",
+  "documents": [
+    { "type": "STNK", "confidence": 0.96,
+      "fields": { "plate": "B 1234 XYZ", "brand": "Toyota", "model": "…", "year": 2022,
+                  "province": "DKI Jakarta", "zone": 2, "market_value": 204840000 } },
+    { "type": "KTP", "fields": { "name": "BUDI SANTOSO", "nik": "…", "address": "…" } }
+  ]
+}
+```
+
+Gambar tidak pernah melewati fungsi ini. `sanitizeDocuments()` hanya mempercayai *bentuk*-nya; isinya tetap data tak tepercaya yang wajib diambil model lewat `read_attachment` — tidak pernah masuk system prompt. Hanya **jenis** lampiran (enum tetap) yang disebut di prompt, supaya model tahu ada yang perlu dibaca.
+
+`build_quotation` mengembalikan payload berbentuk `AgentQuoteSource` (`services/quotationSlipAdapter.ts`). Klien meneruskannya ke `fromAgentQuote()` lalu `publishAndDownloadQuotation()` — **pipeline yang sama persis dengan `components/car-wizard/StepFinal.tsx`**, sehingga proposal dari chat identik dengan proposal dari wizard beli kendaraan.
+
+**Premi dihitung ulang di `build_quotation`**, bukan dibawa dari `compare_offers`. Angka pada dokumen komersial harus berasal dari mesin tarif pada permintaan itu, bukan dari riwayat percakapan.
 
 ## Aturan keamanan
 

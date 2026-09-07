@@ -3,7 +3,7 @@ import PromoBanner from './components/PromoBanner';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin } from './services/supabaseService';
+import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
 import TermsModal from './components/TermsModal';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -134,7 +134,10 @@ const App = () => {
   const [lang, setLang]           = useState<Language>(detectLang);
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
-  const [pendingOAuthUser, setPendingOAuthUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  // An authenticated user with no profile yet, waiting to pick an account
+  // type. Reached from Google OAuth, email OTP, or any other sign-in that
+  // carries no role — not OAuth-only, hence the name.
+  const [pendingRoleUser, setPendingRoleUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [showTc, setShowTc] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -317,12 +320,43 @@ const App = () => {
           });
         } else if (result.noProfile) {
           // Server explicitly confirmed no sp_users row for this auth ID.
-          // Safe to route through role selection for a genuinely new signup.
-          setPendingOAuthUser({
-            id: u.id,
-            name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email!.split('@')[0],
-            email: u.email!,
-          });
+          //
+          // Email/password signup already recorded the chosen account type in
+          // the Supabase Auth metadata, and that metadata is what survives the
+          // email-confirmation round trip (possibly on another device). Honor
+          // it instead of asking again — re-asking here would let someone who
+          // registered as Mitra land back on the picker and answer Nasabah.
+          const metaRole = String(u.user_metadata?.role ?? '').toUpperCase();
+          const intended = metaRole === 'AGENT' ? 'AGENT' : metaRole === 'CUSTOMER' ? 'CUSTOMER' : null;
+          const displayName =
+            u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email!.split('@')[0];
+
+          if (intended) {
+            const refCode = localStorage.getItem('SUREPATH_REF') || null;
+            const created = await ensureProfile({
+              name: displayName,
+              role: intended,
+              referral_code: refCode,
+            }).catch(() => null);
+            if (created) {
+              if (refCode) localStorage.removeItem('SUREPATH_REF');
+              if (!isTcCachedLocally(created.id)) setShowTc(true);
+              handleAuthSuccess({
+                id: created.id, name: created.name, email: created.email,
+                role: created.role as UserRole, supabaseId: created.id,
+                nodeId: created.agent_code ?? `SP-${u.id.slice(0, 8).toUpperCase()}`,
+                trustScore: created.trust_score ?? 85,
+                allowed_apps: (created as any).allowed_apps ?? null,
+              });
+              return;
+            }
+            // Creation failed — fall through to the picker rather than
+            // stranding them; it calls ensure_profile again with a role.
+          }
+
+          // No account type on record: this sign-in carried none (Google
+          // OAuth, and any other method without signup metadata). Ask.
+          setPendingRoleUser({ id: u.id, name: displayName, email: u.email! });
         } else {
           // Transient error (5xx, network, timeout). Do NOT show the role
           // picker — that would risk creating a wrong-role profile for an
@@ -349,7 +383,14 @@ const App = () => {
         }
       });
 
-      const oauthTimeout = setTimeout(() => setOauthLoading(false), 10000);
+      // Safety valve for a sign-in that never resolves. It must not fire while
+      // a profile lookup is still running: dropping to AuthGate mid-flight is
+      // how a brand-new OAuth user used to get a profile created underneath
+      // the role picker. AuthGate no longer creates one blindly, but keeping
+      // the guard honest also avoids a pointless flash of the login screen.
+      const oauthTimeout = setTimeout(() => {
+        if (!resolved) setOauthLoading(false);
+      }, 10000);
       return () => { subscription.unsubscribe(); clearTimeout(oauthTimeout); };
     }
   }, [handleAuthSuccess]);
@@ -401,11 +442,11 @@ const App = () => {
 
   if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
   if (oauthLoading && !currentUser) return <PortalLoader />;
-  if (pendingOAuthUser) return (
+  if (pendingRoleUser) return (
     <RoleSelectionScreen
-      oauthUser={pendingOAuthUser}
-      onComplete={user => { setPendingOAuthUser(null); handleAuthSuccess(user); }}
-      onCancel={() => { setPendingOAuthUser(null); handleLogout(); }}
+      authUser={pendingRoleUser}
+      onComplete={user => { setPendingRoleUser(null); handleAuthSuccess(user); }}
+      onCancel={() => { setPendingRoleUser(null); handleLogout(); }}
     />
   );
   if (entryUser) return <AppEntryScreen name={entryUser.name} onDone={() => setEntryUser(null)} lang={lang} darkMode={darkMode} />;
@@ -506,7 +547,7 @@ const App = () => {
   }
 
   if (['/login', '/custapp', '/agapps'].includes(pathname) && !currentUser) {
-    return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} /></Suspense>;
+    return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} onNeedsRoleSelection={setPendingRoleUser} /></Suspense>;
   }
 
   // Allow direct navigation to /operatorapp when not signed in (will hit OperatorLogin below).
@@ -651,7 +692,7 @@ const App = () => {
 
   // Default: render AuthGate (login screen)
   return (
-    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} /></Suspense>
+    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} onNeedsRoleSelection={setPendingRoleUser} /></Suspense>
   );
 };
 

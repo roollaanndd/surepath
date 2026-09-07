@@ -6,7 +6,11 @@ import { ensureProfile, createB2BClientProfile, applyReferralCode } from '../ser
 type Role = 'CUSTOMER' | 'AGENT' | 'B2B_CLIENT';
 
 interface Props {
-  oauthUser: {
+  // Any authenticated user who has no profile yet — Google OAuth, email OTP,
+  // or any other sign-in that carries no account type. Formerly `oauthUser`,
+  // which under-described it: the picker is the single place where a brand-new
+  // account's type is decided, whatever the sign-in method.
+  authUser: {
     id: string;
     name: string;
     email: string;
@@ -63,7 +67,7 @@ const ROLE_CARDS = [
   },
 ];
 
-const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel }) => {
+const RoleSelectionScreen: React.FC<Props> = ({ authUser, onComplete, onCancel }) => {
   const [selected, setSelected] = useState<Role | null>(null);
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -90,7 +94,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       if (selected === 'CUSTOMER') {
         // referral_code links this user to the upline who shared the ?ref= link
         profile = await ensureProfile({
-          name: oauthUser.name,
+          name: authUser.name,
           phone: phone.trim(),
           role: 'CUSTOMER',
           referral_code: refCode || null,
@@ -98,7 +102,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         if (profile && refCode) localStorage.removeItem('SUREPATH_REF');
       } else if (selected === 'AGENT') {
         profile = await ensureProfile({
-          name: oauthUser.name,
+          name: authUser.name,
           phone: phone.trim(),
           role: 'AGENT',
           referral_code: refCode || null,
@@ -111,9 +115,9 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
         }
       } else {
         profile = await createB2BClientProfile({
-          id: oauthUser.id,
-          name: oauthUser.name,
-          email: oauthUser.email,
+          id: authUser.id,
+          name: authUser.name,
+          email: authUser.email,
           phone: phone.trim(),
           company_name: companyName.trim(),
         });
@@ -126,8 +130,8 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       }
 
       // ROLE STICKINESS: the server may have returned an EXISTING profile with
-      // a different role than the user just clicked (e.g. this OAuth login is
-      // for an account that already registered as AGENT — we must never
+      // a different role than the user just clicked (e.g. this sign-in is for
+      // an account that already registered as AGENT — we must never
       // downgrade them to CUSTOMER just because they picked wrong here).
       // `__existed` is set by ensureProfile from the server's `existed` flag.
       // For B2B (createB2BClientProfile) it's undefined; that path always
@@ -270,7 +274,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ oauthUser, onComplete, onCancel 
       </div>
 
       <p className="text-white/15 text-[0.6rem] mt-5 text-center">
-        Masuk sebagai: {oauthUser.email}
+        Masuk sebagai: {authUser.email}
       </p>
     </div>
   );

@@ -1,12 +1,30 @@
 # SurePath Session Context
-**Updated:** 2026-09-07 (sesi debug Pathy + Pathy agent ber-tools)
+**Updated:** 2026-09-07 (Pathy agent + perbaikan pemilihan tipe akun)
 
 ## Current State
-- **main:** v1.55.0 live. Branch kerja `claude/pathy-chatbot-debug-offers-igs9g0` membawa **v1.56.0** (Pathy agent) — belum merge.
+- **main:** v1.55.0. Branch `claude/pathy-chatbot-debug-offers-igs9g0` = **v1.57.0** (PR #100): Pathy agent + fix signup role.
 - `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya.
-- **Edge function `pathy-agent` SUDAH DI-DEPLOY (v2, verify_jwt true)** dan sumbernya diverifikasi identik byte-per-byte dengan repo. Web build-nya belum tayang sampai PR merge → Vercel.
-- **PR #100 hijau** (quality-check ✅, unit-tests ✅, Vercel preview ✅), tanpa konflik dan tanpa review thread terbuka — tinggal menunggu review/merge user.
-- **`data-gateway` BELUM di-deploy ulang** padahal `actions/misc.ts` berubah (`save_quote` → `quote_data`). Perbaikan sisi klien sudah cukup, tapi deploy tetap disarankan: `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`.
+- **`pathy-agent` DEPLOYED (v2)**, sumber diverifikasi identik byte-per-byte dengan repo.
+- **`data-gateway` HARUS di-deploy** — `actions/users.ts` (409 ROLE_REQUIRED) dan `actions/misc.ts` (`save_quote` → `quote_data`) sudah berubah di repo.
+  ⚠️ **Urutan penting:** merge → tunggu Vercel live → baru deploy data-gateway. Bundle web lama memanggil `ensureProfile()` tanpa role; kalau gateway di-deploy duluan, pendaftar baru di bundle basi kena 409 dan gagal bikin profil.
+
+## v1.57.0 — Tipe akun wajib dipilih (2026-09-07)
+### Akar masalah "user baru selalu masuk aplikasi customer"
+Layar `RoleSelectionScreen` sudah ada, tapi **kalah cepat**. `AuthGate.buildUserObj` memanggil `ensureProfile()` **tanpa argumen**; server default ke `CUSTOMER`; profil tercipta duluan; `App.tsx` hanya menampilkan pemilih role kalau profil **belum** ada.
+Tiga pintu masuknya:
+1. **APK Android** — deep link OAuth tanpa `?code=` → penjaga `oauthLoading` tak aktif → `AuthGate` yang menangani sesi. Pengguna Android **selalu** jadi nasabah.
+2. **Web lambat** — timeout 10 detik menurunkan `oauthLoading` selagi lookup jalan.
+3. **Error sementara** — `resolveAndLogin` fallback login dengan role `CUSTOMER`.
+
+### Perbaikan
+- `AuthGate.buildUserObj` **read-only**; buat profil hanya kalau role diketahui dari `user_metadata`; selain itu prop baru **`onNeedsRoleSelection`** → pemilih role.
+- `App.tsx`: teruskan prop itu ke kedua render `AuthGate`; `pendingOAuthUser` → **`pendingRoleUser`**; prop `RoleSelectionScreen` `oauthUser` → **`authUser`**; timeout `oauthLoading` tidak menyalip lookup yang berjalan.
+- Konfirmasi email: `App.tsx` membaca `user_metadata.role` dan langsung membuat profil — **tidak menanyakan ulang** (kalau ditanya ulang, pilihan Mitra bisa berubah jadi Nasabah).
+- `signUp` mengirim `regRole`, bukan hardcode `CUSTOMER`.
+- Error sementara → tampilkan pesan, **jangan** login dengan role tebakan.
+- **Server:** `ensure_profile` menolak membuat profil tanpa role → **409 `ROLE_REQUIRED`**, tidak menulis baris. Ini backstop supaya bug ini tidak bisa lahir lagi dari klien mana pun.
+- Uji: `services/__tests__/signupRole.test.ts` (8 kasus).
+- Catatan: mengimpor modul edge function ke vitest menarik file itu ke program tsconfig → `noUnusedLocals` menyala. `actions/users.ts` destructuring-nya dirapikan.
 
 ## v1.56.0 — Pathy agent (2026-09-07)
 ### Akar masalah "Pathy ga jalan" (infrastruktur ternyata sehat)

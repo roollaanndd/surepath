@@ -1,6 +1,6 @@
 # SurePath — Alur Autentikasi & Registrasi
 
-> Terakhir diperbarui: 10 Juni 2026 (setelah perbaikan besar auth — PR #3).
+> Terakhir diperbarui: 7 September 2026 (v1.57.0 — tipe akun wajib dipilih, tidak pernah diasumsikan).
 
 ## Identitas: dua lapisan
 
@@ -11,6 +11,24 @@ Keduanya dihubungkan oleh action gateway **`ensure_profile`**: membuat baris `sp
 dari identitas JWT terverifikasi (id & email dari token, name/phone/role dari signup metadata)
 jika belum ada. Idempoten — aman dipanggil berulang.
 
+### ⚠️ Aturan tipe akun (v1.57.0)
+
+**`ensure_profile` tidak akan pernah membuat profil tanpa role yang dinyatakan.** Dulu ia
+jatuh ke `'CUSTOMER'` ketika pemanggil maupun metadata signup tidak menyebut role — dan
+`AuthGate.buildUserObj` memang memanggilnya tanpa argumen. Akibatnya setiap pendaftar baru
+yang tidak membawa role (Google OAuth, dan alur apa pun tanpa metadata signup) diam-diam
+dijadikan nasabah **sebelum** layar pemilihan tipe akun sempat tampil. Kini pemanggilan
+tanpa role dijawab **409 `ROLE_REQUIRED`** dan tidak ada baris yang ditulis.
+
+Satu-satunya sumber role saat pembuatan profil:
+1. `params.role` — dipilih pengguna di `RoleSelectionScreen` atau `AgentOnboarding`, atau
+2. `user_metadata.role` — ditanam saat `signUp`, sehingga pilihan bertahan melewati
+   konfirmasi email (bahkan di perangkat lain).
+
+Role juga **immutable** lewat endpoint ini: profil yang sudah ada tidak pernah diturunkan
+ke role yang diminta klien (lihat "ROLE STICKINESS" di `actions/users.ts`). Satu-satunya
+jalur ubah role adalah `admin_update_user` yang teraudit.
+
 ⚠️ Akun lama (admin `angkouw84@gmail.com`, agent `angkouw777@gmail.com`) punya `sp_users.id`
 yang BERBEDA dari auth id; gateway mencocokkan `id.eq OR email.eq` sehingga tetap jalan.
 Jangan "merapikan" id ini — `sp_clients`, `sp_commissions`, dll mereferensikan id lama.
@@ -18,10 +36,15 @@ Jangan "merapikan" id ini — `sp_clients`, `sp_commissions`, dll mereferensikan
 ## Alur per skenario
 
 ### 1. Registrasi Customer (`AuthGate.tsx` → `handleRegister`)
-1. `supabase.auth.signUp(email, password, { data: { name, role: 'CUSTOMER' } })`
-2. Jika ada sesi langsung (autoconfirm aktif) → `resolveAndLogin` → `ensure_profile` membuat profil.
-3. Jika butuh konfirmasi email → layar CHECK_EMAIL; profil dibuat oleh `ensure_profile`
-   saat login pertama (metadata role/nama ikut di token).
+1. Form registrasi punya toggle **Nasabah / Mitra** (`regRole`). Pilihan Mitra dialihkan ke
+   `AgentOnboarding`; Nasabah lanjut di sini.
+2. `supabase.auth.signUp(email, password, { data: { name, role: regRole } })` — role yang
+   dikirim adalah yang dipilih pengguna (dulu di-hardcode `'CUSTOMER'`).
+3. Jika ada sesi langsung (autoconfirm aktif) → `resolveAndLogin` → `ensure_profile({ role })`.
+4. Jika butuh konfirmasi email → layar CHECK_EMAIL. Saat pengguna kembali dari tautan email,
+   `App.tsx` membaca `user_metadata.role` dan membuat profil dengan role itu — pemilihan
+   tipe akun tidak ditanyakan ulang (menanyakan ulang berarti pilihan Mitra bisa berubah
+   jadi Nasabah).
 
 ### 2. Registrasi Agent (`AgentOnboarding.tsx`)
 1. Step 1: nama/email/HP/password → Step 2: KTP/alamat (opsional) + persetujuan.
@@ -33,15 +56,25 @@ Jangan "merapikan" id ini — `sp_clients`, `sp_commissions`, dll mereferensikan
 
 ### 3. Login email+password (`AuthGate.tsx` → `handleLogin`)
 1. `signInWithPassword` → `resolveAndLogin` → `buildUserObj`.
-2. `buildUserObj` memanggil `ensure_profile()` (tanpa parameter; fallback ke metadata token).
-3. Profil ada → objek user dengan role asli. Profil gagal dibuat → fallback CUSTOMER generik.
+2. `buildUserObj` **membaca saja** (`get_my_profile` via `fetchMyProfileForLogin`), tidak
+   membuat. Tiga kemungkinan:
+   - **profil ada** → objek user dengan role aslinya;
+   - **404 (belum ada profil)** → jika `user_metadata.role` ada, profil dibuat dengan role
+     itu; jika tidak ada, `onNeedsRoleSelection` → `RoleSelectionScreen`;
+   - **gagal sementara** (5xx/jaringan) → tampilkan error, **jangan** login dengan role
+     tebakan. Role yang salah menulis baris yang salah dan tidak memperbaiki diri sendiri.
 
 ### 4. Google OAuth
 1. `signInWithOAuth({ provider: 'google' })` — redirect ke origin (web) atau
    `com.myinsurepath.os://auth-callback` (native).
-2. `App.tsx` (startup) menangkap sesi → cari profil. Tidak ada profil →
-   `RoleSelectionScreen` → user pilih role → `ensure_profile({ role, phone, name })`
-   (B2B masih lewat `createB2BClientProfile`).
+2. `App.tsx` (startup) menangkap sesi → cari profil. Tidak ada profil dan tidak ada role di
+   metadata → `RoleSelectionScreen` → user pilih Nasabah / Mitra / Klien Korporat →
+   `ensure_profile({ role, phone, name })` (B2B lewat `createB2BClientProfile`).
+3. **Dua jalur, satu layar.** Pada web, `?code=` di URL membuat `App.tsx` menahan render
+   (`oauthLoading`) sampai profil selesai dicek. Pada APK native (deep link) tidak ada
+   `?code=`, jadi `AuthGate` yang sedang tampil ikut menangkap event `SIGNED_IN` — karena
+   itu `AuthGate` juga harus bisa memunculkan pemilih role, lewat prop
+   `onNeedsRoleSelection`. Tanpa itu, pengguna Android selalu berakhir sebagai nasabah.
 
 ### 5. OTP Email / Magic Link & Reset Password
 - Ditangani di `AuthGate.tsx`: `signInWithOtp` (shouldCreateUser=false), `verifyOtp`,
@@ -60,3 +93,13 @@ Jangan "merapikan" id ini — `sp_clients`, `sp_commissions`, dll mereferensikan
 | Agent login di APK jadi CUSTOMER | CORS gateway menolak origin `https://localhost` | Izinkan `https://localhost` & `capacitor://localhost` |
 | Profil customer kadang tidak tersimpan | Upsert `sp_users` langsung dari browser (rapuh terhadap RLS) | Dihapus; diganti `ensure_profile` server-side |
 | 4 akun lama tanpa profil | Sisa bug lama | Backfill manual ke `sp_users` (10 Juni 2026) |
+
+## Riwayat bug yang sudah diperbaiki (v1.57.0, 7 September 2026)
+
+| Bug | Akar masalah | Fix |
+|---|---|---|
+| Setiap pendaftar baru masuk ke aplikasi nasabah, pemilihan tipe akun tidak pernah muncul | `AuthGate.buildUserObj` memanggil `ensure_profile()` **tanpa role**, dan server diam-diam default ke `CUSTOMER` — profil sudah tercipta sebelum `RoleSelectionScreen` sempat jalan | Lookup di `AuthGate` jadi read-only; profil hanya dibuat kalau rolenya sudah diketahui, selain itu `onNeedsRoleSelection` → pemilih role. Server menolak pembuatan tanpa role (409 `ROLE_REQUIRED`) |
+| Pengguna APK Android selalu jadi nasabah | Deep-link OAuth tidak membawa `?code=`, jadi penjaga `oauthLoading` di `App.tsx` tidak aktif dan `AuthGate` yang menangani sesi — lalu membuat profil `CUSTOMER` | `AuthGate` kini bisa memanggil pemilih role lewat `onNeedsRoleSelection` |
+| Pilihan "Mitra" di form registrasi tidak ikut ke signup | `options.data.role` di-hardcode `UserRole.CUSTOMER`, mengabaikan toggle `regRole` | Kirim `regRole` |
+| Login gagal sementara → user masuk sebagai nasabah | `resolveAndLogin` menangkap error lalu login dengan objek fallback ber-role `CUSTOMER` | Tampilkan error dan minta coba lagi; jangan pernah menebak role |
+| Layar login berkedip di tengah OAuth | Timeout 10 detik menurunkan `oauthLoading` walau pencarian profil masih berjalan | Timeout hanya berlaku kalau tidak ada proses yang berjalan |

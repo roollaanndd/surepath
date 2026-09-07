@@ -6,9 +6,10 @@
 // The model can therefore hallucinate an id all it wants and still only ever
 // read or write the caller's own rows.
 //
-// Read tools are unrestricted. There is exactly one write tool
-// (create_quote → sp_quotes, a non-binding penawaran). Nothing here touches
-// money tables (sp_agent_wallets, sp_wallet_transactions, sp_commissions are
+// Read tools are unrestricted. Exactly two tools write, and both write the same
+// thing: a non-binding DRAFT row in sp_quotes — create_quote (a single priced
+// option) and build_quotation (a full proposal). Nothing here touches money
+// tables (sp_agent_wallets, sp_wallet_transactions and sp_commissions are
 // read-only), orders, claims, or payments.
 
 import {

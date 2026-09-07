@@ -2,11 +2,18 @@
 **Updated:** 2026-09-07 (Pathy agent + perbaikan pemilihan tipe akun)
 
 ## Current State
-- **main:** v1.55.0. Branch `claude/pathy-chatbot-debug-offers-igs9g0` = **v1.57.0** (PR #100): Pathy agent + fix signup role.
+- **main = v1.57.0, SUDAH LIVE** di myinsurepath.com (squash `5ce3bee`, PR #100 merged 2026-09-07). Vercel production READY, bundle memuat `1.57.0`.
 - `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging, jangan dipercaya.
-- **`pathy-agent` DEPLOYED (v2)**, sumber diverifikasi identik byte-per-byte dengan repo.
-- **`data-gateway` HARUS di-deploy** — `actions/users.ts` (409 ROLE_REQUIRED) dan `actions/misc.ts` (`save_quote` → `quote_data`) sudah berubah di repo.
-  ⚠️ **Urutan penting:** merge → tunggu Vercel live → baru deploy data-gateway. Bundle web lama memanggil `ensureProfile()` tanpa role; kalau gateway di-deploy duluan, pendaftar baru di bundle basi kena 409 dan gagal bikin profil.
+- **`pathy-agent` DEPLOYED (v2)** — sumber diverifikasi identik byte-per-byte dengan repo.
+- ⚠️ **`data-gateway` BELUM di-deploy** padahal `actions/users.ts` + `actions/misc.ts` sudah berubah di repo. Jalankan dari mesin yang punya source:
+
+  ```
+  supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi
+  ```
+
+  **Situs tidak rusak tanpa ini** — bundle baru hanya memanggil `ensure_profile` dengan role eksplisit, yang ditangani baik oleh gateway lama. Yang belum aktif: (a) backstop 409 `ROLE_REQUIRED`, (b) perbaikan `save_quote` → `quote_data`, jadi **Agent Quote Builder masih gagal menyimpan penawaran** (sudah rusak sejak lama, bukan regresi baru).
+
+  Alasan tidak di-deploy dari sesi Claude: MCP `deploy_edge_function` menuntut seluruh 17 berkas (~200 KB) di-inline dalam satu tool call. Menyalin-ulang dispatcher inti platform — termasuk `orders.ts` dan `wallet.ts` yang menyentuh uang — lewat string JSON tanpa bisa memverifikasi byte-parity **sebelum** live, risikonya tidak sepadan. `pathy-agent` aman karena fungsi baru tanpa pemanggil.
 
 ## v1.57.0 — Tipe akun wajib dipilih (2026-09-07)
 ### Akar masalah "user baru selalu masuk aplikasi customer"

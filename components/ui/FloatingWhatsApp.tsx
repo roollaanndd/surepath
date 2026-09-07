@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { useHaptic } from './useHaptic';
+import { SUREPATH_WHATSAPP } from '../../constants';
 
 export interface FloatingWhatsAppProps {
   /** Phone number in international format, no + (e.g. "6281234567890") */
@@ -20,7 +21,7 @@ export interface FloatingWhatsAppProps {
 }
 
 export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
-  phoneNumber = '6282199920300',  // SurePath business number
+  phoneNumber = SUREPATH_WHATSAPP,
   defaultMessage = 'Halo SurePath, saya mau tanya tentang asuransi mobil.',
 }) => {
   const [dismissed, setDismissed] = useState(false);

@@ -101,11 +101,11 @@ export const PRODUCTS: ProductInfo[] = [
     name: 'Personal Safety (Kecelakaan Diri)',
     category: 'Retail',
     coverageType: 'N/A',
-    description: 'Santunan cepat kecelakaan diri dengan instant approval 60 detik. Meliputi cacat tetap, meninggal dunia, dan biaya medis akibat kecelakaan.',
+    description: 'Santunan kecelakaan diri dengan pendaftaran online singkat. Meliputi cacat tetap, meninggal dunia, dan biaya medis akibat kecelakaan.',
     minPremium: 50000,
     maxPremium: 5000000,
     features: [
-      'Instant approval dalam 60 detik',
+      'Pendaftaran online singkat',
       'Santunan meninggal dunia hingga Rp 500jt',
       'Santunan cacat tetap (paruh/total)',
       'Reimbursement biaya medis akibat kecelakaan',

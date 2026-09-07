@@ -52,7 +52,7 @@ These actions use token-based auth (review token or insurer auth token) passed i
 | `redeem_coins` | `coins, description` | `{ ok }` | Redeem coins (self) |
 | `get_leaderboard` | — | `leaderboard[]` | Get agent leaderboard |
 | `create_policy_order` | `order data...` | `sp_policy_orders row` | Create new policy order |
-| `pathy_chat` | `message` | `{ reply }` | AI chat assistant |
+| `pathy_chat` | `message` | `{ reply }` | AI chat lama (butuh `ANTHROPIC_API_KEY`, tidak diset → 503). **Deprecated** — Pathy kini lewat edge function `pathy-agent`, lihat `docs/PATHY_AGENT.md`. |
 
 ---
 

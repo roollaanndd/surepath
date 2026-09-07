@@ -203,17 +203,21 @@ export interface SpCommission {
   paid_at?: string;
 }
 
+// Mirrors public.sp_quotes. FIX: the payload column is `quote_data` (NOT NULL)
+// — this type called it `details`, a column that does not exist, so every
+// saveQuote() insert was rejected by Postgres (both through the gateway and
+// through its direct-insert fallback). There is no `updated_at` column either.
 export interface SpQuote {
   id: string;
   agent_id: string;
-  client_id?: string;
+  client_id?: string | null;
   client_name: string;
-  product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
+  product_type: 'CAR' | 'MOTOR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   status: 'DRAFT' | 'SENT' | 'CONVERTED' | 'EXPIRED';
   premium_estimate: number;
-  details: any;
+  quote_data: any;
+  expires_at?: string | null;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface AgentStats {

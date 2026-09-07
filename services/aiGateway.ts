@@ -30,15 +30,24 @@ export interface AIResponse {
 }
 
 // ─── Core: Call AI Gateway (via local server with z-ai SDK) ─────────────────
-// On Vercel production the local /api/ai-gateway endpoint has no z-ai SDK and
-// returns 503/404, so we fall back to the ai-proxy edge function (OpenRouter,
-// authenticated with the user's Supabase JWT) with the same system prompt.
+// `npm run dev` serves /api/ai-gateway from server.ts (z-ai SDK + caching, PII
+// redaction and prompt-injection layers). Production is a static Vercel build:
+// vercel.json excludes `api/` from the SPA rewrite and there is no api/
+// directory, so that path is a guaranteed 404 there. FIX: only try it in dev —
+// previously every AI call in production burned a round-trip and logged a
+// console error before falling through. Production goes straight to the
+// ai-proxy edge function (OpenRouter, authenticated with the user's JWT).
 async function callAIGateway(
   agentType: AgentType,
   userMessage: string,
   context?: Record<string, any>,
+  extraMessages?: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<AIResponse> {
   const systemPrompt = buildSystemPrompt(agentType, context);
+
+  if (!import.meta.env.DEV) {
+    return await callAiProxyFallback(systemPrompt, userMessage, extraMessages);
+  }
 
   try {
     // Call the local server's /api/ai-gateway endpoint (uses z-ai SDK)
@@ -61,12 +70,16 @@ async function callAIGateway(
     return data as AIResponse;
   } catch (e) {
     console.warn(`AI Gateway unavailable for ${agentType}, falling back to ai-proxy:`, e);
-    return await callAiProxyFallback(systemPrompt, userMessage);
+    return await callAiProxyFallback(systemPrompt, userMessage, extraMessages);
   }
 }
 
 // ─── Fallback: ai-proxy edge function (OpenRouter) ──────────────────────────
-async function callAiProxyFallback(systemPrompt: string, userMessage: string): Promise<AIResponse> {
+async function callAiProxyFallback(
+  systemPrompt: string,
+  userMessage: string,
+  extraMessages?: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<AIResponse> {
   const { supabase } = await import('./db');
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
@@ -83,6 +96,7 @@ async function callAiProxyFallback(systemPrompt: string, userMessage: string): P
       model: 'openai/gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
+        ...(extraMessages ?? []),
         { role: 'user', content: userMessage },
       ],
       max_tokens: 1500,
@@ -118,15 +132,25 @@ export async function askPathy(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<string> {
-  // Include conversation history for context
-  const fullMessage = conversationHistory && conversationHistory.length > 0
-    ? `Riwayat percakapan:\n${conversationHistory.map(m => `${m.role === 'user' ? 'User' : 'Pathy'}: ${m.content}`).join('\n')}\n\nPertanyaan terakhir: ${message}`
-    : message;
+  // FIX: history goes through as real chat turns. It used to be flattened into
+  // one "Riwayat percakapan: …" string inside the user message, which both
+  // wasted the model's turn structure and let a pasted transcript read as
+  // instructions. Keep the last few turns only — this path has no tools and
+  // exists as the degraded fallback behind pathy-agent.
+  const history = (conversationHistory ?? []).slice(-8).map(m => ({
+    role: m.role,
+    content: String(m.content ?? '').slice(0, 2000),
+  }));
 
-  const response = await callAIGateway('pathy', fullMessage, {
-    products: PRODUCTS.map(p => ({ code: p.code, name: p.name, minPremium: p.minPremium })),
-    company: COMPANY_INFO,
-  });
+  const response = await callAIGateway(
+    'pathy',
+    message,
+    {
+      products: PRODUCTS.map(p => ({ code: p.code, name: p.name, minPremium: p.minPremium })),
+      company: COMPANY_INFO,
+    },
+    history,
+  );
 
   return response.content;
 }

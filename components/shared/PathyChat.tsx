@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Language } from '../../types';
-import { pathyChat } from '../../services/supabaseService';
-
-const WHATSAPP_NUMBER = '6280000000000'; // placeholder — do NOT treat as a real number
+import { pathyChat, PathyError } from '../../services/supabaseService';
+import type { PathyCard } from '../../services/supabaseService';
+import { SUREPATH_WHATSAPP } from '../../constants';
 
 type Lang = Language | 'EN' | 'ID';
 const isEN = (lang: Lang) => lang === Language.EN;
@@ -64,28 +64,42 @@ function ensurePathyChatKeyframes() {
 interface QuickReply {
   id: string;
   chipEn: string; chipId: string;
-  answerEn: string; answerId: string;
+  /** Sent to Pathy as if the user typed it, so the answer uses their real data. */
+  promptEn?: string; promptId?: string;
+  /** Canned client-side answer — only for actions that never need the model. */
+  answerEn?: string; answerId?: string;
   action?: 'whatsapp';
+  agentOnly?: boolean;
 }
 
+// FIX: these used to be canned paragraphs ("open the History tab…") that never
+// touched the user's account. They now ask Pathy the real question, so the
+// answer comes back with the caller's own policies, claims and numbers.
 const QUICK_REPLIES: QuickReply[] = [
   {
-    id: 'claim',
-    chipEn: 'How to claim?', chipId: 'Cara klaim?',
-    answerEn: 'Filing a claim is easy: open the Claim tab, snap a photo of the damage, fill in the short form, and submit. Our AI reviews it and you can track the status anytime in History.',
-    answerId: 'Klaim itu mudah: buka tab Klaim, foto kerusakannya, isi formulir singkat, lalu kirim. AI kami akan meninjau dan kamu bisa pantau statusnya kapan saja di Riwayat.',
+    id: 'policies',
+    chipEn: 'My policies', chipId: 'Polis saya',
+    promptEn: 'Show my policies and their status.',
+    promptId: 'Tampilkan daftar polis saya beserta statusnya.',
   },
   {
-    id: 'status',
-    chipEn: 'Policy status', chipId: 'Status polis',
-    answerEn: 'You can see all your active policies and their expiry dates in the History tab. Each policy shows whether it is active, under review, or issued.',
-    answerId: 'Kamu bisa melihat semua polis aktif dan tanggal berakhirnya di tab Riwayat. Setiap polis menampilkan status: aktif, sedang dikaji, atau sudah terbit.',
+    id: 'claims',
+    chipEn: 'Claim status', chipId: 'Status klaim',
+    promptEn: 'What is the status of my claims?',
+    promptId: 'Bagaimana status klaim saya?',
   },
   {
-    id: 'premium',
-    chipEn: 'Calculate premium', chipId: 'Hitung premi',
-    answerEn: 'To get an estimate, open the Buy tab and pick a product. The wizard calculates your premium based on your details in a few taps.',
-    answerId: 'Untuk estimasi, buka tab Beli lalu pilih produk. Wizard akan menghitung premimu berdasarkan datamu dalam beberapa ketukan.',
+    id: 'quote',
+    chipEn: 'Create a quote', chipId: 'Buat penawaran',
+    promptEn: 'I want a car insurance quote.',
+    promptId: 'Aku mau buat penawaran asuransi mobil.',
+  },
+  {
+    id: 'sales',
+    chipEn: 'Sales report', chipId: 'Laporan penjualan',
+    promptEn: 'Show my sales report for this month.',
+    promptId: 'Tampilkan laporan penjualanku bulan ini.',
+    agentOnly: true,
   },
   {
     id: 'whatsapp',
@@ -96,10 +110,215 @@ const QUICK_REPLIES: QuickReply[] = [
   },
 ];
 
+const AGENT_ROLES = new Set(['AGENT', 'AGENT_LEADER', 'MASTER_ADMIN', 'ADMIN']);
+
+// ─── Card rendering ──────────────────────────────────────────────────────────
+// Numbers come straight from the tool result, not from the model's prose, so
+// a premium or policy number can never drift in the retelling.
+
+const rp = (n: unknown) => 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+const shortDate = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+const STATUS_TONE: Record<string, string> = {
+  ISSUED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  ACTIVE: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  PAID: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  APPROVED: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  PENDING: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  DRAFT: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  REVIEW: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  REJECTED: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+  CANCELLED: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+};
+
+const Pill: React.FC<{ value?: string | null }> = ({ value }) => {
+  const key = String(value ?? '').toUpperCase();
+  return (
+    <span className={`px-1.5 py-0.5 rounded-full text-[0.55rem] font-black tracking-wide ${
+      STATUS_TONE[key] ?? 'bg-slate-500/15 text-slate-600 dark:text-slate-300'
+    }`}>
+      {key || '—'}
+    </span>
+  );
+};
+
+const CardShell: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div className="mt-2 rounded-2xl border border-emerald-500/20 bg-white dark:bg-slate-800 overflow-hidden">
+    <p className="px-3 py-1.5 text-[0.55rem] font-black uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10">
+      {title}
+    </p>
+    <div className="px-3 py-2 space-y-2">{children}</div>
+  </div>
+);
+
+const Row: React.FC<{ label: React.ReactNode; value: React.ReactNode }> = ({ label, value }) => (
+  <div className="flex items-baseline justify-between gap-3 text-[0.68rem]">
+    <span className="text-slate-500 dark:text-slate-400">{label}</span>
+    <span className="font-bold text-slate-800 dark:text-slate-100 text-right">{value}</span>
+  </div>
+);
+
+const PathyCardView: React.FC<{ card: PathyCard; en: boolean }> = ({ card, en }) => {
+  const t = (id: string, e: string) => (en ? e : id);
+  const d = card.data ?? {};
+
+  switch (card.type) {
+    case 'policies': {
+      const list = (d.policies ?? []) as any[];
+      if (list.length === 0) {
+        return (
+          <CardShell title={t('Polis', 'Policies')}>
+            <p className="text-[0.68rem] text-slate-500">{t('Belum ada polis pada akun ini.', 'No policies on this account yet.')}</p>
+          </CardShell>
+        );
+      }
+      return (
+        <CardShell title={t(`Polis (${list.length})`, `Policies (${list.length})`)}>
+          {list.map((o, i) => (
+            <div key={o.order_number ?? i} className="pb-2 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-black text-[0.7rem] text-slate-800 dark:text-slate-100">{o.policy_number || o.order_number}</span>
+                <Pill value={o.status} />
+              </div>
+              <p className="text-[0.65rem] text-slate-500 dark:text-slate-400">{o.product}{o.insurer ? ` · ${o.insurer}` : ''}</p>
+              <div className="flex justify-between text-[0.62rem] text-slate-500 dark:text-slate-400 mt-0.5">
+                <span>{t('Premi', 'Premium')}: {rp(o.total_premium)}</span>
+                <span>{t('s/d', 'until')} {shortDate(o.end_date)}</span>
+              </div>
+            </div>
+          ))}
+        </CardShell>
+      );
+    }
+    case 'policy_detail':
+      return (
+        <CardShell title={t('Detail Polis', 'Policy Detail')}>
+          <Row label={t('Nomor', 'Number')} value={d.policy_number || d.order_number} />
+          <Row label={t('Produk', 'Product')} value={d.product} />
+          <Row label="Status" value={<Pill value={d.status} />} />
+          <Row label={t('Pertanggungan', 'Sum insured')} value={rp(d.sum_insured)} />
+          <Row label={t('Total premi', 'Total premium')} value={rp(d.total_premium)} />
+          <Row label={t('Periode', 'Period')} value={`${shortDate(d.start_date)} – ${shortDate(d.end_date)}`} />
+        </CardShell>
+      );
+    case 'claims': {
+      const list = (d.claims ?? []) as any[];
+      if (list.length === 0) {
+        return (
+          <CardShell title={t('Klaim', 'Claims')}>
+            <p className="text-[0.68rem] text-slate-500">{t('Belum ada klaim pada akun ini.', 'No claims on this account yet.')}</p>
+          </CardShell>
+        );
+      }
+      return (
+        <CardShell title={t(`Klaim (${list.length})`, `Claims (${list.length})`)}>
+          {list.map((c, i) => (
+            <div key={c.claim_number ?? i} className="pb-2 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-black text-[0.7rem] text-slate-800 dark:text-slate-100">{c.claim_number}</span>
+                <Pill value={c.status} />
+              </div>
+              <div className="flex justify-between text-[0.62rem] text-slate-500 dark:text-slate-400 mt-0.5">
+                <span>{shortDate(c.incident_date)}</span>
+                <span>{c.amount_approved != null ? `${t('Disetujui', 'Approved')}: ${rp(c.amount_approved)}` : `${t('Estimasi', 'Estimated')}: ${rp(c.amount_estimated)}`}</span>
+              </div>
+            </div>
+          ))}
+        </CardShell>
+      );
+    }
+    case 'quotes': {
+      const list = (d.quotes ?? []) as any[];
+      if (list.length === 0) {
+        return (
+          <CardShell title={t('Penawaran', 'Quotes')}>
+            <p className="text-[0.68rem] text-slate-500">{t('Belum ada penawaran tersimpan.', 'No saved quotes yet.')}</p>
+          </CardShell>
+        );
+      }
+      return (
+        <CardShell title={t(`Penawaran (${list.length})`, `Quotes (${list.length})`)}>
+          {list.map((q, i) => (
+            <div key={q.id ?? i} className="flex items-center justify-between gap-2 text-[0.68rem]">
+              <span className="truncate text-slate-700 dark:text-slate-200">{q.client_name} · {q.product_type}</span>
+              <span className="font-black text-slate-800 dark:text-slate-100">{rp(q.premium_estimate)}</span>
+            </div>
+          ))}
+        </CardShell>
+      );
+    }
+    case 'premium':
+      return (
+        <CardShell title={t('Estimasi Premi', 'Premium Estimate')}>
+          <Row label={t('Pertanggungan', 'Sum insured')} value={rp(d.sum_insured)} />
+          <Row label={t('Jenis', 'Coverage')} value={d.coverageType} />
+          <Row label={t('Zona OJK', 'OJK zone')} value={`${d.zone} · ${t('kategori', 'category')} ${d.category}`} />
+          <Row label={t('Tarif dasar', 'Base rate')} value={`${d.ratePercent}%`} />
+          <Row label={t('Premi dasar', 'Base premium')} value={rp(d.basePremium)} />
+          {Number(d.addonPremium) > 0 && <Row label={t('Perluasan', 'Add-ons')} value={rp(d.addonPremium)} />}
+          <Row label={t('Biaya admin + materai', 'Admin + stamp')} value={rp(Number(d.adminFee) + Number(d.stampDuty))} />
+          <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
+            <Row label={<span className="font-black">{t('Total estimasi', 'Estimated total')}</span>} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.total)}</span>} />
+          </div>
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
+            {t(
+              `Tarif OJK ${d.rateSetVersion ?? ''} — estimasi indikatif, premi final ditentukan insurer.`,
+              `OJK tariff ${d.rateSetVersion ?? ''} — indicative estimate; the insurer sets the final premium.`,
+            )}
+          </p>
+        </CardShell>
+      );
+    case 'quote_created':
+      return (
+        <CardShell title={t('Penawaran Tersimpan', 'Quote Saved')}>
+          <Row label={t('Untuk', 'For')} value={d.client_name} />
+          <Row label={t('Produk', 'Product')} value={`${d.product_type} · ${d.coverage_type}`} />
+          {d.vehicle_description && <Row label={t('Kendaraan', 'Vehicle')} value={d.vehicle_description} />}
+          <Row label={t('Estimasi premi', 'Estimated premium')} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.premium_estimate)}</span>} />
+          <Row label={t('Berlaku s/d', 'Valid until')} value={shortDate(d.expires_at)} />
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
+            {t('Status DRAFT — ini penawaran indikatif, belum penerbitan polis.', 'DRAFT status — an indicative quote, not a policy issuance.')}
+          </p>
+        </CardShell>
+      );
+    case 'sales_report':
+      return (
+        <CardShell title={t('Laporan Penjualan', 'Sales Report')}>
+          <Row label={t('Order', 'Orders')} value={`${d.total_orders} (${d.paid_orders} ${t('terbayar', 'paid')})`} />
+          <Row label={t('Premi bruto', 'Gross premium')} value={rp(d.gross_premium)} />
+          <Row label={t('Premi terbayar', 'Paid premium')} value={rp(d.paid_premium)} />
+          <Row label={t('Komisi (terbayar)', 'Commission (paid)')} value={rp(d.commission_earned_on_paid)} />
+          {d.wallet && (
+            <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
+              <Row label={t('Saldo dompet', 'Wallet balance')} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.wallet.balance)}</span>} />
+            </div>
+          )}
+        </CardShell>
+      );
+    case 'products':
+      return (
+        <CardShell title={t('Produk SurePath', 'SurePath Products')}>
+          {((d.products ?? []) as any[]).map((pr, i) => (
+            <div key={pr.code ?? i} className="text-[0.66rem]">
+              <span className="font-black text-slate-800 dark:text-slate-100">{pr.name}</span>
+              <p className="text-slate-500 dark:text-slate-400 leading-snug">{pr.summary}</p>
+            </div>
+          ))}
+        </CardShell>
+      );
+    default:
+      return null;
+  }
+};
+
 interface Message {
   id: number;
   from: 'bot' | 'user';
   text: string;
+  cards?: PathyCard[];
+  /** Answered from the knowledge base only — Pathy could not reach the user's data. */
+  degraded?: boolean;
 }
 
 interface PathyChatProps {
@@ -109,18 +328,26 @@ interface PathyChatProps {
 
 const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
   const en = isEN(lang);
+  const isAgent = AGENT_ROLES.has(String(currentUser?.role ?? '').toUpperCase());
+  const quickReplies = QUICK_REPLIES.filter(qr => !qr.agentOnly || isAgent);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const msgIdRef = useRef(0);
+  // Read inside `ask` so the callback never closes over a stale transcript and
+  // never needs `messages` in its dependency list (which would re-create it on
+  // every keystroke-driven render).
+  const messagesRef = useRef<Message[]>([]);
+  const loadingRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { ensurePathyChatKeyframes(); }, []);
 
-  const t = (idText: string, enText: string) => (en ? enText : idText);
+  // Stable across renders so the `ask` callback below is not rebuilt on every keystroke.
+  const t = useCallback((idText: string, enText: string) => (en ? enText : idText), [en]);
 
   const greeting = currentUser?.name
     ? t(
@@ -140,6 +367,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    messagesRef.current = messages;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
@@ -152,50 +380,78 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const pushMessage = useCallback((from: 'bot' | 'user', text: string) => {
+  const pushMessage = useCallback((
+    from: 'bot' | 'user',
+    text: string,
+    extra?: { cards?: PathyCard[]; degraded?: boolean },
+  ) => {
     msgIdRef.current += 1;
     const id = msgIdRef.current;
-    setMessages(prev => [...prev, { id, from, text }]);
+    setMessages(prev => [...prev, { id, from, text, ...extra }]);
   }, []);
 
-  const handleSend = useCallback(async () => {
-    const msg = input.trim();
-    if (!msg || loading) return;
-    setInput('');
+  // Shared by the composer and the quick-action chips so a chip answer is the
+  // real, data-backed one rather than a canned paragraph.
+  const ask = useCallback(async (msg: string) => {
+    if (!msg || loadingRef.current) return;
+    loadingRef.current = true;
     pushMessage('user', msg);
     setLoading(true);
     try {
-      // FIX v1.46.0: pass conversation history for context-aware responses
-      const history = messages.map(m => ({
-        role: (m.from === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-        content: m.text,
-      }));
-      const reply = await pathyChat(msg, history);
-      pushMessage('bot', reply);
+      const history = messagesRef.current
+        .filter(m => !m.degraded || m.from === 'user')
+        .slice(-8)
+        .map(m => ({
+          role: (m.from === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+          content: m.text,
+        }));
+      const res = await pathyChat(msg, history);
+      pushMessage('bot', res.reply, { cards: res.cards, degraded: res.degraded });
     } catch (e: any) {
-      const notConfigured = String(e?.message ?? '').toLowerCase().includes('not configured');
-      pushMessage('bot', notConfigured
-        ? t('Fitur AI Pathy akan segera hadir! Sementara itu, gunakan pilihan cepat di bawah.', 'Pathy AI is coming soon! For now, use the quick actions below.')
-        : t('Maaf, ada gangguan sementara. Silakan coba lagi.', 'Sorry, a temporary issue occurred. Please try again.')
-      );
+      // FIX: every failure used to collapse into "Pathy AI is coming soon",
+      // which hid expired sessions, rate limits and outages alike.
+      const code = e instanceof PathyError ? e.code : 'UNAVAILABLE';
+      const text =
+        code === 'AUTH'
+          ? t('Sesi kamu sudah berakhir. Login ulang dulu ya, biar aku bisa lihat data polismu.',
+              'Your session has expired. Please log in again so I can see your policy data.')
+        : code === 'RATE_LIMIT'
+          ? t('Kita sudah ngobrol banyak jam ini 😅 Coba lagi sebentar lagi ya.',
+              "We have chatted a lot this hour 😅 Please try again a little later.")
+        : code === 'NOT_CONFIGURED'
+          ? t('Layanan AI Pathy belum aktif di lingkungan ini. Sementara ini hubungi agen lewat WhatsApp ya.',
+              'Pathy AI is not enabled in this environment yet. Please reach an agent on WhatsApp for now.')
+          : t('Maaf, aku lagi ada gangguan. Coba lagi sebentar lagi ya 🙏',
+              'Sorry, I am having trouble right now. Please try again shortly 🙏');
+      pushMessage('bot', text);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
-  }, [input, loading, pushMessage, t]);
+  }, [pushMessage, t]);
+
+  const handleSend = useCallback(() => {
+    const msg = input.trim();
+    if (!msg) return;
+    setInput('');
+    void ask(msg);
+  }, [input, ask]);
 
   const handleQuick = useCallback((qr: QuickReply) => {
-    pushMessage('user', en ? qr.chipEn : qr.chipId);
-    const answer = en ? qr.answerEn : qr.answerId;
-    window.setTimeout(() => {
-      pushMessage('bot', answer);
-      if (qr.action === 'whatsapp') {
+    if (qr.action === 'whatsapp') {
+      pushMessage('user', en ? qr.chipEn : qr.chipId);
+      const answer = (en ? qr.answerEn : qr.answerId) ?? '';
+      window.setTimeout(() => {
+        if (answer) pushMessage('bot', answer);
         const text = encodeURIComponent(
           en ? 'Hi SurePath, I need help with insurance.' : 'Halo SurePath, saya butuh bantuan soal asuransi.',
         );
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${text}`, '_blank', 'noopener,noreferrer');
-      }
-    }, 350);
-  }, [en, pushMessage]);
+        window.open(`https://wa.me/${SUREPATH_WHATSAPP}?text=${text}`, '_blank', 'noopener,noreferrer');
+      }, 350);
+      return;
+    }
+    void ask((en ? qr.promptEn : qr.promptId) ?? (en ? qr.chipEn : qr.chipId));
+  }, [en, ask, pushMessage]);
 
   const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -258,8 +514,8 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
           <div className="flex-shrink-0 px-3 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200/60 dark:border-amber-700/30">
             <p className="text-[0.58rem] text-amber-700 dark:text-amber-400 font-medium leading-snug text-center">
               {t(
-                'Pathy dapat melihat data kamu tetapi tidak dapat mengubah apapun.',
-                'Pathy can view your data but cannot modify anything.',
+                'Pathy bisa melihat polis & klaim kamu dan membuat draf penawaran — tidak bisa mengubah polis, klaim, atau dana.',
+                'Pathy can read your policies & claims and draft a quote — it cannot change policies, claims, or money.',
               )}
             </p>
           </div>
@@ -268,14 +524,27 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#fafaf9] dark:bg-[#0a0a0a]">
             {messages.map(m => (
               <div key={m.id} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[85%] px-3.5 py-2.5 text-xs font-medium leading-relaxed rounded-2xl ${
-                    m.from === 'user'
-                      ? 'bg-emerald-500 text-white rounded-br-md'
-                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-md border border-slate-100 dark:border-white/5 shadow-sm'
-                  }`}
-                >
-                  {m.text}
+                <div className={`max-w-[88%] ${m.from === 'user' ? '' : 'w-full'}`}>
+                  <div
+                    className={`px-3.5 py-2.5 text-xs font-medium leading-relaxed rounded-2xl whitespace-pre-wrap ${
+                      m.from === 'user'
+                        ? 'bg-emerald-500 text-white rounded-br-md'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-md border border-slate-100 dark:border-white/5 shadow-sm'
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                  {m.cards?.map((card, i) => (
+                    <PathyCardView key={`${m.id}-${i}`} card={card} en={en} />
+                  ))}
+                  {m.degraded && (
+                    <p className="mt-1 px-1 text-[0.55rem] text-amber-600 dark:text-amber-400 leading-snug">
+                      {t(
+                        'Jawaban umum — aku belum bisa membaca data akunmu saat ini.',
+                        'General answer — I could not read your account data just now.',
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -326,7 +595,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
               {t('Pilihan Cepat', 'Quick Actions')}
             </p>
             <div className="flex flex-wrap gap-2">
-              {QUICK_REPLIES.map(qr => (
+              {quickReplies.map(qr => (
                 <button
                   key={qr.id}
                   type="button"

@@ -36,6 +36,12 @@ export const EXPANSION_RATES = {
   PA_PASSENGER: 0.1,  // 0.10% of PA sum assured per seat; assumes Rp25M SA → Rp25k premium
 };
 export const STAMP_DUTY = 10000;
+
+// SurePath business WhatsApp — single source for every click-to-chat handoff
+// (floating button on the marketing site, Pathy's "chat agen" action, …).
+// PathyChat used to carry its own `6280000000000` placeholder, so that button
+// opened a chat with a number that does not exist.
+export const SUREPATH_WHATSAPP = '6282199920300';
 // TODO: confirm vs OJK commission cap (typ. 15–20%)
 export const BASE_COMMISSION_PERCENT = 25; // 25% Komisi untuk semua asuransi
 

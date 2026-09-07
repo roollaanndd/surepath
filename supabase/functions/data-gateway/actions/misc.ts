@@ -111,6 +111,9 @@ ${UNTRUSTED_INPUT_NOTICE}`;
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
         // FIX v1.50.0: use canonical sp_users.id so the quote shows up in the
         // agent's own list (which queries by sp_users.id).
+        // FIX: the payload column is `quote_data` (NOT NULL). This wrote to
+        // `details`, which does not exist on sp_quotes — so every save was
+        // rejected and the agent's quote builder reported a save failure.
         const { data, error } = await db.from('sp_quotes').insert({
           agent_id: caller.ownerId,
           client_id: params.client_id ?? null,
@@ -118,7 +121,7 @@ ${UNTRUSTED_INPUT_NOTICE}`;
           product_type: String(params.product_type ?? 'CAR'),
           status: String(params.status ?? 'SENT'),
           premium_estimate: Number(params.premium_estimate ?? 0),
-          details: params.details ?? {},
+          quote_data: params.quote_data ?? params.details ?? {},
         }).select().single();
         if (error) return json({ error: error.message }, 400);
         return json({ data });

@@ -616,6 +616,8 @@ export function fromB2BQuote(q: B2BQuoteSource, companyName?: string): Quotation
 export interface AgentQuoteSource {
   clientName: string;
   clientPhone?: string;
+  /** Insured's address, e.g. read off their KTP. Printed on the slip. */
+  clientAddress?: string;
   agentName: string;
   agentCode?: string;
   agentPhone?: string;
@@ -705,7 +707,7 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
       : `${productName}. Penawaran proteksi untuk ${q.clientName}, disiapkan oleh ${q.agentName}${q.agentCode ? ` (${q.agentCode})` : ''}, ditempatkan melalui ${insurerShort}.`,
 
     insuredName: q.clientName,
-    insuredAddress: '-',
+    insuredAddress: q.clientAddress || '-',
     vehicleBrand: q.vehicleBrand,
     vehicleType: q.vehicleModel,
     vehicleYear: q.vehicleYear ? String(q.vehicleYear) : '-',

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ScanFace, ImageIcon, Plus, RefreshCw, ShieldCheck, UserCheck, Cpu, CheckCircle2, AlertCircle, FileDown, Loader2 } from 'lucide-react';
 import { ScannerOverlay } from './WizardUI';
-import { extractKtpData } from '../../services/geminiService';
+import { extractKtpOcr } from '../../services/ktpOcr';
 import { REGEX } from '../../services/authService';
 
 interface StepKYCProps {
@@ -21,6 +21,9 @@ const StepKYC: React.FC<StepKYCProps> = ({
   const isNikValid = useMemo(() => REGEX.NIK.test(kycData.ktp), [kycData.ktp]);
   const isPhoneValid = useMemo(() => REGEX.PHONE.test(kycData.phone), [kycData.phone]);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  // What the KTP scan wants the user to do next (bad lighting, NIK not 16
+  // digits, service down). Silence used to be the only feedback on failure.
+  const [scanNote, setScanNote] = useState<string | null>(null);
 
   const generateKtpPdf = async () => {
     if (!kycData.photo) return;
@@ -212,22 +215,25 @@ const StepKYC: React.FC<StepKYCProps> = ({
                   reader.onload = async () => {
                     const base64 = reader.result as string;
                     setKycData((prev: any) => ({ ...prev, photo: base64 }));
-                    const response = await extractKtpData(base64);
+                    // FIX v2.1.0: goes through the validated KTP service. A
+                    // failure used to leave the form blank with no explanation
+                    // — now it says what to do about it.
+                    const res = await extractKtpOcr(base64);
                     setLoading(false);
                     setLoadingType(null);
-                    if (response.success && response.data) {
-                      const newVerified = new Set<string>();
-                      if (response.data.name) newVerified.add('name');
-                      if (response.data.nik) newVerified.add('ktp');
-                      if (response.data.address) newVerified.add('address');
-                      setVerifiedFields(newVerified);
-                      setKycData((prev: any) => ({
-                        ...prev,
-                        name: response.data.name?.toUpperCase() || prev.name,
-                        ktp: response.data.nik || prev.ktp,
-                        address: response.data.address?.toUpperCase() || prev.address
-                      }));
-                    }
+                    setScanNote(res.notes ?? null);
+
+                    const newVerified = new Set<string>();
+                    if (res.validation.name) newVerified.add('name');
+                    if (res.validation.nik) newVerified.add('ktp');
+                    if (res.validation.address) newVerified.add('address');
+                    setVerifiedFields(newVerified);
+                    setKycData((prev: any) => ({
+                      ...prev,
+                      name: res.name || prev.name,
+                      ktp: res.nik || prev.ktp,
+                      address: res.address || prev.address,
+                    }));
                   };
                   reader.readAsDataURL(file);
                 }}
@@ -252,6 +258,13 @@ const StepKYC: React.FC<StepKYCProps> = ({
             </div>
             
             <div className="space-y-5">
+              {scanNote && (
+                <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-700/30">
+                  <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-[0.7rem] font-medium text-amber-800 dark:text-amber-300 leading-snug">{scanNote}</p>
+                </div>
+              )}
+
               <div className="space-y-2 relative">
                 <label className="text-[0.55rem] font-black uppercase text-gray-400 ml-2 tracking-widest">Nama Lengkap (Sesuai KTP)</label>
                 <div className="relative group">

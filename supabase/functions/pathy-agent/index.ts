@@ -24,7 +24,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from '../_shared/promptSafety.ts';
 import { loadRateSet } from '../_shared/ojk.ts';
-import { runTool, toolSchemas, type PathyCaller, type PathyCard, type ToolContext } from './tools.ts';
+import { runTool, toolSchemas, type PathyCaller, type PathyCard, type PathyDocument, type ToolContext } from './tools.ts';
 
 const MODEL = 'openai/gpt-4o-mini';
 const MAX_TOOL_ROUNDS = 4;
@@ -32,7 +32,34 @@ const MAX_HISTORY_TURNS = 8;
 const MAX_MESSAGE_CHARS = 2000;
 const HOURLY_LIMIT = 60;
 
-function systemPrompt(role: string): string {
+const MAX_DOCUMENTS = 4;
+
+/**
+ * Keeps only the shape we expect. `type` is a fixed enum (safe to name in the
+ * system prompt); `fields` never goes near the prompt — the model reaches it
+ * through read_attachment, which returns it as tool output.
+ */
+function sanitizeDocuments(raw: unknown): PathyDocument[] {
+  if (!Array.isArray(raw)) return [];
+  const out: PathyDocument[] = [];
+  for (const d of raw.slice(0, MAX_DOCUMENTS)) {
+    if (!d || typeof d !== 'object') continue;
+    const rec = d as Record<string, unknown>;
+    const type = String(rec.type ?? '').toUpperCase();
+    if (type !== 'STNK' && type !== 'KTP') continue;
+    if (!rec.fields || typeof rec.fields !== 'object') continue;
+    const conf = typeof rec.confidence === 'number' && Number.isFinite(rec.confidence)
+      ? Math.max(0, Math.min(1, rec.confidence))
+      : undefined;
+    out.push({ type, fields: rec.fields as Record<string, unknown>, confidence: conf });
+  }
+  return out;
+}
+
+function systemPrompt(role: string, attachedTypes: string[] = []): string {
+  const attachmentLine = attachedTypes.length > 0
+    ? `\n\nLAMPIRAN\nPengguna melampirkan dokumen berikut di pesan ini: ${attachedTypes.join(', ')}. Panggil read_attachment untuk membacanya. Jangan menebak isinya.`
+    : '';
   return `Kamu adalah Pathy, asisten AI SurePath (PT. Ruang Proteksi Indonesia), platform distribusi asuransi digital di Indonesia yang berizin dan diawasi OJK.
 
 PENGGUNA
@@ -49,11 +76,19 @@ ATURAN ANGKA (WAJIB)
 - Setiap nomor polis, nomor order, nomor klaim, tanggal, dan status HARUS berasal dari hasil tool. Kalau tool tidak mengembalikannya, katakan datanya tidak ada.
 - Selalu sebut angka premi sebagai "estimasi"; premi final ditentukan insurer setelah underwriting.
 
-ALUR PENAWARAN
-1. Kumpulkan dulu: jenis kendaraan (mobil/motor), harga/nilai pertanggungan, provinsi, dan jenis pertanggungan (Comprehensive atau TLO). Tanyakan yang belum ada — satu-dua pertanyaan sekaligus, jangan interogasi.
+ALUR PENAWARAN CEPAT (satu jenis pertanggungan)
+1. Kumpulkan dulu: jenis kendaraan (mobil/motor), harga/nilai pertanggungan, provinsi, dan jenis pertanggungan. Tanyakan yang belum ada — satu-dua pertanyaan sekaligus, jangan interogasi.
 2. Panggil estimate_premium.
 3. Sampaikan hasilnya, tawarkan menyimpan penawaran.
-4. Panggil create_quote HANYA setelah pengguna setuju. Penawaran tersimpan sebagai DRAFT dan bukan penerbitan polis.
+4. Panggil create_quote HANYA setelah pengguna setuju. Tersimpan sebagai DRAFT, bukan penerbitan polis.
+
+ALUR PROPOSAL PENAWARAN (beberapa opsi + PDF)
+Dipakai saat pengguna minta "beberapa opsi", "bandingkan", atau "buatkan penawaran/proposal".
+1. Kalau ada lampiran STNK, panggil read_attachment('STNK'). Dari situ kamu dapat merk, tipe, tahun, plat, provinsi, dan nilai pertanggungan.
+2. Kalau ada lampiran KTP, panggil read_attachment('KTP') untuk nama dan alamat tertanggung. Kalau tidak ada, tanyakan namanya.
+3. Panggil compare_offers sekali — ia mengembalikan tiga opsi sekaligus (Comprehensive, Comprehensive + perluasan, TLO). Ringkas bedanya dalam satu-dua kalimat; angkanya sudah tampil sebagai kartu.
+4. Tanyakan pengguna mau opsi yang mana.
+5. Panggil build_quotation dengan option_id pilihannya. Antarmuka lalu menampilkan tombol unduh PDF — jangan pernah bilang PDF sudah terkirim atau polis sudah terbit.
 
 BATASAN
 - Kamu TIDAK BISA: menerbitkan polis, memproses pembayaran, mengubah data polis/klaim, mencairkan komisi atau saldo dompet, memberi diskon, atau menjanjikan persetujuan klaim/polis.
@@ -61,7 +96,7 @@ BATASAN
 - Kamu hanya membahas asuransi dan layanan SurePath. Di luar itu (kode, dokumen non-asuransi, politik, agama, saran medis/investasi definitif), tolak dengan ramah lalu arahkan kembali ke topik asuransi.
 - Jangan pernah menampilkan data nasabah lain.
 
-${UNTRUSTED_INPUT_NOTICE}`;
+${UNTRUSTED_INPUT_NOTICE}${attachmentLine}`;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -114,7 +149,7 @@ Deno.serve(async (req) => {
   // so reads must match both.
   const { data: spUser } = await db
     .from('sp_users')
-    .select('id,name,role')
+    .select('id,name,role,phone,agent_code')
     .or(`id.eq.${authId},email.ilike.${email}`)
     .maybeSingle();
 
@@ -126,6 +161,8 @@ Deno.serve(async (req) => {
     role: spUser?.role ?? 'CUSTOMER',
     name: spUser?.name ?? '',
     email,
+    phone: spUser?.phone ?? undefined,
+    agentCode: spUser?.agent_code ?? undefined,
   };
 
   // ── Rate limit (persistent, per UTC hour) ─────────────────────────────────
@@ -150,15 +187,20 @@ Deno.serve(async (req) => {
   const userMessage = String(body?.message ?? '').trim().slice(0, MAX_MESSAGE_CHARS);
   if (!userMessage) return json({ error: 'Pesan kosong.' }, 400);
 
+  // Documents the client already OCR'd for this turn. Only the shape is trusted
+  // here; the contents stay untrusted data the model must fetch via
+  // read_attachment rather than read out of the prompt.
+  const documents = sanitizeDocuments(body?.documents);
+
   // deno-lint-ignore no-explicit-any
   const messages: any[] = [
-    { role: 'system', content: systemPrompt(caller.role) },
+    { role: 'system', content: systemPrompt(caller.role, documents.map(d => d.type)) },
     ...sanitizeHistory(body?.history),
     { role: 'user', content: wrapUserContent(userMessage) },
   ];
 
   const tools = toolSchemas(caller.role);
-  const ctx: ToolContext = { db, caller, rateSet: await loadRateSet(db) };
+  const ctx: ToolContext = { db, caller, rateSet: await loadRateSet(db), documents };
   const cards: PathyCard[] = [];
   const toolsUsed: string[] = [];
   const started = Date.now();

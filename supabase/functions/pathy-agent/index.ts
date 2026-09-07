@@ -16,7 +16,8 @@
 //     from model arguments — see tools.ts.
 //   • User free text never enters the system prompt; it is wrapped in
 //     untrusted-input delimiters inside user-role messages.
-//   • Exactly one write tool (create_quote → sp_quotes). No money-table writes.
+//   • Only two write tools (create_quote and build_quotation, both → sp_quotes
+//     as DRAFT). No money-table writes, no order or claim writes.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from 'npm:@supabase/supabase-js@2';

@@ -51,12 +51,12 @@ const AccessibilitySettings: React.FC<Props> = ({ lang }) => {
               onClick={() => setUiScale(opt.value)}
               className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
                 selected
-                  ? 'border-emerald-500 bg-ds-green-tint'
+                  ? 'border-ds-green bg-ds-green-tint'
                   : 'border-ds-border bg-ds-card hover:border-emerald-300'
               }`}
             >
               {selected && (
-                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-ds-green flex items-center justify-center">
                   <Check size={10} className="text-white" strokeWidth={3} />
                 </span>
               )}

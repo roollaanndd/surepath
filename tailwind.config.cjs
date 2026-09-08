@@ -93,6 +93,10 @@ module.exports = {
         'ds-red':        'var(--ds-red)',
         'ds-purple':     'var(--ds-purple)',
         'ds-purple-lt':  'var(--ds-purple-lt)',
+        // Semantic tints — mode-aware, so status chips stay legible in dark mode
+        'ds-blue-lt':    'var(--ds-info-tint)',
+        'ds-amber-lt':   'var(--ds-warning-tint)',
+        'ds-red-lt':     'var(--ds-danger-tint)',
         // SurePath brand — always-on values (not mode-switched)
         'sp-green':      '#00C16A',
         'sp-emerald':    '#003B2F',

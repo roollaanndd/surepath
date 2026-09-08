@@ -8,7 +8,7 @@
    ═══════════════════════════════════════════════════════════════════════════
 
    Consolidates the four parallel color systems that existed before (DS-v2
-   CSS vars, unused HSL landing tokens, Tailwind lp-*/primary/brand, and
+   CSS vars, unused HSL landing tokens, Tailwind lp-x + primary + brand, and
    234 inline hex values) into ONE semantic token system.
 
    Old tokens (--ds-bg, --ds-card, --ds-ink, etc.) are preserved as aliases

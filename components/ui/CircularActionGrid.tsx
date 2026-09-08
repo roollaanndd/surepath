@@ -17,13 +17,20 @@
 // Reference: Screenshot_20260607_232228_Livin' by Mandiri.jpg
 
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 import { useHaptic } from './useHaptic';
+
+/** Any SurePath icon — lucide or a duotone icon from the custom sets. */
+export type ActionIcon = React.ComponentType<{
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  strokeWidth?: number;
+}>;
 
 export interface CircularAction {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: ActionIcon;
   /** Background color of the circle (hex) */
   color: string;
   /** Optional badge count (e.g. unread notifications) */
@@ -63,9 +70,12 @@ export const CircularActionGrid: React.FC<CircularActionGridProps> = ({
               style={{
                 backgroundColor: tintBg,
                 boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.4), 0 4px 12px -4px ${action.color}40`,
+                // duotone icons read their fill from this var, so the glyph's
+                // tint layer always matches its tile
+                ['--ic-tint' as string]: `${action.color}2E`,
               }}
             >
-              <Icon size={24} style={{ color: action.color }} strokeWidth={2} />
+              <Icon size={28} style={{ color: action.color }} strokeWidth={2} />
               {action.badge && action.badge > 0 && (
                 <span
                   className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-ds-red text-white text-[0.55rem] font-black flex items-center justify-center"

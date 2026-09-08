@@ -4,6 +4,45 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.4.0 — 2026-09-08
+
+### Aplikasi Nasabah kini satu keluarga dengan aplikasi Agen — plus satu bug token yang mematikan seluruh mode terang
+
+**Temuan terpenting: token desain mode terang mati sejak DS v3 (2026-07-06)**
+
+Komentar pembuka `styles.css` berbunyi `Tailwind lp-*/primary/brand` — urutan `*/` di situ **menutup komentar CSS lebih awal**. Sisa kalimatnya lalu terbaca sebagai selector, dan blok `:root { --ds-bg … }` tepat sesudahnya tertelan sebagai badan selector rusak itu. Akibatnya seluruh custom property mode terang tidak pernah terdefinisi: setiap kelas `bg-ds-*`, `text-ds-*`, `border-ds-*` di seluruh aplikasi jatuh ke `transparent`/warna warisan. Blok `.dark` tidak terdampak, jadi mode gelap selama ini justru satu-satunya yang benar.
+
+Satu kata diganti, dan seluruh sistem token hidup kembali — di semua portal, bukan hanya nasabah.
+
+**Kerangka portal jadi satu komponen bersama**
+
+Header dan navigasi bawah tidak lagi disalin per portal:
+
+- `components/shared/PortalHeader.tsx` — logo, label portal, identitas, lonceng + badge angka, tombol tema, avatar → Profil. Identitas dipotong (`truncate`), bukan dibungkus, supaya tinggi header tetap 70px; versi aplikasi menyingkir di layar sempit (profil tetap menampilkannya penuh).
+- `components/shared/PortalTabBar.tsx` — pil mengambang dengan aksi tengah terangkat, ikon 23/26px, status aktif berupa chip bertint.
+
+Agen dan nasabah sekarang memakai keduanya, jadi keduanya tidak bisa lagi berbeda diam-diam.
+
+**Navigasi nasabah: Pathy naik ke tengah**
+
+Susunannya kini Beranda · Beli · **[Pathy]** · Klaim · Riwayat — bentuk yang sama dengan agen (dua tab, aksi tengah, dua tab). Slot tengah membuka Pathy sebagai overlay lewat `PATHY_OPEN_EVENT`, bukan berpindah halaman, dan tombol mengambang Pathy dimatikan di portal nasabah supaya pintunya cuma satu. Profil pindah ke avatar di header — persis seperti agen. Ini melanjutkan keputusan v2.3.0: Pathy adalah pintu layanan.
+
+**Ikon nasabah naik kelas**
+
+`components/shared/duotone.tsx` mengangkat resep menggambar `AgentIcons` (grid 48, goresan 3px, lapisan tint, satu aksen emas) menjadi milik bersama; `components/shared/CustomerIcons.tsx` memakainya. Beranda, Profil dan Klaim sengaja digambar identik dengan set agen — konsep yang sama harus terlihat sama di semua portal. Set outline tipis 24-grid lama (`CustomIcons`) tidak lagi dipakai portal nasabah.
+
+**Sisanya**
+
+- Notifikasi nasabah naik dari dropdown 288px jadi drawer penuh. `AgentNotifications` sekarang tipis membungkus `shared/NotificationDrawer` — satu implementasi, dan warnanya pindah ke token sehingga mode gelap ikut benar.
+- `HeroCard` punya dua rupa (`emerald`, `navy`) dengan geometri sama. Hero ungu satu-satunya di halaman Klaim dan gradien inline di Riwayat diganti; sekarang hanya ada satu bahasa hero.
+- Token semantik `ds-blue-lt` / `ds-amber-lt` / `ds-red-lt` ditambahkan ke Tailwind, dipetakan ke `--ds-*-tint` yang sudah ada, lalu semua `bg-amber-50` / `bg-rose-50` / `bg-gray-100` / `bg-slate-100` / `dark:bg-[#161616]` di `CustomerPortal`, `OrderDetailSheet` dan `AccessibilitySettings` diganti. Chip status akhirnya terbaca di mode gelap.
+- Portal nasabah memakai `font-sora` seperti agen.
+- Aksi cepat "AI Bantu" dan CTA "Chat dengan Pathy" kini benar-benar membuka Pathy, bukan halaman HealthChat.
+
+**Tidak disentuh:** data-gateway, dompet, alur pembayaran, dan seluruh edge function. Ini murni lapisan tampilan.
+
+---
+
 ## v2.3.0 — 2026-09-08
 
 ### Pathy jadi satu-satunya pintu layanan + kunci zoom di aplikasi

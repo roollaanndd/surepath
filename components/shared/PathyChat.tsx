@@ -714,16 +714,30 @@ interface Message {
   degraded?: boolean;
 }
 
+/** Fired by a portal to open Pathy from its own chrome (e.g. the bottom-nav
+ *  centre action) instead of the floating launcher. */
+export const PATHY_OPEN_EVENT = 'surepath:pathy-open';
+
 interface PathyChatProps {
   lang: Lang;
   currentUser?: { name?: string; id?: string; role?: string };
+  /** Hide the floating launcher — the portal opens Pathy itself via
+   *  PATHY_OPEN_EVENT, so there is only one entry point on screen. */
+  hideLauncher?: boolean;
 }
 
-const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
+const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher = false }) => {
   const en = isEN(lang);
   const isAgent = AGENT_ROLES.has(String(currentUser?.role ?? '').toUpperCase());
   const quickReplies = QUICK_REPLIES.filter(qr => !qr.agentOnly || isAgent);
   const [open, setOpen] = useState(false);
+
+  // Portals with Pathy in their bottom nav open the panel through this event.
+  useEffect(() => {
+    const openPathy = () => setOpen(true);
+    window.addEventListener(PATHY_OPEN_EVENT, openPathy);
+    return () => window.removeEventListener(PATHY_OPEN_EVENT, openPathy);
+  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -955,7 +969,9 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
 
   return (
     <>
-      {/* Floating action button */}
+      {/* Floating action button — hidden when the portal supplies its own
+          entry point (e.g. the raised centre tab in the customer nav). */}
+      {!hideLauncher && (
       <button
         ref={buttonRef}
         type="button"
@@ -971,6 +987,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
           <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse motion-reduce:animate-none" />
         )}
       </button>
+      )}
 
       {/* Chat panel */}
       {open && (
@@ -979,7 +996,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
           aria-modal="false"
           aria-label={t('Asisten Pathy', 'Pathy assistant')}
           data-pathychat-anim
-          className="fixed bottom-48 right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] flex flex-col rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]"
+          className={`fixed ${hideLauncher ? 'bottom-28' : 'bottom-48'} right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] flex flex-col rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]`}
           style={{ animation: 'pathychat-pop 0.28s cubic-bezier(.22,1,.36,1)' }}
         >
           {/* Header */}

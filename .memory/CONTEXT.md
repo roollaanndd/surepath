@@ -4,9 +4,16 @@
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
 - **main = v2.3.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
-- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0** (9 tool layanan baru + 2 berkas baru `common.ts`/`serviceTools.ts`). Tanpa itu tool barunya tidak ada di produksi:
+- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0** (9 tool layanan baru + 2 berkas baru `common.ts`/`serviceTools.ts`). Tanpa itu tool barunya tidak ada di produksi. Web v2.3.0 sudah live, jadi tinggal:
   `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-  Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.
+
+### ❌ Deploy edge function TIDAK BISA dilakukan dari sesi Claude — ini batas keras, bukan soal kehati-hatian
+Sudah dicoba dua-duanya pada 2026-09-08; catat supaya tidak diulang:
+1. **CLI** (`npx supabase@latest functions deploy …`) — CLI-nya tersedia lewat npx, tapi container tidak punya kredensial:
+   `LegacyPlatformAuthRequiredError: Access token not provided.` `supabase login` interaktif, jadi buntu.
+2. **MCP `deploy_edge_function`** — menuntut SELURUH berkas fungsi di-inline dalam SATU tool call. `pathy-agent` = 8 berkas / ~116 KB, dan itu **melebihi batas output satu giliran**: panggilannya terpotong sebelum `index.ts` sempat ditulis, server menolak dengan `BadRequestException: Entrypoint path does not exist`. **Produksi tidak tersentuh** (diverifikasi: `pathy-agent` tetap v3 ACTIVE) — gagalnya aman, tapi tetap gagal. Berlaku sama untuk `data-gateway` yang lebih besar lagi.
+
+**Solusi permanen:** set **`SUPABASE_ACCESS_TOKEN`** sebagai environment variable di environment Claude Code Remote. Setelah itu CLI jalan dari sesi mana pun, mengunggah berkas asli dari disk, nol risiko transkripsi — dan `data-gateway` yang tertunda sejak v1.57.0 ikut bisa diberesin.
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.

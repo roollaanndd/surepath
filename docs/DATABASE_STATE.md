@@ -3,6 +3,43 @@
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
 > Snapshot per 7 Juli 2026 (v1.23.0), project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
+## Notifikasi admin real-time (diperbarui 8 September 2026)
+
+Pendaftaran nasabah & agen memberi kabar ke Telegram **langsung dari database** —
+tidak lewat edge function. Trigger `trg_notify_new_user` di `sp_users` memanggil
+`notify_admin_telegram()`, yang mem-`POST` ke Telegram Bot API lewat `pg_net`.
+Terukur ~40 ms dari INSERT sampai pesan terkirim.
+
+| Tabel | Trigger | Fungsi | Status |
+|---|---|---|---|
+| `sp_users` | `trg_notify_new_user` | `notify_admin_telegram()` | aktif — nasabah & agen |
+| `sp_policy_orders` | `trg_notify_new_order` | `notify_admin_telegram()` | **diperbaiki 8 Sep 2026** — sebelumnya menempel di `sp_policies` (tabel lama) sehingga tidak pernah bunyi |
+| `sp_claims` | `trg_notify_new_claim` | `notify_admin_telegram()` | aktif |
+| `sp_payments` | `trg_notify_paid_payment` | `notify_paid_payment()` | aktif — ⚠️ masih tanpa penangan error |
+| `sp_withdrawals` | `trg_notify_new_withdrawal` | `notify_new_withdrawal()` | aktif — ⚠️ masih tanpa penangan error |
+
+**Konfigurasi** ada di tabel `sp_bot_config` (bukan env edge function):
+
+| Key | Isi |
+|---|---|
+| `telegram_bot_token` | token bot `@Surepath_bot` |
+| `telegram_chat_id` | chat tujuan — angka; boleh negatif untuk grup |
+| `whatsapp_admin_number` | nomor WhatsApp admin. **Kosong = kanal WhatsApp mati.** Butuh `FONNTE_TOKEN` di Vault (saat ini belum ada) |
+
+⚠️ **Kenapa hardening itu perlu:** versi lama `notify_admin_telegram()` berjalan
+`AFTER INSERT` tanpa penangan error dan melakukan `chat_id::bigint`. Satu nilai
+salah ketik di `sp_bot_config` akan membuat **setiap pendaftaran baru gagal**,
+bukan sekadar menghilangkan notifikasinya. Sejak `20260908_harden_admin_notifications.sql`
+seluruh badan fungsi dibungkus `EXCEPTION` dan cast dijaga regex — sudah diuji
+dengan config sengaja dirusak: pendaftaran tetap berhasil.
+
+`notify_paid_payment()` dan `notify_new_withdrawal()` **masih memakai pola lama**
+dan keduanya ada di jalur uang. Layak di-hardening dengan pola yang sama.
+
+Definisi lama setiap objek yang diubah disimpan di tabel `sp_db_object_backup`.
+
+---
+
 ## Tabel inti (prefix `sp_`)
 
 | Tabel | Isi | Akses dari klien |

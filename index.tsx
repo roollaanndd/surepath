@@ -1,3 +1,10 @@
+// FIRST import, deliberately. It locks zoom/overscroll when running as the
+// installed app (a no-op in a browser tab, where the page must stay zoomable
+// for accessibility) and self-initialises on evaluation — imports are hoisted,
+// so nothing in this file's body could run before ./App loads. See the note at
+// the bottom of that module.
+import './services/appViewport';
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';

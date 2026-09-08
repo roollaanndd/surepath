@@ -6,6 +6,8 @@ import { SUREPATH_WHATSAPP } from '../../constants';
 import { extractStnkOcr } from '../../services/stnkOcr';
 import { extractKtpOcr } from '../../services/ktpOcr';
 import { getMarketValueForYear, getMarketValueForMotoYear } from '../../services/vehicleDatabase';
+import { requestClaimStart } from '../../services/claimHandoff';
+import { isSpeechSupported, startDictation, type DictationHandle } from '../../services/speech';
 
 type Lang = Language | 'EN' | 'ID';
 const isEN = (lang: Lang) => lang === Language.EN;
@@ -59,6 +61,7 @@ function ensurePathyChatKeyframes() {
     @keyframes pathy-blink { 0%,90%,100% { transform: scaleY(1); } 94% { transform: scaleY(0.12); } }
     @keyframes pathychat-pop { 0% { opacity:0; transform: translateY(12px) scale(0.96); } 100% { opacity:1; transform: translateY(0) scale(1); } }
     @keyframes pathy-typing { 0%,80%,100% { transform: translateY(0); opacity:0.4; } 40% { transform: translateY(-5px); opacity:1; } }
+    @keyframes pathy-mic    { 0%,100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.55); } 70% { box-shadow: 0 0 0 7px rgba(244,63,94,0); } }
     @media (prefers-reduced-motion: reduce) { [data-pathychat-anim] { animation: none !important; } }
   `;
   document.head.appendChild(style);
@@ -228,6 +231,54 @@ const QuotationCard: React.FC<{ data: any; en: boolean; sourceApp: 'AGENT' | 'CU
           `Berlaku sampai ${shortDate(data.validUntil)}. Penawaran indikatif — belum penerbitan polis.`,
           `Valid until ${shortDate(data.validUntil)}. Indicative quote — not a policy issuance.`,
         )}
+      </p>
+    </CardShell>
+  );
+};
+
+// A follow-up message Pathy drafted for an agent. Two deliberate properties:
+// the text is editable before it goes anywhere, and the send button is a plain
+// wa.me link the AGENT taps — nothing is ever sent on their behalf.
+const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
+  const t = (id: string, e: string) => (en ? e : id);
+  const [text, setText] = useState<string>(String(data?.message ?? ''));
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard blocked — the text is on screen and selectable */ }
+  };
+
+  return (
+    <CardShell title={t('Draft pesan follow-up', 'Follow-up draft')}>
+      <p className="text-[0.62rem] text-slate-500">{t('Untuk', 'For')}: <span className="font-bold text-slate-700 dark:text-slate-200">{data?.client_name}</span></p>
+      <textarea
+        value={text}
+        onChange={e => setText(e.target.value)}
+        rows={6}
+        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 px-2.5 py-2 text-[0.66rem] leading-snug text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
+        aria-label={t('Isi pesan', 'Message body')}
+      />
+      <div className="flex gap-2">
+        <button onClick={copy}
+          className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 active:scale-[0.98] transition-transform">
+          {copied ? t('Tersalin', 'Copied') : t('Salin', 'Copy')}
+        </button>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(text)}`}
+          target="_blank" rel="noopener noreferrer"
+          className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-white text-center active:scale-[0.98] transition-transform"
+          style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+        >
+          {t('Buka WhatsApp', 'Open WhatsApp')}
+        </a>
+      </div>
+      <p className="text-[0.55rem] text-slate-400 leading-snug">
+        {t('Pathy tidak mengirim pesan. Kamu yang memilih penerima dan menekan kirim.',
+           'Pathy does not send messages. You pick the recipient and hit send.')}
       </p>
     </CardShell>
   );
@@ -435,6 +486,220 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           ))}
         </CardShell>
       );
+    // ── v2.3.0 service cards ────────────────────────────────────────────────
+    case 'coverage': {
+      const ok = d.covered === true;
+      return (
+        <CardShell title={t('Cek jaminan', 'Coverage check')}>
+          <div className={`flex items-start gap-2 px-2.5 py-2 rounded-xl ${ok ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
+            <span className={`mt-0.5 text-[0.8rem] font-black ${ok ? 'text-emerald-600' : 'text-rose-600'}`}>{ok ? '✓' : '✕'}</span>
+            <div className="min-w-0">
+              <p className={`text-[0.7rem] font-black ${ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
+                {ok ? t('Ditanggung', 'Covered') : t('Tidak ditanggung', 'Not covered')}
+              </p>
+              <p className="text-[0.66rem] text-slate-600 dark:text-slate-300 leading-snug">{d.peril_label}</p>
+            </div>
+          </div>
+          <p className="text-[0.66rem] text-slate-600 dark:text-slate-300 leading-snug">{d.reason}</p>
+          <Row label={t('Polis', 'Policy')} value={d.policy?.policy_number || d.policy?.order_number || '—'} />
+          <Row label={t('Jenis', 'Type')} value={d.policy?.coverage_type} />
+          {d.own_risk ? <Row label={t('Risiko sendiri', 'Own risk')} value={rp(d.own_risk)} /> : null}
+          {(d.extensions ?? []).length > 0 && (
+            <p className="text-[0.6rem] text-slate-500 leading-snug">
+              {t('Perluasan aktif: ', 'Active extensions: ')}{(d.extensions as string[]).join(' · ')}
+            </p>
+          )}
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">{d.disclaimer}</p>
+        </CardShell>
+      );
+    }
+
+    case 'claim_start': {
+      const ok = d.eligible === true;
+      return (
+        <CardShell title={t('Siapkan klaim', 'Prepare a claim')}>
+          <p className="text-[0.68rem] font-bold text-slate-800 dark:text-slate-100">{d.peril_label}</p>
+          {!ok && (
+            <p className="text-[0.66rem] text-amber-600 dark:text-amber-400 leading-snug">
+              {d.period_warning || d.coverage_reason}
+            </p>
+          )}
+          <Row label={t('Polis', 'Policy')} value={d.policy?.policy_number || d.policy?.order_number || '—'} />
+          {d.own_risk ? <Row label={t('Risiko sendiri', 'Own risk')} value={rp(d.own_risk)} /> : null}
+          <div className="pt-0.5">
+            <p className="text-[0.6rem] font-black uppercase tracking-wider text-slate-500 mb-1">{t('Siapkan dokumen', 'Documents needed')}</p>
+            <ul className="space-y-0.5">
+              {((d.documents ?? []) as string[]).map((doc, i) => (
+                <li key={i} className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug flex gap-1.5">
+                  <span className="text-emerald-500">•</span><span>{doc}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <button
+            onClick={() => requestClaimStart(d.prefill)}
+            className="w-full mt-1 py-2.5 rounded-xl text-[0.68rem] font-black uppercase tracking-widest text-white active:scale-[0.98] transition-transform"
+            style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+          >
+            {t('Buka formulir klaim', 'Open claim form')}
+          </button>
+          <p className="text-[0.55rem] text-slate-400 leading-snug">
+            {t('Klaim belum dikirim. Kamu yang menekan kirim setelah foto diunggah.',
+               'The claim is not submitted yet. You send it after uploading photos.')}
+          </p>
+        </CardShell>
+      );
+    }
+
+    case 'claim_status': {
+      const list = (d.claims ?? []) as any[];
+      if (list.length === 0) {
+        return <CardShell title={t('Klaim', 'Claims')}><p className="text-[0.68rem] text-slate-500">{t('Belum ada klaim.', 'No claims yet.')}</p></CardShell>;
+      }
+      return (
+        <CardShell title={t('Status klaim', 'Claim status')}>
+          {list.map((c, i) => (
+            <div key={c.claim_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100">{c.claim_number}</span>
+                <Pill value={c.status} />
+              </div>
+              <p className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug">{c.stage}</p>
+              <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 leading-snug">{c.next_step}</p>
+              {((c.missing ?? []) as string[]).map((m, j) => (
+                <p key={j} className="text-[0.6rem] text-amber-600 dark:text-amber-400 leading-snug">⚠ {m}</p>
+              ))}
+            </div>
+          ))}
+        </CardShell>
+      );
+    }
+
+    case 'renewals': {
+      const list = (d.renewals ?? []) as any[];
+      if (list.length === 0) {
+        return <CardShell title={t('Perpanjangan', 'Renewals')}><p className="text-[0.68rem] text-slate-500">{t('Tidak ada polis yang segera jatuh tempo.', 'No policies due soon.')}</p></CardShell>;
+      }
+      return (
+        <CardShell title={t('Akan jatuh tempo', 'Coming up for renewal')}>
+          {list.map((r, i) => (
+            <div key={r.order_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100 truncate">{r.client_name || r.product}</span>
+                <span className={`text-[0.6rem] font-black ${Number(r.days_left) <= 14 ? 'text-rose-600' : 'text-amber-600'}`}>
+                  {r.days_left} {t('hari', 'days')}
+                </span>
+              </div>
+              <p className="text-[0.62rem] text-slate-500">{shortDate(r.end_date)} · {r.coverage_type}</p>
+              {r.renewal_estimate != null && (
+                <Row label={t('Estimasi perpanjangan', 'Renewal estimate')} value={rp(r.renewal_estimate)} />
+              )}
+            </div>
+          ))}
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">{d.disclaimer}</p>
+        </CardShell>
+      );
+    }
+
+    case 'policy_explainer': {
+      const covered = (d.covered ?? []) as string[];
+      const not = (d.not_covered ?? []) as string[];
+      return (
+        <CardShell title={t('Isi polis kamu', 'What your policy covers')}>
+          <Row label={t('Polis', 'Policy')} value={d.policy?.policy_number || d.policy?.order_number || '—'} />
+          <Row label={t('Jenis', 'Type')} value={d.policy?.coverage_type} />
+          <Row label={t('Berlaku sampai', 'Valid until')} value={shortDate(d.policy?.end_date)} />
+          <div className="pt-0.5">
+            <p className="text-[0.6rem] font-black uppercase tracking-wider text-emerald-600 mb-0.5">{t('Ditanggung', 'Covered')}</p>
+            {covered.map((c, i) => <p key={i} className="text-[0.63rem] text-slate-600 dark:text-slate-300 leading-snug">✓ {c}</p>)}
+          </div>
+          <div className="pt-0.5">
+            <p className="text-[0.6rem] font-black uppercase tracking-wider text-rose-600 mb-0.5">{t('Tidak ditanggung', 'Not covered')}</p>
+            {not.map((c, i) => <p key={i} className="text-[0.63rem] text-slate-500 dark:text-slate-400 leading-snug">✕ {c}</p>)}
+          </div>
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">{d.own_risk_note}</p>
+        </CardShell>
+      );
+    }
+
+    case 'payment_help': {
+      const list = (d.pending ?? []) as any[];
+      if (list.length === 0) {
+        return <CardShell title={t('Tagihan', 'Payments')}><p className="text-[0.68rem] text-slate-500">{t('Tidak ada tagihan tertunda.', 'Nothing outstanding.')}</p></CardShell>;
+      }
+      return (
+        <CardShell title={t('Menunggu pembayaran', 'Awaiting payment')}>
+          {list.map((o, i) => (
+            <div key={o.order_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100 truncate">{o.order_number}</span>
+                <span className="text-[0.68rem] font-black text-emerald-700 dark:text-emerald-300">{rp(o.amount)}</span>
+              </div>
+              <p className="text-[0.62rem] text-slate-500">{o.product}</p>
+              {o.invoice_url ? (
+                <a href={o.invoice_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-block mt-1 px-3 py-1.5 rounded-lg text-[0.62rem] font-black uppercase tracking-wider text-white"
+                  style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}>
+                  {t('Bayar sekarang', 'Pay now')}
+                </a>
+              ) : (
+                <p className="text-[0.6rem] text-amber-600 dark:text-amber-400 leading-snug">{o.hint}</p>
+              )}
+            </div>
+          ))}
+        </CardShell>
+      );
+    }
+
+    case 'pipeline': {
+      const quotes = (d.expiring_quotes ?? []) as any[];
+      const stalled = (d.stalled_orders ?? []) as any[];
+      return (
+        <CardShell title={t('Tindak lanjut hari ini', 'Follow up today')}>
+          {quotes.length === 0 && stalled.length === 0 && (
+            <p className="text-[0.68rem] text-slate-500">{t('Tidak ada yang mendesak. Rapi 👌', 'Nothing urgent. All clear 👌')}</p>
+          )}
+          {quotes.length > 0 && (
+            <div>
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-amber-600 mb-0.5">{t('Penawaran hampir kedaluwarsa', 'Quotes expiring')}</p>
+              {quotes.map((q, i) => (
+                <div key={q.id ?? i} className="flex items-center justify-between gap-2 text-[0.65rem]">
+                  <span className="text-slate-700 dark:text-slate-200 truncate">{q.client_name}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 shrink-0">{rp(q.premium_estimate)} · {q.days_left}h</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {stalled.length > 0 && (
+            <div className="pt-0.5">
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-rose-600 mb-0.5">{t('Menunggu pembayaran', 'Awaiting payment')}</p>
+              {stalled.map((o, i) => (
+                <div key={o.order_number ?? i} className="flex items-center justify-between gap-2 text-[0.65rem]">
+                  <span className="text-slate-700 dark:text-slate-200 truncate">{o.client_name}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 shrink-0">{rp(o.total_premium)} · {o.days_waiting}h</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardShell>
+      );
+    }
+
+    case 'commission_forecast':
+      return (
+        <CardShell title={t('Komisi', 'Commission')}>
+          <Row label={t('Saldo dompet', 'Wallet balance')} value={rp(d.wallet_balance)} />
+          <Row label={t('Komisi tertunda', 'Pending commission')} value={rp(d.commission_pending)} />
+          <Row label={t('Sudah dibayar', 'Paid out')} value={rp(d.commission_paid)} />
+          <Row label={t('Pengajuan berjalan', 'In-flight orders')} value={d.inflight_orders} />
+          <Row label={t('Perkiraan dari yang berjalan', 'Expected from in-flight')} value={rp(d.expected_from_inflight)} />
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">{d.disclaimer}</p>
+        </CardShell>
+      );
+
+    case 'followup_draft':
+      return <FollowupCard data={d} en={en} />;
+
     default:
       return null;
   }
@@ -626,6 +891,34 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
       setLoading(false);
     }
   }, [pushMessage, t, pendingDocs]);
+
+  // ── Voice input. The transcript lands in the box, not straight into a send:
+  // dictation misreads names and plate numbers, and the user must be able to
+  // fix it before Pathy acts on it.
+  const [listening, setListening] = useState(false);
+  const dictationRef = useRef<DictationHandle | null>(null);
+  /** Whatever was already typed when the mic opened — dictation appends to it. */
+  const dictationBaseRef = useRef('');
+  const speechOk = useRef(isSpeechSupported()).current;
+
+  useEffect(() => () => { dictationRef.current?.stop(); }, []);
+
+  const toggleDictation = useCallback(() => {
+    if (listening) { dictationRef.current?.stop(); return; }
+    setScanError(null);
+    dictationBaseRef.current = input.trim() ? `${input.trim()} ` : '';
+    const join = (text: string) => `${dictationBaseRef.current}${text}`;
+    const handle = startDictation({
+      lang: en ? 'en-US' : 'id-ID',
+      onPartial: text => setInput(join(text)),
+      onFinal: text => { if (text) setInput(join(text)); },
+      onError: msg => setScanError(msg),
+      onEnd: () => { setListening(false); dictationRef.current = null; },
+    });
+    if (!handle) { setScanError(t('Mikrofon belum didukung browser ini.', 'This browser has no microphone input.')); return; }
+    dictationRef.current = handle;
+    setListening(true);
+  }, [listening, en, input, t]);
 
   const handleSend = useCallback(() => {
     // An attachment on its own is a complete request — nobody should have to
@@ -842,6 +1135,23 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser }) => {
                 placeholder={t('Tanya Pathy…', 'Ask Pathy…')}
                 className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none disabled:opacity-50"
               />
+              {speechOk && (
+                <button
+                  type="button"
+                  onClick={toggleDictation}
+                  disabled={loading}
+                  aria-label={listening ? t('Berhenti merekam', 'Stop recording') : t('Bicara', 'Speak')}
+                  aria-pressed={listening}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-all duration-150 flex-shrink-0 ${
+                    listening ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+                  }`}
+                  style={listening ? { animation: 'pathy-mic 1.1s ease-in-out infinite' } : undefined}
+                >
+                  <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4" />
+                  </svg>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleSend}

@@ -4,6 +4,62 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.3.0 — 2026-09-08
+
+### Pathy jadi satu-satunya pintu layanan + kunci zoom di aplikasi
+
+**Keputusan desain: satu wajah, banyak otak**
+
+Sebelum ini ada 8 mesin AI dengan 4 nama produk dan 5 pintu masuk berbeda (Pathy, ClaimSense, HealthChat, InsurerAI, plus forensik foto & review admin tanpa nama). Untuk mendapat estimasi klaim, nasabah harus tahu bahwa ada menu Klaim, di dalamnya ada panel bernama "ClaimSense AI", dan panel itu harus diketuk manual. Kalau dia tanya Pathy "mobil saya nabrak, gimana?", Pathy hanya punya `get_my_claims` — **dia tidak bisa memulai klaim sama sekali.**
+
+Sekarang Pathy jadi satu-satunya nama yang dilihat nasabah dan agen. Mesin-mesinnya tetap terpisah — yang disatukan pintunya, bukan otaknya. Alat internal (review polis & keuangan admin, InsurerAI) sengaja **tidak** diberi persona: penggunanya bukan nasabah, dan model otorisasinya berbeda.
+
+**Sembilan tool baru — semuanya baca-saja atau siapkan-saja**
+
+Tidak satu pun menulis. Ini bukan jalan pintas. Pengiriman klaim sudah punya rantai kepercayaan yang dibangun hati-hati di `data-gateway/actions/claims.ts`: forensik foto berjalan lebih dulu di `analyze-claim-photos`, hasilnya di-*stage* server-side, lalu `submit_claim` mengonsumsi baris itu sekali, berdasarkan id, setelah memastikan miliknya dan belum kedaluwarsa — justru supaya pemalsu yang jadi target fitur itu tidak bisa mengirim `fraud_verdict: CLEAN` sendiri. Pembayaran lewat `create-xendit-invoice`. Memberi model AI pintu kedua ke salah satunya berarti menduplikasi penjaganya (dua tempat yang harus benar) atau melubanginya. Jadi Pathy mengerjakan bagian yang memang cocok untuknya — polis mana yang berlaku, apa yang dijamin, apa yang kurang, berapa biayanya — lalu menyerahkan tautan terisi ke alur yang sudah ada.
+
+| Tool | Untuk | Isi |
+|---|---|---|
+| `check_coverage` | semua | "Spion pecah ditanggung nggak?" dijawab dari polis **dia sendiri** + risiko sendiri |
+| `start_claim` | semua | Cari polis yang berlaku di tanggal kejadian, daftar dokumen, prefill formulir |
+| `claim_status` | semua | Tahap saat ini, langkah berikutnya, dan apa yang masih kurang |
+| `renewal_check` | semua | Polis jatuh tempo + premi perpanjangan **dihitung ulang** dengan tarif OJK berjalan |
+| `explain_my_policy` | semua | Ditanggung / TIDAK ditanggung, dari polisnya sendiri |
+| `payment_help` | semua | Tagihan tertunda + tautan yang **sudah ada** (tidak membuat tagihan baru) |
+| `pipeline_nudge` | agen | Penawaran mendekati kedaluwarsa + pengajuan mandek |
+| `commission_forecast` | agen | Dompet, komisi tertunda, perkiraan dari pengajuan berjalan |
+| `draft_followup` | agen | Draft pesan WhatsApp — **agen** yang menekan kirim |
+
+**Aturan jaminan yang paling penting**
+
+Banjir, gempa, huru-hara, terorisme, tanggung jawab pihak ketiga, dan kecelakaan diri **BUKAN jaminan dasar** polis kendaraan Indonesia (PSAKBI) — semuanya perluasan berbayar. Mengatakan "ditanggung" pada mobil terendam yang tidak punya perluasan banjir adalah jawaban paling merugikan yang bisa diberikan asisten ini. Karena itu setiap risiko punya *bucket*-nya sendiri dan jawabannya selalu diresolusi terhadap kolom `addons` pada order — bukan dari pengetahuan umum model. Ada 20 kasus ujinya.
+
+**Struktur**
+
+- `supabase/functions/pathy-agent/common.ts` (baru) — tipe + penjaga bersama. `ownerFilter` hidup di satu tempat supaya tidak mungkin menulis tool tanpa melewatinya.
+- `supabase/functions/pathy-agent/serviceTools.ts` (baru) — sembilan tool di atas.
+- `services/claimHandoff.ts` (baru) — kontrak antara chat dan formulir klaim. Payload divalidasi saat keluar (nomor polis cacat dibuang, bukan diketik ke formulir) dan sekali pakai.
+
+**Suara**
+
+`services/speech.ts` (baru) — dikte Web Speech API, `id-ID`. Momen paling butuh Pathy adalah berdiri di samping mobil penyok, satu tangan, sering hujan. Mengetik kronologi di situ menyiksa; bicara tidak. Transkrip masuk ke kotak input untuk dibaca dulu — tidak pernah langsung terkirim, karena dikte salah membaca nama dan nomor plat.
+
+**Kunci zoom + fullscreen di aplikasi**
+
+`services/appViewport.ts` (baru) — pinch-zoom, double-tap zoom, ctrl+scroll zoom, dan rubber-band dimatikan, **hanya saat berjalan sebagai aplikasi** (PWA terpasang atau build Capacitor). Di tab browser biasa halaman tetap bisa di-zoom.
+
+Pemisahan itu disengaja: `user-scalable=no` di situs publik melanggar WCAG 1.4.4 dan menurunkan skor aksesibilitas Lighthouse, dan orang yang perlu memperbesar teks di halaman pemasaran tidak punya chrome aplikasi sebagai pengganti. Pengguna yang sudah memasang aplikasinya punya pengaturan ukuran tampilan OS, dan di sanalah pinch-zoom browser justru merusak rasa "aplikasi": cubitan tak sengaja meninggalkan tata letak melenceng tanpa cara kembali. Seleksi teks tetap menyala — nomor polis dan nomor klaim harus bisa disalin.
+
+**Belum dikerjakan, dan alasannya**
+
+- **Push notification & WhatsApp dua arah** — butuh kunci VAPID dan konfigurasi provider yang tidak ada di repo. Fondasinya sudah siap (`sp_notifications`, `send-whatsapp`, dan PWA-nya baru diperbaiki di v2.2.0).
+- **Pathy publik tanpa login** — permukaan penyalahgunaan biaya model. Perlu rate-limit per-IP tersendiri dan review keamanan sendiri, bukan ditempel di rilis ini.
+- **Bengkel rekanan** — tidak ada tabelnya; hanya teks di `aiKnowledge.ts`. Ini pekerjaan data, bukan AI.
+
+**Uji:** `services/__tests__/pathyService.test.ts` (51 kasus), termasuk satu yang menjalankan **kesembilan** tool terhadap database palsu yang melempar error pada setiap verba tulis — jadi tool baru yang menyisipkan baris akan langsung menggagalkan suite.
+
+---
+
 ## v2.2.0 — 2026-09-08
 
 ### "Install App" sekarang benar-benar memasang aplikasi

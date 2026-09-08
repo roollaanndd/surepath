@@ -433,7 +433,11 @@ export interface PathyCard {
   type:
     | 'policies' | 'policy_detail' | 'claims' | 'quotes'
     | 'premium' | 'quote_created' | 'sales_report' | 'products'
-    | 'document_read' | 'offers' | 'quotation_ready';
+    | 'document_read' | 'offers' | 'quotation_ready'
+    // v2.3.0 — layanan purna jual
+    | 'coverage' | 'claim_start' | 'claim_status' | 'renewals'
+    | 'policy_explainer' | 'payment_help'
+    | 'pipeline' | 'commission_forecast' | 'followup_draft';
   data: any;
 }
 

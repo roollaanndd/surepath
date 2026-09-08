@@ -4,6 +4,48 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.2.0 — 2026-09-08
+
+### "Install App" sekarang benar-benar memasang aplikasi
+
+**Akar masalah: event pemasangan sudah lewat sebelum tombolnya lahir**
+
+Chrome menembakkan `beforeinstallprompt` **satu kali**, tepat setelah pemeriksaan installability-nya lolos, dan **tidak pernah mengulanginya**. Sebelum rilis ini ada **tiga** komponen React yang masing-masing memasang pendengarnya sendiri di dalam `useEffect`:
+
+| Komponen | Kapan mount |
+|---|---|
+| `components/InstallPrompt.tsx` | bersama app shell |
+| `components/Navbar.tsx` | bersama app shell |
+| `src/pages/site/SiteLayout.tsx` | **chunk lazy** — baru diunduh setelah render pertama |
+
+Yang lazy selalu kalah balapan: saat `SiteLayout-*.js` selesai diunduh dan mount, event-nya sudah lewat. `pwaPrompt` tetap `null`, dan `handleInstallClick` jatuh ke `InstallModal` — lembar instruksi "buka menu ⋮ → Add to Home screen". **"Add to Home screen" hanya menaruh pintasan bookmark di layar utama**, bukan memasang aplikasi: tidak ada WebAPK, tetap ada bar alamat, tidak ada ikon aplikasi sungguhan. Persis keluhan yang dilaporkan.
+
+Tiga salinan itu juga saling merebut: satu `beforeinstallprompt` hanya boleh di-`prompt()` **sekali**, jadi komponen yang lebih dulu memakainya meninggalkan dua lainnya memegang objek mati.
+
+**Perbaikan — satu sumber kebenaran, ditangkap sedini mungkin**
+
+- **Skrip inline di `index.html`**, di atas semua bundle, menangkap event dan memarkirnya di `window.__spInstall`. Sekarang tidak peduli selambat apa pun aplikasi mount, prompt-nya tetap ada.
+- **`services/pwaInstall.ts` (baru)** — satu-satunya pembaca parkiran itu. Menyediakan `getInstallState()`, `promptInstall()`, `subscribeInstall()` dan hook `usePwaInstall()`. Melepas event setelah dipakai sekali, mendengar `appinstalled`, dan **membatalkan** penanda "sudah terpasang" begitu browser menawarkan pemasangan lagi (browser hanya menawarkan yang belum terpasang — artinya pengguna sudah menghapusnya).
+- **`components/shared/InstallAppSheet.tsx` (baru)** — satu tampilan pemasangan untuk seluruh aplikasi. Aturannya: **jangan pernah menampilkan instruksi kalau browser bisa memasang sendiri.** Setiap tombol memanggil `promptInstall()` lebih dulu; panduan langkah hanya muncul kalau jawabannya `'unavailable'`.
+- Panduannya jujur per platform: iOS (Bagikan → Tambahkan ke Layar Utama, dengan glif Share digambar inline karena kata "Share" tidak dikenali orang), webview dalam aplikasi (Instagram/Facebook/WhatsApp — **tidak bisa memasang sama sekali**, jadi diarahkan membuka browser + tombol salin tautan), Android tanpa prompt (menu ⋮ → **"Instal aplikasi"**, ditegaskan *bukan* "Tambahkan ke layar utama"), desktop (ikon pasang di address bar), dan browser yang memang tidak mendukung.
+- Lembarnya di-**portal ke `<body>`**: navbar memakai `backdrop-blur`, dan `backdrop-filter` apa pun menjadikan elemennya containing block untuk `position: fixed` — tanpa portal lembarnya terpotong setinggi navbar.
+- Tombol "Pasang" di navbar tidak lagi disembunyikan saat prompt belum ada; ia bersembunyi **hanya** kalau aplikasinya memang sudah terpasang.
+- iPhone kini mendapat tawaran pemasangan pada kunjungan pertama. Sebelumnya tidak ada apa pun di iOS, jadi pengguna iPhone tidak pernah tahu aplikasinya bisa dipasang.
+
+**Manifest — dialog pasang yang kaya, bukan infobar mungil**
+
+- `screenshots` menunjuk `logo.png` dan mendeklarasikannya `3508x2481`; **file aslinya 348x400**. Chrome menolak screenshot yang ukurannya tidak cocok, jadi tidak ada satu pun screenshot sah — dan tanpa screenshot `form_factor: 'narrow'`, Chrome Android hanya memunculkan infobar mungil, bukan dialog pasang besar. Diganti empat screenshot 1080x1920 yang sudah ada di `public/` plus satu `wide`.
+- `id: '/'` ditambahkan supaya identitas aplikasi tidak berubah kalau `start_url` disunting kelak.
+- `display_override: ['standalone', 'minimal-ui']`.
+
+**Lain-lain**
+
+- `src/pages/site/SiteLayout.tsx:324` — satu-satunya **error** ESLint di repo (pre-existing sejak v1.50.0) diperbaiki. `npm run lint` sekarang **0 error** untuk pertama kalinya.
+- `InstallModal` dan `isStandaloneMode` di `siteKit.tsx` dihapus (mati setelah perubahan ini).
+- Uji: `services/__tests__/pwaInstall.test.ts` (18 kasus) — penangkapan awal, sekali-pakai, deteksi platform termasuk iPadOS yang menyamar sebagai Mac, dan penanda terpasang yang basi.
+
+---
+
 ## v2.1.0 — 2026-09-07
 
 ### KTP kembali berfungsi, dan Pathy bisa menerbitkan proposal penawaran

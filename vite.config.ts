@@ -66,6 +66,10 @@ export default defineConfig(() => {
             ],
           },
           manifest: {
+            // `id` pins the app's identity across start_url changes — without it
+            // a future start_url edit registers as a *different* app and the
+            // browser stops recognising the installed copy.
+            id: '/',
             name: 'SurePath – Asuransi Digital',
             short_name: 'SurePath',
             description: 'Platform asuransi digital terpercaya Indonesia. Beli asuransi mobil, jiwa, perjalanan & properti. Klaim cepat via HP.',
@@ -73,6 +77,8 @@ export default defineConfig(() => {
             theme_color: '#003B2F',
             background_color: '#003B2F',
             display: 'standalone',
+            // Falls back gracefully when a browser doesn't do standalone.
+            display_override: ['standalone', 'minimal-ui'],
             orientation: 'portrait',
             start_url: '/',
             scope: '/',
@@ -104,14 +110,19 @@ export default defineConfig(() => {
                 purpose: 'any',
               },
             ],
+            // Screenshots decide whether Chrome shows the rich install dialog
+            // (big preview + Install button) or the barely-noticeable mini
+            // infobar. The old entry pointed at logo.png and declared it
+            // 3508x2481 — the file is actually 348x400, so Chrome rejected the
+            // screenshot outright and mobile visitors never saw the rich UI.
+            // `form_factor: 'narrow'` is what mobile Chrome looks for; a wide
+            // one is needed as well or desktop falls back to the plain dialog.
             screenshots: [
-              {
-                src: 'logo.png',
-                sizes: '3508x2481',
-                type: 'image/png',
-                form_factor: 'wide',
-                label: 'SurePath Dashboard',
-              },
+              { src: 'screenshot-1-buy.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'Beli asuransi kendaraan' },
+              { src: 'screenshot-2-claim.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'Ajukan klaim dari HP' },
+              { src: 'screenshot-3-dashboard.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'Dasbor polis' },
+              { src: 'screenshot-4-ai.png', sizes: '1080x1920', type: 'image/png', form_factor: 'narrow', label: 'Pathy — asisten AI' },
+              { src: 'play-store-feature-graphic.png', sizes: '1024x500', type: 'image/png', form_factor: 'wide', label: 'SurePath' },
             ],
           },
         })

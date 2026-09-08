@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import {
-  Zap, History,
-  Sun, Moon, LogOut, ShieldCheck, Bell,
+  Zap, ShieldCheck,
   Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { Language } from '../../types';
-import { SurePathLogo } from '../Navbar';
-import { BotHome, BotShield as BotShieldNav, BotClaimCam, BotPolicy, BotUser } from '../CustomIcons';
-import { APP_VERSION } from '../../src/version';
+import { IcHome, IcBuy, IcPathy, IcClaim, IcHistory, IcBell } from '../shared/CustomerIcons';
+import PortalHeader from '../shared/PortalHeader';
+import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
+import NotificationDrawer from '../shared/NotificationDrawer';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
 // ── Performance: lazy-load heavy wizards + chat so they don't bloat the
@@ -27,8 +27,7 @@ import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOr
 import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import { HeroProtected, EmptyStateSearch } from '../shared/Illustrations';
 import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
-import { ShieldPlus, MessageCircle } from 'lucide-react';
-import PathyChat from '../shared/PathyChat';
+import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { CLAIM_OPEN_EVENT } from '../../services/claimHandoff';
 import OrderDetailSheet from './OrderDetailSheet';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
@@ -47,12 +46,18 @@ interface Props {
   products: any[];
 }
 
-const TABS = [
-  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: BotHome },
-  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: BotShieldNav },
-  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: BotClaimCam },
-  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: BotPolicy },
-  { id: 'profile',  labelEn: 'Profile', labelId: 'Profil',  Icon: BotUser },
+// Bottom nav — same shape as the agent portal: two tabs, a raised centre
+// action, two tabs. The centre slot opens Pathy (the service front door since
+// v2.3.0) rather than switching page. Profil lives on the header avatar, as it
+// does in the agent portal.
+const PATHY_TAB = 'pathy';
+
+const TABS: { id: string; labelEn: string; labelId: string; Icon: PortalTab['Icon']; center?: boolean; overlay?: boolean }[] = [
+  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: IcHome },
+  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: IcBuy },
+  { id: PATHY_TAB,  labelEn: 'Pathy',   labelId: 'Pathy',   Icon: IcPathy, center: true, overlay: true },
+  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: IcClaim },
+  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: IcHistory },
 ];
 
 const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products }) => {
@@ -120,6 +125,21 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const navigate = (page: string) => {
     setActivePage(page);
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // The drawer marks notifications read on its own — resync the header badge
+  // when it closes.
+  const refreshNotifications = useCallback(() => {
+    if (!currentUser?.id) return;
+    getNotifications(currentUser.id).then(setNotifications).catch(() => {});
+  }, [currentUser?.id]);
+
+  // Pathy is an overlay, not a page — the centre tab and the AI cards open it.
+  const openPathy = () => window.dispatchEvent(new Event(PATHY_OPEN_EVENT));
+
+  const handleTabSelect = (id: string) => {
+    if (id === PATHY_TAB) { openPathy(); return; }
+    navigate(id);
   };
 
   // Pathy prepares a claim and parks the prefill; this switches to the claim
@@ -256,10 +276,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <ClayCard padding="md" variant="default">
                   <CircularActionGrid
                     actions={[
-                      { id: 'buy', label: t('Buy', 'Beli'), icon: ShieldPlus, color: '#00C16A', onClick: () => navigate('products') },
-                      { id: 'claim', label: t('Claim', 'Klaim'), icon: FileText, color: '#EF4444', onClick: () => navigate('claim') },
-                      { id: 'history', label: t('Policies', 'Polis'), icon: History, color: '#3B82F6', onClick: () => navigate('history') },
-                      { id: 'bot', label: t('AI Help', 'AI Bantu'), icon: MessageCircle, color: '#7C3AED', onClick: () => navigate('bot') },
+                      { id: 'buy', label: t('Buy', 'Beli'), icon: IcBuy, color: '#00C16A', onClick: () => navigate('products') },
+                      { id: 'claim', label: t('Claim', 'Klaim'), icon: IcClaim, color: '#EF4444', onClick: () => navigate('claim') },
+                      { id: 'history', label: t('Policies', 'Polis'), icon: IcHistory, color: '#3B82F6', onClick: () => navigate('history') },
+                      { id: 'pathy', label: 'Pathy', icon: IcPathy, color: '#7C3AED', onClick: openPathy },
                     ]}
                   />
                 </ClayCard>
@@ -284,7 +304,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       'Dapatkan asuransi dalam hitungan menit. AI kami membuat klaim jadi cepat & mudah.'
                     )}
                 suggestion={latestPolicy ? { label: t('Add baggage delay coverage', 'Tambah proteksi bagasi'), onClick: () => navigate('buy-travel') } : undefined}
-                cta={{ label: t('Chat with Pathy', 'Chat dengan Pathy'), onClick: () => navigate('bot') }}
+                cta={{ label: t('Chat with Pathy', 'Chat dengan Pathy'), onClick: openPathy }}
               />
 
               {/* Referral card — "Ajak Teman" (v1: share + attribution) */}
@@ -322,21 +342,21 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                           <p className="text-sm font-bold text-ds-ink truncate">{p.product_name}</p>
                           <p className="text-[10px] text-ds-ink3">{new Date(p.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-ds-green-tint text-ds-green' : 'bg-ds-amber-lt text-ds-amber'}`}>
                           {p.status}
                         </span>
                       </div>
                     ))}
                     {customerClaims.slice(0, 1).map((c) => (
                       <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                          <Zap size={16} className="text-rose-500" />
+                        <div className="w-9 h-9 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
+                          <Zap size={16} className="text-ds-red" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-ds-ink truncate">{t('Claim', 'Klaim')} #{c.claim_number ?? c.id.slice(0, 8)}</p>
                           <p className="text-[10px] text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600">{c.status}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ds-red-lt text-ds-red">{c.status}</span>
                       </div>
                     ))}
                   </div>
@@ -360,7 +380,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               </div>
 
               {/* AI recommendation strip */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-ds-green-tint border border-green-100">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-ds-green-tint">
                 <Bot size={16} className="text-ds-green flex-shrink-0" />
                 <p className="text-xs font-bold text-ds-green flex-1">{t('Pathy recommends: add Travel protection — fits your profile', 'Pathy rekomendasikan: tambah proteksi Travel — sesuai profilmu')}</p>
                 <button onClick={() => navigate('buy-travel')} className="flex-shrink-0">
@@ -394,7 +414,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <div className="flex-1 min-w-0 relative z-10">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-black text-[0.95rem] text-ds-ink tracking-tight">{p.title}</h4>
-                        {p.tech && <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">{p.tech}</span>}
+                        {p.tech && <span className="px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest bg-ds-green-tint text-ds-green">{p.tech}</span>}
                       </div>
                       <p className="text-xs text-ds-ink2 leading-relaxed line-clamp-2">{p.desc}</p>
                     </div>
@@ -415,12 +435,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           <PageTransition>
             <div className="pb-32">
               {/* Pre-claim hero */}
-              <div className="mb-4 rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #7C5CFC 0%, #4D7CFE 100%)', boxShadow: '0 8px 32px rgba(124,92,252,0.3)' }}>
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(255,255,255,0.12)' }} />
+              <HeroCard variant="navy" className="mb-4">
                 <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">{t('Claim Assistant', 'Asisten Klaim')}</p>
                 <h3 className="text-lg font-black text-white mb-1">{t('File a Claim', 'Lapor Klaim')}</h3>
                 <p className="text-[12px] text-white/70 leading-snug">{t('Photo + AI = instant processing. Most claims settled in 24h.', 'Foto + AI = proses instan. Sebagian besar klaim selesai dalam 24 jam.')}</p>
-              </div>
+              </HeroCard>
               <ClaimManager onComplete={() => navigate('home')} lang={lang} currentUser={currentUser} />
             </div>
           </PageTransition>
@@ -431,26 +450,25 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         const activePolicies = customerPolicies.filter(p => p.status === 'ISSUED');
         const pendingClaims = customerClaims.filter(c => c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW');
         const policyStatusMap: Record<string,{label:string;cls:string}> = {
-          SUBMITTED:    { label: t('Pending Review','Menunggu Review'), cls: 'bg-amber-50 text-ds-amber' },
-          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),    cls: 'bg-blue-50 text-ds-blue' },
-          APPROVED:     { label: t('Approved','Disetujui'),             cls: 'bg-blue-50 text-ds-blue' },
+          SUBMITTED:    { label: t('Pending Review','Menunggu Review'), cls: 'bg-ds-amber-lt text-ds-amber' },
+          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),    cls: 'bg-ds-blue-lt text-ds-blue' },
+          APPROVED:     { label: t('Approved','Disetujui'),             cls: 'bg-ds-blue-lt text-ds-blue' },
           ISSUED:       { label: t('Active','Polis Aktif'),             cls: 'bg-ds-green-tint text-ds-green' },
-          REJECTED:     { label: t('Rejected','Ditolak'),               cls: 'bg-rose-50 text-ds-red' },
-          CANCELLED:    { label: t('Cancelled','Dibatalkan'),           cls: 'bg-gray-100 text-gray-500' },
+          REJECTED:     { label: t('Rejected','Ditolak'),               cls: 'bg-ds-red-lt text-ds-red' },
+          CANCELLED:    { label: t('Cancelled','Dibatalkan'),           cls: 'bg-ds-card2 text-ds-ink3' },
         };
         const claimStatusMap: Record<string,{label:string;cls:string}> = {
-          SUBMITTED:    { label: t('Submitted','Diajukan'),       cls: 'bg-amber-50 text-ds-amber' },
-          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),cls: 'bg-blue-50 text-ds-blue' },
+          SUBMITTED:    { label: t('Submitted','Diajukan'),       cls: 'bg-ds-amber-lt text-ds-amber' },
+          UNDER_REVIEW: { label: t('Under Review','Sedang Dikaji'),cls: 'bg-ds-blue-lt text-ds-blue' },
           APPROVED:     { label: t('Approved','Disetujui'),       cls: 'bg-ds-green-tint text-ds-green' },
-          REJECTED:     { label: t('Rejected','Ditolak'),         cls: 'bg-rose-50 text-ds-red' },
+          REJECTED:     { label: t('Rejected','Ditolak'),         cls: 'bg-ds-red-lt text-ds-red' },
           PAID:         { label: t('Paid','Dibayarkan'),          cls: 'bg-ds-purple-lt text-ds-purple' },
         };
         return (
           <PageTransition>
             <div className="space-y-5 pb-32 pt-2">
               {/* Summary hero */}
-              <div className="rounded-3xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 100%)', boxShadow: '0 8px 24px rgba(0,59,47,0.4)' }}>
-                <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-2xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.2)' }} />
+              <HeroCard>
                 <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-3">{t('My Protection Wallet', 'Dompet Proteksi Saya')}</p>
                 <div className="flex gap-6">
                   <div>
@@ -468,7 +486,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="text-xl font-black" style={{ color: '#F5B942' }}>{pendingClaims.length}</p>
                   </div>
                 </div>
-              </div>
+              </HeroCard>
 
               {/* Policies */}
               <div className="space-y-3">
@@ -529,7 +547,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </p>
                 {customerClaims.length === 0 ? (
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl bg-ds-red-lt flex items-center justify-center">
                       <AlertCircle size={22} className="text-ds-red" />
                     </div>
                     <p className="text-ds-ink2 text-sm font-bold">{t('No claims submitted.', 'Belum ada klaim.')}</p>
@@ -539,7 +557,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   return (
                     <div key={i} className="sp-glass rounded-2xl p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
                           <AlertCircle size={18} className="text-ds-red" />
                         </div>
                         <div>
@@ -598,157 +616,67 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   };
 
   return (
-    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && (
         <OnboardingFlow role="CUSTOMER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
       )}
 
-      {/* Fixed header */}
       {!isFullscreen && (
-        <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
-          <div className="flex items-center justify-between px-5 py-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-1 ring-emerald-500/20 overflow-hidden">
-                <SurePathLogo className="w-8 h-8 object-contain" />
-              </div>
-              <div>
-                <div className="font-black text-sm tracking-tighter uppercase leading-none">
-                  Sure<span className="text-ds-green">Path</span>
-                </div>
-                <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none">
-                  {t('Customer Portal', 'Portal Nasabah')} <span className="text-ds-green/70 normal-case">v{APP_VERSION}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <div className="text-right mr-2">
-                <div className="text-xs font-black tracking-tight leading-none">
-                  {currentUser?.name ?? 'Nasabah'}
-                </div>
-                <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5">
-                  {currentUser?.nodeId ?? 'SP-USER'}
-                </div>
-              </div>
-
-              <div className="relative">
-                <button
-                  aria-label={t('Notifications', 'Notifikasi')}
-                  aria-haspopup="true"
-                  aria-expanded={showNotifications}
-                  onClick={() => setShowNotifications(v => !v)}
-                  className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
-                >
-                  <Bell size={14} className="text-slate-600 dark:text-slate-300" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#111]" />
-                  )}
-                </button>
-
-                {showNotifications && (
-                  <>
-                    {/* Click-away backdrop */}
-                    <button
-                      aria-label={t('Close notifications', 'Tutup notifikasi')}
-                      onClick={() => setShowNotifications(false)}
-                      className="fixed inset-0 z-40 cursor-default"
-                    />
-                    <div
-                      role="menu"
-                      className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto no-scrollbar z-50 bg-white dark:bg-[#161616] rounded-2xl border border-slate-100 dark:border-white/10 shadow-2xl p-2"
-                    >
-                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        {t('Notifications', 'Notifikasi')}
-                      </div>
-                      {notifications.length === 0 ? (
-                        <div className="px-3 py-6 text-center text-xs font-bold text-slate-400">
-                          {t('No notifications yet', 'Belum ada notifikasi')}
-                        </div>
-                      ) : (
-                        notifications.map(n => (
-                          <div
-                            key={n.id}
-                            className={`px-3 py-2.5 rounded-xl mb-1 last:mb-0 ${n.read ? 'opacity-60' : 'bg-slate-50 dark:bg-white/5'}`}
-                          >
-                            <div className="text-xs font-black text-slate-800 dark:text-white leading-tight">{n.title}</div>
-                            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{n.body}</div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <button
-                aria-label={t('Toggle theme', 'Ganti tema')}
-                onClick={() => setDarkMode(!darkMode)}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none"
-              >
-                {darkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
-              </button>
-
-              <button
-                type="button"
-                aria-label={t('Log out', 'Keluar')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  onLogout();
-                }}
-                onTouchStart={(e) => e.stopPropagation()}
-                className="relative z-50 w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center ml-1 hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-90 transition-all duration-200 motion-reduce:transition-none touch-manipulation"
-                style={{ minHeight: '44px', minWidth: '44px' }}
-              >
-                <LogOut size={14} className="text-rose-500" />
-              </button>
-            </div>
-          </div>
-        </header>
+        <PortalHeader
+          portalLabel={t('Customer', 'Nasabah')}
+          userName={currentUser?.name ?? 'Nasabah'}
+          userCode={currentUser?.nodeId ?? 'SP-USER'}
+          unreadCount={unreadCount}
+          onBellClick={() => setShowNotifications(true)}
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode(!darkMode)}
+          onAvatarClick={() => navigate('profile')}
+          BellIcon={IcBell}
+          labels={{
+            notifications: t('Notifications', 'Notifikasi'),
+            theme: t('Toggle theme', 'Ganti tema'),
+            profile: t('Profile', 'Profil'),
+          }}
+        />
       )}
 
       {/* Main content */}
       <main
         ref={scrollRef}
-        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-16 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-[4.75rem] pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
       >
         <Suspense fallback={<WizardLoader />}>
           {renderContent()}
         </Suspense>
       </main>
 
-      {/* Bottom tab navigation */}
       {!isFullscreen && (
-        <nav className="fixed bottom-6 inset-x-3 z-50 sp-glass-strong rounded-[3rem]">
-          <div className="flex items-center justify-around px-1 py-2.5">
-            {TABS.map(({ id, labelEn, labelId, Icon }) => {
-              const active = activeTab === id;
-              return (
-                <button
-                  key={id}
-                  aria-label={lang === Language.EN ? labelEn : labelId}
-                  aria-current={active ? 'page' : undefined}
-                  onClick={() => navigate(id)}
-                  className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-2xl transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
-                    active
-                      ? 'bg-ds-green text-white scale-110 shadow-ds-green'
-                      : 'text-ds-ink3 hover:text-ds-ink2 hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
-                  }`}
-                >
-                  <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                  <span className={`text-[8px] font-black uppercase tracking-widest leading-none transition-all duration-300 motion-reduce:transition-none ${active ? 'opacity-100' : 'opacity-80'}`}>
-                    {lang === Language.EN ? labelEn : labelId}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        <PortalTabBar
+          tabs={TABS.map(tab => ({ ...tab, label: lang === Language.EN ? tab.labelEn : tab.labelId }))}
+          activeId={activeTab}
+          onSelect={handleTabSelect}
+        />
       )}
 
       {/* Floating Pathy assistant */}
-      {!isFullscreen && <PathyChat lang={lang} currentUser={{ name: currentUser.name, id: currentUser.id, role: currentUser.role }} />}
+      {!isFullscreen && (
+        <PathyChat
+          lang={lang}
+          currentUser={{ name: currentUser.name, id: currentUser.id, role: currentUser.role }}
+          hideLauncher
+        />
+      )}
+
+      {/* Notification drawer */}
+      {showNotifications && (
+        <NotificationDrawer
+          userId={currentUser?.id}
+          lang={lang}
+          onClose={() => { setShowNotifications(false); refreshNotifications(); }}
+          onNavigate={navigate}
+        />
+      )}
 
       {/* Order detail sheet */}
       {selectedOrder && (

@@ -1,15 +1,34 @@
 # SurePath Session Context
-**Updated:** 2026-09-08 (v2.3.0 — Pathy jadi pintu layanan + kunci zoom aplikasi)
+**Updated:** 2026-09-08 (v2.4.0 — audit UI: nasabah diselaraskan ke agen + token mode terang diperbaiki)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
-- **main = v2.3.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
+- **main = v2.4.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
 - ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0** (9 tool layanan baru + 2 berkas baru `common.ts`/`serviceTools.ts`). Tanpa itu tool barunya tidak ada di produksi:
   `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
   Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.4.0 — Audit UI: nasabah ≡ agen (2026-09-08)
+### Bug terbesar: token mode terang mati sejak DS v3 (2026-07-06)
+Komentar pembuka `styles.css` memuat `lp-*/primary/brand`. Urutan `*/` menutup komentar lebih awal → sisa kalimat terbaca sebagai selector → blok `:root { --ds-* }` sesudahnya tertelan sebagai badannya. **Semua `bg-ds-*`/`text-ds-*`/`border-ds-*` di seluruh aplikasi jatuh ke transparan/warna warisan di mode terang.** Blok `.dark` aman, jadi mode gelap satu-satunya yang selama ini benar. Diperbaiki (kalimatnya ditulis ulang tanpa `*/`); diverifikasi di bundle produksi lewat Playwright: `--ds-green` → `#00C16A`, `.bg-ds-green` → `rgb(0,193,106)`.
+**Pelajaran:** jangan pernah tulis `*/` di dalam komentar CSS — termasuk di dalam contoh nama kelas.
+
+### Kerangka portal jadi bersama
+`components/shared/PortalHeader.tsx` + `PortalTabBar.tsx` — diekstrak dari portal agen, sekarang dipakai agen **dan** nasabah, jadi keduanya tidak bisa lagi menyimpang diam-diam. Header dikunci di 70px (identitas `truncate`, bukan wrap; versi app menyingkir di <420px). `main` nasabah karenanya `pt-[4.75rem]`.
+
+### Navigasi nasabah
+Beranda · Beli · **[Pathy]** · Klaim · Riwayat. Slot tengah = overlay Pathy via `PATHY_OPEN_EVENT` (prop baru `hideLauncher` mematikan tombol mengambang di portal nasabah — satu pintu saja). **Profil pindah ke avatar header**, sama seperti agen. Keputusan owner di sesi ini; kalau mau Profil kembali jadi tab, tinggal ubah array `TABS` di `CustomerPortal.tsx`.
+
+### Ikon & token
+`shared/duotone.tsx` (resep gambar bersama) + `shared/CustomerIcons.tsx` (grid 48, duotone, aksen emas — Beranda/Profil/Klaim digambar identik dengan set agen). `CustomIcons` 24-grid tidak dipakai lagi di portal nasabah.
+Token semantik baru di Tailwind: `ds-blue-lt` / `ds-amber-lt` / `ds-red-lt` → `--ds-*-tint`. Semua `bg-amber-50`/`bg-rose-50`/`bg-gray-100`/`bg-slate-100`/`dark:bg-[#161616]` di `CustomerPortal`, `OrderDetailSheet`, `AccessibilitySettings` diganti.
+`AgentNotifications` sekarang tipis membungkus `shared/NotificationDrawer` (satu implementasi, token-based). `HeroCard` dapat varian `emerald`/`navy`.
+
+### Backlog UI (Fase 4, belum dikerjakan)
+`components/ui/EmptyState.tsx` masih tidak dipakai; empty state di portal nasabah masih kotak dashed ad-hoc. Reveal berjenjang `motion/react` juga belum masuk portal nasabah (agen sudah).
 
 ## v2.3.0 — Pathy pintu layanan + kunci zoom (2026-09-08)
 ### Keputusan: satu wajah, banyak otak

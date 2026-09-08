@@ -16,12 +16,12 @@ interface Props {
 }
 
 const policyStatusMap: Record<string, { label: string; cls: string }> = {
-  SUBMITTED:    { label: 'Menunggu Review',  cls: 'bg-amber-50 text-amber-700' },
-  UNDER_REVIEW: { label: 'Sedang Dikaji',    cls: 'bg-amber-50 text-amber-700' },
-  APPROVED:     { label: 'Disetujui',        cls: 'bg-amber-50 text-amber-700' },
-  ISSUED:       { label: 'Polis Aktif',      cls: 'bg-emerald-50 text-emerald-700' },
-  REJECTED:     { label: 'Ditolak',          cls: 'bg-rose-50 text-rose-700' },
-  CANCELLED:    { label: 'Dibatalkan',       cls: 'bg-gray-100 text-gray-500' },
+  SUBMITTED:    { label: 'Menunggu Review',  cls: 'bg-ds-amber-lt text-ds-amber' },
+  UNDER_REVIEW: { label: 'Sedang Dikaji',    cls: 'bg-ds-amber-lt text-ds-amber' },
+  APPROVED:     { label: 'Disetujui',        cls: 'bg-ds-amber-lt text-ds-amber' },
+  ISSUED:       { label: 'Polis Aktif',      cls: 'bg-ds-green-tint text-ds-green' },
+  REJECTED:     { label: 'Ditolak',          cls: 'bg-ds-red-lt text-ds-red' },
+  CANCELLED:    { label: 'Dibatalkan',       cls: 'bg-ds-card2 text-ds-ink3' },
 };
 
 const STATUS_FLOW = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED'];
@@ -48,7 +48,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
     }
   };
 
-  const meta = policyStatusMap[order.status] ?? { label: order.status, cls: 'bg-gray-100 text-gray-500' };
+  const meta = policyStatusMap[order.status] ?? { label: order.status, cls: 'bg-ds-card2 text-ds-ink3' };
   const isTerminal = order.status === 'REJECTED' || order.status === 'CANCELLED';
   const canCancel = order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW';
   const resubmitPage = order.vehicle_type === 'CAR' ? 'buy-car' : 'products';
@@ -97,7 +97,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
             const done = s === 'SUBMITTED';
             return (
               <div key={s} className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-emerald-500' : 'bg-ds-border'}`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-ds-green' : 'bg-ds-border'}`}>
                   {done ? <CheckCircle size={12} className="text-white" /> : <Circle size={10} className="text-ds-ink3" />}
                 </div>
                 <span className={`text-xs font-bold ${done ? 'text-ds-ink' : 'text-ds-ink3'}`}>
@@ -107,10 +107,10 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
             );
           })}
           <div className="flex items-center gap-3">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isRejected ? 'bg-rose-500' : 'bg-gray-300'}`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isRejected ? 'bg-ds-red' : 'bg-ds-border'}`}>
               <XCircle size={12} className="text-white" />
             </div>
-            <span className={`text-xs font-bold ${isRejected ? 'text-rose-600' : 'text-gray-500'}`}>
+            <span className={`text-xs font-bold ${isRejected ? 'text-ds-red' : 'text-ds-ink3'}`}>
               {isRejected ? t('Rejected', 'Ditolak') : t('Cancelled', 'Dibatalkan')}
             </span>
           </div>
@@ -126,14 +126,14 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           const current = i === currentIdx;
           return (
             <div key={s} className="flex items-center gap-3">
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-emerald-500' : 'bg-ds-border'}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-ds-green' : 'bg-ds-border'}`}>
                 {done ? <CheckCircle size={12} className="text-white" /> : <Circle size={10} className="text-ds-ink3" />}
               </div>
-              <span className={`text-xs font-bold ${current ? 'text-emerald-600' : done ? 'text-ds-ink' : 'text-ds-ink3'}`}>
+              <span className={`text-xs font-bold ${current ? 'text-ds-green' : done ? 'text-ds-ink' : 'text-ds-ink3'}`}>
                 {policyStatusMap[s]?.label ?? s}
               </span>
               {current && (
-                <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase tracking-widest">
+                <span className="text-[9px] font-black text-ds-green bg-ds-green-tint px-1.5 py-0.5 rounded-full uppercase tracking-widest">
                   {t('Now', 'Sekarang')}
                 </span>
               )}
@@ -232,7 +232,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
                 <div className="flex justify-between"><span className="text-xs text-ds-ink3">{t('Admin Fee', 'Biaya Admin')}</span><span className="text-xs font-bold text-ds-ink">{formatIDR(order.admin_fee ?? 0)}</span></div>
               )}
               {(order.discount_amount ?? 0) > 0 && (
-                <div className="flex justify-between"><span className="text-xs text-ds-ink3">{t('Discount', 'Diskon')}</span><span className="text-xs font-bold text-emerald-600">- {formatIDR(order.discount_amount ?? 0)}</span></div>
+                <div className="flex justify-between"><span className="text-xs text-ds-ink3">{t('Discount', 'Diskon')}</span><span className="text-xs font-bold text-ds-green">- {formatIDR(order.discount_amount ?? 0)}</span></div>
               )}
               <div className="border-t border-ds-border mt-2 pt-2 flex justify-between">
                 <span className="text-sm font-black text-ds-ink">{t('Total Premium', 'Total Premi')}</span>
@@ -277,7 +277,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
             <button
               onClick={handleDownloadQuote}
               disabled={downloadingQuote}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl bg-ds-green text-white font-black text-sm shadow-ds-green active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {downloadingQuote ? (
                 <>
@@ -297,7 +297,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
                 <button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="w-full py-3 rounded-2xl border-2 border-rose-400 text-rose-600 font-black text-sm active:scale-95 transition-transform disabled:opacity-50"
+                  className="w-full py-3 rounded-2xl border-2 border-ds-red text-ds-red font-black text-sm active:scale-95 transition-transform disabled:opacity-50"
                 >
                   {cancelling ? t('Cancelling...', 'Membatalkan...') : t('Cancel Submission', 'Batalkan Pengajuan')}
                 </button>

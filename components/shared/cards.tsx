@@ -42,11 +42,31 @@ export const SurfaceCard: React.FC<{
   </div>
 );
 
-// ── Dark emerald hero wrapper ─────────────────────────────────────────────────
-export const HeroCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+// ── Dark hero wrapper ─────────────────────────────────────────────────────────
+// Two finishes, one geometry (28px radius, 20px padding, emerald glow):
+//   emerald — the calm default, used for protection/portfolio heroes
+//   navy    — the "bank card" finish the agent portal uses for its focal card
+export type HeroVariant = 'emerald' | 'navy';
+
+const HERO_STYLE: Record<HeroVariant, { background: string; boxShadow: string }> = {
+  emerald: {
+    background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)',
+    boxShadow: '0 8px 32px rgba(0,59,47,0.5)',
+  },
+  navy: {
+    background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)',
+    boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)',
+  },
+};
+
+export const HeroCard: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  variant?: HeroVariant;
+}> = ({ children, className = '', variant = 'emerald' }) => (
   <div
-    className={`rounded-3xl p-5 text-white relative overflow-hidden ${className}`}
-    style={{ background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)', boxShadow: '0 8px 32px rgba(0,59,47,0.5)' }}
+    className={`rounded-[1.75rem] p-5 text-white relative overflow-hidden ${className}`}
+    style={HERO_STYLE[variant]}
   >
     <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.18)' }} />
     <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.08)' }} />

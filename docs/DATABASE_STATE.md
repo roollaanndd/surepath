@@ -20,11 +20,23 @@ Terukur ~40 ms dari INSERT sampai pesan terkirim.
 
 **Konfigurasi** ada di tabel `sp_bot_config` (bukan env edge function):
 
-| Key | Isi |
-|---|---|
-| `telegram_bot_token` | token bot `@Surepath_bot` |
-| `telegram_chat_id` | chat tujuan — angka; boleh negatif untuk grup |
-| `whatsapp_admin_number` | nomor WhatsApp admin. **Kosong = kanal WhatsApp mati.** Butuh `FONNTE_TOKEN` di Vault (saat ini belum ada) |
+| Key | Kanal | Isi | Kredensial yang dibutuhkan |
+|---|---|---|---|
+| `telegram_bot_token` + `telegram_chat_id` | Telegram | token bot `@Surepath_bot` + chat tujuan (angka; negatif untuk grup) | — (sudah di tabel ini) |
+| `whatsapp_admin_number` | WhatsApp (Fonnte) | nomor tujuan, format `62…` | `FONNTE_TOKEN` **di Vault** |
+| `admin_email` | Email (Resend) | alamat penerima | `RESEND_API_KEY` **di Vault** |
+| `webhook_url` | Slack / Discord | URL incoming webhook | — (URL-nya sendiri kredensialnya) |
+
+Slot kosong = kanal mati. Nilai-nilainya **tidak boleh masuk repo**; isi langsung
+ke `sp_bot_config`, yang ber-RLS `USING (false)` sehingga tidak terbaca anon
+maupun authenticated (hanya service_role dan trigger `SECURITY DEFINER`).
+
+⚠️ **Batas penting:** trigger database hanya bisa membaca **Vault** lewat
+`get_app_secret()`, dan **tidak bisa** membaca env edge function. Per 8 Sep 2026
+Vault berisi `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `APP_URL`, `OPENROUTER_KEY`,
+`XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN` — `FONNTE_TOKEN` dan
+`RESEND_API_KEY` hanya ada di env edge function, jadi kanal WhatsApp dan Email
+baru menyala setelah token-nya juga ditambahkan ke Vault.
 
 ⚠️ **Kenapa hardening itu perlu:** versi lama `notify_admin_telegram()` berjalan
 `AFTER INSERT` tanpa penangan error dan melakukan `chat_id::bigint`. Satu nilai

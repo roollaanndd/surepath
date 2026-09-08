@@ -1,43 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
   SitePageProps, useT, useSiteTheme,
-  SectionBackground, PWAPopup, InstallModal, SiteChromeContext, useSiteChrome, isStandaloneMode, ACCENT,
+  SectionBackground, PWAPopup, SiteChromeContext, useSiteChrome, ACCENT,
 } from './siteKit';
 import { FloatingWhatsApp } from '../../../components/ui';
-import { isMobileView } from '../../../components/InstallPrompt';
+import { usePwaInstall, promptInstall, isMobileView, isInstallOfferSnoozed, snoozeInstallOffer } from '../../../services/pwaInstall';
+import InstallAppSheet from '../../../components/shared/InstallAppSheet';
 
 // ─── PWA install state hook ───────────────────────────────────────────────────
+//
+// This used to keep its own `beforeinstallprompt` listener. SiteLayout ships in
+// a lazy chunk, so that listener attached seconds after the browser had already
+// fired the event — the prompt was always missed here, and the Install button
+// fell through to a how-to modal that only creates a browser shortcut. The
+// prompt is now captured in index.html and read from services/pwaInstall.ts.
 const usePwa = () => {
-  const [pwaPrompt, setPwaPrompt] = useState<any>(null);
+  const { installed, canPrompt, method } = usePwaInstall();
   const [pwaVisible, setPwaVisible] = useState(false);
-  const [pwaInstalled, setPwaInstalled] = useState(() => isStandaloneMode());
-  const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [installSheet, setInstallSheet] = useState(false);
+  const teasedRef = useRef(false);
 
   useEffect(() => {
-    // Store the prompt for the navbar Install button everywhere, but only
-    // auto-open the popup on mobile view — one-tap direct install, no how-to.
-    const handler = (e: Event) => { e.preventDefault(); setPwaPrompt(e); if (isMobileView()) setTimeout(() => setPwaVisible(true), 4000); };
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setPwaInstalled(true));
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+    // Soft bottom banner on mobile once a real one-tap install is available.
+    // The shared snooze: InstallPrompt's sheet renders on this same homepage,
+    // so "later" there must silence this banner too.
+    if (teasedRef.current || installed || !canPrompt || !isMobileView() || isInstallOfferSnoozed()) return;
+    teasedRef.current = true;
+    const id = setTimeout(() => setPwaVisible(true), 4000);
+    return () => clearTimeout(id);
+  }, [installed, canPrompt]);
 
   const installPwa = async () => {
-    if (!pwaPrompt) return;
-    pwaPrompt.prompt();
-    await pwaPrompt.userChoice;
-    setPwaVisible(false); setPwaPrompt(null);
+    const outcome = await promptInstall();
+    setPwaVisible(false);
+    if (outcome === 'unavailable') setInstallSheet(true);
   };
 
-  const handleInstallClick = () => {
-    if (pwaPrompt) { installPwa(); return; }
-    setInstallModalOpen(true);
-  };
+  const dismissBanner = () => { snoozeInstallOffer(); setPwaVisible(false); };
 
-  return { pwaPrompt, pwaVisible, pwaInstalled, installModalOpen, setPwaVisible, setInstallModalOpen, installPwa, handleInstallClick };
+  return {
+    pwaVisible,
+    // Hide the navbar Install button once it is installed — and on browsers
+    // that cannot install at all, where the button could only ever apologise.
+    pwaInstalled: installed || method === 'unsupported',
+    installSheet, setInstallSheet, dismissBanner, installPwa,
+    handleInstallClick: installPwa,
+  };
 };
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
@@ -321,7 +332,9 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
     return () => {
       window.removeEventListener('load', schedule);
       const cic = (window as any).cancelIdleCallback;
-      if (idleId !== undefined) (cic ? cic(idleId) : clearTimeout(idleId));
+      if (idleId !== undefined) {
+        if (cic) cic(idleId); else clearTimeout(idleId);
+      }
     };
   }, [bgVideo]);
 
@@ -355,14 +368,10 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
         <SiteFooter {...page} />
 
         {pwa.pwaVisible && !pwa.pwaInstalled && (
-          <PWAPopup onDismiss={() => pwa.setPwaVisible(false)} onInstall={pwa.installPwa} />
+          <PWAPopup onDismiss={pwa.dismissBanner} onInstall={pwa.installPwa} />
         )}
-        {pwa.installModalOpen && (
-          <InstallModal
-            onClose={() => pwa.setInstallModalOpen(false)}
-            onPwa={() => { pwa.installPwa(); pwa.setInstallModalOpen(false); }}
-            hasPwaPrompt={!!pwa.pwaPrompt}
-          />
+        {pwa.installSheet && (
+          <InstallAppSheet lang={page.lang} onClose={() => pwa.setInstallSheet(false)} />
         )}
 
         {/* Floating WhatsApp — Indonesian users expect to ask pre-purchase

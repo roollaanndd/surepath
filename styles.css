@@ -634,3 +634,22 @@ textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+
+/* ─── App-mode viewport lock (services/appViewport.ts) ───────────────────────
+   Applied only when the page runs as an installed PWA or the Android build, so
+   the public website stays zoomable (WCAG 1.4.4). See that module for why. */
+html.sp-app-locked,
+html.sp-app-locked body {
+  height: 100%;
+  /* No rubber-band / pull-to-refresh: an app screen should not bounce. */
+  overscroll-behavior: none;
+}
+html.sp-app-locked body {
+  /* Kills double-tap zoom while keeping taps, scrolls and pans responsive. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+/* Text selection is left ON: users copy policy and claim numbers out of the
+   app, and taking that away buys nothing towards the no-zoom requirement. */

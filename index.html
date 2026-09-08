@@ -17,7 +17,34 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
-    
+
+    <!-- PWA install capture — MUST stay here, above every bundle.
+         Chrome fires `beforeinstallprompt` once, right after its installability
+         check passes, and never replays it. Our install buttons live in React
+         components (one of them in a lazily-loaded chunk), so a listener added
+         in a useEffect regularly missed the event entirely — and the buttons
+         then fell back to "open the ⋮ menu" instructions, which only produce a
+         browser shortcut instead of a real install. Parking the event on
+         window here means services/pwaInstall.ts can always find it, however
+         late the app mounts. -->
+    <script>
+      (function () {
+        var b = (window.__spInstall = window.__spInstall || { event: null, installed: false });
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();          // suppress the mini-infobar; we show our own sheet
+          b.event = e;
+          b.installed = false;         // the browser only offers to install what isn't installed
+          window.dispatchEvent(new Event('sp:installability'));
+        });
+        window.addEventListener('appinstalled', function () {
+          b.event = null;
+          b.installed = true;
+          window.dispatchEvent(new Event('sp:installability'));
+        });
+      })();
+    </script>
+
+
     <!-- PRIMARY SEO -->
     <title>SurePath | Asuransi Mobil, Jiwa & Properti Terpercaya – Klaim Cepat di Indonesia</title>
     <meta name="description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />

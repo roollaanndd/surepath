@@ -5,10 +5,11 @@ import {
   Menu,
   X,
   Download,
-  Share2
 } from "lucide-react";
 import { Language } from "../types";
 import { APP_VERSION } from "../src/version";
+import { usePwaInstall, promptInstall } from "../services/pwaInstall";
+import InstallAppSheet from "./shared/InstallAppSheet";
 
 interface NavbarProps {
   lang: Language;
@@ -51,14 +52,6 @@ export const SurePathLogo = ({
   );
 };
 
-// PWA install helpers used only by the Navbar install chip
-const _isStandaloneMode = () =>
-  window.matchMedia('(display-mode: standalone)').matches ||
-  (window.navigator as any).standalone === true;
-
-const _isIOS = () =>
-  /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-
 const Navbar: React.FC<NavbarProps> = ({
   lang,
   setLang,
@@ -70,42 +63,19 @@ const Navbar: React.FC<NavbarProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // PWA install state
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallChip, setShowInstallChip] = useState(false);
-  const [iosInstall, setIosInstall] = useState(false);
-  const [showIosHint, setShowIosHint] = useState(false);
+  // PWA install — state comes from the single store in services/pwaInstall.ts,
+  // which already holds the browser's prompt however early it fired.
+  const { installed, method } = usePwaInstall();
+  // Nothing to offer on a browser that cannot install — don't show a button
+  // whose only possible outcome is an apology.
+  const canOfferInstall = !installed && method !== 'unsupported';
+  const [installSheet, setInstallSheet] = useState(false);
 
-  useEffect(() => {
-    if (_isStandaloneMode()) return; // already installed
-
-    if (_isIOS()) {
-      setIosInstall(true);
-      setShowInstallChip(true);
-      return;
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallChip(true);
-    };
-    window.addEventListener('beforeinstallprompt', handler as EventListener);
-    return () => window.removeEventListener('beforeinstallprompt', handler as EventListener);
-  }, []);
-
+  // Always try the real install first; the guided sheet is only for browsers
+  // that have no prompt to give (iOS, or Chrome before it is ready to offer).
   const handleInstallClick = async () => {
-    if (iosInstall) {
-      setShowIosHint(h => !h);
-      return;
-    }
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setShowInstallChip(false);
-      setDeferredPrompt(null);
-    }
+    const outcome = await promptInstall();
+    if (outcome === 'unavailable') setInstallSheet(true);
   };
 
   useEffect(() => {
@@ -193,33 +163,16 @@ const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          {/* PWA install chip — only shown when install is available */}
-          {showInstallChip && (
-            <div className="relative">
-              <button
-                onClick={handleInstallClick}
-                aria-label={iosInstall ? (lang === Language.EN ? "Add to Home Screen" : "Tambah ke Layar Utama") : (lang === Language.EN ? "Install App" : "Pasang Aplikasi")}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[0.6rem] font-bold uppercase tracking-widest hover:bg-emerald-500/20 transition-all"
-              >
-                {iosInstall ? <Share2 size={13} /> : <Download size={13} />}
-                {iosInstall
-                  ? (lang === Language.EN ? "Add to Home" : "Tambah")
-                  : (lang === Language.EN ? "Install" : "Pasang")}
-              </button>
-              {/* iOS hint popover */}
-              {showIosHint && iosInstall && (
-                <div className="absolute top-12 right-0 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-xl z-[1100] text-xs text-slate-600 dark:text-slate-300 space-y-2">
-                  <p className="font-bold text-slate-800 dark:text-white">
-                    {lang === Language.EN ? "Add to Home Screen" : "Tambah ke Layar Utama"}
-                  </p>
-                  <ol className="space-y-1.5 list-decimal list-inside text-[0.65rem]">
-                    <li>{lang === Language.EN ? 'Tap the Share icon in Safari' : 'Ketuk ikon Share di Safari'}</li>
-                    <li>{lang === Language.EN ? 'Tap "Add to Home Screen"' : 'Ketuk "Tambahkan ke Layar Utama"'}</li>
-                    <li>{lang === Language.EN ? 'Tap "Add"' : 'Ketuk "Tambahkan"'}</li>
-                  </ol>
-                </div>
-              )}
-            </div>
+          {/* PWA install chip — hidden once installed, or where install is impossible */}
+          {canOfferInstall && (
+            <button
+              onClick={handleInstallClick}
+              aria-label={lang === Language.EN ? "Install App" : "Pasang Aplikasi"}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[0.6rem] font-bold uppercase tracking-widest hover:bg-emerald-500/20 transition-all"
+            >
+              <Download size={13} />
+              {lang === Language.EN ? "Install" : "Pasang"}
+            </button>
           )}
 
           <button
@@ -295,29 +248,20 @@ const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Mobile PWA install option */}
-          {showInstallChip && (
-            <div>
-              <button
-                onClick={() => { handleInstallClick(); if (!iosInstall) setIsOpen(false); }}
-                className="w-full flex items-center justify-center gap-2 py-3.5 border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-semibold uppercase tracking-widest transition-all"
-              >
-                {iosInstall ? <Share2 size={16} /> : <Download size={16} />}
-                {iosInstall
-                  ? (lang === Language.EN ? "Add to Home Screen" : "Tambah ke Layar Utama")
-                  : (lang === Language.EN ? "Install App" : "Pasang Aplikasi")}
-              </button>
-              {showIosHint && iosInstall && (
-                <div className="mt-2 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
-                  <ol className="space-y-1.5 list-decimal list-inside">
-                    <li>{lang === Language.EN ? 'Tap the Share icon in Safari' : 'Ketuk ikon Share di Safari'}</li>
-                    <li>{lang === Language.EN ? 'Tap "Add to Home Screen"' : 'Ketuk "Tambahkan ke Layar Utama"'}</li>
-                    <li>{lang === Language.EN ? 'Tap "Add"' : 'Ketuk "Tambahkan"'}</li>
-                  </ol>
-                </div>
-              )}
-            </div>
+          {canOfferInstall && (
+            <button
+              onClick={() => { setIsOpen(false); handleInstallClick(); }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-semibold uppercase tracking-widest transition-all"
+            >
+              <Download size={16} />
+              {lang === Language.EN ? "Install App" : "Pasang Aplikasi"}
+            </button>
           )}
         </div>
+      )}
+
+      {installSheet && (
+        <InstallAppSheet lang={lang} onClose={() => setInstallSheet(false)} />
       )}
     </nav>
   );

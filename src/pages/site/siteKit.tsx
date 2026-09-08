@@ -458,56 +458,6 @@ export const PWAPopup: React.FC<{ onDismiss: () => void; onInstall: () => void }
   </div>
 );
 
-export const InstallModal: React.FC<{ onClose: () => void; onPwa: () => void; hasPwaPrompt: boolean }> = ({ onClose, onPwa, hasPwaPrompt }) => {
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isAndroid = /android/i.test(navigator.userAgent);
-  return (
-    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} onClick={onClose}>
-      <div className="w-full max-w-sm rounded-3xl p-7 space-y-5"
-        style={{ background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(22,163,74,0.2)' }}
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-black text-white">Install SurePath</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">✕</button>
-        </div>
-        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Akses SurePath langsung dari layar utama HP Anda — lebih cepat, tanpa buka browser.
-        </p>
-        {hasPwaPrompt ? (
-          <button onClick={onPwa}
-            className="w-full py-3.5 rounded-2xl text-sm font-black text-white transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>
-            <Download size={16} /> Pasang ke Layar Utama
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-xs font-bold text-white">
-              {isIos ? 'Cara install di iPhone / iPad:' : isAndroid ? 'Cara install di Android:' : 'Cara install di Desktop:'}
-            </p>
-            {(isIos
-              ? ['1. Buka halaman ini di Safari', '2. Ketuk ikon Share (kotak dengan panah atas)', '3. Pilih "Add to Home Screen"', '4. Ketuk "Add" — selesai!']
-              : isAndroid
-              ? ['1. Ketuk menu ⋮ di pojok kanan atas Chrome', '2. Pilih "Add to Home screen" atau "Install app"', '3. Konfirmasi — selesai!']
-              : ['1. Klik ikon install (⊕) di address bar browser', '2. Atau buka menu browser → "Install SurePath"', '3. Klik Install — selesai!']
-            ).map(s => (
-              <div key={s} className="text-xs py-2 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)' }}>{s}</div>
-            ))}
-          </div>
-        )}
-        <p className="text-[0.55rem] text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          SurePath PWA · Tidak memerlukan App Store · Gratis
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// ─── PWA standalone detection ─────────────────────────────────────────────────
-export const isStandaloneMode = () =>
-  typeof window !== 'undefined' &&
-  (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
-
 // ─── Chrome context — exposes the PWA install handler to nested sections ───────
 export const SiteChromeContext = createContext<{ onInstall: () => void; installed: boolean }>({ onInstall: () => {}, installed: false });
 export const useSiteChrome = () => useContext(SiteChromeContext);

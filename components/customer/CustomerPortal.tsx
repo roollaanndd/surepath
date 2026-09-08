@@ -29,6 +29,7 @@ import { HeroProtected, EmptyStateSearch } from '../shared/Illustrations';
 import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
 import { ShieldPlus, MessageCircle } from 'lucide-react';
 import PathyChat from '../shared/PathyChat';
+import { CLAIM_OPEN_EVENT } from '../../services/claimHandoff';
 import OrderDetailSheet from './OrderDetailSheet';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 
@@ -120,6 +121,15 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
     setActivePage(page);
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Pathy prepares a claim and parks the prefill; this switches to the claim
+  // form so the user lands straight on it. Submission still happens there.
+  useEffect(() => {
+    const open = () => navigate('claim');
+    window.addEventListener(CLAIM_OPEN_EVENT, open);
+    return () => window.removeEventListener(CLAIM_OPEN_EVENT, open);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeTab = TABS.find(t => t.id === activePage)?.id
     ?? (activePage.startsWith('buy-') ? 'products' : activePage === 'bot' ? 'home' : activePage);

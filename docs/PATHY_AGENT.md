@@ -59,6 +59,32 @@ Klien memetakan status itu ke `PathyError.code` (`AUTH` / `RATE_LIMIT` / `NOT_CO
 | `compare_offers` | semua | Tiga opsi sekaligus: Comprehensive, Comprehensive + perluasan, TLO. |
 | `build_quotation` | semua | **Tool tulis kedua.** Menyusun proposal + menyimpan draf; klien merender PDF slip. |
 
+### Tool layanan (v2.3.0) — `serviceTools.ts`
+
+Semuanya **baca-saja atau siapkan-saja**. Tidak satu pun menulis; lihat bagian di bawah.
+
+| Tool | Akses | Fungsi |
+|---|---|---|
+| `check_coverage` | semua | Apakah satu risiko dijamin, dibaca dari `coverage_type` + `addons` polis caller. Termasuk risiko sendiri. |
+| `start_claim` | semua | Cari polis yang berlaku pada tanggal kejadian, daftar dokumen, dan prefill formulir klaim. **Tidak mengirim klaim.** |
+| `claim_status` | semua | Status + tahap + langkah berikutnya + apa yang masih kurang. |
+| `renewal_check` | semua | Polis jatuh tempo; premi perpanjangan dihitung ulang dari rate set OJK aktif (penyusutan 10%/tahun). |
+| `explain_my_policy` | semua | Daftar ditanggung / tidak ditanggung untuk satu polis. |
+| `payment_help` | semua | Tagihan tertunda + `invoice_url` yang **sudah ada** di `sp_payments`. Tidak membuat invoice. |
+| `pipeline_nudge` | AGENT/ADMIN | Penawaran DRAFT mendekati kedaluwarsa + order menunggu bayar > 3 hari. |
+| `commission_forecast` | AGENT/ADMIN | Dompet + komisi + perkiraan dari order berjalan (read-only). |
+| `draft_followup` | AGENT/ADMIN | Draft pesan WhatsApp untuk satu penawaran. Tidak mengirim apa pun. |
+
+### Kenapa tool layanan tidak menulis
+
+`submit_claim` (di `data-gateway/actions/claims.ts`) mengonsumsi hasil forensik foto yang di-*stage* server-side oleh `analyze-claim-photos`: sekali pakai, dicocokkan dengan `user_id` caller, dan ditolak kalau kedaluwarsa — supaya pemalsu tidak bisa mengirim `fraud_verdict: CLEAN` sendiri. Pembayaran lewat `create-xendit-invoice`. Menambahkan pintu kedua ke salah satunya berarti menduplikasi penjaga itu atau melubanginya.
+
+Karena itu Pathy hanya **menyiapkan**: `start_claim` mengembalikan `prefill`, klien memarkirnya lewat `services/claimHandoff.ts` dan membuka formulir klaim yang sudah ada. Commit tetap di tempat penjaganya berada. Ada uji yang menjalankan kesembilan tool terhadap database palsu yang melempar error pada setiap verba tulis.
+
+### Aturan jaminan
+
+Banjir, gempa, huru-hara, terorisme, TJH pihak ketiga, dan kecelakaan diri **bukan jaminan dasar** PSAKBI — semuanya perluasan berbayar. `check_coverage` selalu meresolusi jawabannya terhadap kolom `addons` order, tidak pernah dari pengetahuan umum model.
+
 ## Lampiran & proposal penawaran
 
 **OCR berjalan di klien, bukan di sini.** Browser sudah memiliki `stnk-ocr`, `services/ktpOcr.ts`, dan `services/vehicleDatabase.ts` (2.500 baris harga kendaraan — terlalu besar untuk dikirim ke edge function). Klien mengekstrak, menormalkan, dan meresolusi nilai pertanggungan, lalu mengirim **hanya kolom hasilnya**:

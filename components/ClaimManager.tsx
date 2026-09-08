@@ -8,6 +8,7 @@ import { Language } from '../types';
 import { Badge } from './shared/UI';
 import { submitClaim, uploadClaimPhoto, analyzeClaimPhotos, ClaimPhotoAnalysisResult } from '../services/supabaseService';
 import ClaimSensePanel from './shared/ClaimSensePanel';
+import { consumeClaimPrefill } from '../services/claimHandoff';
 
 const MAX_CLAIM_PHOTOS = 5;
 
@@ -66,6 +67,21 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+
+  // Pathy worked out which policy applies and what happened; jump straight to
+  // the photo step with those fields filled. Read once — see claimHandoff.ts.
+  useEffect(() => {
+    const pre = consumeClaimPrefill();
+    if (!pre) return;
+    setClaimType('AUTO');
+    setStep('upload');
+    setReportForm(f => ({
+      ...f,
+      policyNumber: pre.policyNumber || f.policyNumber,
+      chronology: pre.description || f.chronology,
+      date: pre.incidentDate || f.date,
+    }));
+  }, []);
 
   const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
 

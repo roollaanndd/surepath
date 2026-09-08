@@ -1,13 +1,55 @@
 # SurePath Session Context
-**Updated:** 2026-09-07 (v2.1.0 — KTP + proposal penawaran lewat Pathy)
+**Updated:** 2026-09-08 (v2.3.0 — Pathy jadi pintu layanan + kunci zoom aplikasi)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
-- **main = v2.1.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
-- **`pathy-agent` deployed** — cek versinya sebelum mengubah; sumber harus identik byte-per-byte dengan repo.
+- **main = v2.3.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
+- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0** (9 tool layanan baru + 2 berkas baru `common.ts`/`serviceTools.ts`). Tanpa itu tool barunya tidak ada di produksi:
+  `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
+  Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.3.0 — Pathy pintu layanan + kunci zoom (2026-09-08)
+### Keputusan: satu wajah, banyak otak
+8 mesin AI / 4 nama produk / 5 pintu masuk → **satu nama untuk user (Pathy)**. Mesin tetap terpisah; yang disatukan pintunya. Alat internal (review polis & keuangan admin, InsurerAI) sengaja **tanpa persona** — penggunanya bukan nasabah dan model auth-nya beda.
+
+### 9 tool baru — TIDAK SATU PUN MENULIS
+`supabase/functions/pathy-agent/serviceTools.ts`: `check_coverage`, `start_claim`, `claim_status`, `renewal_check`, `explain_my_policy`, `payment_help` (+ agen: `pipeline_nudge`, `commission_forecast`, `draft_followup`).
+**Alasan tidak menulis:** `submit_claim` sudah mengonsumsi hasil forensik foto yang di-stage server-side (sekali pakai, dicocokkan user_id, ada kedaluwarsa) supaya pemalsu tidak bisa mengirim `fraud_verdict: CLEAN`. Pembayaran lewat `create-xendit-invoice`. Pintu kedua = duplikasi penjaga atau lubang. Jadi Pathy **menyiapkan**, alur lama yang **commit** (`services/claimHandoff.ts` → formulir klaim).
+**Aturan jaminan:** banjir/gempa/huru-hara/terorisme/TJH/PA **bukan** jaminan dasar PSAKBI. `check_coverage` selalu resolusi ke kolom `addons`, tidak pernah dari pengetahuan model.
+`supabase/functions/pathy-agent/common.ts` (baru) — `ownerFilter` dsb. hidup di satu tempat.
+
+### Kunci zoom aplikasi
+`services/appViewport.ts` — pinch/double-tap/ctrl+scroll zoom + rubber-band mati, **hanya di app mode** (PWA terpasang / Capacitor). Tab browser tetap zoomable (WCAG 1.4.4 + Lighthouse).
+⚠️ **Modul ini self-init dan WAJIB jadi import pertama di `index.tsx`.** Import ES di-hoist: `initAppViewport()` di badan index.tsx tidak pernah jalan kalau ada modul di graph `./App` yang melempar saat load (satu env var hilang sudah cukup). Diverifikasi di browser: build tanpa env (app gagal boot) → kuncinya tetap aktif.
+
+### Suara
+`services/speech.ts` — dikte Web Speech API `id-ID`, transkrip masuk kotak input (tidak auto-kirim; dikte salah baca nama & plat).
+
+### Belum & alasannya
+- Push notification + WhatsApp dua arah: butuh kunci VAPID / konfigurasi provider yang tidak ada di repo.
+- Pathy publik tanpa login: permukaan penyalahgunaan biaya model — perlu rate-limit per-IP + review sendiri.
+- Bengkel rekanan: tidak ada tabelnya, cuma teks di `aiKnowledge.ts`. Pekerjaan data.
+
+### Uji
+`services/__tests__/pathyService.test.ts` (51 kasus), termasuk menjalankan **kesembilan** tool terhadap db palsu yang melempar pada setiap verba tulis.
+
+## v2.2.0 — Tombol "Install App" benar-benar memasang (2026-09-08)
+### Akar masalah: event pemasangan sudah lewat sebelum tombolnya ada
+`beforeinstallprompt` ditembakkan **sekali** lalu tidak pernah diulang. Ada **tiga** komponen yang masing-masing memasang listener di `useEffect`: `InstallPrompt.tsx`, `Navbar.tsx`, dan `SiteLayout.tsx`. Yang terakhir ada di **chunk lazy** — saat ia mount, event-nya sudah lewat. `pwaPrompt` tetap null → tombolnya jatuh ke `InstallModal` berisi instruksi "menu ⋮ → Add to Home screen", dan **"Add to Home screen" cuma menaruh pintasan bookmark**, bukan memasang aplikasi. Tiga salinan itu juga rebutan: satu event hanya boleh di-`prompt()` sekali.
+
+### Perbaikan
+- **Skrip inline di `index.html`** (di atas semua bundle) menangkap event → `window.__spInstall`. **Jangan dipindahkan ke bawah skrip modul.**
+- **`services/pwaInstall.ts` (baru)** = satu-satunya sumber kebenaran. `getInstallState()` / `promptInstall()` / `subscribeInstall()` / `usePwaInstall()` + snooze bersama (`isInstallOfferSnoozed`). Melepas event setelah sekali pakai; membatalkan penanda "terpasang" saat browser menawarkan lagi.
+- **`components/shared/InstallAppSheet.tsx` (baru)** — satu tampilan untuk semua. Aturan: **setiap tombol memanggil `promptInstall()` dulu**; instruksi hanya kalau hasilnya `'unavailable'`. Di-portal ke `<body>` (navbar `backdrop-blur` = containing block untuk `position:fixed`).
+- Panduan per platform: iOS (glif Share inline), webview in-app (tidak bisa memasang → buka browser + salin tautan), Android tanpa prompt (**"Instal aplikasi"**, ditegaskan bukan "Tambahkan ke layar utama"), desktop, dan browser tak didukung (tombolnya disembunyikan).
+- iPhone kini dapat tawaran pemasangan di kunjungan pertama — sebelumnya tidak ada apa pun di iOS.
+- **Manifest**: `screenshots` dulu menunjuk `logo.png` dan mengaku `3508x2481` padahal aslinya **348x400** → Chrome menolaknya, jadi tidak ada screenshot sah dan Android hanya dapat infobar mungil. Diganti 4 screenshot `narrow` 1080x1920 + 1 `wide`. Ditambah `id: '/'` dan `display_override`.
+- **`npm run lint` sekarang 0 error** — `SiteLayout.tsx:324` (pre-existing sejak v1.50.0) diperbaiki.
+- `InstallModal` + `isStandaloneMode` di `siteKit.tsx` dihapus (mati).
+- Uji: `services/__tests__/pwaInstall.test.ts` (18 kasus). Diverifikasi juga end-to-end dengan Playwright/Chromium terhadap build produksi lokal: event yang ditembakkan **sebelum** bundle jalan tetap tertangkap, tombol memanggil `prompt()` sungguhan, iPhone dapat panduan Share, dan fallback Android menyebut "Instal aplikasi".
 
 ## v2.1.0 — KTP + proposal penawaran (2026-09-07)
 ### Akar masalah KTP: salah kredensial
@@ -93,6 +135,7 @@ Lighthouse mobile (build produksi lokal): **skor 64 → 82**, FCP 3.8→2.4s, LC
 
 ## Backlog
 - [ ] `styles.css` ada komentar berisi `*/` yang bikin warning css-syntax-error saat minify (pre-existing, non-blocking)
+- [ ] `vercel.json`: aturan `Cache-Control: immutable` untuk `*.js` ikut kena `/sw.js`. Browser melewati HTTP cache saat memeriksa SW dan Vercel purge tiap deploy, jadi tidak merusak — tapi lebih rapi kalau `sw.js` dikecualikan.
 - [ ] Chunk `index.es-*` (~156KB) + `html2canvas.esm` masih ikut build — audit siapa importer-nya
 - [ ] Agent portal: AgentCommission "Total Withdrawn" hardcoded 0 (needs wallet data)
 - [ ] Re-enable stat counters homepage when real data is ready

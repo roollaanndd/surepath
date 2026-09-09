@@ -18,6 +18,9 @@
 3. **Ekstraksi dipakai + disimpan** → `services/docOcr.ts` (baru) mengklasifikasi sendiri (STNK/KTP/SIM/POLIS/INVOICE/DOC) lalu merutekan ke pembaca khusus; `compare_offers`/`build_quotation` mengisi argumen yang tidak disebut model dari lampiran (argumen eksplisit tetap menang); setiap lampiran diarsipkan ke tabel baru `sp_user_documents`; tool tulis ketiga `save_document_data` melengkapi profil (nasabah) atau `sp_clients` (agen) — **hanya kolom kosong**, kecuali `overwrite: true`.
 4. **Disclaimer selalu ada** → `pathy-agent/disclaimers.ts` menghitung caveat tiap giliran dari tool yang berjalan + teks jawaban, dikirim sebagai `data.disclaimer` dan dirender klien di bawah gelembung. **Tidak bergantung kerelaan model.** Otoritas: asuransi / dokter / OJK-kepolisian-hukum.
 
+### Deploy edge function akhirnya otomatis untuk fungsi yang benar
+`.github/workflows/deploy-edge-functions.yml` dulu selalu men-deploy **data-gateway** pada setiap push, apa pun yang berubah — itulah sebabnya `pathy-agent` tertinggal dua rilis padahal workflow-nya hijau di push yang justru mengubahnya. Sekarang ia men-deploy fungsi yang benar-benar tersentuh push (perubahan di `_shared/` → deploy semua). Tetap butuh secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`; tanpa itu workflow no-op dengan peringatan, dan deploy `pathy-agent` harus manual.
+
 ### Yang perlu diingat
 - Tabel `sp_user_documents` **sudah diapply ke production** (deny-all RLS, 0 policy, service_role saja). Menyimpan **field hasil ekstraksi, bukan gambar** — gambar tidak pernah keluar dari browser.
 - `archiveDocuments()` sengaja tidak pernah melempar: kalau tabelnya tidak ada di suatu environment, Pathy tetap jalan, cuma tidak mengingat.

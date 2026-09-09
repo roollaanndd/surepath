@@ -16,11 +16,16 @@
 //     from model arguments — see tools.ts.
 //   • User free text never enters the system prompt; it is wrapped in
 //     untrusted-input delimiters inside user-role messages.
-//   • Only two write tools (create_quote and build_quotation, both → sp_quotes
-//     as DRAFT). No money-table writes, no order or claim writes. The v2.3.0
-//     service tools (coverage, claims, renewal, payment, pipeline) are all
-//     read-only or prepare-only — see serviceTools.ts for why the claim and
-//     payment commits deliberately stay in their existing guarded paths.
+//   • Three write tools: create_quote and build_quotation (both → sp_quotes as
+//     DRAFT) and save_document_data (v2.5.0 → the caller's own profile, or an
+//     agent's own client row, from a document they just had read). No
+//     money-table writes, no order or claim writes. The v2.3.0 service tools
+//     (coverage, claims, renewal, payment, pipeline) are all read-only or
+//     prepare-only — see serviceTools.ts for why the claim and payment commits
+//     deliberately stay in their existing guarded paths.
+//   • Pathy never decides liability. Cover answers are indications; the insurer
+//     decides. Every turn carries a disclaimer computed server-side in
+//     disclaimers.ts, so it is there whether or not the model cooperated.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -28,7 +33,10 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from '../_shared/promptSafety.ts';
 import { loadRateSet } from '../_shared/ojk.ts';
-import { runTool, toolSchemas, type PathyCaller, type PathyCard, type PathyDocument, type ToolContext } from './tools.ts';
+import { runTool, toolSchemas, type PathyCaller, type PathyCard, type PathyDocument, type PathyDocumentType, type ToolContext } from './tools.ts';
+import { DOCUMENT_TYPES } from './common.ts';
+import { archiveDocuments } from './documents.ts';
+import { turnDisclaimer } from './disclaimers.ts';
 
 const MODEL = 'openai/gpt-4o-mini';
 const MAX_TOOL_ROUNDS = 4;
@@ -38,10 +46,18 @@ const HOURLY_LIMIT = 60;
 
 const MAX_DOCUMENTS = 4;
 
+const DOC_TYPE_SET = new Set<string>(DOCUMENT_TYPES);
+const MAX_DOC_FIELDS = 40;
+const MAX_DOC_FIELD_CHARS = 500;
+
 /**
  * Keeps only the shape we expect. `type` is a fixed enum (safe to name in the
  * system prompt); `fields` never goes near the prompt — the model reaches it
  * through read_attachment, which returns it as tool output.
+ *
+ * v2.5.0: the client can now read any document, so the field map is
+ * model-shaped rather than fixed. It is bounded here (count and length, scalar
+ * values only) because it is about to be stored and echoed back as tool output.
  */
 function sanitizeDocuments(raw: unknown): PathyDocument[] {
   if (!Array.isArray(raw)) return [];
@@ -50,19 +66,31 @@ function sanitizeDocuments(raw: unknown): PathyDocument[] {
     if (!d || typeof d !== 'object') continue;
     const rec = d as Record<string, unknown>;
     const type = String(rec.type ?? '').toUpperCase();
-    if (type !== 'STNK' && type !== 'KTP') continue;
-    if (!rec.fields || typeof rec.fields !== 'object') continue;
+    if (!DOC_TYPE_SET.has(type)) continue;
+    if (!rec.fields || typeof rec.fields !== 'object' || Array.isArray(rec.fields)) continue;
+
+    const fields: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rec.fields as Record<string, unknown>).slice(0, MAX_DOC_FIELDS)) {
+      if (v === null || v === undefined) continue;
+      if (typeof v === 'number' || typeof v === 'boolean') { fields[k.slice(0, 40)] = v; continue; }
+      if (typeof v === 'string') { fields[k.slice(0, 40)] = v.slice(0, MAX_DOC_FIELD_CHARS); continue; }
+      // Objects and arrays are dropped rather than walked: nothing downstream
+      // needs them, and a nested blob is just more surface to store and echo.
+    }
+    if (Object.keys(fields).length === 0) continue;
+
     const conf = typeof rec.confidence === 'number' && Number.isFinite(rec.confidence)
       ? Math.max(0, Math.min(1, rec.confidence))
       : undefined;
-    out.push({ type, fields: rec.fields as Record<string, unknown>, confidence: conf });
+    const label = typeof rec.label === 'string' ? rec.label.slice(0, 80) : undefined;
+    out.push({ type: type as PathyDocumentType, label, fields, confidence: conf });
   }
   return out;
 }
 
 function systemPrompt(role: string, attachedTypes: string[] = []): string {
   const attachmentLine = attachedTypes.length > 0
-    ? `\n\nLAMPIRAN\nPengguna melampirkan dokumen berikut di pesan ini: ${attachedTypes.join(', ')}. Panggil read_attachment untuk membacanya. Jangan menebak isinya.`
+    ? `\n\nLAMPIRAN\nPengguna melampirkan dokumen berikut di pesan ini: ${attachedTypes.join(', ')}. Panggil read_attachment untuk membacanya — jangan pernah menebak isinya. Setelah dibaca: pakai datanya untuk menjawab/menghitung, sebutkan singkat apa yang kamu baca, dan tawarkan menyimpannya ke akun pengguna (save_document_data) supaya tidak perlu difoto ulang.`
     : '';
   return `Kamu adalah Pathy, asisten AI SurePath (PT. Ruang Proteksi Indonesia), platform distribusi asuransi digital di Indonesia yang berizin dan diawasi OJK.
 
@@ -95,11 +123,12 @@ Dipakai saat pengguna minta "beberapa opsi", "bandingkan", atau "buatkan penawar
 5. Panggil build_quotation dengan option_id pilihannya. Antarmuka lalu menampilkan tombol unduh PDF — jangan pernah bilang PDF sudah terkirim atau polis sudah terbit.
 
 PERTANYAAN JAMINAN ("ditanggung nggak?")
-Selalu panggil check_coverage dulu. Dilarang menjawab dari pengetahuan umum — jawabannya bergantung pada jenis pertanggungan dan perluasan yang benar-benar dibeli pengguna. Banjir, gempa, huru-hara, terorisme, tanggung jawab pihak ketiga, dan kecelakaan diri BUKAN jaminan dasar; tanpa perluasan, jawabannya tidak ditanggung. Sebutkan juga risiko sendiri bila ada.
+Selalu panggil check_coverage dulu. Dilarang menjawab dari pengetahuan umum — jawabannya bergantung pada jenis pertanggungan dan perluasan yang benar-benar dibeli pengguna. Banjir, gempa, huru-hara, terorisme, tanggung jawab pihak ketiga, dan kecelakaan diri BUKAN jaminan dasar; tanpa perluasan, indikasinya tidak dijamin. Sebutkan juga risiko sendiri bila ada.
+Sampaikan hasilnya sebagai INDIKASI, bukan keputusan (lihat aturan DIPLOMASI di bawah).
 
 ALUR KLAIM
-1. Dengarkan kejadiannya, lalu panggil start_claim dengan peril yang sesuai. Kalau tanggal kejadian belum disebut, tanyakan dulu.
-2. Sampaikan hasilnya: ditanggung atau tidak, dan dokumen yang perlu disiapkan.
+1. Dengarkan kejadiannya dengan empati — orang yang mengalami kecelakaan sedang tidak dalam kondisi terbaiknya. Lalu panggil start_claim dengan peril yang sesuai. Kalau tanggal kejadian belum disebut, tanyakan dulu.
+2. Sampaikan hasilnya sebagai INDIKASI dari pembacaan polis, plus dokumen yang perlu disiapkan. JANGAN memvonis klaim pasti dijamin atau pasti ditolak — yang memutuskan adalah pihak asuransi setelah survei dan pemeriksaan berkas.
 3. Antarmuka menampilkan tombol untuk membuka formulir klaim dengan data terisi. Pengguna yang mengirim klaimnya, bukan kamu.
 4. JANGAN PERNAH bilang klaim sudah diajukan, sudah masuk, atau sudah disetujui. Kamu tidak mengirim klaim.
 5. Untuk "klaim saya sampai mana", panggil claim_status.
@@ -114,10 +143,33 @@ UNTUK AGEN
 - "Komisi saya berapa": commission_forecast.
 - "Buatkan pesan follow-up": draft_followup. Hasilnya draft; agen yang menekan kirim. Jangan pernah bilang pesannya sudah dikirim.
 
+DIPLOMASI SOAL KLAIM & JAMINAN (WAJIB — aturan paling penting di sini)
+- Kamu TIDAK PERNAH memutuskan sebuah klaim liable/dijamin atau tidak. Yang berwenang memutuskan adalah pihak asuransi (insurer) melalui surveyor/adjuster dan pemeriksaan berkas. Posisimu: membaca data polis pengguna dan memberi indikasi.
+- Pakai bahasa indikatif, bukan vonis: "berdasarkan data polismu, indikasinya kemungkinan besar dijamin/tidak dijamin", "ini pembacaan awal", "keputusan akhir ada di pihak asuransi setelah survei".
+- DILARANG mengatakan: "klaim kamu pasti dibayar", "klaim kamu ditolak", "asuransi wajib mengganti", atau menyebut nominal ganti rugi yang pasti.
+- Kalau hasil tool menunjukkan tidak dijamin: sampaikan dengan empati dan alasannya, sebutkan bahwa pengguna tetap berhak mengajukan dan insurer yang menilai, lalu tawarkan langkah yang membantu (perluasan saat perpanjangan, hubungi tim SurePath).
+- Kalau pengguna mendesak jawaban ya/tidak yang pasti: jawab jujur bahwa kamu tidak berwenang memastikannya, berikan indikasinya, dan arahkan ke insurer/tim SurePath.
+- Sengketa dengan insurer, penilaian bengkel, atau nominal yang dirasa kurang: jangan memihak dan jangan menyalahkan siapa pun. Jelaskan mekanismenya dan arahkan ke jalur resmi (tim SurePath, lalu OJK bila perlu).
+
+DISCLAIMER (WAJIB DI SETIAP JAWABAN YANG BERISI PERNYATAAN)
+- Setiap kali kamu menyatakan sesuatu yang bisa dipakai mengambil keputusan (jaminan, klaim, premi, prosedur, kondisi medis, hukum), tutup dengan disclaimer singkat satu kalimat: kamu AI dan bisa keliru, dan yang berwenang adalah pihaknya.
+- Yang berwenang: pihak asuransi untuk jaminan/klaim/nominal · dokter atau tenaga kesehatan untuk hal medis · OJK/kepolisian/penasihat hukum untuk hal hukum · tim SurePath untuk data akun dan transaksi.
+- Untuk pertanyaan medis (cedera, penyakit, layak rawat, obat): jangan pernah memberi diagnosis atau saran pengobatan. Sampaikan sisi asuransinya saja, dan tegaskan yang berwenang secara medis adalah dokter.
+- Disclaimer ditulis singkat dan manusiawi, bukan paragraf hukum. Sekali per jawaban sudah cukup — jangan mengulang di setiap kalimat.
+
+DOKUMEN & LAMPIRAN
+- Pengguna bisa mengunggah foto atau memotret dokumen apa pun (STNK, KTP, SIM, polis, invoice/kuitansi bengkel, dokumen lain). Semuanya sudah dibaca di perangkat pengguna; kamu mengaksesnya lewat read_attachment.
+- Selalu read_attachment dulu sebelum menghitung, menjawab, atau menyimpan apa pun dari lampiran.
+- Setelah membaca: (a) pakai datanya di alur yang sedang berjalan — STNK untuk penawaran, KTP untuk nama/alamat tertanggung, polis untuk nomor polis; (b) sebutkan hasil bacanya singkat dan minta koreksi kalau ada yang salah; (c) tawarkan menyimpannya lewat save_document_data.
+- save_document_data hanya dipanggil SETELAH pengguna setuju. Default-nya hanya mengisi kolom yang masih kosong. Kirim overwrite=true HANYA kalau pengguna eksplisit minta data lamanya diperbarui.
+- Hasil OCR bisa salah baca. Perlakukan sebagai data yang perlu dikonfirmasi pengguna, bukan kebenaran mutlak.
+- Untuk foto kerusakan kendaraan: kamu boleh menerangkan proses klaimnya, tapi JANGAN menaksir biaya perbaikan atau menyatakan kerusakan itu dijamin — penilaian kerusakan adalah wewenang surveyor insurer.
+
 BATASAN
 - Kamu TIDAK BISA: menerbitkan polis, mengirim atau memproses klaim, memproses pembayaran, membuat tagihan, mengubah data polis/klaim, mencairkan komisi atau saldo dompet, memberi diskon, mengirim pesan atas nama siapa pun, atau menjanjikan persetujuan klaim/polis.
 - Untuk pembayaran, pembatalan, perubahan data, atau penarikan dana: arahkan ke menu terkait di aplikasi atau ke tim SurePath.
 - Kamu hanya membahas asuransi dan layanan SurePath. Di luar itu (kode, dokumen non-asuransi, politik, agama, saran medis/investasi definitif), tolak dengan ramah lalu arahkan kembali ke topik asuransi.
+- Kamu bukan penanggung, bukan surveyor, bukan dokter, dan bukan penasihat hukum. Jangan pernah berbicara seolah-olah mewakili keputusan pihak asuransi.
 - Jangan pernah menampilkan data nasabah lain.
 
 ${UNTRUSTED_INPUT_NOTICE}${attachmentLine}`;
@@ -225,6 +277,12 @@ Deno.serve(async (req) => {
 
   const tools = toolSchemas(caller.role);
   const ctx: ToolContext = { db, caller, rateSet: await loadRateSet(db), documents };
+
+  // Filed before the model runs, and independently of whether it decides to
+  // read them: what the user photographed is theirs, and it should still be
+  // there next week. Never blocks or fails the turn — see documents.ts.
+  if (documents.length > 0) await archiveDocuments(ctx);
+
   const cards: PathyCard[] = [];
   const toolsUsed: string[] = [];
   const started = Date.now();
@@ -270,6 +328,10 @@ Deno.serve(async (req) => {
             reply,
             cards,
             toolsUsed,
+            // Computed from what actually ran and what actually came back, so
+            // the caveat is present even on the turns where the model forgot
+            // it. The client renders it under the bubble.
+            disclaimer: turnDisclaimer(reply, toolsUsed),
             model: payload?.model ?? MODEL,
             latencyMs: Date.now() - started,
           },

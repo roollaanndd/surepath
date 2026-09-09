@@ -6,10 +6,12 @@
 // The model can therefore hallucinate an id all it wants and still only ever
 // read or write the caller's own rows.
 //
-// Read tools are unrestricted. Exactly two tools write, and both write the same
-// thing: a non-binding DRAFT row in sp_quotes — create_quote (a single priced
-// option) and build_quotation (a full proposal). Nothing here touches money
-// tables (sp_agent_wallets, sp_wallet_transactions and sp_commissions are
+// Read tools are unrestricted. Three tools write, none of them near money:
+// create_quote and build_quotation both add a non-binding DRAFT row to
+// sp_quotes, and save_document_data (v2.5.0, see documents.ts) fills in the
+// caller's own profile — or an agent's own client record — from a document the
+// user just had read, and only after the user agrees. Nothing here touches
+// money tables (sp_agent_wallets, sp_wallet_transactions and sp_commissions are
 // read-only), orders, claims, or payments.
 
 import {
@@ -18,7 +20,7 @@ import {
 } from '../_shared/ojk.ts';
 
 export type {
-  PathyCaller, PathyDocument, ToolContext, PathyCard, ToolOutcome,
+  PathyCaller, PathyDocument, PathyDocumentType, ToolContext, PathyCard, ToolOutcome,
 } from './common.ts';
 import type { ToolContext, ToolOutcome } from './common.ts';
 import {
@@ -26,6 +28,10 @@ import {
   safeIds, shapeClaim, shapeOrder, str,
 } from './common.ts';
 import { serviceToolSchemas, runServiceTool, isServiceTool } from './serviceTools.ts';
+import {
+  attachmentHints, documentToolSchemas, isDocumentTool, runDocumentTool,
+} from './documents.ts';
+import { PRICE_DISCLAIMER } from './disclaimers.ts';
 
 // ─── Product catalogue ───────────────────────────────────────────────────────
 // Kept deliberately short: claims here are the ones the product pages make.
@@ -186,15 +192,18 @@ export function toolSchemas(role: string) {
       function: {
         name: 'read_attachment',
         description:
-          'Baca dokumen yang dilampirkan pengguna di percakapan ini (STNK atau KTP). ' +
-          'Isinya sudah diekstrak dan divalidasi. Panggil ini SEBELUM menghitung apa pun ' +
-          'kalau pengguna menyebut ada lampiran — jangan menebak isi dokumen.',
+          'Baca dokumen/foto yang dilampirkan pengguna di percakapan ini (STNK, KTP, SIM, polis, invoice, atau dokumen lain). ' +
+          'Isinya sudah diekstrak dan divalidasi di klien. Panggil ini SEBELUM menghitung atau menyimpulkan apa pun ' +
+          'kalau ada lampiran — jangan pernah menebak isi dokumen. Kosongkan `type` untuk membaca semua lampiran giliran ini.',
         parameters: {
           type: 'object',
           properties: {
-            type: { type: 'string', enum: ['STNK', 'KTP'], description: 'Jenis dokumen yang mau dibaca.' },
+            type: {
+              type: 'string',
+              enum: ['STNK', 'KTP', 'SIM', 'POLIS', 'INVOICE', 'DOC'],
+              description: 'Jenis dokumen yang mau dibaca. Kosongkan untuk membaca semuanya.',
+            },
           },
-          required: ['type'],
         },
       },
     },
@@ -271,6 +280,7 @@ export function toolSchemas(role: string) {
     });
   }
 
+  tools.push(...documentToolSchemas);
   tools.push(...serviceToolSchemas(role));
   return tools;
 }
@@ -407,7 +417,7 @@ async function estimatePremium(args: Record<string, unknown>, ctx: ToolContext):
       ...breakdown,
       province: province || null,
       band,
-      disclaimer: 'Estimasi indikatif berdasarkan tarif OJK. Premi final ditentukan insurer setelah underwriting.',
+      disclaimer: PRICE_DISCLAIMER,
     },
     card: { type: 'premium', data: { ...breakdown, province: province || null, addons } },
   };
@@ -570,10 +580,14 @@ function readAttachment(args: Record<string, unknown>, ctx: ToolContext): ToolOu
   const want = str(args.type, 10).toUpperCase();
   const docs = ctx.documents ?? [];
   if (docs.length === 0) {
-    return { result: { error: 'Belum ada dokumen yang dilampirkan. Minta pengguna melampirkan foto STNK atau KTP lewat tombol kamera.' } };
+    return { result: { error: 'Belum ada dokumen yang dilampirkan. Minta pengguna melampirkan foto lewat tombol unggah atau kamera di kolom chat.' } };
   }
-  const doc = docs.find(d => d.type === want);
-  if (!doc) {
+
+  // No type asked for → hand back everything on this turn. The model asking to
+  // "read the attachment" when the user sent one photo should not have to guess
+  // the classification first.
+  const wanted = want ? docs.filter(d => d.type === want) : docs;
+  if (wanted.length === 0) {
     return {
       result: {
         error: `Tidak ada lampiran ${want}.`,
@@ -581,9 +595,20 @@ function readAttachment(args: Record<string, unknown>, ctx: ToolContext): ToolOu
       },
     };
   }
+
+  const shape = (d: typeof docs[number]) => ({
+    type: d.type,
+    label: d.label ?? null,
+    confidence: d.confidence ?? null,
+    fields: d.fields,
+  });
+
+  const primary = wanted[0];
   return {
-    result: { type: doc.type, confidence: doc.confidence ?? null, fields: doc.fields },
-    card: { type: 'document_read', data: { type: doc.type, confidence: doc.confidence ?? null, fields: doc.fields } },
+    result: wanted.length === 1
+      ? { ...shape(primary), saveable: true, save_hint: 'Kalau pengguna mau, datanya bisa disimpan ke akunnya lewat save_document_data.' }
+      : { documents: wanted.map(shape), saveable: true },
+    card: { type: 'document_read', data: shape(primary) },
   };
 }
 
@@ -640,6 +665,18 @@ function formatIdr(n: number): string {
   return 'Rp ' + Math.round(n).toLocaleString('id-ID');
 }
 
+/** Drops keys the model sent as null/empty so a hint can fill them instead. */
+function stripEmpty(args: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(args)) {
+    if (v === null || v === undefined) continue;
+    if (typeof v === 'string' && !v.trim()) continue;
+    if (typeof v === 'number' && !Number.isFinite(v)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
 interface OfferInputs {
   vehicleType: VehicleType;
   sumInsured: number;
@@ -658,10 +695,15 @@ function readOfferInputs(args: Record<string, unknown>, rs: RateSet): OfferInput
   return { vehicleType, sumInsured, province, zone: province ? getZone(rs, province) : 3 };
 }
 
-async function compareOffers(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
+async function compareOffers(rawArgs: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
   const rs = ctx.rateSet ?? await loadRateSet(ctx.db);
   ctx.rateSet = rs;
 
+  // Arguments the model supplied always win; anything it left out is filled
+  // from the document the user attached on this turn (v2.5.0). Quoting a car
+  // whose STNK is sitting right there against an invented sum insured was the
+  // failure this closes.
+  const args = { ...attachmentHints(ctx), ...stripEmpty(rawArgs) };
   const input = readOfferInputs(args, rs);
   if ('error' in input) return { result: { error: input.error } };
 
@@ -701,16 +743,21 @@ async function compareOffers(args: Record<string, unknown>, ctx: ToolContext): P
     band,
     rateSetVersion: rs.version,
     options,
-    disclaimer: 'Estimasi indikatif berdasarkan tarif OJK. Premi final ditentukan insurer setelah underwriting.',
+    disclaimer: PRICE_DISCLAIMER,
   };
 
   return { result: data, card: { type: 'offers', data } };
 }
 
-async function buildQuotation(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
+async function buildQuotation(rawArgs: Record<string, unknown>, ctx: ToolContext): Promise<ToolOutcome> {
   const rs = ctx.rateSet ?? await loadRateSet(ctx.db);
   ctx.rateSet = rs;
 
+  // Arguments the model supplied always win; anything it left out is filled
+  // from the document the user attached on this turn (v2.5.0). Quoting a car
+  // whose STNK is sitting right there against an invented sum insured was the
+  // failure this closes.
+  const args = { ...attachmentHints(ctx), ...stripEmpty(rawArgs) };
   const input = readOfferInputs(args, rs);
   if ('error' in input) return { result: { error: input.error } };
 
@@ -852,6 +899,8 @@ export async function runTool(
     case 'get_sales_report': return await getSalesReport(args, ctx);
     case 'list_products':    return listProducts();
     default:
+      // v2.5.0 document tools (archive + profile/client enrichment).
+      if (isDocumentTool(name)) return await runDocumentTool(name, args, ctx);
       // v2.3.0 service tools (coverage, claims, renewal, payment, pipeline).
       if (isServiceTool(name)) return await runServiceTool(name, args, ctx);
       return { result: { error: `Tool tidak dikenal: ${name}` } };

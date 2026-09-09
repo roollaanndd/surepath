@@ -4,6 +4,45 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.0 — 2026-09-09
+
+### Pathy: unggah dokumen apa pun, dan berhenti memvonis klaim
+
+**1. Pathy tidak lagi memutuskan klaim — itu wewenang asuransi**
+
+`check_coverage` dan `start_claim` dulu menjawab `covered: true/false` dan kartunya menulis "Ditanggung" dengan centang hijau. Itu terbaca sebagai janji, padahal yang memutuskan liable atau tidaknya sebuah klaim adalah insurer setelah survei dan pemeriksaan berkas — SurePath adalah distributor, bukan penanggung.
+
+Keduanya sekarang mengembalikan `indication` (`LIKELY_COVERED` / `LIKELY_NOT_COVERED` / `NEEDS_REVIEW`) plus `decision_by: 'INSURER'`, dan setiap kalimat alasannya ditulis indikatif ("berdasarkan data polismu, indikasinya…"). Kartunya ikut berubah: glyph `≈`/`≉`/`?`, bukan centang/silang. Dua kondisi yang dulu jadi vonis sekarang jadi `NEEDS_REVIEW`: polis yang belum aktif, dan tanggal kejadian di luar periode polis — dua-duanya fakta untuk insurer timbang, bukan penolakan dari Pathy.
+
+Field lama `covered`/`eligible` tetap dikirim, jadi tidak ada jendela rusak saat web sudah rilis tapi edge function-nya belum.
+
+**2. Disclaimer yang tidak bergantung pada kerelaan model**
+
+`supabase/functions/pathy-agent/disclaimers.ts` (baru) menghitung caveat per giliran dari tool yang benar-benar berjalan dan kata yang benar-benar keluar — jadi disclaimer tetap ada di giliran ketika model lupa. Isinya: Pathy AI dan bisa keliru, plus siapa yang berwenang — **asuransi** untuk jaminan/klaim/nominal, **dokter** untuk hal medis, **OJK/kepolisian/penasihat hukum** untuk hal hukum. Maksimal dua baris otoritas supaya masih dibaca orang.
+
+System prompt dapat dua bagian baru: `DIPLOMASI SOAL KLAIM & JAMINAN` (dilarang bilang "pasti dibayar"/"ditolak", jangan memihak dalam sengketa, empati dulu saat orang baru kecelakaan) dan `DISCLAIMER`. Banner atas chat diganti dari "Pathy tidak bisa mengubah polis" jadi "Pathy AI bisa keliru dan tidak memutuskan klaim".
+
+**3. Tombol unggah gambar — yang memang belum pernah ada**
+
+Composer dulu hanya punya "Foto STNK" dan "Foto KTP", keduanya `capture="environment"`: di ponsel itu langsung membuka kamera, sehingga foto yang **sudah ada di galeri tidak pernah bisa dipilih**. Itulah "fitur upload tidak ada".
+
+Sekarang ada dua input: **Unggah gambar** (tanpa `capture` → galeri, file, screenshot) dan **Kamera**. Jenis dokumennya tidak perlu disebut lagi — `services/docOcr.ts` (baru) mengklasifikasi sendiri: STNK, KTP, SIM, polis, invoice/kuitansi, atau dokumen lain. STNK dan KTP tetap diarahkan ke pembaca khususnya (`stnkOcr` dengan resolusi harga pasar, `ktpOcr` dengan validasi NIK 16 digit); sisanya dibaca `extractDocumentData()` yang baru di `geminiService`. Maksimal 4 lampiran, batas 12 MB, thumbnail tampil di composer dan di gelembung pesan pengguna. Gambarnya tetap tidak pernah keluar dari browser — hanya hasil ekstraksinya yang dikirim.
+
+**4. Data hasil ekstraksi dipakai dan disimpan**
+
+- **Dipakai di penawaran.** `compare_offers` dan `build_quotation` kini mengisi argumen yang tidak disebut model dari lampiran giliran itu (nilai pertanggungan, provinsi, merk/tipe/tahun/plat dari STNK; nama & alamat tertanggung dari KTP). Argumen eksplisit tetap menang — pengguna bisa mengoreksi hasil OCR lewat chat.
+- **Diarsipkan otomatis.** Tabel baru `sp_user_documents` (deny-all RLS, hanya service_role) menyimpan **field hasil ekstraksi, bukan gambarnya**. Berjalan deterministik sebelum model dipanggil, jadi tidak bergantung pada keputusan model, dan tidak pernah menggagalkan giliran bila tabelnya tidak ada.
+- **Melengkapi akun.** Tool tulis ketiga, `save_document_data`, hanya dipanggil setelah pengguna setuju: nasabah → melengkapi profilnya sendiri (`name`, `phone`, `ktp`, `address` — tidak ada kolom lain), agen → membuat/memperbarui data klien di `sp_clients` miliknya, tidak pernah profilnya sendiri. Default-nya **hanya mengisi kolom kosong**; menimpa data yang sudah ada butuh `overwrite: true` yang hanya boleh dikirim kalau pengguna eksplisit memintanya.
+
+**Catatan rilis**
+
+- `supabase/migrations/20260909_pathy_user_documents.sql` **sudah diapply ke production**.
+- ⚠️ `pathy-agent` **wajib di-deploy ulang** — seluruh poin 1, 2 dan 4 ada di edge function:
+  `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
+- Uji baru: `services/__tests__/pathyDocuments.test.ts` (21 uji) mengunci bahwa tidak ada jalur kode yang menjanjikan klaim dibayar, disclaimer selalu terbit, dan tulis dokumen tetap sempit.
+
+---
+
 ## v2.4.0 — 2026-09-08
 
 ### Aplikasi Nasabah kini satu keluarga dengan aplikasi Agen — plus satu bug token yang mematikan seluruh mode terang

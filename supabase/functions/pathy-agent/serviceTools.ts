@@ -26,6 +26,7 @@ import {
   ORDER_COLUMNS, ORDER_REF_RE, clamp, daysUntil, isAgentSide, num, ownerFilter,
   safeIds, shapeClaim, shapeOrder, str, type ToolContext, type ToolOutcome,
 } from './common.ts';
+import { COVERAGE_DISCLAIMER, INDICATION_LABEL, type Indication } from './disclaimers.ts';
 
 // ─── Coverage rules ──────────────────────────────────────────────────────────
 //
@@ -157,8 +158,6 @@ export const PERIL_KEYS = Object.keys(PERILS);
 const OWN_RISK_BASE = 300_000;
 const OWN_RISK_EXTENSION_MIN = 500_000;
 
-const COVERAGE_DISCLAIMER =
-  'Ini pembacaan indikatif dari data polismu. Keputusan akhir tetap ada pada insurer setelah survei/pemeriksaan berkas.';
 
 /** Reads the extensions actually bought on the order. */
 function orderAddons(raw: unknown): Record<string, unknown> {
@@ -388,40 +387,61 @@ async function checkCoverage(args: Record<string, unknown>, ctx: ToolContext): P
   const coverageType = String(row.coverage_type ?? '').toUpperCase().includes('TLO') ? 'TLO' : 'COMPREHENSIVE';
   const addons = orderAddons(row.addons);
 
-  let covered = false;
+  // The answer is an INDICATION, never a decision. Whether a loss is paid is
+  // the insurer's call after survey and file review, so every sentence here is
+  // phrased as a reading of the policy document — "berdasarkan polismu…" — and
+  // the caller gets `decision_by: 'INSURER'` alongside it. See disclaimers.ts.
+  let indication: Indication = 'LIKELY_NOT_COVERED';
   let reason = '';
   let ownRisk: number | null = null;
 
   switch (peril.bucket) {
     case 'EXCLUDED':
-      reason = 'Dikecualikan oleh polis standar kendaraan bermotor (PSAKBI).';
+      indication = 'LIKELY_NOT_COVERED';
+      reason = 'Risiko ini termasuk pengecualian pada polis standar kendaraan bermotor (PSAKBI), jadi indikasinya besar kemungkinan tidak dijamin. Kalau situasinya khusus, insurer yang menilai.';
       break;
     case 'EXTENSION': {
-      covered = !!peril.addonKey && hasAddon(addons, peril.addonKey);
-      reason = covered
-        ? 'Perluasan ini ada pada polismu, jadi risikonya dijamin.'
-        : 'Perluasan ini TIDAK ada pada polismu, jadi risiko ini tidak dijamin. Bisa ditambahkan saat perpanjangan.';
-      if (covered) ownRisk = OWN_RISK_EXTENSION_MIN;
+      const on = !!peril.addonKey && hasAddon(addons, peril.addonKey);
+      indication = on ? 'LIKELY_COVERED' : 'LIKELY_NOT_COVERED';
+      reason = on
+        ? 'Perluasan untuk risiko ini tercatat ada pada polismu, jadi indikasinya besar kemungkinan dijamin — besaran penggantian tetap ditentukan insurer setelah survei.'
+        : 'Perluasan untuk risiko ini tidak tercatat pada polismu, jadi indikasinya besar kemungkinan tidak dijamin. Perluasannya bisa ditambahkan saat perpanjangan.';
+      if (on) ownRisk = OWN_RISK_EXTENSION_MIN;
       break;
     }
     case 'TOTAL_LOSS':
-      covered = true;
-      reason = 'Dijamin baik oleh Comprehensive maupun TLO.';
+      indication = 'LIKELY_COVERED';
+      reason = 'Risiko ini tercakup baik pada Comprehensive maupun TLO, jadi indikasinya besar kemungkinan dijamin. Nilai penggantiannya ditentukan insurer setelah survei.';
       ownRisk = OWN_RISK_BASE;
       break;
     case 'COMPREHENSIVE':
-      covered = coverageType === 'COMPREHENSIVE';
-      reason = covered
-        ? 'Termasuk jaminan dasar polis Comprehensive-mu.'
-        : 'Polismu TLO — hanya menjamin kerugian total, jadi kerusakan sebagian seperti ini tidak dijamin.';
-      if (covered) ownRisk = OWN_RISK_BASE;
+      indication = coverageType === 'COMPREHENSIVE' ? 'LIKELY_COVERED' : 'LIKELY_NOT_COVERED';
+      reason = coverageType === 'COMPREHENSIVE'
+        ? 'Risiko ini termasuk jaminan dasar polis Comprehensive-mu, jadi indikasinya besar kemungkinan dijamin.'
+        : 'Polismu berjenis TLO yang hanya menjamin kerugian total, jadi untuk kerusakan sebagian indikasinya besar kemungkinan tidak dijamin.';
+      if (coverageType === 'COMPREHENSIVE') ownRisk = OWN_RISK_BASE;
       break;
   }
+
+  // A policy that is not currently active cannot be read as a cover answer at
+  // all — that is a question for the insurer, not an arithmetic result.
+  const policyStatus = String(row.status ?? '').toUpperCase();
+  if (!ACTIVE_POLICY_STATUSES.has(policyStatus)) {
+    indication = 'NEEDS_REVIEW';
+    reason = `Polis ${row.order_number} berstatus ${policyStatus}, jadi jaminannya belum bisa aku baca dengan pasti. Ini perlu dikonfirmasi ke insurer atau tim SurePath.`;
+    ownRisk = null;
+  }
+
+  const covered = indication === 'LIKELY_COVERED';
 
   const data = {
     peril: perilKey,
     peril_label: peril.label,
+    indication,
+    indication_label: INDICATION_LABEL[indication],
+    /** Kept for older clients that render a yes/no chip. Prefer `indication`. */
     covered,
+    decision_by: 'INSURER',
     reason,
     note: peril.note,
     policy: {
@@ -479,13 +499,25 @@ async function startClaim(args: Record<string, unknown>, ctx: ToolContext): Prom
   // Reuse the coverage engine so the claim advice can never disagree with the
   // coverage answer.
   const coverage = await checkCoverage({ peril: perilKey, order_number: row.order_number }, ctx);
-  const cov = coverage.result as { covered?: boolean; reason?: string; own_risk?: number | null };
+  const cov = coverage.result as {
+    covered?: boolean; indication?: Indication; reason?: string; own_risk?: number | null;
+  };
+
+  // A date outside the policy period is not a rejection Pathy gets to make; it
+  // is a fact the insurer will weigh. Say it, then hand it over.
+  const indication: Indication = periodWarning
+    ? 'NEEDS_REVIEW'
+    : (cov.indication ?? (cov.covered ? 'LIKELY_COVERED' : 'LIKELY_NOT_COVERED'));
 
   const productKey = String(row.product_type ?? row.product_name ?? 'CAR').toUpperCase().includes('MOTOR') ? 'MOTOR' : 'CAR';
   const docs = CLAIM_DOCS[productKey] ?? CLAIM_DOCS.CAR;
 
   const data = {
-    eligible: cov.covered === true && !periodWarning,
+    indication,
+    indication_label: INDICATION_LABEL[indication],
+    decision_by: 'INSURER',
+    /** Kept for older clients that render a yes/no chip. Prefer `indication`. */
+    eligible: indication === 'LIKELY_COVERED',
     covered: cov.covered === true,
     coverage_reason: cov.reason ?? null,
     period_warning: periodWarning,
@@ -516,7 +548,7 @@ async function startClaim(args: Record<string, unknown>, ctx: ToolContext): Prom
   return {
     result: {
       ...data,
-      note: 'Klaim BELUM dikirim. Antarmuka menampilkan tombol untuk membuka formulir klaim dengan data ini. Jangan bilang klaimnya sudah diajukan.',
+      note: 'Klaim BELUM dikirim. Antarmuka menampilkan tombol untuk membuka formulir klaim dengan data ini. Jangan bilang klaimnya sudah diajukan. Sampaikan hasilnya sebagai INDIKASI — yang memutuskan dijamin atau tidak adalah insurer setelah survei. Jangan pernah menjanjikan klaim pasti dibayar atau memvonis klaim pasti ditolak.',
     },
     card: { type: 'claim_start', data },
   };

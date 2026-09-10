@@ -16,9 +16,16 @@
 # [api]/[auth]/[db] supaya tidak ada satu pun setelan layanan produksi yang
 # ikut tertimpa saat deploy.
 #
-# NILAI verify_jwt DI BAWAH ADALAH CERMINAN PERSIS PRODUKSI per 10 Sep 2026
-# (dibaca lewat Management API). Memperkenalkan berkas ini karena itu tidak
-# mengubah perilaku apa pun — ia hanya menuliskan keadaan yang sudah berjalan.
+# NILAI verify_jwt DI BAWAH awalnya cerminan persis produksi per 10 Sep 2026
+# (dibaca lewat Management API). v2.5.2 sengaja menyimpang di DUA tempat, dan
+# keduanya adalah perbaikan cacat yang dijelaskan di komentarnya masing-masing:
+#
+#   • xendit-webhook  true → false  (produksi salah; akan gagal di pembayaran
+#                                    pertama karena callback ditolak platform)
+#   • send-insurer-email            (belum pernah ter-deploy padahal dipanggil
+#                                    klien; alur review insurer mati di ujung)
+#
+# Selain dua itu, berkas ini tetap menuliskan keadaan yang sudah berjalan.
 # Ubah nilainya hanya dengan sengaja, bukan sebagai efek samping.
 
 project_id = "uyjgeteelnswphyzkjwi"
@@ -70,14 +77,28 @@ verify_jwt = true
 [functions.xendit-disburse]
 verify_jwt = true
 
-# CATATAN — PERLU DITINJAU, JANGAN DIUBAH DI SINI TANPA UJI.
-# Produksi saat ini menyetel verify_jwt = true untuk webhook Xendit. Callback
-# Xendit membawa `x-callback-token`, bukan JWT pengguna, jadi nilai ini layak
-# diperiksa ulang bersama konfigurasi callback di dashboard Xendit. Nilai di
-# bawah sengaja mencerminkan produksi apa adanya supaya berkas ini tidak
-# diam-diam mengubah jalur pembayaran.
+# ── PERBAIKAN CACAT (v2.5.2): webhook Xendit tidak boleh minta JWT ───────────
+#
+# Produksi menyetel verify_jwt = true untuk fungsi ini. Itu salah, dan akan
+# meledak pada pembayaran pertama yang benar-benar masuk.
+#
+# `xendit-webhook/index.ts` mengautentikasi dengan `x-callback-token` milik
+# Xendit dan sudah fail-closed: token tidak cocok → 401. Ia tidak pernah
+# mengharapkan JWT pengguna. Dengan verify_jwt = true, platform Supabase
+# menolak request dengan 401 SEBELUM fungsinya sempat jalan, sehingga
+# pengecekan `x-callback-token` itu tidak pernah tereksekusi — dan callback
+# Xendit tidak akan pernah sampai. Akibatnya pembayaran tidak pernah ditandai
+# PAID, komisi tidak pernah dikredit, dan insurer tidak pernah dinotifikasi.
+#
+# Belum ada yang menyadarinya karena `sp_payments` masih kosong: platform belum
+# pernah memproses satu pembayaran pun (order terakhir Juli 2026). Jadi ini
+# ranjau pra-peluncuran, bukan kerusakan yang sedang berjalan.
+#
+# Alasannya sama persis dengan data-gateway: fungsi yang mengautentikasi
+# sendiri dengan mekanismenya sendiri tidak boleh dijaga ganda oleh JWT gate
+# platform yang tidak paham mekanisme itu.
 [functions.xendit-webhook]
-verify_jwt = true
+verify_jwt = false
 
 [functions.submit-policy-insurer]
 verify_jwt = true
@@ -94,20 +115,30 @@ verify_jwt = true
 [functions.send-whatsapp]
 verify_jwt = true
 
+# ── PERBAIKAN CACAT (v2.5.2): send-insurer-email memang dipanggil klien ──────
+#
+# Sebelumnya fungsi ini dibiarkan tidak dideklarasikan dengan alasan
+# "menghidupkan endpoint baru = keputusan produk". Alasan itu keliru setelah
+# dicek: `services/website.ts` MEMANGGILNYA lewat
+# `supabase.functions.invoke('send-insurer-email', …)` — sesudah menerbitkan
+# token insurer dan menyusun review URL. Fungsinya tidak ada di produksi, jadi
+# panggilan itu gagal dan insurer tidak pernah menerima email review-link.
+#
+# Jadi mendeklarasikannya bukan menambah fitur, melainkan memperbaiki langkah
+# terakhir alur review insurer (v1.20.0–v1.22.0) yang selama ini mati diam-diam.
+#
+# verify_jwt = true benar di sini: fungsinya dipanggil dari sesi pengguna yang
+# sudah login, dan di dalamnya masih ada `verifyAuth` + `adminOnly`.
+[functions.send-insurer-email]
+verify_jwt = true
+
 # ── Ada di repo, TIDAK ada di produksi — sengaja dibiarkan mati ───────────────
 #
-# Mendeklarasikan keduanya akan MEMBUAT endpoint baru yang selama ini tidak
-# pernah hidup. Itu keputusan produk, bukan efek samping dari merapikan config,
-# jadi keduanya dikomentari sampai ada yang memutuskan.
-#
-#   send-insurer-email — dipakai alur review insurer (didokumentasikan sejak
-#     v1.20.0) tetapi tidak pernah ter-deploy. Artinya fitur kirim review-link
-#     ke insurer kemungkinan besar mati di produksi. Perlu dicek.
-#   ai-gateway — tampaknya kembaran dari AI gateway lokal di `server.ts` yang
-#     menurut CLAUDE.md hanya ada saat `npm run dev`.
-#
-# [functions.send-insurer-email]
-# verify_jwt = true
+# ai-gateway hanya kembaran dari AI gateway lokal di `server.ts`. Klien
+# menjangkaunya lewat `/api/ai-gateway`, yang menurut CLAUDE.md hanya ada saat
+# `npm run dev` (di produksi jalur itu 404 dan `services/aiGateway.ts` hanya
+# mencobanya bila `import.meta.env.DEV`). Tidak ada yang memanggil versi edge
+# function-nya, jadi mendeklarasikannya hanya akan menambah permukaan serang.
 #
 # [functions.ai-gateway]
 # verify_jwt = true

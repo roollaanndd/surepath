@@ -4,6 +4,36 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.2 — 2026-09-10
+
+### Dua cacat yang ditemukan saat memverifikasi `config.toml` — satu di jalur uang
+
+Merapikan `config.toml` di v2.5.1 memaksa setiap fungsi diperiksa satu per satu. Dua di antaranya ternyata salah, dan keduanya diam.
+
+**1. `xendit-webhook` akan gagal di pembayaran pertama** ⚠️ jalur uang
+
+Produksi menjalankannya dengan `verify_jwt = true`. Fungsinya mengautentikasi dengan `x-callback-token` milik Xendit dan sudah fail-closed — ia tidak pernah mengharapkan JWT pengguna. Dengan `verify_jwt = true`, platform Supabase menolak request dengan **401 sebelum fungsinya sempat jalan**, sehingga pengecekan `x-callback-token` tidak pernah tereksekusi.
+
+Konsekuensinya berantai: callback Xendit tidak pernah sampai → pembayaran tidak pernah ditandai `PAID` → komisi agen tidak pernah dikredit → insurer tidak pernah dinotifikasi.
+
+Belum ada yang menyadarinya karena **`sp_payments` masih kosong** — platform belum pernah memproses satu pembayaran pun (order terakhir Juli 2026). Jadi ini ranjau pra-peluncuran, bukan kerusakan yang sedang berjalan. Diperbaiki jadi `verify_jwt = false`, alasan identik dengan `data-gateway`: fungsi yang mengautentikasi sendiri tidak boleh dijaga ganda oleh gerbang JWT platform yang tidak paham mekanismenya.
+
+**2. `send-insurer-email` tidak pernah ter-deploy padahal dipanggil klien**
+
+Di v2.5.1 fungsi ini sengaja tidak dideklarasikan, dengan alasan "menghidupkan endpoint baru adalah keputusan produk". **Alasan itu keliru.** `services/website.ts` memanggilnya lewat `supabase.functions.invoke('send-insurer-email', …)` — persis setelah menerbitkan token insurer dan menyusun review URL. Fungsinya tidak ada di produksi, jadi panggilan itu gagal dan insurer **tidak pernah menerima email review-link**.
+
+Artinya langkah terakhir alur review insurer (kerja v1.20.0–v1.22.0) mati diam-diam selama ini. Mendeklarasikannya bukan menambah fitur, melainkan memperbaiki yang rusak. `verify_jwt = true` benar di sini: dipanggil dari sesi pengguna yang sudah login, dan `verifyAuth` + `adminOnly` tetap berjalan di dalamnya.
+
+**Yang tetap dibiarkan mati**
+
+`ai-gateway` hanya kembaran AI gateway lokal di `server.ts`; klien menjangkaunya lewat `/api/ai-gateway` yang hanya ada saat `npm run dev`. Tidak ada yang memanggil versi edge function-nya, jadi mendeklarasikannya hanya menambah permukaan serang.
+
+**Catatan penerapan**
+
+Kedua perbaikan ada di `supabase/config.toml`, jadi baru berlaku **saat deploy berikutnya benar-benar berjalan** — yaitu setelah integrasi GitHub di dashboard Supabase dinyalakan (lihat `docs/DEPLOYMENT.md`). Sampai itu terjadi, produksi masih membawa kedua cacat di atas.
+
+---
+
 ## v2.5.1 — 2026-09-10
 
 ### `supabase/config.toml` — berkas yang hilang, dan kenapa deploy tidak pernah jalan

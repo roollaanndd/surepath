@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-10 (v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-10 (v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,18 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.2 — Dua cacat diam yang ketahuan gara-gara config.toml (2026-09-10)
+### ⚠️ `xendit-webhook` akan gagal di pembayaran PERTAMA (jalur uang)
+Produksi menjalankannya `verify_jwt = true`. Fungsinya autentikasi pakai `x-callback-token` Xendit (fail-closed) dan tidak pernah mengharap JWT. Dengan verify_jwt=true, platform menolak **401 sebelum fungsi jalan** → callback Xendit tidak pernah sampai → pembayaran tak pernah `PAID` → komisi tak pernah dikredit → insurer tak pernah dinotifikasi.
+**Belum meledak karena `sp_payments` KOSONG** — belum pernah ada pembayaran (order terakhir Juli 2026, total 5 order, `sp_wallet_transactions` juga kosong). Ranjau pra-peluncuran.
+Diperbaiki di `config.toml` → `false`. Alasan identik data-gateway.
+### `send-insurer-email` tak pernah ter-deploy padahal DIPANGGIL klien
+`services/website.ts:294` memanggil `supabase.functions.invoke('send-insurer-email', …)` setelah menerbitkan token insurer + review URL. Fungsinya tidak ada di produksi → insurer **tidak pernah menerima email review-link**. Langkah terakhir alur review insurer (v1.20.0–v1.22.0) mati diam-diam. Penilaian v2.5.1 ("keputusan produk") KELIRU — ini perbaikan cacat. Sekarang dideklarasikan, `verify_jwt = true`.
+### Tetap dibiarkan mati
+`ai-gateway` — hanya kembaran gateway lokal `server.ts` via `/api/ai-gateway` (dev-only). Tidak ada pemanggil edge-function-nya.
+### ⚠️ BELUM BERLAKU DI PRODUKSI
+Kedua perbaikan ada di `config.toml`, jadi baru aktif saat deploy berikutnya benar-benar jalan — setelah integrasi GitHub di dashboard Supabase dinyalakan.
 
 ## v2.5.1 — Jalan keluar deploy TANPA secret GitHub (2026-09-10)
 **Masalah owner:** tidak punya akses ke Settings→Secrets GitHub, jadi auto-deploy tidak bisa dinyalakan.

@@ -1,0 +1,119 @@
+# SurePath — konfigurasi Supabase CLI.
+#
+# KENAPA BERKAS INI ADA
+#
+# Tanpa `config.toml`, integrasi GitHub Supabase hanya menjalankan migrasi dan
+# men-deploy NOL edge function: yang dideploy hanyalah fungsi yang dideklarasikan
+# di sini. Itu sebabnya berkas ini menjadi prasyarat untuk menyalakan deploy
+# otomatis dari dashboard Supabase (Project Settings → Integrations → GitHub),
+# jalur yang TIDAK memerlukan secret apa pun di GitHub.
+#
+# Berkas ini juga dibaca oleh `supabase functions deploy`, sehingga setelan
+# verify_jwt tidak lagi tersebar antara CLI, workflow CI, dan dashboard —
+# satu sumber kebenaran.
+#
+# SENGAJA MINIMAL. Hanya `project_id` dan blok `[functions.*]`. Tidak ada blok
+# [api]/[auth]/[db] supaya tidak ada satu pun setelan layanan produksi yang
+# ikut tertimpa saat deploy.
+#
+# NILAI verify_jwt DI BAWAH ADALAH CERMINAN PERSIS PRODUKSI per 10 Sep 2026
+# (dibaca lewat Management API). Memperkenalkan berkas ini karena itu tidak
+# mengubah perilaku apa pun — ia hanya menuliskan keadaan yang sudah berjalan.
+# Ubah nilainya hanya dengan sengaja, bukan sebagai efek samping.
+
+project_id = "uyjgeteelnswphyzkjwi"
+
+# ── Gateway: verify_jwt = false karena mengautentikasi sendiri di dalam kode ──
+# data-gateway memverifikasi Bearer JWT untuk action privat dan memakai
+# allowlist PUBLIC_ACTIONS untuk sisanya; quotations-gateway melayani halaman
+# publik /q/{code}. Keduanya dulu di-deploy dengan flag `--no-verify-jwt`.
+
+[functions.data-gateway]
+verify_jwt = false
+
+[functions.quotations-gateway]
+verify_jwt = false
+
+# Dipicu jadwal/cron, bukan sesi pengguna.
+[functions.daily-report]
+verify_jwt = false
+
+[functions.insurer-reminder-cron]
+verify_jwt = false
+
+# ── Selebihnya: JWT diverifikasi platform lebih dulu ──────────────────────────
+
+[functions.pathy-agent]
+verify_jwt = true
+
+[functions.ai-proxy]
+verify_jwt = true
+
+[functions.ai-policy-review]
+verify_jwt = true
+
+[functions.ai-finance-review]
+verify_jwt = true
+
+[functions.analyze-claim-photos]
+verify_jwt = true
+
+[functions.stnk-ocr]
+verify_jwt = true
+
+[functions.ocr-scan]
+verify_jwt = true
+
+[functions.create-xendit-invoice]
+verify_jwt = true
+
+[functions.xendit-disburse]
+verify_jwt = true
+
+# CATATAN — PERLU DITINJAU, JANGAN DIUBAH DI SINI TANPA UJI.
+# Produksi saat ini menyetel verify_jwt = true untuk webhook Xendit. Callback
+# Xendit membawa `x-callback-token`, bukan JWT pengguna, jadi nilai ini layak
+# diperiksa ulang bersama konfigurasi callback di dashboard Xendit. Nilai di
+# bawah sengaja mencerminkan produksi apa adanya supaya berkas ini tidak
+# diam-diam mengubah jalur pembayaran.
+[functions.xendit-webhook]
+verify_jwt = true
+
+[functions.submit-policy-insurer]
+verify_jwt = true
+
+[functions.notify-admin]
+verify_jwt = true
+
+[functions.send-otp]
+verify_jwt = true
+
+[functions.verify-otp]
+verify_jwt = true
+
+[functions.send-whatsapp]
+verify_jwt = true
+
+# ── Ada di repo, TIDAK ada di produksi — sengaja dibiarkan mati ───────────────
+#
+# Mendeklarasikan keduanya akan MEMBUAT endpoint baru yang selama ini tidak
+# pernah hidup. Itu keputusan produk, bukan efek samping dari merapikan config,
+# jadi keduanya dikomentari sampai ada yang memutuskan.
+#
+#   send-insurer-email — dipakai alur review insurer (didokumentasikan sejak
+#     v1.20.0) tetapi tidak pernah ter-deploy. Artinya fitur kirim review-link
+#     ke insurer kemungkinan besar mati di produksi. Perlu dicek.
+#   ai-gateway — tampaknya kembaran dari AI gateway lokal di `server.ts` yang
+#     menurut CLAUDE.md hanya ada saat `npm run dev`.
+#
+# [functions.send-insurer-email]
+# verify_jwt = true
+#
+# [functions.ai-gateway]
+# verify_jwt = true
+
+# ── Milik aplikasi LAIN di project Supabase yang sama ─────────────────────────
+# generate-daily-renungan, backup-daily, admin-auth, push-notify, signup-member
+# hidup di project ini tetapi sumbernya tidak ada di repo ini. Sengaja TIDAK
+# dideklarasikan — mendeklarasikannya berarti men-deploy dari sumber yang tidak
+# kita punya. Jangan tambahkan.

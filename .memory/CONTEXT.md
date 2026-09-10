@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-10 (v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-10 (v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,22 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.3 — Memutus pola "gagal tanpa bersuara" (2026-09-10)
+### Pola yang mendasari SEMUA temuan sesi ini
+Auto-deploy lapor sukses tanpa deploy · `functions.invoke()` gagal tak diperiksa · kanal notifikasi dilewati diam-diam · percakapan Pathy tak pernah disimpan. **Selama sistem tidak bisa memberi tahu saat rusak, tiap perbaikan berikutnya adalah tebakan.**
+### Dua perkakas
+1. `npm run check:functions` (`scripts/check-edge-functions.mjs`) — **memblokir di CI**. Setiap dir di `supabase/functions/` wajib punya sikap TERTULIS di `config.toml`: dideklarasikan, atau `#!undeclared <nama> — alasan`. Menangkap dua arah (fungsi tanpa deklarasi, deklarasi tanpa sumber). Diuji dua-duanya.
+2. `docs/PRODUCTION_READINESS.md` — satu query SQL read-only untuk SQL Editor. Tidak menampilkan NILAI rahasia, hanya ada/tidaknya. Cek: rahasia Vault yang dipakai fungsi DB, `sp_bot_config` kosong, kanal notifikasi, prasyarat Xendit, rate set OJK.
+### ⚠️ Temuan baru: 2 dari 3 kanal notifikasi admin MATI
+| Kanal | Status | Sebab |
+|---|---|---|
+| Telegram | ✅ | — |
+| WhatsApp (Fonnte) | ❌ | `FONNTE_TOKEN` tidak ada di Vault — **nomor admin sudah diisi**, jadi tampak menyala |
+| Email (Resend) | ❌ | `RESEND_API_KEY` tidak ada DAN `admin_email` kosong |
+Cara isi (nilai tidak pernah masuk repo): `select vault.create_secret('<nilai>','FONNTE_TOKEN');` dst — lihat PRODUCTION_READINESS.md.
+### Verifikasi ulang v2.5.2
+`verify_jwt=false` di `xendit-webhook` **tidak** membuka lubang: cek `x-callback-token` fail-closed eksplisit (token tak ada → 500), dan `XENDIT_WEBHOOK_TOKEN` terkonfirmasi ADA di Vault (48 char) → setelah deploy webhook benar-benar jalan.
 
 ## v2.5.2 — Dua cacat diam yang ketahuan gara-gara config.toml (2026-09-10)
 ### ⚠️ `xendit-webhook` akan gagal di pembayaran PERTAMA (jalur uang)

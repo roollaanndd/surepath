@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Menangkap edge function yang tidak punya sikap tertulis di
+      # supabase/config.toml — penyebab send-insurer-email hilang tanpa
+      # ketahuan. Deterministik dan cepat, jadi memblokir.
+      - name: Edge function declarations
+        run: node scripts/check-edge-functions.mjs
+
       - name: TypeScript check
         run: npx tsc --noEmit --skipLibCheck
 

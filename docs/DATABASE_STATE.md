@@ -18,6 +18,7 @@
 | `sp_page_views` | Analytics halaman | anon insert + auth select (tapi lihat catatan grants!) |
 | `sp_quotes`, `sp_product_configs`, `sp_website_config` | Quote publik, harga, CMS landing | publik/terbuka |
 | `sp_withdrawals`, `sp_wallet_transactions` | Penarikan & wallet agent | via gateway / RPC |
+| `sp_user_documents` | Hasil ekstraksi dokumen yang ditunjukkan ke Pathy (**field saja, tanpa gambar**) | **deny-all** → hanya `pathy-agent` (service_role). Diapply ke production 9 Sep 2026 |
 
 ## Tabel + kolom baru (v1.18.0 → v1.23.0)
 

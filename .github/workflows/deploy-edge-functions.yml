@@ -6,6 +6,12 @@
 # data-gateway bundle stale behind the repo (see CHANGELOG v1.51–v1.53 deploy
 # notes).
 #
+# It deploys the functions the push actually changed (v2.5.0). Before that it
+# always deployed data-gateway regardless of what changed, which is why
+# pathy-agent stayed two releases behind production while this workflow ran
+# green on the very pushes that updated it. A change under _shared/ redeploys
+# every function, since they all import from there.
+#
 # REQUIRED REPO SECRETS (Settings → Secrets and variables → Actions):
 #   SUPABASE_ACCESS_TOKEN  — personal access token from https://supabase.com/dashboard/account/tokens
 #   SUPABASE_PROJECT_REF   — uyjgeteelnswphyzkjwi
@@ -34,6 +40,49 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: the push is diffed against its `before` SHA to find
+          # which functions changed, and a shallow clone may not contain it.
+          fetch-depth: 0
+
+      # Deploying only data-gateway on every push was the reason pathy-agent sat
+      # two releases behind production: the push that changed it triggered this
+      # workflow and then deployed something else. Deploy what the push touched.
+      - name: Resolve functions to deploy
+        id: resolve
+        env:
+          MANUAL: ${{ github.event.inputs.functions }}
+        run: |
+          set -euo pipefail
+          if [ -n "${MANUAL:-}" ]; then
+            echo "functions=$MANUAL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "functions=data-gateway" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Changed paths under supabase/functions/<name>/…, minus _shared —
+          # a change there affects every function that imports it, so in that
+          # case redeploy the whole set.
+          before="${{ github.event.before }}"
+          if ! changed=$(git diff --name-only "$before" "${{ github.sha }}" -- 'supabase/functions/**' 2>/dev/null); then
+            # Force-push, first push on a branch, or a missing base object.
+            # Deploying everything is the safe direction here: the failure this
+            # workflow exists to prevent is a function silently NOT deploying.
+            echo "::warning::Could not diff against $before — deploying every function."
+            changed=""
+            all=1
+          fi
+          if [ "${all:-0}" = "1" ] || echo "$changed" | grep -q '^supabase/functions/_shared/'; then
+            fns=$(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name '_shared' -printf '%f\n' | sort | tr '\n' ' ')
+          elif [ -z "$changed" ]; then
+            fns=""
+          else
+            fns=$(echo "$changed" | awk -F/ '{print $3}' | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          fi
+          echo "Deploying: $fns"
+          echo "functions=$fns" >> "$GITHUB_OUTPUT"
 
       - name: Guard — secrets present?
         id: guard
@@ -46,19 +95,17 @@ jobs:
           fi
 
       - name: Setup Supabase CLI
-        if: steps.guard.outputs.ready == 'true'
+        if: steps.guard.outputs.ready == 'true' && steps.resolve.outputs.functions != ''
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Deploy functions
-        if: steps.guard.outputs.ready == 'true'
+        if: steps.guard.outputs.ready == 'true' && steps.resolve.outputs.functions != ''
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          # On manual dispatch, deploy the requested set; on push, deploy data-gateway
-          # (the only function that carries app logic reached from the browser).
-          FUNCTIONS: ${{ github.event.inputs.functions || 'data-gateway' }}
+          FUNCTIONS: ${{ steps.resolve.outputs.functions }}
         run: |
           set -euo pipefail
           for fn in $FUNCTIONS; do

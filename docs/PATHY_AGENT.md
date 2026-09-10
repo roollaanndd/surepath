@@ -2,7 +2,19 @@
 
 > Edge function: `supabase/functions/pathy-agent/`. Deploy manual:
 > `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-> Versi deploy saat ini: **v3** (7 September 2026). Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
+> Versi deploy saat ini: **v3** (7 September 2026) — ⚠️ **belum mencakup v2.3.0 dan v2.5.0**; deploy ulang wajib.
+> Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
+
+## Aturan nomor satu: Pathy tidak memutuskan klaim
+
+SurePath adalah distributor, bukan penanggung. Yang memutuskan sebuah klaim liable atau tidak adalah **insurer**, lewat surveyor/adjuster dan pemeriksaan berkas. Karena itu, sejak v2.5.0:
+
+- `check_coverage` dan `start_claim` mengembalikan `indication` — `LIKELY_COVERED` / `LIKELY_NOT_COVERED` / `NEEDS_REVIEW` — bersama `decision_by: 'INSURER'`, bukan vonis `covered: true/false`. (Field `covered`/`eligible` masih dikirim demi klien lama.)
+- Polis yang belum aktif dan tanggal kejadian di luar periode polis → `NEEDS_REVIEW`, bukan penolakan.
+- Kartu di UI memakai glyph `≈` / `≉` / `?` dengan label "Indikasi: …", bukan centang hijau "Ditanggung".
+- System prompt melarang kalimat "klaim pasti dibayar" / "klaim ditolak", melarang memihak dalam sengketa dengan insurer atau bengkel, dan mewajibkan empati sebelum prosedur.
+
+`supabase/functions/pathy-agent/disclaimers.ts` menghitung disclaimer tiap giliran dari tool yang berjalan + teks jawabannya, lalu mengirimnya sebagai `data.disclaimer`. Klien merendernya di bawah gelembung. Artinya disclaimer tetap muncul **meski model lupa menulisnya** — prompt itu permintaan, bukan jaminan. Otoritas yang disebut: asuransi (jaminan/klaim/nominal), dokter (medis), OJK/kepolisian/penasihat hukum (hukum).
 
 ## Kenapa fungsi sendiri, bukan action di data-gateway
 
@@ -21,7 +33,8 @@ browser ──(Supabase JWT)──▶ pathy-agent ──▶ OpenRouter (tool cal
 ```jsonc
 {
   "message": "polis saya apa saja?",          // maks 2000 karakter
-  "history": [{ "role": "user|assistant", "content": "..." }]  // maks 8 giliran terakhir
+  "history": [{ "role": "user|assistant", "content": "..." }],  // maks 8 giliran terakhir
+  "documents": [{ "type": "STNK", "label": "...", "fields": { }, "confidence": 0.96 }]  // maks 4
 }
 ```
 
@@ -33,6 +46,7 @@ browser ──(Supabase JWT)──▶ pathy-agent ──▶ OpenRouter (tool cal
     "reply": "Kamu punya 2 polis aktif …",
     "cards": [{ "type": "policies", "data": { "policies": [ … ] } }],
     "toolsUsed": ["get_my_policies"],
+    "disclaimer": "Aku AI — jawabanku bisa keliru… Keputusan … ada pada pihak asuransi…",
     "model": "openai/gpt-4o-mini",
     "latencyMs": 2140
   }
@@ -53,9 +67,10 @@ Klien memetakan status itu ke `PathyError.code` (`AUTH` / `RATE_LIMIT` / `NOT_CO
 | `get_my_quotes` | semua | Penawaran tersimpan milik caller. |
 | `list_products` | semua | Katalog produk SurePath (mencegah model mengarang nama/manfaat). |
 | `estimate_premium` | semua | Hitung premi kendaraan dari rate set OJK aktif (`sp_ojk_rate_sets`), band **MIN** (tarif batas bawah). |
-| `create_quote` | semua | **Satu-satunya tool tulis.** Simpan penawaran ke `sp_quotes` status `DRAFT`, berlaku 14 hari. |
+| `create_quote` | semua | **Tool tulis pertama.** Simpan penawaran ke `sp_quotes` status `DRAFT`, berlaku 14 hari. |
 | `get_sales_report` | AGENT/ADMIN | Ringkasan order, premi bruto/terbayar, komisi, saldo dompet (read-only). |
-| `read_attachment` | semua | Baca lampiran STNK/KTP giliran ini (sudah di-OCR di klien). |
+| `read_attachment` | semua | Baca lampiran giliran ini (STNK, KTP, SIM, polis, invoice, dokumen lain — sudah di-OCR di klien). Tanpa `type` → semua lampiran. |
+| `save_document_data` | semua | **Tool tulis ketiga.** Simpan hasil baca ke akun: CUSTOMER → profilnya sendiri (`name`/`phone`/`ktp`/`address`), AGENT → `sp_clients` miliknya. Hanya mengisi kolom kosong kecuali `overwrite: true`. |
 | `compare_offers` | semua | Tiga opsi sekaligus: Comprehensive, Comprehensive + perluasan, TLO. |
 | `build_quotation` | semua | **Tool tulis kedua.** Menyusun proposal + menyimpan draf; klien merender PDF slip. |
 
@@ -87,12 +102,22 @@ Banjir, gempa, huru-hara, terorisme, TJH pihak ketiga, dan kecelakaan diri **buk
 
 ## Lampiran & proposal penawaran
 
+### Unggah & klasifikasi (v2.5.0)
+
+Composer punya dua input: **Unggah gambar** (tanpa `capture`, jadi galeri/berkas terbuka) dan **Kamera**. Pengguna tidak perlu menyebut jenis dokumennya — `services/docOcr.ts` mengklasifikasi lalu merutekan: STNK → `stnkOcr` (plus resolusi harga pasar), KTP → `ktpOcr` (NIK divalidasi 16 digit), sisanya → `extractDocumentData()` di `geminiService`. Maks 4 lampiran, 12 MB per berkas.
+
+Hasilnya dipakai tiga kali:
+
+1. **Menjawab** — lewat `read_attachment`.
+2. **Menghitung** — `compare_offers` / `build_quotation` mengisi argumen yang tidak disebut model dari lampiran (nilai pertanggungan, provinsi, kendaraan; nama & alamat tertanggung dari KTP). Argumen eksplisit selalu menang, supaya koreksi pengguna di chat tidak tertimpa OCR.
+3. **Mengingat** — setiap lampiran diarsipkan ke `sp_user_documents` (deny-all RLS, service_role saja) sebelum model dipanggil. **Field saja, tanpa gambar.** Gagal diam-diam bila tabelnya tidak ada; giliran tetap jalan.
+
 **OCR berjalan di klien, bukan di sini.** Browser sudah memiliki `stnk-ocr`, `services/ktpOcr.ts`, dan `services/vehicleDatabase.ts` (2.500 baris harga kendaraan — terlalu besar untuk dikirim ke edge function). Klien mengekstrak, menormalkan, dan meresolusi nilai pertanggungan, lalu mengirim **hanya kolom hasilnya**:
 
 ```jsonc
 {
   "message": "Buatkan penawaran, beberapa opsi",
-  "documents": [
+  "documents": [   // type: STNK | KTP | SIM | POLIS | INVOICE | DOC
     { "type": "STNK", "confidence": 0.96,
       "fields": { "plate": "B 1234 XYZ", "brand": "Toyota", "model": "…", "year": 2022,
                   "province": "DKI Jakarta", "zone": 2, "market_value": 204840000 } },
@@ -112,7 +137,7 @@ Gambar tidak pernah melewati fungsi ini. `sanitizeDocuments()` hanya mempercayai
 1. **Identitas tidak pernah dari model.** `agent_id`, `client_id`, `user_id` selalu diambil dari JWT yang sudah diverifikasi. Argumen model yang berisi id diabaikan. Model boleh berhalusinasi id apa pun — query tetap hanya menyentuh baris milik caller.
 2. **Owner id kanonik.** Sama seperti data-gateway (FIX v1.50.0): baris ditulis dengan `sp_users.id`, tapi akun lama punya `sp_users.id ≠ auth.users.id`, jadi pembacaan memakai `ownerIds` (keduanya). Semua id divalidasi sebagai UUID sebelum masuk filter.
 3. **Teks bebas pengguna tidak pernah masuk system prompt.** Hanya `role` (enum tetap) yang diinterpolasi. Pesan dan riwayat dibungkus `wrapUserContent()` di dalam message ber-role `user`.
-4. **Tidak ada jalur uang.** Tidak ada tulis ke `sp_agent_wallets`, `sp_wallet_transactions`, `sp_commissions`, `sp_payments`, `sp_policy_orders`, atau `sp_claims`. Dompet hanya dibaca, itu pun hanya dompet caller sendiri.
+4. **Tulis tetap sempit.** Tiga tool tulis: `create_quote`, `build_quotation` (keduanya `sp_quotes` DRAFT) dan `save_document_data` (empat kolom identitas pada baris caller sendiri, atau `sp_clients` milik agen itu). Tidak ada jalur uang. Tidak ada tulis ke `sp_agent_wallets`, `sp_wallet_transactions`, `sp_commissions`, `sp_payments`, `sp_policy_orders`, atau `sp_claims`. Dompet hanya dibaca, itu pun hanya dompet caller sendiri.
 5. **Argumen di-clamp di server.** `limit` 1–25, `sum_insured` Rp 5jt–20M, `tpl_limit` hanya dari daftar OJK, kursi PA 0–7.
 6. **Rate limit** 60 pesan/jam per user lewat `sp_rate_limits` (persisten, tahan redeploy).
 7. **Loop dibatasi** 4 ronde tool; pada ronde terakhir `tools` dilepas agar model wajib menjawab prosa.

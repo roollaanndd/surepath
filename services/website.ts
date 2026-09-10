@@ -437,7 +437,8 @@ export interface PathyCard {
     // v2.3.0 — layanan purna jual
     | 'coverage' | 'claim_start' | 'claim_status' | 'renewals'
     | 'policy_explainer' | 'payment_help'
-    | 'pipeline' | 'commission_forecast' | 'followup_draft';
+    | 'pipeline' | 'commission_forecast' | 'followup_draft'
+    | 'document_saved';
   data: any;
 }
 
@@ -446,8 +447,12 @@ export interface PathyCard {
  * it already owns stnk-ocr, the KTP reader and the vehicle price database — so
  * only extracted fields travel to the agent, never the image itself.
  */
+export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC';
+
 export interface PathyDocument {
-  type: 'STNK' | 'KTP';
+  type: PathyDocumentType;
+  /** Human label for a generic document, e.g. "Kuitansi bengkel". */
+  label?: string;
   fields: Record<string, unknown>;
   confidence?: number;
 }
@@ -456,6 +461,12 @@ export interface PathyReply {
   reply: string;
   cards: PathyCard[];
   toolsUsed: string[];
+  /**
+   * Caveat for this turn, computed server-side from the tools that ran and the
+   * words that came back (pathy-agent/disclaimers.ts). Rendered under the
+   * bubble so it is there even on turns where the model forgot to add one.
+   */
+  disclaimer?: string;
   /** True when the tool-capable agent was unreachable and we answered from the knowledge base only. */
   degraded?: boolean;
 }
@@ -505,6 +516,7 @@ export async function pathyChat(
         reply,
         cards: Array.isArray(data.cards) ? data.cards : [],
         toolsUsed: Array.isArray(data.toolsUsed) ? data.toolsUsed : [],
+        disclaimer: typeof data.disclaimer === 'string' ? data.disclaimer : undefined,
       };
     }
     return await pathyKnowledgeFallback(message, conversationHistory);

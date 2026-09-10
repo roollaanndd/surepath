@@ -23,12 +23,22 @@ export interface PathyCaller {
  * what arrives here is already extracted and normalised — no image ever passes
  * through this function. The model can only see it by calling read_attachment,
  * which keeps the "every fact comes from a tool" discipline intact.
+ *
+ * v2.5.0 widened this past STNK/KTP: the client's generic reader classifies
+ * whatever photo it is given, so a driving licence, a policy schedule or a
+ * workshop invoice arrives here as extracted fields too.
  */
+export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC';
+
 export interface PathyDocument {
-  type: 'STNK' | 'KTP';
+  type: PathyDocumentType;
+  /** What the client's reader called it, e.g. "Faktur bengkel". Free text. */
+  label?: string;
   fields: Record<string, unknown>;
   confidence?: number;
 }
+
+export const DOCUMENT_TYPES: PathyDocumentType[] = ['STNK', 'KTP', 'SIM', 'POLIS', 'INVOICE', 'DOC'];
 
 export interface ToolContext {
   // deno-lint-ignore no-explicit-any
@@ -49,7 +59,9 @@ export interface PathyCard {
     // v2.3.0 — service tools
     | 'coverage' | 'claim_start' | 'claim_status' | 'renewals'
     | 'policy_explainer' | 'payment_help'
-    | 'pipeline' | 'commission_forecast' | 'followup_draft';
+    | 'pipeline' | 'commission_forecast' | 'followup_draft'
+    // v2.5.0 — documents kept, not just read
+    | 'document_saved';
   // deno-lint-ignore no-explicit-any
   data: any;
 }

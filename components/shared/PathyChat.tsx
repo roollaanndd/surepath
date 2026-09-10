@@ -3,9 +3,7 @@ import { Language } from '../../types';
 import { pathyChat, PathyError } from '../../services/supabaseService';
 import type { PathyCard, PathyDocument } from '../../services/supabaseService';
 import { SUREPATH_WHATSAPP } from '../../constants';
-import { extractStnkOcr } from '../../services/stnkOcr';
-import { extractKtpOcr } from '../../services/ktpOcr';
-import { getMarketValueForYear, getMarketValueForMotoYear } from '../../services/vehicleDatabase';
+import { extractDocumentOcr, type DocKind } from '../../services/docOcr';
 import { requestClaimStart } from '../../services/claimHandoff';
 import { isSpeechSupported, startDictation, type DictationHandle } from '../../services/speech';
 
@@ -153,6 +151,43 @@ const Pill: React.FC<{ value?: string | null }> = ({ value }) => {
       {key || '—'}
     </span>
   );
+};
+
+/**
+ * Pathy answers cover questions with an INDICATION, never a decision — the
+ * insurer decides liability after survey. The card says so in as many words,
+ * because a green "Covered" tick reads as a promise no matter what the prose
+ * underneath it says.
+ */
+type Indication = 'LIKELY_COVERED' | 'LIKELY_NOT_COVERED' | 'NEEDS_REVIEW';
+
+const INDICATION_TONE: Record<Indication, { bg: string; text: string; icon: string; glyph: string }> = {
+  LIKELY_COVERED: {
+    bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300',
+    icon: 'text-emerald-600', glyph: '≈',
+  },
+  LIKELY_NOT_COVERED: {
+    bg: 'bg-rose-500/10', text: 'text-rose-700 dark:text-rose-300',
+    icon: 'text-rose-600', glyph: '≉',
+  },
+  NEEDS_REVIEW: {
+    bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300',
+    icon: 'text-amber-600', glyph: '?',
+  },
+};
+
+const indicationLabel = (ind: Indication, en: boolean) =>
+  ind === 'LIKELY_COVERED'
+    ? (en ? 'Indication: likely covered' : 'Indikasi: kemungkinan besar dijamin')
+    : ind === 'LIKELY_NOT_COVERED'
+      ? (en ? 'Indication: likely not covered' : 'Indikasi: kemungkinan besar tidak dijamin')
+      : (en ? 'Indication: insurer review needed' : 'Indikasi: perlu ditinjau insurer');
+
+/** Reads the v2.5.0 field, falling back to the old boolean on an older function. */
+const indicationOf = (d: any, legacy?: boolean): Indication => {
+  const v = String(d?.indication ?? '').toUpperCase();
+  if (v === 'LIKELY_COVERED' || v === 'LIKELY_NOT_COVERED' || v === 'NEEDS_REVIEW') return v;
+  return (legacy ?? d?.covered) === true ? 'LIKELY_COVERED' : 'LIKELY_NOT_COVERED';
 };
 
 const CardShell: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -423,28 +458,45 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
       );
     case 'document_read': {
       const f = (d.fields ?? {}) as Record<string, any>;
-      const isKtp = d.type === 'KTP';
       const conf = typeof d.confidence === 'number' ? Math.round(d.confidence * 100) : null;
-      const entries: Array<[string, any]> = isKtp
-        ? [
-            [t('Nama', 'Name'), f.name],
-            [t('NIK', 'ID number'), f.nik],
-            [t('Alamat', 'Address'), f.address],
-          ]
-        : [
-            [t('Nomor Polisi', 'Plate'), f.plate],
-            [t('Merk / Tipe', 'Make / model'), [f.brand, f.model].filter(Boolean).join(' ')],
-            [t('Tahun', 'Year'), f.year],
-            [t('Nomor Rangka', 'VIN'), f.vin],
-            [t('Pemilik', 'Owner'), f.owner_name],
-            [t('Nilai pertanggungan', 'Sum insured'), f.market_value ? rp(f.market_value) : null],
-          ];
+
+      // STNK and KTP get a curated row order because those two drive the quote
+      // and the insured's identity. Everything else (SIM, policy, invoice, a
+      // letter) is shown as whatever the reader actually found — the point of
+      // accepting any document is not knowing its shape in advance.
+      const CURATED: Record<string, Array<[string, any]>> = {
+        KTP: [
+          [t('Nama', 'Name'), f.name],
+          [t('NIK', 'ID number'), f.nik],
+          [t('Alamat', 'Address'), f.address],
+        ],
+        STNK: [
+          [t('Nomor Polisi', 'Plate'), f.plate],
+          [t('Merk / Tipe', 'Make / model'), [f.brand, f.model].filter(Boolean).join(' ')],
+          [t('Tahun', 'Year'), f.year],
+          [t('Nomor Rangka', 'VIN'), f.vin],
+          [t('Pemilik', 'Owner'), f.owner_name],
+          [t('Nilai pertanggungan', 'Sum insured'), f.market_value ? rp(f.market_value) : null],
+        ],
+      };
+
+      const humanKey = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const entries: Array<[string, any]> = CURATED[String(d.type)]
+        ?? Object.entries(f).slice(0, 10).map(([k, v]) => [humanKey(k), v] as [string, any]);
+
+      const title = d.label
+        ? t(`Hasil baca ${d.label}`, `${d.label} read`)
+        : t('Hasil baca dokumen', 'Document read');
+
       return (
-        <CardShell title={isKtp ? t('Hasil baca KTP', 'KTP read') : t('Hasil baca STNK', 'STNK read')}>
-          {entries.filter(([, v]) => v).map(([k, v]) => <Row key={k} label={k} value={String(v)} />)}
+        <CardShell title={title}>
+          {entries.filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => (
+            <Row key={k} label={k} value={String(v)} />
+          ))}
           <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
             {conf != null ? t(`Keyakinan ${conf}%. `, `${conf}% confident. `) : ''}
-            {t('Ada yang salah? Ketik koreksinya, aku perbaiki.', 'Something wrong? Just type the correction.')}
+            {t('Hasil baca AI bisa keliru — ada yang salah? Ketik koreksinya, aku perbaiki.',
+               'AI reading can be wrong — something off? Just type the correction.')}
           </p>
         </CardShell>
       );
@@ -473,6 +525,34 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
         </CardShell>
       );
     }
+    case 'document_saved': {
+      const saved = (d.saved_fields ?? []) as string[];
+      const skipped = (d.skipped_fields ?? []) as string[];
+      const LABELS: Record<string, [string, string]> = {
+        name: ['Nama', 'Name'], phone: ['Telepon', 'Phone'],
+        ktp: ['NIK', 'ID number'], address: ['Alamat', 'Address'],
+      };
+      const pretty = (k: string) => (LABELS[k] ? t(LABELS[k][0], LABELS[k][1]) : k);
+      return (
+        <CardShell title={d.target === 'CLIENT' ? t('Data klien tersimpan', 'Client data saved') : t('Data profil tersimpan', 'Profile data saved')}>
+          {d.client_name && <Row label={t('Klien', 'Client')} value={d.client_name} />}
+          <Row label={t('Dari dokumen', 'From document')} value={d.doc_type} />
+          <Row
+            label={t('Tersimpan', 'Saved')}
+            value={saved.length > 0 ? saved.map(pretty).join(', ') : t('tidak ada yang baru', 'nothing new')}
+          />
+          {skipped.length > 0 && (
+            <p className="text-[0.6rem] text-slate-500 dark:text-slate-400 leading-snug">
+              {t('Tidak ditimpa karena sudah terisi: ', 'Left as-is (already filled): ')}{skipped.map(pretty).join(', ')}
+            </p>
+          )}
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
+            {t('Hasil OCR bisa keliru — cek lagi di menu profil kalau ada yang salah.',
+               'OCR can misread — check your profile page if something looks wrong.')}
+          </p>
+        </CardShell>
+      );
+    }
     case 'quotation_ready':
       return <QuotationCard data={d} en={en} sourceApp={isAgent ? 'AGENT' : 'CUSTOMER'} />;
     case 'products':
@@ -488,14 +568,17 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
       );
     // ── v2.3.0 service cards ────────────────────────────────────────────────
     case 'coverage': {
-      const ok = d.covered === true;
+      // Never a verdict. `indication` is the v2.5.0 shape; `covered` is kept
+      // for the window where the web build is ahead of the deployed function.
+      const ind = indicationOf(d);
+      const tone = INDICATION_TONE[ind];
       return (
         <CardShell title={t('Cek jaminan', 'Coverage check')}>
-          <div className={`flex items-start gap-2 px-2.5 py-2 rounded-xl ${ok ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
-            <span className={`mt-0.5 text-[0.8rem] font-black ${ok ? 'text-emerald-600' : 'text-rose-600'}`}>{ok ? '✓' : '✕'}</span>
+          <div className={`flex items-start gap-2 px-2.5 py-2 rounded-xl ${tone.bg}`}>
+            <span className={`mt-0.5 text-[0.8rem] font-black ${tone.icon}`}>{tone.glyph}</span>
             <div className="min-w-0">
-              <p className={`text-[0.7rem] font-black ${ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>
-                {ok ? t('Ditanggung', 'Covered') : t('Tidak ditanggung', 'Not covered')}
+              <p className={`text-[0.7rem] font-black ${tone.text}`}>
+                {indicationLabel(ind, en)}
               </p>
               <p className="text-[0.66rem] text-slate-600 dark:text-slate-300 leading-snug">{d.peril_label}</p>
             </div>
@@ -515,11 +598,15 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
     }
 
     case 'claim_start': {
-      const ok = d.eligible === true;
+      const ind = indicationOf(d, d.eligible === true);
+      const tone = INDICATION_TONE[ind];
       return (
         <CardShell title={t('Siapkan klaim', 'Prepare a claim')}>
           <p className="text-[0.68rem] font-bold text-slate-800 dark:text-slate-100">{d.peril_label}</p>
-          {!ok && (
+          <p className={`inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full text-[0.58rem] font-black ${tone.bg} ${tone.text}`}>
+            {tone.glyph} {indicationLabel(ind, en)}
+          </p>
+          {(d.period_warning || (ind !== 'LIKELY_COVERED' && d.coverage_reason)) && (
             <p className="text-[0.66rem] text-amber-600 dark:text-amber-400 leading-snug">
               {d.period_warning || d.coverage_reason}
             </p>
@@ -712,6 +799,24 @@ interface Message {
   cards?: PathyCard[];
   /** Answered from the knowledge base only — Pathy could not reach the user's data. */
   degraded?: boolean;
+  /** Caveat for this turn (who the real authority is). Bot messages only. */
+  disclaimer?: string;
+  /** Thumbnails of what the user attached, echoed in their own bubble. */
+  attachments?: Array<{ id: string; label: string; preview: string }>;
+}
+
+/**
+ * An attachment while it is still in the composer.
+ *
+ * `preview` is a local object URL and never leaves the browser — only `doc`
+ * (the extracted fields) is sent to Pathy. Photographing an ID and having the
+ * image itself uploaded somewhere is exactly what this design avoids.
+ */
+interface Attachment {
+  id: string;
+  doc: PathyDocument;
+  preview: string;
+  label: string;
 }
 
 /** Fired by a portal to open Pathy from its own chrome (e.g. the bottom-nav
@@ -744,11 +849,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
   // Documents attached to the NEXT message. OCR runs here, not in the agent —
   // the browser already owns stnk-ocr, the KTP reader and the vehicle price
   // database, so only extracted fields travel to the server.
-  const [pendingDocs, setPendingDocs] = useState<PathyDocument[]>([]);
-  const [scanning, setScanning] = useState<'STNK' | 'KTP' | null>(null);
+  const [pending, setPending] = useState<Attachment[]>([]);
+  const [scanning, setScanning] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
-  const stnkFileRef = useRef<HTMLInputElement>(null);
-  const ktpFileRef = useRef<HTMLInputElement>(null);
+  /** Gallery / files — no `capture`, so the OS offers everything the user has. */
+  const uploadRef = useRef<HTMLInputElement>(null);
+  /** Straight to the camera, for the "photograph it now" case. */
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const attachIdRef = useRef(0);
   const msgIdRef = useRef(0);
   // Read inside `ask` so the callback never closes over a stale transcript and
   // never needs `messages` in its dependency list (which would re-create it on
@@ -798,7 +906,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
   const pushMessage = useCallback((
     from: 'bot' | 'user',
     text: string,
-    extra?: { cards?: PathyCard[]; degraded?: boolean },
+    extra?: Partial<Omit<Message, 'id' | 'from' | 'text'>>,
   ) => {
     msgIdRef.current += 1;
     const id = msgIdRef.current;
@@ -812,50 +920,64 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     r.readAsDataURL(file);
   });
 
-  const attachDocument = useCallback(async (kind: 'STNK' | 'KTP', file: File) => {
-    setScanning(kind);
+  /** Object URLs are revoked on unmount so a long chat does not leak them. */
+  const previewsRef = useRef<string[]>([]);
+  useEffect(() => () => { previewsRef.current.forEach(u => URL.revokeObjectURL(u)); }, []);
+
+  const MAX_ATTACHMENTS = 4;
+
+  /**
+   * Attach any photo or document.
+   *
+   * `hint` is only set by the "Foto STNK" shortcut; with no hint the reader
+   * classifies the image itself, which is the whole point — nobody should have
+   * to tell a chat app what kind of paper they are holding.
+   */
+  const attachDocument = useCallback(async (file: File, hint?: DocKind) => {
+    if (!file.type.startsWith('image/')) {
+      setScanError(t('Untuk sekarang aku baru bisa membaca foto/gambar. PDF belum ya.',
+                     'For now I can only read photos or images — PDF not yet.'));
+      return;
+    }
+    // Phone photos are routinely 5-10 MB; anything past this is not a document
+    // photo and the compressor would choke on it.
+    if (file.size > 12 * 1024 * 1024) {
+      setScanError(t('Fotonya terlalu besar (maks 12 MB). Coba foto ulang dengan resolusi lebih kecil.',
+                     'That photo is too large (max 12 MB). Try a smaller one.'));
+      return;
+    }
+
+    setScanning(hint ?? t('dokumen', 'document'));
     setScanError(null);
     try {
       const dataUrl = await readFileAsDataUrl(file);
-
-      if (kind === 'KTP') {
-        const res = await extractKtpOcr(dataUrl);
-        if (res.status === 'UNCLEAR') {
-          setScanError(res.notes ?? t('KTP belum terbaca. Coba foto ulang.', 'Could not read the ID. Try another photo.'));
-          return;
-        }
-        setPendingDocs(prev => [
-          ...prev.filter(d => d.type !== 'KTP'),
-          { type: 'KTP', fields: { name: res.name, nik: res.nik, address: res.address }, confidence: res.ok ? 1 : 0.6 },
-        ]);
+      const res = await extractDocumentOcr(dataUrl, hint);
+      if (!res) {
+        setScanError(t('Dokumennya belum terbaca. Pastikan seluruh dokumen masuk frame dan cahayanya cukup.',
+                       'I could not read that. Fit the whole document in frame with good light.'));
         return;
       }
 
-      const res = await extractStnkOcr(dataUrl);
-      if (res.status === 'UNCLEAR' && !res.plate && !res.brand) {
-        setScanError(t('STNK belum terbaca. Pastikan seluruh dokumen masuk frame.', 'Could not read the registration. Fit the whole document in frame.'));
-        return;
-      }
-      // Resolve the market value here — the price database is a client asset and
-      // is far too large to ship into an edge function.
-      let marketValue: number | null = null;
-      if (res.brand && res.model && res.year) {
-        marketValue = getMarketValueForYear(res.brand, res.model, res.year)
-          ?? getMarketValueForMotoYear(res.brand, res.model, res.year);
-      }
-      setPendingDocs(prev => [
-        ...prev.filter(d => d.type !== 'STNK'),
-        {
-          type: 'STNK',
-          confidence: res.confidence,
-          fields: {
-            plate: res.plate, brand: res.brand, model: res.model, variant: res.variant,
-            year: res.year, vin: res.vin, engine_no: res.engineNo, color: res.color,
-            owner_name: res.ownerName, province: res.region, zone: res.zone,
-            market_value: marketValue,
-          },
-        },
-      ]);
+      const preview = URL.createObjectURL(file);
+      previewsRef.current.push(preview);
+      attachIdRef.current += 1;
+      const attachment: Attachment = {
+        id: `att-${attachIdRef.current}`,
+        preview,
+        label: res.label,
+        doc: { type: res.type, label: res.label, fields: res.fields, confidence: res.confidence },
+      };
+
+      setPending(prev => {
+        // One of each specialist type: a second STNK replaces the first, since
+        // it is a correction, not a second vehicle in the same breath.
+        const deduped = res.type === 'STNK' || res.type === 'KTP'
+          ? prev.filter(a => a.doc.type !== res.type)
+          : prev;
+        return [...deduped, attachment].slice(-MAX_ATTACHMENTS);
+      });
+
+      if (res.notes) setScanError(res.notes);
     } catch (e) {
       console.error('Pathy attachment:', e);
       setScanError(t('Gagal membaca dokumen. Coba lagi ya.', 'Could not read the document. Please try again.'));
@@ -869,7 +991,10 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
   const ask = useCallback(async (msg: string) => {
     if (!msg || loadingRef.current) return;
     loadingRef.current = true;
-    pushMessage('user', msg);
+    const attached = pending;
+    pushMessage('user', msg, attached.length > 0
+      ? { attachments: attached.map(a => ({ id: a.id, label: a.label, preview: a.preview })) }
+      : undefined);
     setLoading(true);
     try {
       const history = messagesRef.current
@@ -879,10 +1004,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           role: (m.from === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
           content: m.text,
         }));
-      const docs = pendingDocs;
-      setPendingDocs([]);
-      const res = await pathyChat(msg, history, docs);
-      pushMessage('bot', res.reply, { cards: res.cards, degraded: res.degraded });
+      setPending([]);
+      setScanError(null);
+      const res = await pathyChat(msg, history, attached.map(a => a.doc));
+      pushMessage('bot', res.reply, {
+        cards: res.cards,
+        degraded: res.degraded,
+        disclaimer: res.disclaimer,
+      });
     } catch (e: any) {
       // FIX: every failure used to collapse into "Pathy AI is coming soon",
       // which hid expired sessions, rate limits and outages alike.
@@ -904,7 +1033,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [pushMessage, t, pendingDocs]);
+  }, [pushMessage, t, pending]);
 
   // ── Voice input. The transcript lands in the box, not straight into a send:
   // dictation misreads names and plate numbers, and the user must be able to
@@ -938,14 +1067,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     // An attachment on its own is a complete request — nobody should have to
     // type a sentence to explain a photo of their own STNK.
     const msg = input.trim() || (
-      pendingDocs.some(d => d.type === 'STNK')
+      pending.some(a => a.doc.type === 'STNK')
         ? t('Tolong buatkan penawaran dari dokumen ini, beberapa opsi ya.', 'Please build me a few quote options from this document.')
-        : t('Tolong baca dokumen ini.', 'Please read this document.')
+        : t('Tolong baca dokumen ini dan simpan datanya kalau relevan.', 'Please read this document and keep the data if it is useful.')
     );
-    if (!input.trim() && pendingDocs.length === 0) return;
+    if (!input.trim() && pending.length === 0) return;
     setInput('');
     void ask(msg);
-  }, [input, ask, pendingDocs, t]);
+  }, [input, ask, pending, t]);
 
   const handleQuick = useCallback((qr: QuickReply) => {
     if (qr.action === 'whatsapp') {
@@ -1027,8 +1156,8 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           <div className="flex-shrink-0 px-3 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200/60 dark:border-amber-700/30">
             <p className="text-[0.58rem] text-amber-700 dark:text-amber-400 font-medium leading-snug text-center">
               {t(
-                'Pathy bisa melihat polis & klaim kamu dan membuat draf penawaran — tidak bisa mengubah polis, klaim, atau dana.',
-                'Pathy can read your policies & claims and draft a quote — it cannot change policies, claims, or money.',
+                'Pathy AI bisa keliru dan tidak memutuskan klaim — keputusan dijamin atau tidak ada pada pihak asuransi.',
+                'Pathy is AI, can be wrong, and does not decide claims — cover decisions rest with the insurer.',
               )}
             </p>
           </div>
@@ -1047,9 +1176,24 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                   >
                     {m.text}
                   </div>
+                  {(m.attachments?.length ?? 0) > 0 && (
+                    <div className={`flex flex-wrap gap-1.5 mt-1.5 ${m.from === 'user' ? 'justify-end' : ''}`}>
+                      {m.attachments!.map(att => (
+                        <span key={att.id} className="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-xl bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-white/10">
+                          <img src={att.preview} alt="" className="w-7 h-7 rounded-lg object-cover" />
+                          <span className="text-[0.58rem] font-bold text-slate-600 dark:text-slate-300 max-w-[8rem] truncate">{att.label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {m.cards?.map((card, i) => (
                     <PathyCardView key={`${m.id}-${i}`} card={card} en={en} isAgent={isAgent} />
                   ))}
+                  {m.from === 'bot' && m.disclaimer && (
+                    <p className="mt-1 px-1 text-[0.55rem] text-slate-400 dark:text-slate-500 leading-snug">
+                      {m.disclaimer}
+                    </p>
+                  )}
                   {m.degraded && (
                     <p className="mt-1 px-1 text-[0.55rem] text-amber-600 dark:text-amber-400 leading-snug">
                       {t(
@@ -1077,34 +1221,46 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           </div>
 
           {/* Composer — attachments first: a photo is the input format
-              everyone can produce, and it is what the proposal flow runs on. */}
+              everyone can produce, and it is what the proposal flow runs on.
+
+              Two inputs, deliberately. The upload one has NO `capture`
+              attribute, which is what makes the OS offer the gallery, files and
+              recent screenshots; with `capture` set (as this used to be) a
+              phone jumps straight to the camera and a photo the user already
+              has is unreachable — the "there is no upload" complaint. */}
           <div className="flex-shrink-0 px-3 pt-2 pb-1 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-slate-900">
             <input
-              ref={stnkFileRef}
+              ref={uploadRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument('STNK', f); }}
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f); }}
             />
             <input
-              ref={ktpFileRef}
+              ref={cameraRef}
               type="file"
               accept="image/*"
               capture="environment"
               className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument('KTP', f); }}
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f); }}
             />
 
-            {(pendingDocs.length > 0 || scanning || scanError) && (
+            {(pending.length > 0 || scanning || scanError) && (
               <div className="flex flex-wrap items-center gap-1.5 pb-2">
-                {pendingDocs.map(doc => (
-                  <span key={doc.type} className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/20">
-                    <span className="text-[0.6rem] font-black text-emerald-700 dark:text-emerald-300">{doc.type} {t('terbaca', 'read')}</span>
+                {pending.map(att => (
+                  <span key={att.id} className="inline-flex items-center gap-1.5 pl-1 pr-1 py-1 rounded-full bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/20">
+                    <img
+                      src={att.preview}
+                      alt=""
+                      className="w-5 h-5 rounded-full object-cover ring-1 ring-emerald-500/30"
+                    />
+                    <span className="text-[0.6rem] font-black text-emerald-700 dark:text-emerald-300 max-w-[9rem] truncate">
+                      {att.label} · {t('terbaca', 'read')}
+                    </span>
                     <button
                       type="button"
-                      aria-label={t(`Hapus ${doc.type}`, `Remove ${doc.type}`)}
-                      onClick={() => setPendingDocs(prev => prev.filter(x => x.type !== doc.type))}
+                      aria-label={t(`Hapus ${att.label}`, `Remove ${att.label}`)}
+                      onClick={() => setPending(prev => prev.filter(x => x.id !== att.id))}
                       className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center"
                     >
                       <svg viewBox="0 0 24 24" width={9} height={9} fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -1123,22 +1279,25 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
             <div className="flex items-center gap-1.5 pb-2">
               <button
                 type="button"
-                onClick={() => stnkFileRef.current?.click()}
-                disabled={!!scanning}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[0.62rem] font-bold text-slate-600 dark:text-slate-300 active:scale-95 transition-transform disabled:opacity-50"
+                onClick={() => uploadRef.current?.click()}
+                disabled={!!scanning || pending.length >= 4}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-emerald-500/10 text-[0.62rem] font-bold text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20 active:scale-95 transition-transform disabled:opacity-50"
               >
-                <svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                {t('Foto STNK', 'STNK photo')}
+                <svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 3v13M7 8l5-5 5 5" /></svg>
+                {t('Unggah gambar', 'Upload image')}
               </button>
               <button
                 type="button"
-                onClick={() => ktpFileRef.current?.click()}
-                disabled={!!scanning}
+                onClick={() => cameraRef.current?.click()}
+                disabled={!!scanning || pending.length >= 4}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[0.62rem] font-bold text-slate-600 dark:text-slate-300 active:scale-95 transition-transform disabled:opacity-50"
               >
-                <svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><circle cx="8.5" cy="11" r="2.2" /><path d="M14 10h4M14 14h4M5 16.5c.7-1.4 2-2.1 3.5-2.1s2.8.7 3.5 2.1" /></svg>
-                {t('Foto KTP', 'ID photo')}
+                <svg viewBox="0 0 24 24" width={11} height={11} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                {t('Kamera', 'Camera')}
               </button>
+              <span className="text-[0.55rem] text-slate-400 leading-tight">
+                {t('STNK · KTP · SIM · polis · kuitansi', 'Registration · ID · licence · policy · receipt')}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 rounded-2xl px-3 py-2 ring-1 ring-slate-200 dark:ring-white/10 focus-within:ring-emerald-500/50">
@@ -1172,7 +1331,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={(!input.trim() && pendingDocs.length === 0) || loading}
+                disabled={(!input.trim() && pending.length === 0) || loading}
                 className="w-7 h-7 rounded-full bg-emerald-500 disabled:bg-slate-200 dark:disabled:bg-slate-700 flex items-center justify-center active:scale-90 transition-all duration-150 flex-shrink-0"
               >
                 <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="white" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

@@ -498,3 +498,66 @@ Return JSON only: { "name": string|null, "nik": string|null, "address": string|n
     return { success: false };
   }
 };
+
+/**
+ * Classify and read ANY document the user photographs.
+ *
+ * Pathy's attachment button used to accept exactly two things — STNK and KTP —
+ * and the user had to say which was which before taking the photo. Everyone
+ * else's chat app takes a picture of anything, so this one is expected to as
+ * well. This classifies first, then extracts what that kind of document
+ * actually carries, so a driving licence, a policy schedule or a workshop
+ * invoice all become structured fields instead of an apology.
+ *
+ * The image is compressed client-side first: these are phone photos, and the
+ * full-resolution version buys no accuracy at OCR sizes.
+ */
+export const extractDocumentData = async (
+  base64: string,
+): Promise<{ success: boolean; data?: any }> => {
+  try {
+    const compressed = await compressImageBase64(base64, 1280);
+    const res = await (await getClient()).chat.completions.create({
+      model: VISION_MODEL,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: `Kamu membaca dokumen milik nasabah asuransi Indonesia. Klasifikasikan lalu ekstrak isinya.
+
+doc_type harus salah satu dari:
+- "STNK"    : Surat Tanda Nomor Kendaraan
+- "KTP"     : Kartu Tanda Penduduk
+- "SIM"     : Surat Izin Mengemudi
+- "POLIS"   : polis / ikhtisar / sertifikat asuransi
+- "INVOICE" : invoice, kuitansi, estimasi biaya bengkel/rumah sakit
+- "DOC"     : dokumen lain, termasuk foto kerusakan kendaraan atau surat
+
+fields: pasangan key-value datar (string atau angka saja, TANPA objek bersarang).
+Pakai key snake_case yang lazim untuk jenis dokumennya, contoh:
+- STNK    : owner_name, plate, brand, model, variant, year, color, vin, engine_no, cylinder_cc, region, expiry_date
+- KTP     : name, nik, address, dob, gender
+- SIM     : name, sim_number, sim_class, address, expiry_date
+- POLIS   : policy_number, insurer_name, insured_name, coverage_type, sum_insured, start_date, end_date
+- INVOICE : vendor_name, invoice_number, invoice_date, total_amount, customer_name
+- DOC     : deskripsikan apa adanya (document_title, subject, date, dst.)
+
+Aturan:
+- HANYA tulis yang benar-benar terbaca di gambar. Yang tidak terbaca: hilangkan key-nya, jangan menebak.
+- Angka rupiah sebagai angka polos tanpa titik/koma. Tanggal sebagai YYYY-MM-DD bila jelas.
+- label: nama dokumen yang manusiawi dan singkat dalam Bahasa Indonesia, maks 6 kata.
+- notes: catatan singkat Bahasa Indonesia bila ada yang buram/terpotong. Kosongkan bila tidak ada.
+- confidence: 0..1 seberapa yakin kamu pada hasil bacanya.
+
+Balas HANYA JSON: { "doc_type": string, "label": string, "confidence": number, "fields": object, "notes": string }` },
+          imageContent(compressed),
+        ],
+      }],
+    });
+    const text = res.choices[0]?.message?.content ?? '';
+    if (!text) throw new Error('Empty response');
+    return { success: true, data: parseJSON(text) };
+  } catch (e) {
+    console.error('extractDocumentData error:', e);
+    return { success: false };
+  }
+};

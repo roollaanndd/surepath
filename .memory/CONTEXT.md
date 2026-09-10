@@ -1,15 +1,30 @@
 # SurePath Session Context
-**Updated:** 2026-09-08 (v2.4.0 — audit UI: nasabah diselaraskan ke agen + token mode terang diperbaiki)
+**Updated:** 2026-09-09 (v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
-- **main = v2.4.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
-- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0** (9 tool layanan baru + 2 berkas baru `common.ts`/`serviceTools.ts`). Tanpa itu tool barunya tidak ada di produksi:
+- **main = v2.5.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
+- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0 + v2.5.0** (9 tool layanan v2.3.0, lalu v2.5.0: `disclaimers.ts` & `documents.ts` baru, `indication` di coverage/klaim, `save_document_data`, arsip `sp_user_documents`). Tanpa itu semuanya tidak ada di produksi:
   `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
   Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.0 — Pathy: dokumen & diplomasi (2026-09-09)
+### Permintaan owner (4 poin) dan bagaimana dijawab
+1. **Diplomatis soal klaim** → `check_coverage`/`start_claim` tidak lagi memvonis. Mengembalikan `indication` (`LIKELY_COVERED`/`LIKELY_NOT_COVERED`/`NEEDS_REVIEW`) + `decision_by: 'INSURER'`; polis belum aktif dan tanggal di luar periode → `NEEDS_REVIEW`, bukan penolakan. Kartu UI: glyph `≈`/`≉`/`?`, bukan centang "Ditanggung". Field lama `covered`/`eligible` tetap dikirim → tidak ada jendela rusak saat web sudah live tapi function belum.
+2. **Upload gambar** → penyebabnya ketemu: dua tombol lama (`Foto STNK`/`Foto KTP`) memakai `capture="environment"`, jadi ponsel langsung ke kamera dan galeri tidak pernah bisa dibuka. Sekarang **Unggah gambar** (tanpa `capture`) + **Kamera**, maks 4 lampiran, 12 MB, thumbnail di composer & gelembung pesan.
+3. **Ekstraksi dipakai + disimpan** → `services/docOcr.ts` (baru) mengklasifikasi sendiri (STNK/KTP/SIM/POLIS/INVOICE/DOC) lalu merutekan ke pembaca khusus; `compare_offers`/`build_quotation` mengisi argumen yang tidak disebut model dari lampiran (argumen eksplisit tetap menang); setiap lampiran diarsipkan ke tabel baru `sp_user_documents`; tool tulis ketiga `save_document_data` melengkapi profil (nasabah) atau `sp_clients` (agen) — **hanya kolom kosong**, kecuali `overwrite: true`.
+4. **Disclaimer selalu ada** → `pathy-agent/disclaimers.ts` menghitung caveat tiap giliran dari tool yang berjalan + teks jawaban, dikirim sebagai `data.disclaimer` dan dirender klien di bawah gelembung. **Tidak bergantung kerelaan model.** Otoritas: asuransi / dokter / OJK-kepolisian-hukum.
+
+### Deploy edge function akhirnya otomatis untuk fungsi yang benar
+`.github/workflows/deploy-edge-functions.yml` dulu selalu men-deploy **data-gateway** pada setiap push, apa pun yang berubah — itulah sebabnya `pathy-agent` tertinggal dua rilis padahal workflow-nya hijau di push yang justru mengubahnya. Sekarang ia men-deploy fungsi yang benar-benar tersentuh push (perubahan di `_shared/` → deploy semua). Tetap butuh secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`; tanpa itu workflow no-op dengan peringatan, dan deploy `pathy-agent` harus manual.
+
+### Yang perlu diingat
+- Tabel `sp_user_documents` **sudah diapply ke production** (deny-all RLS, 0 policy, service_role saja). Menyimpan **field hasil ekstraksi, bukan gambar** — gambar tidak pernah keluar dari browser.
+- `archiveDocuments()` sengaja tidak pernah melempar: kalau tabelnya tidak ada di suatu environment, Pathy tetap jalan, cuma tidak mengingat.
+- Uji baru `services/__tests__/pathyDocuments.test.ts` (21 uji) mengunci: tidak ada jalur kode yang menjanjikan klaim dibayar, disclaimer selalu terbit, tulis profil terbatas 4 kolom, dan scan agen tidak pernah menyentuh `sp_users`.
 
 ## v2.4.0 — Audit UI: nasabah ≡ agen (2026-09-08)
 ### Bug terbesar: token mode terang mati sejak DS v3 (2026-07-06)

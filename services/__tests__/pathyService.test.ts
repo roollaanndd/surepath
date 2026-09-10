@@ -130,7 +130,8 @@ describe('check_coverage', () => {
   it('refuses flood when the extension was never bought', async () => {
     const { result } = await run('check_coverage', { peril: 'flood' }, ctx({ sp_policy_orders: [BARE_POLICY] }));
     expect(result.covered).toBe(false);
-    expect(result.reason).toMatch(/TIDAK ada/i);
+    expect(result.indication).toBe('LIKELY_NOT_COVERED');
+    expect(result.reason).toMatch(/tidak tercatat/i);
   });
 
   it('allows flood once the extension is on the policy', async () => {

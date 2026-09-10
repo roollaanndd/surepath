@@ -4,6 +4,43 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.4 — 2026-09-10
+
+### Ranjau KEDUA di jalur uang: setiap UPDATE ke `sp_payments` di-rollback
+
+Memeriksa daftar PR terbuka memunculkan laporan lama (#95) tentang cacat trigger yang belum pernah diverifikasi maupun diperbaiki. Diverifikasi sekarang: **benar, dan lebih serius dari yang terlihat.**
+
+`audit_critical_update()` terpasang di dua tabel — `sp_policy_orders` dan `sp_payments` — tetapi mendereferensi `OLD.total_premium`, `OLD.commission_amount`, dan `OLD.discount_amount` tanpa syarat. `sp_payments` tidak punya satu pun dari ketiganya (17 kolom, hanya `status` yang cocok), dan di PL/pgSQL field record yang tidak ada adalah **error runtime, bukan NULL**.
+
+Karena ini trigger `AFTER UPDATE` dalam transaksi yang sama, errornya membatalkan transaksi pemanggil. **Setiap UPDATE ke `sp_payments` gagal.** `INSERT` aman (trigger ini hanya UPDATE) — itulah sebabnya `create-xendit-invoice` jalan normal dan tidak ada yang menyadarinya.
+
+**Dibuktikan empiris di produksi**, dalam transaksi yang dibatalkan sendiri:
+
+```
+UPDATE GAGAL -> record "old" has no field "total_premium"
+```
+
+**Kenapa ini penting: ini ranjau kedua di jalur yang sama.** v2.5.2 memperbaiki `verify_jwt = true` yang membuat callback Xendit ditolak sebelum fungsinya jalan. Ternyata memperbaiki itu saja tidak cukup — setelah callback akhirnya sampai, `xendit-webhook` menandai PAID lewat `UPDATE`, dan update itu di-rollback oleh trigger ini. Rantai lengkapnya: pembayaran tidak pernah PAID → komisi agen tidak dikredit → order tidak maju → insurer tidak dinotifikasi.
+
+**Perbaikannya** (`supabase/migrations/20260910_fix_audit_critical_update.sql`, **sudah diterapkan ke produksi**): bandingkan lewat `to_jsonb()` supaya kolom yang tidak ada menghasilkan NULL, bukan error. Ekuivalensi untuk `sp_policy_orders` dijaga ketat — `status` tetap dibandingkan sebagai text, dan ketiga kolom uang di-cast kembali ke `numeric` sehingga perbandingannya tetap numerik, bukan perbandingan teks yang akan menganggap `1.0` dan `1.00` berbeda. Atribut fungsi dipertahankan apa adanya (SECURITY INVOKER, `search_path = public, pg_temp`).
+
+**Verifikasi sesudah perbaikan**, keduanya dalam transaksi yang dibatalkan:
+
+| Uji | Hasil |
+|---|---|
+| `sp_payments`: update kolom sepele | berhasil |
+| `sp_payments`: `status` → `PAID` | berhasil |
+| `sp_payments`: baris audit tercatat | tepat 1 — update sepele benar tidak dicatat |
+| `sp_policy_orders`: update sepele | **+0** baris audit |
+| `sp_policy_orders`: ubah `status` | **+1** baris audit |
+| `sp_policy_orders`: ubah `total_premium` | **+1** baris audit |
+
+Tidak ada regresi pada tabel yang punya data nyata.
+
+**Catatan status:** berbeda dengan perbaikan v2.5.2 yang menunggu deploy edge function, perbaikan ini ada di database sehingga **sudah aktif sekarang**. Jalur pembayaran masih menunggu satu hal: deploy `xendit-webhook` dengan `verify_jwt = false`.
+
+---
+
 ## v2.5.3 — 2026-09-10
 
 ### Memutus pola "gagal tanpa bersuara"

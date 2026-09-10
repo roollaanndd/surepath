@@ -7,7 +7,7 @@
 | Komponen | Trigger | Otomatis? |
 |---|---|---|
 | Web (myinsurepath.com) | push/merge ke `main` di GitHub | ✅ otomatis via Vercel |
-| Edge functions Supabase | `supabase functions deploy <nama>` | ❌ MANUAL |
+| Edge functions Supabase | push ke `main` yang menyentuh `supabase/functions/**` | ⚠️ **belum aktif** — lihat di bawah |
 | APK Android | build di Android Studio | ❌ MANUAL |
 
 ## 1. Web — Vercel
@@ -27,6 +27,21 @@ npm run lint       # tsc --noEmit (banyak error TS lama — vite tetap build)
 ## 2. Edge Functions — Supabase
 
 Project ref: `uyjgeteelnswphyzkjwi`.
+
+### ⚠️ Auto-deploy ada, tapi belum pernah benar-benar jalan
+
+`.github/workflows/deploy-edge-functions.yml` sudah men-deploy fungsi yang tersentuh push ke `main`. **Tetapi dua secret repo-nya belum pernah diset**, jadi setiap run berhenti di langkah guard dan melaporkan sukses tanpa men-deploy apa pun. Itulah sebabnya `pathy-agent` di produksi masih versi 7 September (v3) padahal repo sudah dua rilis di depan.
+
+Untuk mengaktifkannya — **Settings → Secrets and variables → Actions**:
+
+| Secret | Isi |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Personal access token dari <https://supabase.com/dashboard/account/tokens> |
+| `SUPABASE_PROJECT_REF` | `uyjgeteelnswphyzkjwi` |
+
+Sesudah itu, jalankan ulang workflow terakhir (atau `workflow_dispatch` dengan daftar fungsi) dan deploy berjalan sendiri untuk seterusnya. Selama secret belum ada, halaman run menampilkan ringkasan "⚠️ Edge functions NOT deployed" beserta perintah manual yang perlu dijalankan.
+
+### Deploy manual (selama auto-deploy belum aktif)
 
 ```bash
 supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi

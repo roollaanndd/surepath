@@ -132,13 +132,10 @@ jobs:
           set -euo pipefail
           for fn in $FUNCTIONS; do
             echo "Deploying $fn to $PROJECT_REF ..."
-            # data-gateway authenticates internally (Bearer JWT verified in code
-            # for private actions; PUBLIC_ACTIONS allowlist for the rest), so it
-            # runs with --no-verify-jwt exactly as the manual deploys did.
-            if [ "$fn" = "data-gateway" ] || [ "$fn" = "quotations-gateway" ]; then
-              supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --no-verify-jwt
-            else
-              supabase functions deploy "$fn" --project-ref "$PROJECT_REF"
-            fi
+            # No --no-verify-jwt special-casing here any more: supabase/config.toml
+            # declares verify_jwt per function, and the CLI reads it. Keeping the
+            # list in two places meant a function could be deployed with the wrong
+            # auth posture depending on which path deployed it.
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF"
           done
           echo "Done."

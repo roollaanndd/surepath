@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-09 (v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-10 (v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,17 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.1 — Jalan keluar deploy TANPA secret GitHub (2026-09-10)
+**Masalah owner:** tidak punya akses ke Settings→Secrets GitHub, jadi auto-deploy tidak bisa dinyalakan.
+**Jawabannya:** secret GitHub memang tidak diperlukan. **Integrasi GitHub dari dashboard Supabase** (Project Settings → Integrations → GitHub) men-deploy migrasi + edge function pada setiap push ke `main`, tersedia di **semua paket**, dan kredensialnya tinggal di sisi Supabase — nol secret di repo.
+**Penghalang kedua yang ditemukan:** integrasi itu hanya men-deploy fungsi yang dideklarasikan di `supabase/config.toml` — dan repo ini **tidak punya berkas itu**. Jadi kedua jalur deploy sama-sama buntu dengan sebab berbeda. Sekarang `supabase/config.toml` ada: 19 fungsi, `verify_jwt` **dicerminkan persis dari produksi** dan diverifikasi terprogram. Minimal (hanya `project_id` + `[functions.*]`) supaya setelan layanan lain tidak tertimpa.
+**Langkah owner (dashboard Supabase, bukan GitHub):** Authorize GitHub → pilih repo → Working directory `.` → nyalakan **Deploy to production**.
+**Temuan sampingan:**
+- `send-insurer-email` & `ai-gateway` ada di repo tapi **tidak pernah ter-deploy** → fitur kirim review-link insurer (v1.20.0) kemungkinan mati di produksi. Sengaja dikomentari di config; perlu keputusan.
+- `xendit-webhook` di produksi `verify_jwt = true` padahal callback Xendit pakai `x-callback-token`. Dicerminkan apa adanya; perlu ditinjau.
+- Workflow CI tidak lagi hardcode `--no-verify-jwt` — `config.toml` jadi satu-satunya sumber kebenaran.
+**Kenapa tidak deploy dari sesi Claude:** MCP `deploy_edge_function` menuntut seluruh isi berkas inline dalam satu panggilan. Bundle esbuild pathy-agent minified = 77 KB; harness memindahkan keluaran >28 KB ke file sehingga isinya tidak bisa masuk konteks utuh, dan mengirim artefak build lewat model bukan mekanisme yang bisa diandalkan berulang.
 
 ## v2.5.0 — Pathy: dokumen & diplomasi (2026-09-09)
 ### Permintaan owner (4 poin) dan bagaimana dijawab

@@ -4,6 +4,35 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.1 — 2026-09-10
+
+### `supabase/config.toml` — berkas yang hilang, dan kenapa deploy tidak pernah jalan
+
+Rilis v2.5.0 menemukan bahwa auto-deploy edge function **belum pernah benar-benar berjalan** karena dua secret repo tidak pernah diset. Menelusuri lebih jauh, ternyata ada penghalang kedua yang lebih dalam: **repo ini tidak punya `supabase/config.toml`**.
+
+Itu penting karena jalur deploy yang paling mudah — **integrasi GitHub dari dashboard Supabase**, yang tersedia di semua paket dan **tidak memerlukan secret GitHub sama sekali** — hanya men-deploy edge function yang **dideklarasikan di `config.toml`**. Tanpa berkas itu, menyalakan integrasinya pun hanya akan menjalankan migrasi dan nol fungsi. Jadi selama ini kedua jalur deploy sama-sama buntu, dengan sebab yang berbeda.
+
+**Yang ditambahkan**
+
+`supabase/config.toml` mendeklarasikan 19 edge function milik repo ini beserta `verify_jwt`-nya. Nilainya **dicerminkan persis dari produksi** (dibaca lewat Management API dan diverifikasi terprogram, bukan dengan mata), sehingga memperkenalkan berkas ini tidak mengubah perilaku apa pun — ia hanya menuliskan keadaan yang sudah berjalan.
+
+Berkas ini sengaja **minimal**: hanya `project_id` dan blok `[functions.*]`, tanpa `[api]`/`[auth]`/`[db]`, supaya tidak ada setelan layanan produksi yang ikut tertimpa saat deploy.
+
+**Yang sengaja TIDAK dideklarasikan**
+
+- `send-insurer-email` dan `ai-gateway` ada di repo tapi **tidak pernah ter-deploy**. Mendeklarasikannya berarti membuat endpoint baru yang selama ini tidak hidup — itu keputusan produk, bukan efek samping merapikan config, jadi keduanya dikomentari. ⚠️ Konsekuensinya: fitur kirim review-link ke insurer (didokumentasikan sejak v1.20.0) kemungkinan besar mati di produksi. Perlu dicek.
+- `generate-daily-renungan`, `backup-daily`, `admin-auth`, `push-notify`, `signup-member` hidup di project Supabase yang sama tapi sumbernya bukan milik repo ini. Mendeklarasikannya berarti men-deploy dari sumber yang tidak kita punya.
+
+**Satu sumber kebenaran untuk verify_jwt**
+
+Workflow CI dulu meng-hardcode `--no-verify-jwt` untuk `data-gateway` dan `quotations-gateway`. Sekarang CLI membaca `config.toml`, jadi special-case itu dihapus — sebuah fungsi tidak bisa lagi ter-deploy dengan postur auth berbeda tergantung jalur mana yang men-deploy-nya.
+
+**Catatan yang perlu ditinjau**
+
+Produksi menyetel `verify_jwt = true` untuk `xendit-webhook`, padahal callback Xendit membawa `x-callback-token`, bukan JWT pengguna. Nilai itu dicerminkan apa adanya agar config ini tidak diam-diam mengubah jalur pembayaran, tapi layak diperiksa bersama konfigurasi callback di dashboard Xendit.
+
+---
+
 ## v2.5.0 — 2026-09-09
 
 ### Pathy: unggah dokumen apa pun, dan berhenti memvonis klaim

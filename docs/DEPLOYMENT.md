@@ -28,7 +28,27 @@ npm run lint       # tsc --noEmit (banyak error TS lama — vite tetap build)
 
 Project ref: `uyjgeteelnswphyzkjwi`.
 
-### ⚠️ Auto-deploy ada, tapi belum pernah benar-benar jalan
+### Cara paling mudah: integrasi GitHub dari dashboard Supabase (TANPA secret)
+
+**Ini jalur yang direkomendasikan, dan tidak memerlukan akses ke Settings GitHub sama sekali.** Kredensialnya tinggal di sisi Supabase lewat GitHub App — tidak ada token yang disimpan di repo. Tersedia di **semua paket**, tidak perlu Pro.
+
+Di **dashboard Supabase** → Project Settings → Integrations → GitHub Integration:
+
+1. **Authorize GitHub**, lalu pilih repo `roollaanndd/surepath`.
+2. **Working directory**: isi `.` (folder `supabase/` ada di root repo).
+3. Nyalakan **Deploy to production**.
+
+Sejak itu, setiap push/merge ke `main` otomatis menerapkan migrasi baru **dan** men-deploy edge function.
+
+> ⚠️ **Prasyarat yang dulu hilang:** integrasi ini hanya men-deploy fungsi yang **dideklarasikan di `supabase/config.toml`**. Sebelum v2.5.1 berkas itu tidak ada, jadi menyalakan integrasi pun hanya akan menjalankan migrasi dan **nol** edge function. Sekarang berkasnya ada dan mencerminkan persis 19 fungsi milik repo ini beserta `verify_jwt`-nya.
+
+`config.toml` sengaja minimal — hanya `project_id` dan blok `[functions.*]`, tanpa `[api]`/`[auth]`/`[db]` — supaya tidak ada setelan layanan produksi yang ikut tertimpa. Berkas yang sama juga dipakai `supabase functions deploy` dan workflow CI, jadi `verify_jwt` punya satu sumber kebenaran.
+
+### Alternatif: GitHub Actions (butuh secret repo)
+
+Kalau lebih suka lewat GitHub Actions, `deploy-edge-functions.yml` sudah siap — tapi butuh dua secret di repo.
+
+#### ⚠️ Status sekarang: belum pernah benar-benar jalan
 
 `.github/workflows/deploy-edge-functions.yml` sudah men-deploy fungsi yang tersentuh push ke `main`. **Tetapi dua secret repo-nya belum pernah diset**, jadi setiap run berhenti di langkah guard dan melaporkan sukses tanpa men-deploy apa pun. Itulah sebabnya `pathy-agent` di produksi masih versi 7 September (v3) padahal repo sudah dua rilis di depan.
 

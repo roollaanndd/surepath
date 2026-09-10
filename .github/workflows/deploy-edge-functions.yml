@@ -16,8 +16,10 @@
 #   SUPABASE_ACCESS_TOKEN  — personal access token from https://supabase.com/dashboard/account/tokens
 #   SUPABASE_PROJECT_REF   — uyjgeteelnswphyzkjwi
 #
-# Until those secrets are set, this workflow no-ops with a clear message instead
-# of failing the run.
+# Until those secrets are set, this workflow no-ops instead of failing the run —
+# and as of 10 Sep 2026 they are still not set, so it has never actually
+# deployed anything. The skip is written to the run summary so that fact is
+# visible on the run page rather than buried in a skipped step.
 
 name: Deploy Edge Functions
 
@@ -84,11 +86,31 @@ jobs:
           echo "Deploying: $fns"
           echo "functions=$fns" >> "$GITHUB_OUTPUT"
 
+      # This has been skipping since the workflow was added — the secrets were
+      # never set — and a skipped step inside a green run is invisible, so the
+      # functions quietly stayed stale while every run reported success. The
+      # skip now writes to the run summary, where it is actually read.
       - name: Guard — secrets present?
         id: guard
+        env:
+          FNS: ${{ steps.resolve.outputs.functions }}
         run: |
           if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ]; then
             echo "::warning::SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF not set — skipping edge-function deploy. Add them in repo Settings → Secrets to enable auto-deploy."
+            {
+              echo "## ⚠️ Edge functions NOT deployed"
+              echo
+              echo "Changed and awaiting deploy: \`${FNS:-none}\`"
+              echo
+              echo "\`SUPABASE_ACCESS_TOKEN\` / \`SUPABASE_PROJECT_REF\` are not set, so this run deployed nothing."
+              echo "Add them in **Settings → Secrets and variables → Actions**, then re-run this workflow."
+              echo
+              echo "Until then the production functions stay on their previous version and must be deployed by hand:"
+              echo
+              echo '```'
+              for fn in ${FNS:-}; do echo "supabase functions deploy $fn --project-ref uyjgeteelnswphyzkjwi"; done
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"

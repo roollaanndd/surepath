@@ -18,6 +18,13 @@
 3. **Ekstraksi dipakai + disimpan** → `services/docOcr.ts` (baru) mengklasifikasi sendiri (STNK/KTP/SIM/POLIS/INVOICE/DOC) lalu merutekan ke pembaca khusus; `compare_offers`/`build_quotation` mengisi argumen yang tidak disebut model dari lampiran (argumen eksplisit tetap menang); setiap lampiran diarsipkan ke tabel baru `sp_user_documents`; tool tulis ketiga `save_document_data` melengkapi profil (nasabah) atau `sp_clients` (agen) — **hanya kolom kosong**, kecuali `overwrite: true`.
 4. **Disclaimer selalu ada** → `pathy-agent/disclaimers.ts` menghitung caveat tiap giliran dari tool yang berjalan + teks jawaban, dikirim sebagai `data.disclaimer` dan dirender klien di bawah gelembung. **Tidak bergantung kerelaan model.** Otoritas: asuransi / dokter / OJK-kepolisian-hukum.
 
+### 🔑 AKAR MASALAH DEPLOY DITEMUKAN: secret repo tidak pernah diset
+Workflow `deploy-edge-functions.yml` **belum pernah men-deploy apa pun**. Setiap run berhenti di langkah guard karena `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` kosong, lalu melaporkan **sukses** — sehingga tidak ada yang sadar. Log run #7 (10 Sep) membuktikan keduanya: `Deploying: pathy-agent` (perbaikan resolusi fungsi bekerja), lalu `::warning:: … not set — skipping`.
+**Yang perlu owner lakukan sekali (±1 menit):** Settings → Secrets and variables → Actions → tambahkan `SUPABASE_ACCESS_TOKEN` (token dari dashboard Supabase) dan `SUPABASE_PROJECT_REF` = `uyjgeteelnswphyzkjwi`, lalu re-run workflow. Setelah itu deploy otomatis selamanya.
+Sampai itu dilakukan: `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi` dari mesin yang punya source.
+Skip-nya sekarang ditulis ke run summary ("⚠️ Edge functions NOT deployed" + perintah manualnya), supaya tidak lagi tersembunyi di dalam run hijau.
+**Kenapa tidak di-deploy dari sesi Claude:** MCP `deploy_edge_function` menuntut seluruh berkas fungsi di-inline dalam satu panggilan — pathy-agent 146 KB (6 berkas + 4 `_shared`), melebihi batas keluaran satu pesan.
+
 ### Deploy edge function akhirnya otomatis untuk fungsi yang benar
 `.github/workflows/deploy-edge-functions.yml` dulu selalu men-deploy **data-gateway** pada setiap push, apa pun yang berubah — itulah sebabnya `pathy-agent` tertinggal dua rilis padahal workflow-nya hijau di push yang justru mengubahnya. Sekarang ia men-deploy fungsi yang benar-benar tersentuh push (perubahan di `_shared/` → deploy semua). Tetap butuh secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`; tanpa itu workflow no-op dengan peringatan, dan deploy `pathy-agent` harus manual.
 

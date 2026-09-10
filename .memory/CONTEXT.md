@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-10 (v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-10 (v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,18 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.4 — Ranjau KEDUA jalur uang (2026-09-10) — SUDAH AKTIF DI PRODUKSI
+### Setiap UPDATE ke `sp_payments` di-rollback
+`audit_critical_update()` dipasang di `sp_policy_orders` DAN `sp_payments`, tapi mendereferensi `OLD.total_premium`/`commission_amount`/`discount_amount` tanpa syarat. `sp_payments` tidak punya ketiganya → di PL/pgSQL itu **error runtime, bukan NULL**. Trigger AFTER UPDATE di transaksi yang sama → **setiap UPDATE ke sp_payments gagal**. INSERT aman (trigger UPDATE-only), makanya `create-xendit-invoice` jalan dan tidak ada yang sadar.
+Dibuktikan empiris di produksi (transaksi dibatalkan sendiri): `record "old" has no field "total_premium"`.
+Dilaporkan PR #95 (draft, Agustus) tapi tidak pernah diverifikasi/diperbaiki. Sekarang sudah.
+### ⚠️ JALUR PEMBAYARAN PUNYA DUA RANJAU — perbaiki satu saja tidak cukup
+1. `verify_jwt=true` di `xendit-webhook` → callback ditolak 401 sebelum fungsi jalan. **Diperbaiki v2.5.2, MASIH menunggu deploy.**
+2. Trigger audit → UPDATE PAID di-rollback. **Diperbaiki v2.5.4, SUDAH AKTIF** (migrasi DB, tidak butuh deploy edge function).
+### Perbaikan & ekuivalensi
+`supabase/migrations/20260910_fix_audit_critical_update.sql` — banding lewat `to_jsonb()`; `status` tetap text; tiga kolom uang di-**cast ke numeric** supaya perbandingan tetap numerik (bukan teks: `1.0` vs `1.00`). Atribut dijaga: SECURITY INVOKER, `search_path=public, pg_temp`.
+Verifikasi (semua rollback): sp_payments update sepele ✓, status→PAID ✓, audit tepat 1. sp_policy_orders: sepele **+0**, status **+1**, premi **+1** → tanpa regresi.
 
 ## v2.5.3 — Memutus pola "gagal tanpa bersuara" (2026-09-10)
 ### Pola yang mendasari SEMUA temuan sesi ini

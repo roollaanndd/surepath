@@ -114,8 +114,19 @@ Perbaikan berikut sudah ada di `main` tetapi **belum berlaku di produksi**, kare
 
 | Menunggu | Dampak selama belum di-deploy |
 |---|---|
-| `xendit-webhook` → `verify_jwt = false` | Pembayaran **pertama** akan gagal jadi PAID; komisi tidak dikredit |
+| `xendit-webhook` → `verify_jwt = false` | Callback Xendit ditolak 401 sebelum fungsinya jalan; pembayaran tidak pernah jadi PAID |
 | `send-insurer-email` dideklarasikan | Insurer tidak menerima email review-link |
 | `pathy-agent` v2.3.0 + v2.5.0 | Indikasi jaminan, disclaimer, arsip dokumen, `save_document_data` tidak aktif |
 
 Ketiganya selesai dengan **satu** tindakan: nyalakan integrasi GitHub di dashboard Supabase (`docs/DEPLOYMENT.md`).
+
+### Sudah aktif (tidak menunggu deploy)
+
+Perbaikan sisi database berlaku begitu migrasinya diterapkan, tanpa perlu deploy edge function:
+
+| Perbaikan | Status |
+|---|---|
+| `audit_critical_update()` tidak lagi menggagalkan setiap UPDATE ke `sp_payments` (v2.5.4) | ✅ aktif di produksi |
+| Tabel `sp_user_documents` untuk arsip dokumen Pathy (v2.5.0) | ✅ aktif di produksi |
+
+⚠️ Jalur pembayaran punya **dua** ranjau, dan keduanya harus beres. Yang di database sudah; yang di edge function (`verify_jwt`) masih menunggu deploy. Memperbaiki satu saja tidak membuat pembayaran berhasil.

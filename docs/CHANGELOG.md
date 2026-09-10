@@ -4,6 +4,38 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.3 — 2026-09-10
+
+### Memutus pola "gagal tanpa bersuara"
+
+Hampir setiap cacat yang ditemukan dalam audit 9–10 September punya bentuk yang sama: sistem gagal **tanpa memberi tahu siapa pun**. Auto-deploy melaporkan sukses tanpa men-deploy. `functions.invoke()` gagal dan hasilnya tidak diperiksa. Kanal notifikasi dilewati diam-diam karena tokennya kosong. Percakapan Pathy tidak pernah disimpan, jadi jawaban salah tidak pernah terdeteksi.
+
+Selama sistem tidak bisa memberi tahu saat dirinya rusak, setiap perbaikan berikutnya adalah tebakan. Rilis ini menambahkan dua perkakas untuk memutus pola itu, plus satu temuan baru.
+
+**1. Penjaga deklarasi edge function** — `npm run check:functions`, memblokir di CI
+
+Setiap direktori di `supabase/functions/` wajib punya sikap **tertulis** di `config.toml`: dideklarasikan, atau ditandai sengaja mati lewat `#!undeclared <nama> — alasan`. Diam bukan pilihan — diam persis yang membuat `send-insurer-email` hilang berbulan-bulan. Penjaga ini menangkap dua arah: fungsi tanpa deklarasi, dan deklarasi tanpa sumber.
+
+**2. Pemeriksa kesehatan produksi** — `docs/PRODUCTION_READINESS.md`
+
+Satu query SQL yang bisa ditempel di Supabase SQL Editor kapan saja. Read-only, tidak butuh kredensial tambahan, dan tidak pernah menampilkan **nilai** rahasia — hanya ada/tidaknya. Melaporkan: rahasia yang dipakai fungsi DB tapi hilang dari Vault, baris `sp_bot_config` yang kosong, status tiap kanal notifikasi, prasyarat pembayaran, dan rate set OJK aktif.
+
+**3. Temuan baru: dua dari tiga kanal notifikasi admin mati**
+
+Dijalankan terhadap produksi, pemeriksa itu langsung menemukan:
+
+| Kanal | Status | Sebab |
+|---|---|---|
+| Telegram | ✅ jalan | — |
+| WhatsApp (Fonnte) | ❌ mati | `FONNTE_TOKEN` tidak ada di Vault — padahal **nomor admin sudah diisi**, jadi kanal ini tampak menyala |
+| Email (Resend) | ❌ mati | `RESEND_API_KEY` tidak ada **dan** `admin_email` kosong |
+
+Kedua kanal dilewati tanpa log — itu desain yang disengaja (notifikasi gagal tidak boleh menggagalkan transaksi), tetapi akibatnya tidak ada yang tahu. Cara mengisinya ada di `docs/PRODUCTION_READINESS.md`; nilainya tidak pernah menyentuh repo.
+
+Juga diverifikasi ulang: perubahan `verify_jwt = false` pada `xendit-webhook` (v2.5.2) **tidak** membuka lubang. Pengecekan `x-callback-token` di dalam fungsinya fail-closed secara eksplisit (token tidak terkonfigurasi → 500, bukan lolos), dan `XENDIT_WEBHOOK_TOKEN` terkonfirmasi ada di Vault — jadi setelah ter-deploy webhook itu benar-benar berfungsi, bukan sekadar berganti mode gagal.
+
+---
+
 ## v2.5.2 — 2026-09-10
 
 ### Dua cacat yang ditemukan saat memverifikasi `config.toml` — satu di jalur uang

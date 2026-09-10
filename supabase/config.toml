@@ -140,8 +140,11 @@ verify_jwt = true
 # mencobanya bila `import.meta.env.DEV`). Tidak ada yang memanggil versi edge
 # function-nya, jadi mendeklarasikannya hanya akan menambah permukaan serang.
 #
-# [functions.ai-gateway]
-# verify_jwt = true
+# Baris di bawah dibaca `scripts/check-edge-functions.mjs`: ia mewajibkan setiap
+# fungsi di repo punya sikap TERTULIS — dideklarasikan, atau dinyatakan sengaja
+# mati berikut alasannya. Diam tidak diperbolehkan, karena diam persis yang
+# membuat send-insurer-email hilang berbulan-bulan tanpa ketahuan.
+#!undeclared ai-gateway — kembaran AI gateway lokal `server.ts` (`/api/ai-gateway`, hanya ada saat `npm run dev`); versi edge function-nya tidak punya pemanggil
 
 # ── Milik aplikasi LAIN di project Supabase yang sama ─────────────────────────
 # generate-daily-renungan, backup-daily, admin-auth, push-notify, signup-member

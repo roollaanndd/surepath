@@ -4,6 +4,53 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.8 — 2026-09-11
+
+### Verifikasi email agen: sudah terpasang, tinggal dinyalakan
+
+Seluruh alur "link unik ke email terdaftar" **sudah ada di dalam kode** dan tidak pernah aktif. Bukti dari produksi:
+
+```
+35 akun auth, 32 terkonfirmasi, jeda konfirmasi rata-rata 0,08 detik
+```
+
+Jeda 0,08 detik berarti tidak ada manusia yang mengklik apa pun — **auto-confirm menyala**, jadi Supabase tidak pernah mengirim email konfirmasi sama sekali. Yang sudah siap di kode:
+
+| Bagian | Berkas | Status |
+|---|---|---|
+| Layar "Cek Email Kamu" (nasabah) | `AuthGate.tsx` — cabang `!data.session` | sudah ada |
+| Layar "Cek Email Kamu" (agen) | `AgentOnboarding.tsx` — `setCheckEmail(true)` | sudah ada |
+| Penanganan link balik | `App.tsx` — `#access_token=` / `?code=` | sudah ada |
+| Gerbang tier kepercayaan | `_shared/trust.ts` membaca `email_confirmed_at` | sudah ada (v2.5.6) |
+
+Yang ditambahkan rilis ini agar alurnya utuh saat toggle dimatikan:
+
+- `emailRedirectTo: window.location.origin` pada kedua `signUp()` — link balik tidak lagi bergantung pada Site URL dashboard yang bisa salah tanpa ketahuan.
+- Tombol **kirim ulang link konfirmasi** di pendaftaran agen. Tanpa ini, agen yang emailnya masuk spam buntu: tidak bisa masuk, tidak bisa daftar ulang dengan alamat yang sama.
+
+Semua bersifat *no-op* selama auto-confirm masih menyala — `signUp()` tetap mengembalikan sesi dan alurnya persis seperti sekarang.
+
+### STNK gagal terbaca tidak lagi diam
+
+Tiga jalur AI ditelusuri. Dua sudah benar, satu bisu:
+
+| Jalur | Saat AI gagal | Sebelum rilis ini |
+|---|---|---|
+| Foto mobil (`StepSurvey`) | kotak amber "Perlu Pemeriksaan Manual" + langkah selanjutnya | ✅ benar |
+| Scan KTP (`StepKYC`) | kotak amber berisi `scanNote` | ✅ benar |
+| Scan STNK (`StepVehicle`) | **tidak ada apa-apa** — hanya `console.warn`, lalu diam-diam pindah ke isian manual | ❌ bisu |
+
+Penyebabnya: pada kegagalan total `extractedStnk` di-set `null`, sedangkan seluruh pesan OCR — termasuk peringatan amber — berada di dalam blok yang hanya dirender kalau `extractedStnk` ada. Kondisi peringatannya pun `status !== 'UNCLEAR'`, yang justru mengecualikan kasus gagal total.
+
+Ditambahkan blok notifikasi terpisah di luar region sukses, sejajar dengan notifikasi KTP: menjelaskan kemungkinan penyebab (buram, terpotong, bukan STNK), menawarkan unggah ulang, dan menegaskan pesanan tetap bisa diproses.
+
+### Tindakan pemilik (tidak bisa dilakukan dari kode)
+
+1. **Supabase → Authentication → Providers → Email → matikan "Confirm email" auto-confirm.** Ini satu-satunya saklar yang memisahkan "sudah terpasang" dari "berjalan".
+2. **Supabase → Authentication → SMTP Settings → arahkan ke Resend.** Domain `noreply@myinsurepath.com` sudah dipakai `send-insurer-email`. SMTP bawaan Supabase dibatasi beberapa email per jam dan tidak layak untuk pendaftaran.
+
+---
+
 ## v2.5.7 — 2026-09-11
 
 ### Email palsu ditolak di titik pendaftaran

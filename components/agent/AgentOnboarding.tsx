@@ -18,6 +18,9 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
 
   const [step, setStep] = useState(1);
   const [checkEmail, setCheckEmail] = useState(false);
+  // Without a resend path, an agent whose confirmation mail lands in spam
+  // is stuck: they cannot sign in and cannot re-register the same address.
+  const [resending, setResending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPass, setShowPass] = useState(false);
@@ -57,6 +60,15 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
     setStep(2);
   };
 
+  const handleResend = async () => {
+    if (!email || resending) return;
+    setResending(true);
+    await supabase.auth
+      .resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } })
+      .catch(() => {});
+    setTimeout(() => setResending(false), 5000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
@@ -89,6 +101,8 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           address: address || null,
           referral_code: refCode,
         },
+        // Return target for the confirmation link (see AuthGate for why).
+        emailRedirectTo: window.location.origin,
       },
     });
 
@@ -185,6 +199,15 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm"
               >
                 {t('Back to Login', 'Kembali ke Login')}
+              </button>
+              <button
+                onClick={handleResend}
+                disabled={resending}
+                className="w-full h-11 rounded-xl border border-white/15 text-gray-300 font-semibold text-xs disabled:opacity-50"
+              >
+                {resending
+                  ? t('Link sent — check your inbox and spam folder', 'Link terkirim — cek inbox dan folder spam')
+                  : t('Resend confirmation link', 'Kirim ulang link konfirmasi')}
               </button>
             </div>
           )}

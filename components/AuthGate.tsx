@@ -259,7 +259,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
         // latent — but it meant the chosen role was not what actually travelled
         // with the signup, which is the one thing that must survive the
         // email-confirmation round trip.
-        options:  { data: { name: formData.name, role: regRole, referral_code: refCode } },
+        options:  {
+          data: { name: formData.name, role: regRole, referral_code: refCode },
+          // Where Supabase's confirmation link sends them back to. Without it
+          // the link uses the dashboard Site URL, which silently breaks the
+          // round trip if that is ever wrong. App.tsx already consumes the
+          // returning `#access_token=` / `?code=` and resolves the profile.
+          emailRedirectTo: window.location.origin,
+        },
       });
 
       const timeoutPromise = new Promise<never>((_, reject) =>

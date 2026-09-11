@@ -327,6 +327,27 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
              </>
            )}
 
+           {/* AI could not read the document at all. Previously this branch was
+               silent (console.warn only) and the user was dropped into manual
+               entry with no explanation — the success region above, which holds
+               every other OCR message, is not rendered when extractedStnk is
+               null. Mirrors the KTP scan notice in StepKYC. */}
+           {!extractedStnk && stnkOcrResult && !stnkOcrResult.ok && (
+             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 space-y-1.5 animate-pop-in">
+               <p className="text-[0.65rem] font-black uppercase tracking-widest flex items-center gap-1.5">
+                 <AlertCircle size={12}/> STNK Tidak Terbaca
+               </p>
+               <p className="text-[0.55rem] font-bold opacity-90 leading-relaxed">
+                 AI tidak dapat membaca dokumen ini — kemungkinan foto buram, terpotong, atau bukan STNK.
+                 Silakan isi data kendaraan secara manual di bawah, atau unggah ulang dengan foto yang lebih jelas.
+                 Pesanan kamu tetap bisa diproses.
+               </p>
+               {stnkOcrResult.notes && (
+                 <p className="text-[0.5rem] italic opacity-70 pt-1">Catatan AI: {stnkOcrResult.notes}</p>
+               )}
+             </div>
+           )}
+
            <div className="flex bg-gray-100 dark:bg-white/[0.03] p-1.5 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner">
                 <button onClick={() => setEntryMode('DATABASE')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'DATABASE' ? 'bg-white dark:bg-gray-800 shadow-xl text-emerald-500 scale-100' : 'text-gray-400 scale-95'}`}><Database size={16} className="inline mr-2"/> Pilih Merk</button>
                 <button onClick={() => setEntryMode('MANUAL')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'MANUAL' ? 'bg-white dark:bg-gray-800 shadow-xl text-emerald-500 scale-100' : 'text-gray-400 scale-95'}`}><Edit3 size={16} className="inline mr-2"/> Ketik Manual</button>

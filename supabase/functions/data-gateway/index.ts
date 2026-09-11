@@ -13,6 +13,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import type { GatewayContext, ActionResult } from './actions/types.ts';
+import { evaluateTrust } from '../_shared/trust.ts';
 import { handleUsersAction } from './actions/users.ts';
 import { handleOrdersAction } from './actions/orders.ts';
 import { handleClaimsAction } from './actions/claims.ts';
@@ -101,6 +102,9 @@ Deno.serve(async (req) => {
 
     // Auth
     let caller: Caller;
+    // Dipakai gerbang kepercayaan di bawah. Diambil dari sesi yang sudah
+    // diverifikasi, jadi tidak menambah satu pun query.
+    let emailConfirmedAt: string | null = null;
     if (PUBLIC_ACTIONS.has(action)) {
       if (action.startsWith('get_insurer_') || action.startsWith('insurer_') || action.startsWith('submit_insurer_') || action.endsWith('_public_quotation')) {
         const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
@@ -118,6 +122,7 @@ Deno.serve(async (req) => {
       const authId = userData.user.id;
       const email = (userData.user.email ?? '').toLowerCase();
       const userMetadata = (userData.user.user_metadata ?? null) as Record<string, any> | null;
+      emailConfirmedAt = (userData.user.email_confirmed_at ?? null) as string | null;
       // FIX v1.49.2: Use ilike for case-insensitive email match.
       // Previously used .or() with exact match — Google OAuth emails can have
       // different casing than the original signup email.
@@ -130,6 +135,34 @@ Deno.serve(async (req) => {
       const ownerId = spUser?.id ?? authId;
       const ownerIds = [...new Set([ownerId, authId].filter(Boolean))];
       caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), isFinanceAdmin: FINANCE_ROLES.includes(spUser?.role ?? ''), userMetadata, ownerId, ownerIds };
+    }
+
+    // ── Gerbang kepercayaan akun (v2.5.6) ─────────────────────────────────
+    //
+    // SATU tempat, bukan puluhan penjaga tersebar di 103 action. Hanya enam
+    // aksi berisiko yang digerbang (lihat _shared/trust.ts); semua aksi baca,
+    // simulasi premi, penawaran draf, profil, notifikasi dan Pathy tetap
+    // terbuka supaya pendaftar baru masih bisa mencoba produk.
+    //
+    // Akun yang dibuat sebelum ENFORCEMENT_FROM dibebaskan sepenuhnya, jadi
+    // menyalakan gerbang ini tidak mengubah pengalaman satu pun pengguna lama.
+    //
+    // Ini menutup celah yang terlihat 11 Sep 2026: pendaftar CUSTOMER selalu
+    // ditulis `verified: true`, sehingga akun `@example.com` punya akses penuh.
+    if (!PUBLIC_ACTIONS.has(action)) {
+      const trust = evaluateTrust(
+        action,
+        { email: caller.email, emailConfirmedAt, spUser: caller.spUser },
+        { isAdmin: caller.isAdmin },
+      );
+      if (!trust.allowed) {
+        return json({
+          error: trust.message,
+          code: trust.code,
+          tier: trust.tier,
+          required_tier: trust.required,
+        }, 403);
+      }
     }
 
     // Build context for modules

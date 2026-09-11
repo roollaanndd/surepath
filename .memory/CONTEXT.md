@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-11 (v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-11 (v2.5.7 — email palsu ditolak di pendaftaran; v2.5.6 — gerbang kepercayaan akun + rancangan pelapisan keamanan; v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,32 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.7 — Email palsu ditolak di titik pendaftaran (2026-09-11)
+Tiga lapis: `AuthGate.tsx` + `AgentOnboarding.tsx` sebelum `signUp()` (**aktif otomatis via Vercel**), dan `ensure_profile` di gateway (menunggu deploy). Menolak SEBELUM signUp supaya tidak meninggalkan akun auth yatim.
+Satu sumber kebenaran: klien mengimpor `isUntrustedEmail` langsung dari `_shared/trust.ts` (tsc + vite OK, terverifikasi ter-bundle di `AuthGate-*.js`).
+### ⚠️ Cacat yang ditangkap uji — JANGAN diulang
+Versi pertama penjaga server menolak SEBELUM cek profil-sudah-ada. `ensure_profile` jalan di SETIAP login → akan **mengunci 6 akun domain mencurigakan yang sudah ada**. `signupRole.test.ts` menangkapnya (6 merah). Penjaga dipindah ke jalur profil-BARU saja + 2 uji mengunci keduanya.
+### Sengaja TIDAK dikerjakan
+`vehicleDatabase.ts` → server: **31 titik panggil sinkron** jadi async, termasuk wizard beli (jalur uang). Sudah di lazy-chunk, bukan bundle utama. Butuh pass tersendiri dengan aplikasi bisa dijalankan.
+
+## v2.5.6 — Gerbang kepercayaan akun + pelapisan keamanan (2026-09-11)
+### Temuan audit 35 akun
+30 dari 32 dikonfirmasi **instan <2 detik** (auto-confirm MENYALA, cuma 2 yang benar-benar klik) · **6 akun (17%) domain sampah**.
+Akar: pendaftar CUSTOMER ditulis `verified: true` (`verified: role !== 'AGENT'`) → kolom `verified` TIDAK bisa membedakan nasabah asli dari akun karangan. `identity_status` terisi di 40 baris tapi **tidak dibaca kode mana pun** — kolom mati.
+### Rancangan (`_shared/trust.ts`) — tanpa perubahan skema
+Tier 0/1/2 diturunkan dari data yang ada. **Kuncinya pemeriksaan DOMAIN email**, bukan `email_confirmed_at` — selama auto-confirm menyala kolom itu selalu terisi jadi bernilai nol. Domain `@example.com` mengunci tier 0 **meski verified:true**.
+Digerbang hanya **6 dari 103 action**: create_policy_order, submit_claim, agent_request_withdrawal, redeem_coins, apply_referral, accept_agreement. Sisanya (baca, simulasi, quote draf, Pathy, profil) TETAP TERBUKA.
+**Grandfathering**: akun < 12 Sep 2026 bebas sepenuhnya (termasuk 6 domain sampah lama) → menyalakan ini tidak mengubah pengalaman pengguna lama. Ada uji yang mengunci ini.
+Ditegakkan di **dispatcher data-gateway** (1 titik, bukan 103). Admin selalu lolos. Tolak → 403 + `code:'VERIFICATION_REQUIRED'`. 17 uji baru.
+### `docs/SECURITY_LAYERING.md`
+Jujur: kode browser TIDAK bisa disembunyikan. Obfuscation menaikkan biaya, tidak mencegah, dan merusak stack trace Sentry. Frame yang benar: bikin kode tersalin jadi TIDAK BERGUNA.
+⚠️ **Aset asli yang terekspos bukan kode React, tapi `services/vehicleDatabase.ts` (2.572 baris / 352 KB harga kendaraan)** + tabel OJK — ikut bundle produksi, tinggal ambil arraynya. Rekomendasi pindah ke server (bonus: bundle −350 KB) **sengaja TIDAK dikerjakan** (mengubah jalur data wizard beli) — keputusan owner.
+### Butuh tangan owner
+1. **Matikan auto-confirm** Supabase → Auth → Providers → Email (satu-satunya cara stop email karangan di sumbernya; tidak diubah sendiri karena mengubah alur daftar).
+2. Pastikan repo GitHub privat.
+### ⚠️ BELUM AKTIF
+Gerbang ada di data-gateway yang **belum pernah ter-deploy**. Baru berlaku setelah integrasi GitHub Supabase dinyalakan.
 
 ## v2.5.5 — Kode sumber server terpublikasi lewat sourcemap (2026-09-11)
 ### Cacatnya

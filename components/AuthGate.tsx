@@ -8,6 +8,7 @@ import { Capacitor } from '@capacitor/core';
 import { SurePathLogo } from './Navbar';
 import { Language, UserRole } from '../types';
 import { supabase, ensureProfile, fetchMyProfileForLogin } from '../services/supabaseService';
+import { isUntrustedEmail } from '../supabase/functions/_shared/trust';
 import AgentOnboarding from './agent/AgentOnboarding';
 import { OjkBadge, EncryptionBadge } from './ui';
 
@@ -228,6 +229,18 @@ const AuthGate: React.FC<AuthGateProps> = ({
       setShowAgentOnboarding(true);
       return;
     }
+    // Tolak domain yang tidak dapat menerima email SEBELUM akun dibuat, supaya
+    // tidak meninggalkan akun auth yatim. 11 Sep 2026 sebuah akun mendaftar
+    // dengan @example.com dan langsung berstatus terkonfirmasi, karena
+    // auto-confirm menyala di Supabase Auth.
+    if (isUntrustedEmail(formData.email)) {
+      setError(t(
+        'Please use a real email address — that domain cannot receive email.',
+        'Gunakan alamat email sungguhan — domain tersebut tidak bisa menerima email.',
+      ));
+      return;
+    }
+
     setLoading(true);
     setError(null);
     resolvedRef.current = false;

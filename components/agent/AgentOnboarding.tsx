@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Language } from '../../types';
 import { supabase, ensureProfile } from '../../services/supabaseService';
+import { isUntrustedEmail } from '../../supabase/functions/_shared/trust';
 
 interface Props {
   onSuccess: (agent: any) => void;
@@ -59,6 +60,14 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
+
+    // Sama seperti pendaftaran nasabah: tolak domain yang tidak dapat menerima
+    // email sebelum akun auth dibuat.
+    if (isUntrustedEmail(email)) {
+      setError('Gunakan alamat email sungguhan — domain tersebut tidak bisa menerima email.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

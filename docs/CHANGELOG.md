@@ -4,6 +4,36 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.7 — 2026-09-11
+
+### Email palsu ditolak di titik pendaftaran
+
+v2.5.6 menahan akun berdomain sampah di tier 0 *setelah* mereka mendaftar. Rilis ini menolaknya **sebelum akun terbentuk**, di tiga lapis:
+
+| Lapis | Tempat | Berlaku |
+|---|---|---|
+| Klien — nasabah | `AuthGate.tsx`, sebelum `signUp()` | **otomatis via Vercel** |
+| Klien — agen | `AgentOnboarding.tsx`, sebelum `signUp()` | **otomatis via Vercel** |
+| Server | `ensure_profile` di data-gateway | saat gateway di-deploy |
+
+Menolak sebelum `signUp()` penting: kalau ditolak belakangan, akun auth terlanjur ada dan menjadi yatim tanpa profil.
+
+Satu sumber kebenaran — klien mengimpor `isUntrustedEmail` langsung dari `supabase/functions/_shared/trust.ts`, bukan daftar kembar yang bisa melenceng. Diverifikasi ikut ter-bundle (`AuthGate-*.js`).
+
+### ⚠️ Cacat yang ditangkap uji sendiri — dan kenapa itu penting
+
+Versi **pertama** penjaga sisi server salah: ia menolak **sebelum** memeriksa apakah profil sudah ada. Karena `ensure_profile` dipanggil di **setiap login**, itu akan **mengunci enam akun berdomain mencurigakan yang sudah ada di produksi** — pengguna sungguhan, terkunci di luar aplikasinya.
+
+`services/__tests__/signupRole.test.ts` menangkapnya (6 uji merah) sebelum apa pun ter-commit. Penjaga dipindahkan ke jalur profil-baru saja, dan dua uji ditambahkan untuk mengunci keduanya: profil baru berdomain palsu **ditolak**, akun lama berdomain sama **tetap bisa login**.
+
+Prinsipnya sama dengan grandfathering di v2.5.6: mengencangkan keamanan tidak boleh mengorbankan pengguna yang sudah ada.
+
+### Yang sengaja TIDAK dikerjakan
+
+Memindahkan `services/vehicleDatabase.ts` (352 KB harga kendaraan) ke server: **31 titik panggil sinkron** harus jadi async, termasuk wizard pembelian — jalur uang. Data itu sudah berada di lazy-chunk, bukan bundle utama. Melakukannya tanpa bisa menjalankan aplikasi adalah cara membuat aplikasi rusak; ia butuh satu pass tersendiri. Rancangannya ada di `docs/SECURITY_LAYERING.md`.
+
+---
+
 ## v2.5.6 — 2026-09-11
 
 ### Gerbang kepercayaan akun — hanya akun terverifikasi untuk aksi berisiko

@@ -40,7 +40,7 @@ function makeDb(opts: { existingByEmail?: Row | null; upline?: Row | null } = {}
   return db;
 }
 
-function makeCtx(over: { spUser?: Row | null; params?: Row; meta?: Row } = {}) {
+function makeCtx(over: { spUser?: Row | null; params?: Row; meta?: Row; email?: string } = {}) {
   const db = makeDb();
   return {
     ctx: {
@@ -48,7 +48,7 @@ function makeCtx(over: { spUser?: Row | null; params?: Row; meta?: Row } = {}) {
       params: over.params ?? {},
       caller: {
         authId: '11111111-1111-4111-8111-111111111111',
-        email: 'baru@example.com',
+        email: over.email ?? 'baru@gmail.com',
         spUser: over.spUser ?? null,
         role: (over.spUser?.role as string) ?? null,
         isAdmin: false,
@@ -107,7 +107,7 @@ describe('ensure_profile — account type must be chosen, never assumed', () => 
   });
 
   it('never downgrades an existing profile to the role the client asked for', async () => {
-    const existing = { id: 'agent-1', role: 'AGENT', email: 'baru@example.com', name: 'Budi' };
+    const existing = { id: 'agent-1', role: 'AGENT', email: 'baru@gmail.com', name: 'Budi' };
     const { ctx, db } = makeCtx({ spUser: existing, params: { role: 'CUSTOMER' } });
     const res = await handleUsersAction('ensure_profile', ctx);
     expect((res?.body as any).data.role).toBe('AGENT');
@@ -123,7 +123,7 @@ describe('ensure_profile — account type must be chosen, never assumed', () => 
       params: { role: 'CUSTOMER', name: 'Rina', referral_code: 'SP-AGT-1234' },
       caller: {
         authId: '22222222-2222-4222-8222-222222222222',
-        email: 'rina@example.com',
+        email: 'rina@gmail.com',
         spUser: null, role: null, isAdmin: false, isFinanceAdmin: false,
         userMetadata: {},
         ownerId: '22222222-2222-4222-8222-222222222222',
@@ -149,5 +149,28 @@ describe('get_my_profile — 404 is what tells the client to show the picker', (
     const res = await handleUsersAction('get_my_profile', ctx);
     expect(res?.status).toBe(200);
     expect((res?.body as any).data.role).toBe('AGENT');
+  });
+
+  // ── Domain email tidak tepercaya (v2.5.7) ─────────────────────────────────
+  //
+  // Uji kedua ada karena versi PERTAMA penjaga ini salah: ia menolak sebelum
+  // memeriksa profil yang sudah ada. ensure_profile dipanggil di setiap login,
+  // jadi itu akan mengunci enam akun berdomain mencurigakan yang sudah ada di
+  // produksi. Suite inilah yang menangkapnya — jangan dilonggarkan.
+
+  it('menolak profil BARU dengan domain yang tidak bisa menerima email', async () => {
+    const { ctx, db } = makeCtx({ params: { role: 'CUSTOMER' }, email: 'palsu@example.com' });
+    const res = await handleUsersAction('ensure_profile', ctx);
+    expect(res?.status).toBe(403);
+    expect((res?.body as any).code).toBe('UNTRUSTED_EMAIL_DOMAIN');
+    expect(db.inserted).toHaveLength(0);
+  });
+
+  it('TIDAK mengunci akun lama yang sudah terlanjur berdomain mencurigakan', async () => {
+    const existing = { id: 'lama-1', role: 'CUSTOMER', name: 'Lama' };
+    const { ctx } = makeCtx({ spUser: existing, email: 'lama@example.com' });
+    const res = await handleUsersAction('ensure_profile', ctx);
+    expect(res?.status).toBe(200);
+    expect((res?.body as any).existed).toBe(true);
   });
 });

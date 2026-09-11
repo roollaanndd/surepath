@@ -1,6 +1,7 @@
 // users.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
+import { isUntrustedEmail } from '../../_shared/trust.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -85,6 +86,23 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
             );
           }
           return json({ data: caller.spUser, existed: true });
+        }
+
+        // Pertahanan berlapis — HANYA untuk profil baru.
+        //
+        // Sengaja diletakkan SESUDAH cabang "profil sudah ada" di atas.
+        // ensure_profile dipanggil di SETIAP login, jadi menolak lebih awal
+        // akan mengunci enam akun berdomain mencurigakan yang sudah terlanjur
+        // ada di produksi — pengguna lama tidak boleh terdampak, prinsip yang
+        // sama dengan grandfathering di _shared/trust.ts.
+        //
+        // Validasi di klien bisa dilewati dengan memanggil API langsung, jadi
+        // pendaftaran baru tetap diperiksa di sini.
+        if (isUntrustedEmail(caller.email)) {
+          return json({
+            error: 'Gunakan alamat email sungguhan — domain tersebut tidak bisa menerima email.',
+            code: 'UNTRUSTED_EMAIL_DOMAIN',
+          }, 403);
         }
 
         // Explicit email lookup — case insensitive

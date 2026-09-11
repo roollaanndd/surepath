@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-11 (v2.5.6 — gerbang kepercayaan akun + rancangan pelapisan keamanan; v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-11 (v2.5.7 — email palsu ditolak di pendaftaran; v2.5.6 — gerbang kepercayaan akun + rancangan pelapisan keamanan; v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,14 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.7 — Email palsu ditolak di titik pendaftaran (2026-09-11)
+Tiga lapis: `AuthGate.tsx` + `AgentOnboarding.tsx` sebelum `signUp()` (**aktif otomatis via Vercel**), dan `ensure_profile` di gateway (menunggu deploy). Menolak SEBELUM signUp supaya tidak meninggalkan akun auth yatim.
+Satu sumber kebenaran: klien mengimpor `isUntrustedEmail` langsung dari `_shared/trust.ts` (tsc + vite OK, terverifikasi ter-bundle di `AuthGate-*.js`).
+### ⚠️ Cacat yang ditangkap uji — JANGAN diulang
+Versi pertama penjaga server menolak SEBELUM cek profil-sudah-ada. `ensure_profile` jalan di SETIAP login → akan **mengunci 6 akun domain mencurigakan yang sudah ada**. `signupRole.test.ts` menangkapnya (6 merah). Penjaga dipindah ke jalur profil-BARU saja + 2 uji mengunci keduanya.
+### Sengaja TIDAK dikerjakan
+`vehicleDatabase.ts` → server: **31 titik panggil sinkron** jadi async, termasuk wizard beli (jalur uang). Sudah di lazy-chunk, bukan bundle utama. Butuh pass tersendiri dengan aplikasi bisa dijalankan.
 
 ## v2.5.6 — Gerbang kepercayaan akun + pelapisan keamanan (2026-09-11)
 ### Temuan audit 35 akun

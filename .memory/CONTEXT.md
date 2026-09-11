@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-09-10 (v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-11 (v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
 
 ## Current State
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
@@ -10,6 +10,23 @@
 - ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
   `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
   Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+
+## v2.5.5 — Kode sumber server terpublikasi lewat sourcemap (2026-09-11)
+### Cacatnya
+`npm run build` menulis `esbuild server.ts --sourcemap --outfile=dist/server.cjs` — **dist/ adalah folder publik Vercel**. Sourcemap dibuat dengan `sourcesContent`, jadi **kode TS asli** `server.ts` (AI gateway + lapisan validasi PII-leak) dan `services/aiAdminEngine.ts` bisa diunduh utuh lewat `/server.cjs.map`. `server.ts` menurut CLAUDE.md hanya untuk dev lokal — tidak pernah punya urusan di folder publik.
+Keterjangkauan dari internet **tidak diverifikasi** (sandbox tanpa egress ke domain produksi); yang pasti berkasnya ada di direktori publikasi.
+### Perbaikan
+- Bundle server → `build-server/` (di luar dist/, masuk .gitignore, ditambahkan ke eslint ignores). `npm start` menyesuaikan.
+- `scripts/check-dist-clean.mjs` (baru) jalan di **akhir `npm run build`** → build GAGAL bila dist/ memuat sourcemap / bundle server / berkas kredensial. Melekat di `build`, jadi CI **dan Vercel** ikut memeriksa otomatis.
+- Diuji dua arah: dist lama → gagal & menyebut 2 berkas; sesudah perbaikan → 119 berkas, 0 sourcemap.
+### Sudah benar (diverifikasi, jangan diutak-atik)
+Sourcemap klien tidak diproduksi · nol rahasia di bundle klien (`service_role`/`xnd_`/`sk_live`/JWT) · hanya `VITE_SUPABASE_URL`+`VITE_SUPABASE_ANON_KEY` ke browser (memang publik) · `SUPABASE_SERVICE_ROLE_KEY` di aiAdminEngine aman (vite tak meng-`define` process.env; hanya di-import server.ts) · `re_` di bundle = `re_profile`, positif palsu.
+### Jebakan yang sempat kena
+Menambah `build-server/` membuat `eslint .` melahap bundel CJS → 69 error palsu (`no-var`, `require is not defined`). Ditambahkan ke `eslint.config.js` ignores; kembali ke baseline 28 warning / 0 error.
+
+## Data pengguna per 11 Sep 2026
+35 akun auth · 40 baris sp_users (selisih 5 — perlu dicek) · hari ini: **1 daftar + 1 login** (`edotbotak@example.com`, CUSTOMER, 16:56 WIB).
+⚠️ **`auth.audit_log_entries` KOSONG** — tidak ada riwayat login/daftar sama sekali. `auth.users.last_sign_in_at` DITIMPA tiap login, jadi hanya login terakhir yang diketahui. `sp_page_views` (1090 baris) tidak punya kolom user_id. `sp_audit_log` hanya 4 baris, cuma UPDATE tabel kritis.
 
 ## v2.5.4 — Ranjau KEDUA jalur uang (2026-09-10) — SUDAH AKTIF DI PRODUKSI
 ### Setiap UPDATE ke `sp_payments` di-rollback

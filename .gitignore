@@ -52,3 +52,6 @@ test-results/
 # Generated quotation slip PDFs (test artifacts)
 QS_SP_*.pdf
 QS-SP-*.pdf
+
+# Bundle server dev — TIDAK boleh masuk dist/ (folder publik Vercel)
+build-server

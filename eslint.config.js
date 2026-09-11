@@ -38,7 +38,10 @@ export default tseslint.config(
   },
   {
     ignores: [
-      'dist/', 'node_modules/', 'supabase/functions/',
+      // build-server/ berisi bundel CJS hasil esbuild (var/require/process) —
+      // keluaran build, bukan sumber. Dipindahkan ke sini dari dist/ di v2.5.5
+      // supaya tidak ikut terpublikasi ke internet.
+      'dist/', 'build-server/', 'node_modules/', 'supabase/functions/',
       '*.cjs', '*.js', 'server.ts', 'scripts/',
       'android/', 'public/',
       'eslint.config.js',

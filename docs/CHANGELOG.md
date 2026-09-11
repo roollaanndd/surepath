@@ -4,6 +4,53 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.6 — 2026-09-11
+
+### Gerbang kepercayaan akun — hanya akun terverifikasi untuk aksi berisiko
+
+Berangkat dari akun `@example.com` yang mendaftar 11 September. Audit menunjukkan itu bukan kejadian tunggal.
+
+**Temuan (35 akun produksi)**
+
+| | |
+|---|---|
+| Dikonfirmasi instan <2 detik → auto-confirm menyala | **30 dari 32** |
+| Benar-benar klik tautan email | **2** |
+| Domain sampah (`example`, `test`, dll) | **6 akun (17%)** |
+
+Lebih dalam: pendaftar CUSTOMER langsung ditulis `verified: true` (`verified: role !== 'AGENT'`), jadi kolom `verified` **tidak pernah bisa** membedakan nasabah asli dari akun karangan. Dan `identity_status` — terisi di 40 baris — **tidak dibaca satu baris kode pun**. Kolom mati.
+
+**Rancangannya** (`supabase/functions/_shared/trust.ts`)
+
+Tiga tingkat, diturunkan dari data yang sudah ada, **tanpa perubahan skema**: tier 0 belum tepercaya · tier 1 email wajar · tier 2 terverifikasi penuh.
+
+Kuncinya **pemeriksaan domain email**, bukan `email_confirmed_at`: selama auto-confirm menyala kolom itu selalu terisi sehingga bernilai nol sebagai sinyal. Domain `@example.com` mengunci di tier 0 **meskipun `verified: true`** — persis celah yang terlihat.
+
+**Cakupan sengaja sempit.** Dari 103 action, hanya enam yang digerbang: `create_policy_order`, `submit_claim`, `agent_request_withdrawal`, `redeem_coins`, `apply_referral`, `accept_agreement`. Semua aksi baca, simulasi premi, penawaran draf, profil, notifikasi dan Pathy **tetap terbuka** — pendaftar baru harus tetap bisa mencoba produk.
+
+**Tidak mengubah apa pun bagi pengguna lama.** Akun yang dibuat sebelum 12 Sep 2026 dibebaskan sepenuhnya, termasuk 6 akun domain sampah yang sudah ada. Ada uji khusus yang mengunci jaminan itu.
+
+**Ditegakkan di satu tempat**: dispatcher `data-gateway`, setelah identitas caller terbentuk dan sebelum dispatch — satu titik untuk 103 action, bukan 103 penjaga yang bisa lupa dipasang. Peran admin selalu lolos. Penolakan → **403** dengan `code: 'VERIFICATION_REQUIRED'` supaya klien bisa menampilkan ajakan verifikasi yang tepat.
+
+17 uji baru (`services/__tests__/trust.test.ts`).
+
+### `docs/SECURITY_LAYERING.md` — rancangan pelapisan
+
+Menjawab permintaan "kamuflase kode" dengan jujur: **kode yang berjalan di browser tidak bisa dibuat tak-terbaca** — browser wajib mengeksekusinya. Obfuscation menaikkan biaya menyalin, tidak mencegahnya, dan merusak stack trace Sentry.
+
+Pertanyaan yang benar: **bagaimana membuat kode yang tersalin menjadi tidak berguna.** Dokumen ini memetakan lima lapis, menempatkan yang menentukan (otorisasi server + gerbang akun) di atas yang kosmetik (minify/obfuscation).
+
+**Temuan aset:** yang benar-benar berharga dan ikut terkirim ke browser bukan kode React-nya, melainkan **`services/vehicleDatabase.ts` — 2.572 baris / 352 KB daftar harga pasar kendaraan**, plus tabel tarif OJK. Menyalinnya tidak butuh membaca logika apa pun; cukup ambil arraynya dari bundle.
+
+Rekomendasi memindahkannya ke server (bonus: bundle turun ±350 KB) **sengaja tidak dikerjakan** — itu mengubah jalur data wizard pembelian, dan owner meminta tanpa mengubah fungsi. Keputusan owner, bukan efek samping.
+
+### Yang butuh tangan owner
+
+- **Matikan auto-confirm email** di Supabase Dashboard → Authentication → Providers → Email. Satu-satunya cara menghentikan email karangan di sumbernya. Tidak saya ubah sendiri karena mengubah alur pendaftaran.
+- **Pastikan repo GitHub privat.**
+
+---
+
 ## v2.5.5 — 2026-09-11
 
 ### Kode sumber server ikut terpublikasi lewat sourcemap

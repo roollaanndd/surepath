@@ -4,6 +4,48 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.5 — 2026-09-11
+
+### Kode sumber server ikut terpublikasi lewat sourcemap
+
+Ditemukan saat menjawab pertanyaan owner: bagaimana mencegah kode dilihat atau disalin orang luar.
+
+`npm run build` menulis bundle server **langsung ke `dist/`** — folder yang dipublikasikan Vercel:
+
+```
+esbuild server.ts … --sourcemap --outfile=dist/server.cjs
+```
+
+Sourcemap itu dibuat dengan `sourcesContent`, artinya **kode sumber TypeScript asli ikut di dalamnya**, lengkap dengan komentar:
+
+- `server.ts` — termasuk AI gateway berikut lapisan validasi PII-leak dan anti-halusinasi
+- `services/aiAdminEngine.ts` — mesin AI admin otonom
+
+Siapa pun yang menebak `/server.cjs.map` bisa mengunduhnya utuh. Ironisnya `server.ts` menurut `CLAUDE.md` **hanya untuk dev lokal** — ia tidak pernah punya urusan berada di folder publik.
+
+> Keterjangkauannya dari internet **tidak diverifikasi langsung** (sandbox tidak punya akses keluar ke domain produksi). Yang pasti: berkasnya ada di direktori yang dipublikasikan.
+
+**Perbaikannya**
+
+- Bundle server pindah ke `build-server/` (di luar `dist/`, masuk `.gitignore`). `npm start` menyesuaikan.
+- `scripts/check-dist-clean.mjs` (baru) berjalan di **akhir `npm run build`** dan menggagalkan build bila `dist/` memuat sourcemap, bundle server, atau berkas kredensial. Karena melekat di `build`, CI **dan** Vercel ikut memeriksanya otomatis — tidak perlu langkah terpisah yang bisa lupa dipasang.
+
+Diuji dua arah: terhadap `dist/` lama penjaga menggagalkan build dan menyebut kedua berkasnya; setelah perbaikan, `dist/` bersih (119 berkas, nol sourcemap).
+
+### Yang sudah benar dan diverifikasi ulang
+
+Pemeriksaan yang sama memastikan hal-hal berikut **tidak** bermasalah, jadi tidak perlu diutak-atik:
+
+| Diperiksa | Hasil |
+|---|---|
+| Sourcemap bundle **klien** | tidak diproduksi — kode TS klien tidak bisa diunduh |
+| Rahasia di bundle klien | nihil (`service_role`, `xnd_`, `sk_live`, JWT — semua nol) |
+| Env yang sampai ke browser | hanya `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`, keduanya memang publik |
+| `SUPABASE_SERVICE_ROLE_KEY` di `services/aiAdminEngine.ts` | aman — `vite.config.ts` tidak meng-`define` `process.env`, dan berkasnya hanya di-import `server.ts` |
+| Pola mirip kunci Resend (`re_`) di bundle | positif palsu — ternyata nama variabel `re_profile` |
+
+---
+
 ## v2.5.4 — 2026-09-10
 
 ### Ranjau KEDUA di jalur uang: setiap UPDATE ke `sp_payments` di-rollback

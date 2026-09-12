@@ -165,14 +165,14 @@ const CommissionLedger: React.FC = () => {
   const TABS: FilterTab[] = ['ALL', 'PENDING', 'PAID', 'CANCELLED'];
 
   return (
-    <div className="space-y-6 animate-fade-in bg-gray-50 text-gray-900">
+    <div className="space-y-6 animate-fade-in bg-ds-card2 text-ds-ink">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h2 className="text-2xl font-bold tracking-tight text-ds-ink">
             Komisi <span className="text-emerald-600">Ledger</span>
           </h2>
-          <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mt-1">
+          <p className="text-xs uppercase tracking-wide text-ds-ink3 font-semibold mt-1">
             Manajemen komisi agen
           </p>
         </div>
@@ -181,7 +181,7 @@ const CommissionLedger: React.FC = () => {
           disabled={bulkSaving || pendingCount === 0}
           className={`h-10 px-4 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
             pendingCount === 0
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              ? 'bg-gray-100 text-ds-ink3 cursor-not-allowed'
               : 'bg-emerald-500 text-white hover:bg-emerald-600'
           }`}
         >
@@ -191,7 +191,7 @@ const CommissionLedger: React.FC = () => {
 
       {/* ── Filter tabs + search ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex gap-1 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm flex-wrap">
+        <div className="flex gap-1 bg-white p-1 rounded-2xl border border-ds-border shadow-sm flex-wrap">
           {TABS.map(tab => {
             const count = tab === 'ALL'
               ? rows.length
@@ -203,7 +203,7 @@ const CommissionLedger: React.FC = () => {
                 className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   filter === tab
                     ? 'bg-emerald-500 text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-50'
+                    : 'text-ds-ink3 hover:bg-ds-card2'
                 }`}
               >
                 {tab === 'ALL' ? 'Semua' : STATUS_LABEL[tab as CommissionStatus]}{' '}
@@ -213,25 +213,25 @@ const CommissionLedger: React.FC = () => {
           })}
         </div>
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ds-ink3" />
           <input
             type="text"
             placeholder="Cari agen / klien…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-gray-400"
+            className="w-full h-10 pl-9 pr-3 bg-white border border-ds-border rounded-xl text-sm text-ds-ink outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-ds-ink3"
           />
         </div>
       </div>
 
       {/* ── Summary bar ── */}
-      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+      <div className="bg-white border border-ds-border shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+        <p className="text-xs text-ds-ink3 font-semibold uppercase tracking-wide">
           Menampilkan{' '}
-          <span className="text-gray-900 font-bold">{filtered.length}</span>{' '}
+          <span className="text-ds-ink font-bold">{filtered.length}</span>{' '}
           dari {rows.length} komisi
         </p>
-        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+        <p className="text-xs text-ds-ink3 font-semibold uppercase tracking-wide">
           Total:{' '}
           <span className="text-emerald-600 font-bold font-mono">{formatIDR(totalAmount)}</span>
         </p>
@@ -243,7 +243,7 @@ const CommissionLedger: React.FC = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-gray-100 shadow-sm rounded-2xl text-center py-16 text-gray-400 font-medium text-sm">
+        <div className="bg-white border border-ds-border shadow-sm rounded-2xl text-center py-16 text-ds-ink3 font-medium text-sm">
           Tidak ada data komisi.
         </div>
       ) : (
@@ -253,26 +253,26 @@ const CommissionLedger: React.FC = () => {
             return (
               <div
                 key={row.id}
-                className="bg-white border border-gray-100 shadow-sm rounded-2xl px-6 py-4 hover:bg-gray-50 transition-colors"
+                className="bg-white border border-ds-border shadow-sm rounded-2xl px-6 py-4 hover:bg-ds-card2 transition-colors"
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                   {/* ── Left: identity ── */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-gray-900">{row.agentName}</p>
+                      <p className="text-sm font-bold text-ds-ink">{row.agentName}</p>
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[row.status]}`}
                       >
                         {STATUS_LABEL[row.status]}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-semibold">
+                    <p className="text-[10px] text-ds-ink3 font-semibold">
                       {row.client_name}
                       {row.order_number && (
-                        <span className="ml-2 text-slate-600 font-mono">{row.order_number}</span>
+                        <span className="ml-2 text-ds-ink2 font-mono">{row.order_number}</span>
                       )}
                     </p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">
                       {row.product_type}
                       {row.discount_rate !== undefined && row.discount_rate !== null && (
                         <span className="ml-2 text-rose-500/60">Diskon {(row.discount_rate * 100).toFixed(0)}%</span>
@@ -281,7 +281,7 @@ const CommissionLedger: React.FC = () => {
                         <span className="ml-2 text-emerald-500/60">Dibayar {fmtDate(row.paid_at)}</span>
                       )}
                       {!row.paid_at && row.created_at && (
-                        <span className="ml-2 text-slate-700">{fmtDate(row.created_at)}</span>
+                        <span className="ml-2 text-ds-ink2">{fmtDate(row.created_at)}</span>
                       )}
                     </p>
                   </div>
@@ -289,16 +289,16 @@ const CommissionLedger: React.FC = () => {
                   {/* ── Middle: amounts ── */}
                   <div className="flex items-center gap-6 text-right flex-shrink-0">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Premi</p>
-                      <p className="text-xs font-mono text-gray-900">{formatIDR(row.premium_amount)}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Premi</p>
+                      <p className="text-xs font-mono text-ds-ink">{formatIDR(row.premium_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Komisi</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Komisi</p>
                       <p className="text-sm font-black text-amber-400">{formatIDR(row.commission_amount)}</p>
                     </div>
                     {row.coin_reward !== undefined && row.coin_reward !== null && row.coin_reward > 0 && (
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">Koin</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Koin</p>
                         <p className="text-xs font-mono text-emerald-400">
                           {row.coin_reward.toLocaleString('id-ID')}
                         </p>

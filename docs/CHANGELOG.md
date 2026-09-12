@@ -4,6 +4,39 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.11 — 2026-09-12
+
+### CMS akhirnya memakai tema aplikasi
+
+Pemeriksaan adopsi design system per portal menunjukkan CMS sebagai satu-satunya yang berdiri sendiri:
+
+| Portal | `ds-*` | warna mentah |
+|---|---|---|
+| **admin (CMS)** | **0** | **709** |
+| customer | 198 | 0 |
+| agent | 572 | 553 |
+| operator | 164 | 57 |
+| insurer | 139 | 12 |
+
+Nol. Bukan karena tokennya tidak cocok, tapi karena **token `ds-*` tidak akan pernah bekerja di CMS**: token itu adalah CSS variable yang berganti nilai lewat kelas `.dark` pada elemen root — dan `AdminPortal` satu-satunya portal yang **tidak pernah menyetel kelas itu**. Customer, agent, dan operator semuanya punya `document.documentElement.classList.toggle('dark', darkMode)`; CMS tidak.
+
+Sebagai gantinya CMS membangun sistem tema keduanya sendiri: helper lokal `th(darkMode, kelasGelap, kelasTerang)` dengan 75 pemanggilan, plus hex hardcoded (`bg-[#08120d]`, `bg-[#0a1510]`, `bg-[#111]`, `bg-[#0a0a0a]`) yang tidak mungkin mengikuti tema apa pun.
+
+Perbaikannya berurutan, bukan ganti warna asal:
+
+1. **Sambungkan `darkMode` ke `.dark`**, persis seperti portal lain. Ini yang membuat token mulai berfungsi.
+2. **75 panggilan `th()` → token `ds-*`**, lalu helpernya dihapus. Token sudah sadar-mode, jadi percabangan gelap/terang tidak perlu lagi. Skripnya memakai tabel pemetaan eksplisit dan **gagal kalau ada pola tak terpetakan** — dan itu benar-benar terjadi: dua panggilan multi-baris tertangkap dan ikut dipetakan, bukan lolos diam-diam.
+3. **1.058 kelas mentah di 20 berkas view → token.**
+4. **34 hex hardcoded → token.**
+
+Hasil: `ds-*` **0 → 1.224**, warna mentah **709 → 20**. CMS kini justru portal dengan adopsi tema tertinggi.
+
+#### Yang sengaja TIDAK disentuh
+
+`text-white` (277) dan `bg-white` polos (22) dibiarkan. Di permukaan ini keduanya banyak duduk di tombol emerald dan knob toggle, tempat putih memang nilai literal yang benar — bukan "teks utama" yang bisa ditema. Mengganti 277 titik itu secara buta akan membuat teks tombol lenyap. Konsekuensinya jujur: mode terang di CMS masih belum sempurna, dan itu perlu penilaian per-titik, bukan sed.
+
+---
+
 ## v2.5.10 — 2026-09-12
 
 ### Deploy edge function yang gagal kini merah, bukan hijau

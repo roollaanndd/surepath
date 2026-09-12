@@ -9,23 +9,23 @@ import { useConfirmDialog, useToast } from '../ui';
 // ─── Shared UI primitives (mirrors InsurerAdmin.tsx conventions) ─────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{children}</p>
+  <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
 );
 
 const inputCls =
-  'bg-white/[0.05] border border-white/10 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-40';
 
 const secondaryBtn =
-  'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-40';
+  'bg-ds-card2 hover:bg-ds-card2 text-ds-ink2 border border-ds-border rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-40';
 
 const Card: React.FC<{ title: string; sub?: string; children: React.ReactNode }> = ({ title, sub, children }) => (
-  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 space-y-3">
+  <div className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-3">
     <div>
       <p className="text-xs font-black uppercase tracking-widest text-emerald-400">{title}</p>
-      {sub && <p className="text-[10px] text-slate-500 mt-0.5">{sub}</p>}
+      {sub && <p className="text-[10px] text-ds-ink3 mt-0.5">{sub}</p>}
     </div>
     {children}
   </div>
@@ -50,9 +50,9 @@ const ZoneMatrix: React.FC<{
   return (
     <div>
       <SectionLabel>{label}</SectionLabel>
-      <div className="overflow-x-auto rounded-xl border border-white/10">
+      <div className="overflow-x-auto rounded-xl border border-ds-border">
         <table className="w-full text-xs">
-          <thead className="bg-white/[0.04] text-[9px] uppercase tracking-widest text-slate-500">
+          <thead className="bg-white/[0.04] text-[9px] uppercase tracking-widest text-ds-ink3">
             <tr>
               <th className="px-3 py-2 text-left">Kategori</th>
               {ZONES.map(z => <th key={z} className="px-3 py-2 text-left">Zona {z}</th>)}
@@ -60,8 +60,8 @@ const ZoneMatrix: React.FC<{
           </thead>
           <tbody>
             {CATEGORIES.map(cat => (
-              <tr key={cat} className="border-t border-white/5">
-                <td className="px-3 py-2 font-black text-slate-300">Kat {cat}</td>
+              <tr key={cat} className="border-t border-ds-border">
+                <td className="px-3 py-2 font-black text-ds-ink2">Kat {cat}</td>
                 {ZONES.map(z => (
                   <td key={z} className="px-2 py-1.5">
                     <div className="flex items-center gap-1">
@@ -71,7 +71,7 @@ const ZoneMatrix: React.FC<{
                         value={((table[cat]?.[z] ?? 0) * 100).toFixed(2)}
                         onChange={e => setCell(cat, z, e.target.value)}
                       />
-                      <span className="text-slate-500">%</span>
+                      <span className="text-ds-ink3">%</span>
                     </div>
                   </td>
                 ))}
@@ -204,12 +204,12 @@ const OjkRateAdmin: React.FC = () => {
           <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
             <ShieldCheck size={22} className="text-emerald-400" /> Rate OJK — Asuransi Kendaraan Bermotor
           </h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
             SEOJK No. 6/SEOJK.05/2017 · {sets.length} versi tersimpan
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={load} className="w-9 h-9 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+          <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 hover:text-white transition-all">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={handleNewBlank} className={secondaryBtn}>+ Versi Baru</button>
@@ -231,7 +231,7 @@ const OjkRateAdmin: React.FC = () => {
             className={`px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all border ${
               s.id === selectedId
                 ? 'bg-emerald-500 text-white border-emerald-500'
-                : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
+                : 'bg-ds-card2 text-ds-ink3 border-ds-border hover:bg-ds-card2'
             }`}
           >
             {s.version} {s.is_active && '· AKTIF'}
@@ -240,7 +240,7 @@ const OjkRateAdmin: React.FC = () => {
       </div>
 
       {!form ? (
-        <div className="text-center py-20 text-slate-500 text-sm font-bold">
+        <div className="text-center py-20 text-ds-ink3 text-sm font-bold">
           Belum ada rate set. Klik "+ Versi Baru".
         </div>
       ) : (
@@ -352,7 +352,7 @@ const OjkRateAdmin: React.FC = () => {
                     <input type="number" step="0.01" className={`${inputCls} text-right`}
                       value={(Number(form[key]) * 100).toFixed(2)}
                       onChange={e => set(key, (parseFloat(e.target.value) || 0) / 100)} />
-                    <span className="text-slate-500">%</span>
+                    <span className="text-ds-ink3">%</span>
                   </div>
                 </div>
               ))}
@@ -367,7 +367,7 @@ const OjkRateAdmin: React.FC = () => {
                         <input type="number" step="0.01" className={`${inputCls} !px-1.5 text-right`}
                           value={((form[key] as Record<string, number>)[z] * 100 || 0).toFixed(2)}
                           onChange={e => set(key, { ...(form[key] as any), [z]: (parseFloat(e.target.value) || 0) / 100 })} />
-                        <span className="text-[9px] text-slate-500">%</span>
+                        <span className="text-[9px] text-ds-ink3">%</span>
                       </div>
                     ))}
                   </div>
@@ -389,24 +389,24 @@ const OjkRateAdmin: React.FC = () => {
                     <input type="number" step="0.0001" className={`${inputCls} text-right`}
                       value={(Number(form.addon_rates[key]) * 100).toFixed(4)}
                       onChange={e => setAddon(key, (parseFloat(e.target.value) || 0) / 100)} />
-                    <span className="text-slate-500">%</span>
+                    <span className="text-ds-ink3">%</span>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="pt-2 border-t border-white/5">
+            <div className="pt-2 border-t border-ds-border">
               <SectionLabel>TPL Progresif (Tanggung Jawab Hukum Pihak Ketiga) — OJK IV.B No.5</SectionLabel>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[1, 2, 3].map(band => (
                   <div key={band} className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-[9px] text-slate-500 mb-1">Band {band} tarif (%)</p>
+                      <p className="text-[9px] text-ds-ink3 mb-1">Band {band} tarif (%)</p>
                       <input type="number" step="0.01" className={`${inputCls} text-right`}
                         value={(Number(form.addon_rates[`tplBand${band}Rate`]) * 100).toFixed(2)}
                         onChange={e => setAddon(`tplBand${band}Rate`, (parseFloat(e.target.value) || 0) / 100)} />
                     </div>
                     <div>
-                      <p className="text-[9px] text-slate-500 mb-1">Batas (Rp)</p>
+                      <p className="text-[9px] text-ds-ink3 mb-1">Batas (Rp)</p>
                       <input type="number" className={`${inputCls} text-right`}
                         value={Number(form.addon_rates[`tplBand${band}Cap`])}
                         onChange={e => setAddon(`tplBand${band}Cap`, parseInt(e.target.value) || 0)} />
@@ -415,7 +415,7 @@ const OjkRateAdmin: React.FC = () => {
                 ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-ds-border">
               <div>
                 <SectionLabel>PA Pengemudi (Rp flat) — OJK IV.B No.6a</SectionLabel>
                 <input type="number" className={`${inputCls} text-right`}

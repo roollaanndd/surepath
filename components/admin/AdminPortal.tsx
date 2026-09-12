@@ -158,7 +158,6 @@ const TAB_SUBTITLE: Record<string, string> = {
 };
 
 // ─── Theme helpers ────────────────────────────────────────────────────────────
-const th = (dark: boolean, darkCls: string, lightCls: string) => dark ? darkCls : lightCls;
 
 // ─── Settings error boundary ─────────────────────────────────────────────────
 class SettingsErrorBoundary extends Component<
@@ -217,6 +216,17 @@ const AdminPortal = ({
   const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // The CMS used to theme itself with a local `th(darkMode, darkCls, lightCls)`
+  // helper and never touched the document class. That made it the only portal
+  // outside the design system: `ds-*` tokens resolve through CSS variables that
+  // switch on `.dark`, so with the class never set they always rendered their
+  // LIGHT values — which is why nothing here could use them. Every other portal
+  // (customer, agent, operator) already syncs this way; the CMS now does too,
+  // so the whole admin surface themes from the same tokens as the rest of the app.
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -295,13 +305,13 @@ const AdminPortal = ({
       {/* Back to website */}
       <button
         onClick={onLogout}
-        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${th(darkMode, 'text-gray-600 hover:text-gray-300', 'text-gray-400 hover:text-gray-700')}`}
+        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${'text-ds-ink3 hover:text-ds-ink'}`}
       >
         <ArrowLeft size={13} /> Kembali ke Website
       </button>
 
       {/* Logo */}
-      <div className={`mb-6 pb-5 border-b ${th(darkMode, 'border-white/5', 'border-gray-100')}`}>
+      <div className={`mb-6 pb-5 border-b ${'border-ds-border'}`}>
         <div className="flex items-center gap-3">
           <div className="relative group flex-shrink-0">
             <input
@@ -330,12 +340,12 @@ const AdminPortal = ({
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className={`font-black text-lg tracking-tight leading-none ${th(darkMode, 'text-white', 'text-gray-900')}`}>
+            <h1 className={`font-black text-lg tracking-tight leading-none ${'text-ds-ink'}`}>
               Sure<span className="text-emerald-500">Path</span>
             </h1>
             <button
               onClick={() => logoInputRef.current?.click()}
-              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${th(darkMode, 'text-gray-600 hover:text-emerald-400', 'text-gray-400 hover:text-emerald-600')}`}
+              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${'text-ds-ink3 hover:text-ds-green'}`}
             >
               {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
             </button>
@@ -349,7 +359,7 @@ const AdminPortal = ({
           if (item.isSeparator) {
             return (
               <div key={item.id} className="mt-4 mb-1 px-2">
-                <p className={`text-[0.45rem] font-black uppercase tracking-[0.35em] ${th(darkMode, 'text-gray-600', 'text-gray-300')}`}>{(item as any).groupLabel}</p>
+                <p className={`text-[0.45rem] font-black uppercase tracking-[0.35em] ${'text-ds-ink3'}`}>{(item as any).groupLabel}</p>
               </div>
             );
           }
@@ -361,12 +371,8 @@ const AdminPortal = ({
               onClick={() => { setActiveTab(navItem.id); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
                 activeTab === navItem.id
-                  ? th(darkMode,
-                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
-                      'bg-emerald-50 text-emerald-700 border border-emerald-100')
-                  : th(darkMode,
-                      'text-gray-500 hover:text-white hover:bg-white/5',
-                      'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
+                  ? 'bg-ds-green-tint text-ds-green border border-ds-green/20'
+                  : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
               }`}
             >
               <Icon size={17} className="flex-shrink-0" />
@@ -377,20 +383,20 @@ const AdminPortal = ({
       </nav>
 
       {/* User footer — always visible */}
-      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${th(darkMode, 'bg-white/5 border-white/10', 'bg-gray-50 border-gray-100')}`}>
+      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${'bg-ds-card2 border-ds-border'}`}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 ring-2 ring-emerald-500/25"
             style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}>
             {(currentUser?.name ?? userRole)[0].toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-xs font-black truncate ${th(darkMode, 'text-white', 'text-gray-900')}`}>{formatRole(userRole)}</p>
-            <p className={`text-[0.5rem] font-medium truncate ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{currentUser?.email ?? 'Admin'}</p>
+            <p className={`text-xs font-black truncate ${'text-ds-ink'}`}>{formatRole(userRole)}</p>
+            <p className={`text-[0.5rem] font-medium truncate ${'text-ds-ink3'}`}>{currentUser?.email ?? 'Admin'}</p>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className={`w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 ${th(darkMode, 'bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white', 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white')}`}
+          className={`w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 ${'bg-ds-red-lt text-ds-red hover:bg-ds-red hover:text-white'}`}
         >
           <LogOut size={13} /> Keluar
         </button>
@@ -399,7 +405,7 @@ const AdminPortal = ({
   );
 
   // ── Sidebar widths ─────────────────────────────────────────────────────────
-  const sidebarBg = th(darkMode, 'bg-emerald-950/30 border-emerald-500/10 backdrop-blur-xl', 'bg-white/80 backdrop-blur-xl border-emerald-900/10 shadow-sm');
+  const sidebarBg = 'bg-ds-card/80 backdrop-blur-xl border-ds-border shadow-ds-sm';
 
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
@@ -442,18 +448,18 @@ const AdminPortal = ({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
-          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
-          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: th(darkMode, 'bg-blue-500/10 text-blue-400', 'bg-blue-50 text-blue-600') },
-          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
+          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: 'bg-ds-green-tint text-ds-green' },
+          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: 'bg-ds-blue-lt text-ds-blue' },
+          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: 'bg-ds-amber-lt text-ds-amber' },
         ].map(card => (
           <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
-            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
+            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
               <card.icon size={20} />
             </div>
-            <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
-            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
+            <p className={`text-2xl font-black tracking-tight mb-1 ${'text-ds-ink'}`}>{card.value}</p>
+            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${'text-ds-ink3'}`}>{card.label}</p>
             <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
           </button>
         ))}
@@ -461,39 +467,39 @@ const AdminPortal = ({
 
       {/* Transaksi Overview + Online Users */}
       <div>
-        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>Transaksi Overview</p>
+        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${'text-ds-ink3'}`}>Transaksi Overview</p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: th(darkMode, 'bg-violet-500/10 text-violet-400', 'bg-violet-50 text-violet-600') },
-            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
-            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: th(darkMode, 'bg-emerald-500/10 text-emerald-400', 'bg-emerald-50 text-emerald-600') },
-            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: th(darkMode, 'bg-amber-500/10 text-amber-400', 'bg-amber-50 text-amber-600') },
+            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: 'bg-ds-purple-lt text-ds-purple' },
+            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
+            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: 'bg-ds-green-tint text-ds-green' },
+            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: 'bg-ds-amber-lt text-ds-amber' },
           ].map(card => (
             <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
-              className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-emerald-300')}`}>
+              className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
                 <card.icon size={20} />
               </div>
-              <p className={`text-2xl font-black tracking-tight mb-1 ${th(darkMode, 'text-white', 'text-gray-900')}`}>{card.value}</p>
-              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${th(darkMode, 'text-gray-500', 'text-gray-400')}`}>{card.label}</p>
+              <p className={`text-2xl font-black tracking-tight mb-1 ${'text-ds-ink'}`}>{card.value}</p>
+              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${'text-ds-ink3'}`}>{card.label}</p>
               <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
             </button>
           ))}
           {/* Online Users Card */}
           <button type="button" onClick={() => setActiveTab('security')}
-            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${th(darkMode, 'bg-white/[0.03] border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.05]', 'bg-white border-slate-100 hover:border-emerald-300 shadow-sm hover:shadow-md')}`}>
+            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className="flex items-center gap-2 mb-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${th(darkMode, 'bg-green-500/10 text-green-400', 'bg-green-50 text-green-600')}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${'bg-ds-green-tint text-ds-green'}`}>
                 <Users size={20} />
               </div>
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             </div>
-            <p className={`text-2xl font-black tracking-tight mb-0.5 ${th(darkMode, 'text-white', 'text-slate-900')}`}>
+            <p className={`text-2xl font-black tracking-tight mb-0.5 ${'text-ds-ink'}`}>
               {onlineUsers ? onlineUsers.total : '—'}
             </p>
-            <p className={`text-[0.6rem] font-bold uppercase tracking-widest mb-2 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>Pengguna Online</p>
+            <p className={`text-[0.6rem] font-bold uppercase tracking-widest mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
             {onlineUsers && onlineUsers.total > 0 && (
-              <p className={`text-[0.55rem] font-bold ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>
+              <p className={`text-[0.55rem] font-bold ${'text-ds-ink3'}`}>
                 {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
               </p>
             )}
@@ -504,8 +510,8 @@ const AdminPortal = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order funnel */}
-        <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Status Pesanan</p>
+        <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Status Pesanan</p>
           {adminStats
             ? (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
                 const count = adminStats.ordersByStatus[st] ?? 0;
@@ -521,40 +527,40 @@ const AdminPortal = ({
                 return (
                   <div key={st} className="mb-3">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className={`font-bold ${th(darkMode, 'text-gray-400', 'text-slate-500')}`}>{labels[st]}</span>
-                      <span className={`font-black ${th(darkMode, 'text-white', 'text-slate-900')}`}>{count}</span>
+                      <span className={`font-bold ${'text-ds-ink3'}`}>{labels[st]}</span>
+                      <span className={`font-black ${'text-ds-ink'}`}>{count}</span>
                     </div>
-                    <div className={`h-1.5 rounded-full overflow-hidden ${th(darkMode, 'bg-white/5', 'bg-slate-100')}`}>
+                    <div className={`h-1.5 rounded-full overflow-hidden ${'bg-ds-card2'}`}>
                       <div className={`h-full ${clr[st]} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
               })
-            : <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+            : <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
           }
         </div>
 
         {/* Top agents */}
-        <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Mitra Teratas</p>
+        <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Mitra Teratas</p>
           {adminStats
             ? adminStats.topAgents.length === 0
-              ? <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Belum ada data.</p>
+              ? <p className={`text-xs ${'text-ds-ink3'}`}>Belum ada data.</p>
               : adminStats.topAgents.map((a, i) => (
                   <div key={a.agent_id} className="flex items-center gap-3 mb-3">
-                    <span className={`text-[10px] font-black w-4 ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>{i + 1}</span>
+                    <span className={`text-[10px] font-black w-4 ${'text-ds-ink3'}`}>{i + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold truncate ${th(darkMode, 'text-white', 'text-slate-900')}`}>{a.name}</p>
-                      <p className={`text-[9px] ${th(darkMode, 'text-gray-500', 'text-slate-400')}`}>{a.orders} pesanan</p>
+                      <p className={`text-xs font-bold truncate ${'text-ds-ink'}`}>{a.name}</p>
+                      <p className={`text-[9px] ${'text-ds-ink3'}`}>{a.orders} pesanan</p>
                     </div>
                     <span className="text-[10px] font-black text-emerald-500">{formatIDR(a.premium)}</span>
                   </div>
                 ))
-            : <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+            : <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
           }
           {adminStats && adminStats.pendingCommissions > 0 && (
-            <div className={`mt-4 pt-4 border-t flex justify-between text-xs ${th(darkMode, 'border-white/5', 'border-slate-100')}`}>
-              <span className={th(darkMode, 'text-gray-400', 'text-slate-500')}>Komisi tertunda</span>
+            <div className={`mt-4 pt-4 border-t flex justify-between text-xs ${'border-ds-border'}`}>
+              <span className={'text-ds-ink3'}>Komisi tertunda</span>
               <span className="font-black text-amber-500">{formatIDR(adminStats.pendingCommissions)}</span>
             </div>
           )}
@@ -562,8 +568,8 @@ const AdminPortal = ({
       </div>
 
       {/* Traffic 7 Hari */}
-      <div className={`p-6 rounded-3xl border ${th(darkMode, 'bg-white/[0.03] border-white/5', 'bg-white border-slate-100 shadow-sm')}`}>
-        <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${th(darkMode, 'text-gray-400', 'text-slate-400')}`}>Traffic Website — 7 Hari Terakhir</p>
+      <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
+        <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Traffic Website — 7 Hari Terakhir</p>
         {trafficStats ? (
           <div className="space-y-4">
             {/* Bar chart */}
@@ -574,11 +580,11 @@ const AdminPortal = ({
                 return (
                   <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
                     <div
-                      className={`w-full rounded-t-sm transition-all duration-700 ${th(darkMode, 'bg-blue-500/50', 'bg-blue-400')}`}
+                      className={`w-full rounded-t-sm transition-all duration-700 ${'bg-ds-blue'}`}
                       style={{ height: `${Math.max(pct, 4)}%` }}
                       title={`${d.date}: ${d.count} views`}
                     />
-                    <span className={`text-[0.45rem] font-mono ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>
+                    <span className={`text-[0.45rem] font-mono ${'text-ds-ink3'}`}>
                       {d.date.slice(5)}
                     </span>
                   </div>
@@ -588,18 +594,18 @@ const AdminPortal = ({
             {/* Top pages */}
             {trafficStats.topPages.length > 0 && (
               <div className="space-y-1.5">
-                <p className={`text-[0.5rem] font-black uppercase tracking-widest ${th(darkMode, 'text-gray-600', 'text-slate-400')}`}>Halaman Terpopuler</p>
+                <p className={`text-[0.5rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Halaman Terpopuler</p>
                 {trafficStats.topPages.map(p => (
                   <div key={p.page} className="flex items-center justify-between">
-                    <span className={`text-[0.65rem] font-mono truncate max-w-[200px] ${th(darkMode, 'text-gray-400', 'text-slate-600')}`}>{p.page}</span>
-                    <span className={`text-[0.65rem] font-black ${th(darkMode, 'text-blue-400', 'text-blue-600')}`}>{p.count}</span>
+                    <span className={`text-[0.65rem] font-mono truncate max-w-[200px] ${'text-ds-ink2'}`}>{p.page}</span>
+                    <span className={`text-[0.65rem] font-black ${'text-ds-blue'}`}>{p.count}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
         ) : (
-          <p className={`text-xs ${th(darkMode, 'text-slate-500', 'text-slate-400')}`}>Memuat…</p>
+          <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
         )}
       </div>
     </div>
@@ -643,9 +649,9 @@ const AdminPortal = ({
   };
 
   // ── Layout vars ────────────────────────────────────────────────────────────
-  const rootBg   = th(darkMode, 'bg-[#08120d] text-white',           'bg-[#f6faf7] text-gray-900');
-  const headerBg = th(darkMode, 'bg-emerald-950/25 border-emerald-500/10 backdrop-blur-xl', 'bg-white/80 backdrop-blur-xl border-emerald-900/10 shadow-sm');
-  const inputBg  = th(darkMode, 'bg-white/5 border-white/10 text-white placeholder-gray-600', 'bg-slate-100 border-slate-200 text-slate-900 placeholder-slate-400');
+  const rootBg   = 'bg-ds-bg text-ds-ink';
+  const headerBg = 'bg-ds-card/80 backdrop-blur-xl border-ds-border shadow-ds-sm';
+  const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
 
   return (
     <div className={`flex h-screen overflow-hidden font-sans ${rootBg}`}>
@@ -670,7 +676,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${th(darkMode, 'bg-[#0a1510]', 'bg-white shadow-sm')}`}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`}>
             <SidebarContent />
           </aside>
         </div>
@@ -682,12 +688,12 @@ const AdminPortal = ({
         <header className={`h-16 border-b flex items-center justify-between px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`}>
           <div className="flex items-center gap-4">
             {isMobile && (
-              <button onClick={() => setMobileOpen(true)} className={`p-2 rounded-xl ${th(darkMode, 'bg-white/5 text-gray-400', 'bg-slate-100 text-slate-500')}`}>
+              <button onClick={() => setMobileOpen(true)} className={`p-2 rounded-xl ${'bg-ds-card2 text-ds-ink3'}`}>
                 <Menu size={20} />
               </button>
             )}
             <div className="relative">
-              <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${th(darkMode, 'text-gray-500', 'text-slate-400')}`} />
+              <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${'text-ds-ink3'}`} />
               <input
                 className={`rounded-xl py-2 pl-9 pr-4 text-xs font-medium outline-none w-52 lg:w-80 border ${inputBg}`}
                 placeholder="Cari data..."
@@ -697,7 +703,7 @@ const AdminPortal = ({
 
           <div className="flex items-center gap-2">
             {currentUser?.email && (
-              <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.55rem] font-bold uppercase tracking-widest border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}>
+              <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.55rem] font-bold uppercase tracking-widest border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
                 <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-[0.5rem]`}>
                   {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
                 </span>
@@ -707,7 +713,7 @@ const AdminPortal = ({
             {/* Day / Night toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-xl border transition-all ${th(darkMode, 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10', 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200')}`}
+              className={`p-2 rounded-xl border transition-all ${'bg-ds-card2 border-ds-border text-ds-amber hover:bg-ds-card'}`}
               title={darkMode ? 'Mode Terang' : 'Mode Gelap'}
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
@@ -728,22 +734,22 @@ const AdminPortal = ({
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(v => !v)}
-                className={`relative p-2 rounded-xl border ${th(darkMode, 'bg-white/5 border-white/10 text-gray-400', 'bg-slate-100 border-slate-200 text-slate-500')}`}
+                className={`relative p-2 rounded-xl border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}
               >
                 <Bell size={17} />
                 {notifications.some(n => !n.read) && (
-                  <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 ${th(darkMode, 'border-[#050505]', 'border-white')}`}>
+                  <span className={`absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 ${'border-ds-bg'}`}>
                     <span className="sr-only">{notifications.filter(n => !n.read).length} notifikasi baru</span>
                   </span>
                 )}
               </button>
               {showNotifications && (
                 <div
-                  className={`absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden ${th(darkMode, 'bg-[#111] border-white/10', 'bg-white border-gray-200 shadow-xl')}`}
+                  className={`absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden ${'bg-ds-card border-ds-border shadow-ds-lg'}`}
                   onMouseLeave={() => setShowNotifications(false)}
                 >
-                  <div className={`px-4 py-3 border-b flex items-center justify-between ${th(darkMode, 'border-white/5', 'border-gray-100')}`}>
-                    <p className={`text-[0.6rem] font-black uppercase tracking-widest ${th(darkMode, 'text-gray-400', 'text-gray-500')}`}>Notifikasi</p>
+                  <div className={`px-4 py-3 border-b flex items-center justify-between ${'border-ds-border'}`}>
+                    <p className={`text-[0.6rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Notifikasi</p>
                     {notifications.some(n => !n.read) && (
                       <button
                         onClick={async () => {
@@ -758,7 +764,7 @@ const AdminPortal = ({
                   </div>
                   <div className="max-h-80 overflow-y-auto no-scrollbar">
                     {notifications.length === 0 ? (
-                      <p className={`text-center py-8 text-xs font-bold ${th(darkMode, 'text-gray-600', 'text-gray-400')}`}>Tidak ada notifikasi</p>
+                      <p className={`text-center py-8 text-xs font-bold ${'text-ds-ink3'}`}>Tidak ada notifikasi</p>
                     ) : notifications.slice(0, 20).map(n => (
                       <button
                         key={n.id}
@@ -773,14 +779,14 @@ const AdminPortal = ({
                           else if (n.type === 'NEW_CUSTOMER') setActiveTab('users');
                           setShowNotifications(false);
                         }}
-                        className={`w-full text-left px-4 py-3 border-b transition-colors ${th(darkMode, 'border-white/5 hover:bg-white/5', 'border-gray-50 hover:bg-gray-50')} ${!n.read ? th(darkMode, 'bg-emerald-500/5', 'bg-emerald-50/50') : ''}`}
+                        className={`w-full text-left px-4 py-3 border-b transition-colors ${'border-ds-border hover:bg-ds-card2'} ${!n.read ? 'bg-ds-green-tint' : ''}`}
                       >
                         <div className="flex items-start gap-2">
                           {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />}
                           <div className={!n.read ? '' : 'pl-3.5'}>
-                            <p className={`text-xs font-black leading-tight ${th(darkMode, 'text-white', 'text-gray-900')}`}>{n.title}</p>
-                            <p className={`text-[0.6rem] font-medium mt-0.5 ${th(darkMode, 'text-gray-500', 'text-gray-500')}`}>{n.body}</p>
-                            <p className={`text-[0.5rem] font-bold mt-1 ${th(darkMode, 'text-gray-700', 'text-gray-300')}`}>
+                            <p className={`text-xs font-black leading-tight ${'text-ds-ink'}`}>{n.title}</p>
+                            <p className={`text-[0.6rem] font-medium mt-0.5 ${'text-ds-ink3'}`}>{n.body}</p>
+                            <p className={`text-[0.5rem] font-bold mt-1 ${'text-ds-ink2'}`}>
                               {new Date(n.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
@@ -805,7 +811,7 @@ const AdminPortal = ({
         </header>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar ${th(darkMode, '', 'bg-gray-50')}`}>
+        <div className={`flex-1 overflow-y-auto p-6 lg:p-10 no-scrollbar ${'bg-ds-card2'}`}>
           <div className="max-w-7xl mx-auto">
             <AgentArtKeyframes />
             {/* Themed hero banner for every view (dashboard has its own) */}

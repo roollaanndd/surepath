@@ -4,8 +4,8 @@ import {
   SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection, uploadSectionImage,
 } from '../../services/supabaseService';
 
-const inputCls = 'bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
-const labelCls = 'text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block';
+const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
+const labelCls = 'text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
 
 const PromoBannerAdmin: React.FC = () => {
   const [form, setForm] = useState<Partial<SpWebsiteConfig>>({
@@ -86,7 +86,7 @@ const PromoBannerAdmin: React.FC = () => {
           </div>
           <div>
             <h3 className="text-sm font-black uppercase tracking-widest text-white">Promo Banner</h3>
-            <p className="text-[10px] text-gray-600">Banner pengumuman di atas halaman</p>
+            <p className="text-[10px] text-ds-ink2">Banner pengumuman di atas halaman</p>
           </div>
         </div>
         <button
@@ -107,7 +107,7 @@ const PromoBannerAdmin: React.FC = () => {
           <Loader2 size={14} className="animate-spin" /> Memuat...
         </div>
       ) : (
-        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-7 space-y-5">
+        <div className="bg-ds-card2 border border-ds-border rounded-3xl p-7 space-y-5">
           <div>
             <label className={labelCls}>Headline</label>
             <input
@@ -136,7 +136,7 @@ const PromoBannerAdmin: React.FC = () => {
                     src={imageUrl}
                     alt="Banner preview"
                     style={{ height: 80, objectFit: 'cover' }}
-                    className="rounded-xl border border-white/10 w-auto max-w-[200px]"
+                    className="rounded-xl border border-ds-border w-auto max-w-[200px]"
                   />
                   <button
                     onClick={handleRemoveImage}
@@ -148,7 +148,7 @@ const PromoBannerAdmin: React.FC = () => {
               ) : null}
               <div className="flex items-center gap-3">
                 <label
-                  className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-xs font-black uppercase tracking-widest text-gray-400 hover:border-emerald-500/30 hover:text-emerald-400 transition-colors ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
+                  className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-xl border border-ds-border bg-ds-card2 text-xs font-black uppercase tracking-widest text-ds-ink3 hover:border-emerald-500/30 hover:text-emerald-400 transition-colors ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
                 >
                   {uploading ? (
                     <>
@@ -167,7 +167,7 @@ const PromoBannerAdmin: React.FC = () => {
                   />
                 </label>
                 {!imageUrl && (
-                  <span className="text-[10px] text-gray-600">Belum ada gambar</span>
+                  <span className="text-[10px] text-ds-ink2">Belum ada gambar</span>
                 )}
               </div>
             </div>
@@ -175,7 +175,7 @@ const PromoBannerAdmin: React.FC = () => {
 
           <div className="pt-2">
             <label className={labelCls}>Preview Live</label>
-            <div className="rounded-2xl overflow-hidden border border-white/10">
+            <div className="rounded-2xl overflow-hidden border border-ds-border">
               {previewVisible ? (
                 imageUrl ? (
                   <div className="relative w-full" style={{ height: 72 }}>
@@ -217,7 +217,7 @@ const PromoBannerAdmin: React.FC = () => {
                   </div>
                 )
               ) : (
-                <div className="py-4 flex items-center justify-center gap-2 text-gray-600 text-xs">
+                <div className="py-4 flex items-center justify-center gap-2 text-ds-ink2 text-xs">
                   <EyeOff size={14} />
                   {form.is_visible && !form.headline ? 'Masukkan headline untuk preview' : 'Banner tersembunyi'}
                 </div>

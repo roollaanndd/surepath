@@ -56,7 +56,7 @@ const downloadCSV = (data: any[], filename: string) => {
 };
 
 const Card: React.FC<{ children?: React.ReactNode, className?: string, onClick?: () => void }> = ({ children, className = "", onClick }) => (
-  <div onClick={onClick} className={`p-8 bg-white/[0.03] border border-white/5 rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
+  <div onClick={onClick} className={`p-8 bg-ds-card2 border border-ds-border rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
     {children}
   </div>
 );
@@ -76,8 +76,8 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
 
   const Field: React.FC<{ label: string; value?: string | number | null }> = ({ label, value }) => (
     <div className="space-y-0.5">
-      <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">{label}</p>
-      <p className="text-xs font-bold text-white break-all">{value || <span className="text-gray-600">—</span>}</p>
+      <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">{label}</p>
+      <p className="text-xs font-bold text-white break-all">{value || <span className="text-ds-ink2">—</span>}</p>
     </div>
   );
 
@@ -85,13 +85,13 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
     <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
       <div
-        className="relative z-10 w-full max-w-2xl bg-[#0e0e0e] border border-white/10 rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
+        className="relative z-10 w-full max-w-2xl bg-ds-card border border-ds-border rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
           <h2 className="font-black text-sm uppercase tracking-widest text-white">Detail Pengguna</h2>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -101,23 +101,23 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
           </div>
         ) : !user ? (
-          <div className="text-center py-12 text-gray-500 text-sm font-bold">Data tidak ditemukan.</div>
+          <div className="text-center py-12 text-ds-ink3 text-sm font-bold">Data tidak ditemukan.</div>
         ) : (
           <div className="p-6 space-y-6">
             {/* Photos */}
             <div className="grid grid-cols-2 gap-4">
               {/* Profile photo */}
               <div className="space-y-2">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Foto Profil</p>
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Foto Profil</p>
                 {user.profile_photo_url && !imgError['profile'] ? (
                   <img
                     src={user.profile_photo_url}
                     alt="Foto profil"
-                    className="w-full h-36 object-cover rounded-2xl border border-white/10"
+                    className="w-full h-36 object-cover rounded-2xl border border-ds-border"
                     onError={() => setImgError(p => ({ ...p, profile: true }))}
                   />
                 ) : (
-                  <div className="w-full h-36 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center justify-center">
+                  <div className="w-full h-36 rounded-2xl border border-ds-border bg-ds-card2 flex items-center justify-center">
                     <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-2xl">
                       {user.name?.charAt(0)?.toUpperCase() ?? '?'}
                     </div>
@@ -126,17 +126,17 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
               </div>
               {/* KTP document */}
               <div className="space-y-2">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Dokumen KTP</p>
+                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Dokumen KTP</p>
                 {user.ktp_document_url ? (
                   <SecureDocLink url={user.ktp_document_url} className="block w-full">
                     <SecureDocImage
                       url={user.ktp_document_url}
                       alt="KTP"
-                      className="w-full h-36 object-cover rounded-2xl border border-white/10 hover:opacity-80 transition-opacity cursor-pointer"
+                      className="w-full h-36 object-cover rounded-2xl border border-ds-border hover:opacity-80 transition-opacity cursor-pointer"
                     />
                   </SecureDocLink>
                 ) : (
-                  <div className="w-full h-36 rounded-2xl border border-white/5 bg-white/[0.03] flex items-center justify-center text-gray-600 text-xs font-bold">
+                  <div className="w-full h-36 rounded-2xl border border-ds-border bg-ds-card2 flex items-center justify-center text-ds-ink2 text-xs font-bold">
                     Belum ada dokumen
                   </div>
                 )}
@@ -157,7 +157,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
 
             {/* Agent-specific */}
             {user.role === 'AGENT' && (
-              <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-x-6 gap-y-4">
+              <div className="pt-4 border-t border-ds-border grid grid-cols-2 gap-x-6 gap-y-4">
                 <Field label="Kode Mitra" value={user.agent_code} />
                 <Field label="Kode Referral" value={user.referral_code} />
                 <Field label="Tier" value={user.tier ?? 'Standard'} />
@@ -197,15 +197,15 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
     <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
       <div
-        className="relative z-10 w-full max-w-2xl bg-[#0e0e0e] border border-white/10 rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
+        className="relative z-10 w-full max-w-2xl bg-ds-card border border-ds-border rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
           <div>
             <h2 className="font-black text-sm uppercase tracking-widest text-white">{claim.claim_number ?? claim.id.slice(0, 8)}</h2>
-            <p className="text-[0.6rem] font-bold text-gray-500 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
+            <p className="text-[0.6rem] font-bold text-ds-ink3 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -226,11 +226,11 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
           {photos.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Foto ({photos.length})</p>
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Foto ({photos.length})</p>
               <div className="grid grid-cols-3 gap-3">
                 {photos.map((url: string, i: number) => (
                   <a key={i} href={url} target="_blank" rel="noreferrer">
-                    <img src={url} alt={`claim-photo-${i}`} className="w-full aspect-square object-cover rounded-2xl border border-white/10 hover:opacity-80 transition-opacity" />
+                    <img src={url} alt={`claim-photo-${i}`} className="w-full aspect-square object-cover rounded-2xl border border-ds-border hover:opacity-80 transition-opacity" />
                   </a>
                 ))}
               </div>
@@ -239,18 +239,18 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
           {reports.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Laporan Forensik Per Foto</p>
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Laporan Forensik Per Foto</p>
               <div className="space-y-3">
                 {reports.map((r: any, i: number) => {
                   const badge = PHOTO_VERDICT_BADGE[r.verdict] ?? PHOTO_VERDICT_BADGE.CLEAN;
                   const matched = r.duplicate?.isDuplicate ? claims.find(c => c.id === r.duplicate.matchedSourceId) : null;
                   return (
-                    <div key={i} className="p-4 bg-white/[0.03] border border-white/5 rounded-2xl space-y-2">
+                    <div key={i} className="p-4 bg-ds-card2 border border-ds-border rounded-2xl space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-[0.65rem] font-black uppercase text-white">Foto {r.photoIndex + 1}</p>
                         <span className={`px-2 py-0.5 rounded text-[0.45rem] font-black uppercase ${badge}`}>{r.verdict}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[0.55rem] text-gray-400 font-bold">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[0.55rem] text-ds-ink3 font-bold">
                         <span>Skor Keaslian: {r.ai?.authenticityScore ?? '—'}/100</span>
                         <span>Plat Terlihat: {r.ai?.plateVisible ? 'Ya' : 'Tidak'}</span>
                         <span>Foto Layar: {r.ai?.isScreenPhoto ? 'Ya' : 'Tidak'}</span>
@@ -280,17 +280,17 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-ds-border">
             <div className="space-y-0.5">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Status</p>
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Status</p>
               <p className="text-xs font-bold text-white">{STATUS_LABEL[claim.status] ?? claim.status}</p>
             </div>
             <div className="space-y-0.5">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Estimasi</p>
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Estimasi</p>
               <p className="text-xs font-bold text-white">{claim.amount_estimated ? formatIDR(claim.amount_estimated) : '—'}</p>
             </div>
             <div className="space-y-0.5 col-span-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-gray-500">Kronologi</p>
+              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Kronologi</p>
               <p className="text-xs font-bold text-white leading-relaxed">{claim.chronology || '—'}</p>
             </div>
           </div>
@@ -329,7 +329,7 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
       )}
     </div>
     <p className="text-3xl font-black tracking-tighter leading-none mb-2">{value}</p>
-    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{label}</p>
+    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{label}</p>
   </Card>
 );
 
@@ -384,14 +384,14 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
               <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
               <div className="space-y-4">
                  {policies.map((p, i) => (
-                    <div key={i} className="p-4 bg-white/5 rounded-2xl flex items-center justify-between border border-white/5">
+                    <div key={i} className="p-4 bg-ds-card2 rounded-2xl flex items-center justify-between border border-ds-border">
                        <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
                              <ShieldCheck size={20}/>
                           </div>
                           <div>
                              <p className="text-xs font-black uppercase">{p.policyNumber}</p>
-                             <p className="text-[0.5rem] text-gray-500 uppercase tracking-widest">{p.type} • {p.providerId}</p>
+                             <p className="text-[0.5rem] text-ds-ink3 uppercase tracking-widest">{p.type} • {p.providerId}</p>
                           </div>
                        </div>
                        <p className="text-sm font-black tracking-tighter text-emerald-500">{formatIDR(p.premium)}</p>
@@ -420,13 +420,13 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-black uppercase tracking-widest text-sm">Direktori Partner (Top Aktif)</h3>
           <div className="flex items-center gap-3">
-             <span className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{users.length} Total Terdaftar</span>
+             <span className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{users.length} Total Terdaftar</span>
              <div className="relative">
-                <Search size={14} className="text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"/>
+                <Search size={14} className="text-ds-ink3 absolute left-3 top-1/2 -translate-y-1/2"/>
                 <input 
                   type="text" 
                   placeholder="Cari user..." 
-                  className="pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                  className="pl-9 pr-4 py-2 bg-ds-card2 border border-ds-border rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -436,7 +436,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
         <div className="overflow-x-auto no-scrollbar">
            <table className="w-full text-left whitespace-nowrap">
               <thead>
-                <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+                <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
                   <th className="pb-4 pl-4">Partner Info</th>
                   <th className="pb-4">No. HP</th>
                   <th className="pb-4">Sales (GWP)</th>
@@ -452,11 +452,11 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{(u.name ?? '?')[0]}</div>
                         <div>
                           <p className="text-xs font-black uppercase text-white">{u.name ?? '—'}</p>
-                          <p className="text-[0.5rem] text-gray-500 tracking-widest">{u.email}</p>
+                          <p className="text-[0.5rem] text-ds-ink3 tracking-widest">{u.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 font-mono text-[0.6rem] text-gray-400">{u.phone}</td>
+                    <td className="py-4 font-mono text-[0.6rem] text-ds-ink3">{u.phone}</td>
                     <td className="py-4 font-black text-emerald-500">{formatIDR(u.totalSales || 0)}</td>
                     <td className="py-4 font-black text-amber-500">{formatIDR(u.totalCommission || 0)}</td>
                     <td className="py-4 text-right pr-4">
@@ -467,7 +467,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
               </tbody>
            </table>
            {filteredUsers.length > 200 && (
-             <div className="p-4 text-center text-xs text-gray-500 font-bold uppercase tracking-widest">
+             <div className="p-4 text-center text-xs text-ds-ink3 font-bold uppercase tracking-widest">
                Menampilkan Top 200 dari {filteredUsers.length} Partner. Gunakan pencarian untuk User lainnya.
              </div>
            )}
@@ -536,12 +536,12 @@ export const SecurityView = () => {
                    <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><Terminal size={20}/></div>
                    <div>
                       <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
-                      <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
+                      <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
                    </div>
                 </div>
              </div>
 
-             <div className="h-56 flex items-end gap-1 px-2 border-b border-white/5 pb-1">
+             <div className="h-56 flex items-end gap-1 px-2 border-b border-ds-border pb-1">
                 {sessionActivity.length > 0
                   ? sessionActivity.map((s, i) => {
                       const pct = (s.count / maxActivity) * 100;
@@ -559,14 +559,14 @@ export const SecurityView = () => {
                       );
                     })
                   : Array(24).fill(0).map((_, i) => (
-                      <div key={i} className="flex-1 bg-white/5 rounded-t-sm" style={{ height: '8%' }} />
+                      <div key={i} className="flex-1 bg-ds-card2 rounded-t-sm" style={{ height: '8%' }} />
                     ))
                 }
              </div>
              <div className="flex justify-between mt-2 px-2">
-               <span className="text-[0.45rem] text-gray-600">00:00</span>
-               <span className="text-[0.45rem] text-gray-600">12:00</span>
-               <span className="text-[0.45rem] text-gray-600">23:00</span>
+               <span className="text-[0.45rem] text-ds-ink2">00:00</span>
+               <span className="text-[0.45rem] text-ds-ink2">12:00</span>
+               <span className="text-[0.45rem] text-ds-ink2">23:00</span>
              </div>
           </Card>
 
@@ -579,17 +579,17 @@ export const SecurityView = () => {
                 <Badge color="rose">Real Data</Badge>
              </div>
              {loading ? (
-               <p className="text-xs text-gray-500">Memuat…</p>
+               <p className="text-xs text-ds-ink3">Memuat…</p>
              ) : secStats && secStats.blockedEntries.length > 0 ? (
                <div className="space-y-3">
                  {secStats.blockedEntries.slice(0, 5).map((entry, i) => (
-                   <div key={i} className={`p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-all ${i === 0 ? 'border-emerald-500/40 bg-emerald-500/5' : ''}`}>
+                   <div key={i} className={`p-4 bg-ds-card2 border border-ds-border rounded-2xl flex items-center justify-between hover:bg-ds-card2 transition-all ${i === 0 ? 'border-emerald-500/40 bg-emerald-500/5' : ''}`}>
                      <div className="space-y-1 overflow-hidden">
                        <div className="flex items-center gap-2">
                          <Badge color="rose">RATE LIMIT</Badge>
-                         <span className="text-[0.6rem] font-mono text-gray-500 truncate">{entry.email}</span>
+                         <span className="text-[0.6rem] font-mono text-ds-ink3 truncate">{entry.email}</span>
                        </div>
-                       <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-widest">
+                       <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-widest">
                          {entry.attempts} percobaan · {entry.until > Date.now() ? `Diblokir ${Math.ceil((entry.until - Date.now()) / 60000)} mnt` : 'Kadaluarsa'}
                        </p>
                      </div>
@@ -601,9 +601,9 @@ export const SecurityView = () => {
                </div>
              ) : (
                <div className="space-y-3">
-                 <p className="text-xs text-gray-500 py-4 text-center">Tidak ada blokir aktif</p>
+                 <p className="text-xs text-ds-ink3 py-4 text-center">Tidak ada blokir aktif</p>
                  {secStats?.lastLoginAt && (
-                   <p className="text-[0.5rem] text-gray-600 text-center uppercase tracking-widest">
+                   <p className="text-[0.5rem] text-ds-ink2 text-center uppercase tracking-widest">
                      Login terakhir: {new Date(secStats.lastLoginAt).toLocaleString('id-ID')}
                    </p>
                  )}
@@ -700,7 +700,7 @@ export const LedgerView = () => {
            <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
               <div>
                  <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-emerald-500">Besar</span></h2>
-                 <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Sistem Pencatatan Transaksi Real-time</p>
+                 <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Sistem Pencatatan Transaksi Real-time</p>
               </div>
               <div className="flex gap-4">
                  <button onClick={handleExport} className="flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl shadow-emerald-500/10 active:scale-95 transition-all">
@@ -713,7 +713,7 @@ export const LedgerView = () => {
               <div className="overflow-x-auto no-scrollbar">
                  <table className="w-full text-left min-w-[600px]">
                     <thead>
-                       <tr className="text-[0.55rem] font-black text-gray-500 uppercase tracking-widest border-b border-white/5">
+                       <tr className="text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest border-b border-ds-border">
                           <th className="pb-4 pl-4">Tanggal</th>
                           <th className="pb-4">Tipe Transaksi</th>
                           <th className="pb-4">Deskripsi</th>
@@ -723,14 +723,14 @@ export const LedgerView = () => {
                     </thead>
                     <tbody className="text-[0.7rem] font-bold">
                        {loading && (
-                          <tr><td colSpan={5} className="py-12 text-center text-gray-500">Memuat transaksi…</td></tr>
+                          <tr><td colSpan={5} className="py-12 text-center text-ds-ink3">Memuat transaksi…</td></tr>
                        )}
                        {!loading && txs.length === 0 && (
-                          <tr><td colSpan={5} className="py-12 text-center text-gray-500 font-bold">Belum ada transaksi tercatat.</td></tr>
+                          <tr><td colSpan={5} className="py-12 text-center text-ds-ink3 font-bold">Belum ada transaksi tercatat.</td></tr>
                        )}
                        {!loading && txs.slice(0, 100).map((t, i) => (
-                          <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                             <td className="py-4 pl-4 text-gray-400">{new Date(t.date).toLocaleString('id-ID')}</td>
+                          <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
+                             <td className="py-4 pl-4 text-ds-ink3">{new Date(t.date).toLocaleString('id-ID')}</td>
                              <td className="py-4 text-emerald-500 font-mono">{t.type}</td>
                              <td className="py-4 text-white max-w-xs truncate" title={t.description}>{t.description}</td>
                              <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-emerald-500">+{convert(t.amount)}</span>}</td>
@@ -819,26 +819,26 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
               <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
                  <div>
                     <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-emerald-500">Keuangan</span></h2>
-                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
+                    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
                  </div>
                  <div className="flex gap-4">
-                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                    <div className="flex bg-ds-card2 p-1 rounded-2xl border border-ds-border">
                        {[2023, 2024, 2025, 2026].map(y => (
                           <button 
                             key={y} 
                             onClick={() => setSelectedYear(y)}
-                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${selectedYear === y ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${selectedYear === y ? 'bg-ds-card2 text-white shadow-lg' : 'text-ds-ink3 hover:text-white'}`}
                           >
                              {y}
                           </button>
                        ))}
                     </div>
-                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                    <div className="flex bg-ds-card2 p-1 rounded-2xl border border-ds-border">
                        {(['daily', 'monthly', 'yearly'] as const).map(v => (
                           <button 
                             key={v} 
                             onClick={() => setViewType(v)}
-                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-lg' : 'text-ds-ink3 hover:text-white'}`}
                           >
                              {v === 'daily' ? 'Harian' : v === 'monthly' ? 'Bulanan' : 'Tahunan'}
                           </button>
@@ -854,12 +854,12 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
               <div className="lg:col-span-3 space-y-6">
                  <Card className="p-0">
-                    <div className="p-8 border-b border-white/5 flex justify-between items-center">
+                    <div className="p-8 border-b border-ds-border flex justify-between items-center">
                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white"><FileText size={24}/></div>
+                          <div className="w-12 h-12 bg-ds-card2 rounded-2xl flex items-center justify-center text-white"><FileText size={24}/></div>
                           <div>
                              <h3 className="font-black uppercase tracking-widest text-lg text-white">Ringkasan {viewType === 'daily' ? 'Harian' : viewType === 'monthly' ? 'Bulanan' : 'Tahunan'}</h3>
-                             <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Berdasarkan Total Transaksi Masuk</p>
+                             <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan Total Transaksi Masuk</p>
                           </div>
                        </div>
                     </div>
@@ -867,20 +867,20 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                     <div className="w-full overflow-x-auto">
                        {loading && <div className="flex justify-center py-8"><div className="w-7 h-7 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" /></div>}
                        <table className="w-full text-left min-w-[700px]">
-                          <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-gray-500 font-black">
+                          <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-ds-ink3 font-black">
                              <tr>
-                                <th className="py-4 pl-4 font-bold border-b border-white/5">Periode</th>
-                                <th className="py-4 font-bold border-b border-white/5">Premi Masuk</th>
-                                <th className="py-4 font-bold border-b border-white/5">Komisi</th>
-                                <th className="py-4 font-bold border-b border-white/5">Promo/Marketing</th>
-                                <th className="py-4 font-bold border-b border-white/5">Operasional</th>
-                                <th className="py-4 font-bold border-b border-white/5">Klaim Dibayar</th>
-                                <th className="py-4 border-b border-white/5 text-right pr-4">Status</th>
+                                <th className="py-4 pl-4 font-bold border-b border-ds-border">Periode</th>
+                                <th className="py-4 font-bold border-b border-ds-border">Premi Masuk</th>
+                                <th className="py-4 font-bold border-b border-ds-border">Komisi</th>
+                                <th className="py-4 font-bold border-b border-ds-border">Promo/Marketing</th>
+                                <th className="py-4 font-bold border-b border-ds-border">Operasional</th>
+                                <th className="py-4 font-bold border-b border-ds-border">Klaim Dibayar</th>
+                                <th className="py-4 border-b border-ds-border text-right pr-4">Status</th>
                              </tr>
                           </thead>
                           <tbody className="text-[0.7rem] font-bold">
                              {aggregatedData.map((row, i) => (
-                                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                                <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors group">
                                    <td className="py-4 pl-4 uppercase text-white font-black">{row.period}</td>
                                    <td className="py-4 text-emerald-500 font-mono">{convert(row.gwp)}</td>
                                    <td className="py-4 text-blue-400 font-mono">{convert(row.commissions)}</td>
@@ -907,12 +907,12 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                        <h3 className="text-sm font-black uppercase tracking-tight">Performa Bisnis</h3>
                     </div>
                     <div className="space-y-4">
-                       <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Total GWP</p>
+                       <div className="p-4 bg-black/20 rounded-2xl border border-ds-border">
+                          <p className="text-[0.5rem] font-black text-ds-ink3 uppercase tracking-widest">Total GWP</p>
                           <p className="text-2xl font-black text-white">{convert(totalGwp)}</p>
                        </div>
-                       <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                          <p className="text-[0.5rem] font-black text-gray-400 uppercase tracking-widest">Rasio Gabungan (Combined Ratio)</p>
+                       <div className="p-4 bg-black/20 rounded-2xl border border-ds-border">
+                          <p className="text-[0.5rem] font-black text-ds-ink3 uppercase tracking-widest">Rasio Gabungan (Combined Ratio)</p>
                           <p className={`text-2xl font-black ${Number(combinedRatio) > 100 ? 'text-rose-500' : 'text-emerald-500'}`}>~{combinedRatio}%</p>
                        </div>
                     </div>
@@ -929,13 +929,13 @@ export const AuditLogView = ({ compact }: { compact?: boolean }) => {
     return (
         <div className="space-y-4">
            {logs.map(log => (
-              <div key={log.id} className="flex gap-4 items-start p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:bg-white/5 transition-all">
+              <div key={log.id} className="flex gap-4 items-start p-4 bg-ds-card2 rounded-2xl border border-ds-border hover:bg-ds-card2 transition-all">
                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#00C16A]'}`}></div>
                  <div className="min-w-0">
-                    <p className="text-[0.65rem] font-bold text-gray-300 leading-tight"><span className="text-emerald-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
+                    <p className="text-[0.65rem] font-bold text-ds-ink2 leading-tight"><span className="text-emerald-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
                     <div className="flex items-center gap-3 mt-1.5">
                        <Badge color={log.domain === 'SECURITY' ? 'rose' : 'blue'}>{log.domain}</Badge>
-                       <span className="text-[0.5rem] font-mono text-gray-600 uppercase tracking-widest">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</span>
+                       <span className="text-[0.5rem] font-mono text-ds-ink2 uppercase tracking-widest">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</span>
                     </div>
                  </div>
               </div>
@@ -978,7 +978,7 @@ export const ApprovalsView = () => {
                 <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500"><ClipboardCheck size={22}/></div>
                 <div>
                     <h3 className="font-black uppercase tracking-widest text-sm">Antrean Persetujuan Polis</h3>
-                    <p className="text-[0.5rem] font-bold text-gray-500 uppercase tracking-[0.2em] mt-1">Pesanan menunggu review · untuk terbitkan polis buka menu Pesanan Polis</p>
+                    <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Pesanan menunggu review · untuk terbitkan polis buka menu Pesanan Polis</p>
                 </div>
                 </div>
                 <Badge color="yellow">{orders.length} Pending</Badge>
@@ -989,17 +989,17 @@ export const ApprovalsView = () => {
                     <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
                 </div>
             ) : orders.length === 0 ? (
-                <p className="text-center py-12 text-gray-500 text-sm font-bold">Tidak ada pesanan menunggu persetujuan.</p>
+                <p className="text-center py-12 text-ds-ink3 text-sm font-bold">Tidak ada pesanan menunggu persetujuan.</p>
             ) : (
             <div className="space-y-4">
                 {orders.map(o => (
-                <div key={o.id} className="p-6 bg-white/[0.02] border border-white/5 rounded-[1.8rem] space-y-4">
+                <div key={o.id} className="p-6 bg-ds-card2 border border-ds-border rounded-[1.8rem] space-y-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-12 h-12 bg-gray-100/10 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0"><FileText size={24}/></div>
+                        <div className="w-12 h-12 bg-gray-100/10 rounded-2xl flex items-center justify-center text-ds-ink3 flex-shrink-0"><FileText size={24}/></div>
                         <div className="min-w-0">
                             <p className="font-black text-sm uppercase truncate">{o.client_name} · {o.order_number}</p>
-                            <p className="text-[0.55rem] text-gray-500 font-bold uppercase tracking-widest">{o.product_name} • {formatIDR(o.total_premium)} • {o.status === 'UNDER_REVIEW' ? 'Sedang Ditinjau' : 'Baru Diajukan'}</p>
+                            <p className="text-[0.55rem] text-ds-ink3 font-bold uppercase tracking-widest">{o.product_name} • {formatIDR(o.total_premium)} • {o.status === 'UNDER_REVIEW' ? 'Sedang Ditinjau' : 'Baru Diajukan'}</p>
                         </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1023,7 +1023,7 @@ export const ApprovalsView = () => {
                         value={notes[o.id] ?? ''}
                         onChange={e => setNotes(prev => ({ ...prev, [o.id]: e.target.value }))}
                         placeholder="Catatan reviewer (wajib untuk penolakan)…"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-all"
+                        className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-all"
                     />
                 </div>
                 ))}
@@ -1042,12 +1042,12 @@ export const InventoryView = () => (
           <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><HardDrive size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Active Matrix Inventory</h3>
         </div>
-        <button className="p-2 text-gray-500 hover:text-white transition-all"><RefreshCw size={18}/></button>
+        <button className="p-2 text-ds-ink3 hover:text-white transition-all"><RefreshCw size={18}/></button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+            <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
               <th className="pb-4 pl-4">Asset Matrix</th>
               <th className="pb-4">Status</th>
               <th className="pb-4">Risk Rating</th>
@@ -1059,13 +1059,13 @@ export const InventoryView = () => (
               <tr key={i} className="border-b border-white/[0.02] group hover:bg-white/[0.01]">
                 <td className="py-4 pl-4">
                   <div className="flex items-center gap-3">
-                    <Car size={16} className="text-gray-400"/>
+                    <Car size={16} className="text-ds-ink3"/>
                     <span className="font-black uppercase">Unit-A0{i} (Matrix)</span>
                   </div>
                 </td>
                 <td className="py-4"><Badge color="emerald">Active</Badge></td>
                 <td className="py-4 font-mono">0.122-LOW</td>
-                <td className="py-4 text-right pr-4"><button className="text-gray-500 hover:text-white"><Eye size={14}/></button></td>
+                <td className="py-4 text-right pr-4"><button className="text-ds-ink3 hover:text-white"><Eye size={14}/></button></td>
               </tr>
             ))}
           </tbody>
@@ -1112,7 +1112,7 @@ const BackupView: React.FC = () => {
   const handleDownload = (id: number | string) => downloadBackup(id);
 
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
+    <div className="rounded-2xl bg-ds-card2 border border-ds-border p-6 space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -1121,7 +1121,7 @@ const BackupView: React.FC = () => {
           </div>
           <div>
             <p className="font-black uppercase text-sm text-white">Backup Data</p>
-            <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Auto-backup status</p>
+            <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Auto-backup status</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1141,12 +1141,12 @@ const BackupView: React.FC = () => {
 
       {/* Table */}
       {backups.length === 0 ? (
-        <p className="text-center text-[0.65rem] text-gray-600 font-bold py-6 uppercase tracking-widest">No backups found.</p>
+        <p className="text-center text-[0.65rem] text-ds-ink2 font-bold py-6 uppercase tracking-widest">No backups found.</p>
       ) : (
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left whitespace-nowrap min-w-[580px]">
             <thead>
-              <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-3 pr-4">Date / Time</th>
                 <th className="py-3 pr-4">Type</th>
                 <th className="py-3 pr-4">Tables</th>
@@ -1157,20 +1157,20 @@ const BackupView: React.FC = () => {
             </thead>
             <tbody>
               {backups.map(b => (
-                <tr key={b.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors text-xs">
-                  <td className="py-3 pr-4 font-mono text-gray-300 text-[0.65rem]">{new Date(b.created_at).toLocaleString('id-ID')}</td>
+                <tr key={b.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors text-xs">
+                  <td className="py-3 pr-4 font-mono text-ds-ink2 text-[0.65rem]">{new Date(b.created_at).toLocaleString('id-ID')}</td>
                   <td className="py-3 pr-4">
                     <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
                       {b.backup_type}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{b.tables_list?.length ?? 0}</td>
-                  <td className="py-3 pr-4 text-gray-400 font-mono text-[0.65rem]">{(b.backup_size_bytes / 1024).toFixed(1)}</td>
-                  <td className="py-3 pr-4 text-gray-500 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.tables_list?.length ?? 0}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{(b.backup_size_bytes / 1024).toFixed(1)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
                   <td className="py-3 text-right">
                     <button
                       onClick={() => handleDownload(b.id)}
-                      className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-emerald-400 hover:bg-white/10 transition-colors"
+                      className="p-1.5 rounded-lg bg-ds-card2 text-ds-ink3 hover:text-emerald-400 hover:bg-ds-card2 transition-colors"
                       title="Download backup"
                     >
                       <FileDown size={13} />
@@ -1245,7 +1245,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
 
   if (currentUserRole !== UserRole.MASTER_ADMIN) {
     return (
-      <div className="p-8 text-center text-gray-500 font-bold text-sm">
+      <div className="p-8 text-center text-ds-ink3 font-bold text-sm">
         Hanya MASTER_ADMIN yang dapat mengakses konfigurasi ini.
       </div>
     );
@@ -1279,12 +1279,12 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Akses Menu Per Role</h3>
-          <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-widest mt-1">Centang menu yang boleh diakses oleh setiap role</p>
+          <p className="text-[0.55rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Centang menu yang boleh diakses oleh setiap role</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleReset}
-            className="px-5 py-2.5 bg-white/5 border border-white/10 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+            className="px-5 py-2.5 bg-ds-card2 border border-ds-border text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
           >
             Reset Default
           </button>
@@ -1297,11 +1297,11 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/5">
+      <div className="overflow-x-auto rounded-2xl border border-ds-border">
         <table className="w-full text-left whitespace-nowrap min-w-[900px]">
           <thead>
-            <tr className="border-b border-white/5 text-[0.5rem] font-black uppercase text-gray-500 tracking-[0.2em]">
-              <th className="py-3 pl-5 pr-4 sticky left-0 bg-[#0a0a0a]">Menu</th>
+            <tr className="border-b border-ds-border text-[0.5rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+              <th className="py-3 pl-5 pr-4 sticky left-0 bg-ds-card">Menu</th>
               {CONFIGURABLE_ROLES.map(role => (
                 <th key={role} className="py-3 px-3 text-center">
                   {role.replace('_', ' ')}
@@ -1311,8 +1311,8 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
           </thead>
           <tbody>
             {MENU_IDS.map(menu => (
-              <tr key={menu.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                <td className="py-2.5 pl-5 pr-4 text-[0.65rem] font-bold text-gray-300 sticky left-0 bg-[#0a0a0a]">
+              <tr key={menu.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
+                <td className="py-2.5 pl-5 pr-4 text-[0.65rem] font-bold text-ds-ink2 sticky left-0 bg-ds-card">
                   {menu.label}
                 </td>
                 {CONFIGURABLE_ROLES.map(role => {
@@ -1429,13 +1429,13 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
        <div className="grid gap-4">
           <Card className="flex items-center justify-between py-6">
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 text-gray-400`}><Upload size={24}/></div>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 text-ds-ink3`}><Upload size={24}/></div>
               <div>
                 <p className="font-black uppercase text-sm">Logo Perusahaan</p>
-                <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Update Logo Platform (Maks 2MB)</p>
+                <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Update Logo Platform (Maks 2MB)</p>
               </div>
             </div>
-            <label className="cursor-pointer px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-white/10 hover:bg-white/20 text-white">
+            <label className="cursor-pointer px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-ds-card2 hover:bg-white/20 text-white">
               Pilih File
               <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={handleLogoUpload} />
             </label>
@@ -1445,18 +1445,18 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
        </div>
 
        <div className="grid gap-4 mt-8">
-          <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Tambah Produk Baru</h3>
+          <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Tambah Produk Baru</h3>
           <Card className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input 
                 type="text" 
                 placeholder="Nama Produk (Cth: Asuransi Gempa)" 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.name}
                 onChange={e => setNewProduct({...newProduct, name: e.target.value})}
               />
               <select 
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono [&>option]:bg-slate-900"
+                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono [&>option]:bg-ds-card"
                 value={newProduct.type}
                 onChange={e => setNewProduct({...newProduct, type: e.target.value})}
               >
@@ -1464,22 +1464,22 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                 <option value="SERVICES">Additional Services</option>
               </select>
               <div className="relative">
-                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">Rp</span>
+                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-ds-ink3 font-mono">Rp</span>
                  <input 
                    type="number" 
                    placeholder="Basic Premium" 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.basePremium}
                    onChange={e => setNewProduct({...newProduct, basePremium: Number(e.target.value)})}
                  />
               </div>
               <div className="relative">
-                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">% Rate</span>
+                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-ds-ink3 font-mono">% Rate</span>
                  <input 
                    type="number" 
                    step="0.01"
                    placeholder="Multiplier Rate (e.g. 0.05)" 
-                   className="w-full bg-white/5 border border-white/10 rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.rate}
                    onChange={e => setNewProduct({...newProduct, rate: Number(e.target.value)})}
                  />
@@ -1487,7 +1487,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <input 
                 type="text" 
                 placeholder="Deskripsi Singkat" 
-                className="w-full md:col-span-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                className="w-full md:col-span-2 bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.description}
                 onChange={e => setNewProduct({...newProduct, description: e.target.value})}
               />
@@ -1505,14 +1505,14 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
 
        {customProducts.length > 0 && (
          <div className="grid gap-4 mt-8">
-            <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Daftar Produk Tambahan</h3>
+            <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Daftar Produk Tambahan</h3>
             {customProducts.map(p => (
               <Card key={p.id} className="flex items-center justify-between py-6">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500`}><FileText size={24}/></div>
                   <div>
                     <p className="font-black uppercase text-sm">{p.name}</p>
-                    <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
+                    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
                   </div>
                 </div>
                 <button 
@@ -1527,14 +1527,14 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
        )}
 
        <div className="grid gap-4 mt-8">
-          <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Manajemen Modul Platform</h3>
+          <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Manajemen Modul Platform</h3>
           {safeProducts.map(p => (
             <Card key={p.id} className="flex items-center justify-between py-6">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 ${p.color}`}><p.icon size={24}/></div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 ${p.color}`}><p.icon size={24}/></div>
                 <div>
                   <p className="font-black uppercase text-sm">{p.label}</p>
-                  <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
+                  <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
                 </div>
               </div>
               <button
@@ -1550,7 +1550,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
        {/* Role Permissions sub-section — only shown to MASTER_ADMIN */}
        {currentUserRole === UserRole.MASTER_ADMIN && (
          <div className="mt-8 space-y-4">
-           <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-2">Konfigurasi Akses Role</h3>
+           <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Konfigurasi Akses Role</h3>
            <RolePermissionsView currentUserRole={currentUserRole} />
          </div>
        )}
@@ -1633,7 +1633,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={importing ? undefined : onClose} />
-      <div className="relative z-10 w-full max-w-2xl mx-4 bg-[#0d0d0d] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-2xl mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-3">
@@ -1641,14 +1641,14 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
             Impor Mitra dari CSV/Excel
           </h3>
           {!importing && (
-            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
               <X size={18} />
             </button>
           )}
         </div>
 
         {/* Instructions */}
-        <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mb-4">
+        <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mb-4">
           Format kolom: name, email, phone, upline_code (opsional)
         </p>
 
@@ -1656,7 +1656,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
         {!done && (
           <>
             <textarea
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-all resize-none mb-3"
+              className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-all resize-none mb-3"
               rows={6}
               placeholder={"Budi Santoso,budi@email.com,08123456789,SP-AGT-0001\nSiti Rahma,siti@email.com,08234567890,"}
               value={csvText}
@@ -1666,7 +1666,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
             <button
               onClick={handleParse}
               disabled={!csvText.trim() || importing}
-              className="px-5 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all disabled:opacity-40 mb-5"
+              className="px-5 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-white/20 hover:text-white transition-all disabled:opacity-40 mb-5"
             >
               Parse CSV
             </button>
@@ -1676,13 +1676,13 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
         {/* Preview table */}
         {rows.length > 0 && (
           <div className="space-y-4">
-            <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-500">
+            <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">
               Preview — {rows.length} baris
             </p>
-            <div className="overflow-x-auto rounded-xl border border-white/10">
+            <div className="overflow-x-auto rounded-xl border border-ds-border">
               <table className="w-full text-[0.6rem]">
                 <thead>
-                  <tr className="text-[0.5rem] font-black uppercase tracking-widest text-gray-500 border-b border-white/10">
+                  <tr className="text-[0.5rem] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                     <th className="py-2.5 px-3 text-left">Nama</th>
                     <th className="py-2.5 px-3 text-left">Email</th>
                     <th className="py-2.5 px-3 text-left">Phone</th>
@@ -1692,13 +1692,13 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
                 </thead>
                 <tbody className="divide-y divide-white/[0.04]">
                   {rows.map((row, i) => (
-                    <tr key={i} className="hover:bg-white/[0.02]">
+                    <tr key={i} className="hover:bg-ds-card2">
                       <td className="py-2 px-3 text-white font-bold">{row.name || <span className="text-rose-400">—</span>}</td>
-                      <td className="py-2 px-3 text-gray-400 font-mono">{row.email || <span className="text-rose-400">—</span>}</td>
-                      <td className="py-2 px-3 text-gray-400 font-mono">{row.phone || <span className="text-rose-400">—</span>}</td>
-                      <td className="py-2 px-3 text-gray-500">{row.upline_code || '—'}</td>
+                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.email || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.phone || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-ds-ink3">{row.upline_code || '—'}</td>
                       <td className="py-2 px-3 text-center">
-                        {row.status === 'pending' && <span className="text-gray-500">—</span>}
+                        {row.status === 'pending' && <span className="text-ds-ink3">—</span>}
                         {row.status === 'success' && <span className="text-emerald-400 font-black">OK</span>}
                         {row.status === 'error' && (
                           <span className="text-rose-400 font-black" title={row.error}>ERR</span>
@@ -1712,7 +1712,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
 
             {/* Progress */}
             {progress && (
-              <p className="text-[0.6rem] font-bold text-gray-400 uppercase tracking-widest">
+              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">
                 {progress.done}/{progress.total} diproses
                 {done && ` — ${successCount} berhasil, ${errorCount} gagal`}
               </p>
@@ -1745,7 +1745,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
               {!importing && !done && (
                 <button
                   onClick={onClose}
-                  className="px-5 py-3 bg-white/5 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+                  className="px-5 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
                 >
                   Batal
                 </button>
@@ -1769,7 +1769,7 @@ const STATUS_COLOR: Record<string, string> = {
   UNDER_REVIEW: 'bg-blue-500/10 text-blue-400',
   APPROVED: 'bg-emerald-500/10 text-emerald-400',
   REJECTED: 'bg-rose-500/10 text-rose-400',
-  CLOSED: 'bg-white/5 text-gray-400',
+  CLOSED: 'bg-ds-card2 text-ds-ink3',
 };
 
 export const AgentManagementView = () => {
@@ -1892,7 +1892,7 @@ export const AgentManagementView = () => {
                 <p className="font-black text-sm truncate">{a.name}</p>
                 <TierBadge tier={agentTier} />
               </div>
-              <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest truncate">{a.email}</p>
+              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
               <p className="text-[0.6rem] font-bold text-emerald-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
             </div>
           </button>
@@ -1906,12 +1906,12 @@ export const AgentManagementView = () => {
                 </span>
               )}
               {isSavingTier ? (
-                <span className="text-[0.6rem] text-gray-400">…</span>
+                <span className="text-[0.6rem] text-ds-ink3">…</span>
               ) : (
                 <select
                   value={agentTier ?? ''}
                   onChange={e => e.target.value && handleTierChange(a.id, e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-xl px-2 py-1.5 text-[0.6rem] font-black uppercase tracking-widest text-gray-300 focus:outline-none"
+                  className="bg-ds-card2 border border-ds-border rounded-xl px-2 py-1.5 text-[0.6rem] font-black uppercase tracking-widest text-ds-ink2 focus:outline-none"
                 >
                   {tiers.map(tier => (
                     <option key={tier.code} value={tier.code}>{tier.emoji ? `${tier.emoji} ` : ''}{tier.name}</option>
@@ -1922,7 +1922,7 @@ export const AgentManagementView = () => {
                 onClick={() => handleEvaluateTier(a.id)}
                 disabled={isSavingTier}
                 title="Evaluasi tier otomatis dari jumlah polis & premi"
-                className="w-7 h-7 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+                className="w-7 h-7 rounded-lg bg-ds-card2 text-ds-ink3 hover:bg-ds-card2 flex items-center justify-center flex-shrink-0 disabled:opacity-40"
               >
                 <Sparkles size={12} />
               </button>
@@ -1938,7 +1938,7 @@ export const AgentManagementView = () => {
                   step="0.01" min="0" max="1"
                   value={editRate[a.id]}
                   onChange={e => setEditRate(prev => ({ ...prev, [a.id]: e.target.value }))}
-                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-24 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   disabled={saving === a.id}
@@ -1949,7 +1949,7 @@ export const AgentManagementView = () => {
                 </button>
                 <button
                   onClick={() => setEditRate(prev => { const n = { ...prev }; delete n[a.id]; return n; })}
-                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400"
+                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3"
                 >
                   ✕
                 </button>
@@ -1957,7 +1957,7 @@ export const AgentManagementView = () => {
             ) : (
               <button
                 onClick={() => setEditRate(prev => ({ ...prev, [a.id]: String(rate) }))}
-                className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-colors"
               >
                 Rate: {(rate * 100).toFixed(0)}%
               </button>
@@ -2011,7 +2011,7 @@ export const AgentManagementView = () => {
         ].map(({ label, value, color }) => (
           <Card key={label} className="py-5 text-center">
             <p className={`text-2xl font-black ${color}`}>{value}</p>
-            <p className="text-[0.55rem] font-bold text-gray-500 uppercase tracking-widest mt-1">{label}</p>
+            <p className="text-[0.55rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">{label}</p>
           </Card>
         ))}
       </div>
@@ -2029,11 +2029,11 @@ export const AgentManagementView = () => {
       )}
 
       <div>
-        <h3 className="font-black uppercase tracking-widest text-xs text-gray-400 mb-4">
+        <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-4">
           Mitra Aktif ({active.length})
         </h3>
         {active.length === 0 ? (
-          <Card className="text-center py-10 text-gray-500 text-sm font-bold">Belum ada agen aktif.</Card>
+          <Card className="text-center py-10 text-ds-ink3 text-sm font-bold">Belum ada agen aktif.</Card>
         ) : (
           <div className="space-y-3">
             {active.map(a => <AgentRow key={a.id} a={a} />)}
@@ -2082,7 +2082,7 @@ export const ClaimsAdminView = () => {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all ${
-              filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
             }`}
           >
             {f === 'ALL' ? 'All' : STATUS_LABEL[f] ?? f}
@@ -2106,7 +2106,7 @@ export const ClaimsAdminView = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
-        <Card className="text-center py-12 text-gray-500 text-sm font-bold">No claims found.</Card>
+        <Card className="text-center py-12 text-ds-ink3 text-sm font-bold">No claims found.</Card>
       ) : (
         <div className="space-y-3">
           {visible.map(claim => {
@@ -2118,7 +2118,7 @@ export const ClaimsAdminView = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-black text-sm">{claim.client_name ?? '—'}</p>
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${STATUS_COLOR[claim.status] ?? 'bg-white/5 text-gray-400'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${STATUS_COLOR[claim.status] ?? 'bg-ds-card2 text-ds-ink3'}`}>
                       {STATUS_LABEL[claim.status] ?? claim.status}
                     </span>
                     {fraudMeta && (
@@ -2127,11 +2127,11 @@ export const ClaimsAdminView = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest">
+                  <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">
                     {claim.claim_number ?? '-'} · {claim.product_type ?? '-'} · {claim.date ?? '-'}
                   </p>
                   {claim.location && (
-                    <p className="text-xs text-gray-400 mt-1 truncate">{claim.location}</p>
+                    <p className="text-xs text-ds-ink3 mt-1 truncate">{claim.location}</p>
                   )}
                   {claim.amount_estimated && (
                     <p className="text-xs font-bold text-emerald-500 mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
@@ -2166,7 +2166,7 @@ export const ClaimsAdminView = () => {
                   {claim.status === 'APPROVED' && (
                     <button
                       onClick={() => handleStatus(claim.id, 'CLOSED')}
-                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-white/5 text-gray-400 hover:bg-white/10 transition-colors"
+                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:bg-ds-card2 transition-colors"
                     >
                       Close
                     </button>
@@ -2326,12 +2326,12 @@ export const UserManagementView = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-emerald-500">User</span></h2>
-          <p className="text-[0.6rem] font-bold text-gray-500 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
+          <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={load}
-            className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-3 bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-white hover:bg-ds-card2 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all active:scale-95"
           >
             <RefreshCw size={14} /> Refresh
           </button>
@@ -2347,13 +2347,13 @@ export const UserManagementView = () => {
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ds-ink3" />
           <input
             type="text"
             placeholder="Cari nama atau email..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -2362,7 +2362,7 @@ export const UserManagementView = () => {
               key={rf}
               onClick={() => setRoleFilter(rf)}
               className={`px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
-                roleFilter === rf ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                roleFilter === rf ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
               {rf === 'All' ? 'All' : rf.replace('_', ' ')}
@@ -2376,7 +2376,7 @@ export const UserManagementView = () => {
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left whitespace-nowrap min-w-[800px]">
             <thead>
-              <tr className="border-b border-white/5 text-[0.55rem] font-black uppercase text-gray-500 tracking-[0.2em]">
+              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-4 pl-6">Nama</th>
                 <th className="py-4">Email</th>
                 <th className="py-4">Role</th>
@@ -2394,7 +2394,7 @@ export const UserManagementView = () => {
                 const isEditingApps = editAppsId === u.id;
                 const userAllowedApps: string[] = Array.isArray((u as any).allowed_apps) ? (u as any).allowed_apps : (u.role ? [u.role] : []);
                 return (
-                  <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                  <tr key={u.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
                     <td className="py-3.5 pl-6">
                       <button
                         type="button"
@@ -2409,14 +2409,14 @@ export const UserManagementView = () => {
                         <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>
                       </button>
                     </td>
-                    <td className="py-3.5 font-mono text-[0.65rem] text-gray-400">{u.email}</td>
+                    <td className="py-3.5 font-mono text-[0.65rem] text-ds-ink3">{u.email}</td>
                     <td className="py-3.5">
                       {isEditingRole ? (
                         <div className="flex items-center gap-2">
                           <select
                             defaultValue={u.role}
                             onChange={e => handleRoleChange(u, e.target.value as UserRole)}
-                            className="bg-[#0a0a0a] border border-white/10 rounded-lg px-2 py-1.5 text-[0.6rem] font-black uppercase text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-slate-900"
+                            className="bg-ds-card border border-ds-border rounded-lg px-2 py-1.5 text-[0.6rem] font-black uppercase text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-ds-card"
                             autoFocus
                             onBlur={() => setEditRoleId(null)}
                           >
@@ -2424,14 +2424,14 @@ export const UserManagementView = () => {
                               <option key={r} value={r}>{r.replace('_', ' ')}</option>
                             ))}
                           </select>
-                          <ChevronDown size={12} className="text-gray-500" />
+                          <ChevronDown size={12} className="text-ds-ink3" />
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <Badge color={ROLE_COLOR[u.role] ?? 'primary'}>{u.role.replace('_', ' ')}</Badge>
                           <button
                             onClick={() => setEditRoleId(u.id)}
-                            className="p-1 text-gray-600 hover:text-emerald-400 transition-colors"
+                            className="p-1 text-ds-ink2 hover:text-emerald-400 transition-colors"
                             title="Edit Role"
                           >
                             <Pencil size={11} />
@@ -2445,7 +2445,7 @@ export const UserManagementView = () => {
                           {['CUSTOMER', 'AGENT', 'OPERATOR', 'ADMIN'].map(app => {
                             const checked = userAllowedApps.includes(app);
                             return (
-                              <label key={app} className="flex items-center gap-1 text-[0.55rem] font-bold uppercase cursor-pointer bg-white/5 px-1.5 py-0.5 rounded">
+                              <label key={app} className="flex items-center gap-1 text-[0.55rem] font-bold uppercase cursor-pointer bg-ds-card2 px-1.5 py-0.5 rounded">
                                 <input
                                   type="checkbox"
                                   defaultChecked={checked}
@@ -2468,7 +2468,7 @@ export const UserManagementView = () => {
                           title="Edit Apps Access"
                         >
                           {userAllowedApps.length === 0 ? (
-                            <span className="text-[0.6rem] text-gray-500 italic">— none —</span>
+                            <span className="text-[0.6rem] text-ds-ink3 italic">— none —</span>
                           ) : (
                             userAllowedApps.map(app => (
                               <span key={app} className="text-[0.5rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
@@ -2476,14 +2476,14 @@ export const UserManagementView = () => {
                               </span>
                             ))
                           )}
-                          <Pencil size={10} className="text-gray-600 hover:text-emerald-400 transition-colors" />
+                          <Pencil size={10} className="text-ds-ink2 hover:text-emerald-400 transition-colors" />
                         </button>
                       )}
                     </td>
                     <td className="py-3.5">
                       <Badge color={isActive ? 'emerald' : 'rose'}>{isActive ? 'Aktif' : 'Nonaktif'}</Badge>
                     </td>
-                    <td className="py-3.5 text-[0.6rem] text-gray-500 font-mono">
+                    <td className="py-3.5 text-[0.6rem] text-ds-ink3 font-mono">
                       {u.memberSince ? new Date(u.memberSince).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                     <td className="py-3.5 text-center">
@@ -2493,13 +2493,13 @@ export const UserManagementView = () => {
                             ✓ {(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : 'Diterima'}
                           </span>
                           {(u as any).tnc_ref_number && (
-                            <span className="text-[0.5rem] font-mono text-gray-500" title={(u as any).tnc_ref_number}>
+                            <span className="text-[0.5rem] font-mono text-ds-ink3" title={(u as any).tnc_ref_number}>
                               {(u as any).tnc_ref_number}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-gray-600">–</span>
+                        <span className="text-ds-ink2">–</span>
                       )}
                     </td>
                     <td className="py-3.5 text-right pr-6">
@@ -2520,12 +2520,12 @@ export const UserManagementView = () => {
             </tbody>
           </table>
           {filtered.length > 100 && (
-            <p className="text-center text-[0.6rem] text-gray-500 font-bold uppercase tracking-widest py-4">
+            <p className="text-center text-[0.6rem] text-ds-ink3 font-bold uppercase tracking-widest py-4">
               Menampilkan 100 dari {filtered.length} user. Gunakan filter/pencarian.
             </p>
           )}
           {filtered.length === 0 && (
-            <p className="text-center text-[0.7rem] text-gray-600 font-bold py-10">Tidak ada user ditemukan.</p>
+            <p className="text-center text-[0.7rem] text-ds-ink2 font-bold py-10">Tidak ada user ditemukan.</p>
           )}
         </div>
       </Card>
@@ -2534,7 +2534,7 @@ export const UserManagementView = () => {
       {showAddModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
-          <div className="relative z-10 w-full max-w-md mx-4 bg-[#0d0d0d] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
+          <div className="relative z-10 w-full max-w-md mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl">
             <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
               <UserPlus size={18} className="text-emerald-500" /> Tambah Admin Baru
             </h3>
@@ -2543,31 +2543,31 @@ export const UserManagementView = () => {
             )}
             <div className="space-y-4">
               <div>
-                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
+                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
                 <input
                   type="text"
                   value={newUser.name}
                   onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                   placeholder="Cth: Budi Santoso"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Email</label>
+                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Email</label>
                 <input
                   type="email"
                   value={newUser.email}
                   onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="admin@surepath.id"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-[0.55rem] font-black text-gray-500 uppercase tracking-widest mb-1.5">Role</label>
+                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Role</label>
                 <select
                   value={newUser.role}
                   onChange={e => setNewUser({ ...newUser, role: e.target.value as UserRole })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-slate-900"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
                 >
                   {Object.values(UserRole).map(r => (
                     <option key={r} value={r}>{r.replace('_', ' ')}</option>
@@ -2578,7 +2578,7 @@ export const UserManagementView = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => { setShowAddModal(false); setAddError(null); }}
-                className="flex-1 py-3 bg-white/5 text-gray-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-white/10 transition-all"
+                className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
               >
                 Batal
               </button>
@@ -2627,7 +2627,7 @@ export const PaymentsAdminView = () => {
         PAID:    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
         PENDING: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
         EXPIRED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    }[s] ?? 'bg-slate-500/10 text-slate-400 border-slate-500/20');
+    }[s] ?? 'bg-slate-500/10 text-ds-ink3 border-slate-500/20');
 
     const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '-';
 
@@ -2637,9 +2637,9 @@ export const PaymentsAdminView = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-emerald-500">Xendit</span></h2>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">Semua transaksi invoice dari gateway Xendit</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
                 </div>
-                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-[9px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-colors">
                     <RefreshCw size={13} /> Refresh
                 </button>
             </div>
@@ -2649,17 +2649,17 @@ export const PaymentsAdminView = () => {
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 space-y-2">
                     <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Total Terbayar</p>
                     <p className="text-2xl font-black">{formatIDR(totalPaid)}</p>
-                    <p className="text-[9px] text-slate-500">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
+                    <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 space-y-2">
                     <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">Invoice Pending</p>
                     <p className="text-2xl font-black">{formatIDR(totalPending)}</p>
-                    <p className="text-[9px] text-slate-500">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
+                    <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
                 </div>
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-[2rem] p-6 space-y-2">
                     <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Kadaluarsa</p>
                     <p className="text-2xl font-black">{countExpired}</p>
-                    <p className="text-[9px] text-slate-500">invoice expired</p>
+                    <p className="text-[9px] text-ds-ink3">invoice expired</p>
                 </div>
             </div>
 
@@ -2670,7 +2670,7 @@ export const PaymentsAdminView = () => {
                         key={f}
                         onClick={() => setFilter(f)}
                         className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
-                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-white border border-white/10'
+                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-ds-card2 text-ds-ink3 hover:text-white border border-ds-border'
                         }`}
                     >
                         {f === 'ALL' ? `Semua (${payments.length})` : `${f} (${payments.filter(p => p.status === f).length})`}
@@ -2679,7 +2679,7 @@ export const PaymentsAdminView = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden">
+            <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
                 {loading ? (
                     <div className="flex justify-center py-16">
                         <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
@@ -2688,7 +2688,7 @@ export const PaymentsAdminView = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs min-w-[900px]">
                             <thead>
-                                <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5">
+                                <tr className="text-ds-ink3 text-[9px] font-black uppercase tracking-widest border-b border-ds-border">
                                     <th className="px-6 py-4 text-left">Tanggal</th>
                                     <th className="px-4 py-4 text-left">Order #</th>
                                     <th className="px-4 py-4 text-left">Klien</th>
@@ -2703,24 +2703,24 @@ export const PaymentsAdminView = () => {
                             <tbody>
                                 {filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="text-center py-12 text-slate-600 font-bold text-sm">
+                                        <td colSpan={9} className="text-center py-12 text-ds-ink2 font-bold text-sm">
                                             Tidak ada data pembayaran.
                                         </td>
                                     </tr>
                                 ) : filtered.map(p => (
-                                    <tr key={p.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-6 py-3 text-slate-500 whitespace-nowrap text-[10px]">{fmtDate(p.created_at)}</td>
+                                    <tr key={p.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
+                                        <td className="px-6 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{fmtDate(p.created_at)}</td>
                                         <td className="px-4 py-3 font-mono text-emerald-400 whitespace-nowrap text-[10px]">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
                                         <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{p.client_name ?? '—'}</td>
-                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{p.product_name ?? '—'}</td>
+                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap">{p.product_name ?? '—'}</td>
                                         <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
                                                 {p.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[10px]">{p.payment_method ?? p.payment_channel ?? '—'}</td>
-                                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap text-[10px]">{fmtDate(p.paid_at)}</td>
+                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{p.payment_method ?? p.payment_channel ?? '—'}</td>
+                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{fmtDate(p.paid_at)}</td>
                                         <td className="px-6 py-3">
                                             {p.invoice_url && p.status === 'PENDING' ? (
                                                 <a
@@ -2731,7 +2731,7 @@ export const PaymentsAdminView = () => {
                                                 >
                                                     <Globe size={10} /> Buka
                                                 </a>
-                                            ) : <span className="text-slate-700">—</span>}
+                                            ) : <span className="text-ds-ink2">—</span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -2828,9 +2828,9 @@ export const WithdrawalsAdminView: React.FC = () => {
       DISBURSED:   { cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: 'Cair' },
       FAILED:      { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Gagal' },
       REJECTED:    { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Ditolak' },
-      CANCELLED:   { cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20',      label: 'Dibatalkan' },
+      CANCELLED:   { cls: 'bg-gray-500/10 text-ds-ink3 border-gray-500/20',      label: 'Dibatalkan' },
     };
-    return map[status] ?? { cls: 'bg-gray-500/10 text-gray-400', label: status };
+    return map[status] ?? { cls: 'bg-gray-500/10 text-ds-ink3', label: status };
   };
 
   const totalPending = withdrawals.filter(w => w.status.startsWith('PENDING')).reduce((s, w) => s + w.amount, 0);
@@ -2841,7 +2841,7 @@ export const WithdrawalsAdminView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-black uppercase tracking-tight">Penarikan Dana Mitra</h2>
-        <button onClick={load} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all active:scale-95">
+        <button onClick={load} className="p-2 rounded-xl bg-ds-card2 hover:bg-ds-card2 transition-all active:scale-95">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
@@ -2853,10 +2853,10 @@ export const WithdrawalsAdminView: React.FC = () => {
           { label: 'Total Dicairkan', value: IDR(totalDisbursed), sub: `${withdrawals.filter(w => w.status === 'DISBURSED').length} transaksi`, color: 'text-emerald-400' },
           { label: 'Total Permintaan', value: withdrawals.length.toString(), sub: 'Semua waktu', color: 'text-blue-400' },
         ].map(k => (
-          <div key={k.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-1">
-            <p className="text-[0.5rem] font-black uppercase tracking-widest text-gray-500">{k.label}</p>
+          <div key={k.label} className="bg-ds-card2 border border-ds-border rounded-2xl p-4 space-y-1">
+            <p className="text-[0.5rem] font-black uppercase tracking-widest text-ds-ink3">{k.label}</p>
             <p className={`text-lg font-black ${k.color}`}>{k.value}</p>
-            <p className="text-[0.5rem] text-gray-600">{k.sub}</p>
+            <p className="text-[0.5rem] text-ds-ink2">{k.sub}</p>
           </div>
         ))}
       </div>
@@ -2867,7 +2867,7 @@ export const WithdrawalsAdminView: React.FC = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'}`}
           >
             {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak'}
           </button>
@@ -2876,32 +2876,32 @@ export const WithdrawalsAdminView: React.FC = () => {
 
       {/* Table */}
       <div className="space-y-3">
-        {loading && <div className="text-center py-8 text-gray-500 text-sm">Memuat...</div>}
-        {!loading && filtered.length === 0 && <div className="text-center py-8 text-gray-500 text-sm">Tidak ada data</div>}
+        {loading && <div className="text-center py-8 text-ds-ink3 text-sm">Memuat...</div>}
+        {!loading && filtered.length === 0 && <div className="text-center py-8 text-ds-ink3 text-sm">Tidak ada data</div>}
         {filtered.map(wd => {
           const { cls, label } = statusBadge(wd.status);
           const busy = actionLoading === wd.id;
           return (
-            <div key={wd.id} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 space-y-4">
+            <div key={wd.id} className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-black text-white">{wd.agent_name ?? 'Mitra Tidak Dikenal'}</p>
-                  <p className="text-[0.5rem] text-gray-500">{wd.agent_email}</p>
-                  <p className="text-[0.5rem] text-gray-500 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
+                  <p className="text-[0.5rem] text-ds-ink3">{wd.agent_email}</p>
+                  <p className="text-[0.5rem] text-ds-ink3 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
                 </div>
                 <span className={`text-[0.45rem] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border whitespace-nowrap ${cls}`}>{label}</span>
               </div>
-              <div className="grid grid-cols-3 gap-3 bg-white/5 rounded-xl p-3">
+              <div className="grid grid-cols-3 gap-3 bg-ds-card2 rounded-xl p-3">
                 <div>
-                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diminta</p>
+                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Diminta</p>
                   <p className="text-xs font-black text-white">{IDR(wd.amount)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Biaya Xendit</p>
+                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Biaya Xendit</p>
                   <p className="text-xs font-black text-amber-400">-{IDR(wd.xendit_fee)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.45rem] text-gray-500 uppercase tracking-widest">Diterima Mitra</p>
+                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Diterima Mitra</p>
                   <p className="text-xs font-black text-emerald-400">{IDR(wd.net_amount)}</p>
                 </div>
               </div>
@@ -2920,7 +2920,7 @@ export const WithdrawalsAdminView: React.FC = () => {
               {wd.rejection_reason && (
                 <p className="text-[0.5rem] text-red-400">Alasan ditolak: {wd.rejection_reason}</p>
               )}
-              <div className="text-[0.45rem] text-gray-600">
+              <div className="text-[0.45rem] text-ds-ink2">
                 {wd.l1_approved_at && <span>L1: {new Date(wd.l1_approved_at).toLocaleDateString('id-ID')} · </span>}
                 {wd.l2_approved_at && <span>L2: {new Date(wd.l2_approved_at).toLocaleDateString('id-ID')} · </span>}
                 {wd.l3_approved_at && <span>L3: {new Date(wd.l3_approved_at).toLocaleDateString('id-ID')} · </span>}
@@ -2967,18 +2967,18 @@ export const WithdrawalsAdminView: React.FC = () => {
       {/* Reject modal */}
       {rejectModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center p-4">
-          <div className="bg-slate-900 border border-white/10 rounded-[2rem] p-6 w-full max-w-md space-y-4">
+          <div className="bg-ds-card border border-ds-border rounded-[2rem] p-6 w-full max-w-md space-y-4">
             <h3 className="text-lg font-black uppercase tracking-tight">Tolak Penarikan</h3>
-            <p className="text-sm text-gray-400">Penarikan dari {rejectModal.agentName} akan dibatalkan dan saldo dikembalikan.</p>
+            <p className="text-sm text-ds-ink3">Penarikan dari {rejectModal.agentName} akan dibatalkan dan saldo dikembalikan.</p>
             <textarea
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm outline-none focus:border-red-500 resize-none"
+              className="w-full bg-ds-card2 border border-ds-border rounded-xl p-4 text-sm outline-none focus:border-red-500 resize-none"
               rows={3}
               placeholder="Alasan penolakan..."
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
             />
             <div className="flex gap-3">
-              <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 font-black text-xs uppercase tracking-widest">Batal</button>
+              <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="flex-1 py-3 rounded-xl border border-ds-border text-ds-ink3 font-black text-xs uppercase tracking-widest">Batal</button>
               <button
                 onClick={handleReject}
                 disabled={!rejectReason.trim() || actionLoading === rejectModal.id}

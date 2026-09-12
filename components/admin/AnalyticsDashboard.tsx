@@ -30,22 +30,22 @@ function formatIDR(v: number) {
 
 // ─── Skeleton ──────────────────────────────────────────────────────────────────
 const Skeleton = ({ h = 'h-32', cls = '' }: { h?: string; cls?: string }) => (
-  <div className={`${h} ${cls} rounded-2xl bg-white/5 animate-pulse`} />
+  <div className={`${h} ${cls} rounded-2xl bg-ds-card2 animate-pulse`} />
 );
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────────
 const KPICard = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
-  <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-1">
-    <p className="text-[0.55rem] font-black uppercase tracking-widest text-gray-500">{label}</p>
+  <div className="p-5 rounded-2xl bg-ds-card2 border border-ds-border flex flex-col gap-1">
+    <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">{label}</p>
     <p className="text-2xl font-black text-white leading-none">{value}</p>
-    {sub && <p className="text-[0.6rem] text-gray-500">{sub}</p>}
+    {sub && <p className="text-[0.6rem] text-ds-ink3">{sub}</p>}
   </div>
 );
 
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-    <p className="text-[0.6rem] font-black uppercase tracking-widest text-gray-500 mb-4">{title}</p>
+  <div className="p-5 rounded-2xl bg-ds-card2 border border-ds-border">
+    <p className="text-[0.6rem] font-black uppercase tracking-widest text-ds-ink3 mb-4">{title}</p>
     {children}
   </div>
 );
@@ -54,8 +54,8 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 const ChartTip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-xs">
-      {label && <p className="text-gray-400 mb-1">{label}</p>}
+    <div className="bg-ds-card border border-ds-border rounded-xl px-3 py-2 text-xs">
+      {label && <p className="text-ds-ink3 mb-1">{label}</p>}
       {payload.map((p: any) => (
         <p key={p.name} style={{ color: p.color ?? '#00C16A' }} className="font-bold">
           {p.name}: {typeof p.value === 'number' && p.value > 1_000 ? formatIDR(p.value) : p.value}
@@ -232,7 +232,7 @@ const AnalyticsDashboard = () => {
           {loading ? <Skeleton h="h-64" /> : (
             <Section title="Pendapatan per Produk">
               {productMix.length === 0 ? (
-                <p className="text-xs text-gray-500 text-center py-16">Belum ada data</p>
+                <p className="text-xs text-ds-ink3 text-center py-16">Belum ada data</p>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -255,7 +255,7 @@ const AnalyticsDashboard = () => {
           {loading ? <Skeleton h="h-64" /> : (
             <Section title="Top 5 Mitra Bulan Ini (GWP)">
               {topAgents.length === 0 ? (
-                <p className="text-xs text-gray-500 text-center py-16">Belum ada data bulan ini</p>
+                <p className="text-xs text-ds-ink3 text-center py-16">Belum ada data bulan ini</p>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={topAgents} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -306,10 +306,10 @@ const AnalyticsDashboard = () => {
               return (
                 <div key={st} className="space-y-2">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[0.6rem] font-bold uppercase tracking-wide text-gray-400">{PIPE_LABELS[st]}</span>
+                    <span className="text-[0.6rem] font-bold uppercase tracking-wide text-ds-ink3">{PIPE_LABELS[st]}</span>
                     <span className="text-sm font-black text-white">{count}</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-ds-card2 overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-700 ${PIPE_COLORS[st]}`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>

@@ -4,6 +4,45 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.14 — 2026-09-13
+
+### Jejak aktivitas per pengguna, dicatat di satu titik
+
+Sebelum ini tidak ada log aktivitas pengguna sama sekali. Yang terlihat seperti log ternyata bukan:
+
+| Tabel | Isi sebenarnya |
+|---|---|
+| `sp_page_views` (1.101 baris) | halaman + user agent — **tanpa identitas pengguna** |
+| `sp_user_sessions` (24) | heartbeat `last_seen`, bukan aktivitas |
+| `sp_audit_log` (4) | perubahan baris DB, hanya ditulis AI agent + trigger |
+| `sp_insurer_activity_log` (0) | khusus insurer, ditempel manual di 6 tempat |
+
+`sp_activity_log` baru menjawab pertanyaan yang berbeda: **siapa melakukan apa, mengakses apa, dan apa yang ditolak.**
+
+Ditulis di **dispatcher data-gateway**, bukan ditempel di 100+ action satu per satu. Itu keputusan arsitektural: setiap aksi terautentikasi lewat satu titik itu dengan `caller` yang sudah diverifikasi, jadi cakupannya lengkap dengan sendirinya dan tidak bisa dipalsukan klien — alasan yang sama kenapa gerbang kepercayaan v2.5.6 juga duduk di sana. Penolakan ikut dicatat; percobaan yang gagal justru bagian paling berguna untuk keamanan.
+
+**Nilai parameter sengaja tidak pernah disimpan** — hanya nama kuncinya. Payload aplikasi ini membawa NIK, foto base64, dan kata sandi; menyalinnya ke tabel audit hanya menciptakan salinan kedua dari data yang sedang kita lindungi. `action` + `target_id` + nama kunci sudah cukup menjawab "mengakses apa" tanpa itu.
+
+Menu **Jejak Aktivitas** di CMS punya dua mode: ringkasan per pengguna (siapa paling aktif, berapa ditolak, terakhir kapan) lalu klik untuk turun ke rinciannya. Membuka langsung ke ribuan baris mentah hanya memindahkan pekerjaan menyaring ke mata admin.
+
+Tulisan audit bersifat *fire-and-forget* — sebuah log tidak boleh menggagalkan permintaan yang sedang dicatatnya.
+
+### `docs/CMS_ARCHITECTURE.md`
+
+Menjawab "CMS seharusnya berfungsi bagaimana dan tersambung ke apps bagaimana".
+
+Intinya: **tidak ada backend CMS terpisah.** CMS, apps nasabah, apps mitra, operator, dan asuransi berbagi satu database dan satu pintu — data-gateway. Jadi **kemampuan CMS = daftar action `admin_*` di gateway**, tidak lebih, dan tidak ada push dari CMS ke apps (apps menarik saat dibuka; kalau butuh seketika, jalurnya notifikasi).
+
+Diagnosisnya: CMS ini **editor konfigurasi, bukan konsol operasi**. Dari 25 menu, mayoritas menjawab "atur sekali lalu ditinggal". Buktinya nyata — 5 order mandek sejak Juli tanpa ada yang sadar, 0 invoice sepanjang hidup aplikasi, `pathy-agent` tertinggal berhari-hari. Polanya satu: **CMS bisa menampilkan apa yang ADA, tapi tidak apa yang SEHARUSNYA ada tapi tidak terjadi** — dan untuk bisnis asuransi, justru yang kedua itu uangnya.
+
+Usulan berikutnya, tanpa tabel baru: antrean bertindak diurutkan berdasarkan **umur**, dan corong order → invoice → bayar → polis.
+
+### ⚠️ Belum aktif sampai gateway di-deploy
+
+Tabel sudah ada di produksi dan menunya sudah naik lewat Vercel, tapi **penulis dan pembacanya ada di data-gateway** yang masih belum ter-deploy. Sampai koneksi Supabase↔GitHub dibuat, layarnya hidup tapi datanya kosong. Layar kosong itu menjelaskan sendiri penyebabnya, bukan diam.
+
+---
+
 ## v2.5.13 — 2026-09-13
 
 ### Nasabah dirayakan atas polis yang tidak pernah ditagih

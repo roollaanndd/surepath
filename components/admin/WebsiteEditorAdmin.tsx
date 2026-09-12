@@ -33,8 +33,8 @@ const BG_TYPES: { value: SpWebsiteConfig['bg_type']; label: string; desc: string
   { value: 'none',          label: 'None',          desc: 'Transparan / tanpa bg' },
 ];
 
-const inputCls = 'bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
-const labelCls = 'text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block';
+const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
+const labelCls = 'text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
 
 const defaultSection = (key: SectionKey): SpWebsiteConfig => ({
   section_key: key,
@@ -118,7 +118,7 @@ const WebsiteEditorAdmin: React.FC = () => {
     <div className="flex gap-6 h-full min-h-[70vh]">
       {/* ── Left: section list ─────────────────────────────────────────── */}
       <aside className="w-56 flex-shrink-0 space-y-1.5">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+        <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-4 flex items-center gap-2">
           <Layers size={12} /> Sections
         </p>
         {SECTIONS.map(s => (
@@ -128,14 +128,14 @@ const WebsiteEditorAdmin: React.FC = () => {
             className={`w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-200 group ${
               activeKey === s.key
                 ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                : 'bg-white/[0.02] border border-white/5 text-gray-400 hover:text-white hover:border-white/15'
+                : 'bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-white hover:border-white/15'
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wide">{s.label}</span>
-              <ChevronRight size={12} className={activeKey === s.key ? 'text-emerald-400' : 'text-gray-600 group-hover:text-gray-400'} />
+              <ChevronRight size={12} className={activeKey === s.key ? 'text-emerald-400' : 'text-ds-ink2 group-hover:text-ds-ink3'} />
             </div>
-            <p className="text-[10px] text-gray-600 mt-0.5 leading-tight">{s.desc}</p>
+            <p className="text-[10px] text-ds-ink2 mt-0.5 leading-tight">{s.desc}</p>
           </button>
         ))}
       </aside>
@@ -156,7 +156,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                 {SECTIONS.find(s => s.key === activeKey)?.label}
               </h3>
               {savedAt && (
-                <p className="text-[10px] text-gray-600">Terakhir disimpan: {savedAt}</p>
+                <p className="text-[10px] text-ds-ink2">Terakhir disimpan: {savedAt}</p>
               )}
               {loading && (
                 <p className="text-[10px] text-emerald-500 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
@@ -187,7 +187,7 @@ const WebsiteEditorAdmin: React.FC = () => {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
                 activeTab === tab
                   ? 'bg-white/[0.08] border-white/15 text-white'
-                  : 'bg-transparent border-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-transparent border-ds-border text-ds-ink3 hover:text-ds-ink2'
               }`}
             >
               {tab === 'content' ? <Type size={12} /> : <Palette size={12} />}
@@ -196,7 +196,7 @@ const WebsiteEditorAdmin: React.FC = () => {
           ))}
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-7 space-y-6">
+        <div className="bg-ds-card2 border border-ds-border rounded-3xl p-7 space-y-6">
           {activeTab === 'content' && activeKey === 'splash' && (
             <>
               <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
@@ -220,9 +220,9 @@ const WebsiteEditorAdmin: React.FC = () => {
                   {logoUploading ? 'Mengupload...' : 'Upload Logo dari Perangkat'}
                 </button>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="flex-1 h-px bg-white/5" />
-                  <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">atau URL</span>
-                  <div className="flex-1 h-px bg-white/5" />
+                  <div className="flex-1 h-px bg-ds-card2" />
+                  <span className="text-[10px] text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
+                  <div className="flex-1 h-px bg-ds-card2" />
                 </div>
                 <input
                   className={inputCls}
@@ -230,7 +230,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                   value={form.cta_text ?? ''}
                   onChange={e => set({ cta_text: e.target.value })}
                 />
-                <div className="mt-3 h-24 rounded-2xl border border-white/10 bg-black/30 flex items-center justify-center overflow-hidden">
+                <div className="mt-3 h-24 rounded-2xl border border-ds-border bg-black/30 flex items-center justify-center overflow-hidden">
                   <img
                     src={form.cta_text || '/logo.png'}
                     alt="preview"
@@ -262,7 +262,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                     value={form.bg_value ?? ''}
                     onChange={e => set({ bg_value: e.target.value })}
                   />
-                  <div className="w-10 h-10 flex-shrink-0 rounded-xl border border-white/10 transition-all"
+                  <div className="w-10 h-10 flex-shrink-0 rounded-xl border border-ds-border transition-all"
                     style={{ background: form.bg_value || '#22c55e' }} />
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -332,10 +332,10 @@ const WebsiteEditorAdmin: React.FC = () => {
           )}
 
           {activeTab === 'background' && activeKey === 'splash' && (
-            <div className="flex items-start gap-3 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
-              <Palette size={14} className="text-gray-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Background splash screen menggunakan animated canvas. Gunakan tab <strong className="text-gray-300">Konten</strong> untuk mengubah warna aksen.
+            <div className="flex items-start gap-3 p-4 bg-ds-card2 border border-ds-border rounded-2xl">
+              <Palette size={14} className="text-ds-ink3 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-ds-ink3 leading-relaxed">
+                Background splash screen menggunakan animated canvas. Gunakan tab <strong className="text-ds-ink2">Konten</strong> untuk mengubah warna aksen.
               </p>
             </div>
           )}
@@ -351,7 +351,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                       className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
                         form.bg_type === bt.value
                           ? 'bg-emerald-500/10 border-emerald-500/30 text-white'
-                          : 'bg-white/[0.02] border-white/5 text-gray-400 hover:border-white/15'
+                          : 'bg-ds-card2 border-ds-border text-ds-ink3 hover:border-white/15'
                       }`}
                     >
                       <input
@@ -364,7 +364,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                       />
                       <div>
                         <p className="text-xs font-black uppercase tracking-wide">{bt.label}</p>
-                        <p className="text-[10px] text-gray-600 mt-0.5">{bt.desc}</p>
+                        <p className="text-[10px] text-ds-ink2 mt-0.5">{bt.desc}</p>
                       </div>
                     </label>
                   ))}
@@ -392,9 +392,9 @@ const WebsiteEditorAdmin: React.FC = () => {
                         {uploading ? 'Mengupload...' : 'Upload Gambar dari Perangkat'}
                       </button>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-white/5" />
-                        <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">atau URL</span>
-                        <div className="flex-1 h-px bg-white/5" />
+                        <div className="flex-1 h-px bg-ds-card2" />
+                        <span className="text-[10px] text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
+                        <div className="flex-1 h-px bg-ds-card2" />
                       </div>
                       <input
                         className={inputCls}
@@ -404,7 +404,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                       />
                       {form.bg_value && (
                         <div
-                          className="mt-1 h-32 rounded-2xl border border-white/10 bg-center bg-cover relative overflow-hidden"
+                          className="mt-1 h-32 rounded-2xl border border-ds-border bg-center bg-cover relative overflow-hidden"
                           style={{ backgroundImage: `url(${form.bg_value})` }}
                         >
                           <div className="absolute inset-0 bg-black/20 flex items-end p-2">
@@ -422,7 +422,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                         onChange={e => set({ bg_value: e.target.value })}
                       />
                       {form.bg_value && (
-                        <div className="mt-3 h-12 rounded-2xl border border-white/10" style={{ background: form.bg_value }} />
+                        <div className="mt-3 h-12 rounded-2xl border border-ds-border" style={{ background: form.bg_value }} />
                       )}
                     </>
                   )}
@@ -444,19 +444,19 @@ const WebsiteEditorAdmin: React.FC = () => {
           </button>
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 px-5 py-3 bg-white/[0.04] border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+            className="flex items-center gap-2 px-5 py-3 bg-white/[0.04] border border-ds-border hover:bg-ds-card2 text-ds-ink3 hover:text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
           >
             <RotateCcw size={14} /> Reset ke Default
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/5 rounded-xl">
+          <div className="flex items-center gap-2 px-4 py-2 bg-ds-card2 border border-ds-border rounded-xl">
             <Layout size={12} className="text-emerald-600" />
             <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
             <Image size={12} className="text-emerald-600" />
           </div>
         </div>
 
-        <p className="text-[10px] text-gray-700 mt-3 leading-relaxed">
+        <p className="text-[10px] text-ds-ink2 mt-3 leading-relaxed">
           Perubahan disimpan ke Supabase dan langsung aktif di website setelah pengunjung refresh. Kosongkan field untuk kembali ke konten default.
         </p>
         </>

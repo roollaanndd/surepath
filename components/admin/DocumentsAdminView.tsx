@@ -39,12 +39,12 @@ const FILTER_TABS: { id: FilterTab; label: string }[] = [
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
-  <div className="rounded-2xl border border-white/5 bg-white/[0.03] overflow-hidden animate-pulse">
-    <div className="h-40 bg-white/5" />
+  <div className="rounded-2xl border border-ds-border bg-ds-card2 overflow-hidden animate-pulse">
+    <div className="h-40 bg-ds-card2" />
     <div className="p-4 space-y-2">
-      <div className="h-3 bg-white/10 rounded w-2/3" />
-      <div className="h-2.5 bg-white/5 rounded w-1/2" />
-      <div className="h-2.5 bg-white/5 rounded w-1/3" />
+      <div className="h-3 bg-ds-card2 rounded w-2/3" />
+      <div className="h-2.5 bg-ds-card2 rounded w-1/2" />
+      <div className="h-2.5 bg-ds-card2 rounded w-1/3" />
     </div>
   </div>
 );
@@ -60,9 +60,9 @@ const DocCard: React.FC<{ doc: DocItem }> = ({ doc }) => {
   const showThumb = isBase64 || isImageUrl;
 
   return (
-    <div className="group rounded-2xl border border-white/5 bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.05] overflow-hidden transition-all flex flex-col">
+    <div className="group rounded-2xl border border-ds-border bg-ds-card2 hover:border-ds-border hover:bg-ds-card2 overflow-hidden transition-all flex flex-col">
       {/* Thumbnail / icon area */}
-      <div className="h-40 bg-white/5 flex items-center justify-center relative overflow-hidden">
+      <div className="h-40 bg-ds-card2 flex items-center justify-center relative overflow-hidden">
         {showThumb ? (
           <img
             src={doc.url}
@@ -74,7 +74,7 @@ const DocCard: React.FC<{ doc: DocItem }> = ({ doc }) => {
         ) : (
           <div className="flex flex-col items-center gap-2 opacity-40">
             {doc.isPdf ? <FileText size={36} className="text-blue-400" /> : <FileImage size={36} />}
-            <span className="text-[0.55rem] font-bold uppercase tracking-widest text-gray-400">
+            <span className="text-[0.55rem] font-bold uppercase tracking-widest text-ds-ink3">
               {doc.isPdf ? 'PDF' : 'Document'}
             </span>
           </div>
@@ -91,9 +91,9 @@ const DocCard: React.FC<{ doc: DocItem }> = ({ doc }) => {
       {/* Meta */}
       <div className="p-4 flex flex-col gap-1 flex-1">
         <p className="text-xs font-black text-white truncate">{doc.ownerName}</p>
-        <p className="text-[0.6rem] font-medium text-gray-500 truncate">{doc.ref}</p>
+        <p className="text-[0.6rem] font-medium text-ds-ink3 truncate">{doc.ref}</p>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[0.5rem] font-bold uppercase tracking-widest text-gray-600">
+          <span className="text-[0.5rem] font-bold uppercase tracking-widest text-ds-ink2">
             {doc.date ? new Date(doc.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
           </span>
           <span className={`text-[0.48rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
@@ -111,7 +111,7 @@ const DocCard: React.FC<{ doc: DocItem }> = ({ doc }) => {
           href={doc.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all text-[0.6rem] font-black uppercase tracking-widest text-gray-300 hover:text-white"
+          className="mt-3 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-ds-card2 hover:bg-ds-card2 border border-ds-border hover:border-ds-border transition-all text-[0.6rem] font-black uppercase tracking-widest text-ds-ink2 hover:text-white"
         >
           <Eye size={11} /> Buka
         </a>
@@ -312,8 +312,8 @@ const DocumentsAdminView: React.FC = () => {
 
       {/* Filter bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.03] border border-white/5 flex-wrap">
-          <Filter size={12} className="ml-2 text-gray-600 flex-shrink-0" />
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-ds-card2 border border-ds-border flex-wrap">
+          <Filter size={12} className="ml-2 text-ds-ink2 flex-shrink-0" />
           {FILTER_TABS.map(tab => (
             <button
               key={tab.id}
@@ -321,7 +321,7 @@ const DocumentsAdminView: React.FC = () => {
               className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
                 filter === tab.id
                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'text-gray-500 hover:text-white'
+                  : 'text-ds-ink3 hover:text-white'
               }`}
             >
               {tab.label}
@@ -331,13 +331,13 @@ const DocumentsAdminView: React.FC = () => {
 
         {/* Search */}
         <div className="relative flex-shrink-0">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-ds-ink3" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari nama / nomor..."
-            className="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-gray-600 outline-none focus:border-emerald-500/40 w-56"
+            className="pl-9 pr-4 py-2 rounded-xl bg-ds-card2 border border-ds-border text-xs text-white placeholder-gray-600 outline-none focus:border-emerald-500/40 w-56"
           />
         </div>
       </div>
@@ -349,10 +349,10 @@ const DocumentsAdminView: React.FC = () => {
         </div>
       ) : visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/5 flex items-center justify-center">
-            <FileImage size={28} className="text-gray-600" />
+          <div className="w-16 h-16 rounded-3xl bg-ds-card2 border border-ds-border flex items-center justify-center">
+            <FileImage size={28} className="text-ds-ink2" />
           </div>
-          <p className="text-sm font-black text-gray-500">
+          <p className="text-sm font-black text-ds-ink3">
             {search || filter !== 'all' ? 'Tidak ada dokumen yang cocok' : 'No documents uploaded yet'}
           </p>
           {(search || filter !== 'all') && (
@@ -366,7 +366,7 @@ const DocumentsAdminView: React.FC = () => {
         </div>
       ) : (
         <>
-          <p className="text-[0.55rem] font-bold uppercase tracking-widest text-gray-600">
+          <p className="text-[0.55rem] font-bold uppercase tracking-widest text-ds-ink2">
             {visible.length} dokumen
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

@@ -41,23 +41,23 @@ function extractVersions(overrides: SpVehicleOverride[]): string[] {
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{children}</p>
+  <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
 );
 
 const inputCls =
-  'bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const secondaryBtn =
-  'bg-white/[0.05] border border-white/10 hover:bg-white/10 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
+  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const dangerBtn =
   'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-xl px-3 py-2 font-black text-xs transition-colors';
 
 const editBtn =
-  'bg-white/[0.05] border border-white/10 hover:bg-white/10 text-slate-300 rounded-xl px-3 py-2 font-black text-xs transition-colors';
+  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink2 rounded-xl px-3 py-2 font-black text-xs transition-colors';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
@@ -65,10 +65,10 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   title, onClose, children,
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-    <div className="bg-[#0a0a0a] border border-white/10 rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between px-7 pt-7 pb-4 border-b border-white/5">
+    <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="flex items-center justify-between px-7 pt-7 pb-4 border-b border-ds-border">
         <h2 className="text-white font-black text-sm uppercase tracking-widest">{title}</h2>
-        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+        <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -157,9 +157,9 @@ const OverrideModal: React.FC<OverrideModalProps> = ({ initial, onSave, onClose 
           <SectionLabel>Diskon Rate (%)</SectionLabel>
           <div className="flex items-center gap-3">
             <input type="number" min={0} max={50} step={0.1} className={inputCls} value={(form.discount_rate * 100).toFixed(1)} onChange={e => set('discount_rate', parseFloat(e.target.value) / 100 || 0)} />
-            <span className="text-slate-400 font-black text-sm">%</span>
+            <span className="text-ds-ink3 font-black text-sm">%</span>
           </div>
-          <input type="range" min={0} max={50} step={0.1} value={form.discount_rate * 100} onChange={e => set('discount_rate', parseFloat(e.target.value) / 100)} className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10 accent-emerald-500 mt-2" />
+          <input type="range" min={0} max={50} step={0.1} value={form.discount_rate * 100} onChange={e => set('discount_rate', parseFloat(e.target.value) / 100)} className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-ds-card2 accent-emerald-500 mt-2" />
         </div>
         <div>
           <SectionLabel>Catatan</SectionLabel>
@@ -168,8 +168,8 @@ const OverrideModal: React.FC<OverrideModalProps> = ({ initial, onSave, onClose 
         <div className="flex items-center justify-between">
           <SectionLabel>Status Aktif</SectionLabel>
           <button type="button" onClick={() => set('is_active', !form.is_active)} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest">
-            {form.is_active ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} className="text-slate-500" />}
-            <span className={form.is_active ? 'text-emerald-400' : 'text-slate-500'}>{form.is_active ? 'Aktif' : 'Nonaktif'}</span>
+            {form.is_active ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} className="text-ds-ink3" />}
+            <span className={form.is_active ? 'text-emerald-400' : 'text-ds-ink3'}>{form.is_active ? 'Aktif' : 'Nonaktif'}</span>
           </button>
         </div>
         <div className="flex gap-3 pt-2">
@@ -318,7 +318,7 @@ const VehiclePricelistAdmin: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Manajemen</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Manajemen</p>
           <h1 className="text-2xl font-black text-white">Database Kendaraan</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -345,17 +345,17 @@ const VehiclePricelistAdmin: React.FC = () => {
 
       {/* Stats */}
       <div className="flex items-center gap-6 flex-wrap">
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Total</p>
+        <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Total</p>
           <p className="text-xl font-black text-white">{overrides.length}</p>
         </div>
-        <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Aktif</p>
+        <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Aktif</p>
           <p className="text-xl font-black text-emerald-400">{overrides.filter(o => o.is_active).length}</p>
         </div>
         {versions.length > 0 && (
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Versi</p>
+          <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
+            <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Versi</p>
             <p className="text-xl font-black text-white">{versions.length}</p>
           </div>
         )}
@@ -364,9 +364,9 @@ const VehiclePricelistAdmin: React.FC = () => {
       {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="relative max-w-sm flex-1">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ds-ink3" />
           <input
-            className="bg-white/[0.05] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white"
+            className="bg-ds-card2 border border-ds-border rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white"
             placeholder="Cari merek / model..."
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -374,7 +374,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         </div>
         {versions.length > 0 && (
           <select
-            className="bg-white/[0.05] border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+            className="bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
             value={activeVersion}
             onChange={e => setActiveVersion(e.target.value)}
           >
@@ -386,18 +386,18 @@ const VehiclePricelistAdmin: React.FC = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-16 text-slate-500 text-sm font-bold">Memuat data...</div>
+        <div className="text-center py-16 text-ds-ink3 text-sm font-bold">Memuat data...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-500 text-sm font-bold flex flex-col items-center gap-4">
-          <Car size={40} className="text-slate-600" />
+        <div className="text-center py-16 text-ds-ink3 text-sm font-bold flex flex-col items-center gap-4">
+          <Car size={40} className="text-ds-ink2" />
           {query || activeVersion ? 'Tidak ada hasil untuk filter ini.' : 'Belum ada data override. Klik "Tambah Override" atau "Sinkronisasi dari Database Bawaan".'}
         </div>
       ) : (
-        <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden">
+        <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
-                <tr className="text-[9px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5">
+                <tr className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                   <th className="text-left px-6 py-4">Merek / Model</th>
                   <th className="text-left px-4 py-4">Tahun</th>
                   <th className="text-right px-4 py-4">Harga List</th>
@@ -409,13 +409,13 @@ const VehiclePricelistAdmin: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-white/[0.03]">
                 {filtered.map(ov => (
-                  <tr key={ov.id} className={`hover:bg-white/[0.02] transition-colors ${!ov.is_active ? 'opacity-50' : ''}`}>
+                  <tr key={ov.id} className={`hover:bg-ds-card2 transition-colors ${!ov.is_active ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-3">
                       <p className="font-black text-white">{ov.brand}</p>
-                      <p className="text-[10px] text-slate-400">{ov.model}</p>
+                      <p className="text-[10px] text-ds-ink3">{ov.model}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-300 font-bold">{ov.ref_year}</td>
-                    <td className="px-4 py-3 text-right text-slate-300 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</td>
+                    <td className="px-4 py-3 text-ds-ink2 font-bold">{ov.ref_year}</td>
+                    <td className="px-4 py-3 text-right text-ds-ink2 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</td>
                     <td className="px-4 py-3 text-right text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</td>
                     <td className="px-4 py-3 text-right text-amber-400 font-black">{pct(ov.discount_rate)}</td>
                     <td className="px-4 py-3 text-center">
@@ -439,7 +439,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         </div>
       )}
 
-      <p className="text-[9px] text-slate-600 font-bold">
+      <p className="text-[9px] text-ds-ink2 font-bold">
         Override ini digunakan untuk menyesuaikan nilai pertanggungan kendaraan di luar database OJK standar.
         Data pasar aktif akan diprioritaskan saat agen memilih kendaraan dalam wizard.
       </p>

@@ -61,10 +61,10 @@ interface KpiCardProps {
 }
 
 const KpiCard: React.FC<KpiCardProps> = ({ label, value, sub }) => (
-  <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-6 flex flex-col gap-3">
-    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{label}</p>
+  <div className="bg-ds-card2 border border-ds-border rounded-[2rem] p-6 flex flex-col gap-3">
+    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">{label}</p>
     <p className="text-3xl font-black text-white leading-none">{value}</p>
-    {sub && <p className="text-[10px] text-slate-600 font-semibold">{sub}</p>}
+    {sub && <p className="text-[10px] text-ds-ink2 font-semibold">{sub}</p>}
   </div>
 );
 
@@ -147,11 +147,11 @@ const FinancialAdmin: React.FC = () => {
           <h2 className="text-2xl font-black uppercase tracking-tighter">
             Laporan <span className="text-emerald-500">Keuangan</span>
           </h2>
-          <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">
+          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
             Data real-time dari Supabase
           </p>
         </div>
-        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 gap-1">
+        <div className="flex bg-ds-card2 p-1 rounded-2xl border border-ds-border gap-1">
           {(['THIS_MONTH', 'LAST_MONTH', 'ALL'] as DateRange[]).map(r => (
             <button
               key={r}
@@ -159,7 +159,7 @@ const FinancialAdmin: React.FC = () => {
               className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
                 range === r
                   ? 'bg-emerald-500 text-white shadow-lg'
-                  : 'text-slate-500 hover:text-white'
+                  : 'text-ds-ink3 hover:text-white'
               }`}
             >
               {RANGE_LABELS[r]}
@@ -199,16 +199,16 @@ const FinancialAdmin: React.FC = () => {
           </div>
 
           {/* ── Recent Issued Orders ── */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] overflow-hidden">
-            <div className="px-6 py-5 border-b border-white/5">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+          <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
+            <div className="px-6 py-5 border-b border-ds-border">
+              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">
                 Order Terbaru — Status ISSUED
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[720px]">
                 <thead>
-                  <tr className="text-slate-500 text-[9px] font-black uppercase tracking-widest border-b border-white/5">
+                  <tr className="text-ds-ink3 text-[9px] font-black uppercase tracking-widest border-b border-ds-border">
                     <th className="px-6 py-3 text-left">Order#</th>
                     <th className="px-4 py-3 text-left">Klien</th>
                     <th className="px-4 py-3 text-left">Produk</th>
@@ -223,7 +223,7 @@ const FinancialAdmin: React.FC = () => {
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="text-center py-12 text-slate-600 font-bold">
+                      <td colSpan={9} className="text-center py-12 text-ds-ink2 font-bold">
                         Tidak ada data untuk periode ini.
                       </td>
                     </tr>
@@ -231,7 +231,7 @@ const FinancialAdmin: React.FC = () => {
                     orders.map(order => (
                       <tr
                         key={order.id}
-                        className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors"
+                        className="border-b border-ds-border hover:bg-ds-card2 transition-colors"
                       >
                         <td className="px-6 py-3 font-mono text-emerald-400 whitespace-nowrap">
                           {order.order_number ?? order.id.slice(0, 8)}
@@ -239,7 +239,7 @@ const FinancialAdmin: React.FC = () => {
                         <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">
                           {order.client_name}
                         </td>
-                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap">
                           {order.product_name}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">
@@ -254,10 +254,10 @@ const FinancialAdmin: React.FC = () => {
                         <td className="px-4 py-3 text-right font-mono text-amber-400 whitespace-nowrap">
                           {order.commission_amount ? formatIDR(order.commission_amount) : '—'}
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-right text-ds-ink3 whitespace-nowrap">
                           {order.coin_reward ? order.coin_reward.toLocaleString('id-ID') : '—'}
                         </td>
-                        <td className="px-6 py-3 text-right text-slate-500 whitespace-nowrap">
+                        <td className="px-6 py-3 text-right text-ds-ink3 whitespace-nowrap">
                           {fmtDate(order.created_at)}
                         </td>
                       </tr>

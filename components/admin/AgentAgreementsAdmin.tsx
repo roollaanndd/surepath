@@ -49,21 +49,21 @@ const AgentAgreementsAdmin: React.FC = () => {
           <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
             <ShieldCheck size={22} className="text-emerald-400" /> Perjanjian Mitra
           </h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
             {rows.length} mitra menyetujui · audit legal
           </p>
         </div>
         <button onClick={load}
-          className="w-9 h-9 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+          className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 hover:text-white transition-all">
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
       <div className="relative">
-        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ds-ink3" />
         <input value={q} onChange={e => setQ(e.target.value)}
           placeholder="Cari nama, nomor perjanjian, email, atau KTP…"
-          className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50" />
+          className="w-full h-11 pl-10 pr-4 rounded-xl bg-ds-card2 border border-ds-border text-sm text-white placeholder:text-ds-ink2 focus:outline-none focus:border-emerald-500/50" />
       </div>
 
       {loading ? (
@@ -71,14 +71,14 @@ const AgentAgreementsAdmin: React.FC = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">
+        <div className="text-center py-20 text-ds-ink3">
           <FileText size={32} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm font-bold">Belum ada perjanjian tercatat.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/5">
+        <div className="overflow-x-auto rounded-2xl border border-ds-border">
           <table className="w-full text-left">
-            <thead className="bg-white/[0.03] text-[9px] font-black uppercase tracking-widest text-slate-500">
+            <thead className="bg-ds-card2 text-[9px] font-black uppercase tracking-widest text-ds-ink3">
               <tr>
                 <th className="px-4 py-3">No. Perjanjian</th>
                 <th className="px-4 py-3">Nama & KTP</th>
@@ -90,17 +90,17 @@ const AgentAgreementsAdmin: React.FC = () => {
             </thead>
             <tbody className="text-xs">
               {filtered.map(r => (
-                <tr key={r.id} className="border-t border-white/[0.03] hover:bg-white/[0.02]">
+                <tr key={r.id} className="border-t border-ds-border hover:bg-ds-card2">
                   <td className="px-4 py-3 font-mono font-bold text-emerald-400 text-[0.7rem]">{r.agreement_no}</td>
                   <td className="px-4 py-3">
                     <p className="font-black text-white">{r.full_name}</p>
-                    <p className="font-mono text-slate-500 text-[0.65rem]">{maskKtp(r.ktp_number)}</p>
+                    <p className="font-mono text-ds-ink3 text-[0.65rem]">{maskKtp(r.ktp_number)}</p>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">
+                  <td className="px-4 py-3 text-ds-ink3">
                     <p>{r.agent_email ?? '—'}</p>
-                    <p className="text-[0.65rem] text-slate-600">{r.agent_phone ?? ''}</p>
+                    <p className="text-[0.65rem] text-ds-ink2">{r.agent_phone ?? ''}</p>
                   </td>
-                  <td className="px-4 py-3 text-slate-300 font-mono text-[0.68rem]">
+                  <td className="px-4 py-3 text-ds-ink2 font-mono text-[0.68rem]">
                     {new Date(r.accepted_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </td>
                   <td className="px-4 py-3">
@@ -108,7 +108,7 @@ const AgentAgreementsAdmin: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => download(r)}
-                      className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-emerald-400 hover:bg-white/10 transition-colors" title="Unduh PDF">
+                      className="p-1.5 rounded-lg bg-ds-card2 text-ds-ink3 hover:text-emerald-400 hover:bg-ds-card2 transition-colors" title="Unduh PDF">
                       <Download size={14} />
                     </button>
                   </td>

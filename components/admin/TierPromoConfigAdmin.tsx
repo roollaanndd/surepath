@@ -165,7 +165,7 @@ const TierConfigTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Info banner */}
-      <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-[11px] text-slate-400 space-y-1">
+      <div className="bg-ds-card2 border border-ds-border rounded-2xl p-4 text-[11px] text-ds-ink3 space-y-1">
         <p className="text-white font-bold text-xs mb-2">Cara Kerja Tier</p>
         <p>• <b>Override</b> = % dari <b>komisi</b> downline (bukan dari premi). <b>Bonus Koin</b> = koin tambahan per penjualan.</p>
         <p>• Threshold (jumlah polis / total premi) dipakai untuk evaluasi otomatis tier agen.</p>
@@ -183,7 +183,7 @@ const TierConfigTab: React.FC = () => {
           <button
             onClick={handleEvaluateAll}
             disabled={evaluating}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-white/5 text-slate-300 hover:bg-white/10 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all disabled:opacity-50"
           >
             <Sparkles size={12} /> {evaluating ? 'Mengevaluasi…' : 'Evaluasi Semua Agen'}
           </button>
@@ -207,20 +207,20 @@ const TierConfigTab: React.FC = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-black text-sm text-white truncate">{tier.name}</p>
-                    {tier.is_default && <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 bg-white/10 px-1.5 py-0.5 rounded">Default</span>}
+                    {tier.is_default && <span className="text-[8px] font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-1.5 py-0.5 rounded">Default</span>}
                     {tier.requires_approval && <span className="text-[8px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Butuh Persetujuan</span>}
                     {!tier.is_active && <span className="text-[8px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Nonaktif</span>}
                   </div>
-                  <p className="text-[10px] text-slate-500 font-mono">{tier.code} · {tier.min_policies_count ? `≥${tier.min_policies_count} polis` : ''} {tier.min_premium_amount ? `· ≥Rp${(tier.min_premium_amount / 1_000_000).toFixed(0)}jt` : ''}</p>
+                  <p className="text-[10px] text-ds-ink3 font-mono">{tier.code} · {tier.min_policies_count ? `≥${tier.min_policies_count} polis` : ''} {tier.min_premium_amount ? `· ≥Rp${(tier.min_premium_amount / 1_000_000).toFixed(0)}jt` : ''}</p>
                 </div>
               </div>
               {canManage && (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button onClick={() => handleReorder(idx, -1)} disabled={idx === 0} className="w-6 h-6 rounded-lg bg-white/5 text-slate-400 disabled:opacity-20 flex items-center justify-center"><ChevronUp size={12} /></button>
-                  <button onClick={() => handleReorder(idx, 1)} disabled={idx === tiers.length - 1} className="w-6 h-6 rounded-lg bg-white/5 text-slate-400 disabled:opacity-20 flex items-center justify-center"><ChevronDown size={12} /></button>
+                  <button onClick={() => handleReorder(idx, -1)} disabled={idx === 0} className="w-6 h-6 rounded-lg bg-ds-card2 text-ds-ink3 disabled:opacity-20 flex items-center justify-center"><ChevronUp size={12} /></button>
+                  <button onClick={() => handleReorder(idx, 1)} disabled={idx === tiers.length - 1} className="w-6 h-6 rounded-lg bg-ds-card2 text-ds-ink3 disabled:opacity-20 flex items-center justify-center"><ChevronDown size={12} /></button>
                   <button
                     onClick={() => isEditing ? cancelEdit() : startEdit(tier)}
-                    className="px-2.5 py-1.5 rounded-xl text-[0.58rem] font-black uppercase tracking-widest bg-white/5 text-slate-300 hover:bg-white/10 transition-all"
+                    className="px-2.5 py-1.5 rounded-xl text-[0.58rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all"
                   >
                     {isEditing ? 'Tutup' : 'Edit'}
                   </button>
@@ -241,7 +241,7 @@ const TierConfigTab: React.FC = () => {
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: tier.color + '14', border: `1px solid ${tier.color}22` }}>
                   <p className="font-black text-sm" style={{ color: tier.color }}>{pct(value)}</p>
-                  <p className="text-[0.55rem] font-bold opacity-50 mt-0.5 uppercase tracking-widest text-slate-300">{label}</p>
+                  <p className="text-[0.55rem] font-bold opacity-50 mt-0.5 uppercase tracking-widest text-ds-ink2">{label}</p>
                 </div>
               ))}
             </div>
@@ -268,7 +268,7 @@ const TierConfigTab: React.FC = () => {
       })}
 
       {creating && draft && (
-        <div className="rounded-[1.5rem] p-5 space-y-4 border border-white/10 bg-white/[0.02]">
+        <div className="rounded-[1.5rem] p-5 space-y-4 border border-ds-border bg-ds-card2">
           <p className="font-black text-sm text-white">Tier Baru</p>
           <TierEditForm
             draft={draft}
@@ -305,66 +305,66 @@ const TierEditForm: React.FC<{
   saving: boolean;
   error: string;
 }> = ({ draft, locked, onField, onRate, onToggleApprovalRole, onAddBenefit, onRemoveBenefit, onSetBenefit, onSave, onCancel, onMakeDefault, saving, error }) => (
-  <div className="space-y-4 pt-2 border-t border-white/10">
+  <div className="space-y-4 pt-2 border-t border-ds-border">
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Kode</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
         <input
           type="text" placeholder="GOLD" disabled={locked}
           value={draft.code ?? ''}
           onChange={e => onField('code', e.target.value.toUpperCase())}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40 disabled:opacity-40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40 disabled:opacity-40"
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Nama Tampilan</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Nama Tampilan</label>
         <input
           type="text" placeholder="Mitra Gold"
           value={draft.name ?? ''}
           onChange={e => onField('name', e.target.value)}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Warna</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Warna</label>
         <input
           type="color"
           value={draft.color ?? '#6b7280'}
           onChange={e => onField('color', e.target.value)}
-          className="w-full h-9 bg-black/30 border border-white/10 rounded-xl px-1 py-1"
+          className="w-full h-9 bg-black/30 border border-ds-border rounded-xl px-1 py-1"
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Emoji</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Emoji</label>
         <input
           type="text" placeholder="🏆" maxLength={4}
           value={draft.emoji ?? ''}
           onChange={e => onField('emoji', e.target.value)}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Min. Jumlah Polis</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Jumlah Polis</label>
         <input
           type="number" min={0} placeholder="Tanpa syarat"
           value={draft.min_policies_count ?? ''}
           onChange={e => onField('min_policies_count', e.target.value === '' ? null : Number(e.target.value))}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Min. Total Premi (IDR)</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Total Premi (IDR)</label>
         <input
           type="number" min={0} step={1000000} placeholder="Tanpa syarat"
           value={draft.min_premium_amount ?? ''}
           onChange={e => onField('min_premium_amount', e.target.value === '' ? null : Number(e.target.value))}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
@@ -376,15 +376,15 @@ const TierEditForm: React.FC<{
         { label: 'Override L2', field: 'l2_override_rate' as const, max: 5 },
       ].map(({ label, field, max }) => (
         <div key={field}>
-          <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">{label}</label>
+          <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5">{label}</label>
           <div className="flex items-center gap-1">
             <input
               type="number" min={0} max={max} step={0.5}
               value={(((draft[field] as number) ?? 0) * 100).toFixed(1)}
               onChange={e => onRate(field, e.target.value)}
-              className="w-full bg-black/30 border border-white/10 rounded-xl px-2 py-2 text-xs text-white font-mono focus:outline-none"
+              className="w-full bg-black/30 border border-ds-border rounded-xl px-2 py-2 text-xs text-white font-mono focus:outline-none"
             />
-            <span className="text-[10px] text-slate-500 flex-shrink-0">%</span>
+            <span className="text-[10px] text-ds-ink3 flex-shrink-0">%</span>
           </div>
         </div>
       ))}
@@ -393,24 +393,24 @@ const TierEditForm: React.FC<{
     {/* Benefits — generic key/value bag for future perks */}
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Benefit Tambahan</label>
+        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3">Benefit Tambahan</label>
         <button onClick={onAddBenefit} className="text-[9px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1"><Plus size={10} /> Tambah</button>
       </div>
       <div className="space-y-1.5">
-        {draft.benefitsList.length === 0 && <p className="text-[10px] text-slate-500">Belum ada benefit tambahan (mis. kuota lead, prioritas cair dana).</p>}
+        {draft.benefitsList.length === 0 && <p className="text-[10px] text-ds-ink3">Belum ada benefit tambahan (mis. kuota lead, prioritas cair dana).</p>}
         {draft.benefitsList.map((b, i) => (
           <div key={i} className="flex items-center gap-1.5">
             <input
               type="text" placeholder="nama_benefit"
               value={b.key}
               onChange={e => onSetBenefit(i, 'key', e.target.value)}
-              className="flex-1 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white font-mono focus:outline-none"
+              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-white font-mono focus:outline-none"
             />
             <input
               type="text" placeholder="nilai"
               value={b.value}
               onChange={e => onSetBenefit(i, 'value', e.target.value)}
-              className="flex-1 bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none"
+              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none"
             />
             <button onClick={() => onRemoveBenefit(i)} className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0"><X size={11} /></button>
           </div>
@@ -422,7 +422,7 @@ const TierEditForm: React.FC<{
     <div>
       <label className="flex items-center gap-2 mb-2 cursor-pointer">
         <input type="checkbox" checked={!!draft.requires_approval} onChange={e => onField('requires_approval', e.target.checked)} className="accent-emerald-500" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Butuh Persetujuan Level Atas</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink2">Butuh Persetujuan Level Atas</span>
       </label>
       {draft.requires_approval && (
         <div className="flex flex-wrap gap-1.5">
@@ -444,7 +444,7 @@ const TierEditForm: React.FC<{
     </div>
 
     {onMakeDefault && !draft.is_default && (
-      <button onClick={onMakeDefault} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all">
+      <button onClick={onMakeDefault} className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-all">
         Jadikan Tier Default (agen baru)
       </button>
     )}
@@ -459,7 +459,7 @@ const TierEditForm: React.FC<{
       >
         {saving ? 'Menyimpan…' : 'Simpan Tier'}
       </button>
-      <button onClick={onCancel} className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:bg-white/10 transition-all">
+      <button onClick={onCancel} className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:bg-ds-card2 transition-all">
         Batal
       </button>
     </div>
@@ -504,7 +504,7 @@ const TierRequestsTab: React.FC = () => {
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
-              filter === f ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-400'
+              filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3'
             }`}
           >
             {f === 'PENDING' ? 'Menunggu' : f === 'APPROVED' ? 'Disetujui' : 'Ditolak'}
@@ -517,20 +517,20 @@ const TierRequestsTab: React.FC = () => {
           <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : requests.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 text-sm">Tidak ada permintaan.</div>
+        <div className="text-center py-12 text-ds-ink3 text-sm">Tidak ada permintaan.</div>
       ) : (
         <div className="space-y-2">
           {requests.map(r => (
-            <div key={r.id} className="border border-white/10 rounded-2xl px-4 py-3 bg-white/[0.02]">
+            <div key={r.id} className="border border-ds-border rounded-2xl px-4 py-3 bg-ds-card2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-black text-white truncate">{r.sp_users?.name ?? r.agent_id}</p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-ds-ink3">
                     {r.current_tier_code ?? '—'} → <span className="text-emerald-400 font-bold">{r.requested_tier_code}</span>
                     {' · '}{r.source === 'AUTO_ELIGIBLE' ? 'Evaluasi otomatis' : 'Diajukan manual'}
                   </p>
-                  {r.reason && <p className="text-[10px] text-slate-500 mt-0.5">"{r.reason}"</p>}
-                  <p className="text-[9px] text-slate-600 mt-0.5">{new Date(r.requested_at).toLocaleString('id-ID')}</p>
+                  {r.reason && <p className="text-[10px] text-ds-ink3 mt-0.5">"{r.reason}"</p>}
+                  <p className="text-[9px] text-ds-ink2 mt-0.5">{new Date(r.requested_at).toLocaleString('id-ID')}</p>
                 </div>
                 {r.status === 'PENDING' && (
                   <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -637,7 +637,7 @@ const PromoCodesTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-black text-white">Kode Promo Nasabah</p>
-          <p className="text-[10px] text-slate-500">{active.length} aktif · {expired.length} nonaktif/kadaluarsa</p>
+          <p className="text-[10px] text-ds-ink3">{active.length} aktif · {expired.length} nonaktif/kadaluarsa</p>
         </div>
         <button
           onClick={() => setShowForm(f => !f)}
@@ -650,25 +650,25 @@ const PromoCodesTab: React.FC = () => {
 
       {/* Create form */}
       {showForm && (
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 space-y-4">
+        <div className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-4">
           <p className="text-xs font-black text-white">Kode Promo Baru</p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Kode</label>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
               <input
                 type="text" placeholder="PROMO10"
                 value={form.code}
                 onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Jenis Diskon</label>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Jenis Diskon</label>
               <select
                 value={form.discount_type}
                 onChange={e => setForm(p => ({ ...p, discount_type: e.target.value as 'PERCENT' | 'FLAT' }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               >
                 <option value="PERCENT">Persen (%)</option>
                 <option value="FLAT">Nominal (IDR)</option>
@@ -678,48 +678,48 @@ const PromoCodesTab: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">
                 Nilai {form.discount_type === 'PERCENT' ? '(%)' : '(IDR)'}
               </label>
               <input
                 type="number" min={0}
                 value={form.discount_value}
                 onChange={e => setForm(p => ({ ...p, discount_value: parseFloat(e.target.value) }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Kuota</label>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kuota</label>
               <input
                 type="number" min={1}
                 value={form.usage_limit}
                 onChange={e => setForm(p => ({ ...p, usage_limit: parseInt(e.target.value) }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Mulai</label>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Mulai</label>
               <input
                 type="date" value={form.valid_from}
                 onChange={e => setForm(p => ({ ...p, valid_from: e.target.value }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Akhir</label>
+              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Akhir</label>
               <input
                 type="date" value={form.valid_to}
                 onChange={e => setForm(p => ({ ...p, valid_to: e.target.value }))}
-                className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Berlaku untuk Produk</label>
+            <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Berlaku untuk Produk</label>
             <div className="flex flex-wrap gap-2">
               {PRODUCT_OPTIONS.map(p => (
                 <button
@@ -738,12 +738,12 @@ const PromoCodesTab: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Deskripsi (opsional)</label>
+            <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Deskripsi (opsional)</label>
             <input
               type="text" placeholder="Promo Lebaran 2026"
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+              className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
             />
           </div>
 
@@ -765,7 +765,7 @@ const PromoCodesTab: React.FC = () => {
           <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : codes.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 text-sm">
+        <div className="text-center py-12 text-ds-ink3 text-sm">
           <Tag size={28} className="mx-auto mb-2 opacity-30" />
           Belum ada kode promo
         </div>
@@ -788,7 +788,7 @@ const PromoCodesTab: React.FC = () => {
                     {isExpired && <span className="text-[8px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Kadaluarsa</span>}
                     {!isExpired && c.is_active && <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Aktif</span>}
                   </div>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-ds-ink3">
                     {c.discount_type === 'PERCENT' ? `${c.discount_value}% diskon` : `IDR ${c.discount_value.toLocaleString('id-ID')} diskon`}
                     {' · '}{c.applicable_products.join(', ')}
                     {' · '}{c.used_count}/{c.usage_limit} digunakan
@@ -826,11 +826,11 @@ const TierPromoConfigAdmin: React.FC = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="font-black text-white text-lg">Konfigurasi Tier &amp; Promo</h2>
-        <p className="text-slate-400 text-xs mt-0.5">Atur tier mitra, persetujuan tier, dan kode promo nasabah</p>
+        <p className="text-ds-ink3 text-xs mt-0.5">Atur tier mitra, persetujuan tier, dan kode promo nasabah</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 bg-white/[0.03] border border-white/5 rounded-2xl p-1">
+      <div className="flex gap-2 bg-ds-card2 border border-ds-border rounded-2xl p-1">
         {([
           { id: 'tier' as const, label: 'Tier Mitra' },
           { id: 'requests' as const, label: 'Persetujuan Tier' },
@@ -840,7 +840,7 @@ const TierPromoConfigAdmin: React.FC = () => {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex-1 py-2.5 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all ${
-              tab === t.id ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'
+              tab === t.id ? 'bg-emerald-500 text-white' : 'text-ds-ink3 hover:text-ds-ink2'
             }`}
           >
             {t.label}

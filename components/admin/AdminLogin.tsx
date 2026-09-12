@@ -208,7 +208,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     type="email" required autoComplete="username"
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="admin@surepath.ai"
-                    className="block w-full pl-10 pr-4 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
+                    className="block w-full pl-10 pr-4 py-3 rounded-xl text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
                     onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
                     onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
@@ -227,7 +227,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     type={showPass ? 'text' : 'password'} required autoComplete="current-password"
                     value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="block w-full pl-10 pr-11 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
+                    className="block w-full pl-10 pr-11 py-3 rounded-xl text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
                     onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
                     onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}

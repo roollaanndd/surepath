@@ -14,7 +14,7 @@ const SEVERITY_BG: Record<string, string> = {
 };
 
 const PRIORITY_COLOR: Record<string, string> = {
-  LOW:    'text-slate-400',
+  LOW:    'text-ds-ink3',
   MEDIUM: 'text-amber-400',
   HIGH:   'text-rose-400',
 };
@@ -63,18 +63,18 @@ const AIFinanceView: React.FC = () => {
             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">AI Finance Agent</p>
           </div>
           <h2 className="text-2xl font-black text-white">Analisis Keuangan Cerdas</h2>
-          <p className="text-xs text-slate-400 mt-1">Analisis keuangan mendalam dengan kecerdasan buatan SurePath AI</p>
+          <p className="text-xs text-ds-ink3 mt-1">Analisis keuangan mendalam dengan kecerdasan buatan SurePath AI</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-3 py-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periode</span>
+          <div className="flex items-center gap-2 bg-ds-card2 border border-ds-border rounded-2xl px-3 py-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Periode</span>
             <select
               value={period}
               onChange={e => setPeriod(+e.target.value)}
               className="bg-transparent text-white text-[10px] font-black focus:outline-none"
             >
               {[7, 14, 30, 60, 90].map(d => (
-                <option key={d} value={d} className="bg-[#111]">{d} hari</option>
+                <option key={d} value={d} className="bg-ds-card">{d} hari</option>
               ))}
             </select>
           </div>
@@ -91,12 +91,12 @@ const AIFinanceView: React.FC = () => {
 
       {/* Empty state */}
       {!analysis && !loading && !error && (
-        <div className="text-center py-20 bg-white/[0.01] border border-white/5 rounded-[2rem]">
+        <div className="text-center py-20 bg-white/[0.01] border border-ds-border rounded-[2rem]">
           <div className="w-16 h-16 mx-auto bg-emerald-500/10 rounded-[1.5rem] flex items-center justify-center mb-4">
             <BarChart3 size={28} className="text-emerald-400" />
           </div>
           <p className="text-white font-black text-lg mb-2">Siap Menganalisis</p>
-          <p className="text-slate-400 text-sm mb-6 max-w-xs mx-auto">
+          <p className="text-ds-ink3 text-sm mb-6 max-w-xs mx-auto">
             Klik "Jalankan Analisis" untuk mendapatkan laporan keuangan mendalam dari AI Finance Agent
           </p>
           <button
@@ -113,7 +113,7 @@ const AIFinanceView: React.FC = () => {
       {loading && (
         <div className="flex flex-col items-center py-20 gap-4">
           <div className="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI sedang menganalisis data keuangan…</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">AI sedang menganalisis data keuangan…</p>
         </div>
       )}
 
@@ -146,8 +146,8 @@ const AIFinanceView: React.FC = () => {
 
           {/* Health score + summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="col-span-2 md:col-span-1 bg-white/[0.03] border border-white/5 rounded-[2rem] p-6 flex flex-col items-center justify-center">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Skor Kesehatan</p>
+            <div className="col-span-2 md:col-span-1 bg-ds-card2 border border-ds-border rounded-[2rem] p-6 flex flex-col items-center justify-center">
+              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Skor Kesehatan</p>
               <p className={`text-5xl font-black ${HEALTH_COLOR(analysis.health_score)}`}>{analysis.health_score}</p>
               <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${HEALTH_COLOR(analysis.health_score)}`}>{HEALTH_LABEL(analysis.health_score)}</p>
             </div>
@@ -156,12 +156,12 @@ const AIFinanceView: React.FC = () => {
               { label: 'Total Komisi', value: formatIDR(s.total_commissions), icon: DollarSign, color: 'text-blue-400' },
               { label: 'Pendapatan Bersih', value: formatIDR(s.net_revenue ?? (s.total_gwp - s.total_commissions - (s.total_claims ?? 0))), icon: CheckCircle, color: 'text-emerald-400' },
             ].map(metric => (
-              <div key={metric.label} className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-5">
-                <div className={`w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center mb-3 ${metric.color}`}>
+              <div key={metric.label} className="bg-ds-card2 border border-ds-border rounded-[2rem] p-5">
+                <div className={`w-8 h-8 rounded-xl bg-ds-card2 flex items-center justify-center mb-3 ${metric.color}`}>
                   <metric.icon size={16} />
                 </div>
                 <p className={`text-xl font-black ${metric.color}`}>{metric.value}</p>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-1">{metric.label}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{metric.label}</p>
               </div>
             ))}
           </div>
@@ -185,7 +185,7 @@ const AIFinanceView: React.FC = () => {
               ].map(ratio => (
                 <div key={ratio.label} className={`p-4 rounded-2xl border ${ratio.ok ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{ratio.label}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">{ratio.label}</p>
                     <span className={`text-[9px] font-black ${ratio.ok ? 'text-emerald-400' : 'text-rose-400'}`}>{ratio.ok ? '✓' : '✗'} Target {ratio.target}</span>
                   </div>
                   <p className={`text-2xl font-black ${ratio.ok ? 'text-emerald-400' : 'text-rose-400'}`}>{ratio.value}</p>
@@ -195,18 +195,18 @@ const AIFinanceView: React.FC = () => {
           )}
 
           {/* AI Insights */}
-          <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6">
+          <div className="bg-ds-card2 border border-ds-border rounded-[2rem] p-6">
             <div className="flex items-center gap-2 mb-4">
               <Bot size={14} className="text-emerald-400" />
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Analisis AI</p>
             </div>
-            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{analysis.insights}</p>
+            <p className="text-sm text-ds-ink2 leading-relaxed whitespace-pre-line">{analysis.insights}</p>
           </div>
 
           {/* Anomalies */}
           {analysis.anomalies.length > 0 && (
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anomali Terdeteksi ({analysis.anomalies.length})</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Anomali Terdeteksi ({analysis.anomalies.length})</p>
               {analysis.anomalies.map((a, i) => (
                 <div key={i} className={`flex items-start gap-3 p-4 rounded-2xl border ${SEVERITY_BG[a.severity] ?? SEVERITY_BG.MEDIUM}`}>
                   <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
@@ -225,16 +225,16 @@ const AIFinanceView: React.FC = () => {
           {/* Recommendations */}
           {analysis.recommendations.length > 0 && (
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rekomendasi Tindakan</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Rekomendasi Tindakan</p>
               {analysis.recommendations.map((r, i) => (
-                <div key={i} className="flex items-start gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                  <div className={`w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-xs font-black ${PRIORITY_COLOR[r.priority]}`}>{i + 1}</div>
+                <div key={i} className="flex items-start gap-4 p-4 bg-ds-card2 border border-ds-border rounded-2xl">
+                  <div className={`w-6 h-6 rounded-full bg-ds-card2 flex items-center justify-center flex-shrink-0 text-xs font-black ${PRIORITY_COLOR[r.priority]}`}>{i + 1}</div>
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className={`text-[9px] font-black uppercase tracking-widest ${PRIORITY_COLOR[r.priority]}`}>{r.priority}</span>
                     </div>
                     <p className="text-sm font-bold text-white">{r.action}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{r.impact}</p>
+                    <p className="text-xs text-ds-ink3 mt-0.5">{r.impact}</p>
                   </div>
                 </div>
               ))}
@@ -242,7 +242,7 @@ const AIFinanceView: React.FC = () => {
           )}
 
           {/* Footer */}
-          <p className="text-[9px] text-slate-600 text-center">
+          <p className="text-[9px] text-ds-ink2 text-center">
             Analisis dihasilkan {analysis.generated_at ? new Date(analysis.generated_at).toLocaleString('id-ID') : ''}
             {' '}· Periode {analysis.period_days} hari · Didukung SurePath AI
           </p>

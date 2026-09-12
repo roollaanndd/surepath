@@ -22,7 +22,7 @@ const STATUS_META: Record<SpPolicyOrder['status'], { en: string; id: string; col
   SUBMITTED:    { en: 'Submitted',    id: 'Diajukan',    color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',       Icon: Clock },
   UNDER_REVIEW: { en: 'In Review',    id: 'Ditinjau',    color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',            Icon: Eye },
   APPROVED:     { en: 'Approved',     id: 'Disetujui',   color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit', color: 'bg-[#16a34a]/10 text-[#16a34a]',                                            Icon: FileText },
+  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit', color: 'bg-ds-green/10 text-ds-green',                                            Icon: FileText },
   REJECTED:     { en: 'Rejected',     id: 'Ditolak',     color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',             Icon: XCircle },
   CANCELLED:    { en: 'Cancelled',    id: 'Dibatalkan',  color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',         Icon: XCircle },
 };
@@ -45,7 +45,7 @@ const OrderSheet: React.FC<{
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
       <div className="flex-1 bg-black/60 backdrop-blur-sm" />
       <div
-        className="bg-white dark:bg-[#111] rounded-t-[2.5rem] p-6 pb-10 max-h-[85dvh] overflow-y-auto"
+        className="bg-white dark:bg-ds-card rounded-t-[2.5rem] p-6 pb-10 max-h-[85dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
@@ -141,7 +141,7 @@ const OrderSheet: React.FC<{
               <button
                 onClick={onPay}
                 disabled={paying}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-br from-ds-green to-ds-green-dk disabled:opacity-50 text-white rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all"
               >
                 {paying ? <Loader2 size={12} className="animate-spin" /> : <CreditCard size={12} />}
                 {paying ? t('Creating Invoice…', 'Membuat Invoice…') : t('Pay Premium', 'Bayar Premi')}
@@ -249,7 +249,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(f.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === f.id
-                ? 'bg-[#16a34a] text-white shadow-md shadow-[#16a34a]/25'
+                ? 'bg-ds-green text-white shadow-md shadow-ds-green/25'
                 : 'bg-white dark:bg-white/5 text-slate-400 border border-slate-100 dark:border-white/10'
             }`}
           >
@@ -264,7 +264,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-9 h-9 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
+          <div className="w-9 h-9 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
         </div>
       ) : visible.length === 0 ? (
         <AgentEmpty
@@ -298,7 +298,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                       <meta.Icon size={9} />
                       {lang === Language.EN ? meta.en : meta.id}
                     </span>
-                    <span className="text-[9px] font-bold text-[#16a34a]">{formatIDR(order.total_premium)}</span>
+                    <span className="text-[9px] font-bold text-ds-green">{formatIDR(order.total_premium)}</span>
                     {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (() => {
                       const pmt = payments[order.id];
                       if (pmt?.status === 'PAID') return (

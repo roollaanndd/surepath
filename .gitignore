@@ -55,3 +55,9 @@ QS-SP-*.pdf
 
 # Bundle server dev — TIDAK boleh masuk dist/ (folder publik Vercel)
 build-server
+
+# Android release signing — keystore passwords in plain text.
+# The *.keystore/*.jks files were already ignored but this properties file,
+# which holds storePassword and keyPassword, was not.
+android/keystore.properties
+keystore.properties

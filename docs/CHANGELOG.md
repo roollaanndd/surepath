@@ -4,6 +4,41 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.12 — 2026-09-12
+
+### Apps mitra: hijaunya ternyata bukan hijau brand
+
+169 hex hardcoded di `components/agent/` diganti token. Yang paling menonjol: **`#16a34a` dipakai 116 kali** — itu Tailwind green-600, sedangkan primary SurePath adalah `#00C16A`. Tidak ada token yang mendefinisikannya dan tidak ada dokumen yang menyebutnya sebagai warna mitra; ini drift, bukan sub-brand. Itulah sebabnya apps mitra selalu terasa "hampir" sewarna dengan produk lain tapi tidak pernah persis.
+
+Kelompok kedua lebih halus: beberapa hex adalah **salinan literal nilai token mode-gelap** —
+
+| Hex | Sebenarnya |
+|---|---|
+| `#8E95A8` | `--ds-text-muted` (dark) |
+| `#2C3142` | `--ds-surface-2` (dark) |
+| `#3A3F52` | `--ds-border` (dark) |
+| `#242836` | `--ds-surface` (dark) |
+| `#B8BFD0` | `--ds-text-secondary` (dark) |
+
+Disalin sebagai konstanta, nilai-nilai itu membeku di versi gelap dan tidak bisa mengikuti tema di mode terang.
+
+**Kelas `slate/gray` mentah di apps mitra sengaja TIDAK disentuh.** Berbeda dari CMS, apps mitra sudah light-first dan sehat: 464 varian `dark:`, root sudah `bg-ds-bg dark:bg-ds-dk-bg`. Mengganti `text-slate-400` yang berpasangan dengan `dark:text-slate-500` justru merusak — token-nya akan dikalahkan oleh override `dark:` di sebelahnya. Itu perlu penggantian berpasangan, bukan per kelas.
+
+**Apps nasabah tidak diubah** — sudah bersih sejak awal: 198 token, 0 warna mentah, 0 hex.
+
+### Kesiapan rilis Android
+
+`versionName` masih **"1.0.1"** sementara aplikasi sudah 2.5.11 — dua puluhan rilis melenceng. Upload Play dengan versi salah tidak bisa dikaitkan dengan laporan crash atau entri changelog, dan tidak ada apa pun di build yang menyuarakan ketidakcocokan itu.
+
+- `scripts/sync-android-version.mjs` menyelaraskan `versionName` dari `src/version.ts` dan menaikkan `versionCode` satu langkah (tidak pernah menurunkan — Play tidak pernah memakai ulang nomor).
+- `npm run check:android` gagal bila melenceng · `npm run build:android` melakukan sync → build → `cap sync`.
+- `allowBackup` **true → false** plus `data_extraction_rules.xml`. Aplikasi ini menyimpan NIK, dokumen polis, dan sesi aktif; auto-backup Android akan menyalinnya ke Google Drive pengguna, di luar kendali kita.
+- **`keystore.properties` ternyata belum ada di `.gitignore`** — berkas itu berisi `storePassword` dan `keyPassword` polos. Berkas `*.keystore` sudah diabaikan, properties-nya tidak. Sudah ditambahkan; riwayat git diperiksa dan tidak pernah ada yang ter-commit.
+
+`docs/PLAY_STORE.md` berisi rencana lengkap: apa yang sudah siap (targetSdk 36, signing config, ikon 512×512, feature graphic 1024×500, halaman privasi), apa yang hanya bisa dikerjakan pemilik (keystore, akun developer, data safety), urutan eksekusi, dan risiko penolakan — termasuk satu yang nyata: **reviewer Play akan mencoba membeli polis, dan `sp_payments` masih kosong.**
+
+---
+
 ## v2.5.11 — 2026-09-12
 
 ### CMS akhirnya memakai tema aplikasi

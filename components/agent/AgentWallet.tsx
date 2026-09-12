@@ -55,7 +55,7 @@ interface SavedAccount {
 const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () => void; onCancel: () => void }> = ({ amount, fee, onAccept, onCancel }) => {
   const [agreed, setAgreed] = useState(false);
   return (
-    <div className="fixed inset-0 z-50 bg-[#003B2F]/70 backdrop-blur-sm flex items-end justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-sp-emerald/70 backdrop-blur-sm flex items-end justify-center p-4">
       <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-md p-6 space-y-5">
         <h3 className="text-base font-black text-ds-ink">Syarat Penarikan Dana</h3>
         <div className="space-y-2.5 text-[11px] text-ds-ink2 leading-relaxed">

@@ -362,7 +362,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-[#16a34a] flex-shrink-0"
+                  className="mt-0.5 w-4 h-4 accent-ds-green flex-shrink-0"
                 />
                 <span className="text-xs font-medium text-gray-400 leading-relaxed">
                   {t(
@@ -384,7 +384,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                 className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-[#16a34a]" />
+                  <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-ds-green" />
                 ) : (
                   <>
                     <ShieldCheck size={16} />

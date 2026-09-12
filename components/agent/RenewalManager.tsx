@@ -139,7 +139,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
+        <div className="w-10 h-10 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
         <p className="text-sm text-slate-400 font-bold">{t('Loading renewals…', 'Memuat renewal…')}</p>
       </div>
     );
@@ -175,7 +175,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(b.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === b.id
-                ? 'bg-[#16a34a] text-white shadow-md shadow-[#16a34a]/25'
+                ? 'bg-ds-green text-white shadow-md shadow-ds-green/25'
                 : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -262,7 +262,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
                     ) : (
                       <button
                         onClick={() => setModal(order)}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-md shadow-[#16a34a]/25"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-br from-ds-green to-ds-green-dk text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-md shadow-ds-green/25"
                       >
                         <RefreshCw size={11} />
                         {t('Proses Renewal','Proses Renewal')}

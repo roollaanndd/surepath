@@ -107,7 +107,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({ order, agentId, lang, onClo
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm px-4 pb-8 sm:pb-0">
-      <div className="w-full max-w-md bg-white dark:bg-[#111] rounded-[2rem] border border-slate-100 dark:border-white/10 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-ds-card rounded-[2rem] border border-slate-100 dark:border-white/10 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-white/10">
           <div>
             <p className="font-black text-base tracking-tight">{t('Process Renewal', 'Proses Renewal')}</p>
@@ -141,7 +141,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({ order, agentId, lang, onClo
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="w-full py-3.5 bg-gradient-to-br from-[#16a34a] to-[#15803d] text-white rounded-2xl font-black text-sm tracking-tight disabled:opacity-60 active:scale-[0.98] motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-lg shadow-[#16a34a]/25"
+              className="w-full py-3.5 bg-gradient-to-br from-ds-green to-ds-green-dk text-white rounded-2xl font-black text-sm tracking-tight disabled:opacity-60 active:scale-[0.98] motion-reduce:active:scale-100 hover:brightness-105 transition-all shadow-lg shadow-ds-green/25"
             >
               {saving ? t('Creating…', 'Membuat…') : t('Create Renewal Order', 'Buat Order Renewal')}
             </button>

@@ -98,7 +98,7 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
       <div className="flex-1 bg-black/60 backdrop-blur-sm" />
       <div
-        className="bg-white dark:bg-[#111] rounded-t-[2.5rem] p-6 pb-10 max-h-[90dvh] overflow-y-auto font-sora"
+        className="bg-white dark:bg-ds-card rounded-t-[2.5rem] p-6 pb-10 max-h-[90dvh] overflow-y-auto font-sora"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -125,7 +125,7 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
             <select
               value={policyId}
               onChange={e => setPolicyId(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-ds-green"
             >
               <option value="">{t('Select a policy…', 'Pilih polis…')}</option>
               {policies.filter(p => p.status === 'ACTIVE').map(p => (
@@ -145,7 +145,7 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-ds-green"
             />
           </div>
 
@@ -159,7 +159,7 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
               value={location}
               onChange={e => setLocation(e.target.value)}
               placeholder={t('e.g. Jl. Sudirman, Jakarta', 'cth: Jl. Sudirman, Jakarta')}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-ds-green"
             />
           </div>
 
@@ -173,7 +173,7 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
               onChange={e => setChronology(e.target.value)}
               rows={4}
               placeholder={t('Describe what happened…', 'Jelaskan kronologi kejadian…')}
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#16a34a] resize-none"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-ds-green resize-none"
             />
           </div>
 
@@ -187,14 +187,14 @@ const SubmitClaimSheet: React.FC<SubmitSheetProps> = ({ agentId, policies, lang,
               value={estimated}
               onChange={e => setEstimated(e.target.value)}
               placeholder="0"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl text-sm font-medium border border-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-ds-green"
             />
           </div>
 
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full flex items-center justify-between p-5 bg-gradient-to-br from-[#16a34a] to-[#15803d] hover:brightness-105 disabled:opacity-60 rounded-2xl text-white font-black uppercase tracking-widest transition-all active:scale-95 motion-reduce:active:scale-100 shadow-lg shadow-[#16a34a]/25 group"
+            className="w-full flex items-center justify-between p-5 bg-gradient-to-br from-ds-green to-ds-green-dk hover:brightness-105 disabled:opacity-60 rounded-2xl text-white font-black uppercase tracking-widest transition-all active:scale-95 motion-reduce:active:scale-100 shadow-lg shadow-ds-green/25 group"
           >
             {saving ? t('Submitting…', 'Mengajukan…') : t('Submit Claim', 'Ajukan Klaim')}
             <ChevronRight className="group-hover:translate-x-1 transition-transform" size={18} />
@@ -215,7 +215,7 @@ const ClaimDetail: React.FC<{ claim: SpClaim; lang: Language; onClose: () => voi
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
       <div className="flex-1 bg-black/60 backdrop-blur-sm" />
       <div
-        className="bg-white dark:bg-[#111] rounded-t-[2.5rem] p-6 pb-10 max-h-[80dvh] overflow-y-auto"
+        className="bg-white dark:bg-ds-card rounded-t-[2.5rem] p-6 pb-10 max-h-[80dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
@@ -323,7 +323,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
       >
         <button
           onClick={() => setShowSubmit(true)}
-          className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-white text-[#0B3D2E] rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 motion-reduce:active:scale-100 hover:brightness-95 transition-all"
+          className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-white text-sp-emerald rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 motion-reduce:active:scale-100 hover:brightness-95 transition-all"
         >
           <Plus size={14} />
           {t('File Claim', 'Ajukan Klaim')}
@@ -337,7 +337,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={t('Search claims…', 'Cari klaim…')}
-          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#16a34a]"
+          className="w-full pl-10 pr-4 py-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ds-green"
         />
       </div>
 
@@ -349,7 +349,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(f.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === f.id
-                ? 'bg-[#16a34a] text-white shadow-md shadow-[#16a34a]/25'
+                ? 'bg-ds-green text-white shadow-md shadow-ds-green/25'
                 : 'bg-white dark:bg-white/5 text-slate-400 border border-slate-100 dark:border-white/10'
             }`}
           >
@@ -361,7 +361,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
       {/* Claims list */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-10 h-10 rounded-full border-4 border-[#16a34a]/20 border-t-[#16a34a] animate-spin motion-reduce:animate-none" />
+          <div className="w-10 h-10 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
         </div>
       ) : filtered.length === 0 ? (
         <AgentEmpty

@@ -191,7 +191,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const inputCls =
-  'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#16a34a] text-sm transition';
+  'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-ds-green text-sm transition';
 
 const PrimaryBtn: React.FC<{
   children: React.ReactNode;
@@ -203,7 +203,7 @@ const PrimaryBtn: React.FC<{
     type={type}
     onClick={onClick}
     disabled={disabled}
-    className="bg-[#16a34a] hover:bg-[#15803d] disabled:opacity-40 text-white rounded-2xl font-black uppercase tracking-widest px-6 py-3 transition text-sm"
+    className="bg-ds-green hover:bg-ds-green-dk disabled:opacity-40 text-white rounded-2xl font-black uppercase tracking-widest px-6 py-3 transition text-sm"
   >
     {children}
   </button>
@@ -707,22 +707,22 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               }}
               className={`flex flex-col items-center justify-center gap-4 rounded-[2rem] border-2 p-8 transition ${
                 isActive
-                  ? 'border-[#16a34a] bg-[#16a34a]/10'
-                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-[#86efac]'
+                  ? 'border-ds-green bg-ds-green/10'
+                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:border-ds-green'
               }`}
             >
               {type === 'CAR' ? (
                 <Car
-                  className={`w-12 h-12 ${isActive ? 'text-[#16a34a]' : 'text-slate-400'}`}
+                  className={`w-12 h-12 ${isActive ? 'text-ds-green' : 'text-slate-400'}`}
                 />
               ) : (
                 <Bike
-                  className={`w-12 h-12 ${isActive ? 'text-[#16a34a]' : 'text-slate-400'}`}
+                  className={`w-12 h-12 ${isActive ? 'text-ds-green' : 'text-slate-400'}`}
                 />
               )}
               <span
                 className={`font-black text-sm uppercase tracking-wide ${
-                  isActive ? 'text-[#16a34a]' : 'text-slate-600 dark:text-slate-300'
+                  isActive ? 'text-ds-green' : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
                 {type === 'CAR' ? 'Roda 4 (Mobil)' : 'Roda 2 (Motor)'}
@@ -745,7 +745,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           onClick={() => setUseManualClient(false)}
           className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition ${
             !useManualClient
-              ? 'bg-[#16a34a] text-white'
+              ? 'bg-ds-green text-white'
               : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
         >
@@ -756,7 +756,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           onClick={() => setUseManualClient(true)}
           className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition ${
             useManualClient
-              ? 'bg-[#16a34a] text-white'
+              ? 'bg-ds-green text-white'
               : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
         >
@@ -787,19 +787,19 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 onClick={() => setSelectedClient(c)}
                 className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition border ${
                   selectedClient?.id === c.id
-                    ? 'border-[#16a34a] bg-[#16a34a]/10'
+                    ? 'border-ds-green bg-ds-green/10'
                     : 'border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
-                <div className="w-9 h-9 rounded-full bg-[#16a34a]/20 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-[#16a34a]" />
+                <div className="w-9 h-9 rounded-full bg-ds-green/20 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-ds-green" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-800 dark:text-white">{c.name}</p>
                   <p className="text-xs text-slate-400">{c.phone}</p>
                 </div>
                 {selectedClient?.id === c.id && (
-                  <CheckCircle className="w-5 h-5 text-[#16a34a] ml-auto" />
+                  <CheckCircle className="w-5 h-5 text-ds-green ml-auto" />
                 )}
               </button>
             ))}
@@ -845,7 +845,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 maxLength={16}
               />
             </div>
-            <p className="text-xs text-[#16a34a] font-semibold flex items-center gap-1.5">
+            <p className="text-xs text-ds-green font-semibold flex items-center gap-1.5">
               <CheckCircle className="w-3.5 h-3.5" />
               Data klien baru otomatis tersimpan ke daftar Klien Anda.
             </p>
@@ -1208,12 +1208,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                   onClick={() => setCoverageType(ct)}
                   className={`rounded-2xl border-2 p-4 text-left transition ${
                     coverageType === ct
-                      ? 'border-[#16a34a] bg-[#16a34a]/10'
-                      : 'border-slate-200 dark:border-white/10 hover:border-[#86efac]'
+                      ? 'border-ds-green bg-ds-green/10'
+                      : 'border-slate-200 dark:border-white/10 hover:border-ds-green'
                   }`}
                 >
                   <p
-                    className={`font-black text-sm ${coverageType === ct ? 'text-[#16a34a]' : 'text-slate-700 dark:text-slate-200'}`}
+                    className={`font-black text-sm ${coverageType === ct ? 'text-ds-green' : 'text-slate-700 dark:text-slate-200'}`}
                   >
                     {ct === 'COMPREHENSIVE' ? 'Komprehensif (All Risk)' : 'TLO (Total Loss Only)'}
                   </p>
@@ -1244,7 +1244,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAddons((p) => ({ ...p, flood: e.target.checked }))
                 }
-                className="w-5 h-5 accent-[#16a34a]"
+                className="w-5 h-5 accent-ds-green"
               />
               <div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1261,7 +1261,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAddons((p) => ({ ...p, earthquake: e.target.checked }))
                 }
-                className="w-5 h-5 accent-[#16a34a]"
+                className="w-5 h-5 accent-ds-green"
               />
               <div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1278,7 +1278,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAddons((p) => ({ ...p, riot: e.target.checked }))
                 }
-                className="w-5 h-5 accent-[#16a34a]"
+                className="w-5 h-5 accent-ds-green"
               />
               <div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1314,7 +1314,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setAddons((p) => ({ ...p, paDriver: e.target.checked }))
                 }
-                className="w-5 h-5 accent-[#16a34a]"
+                className="w-5 h-5 accent-ds-green"
               />
               <div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -1379,8 +1379,8 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     onClick={() => setSelectedInsurerProduct(selected ? null : p)}
                     className={`text-left rounded-2xl border-2 p-4 transition ${
                       selected
-                        ? 'border-[#16a34a] bg-[#16a34a]/10'
-                        : 'border-slate-200 dark:border-white/10 hover:border-[#86efac]'
+                        ? 'border-ds-green bg-ds-green/10'
+                        : 'border-slate-200 dark:border-white/10 hover:border-ds-green'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -1388,7 +1388,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                         <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
                           className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
                       )}
-                      <p className={`font-black text-sm ${selected ? 'text-[#16a34a]' : 'text-slate-700 dark:text-slate-200'}`}>
+                      <p className={`font-black text-sm ${selected ? 'text-ds-green' : 'text-slate-700 dark:text-slate-200'}`}>
                         {p.insurer_name ?? p.insurer_code}
                       </p>
                     </div>
@@ -1662,7 +1662,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         <SectionCard>
           {/* Product badge */}
           <div className="flex flex-wrap gap-2 mb-5">
-            <span className="inline-flex items-center gap-1.5 bg-[#16a34a]/10 text-[#15803d] dark:text-[#22c55e] font-bold text-xs px-3 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1.5 bg-ds-green/10 text-ds-green-dk dark:text-ds-green font-bold text-xs px-3 py-1 rounded-full">
               <FileText className="w-3.5 h-3.5" />
               {code} — {name}
             </span>
@@ -1763,7 +1763,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <div className="mb-5">
                   <div className="flex justify-between items-center mb-2">
                     <Label>Diskon untuk Klien</Label>
-                    <span className="text-sm font-black text-[#16a34a]">{(discountRate * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-black text-ds-green">{(discountRate * 100).toFixed(1)}%</span>
                   </div>
                   <input
                     type="range"
@@ -1772,7 +1772,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     step={5}
                     value={Math.round(discountRate * 1000)}
                     onChange={e => setDiscountRate(parseInt(e.target.value, 10) / 1000)}
-                    className="w-full accent-[#16a34a]"
+                    className="w-full accent-ds-green"
                   />
                   <div className="flex justify-between text-[9px] text-slate-400 mt-1">
                     <span>0%</span><span>Max {(maxDisc * 100).toFixed(0)}%</span>
@@ -1792,7 +1792,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 )}
                 <div className="flex justify-between py-2.5">
                   <span className="font-black text-slate-700 dark:text-slate-200">Net Premi Klien</span>
-                  <span className="font-black text-[#16a34a] text-lg">{formatIDR(netPrem)}</span>
+                  <span className="font-black text-ds-green text-lg">{formatIDR(netPrem)}</span>
                 </div>
               </div>
 
@@ -1816,7 +1816,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         {/* ── Delivery Options ── */}
         <SectionCard>
           <h3 className="font-black text-slate-700 dark:text-slate-200 text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Package className="w-4 h-4 text-[#16a34a]" />
+            <Package className="w-4 h-4 text-ds-green" />
             Pengiriman Polis
           </h3>
 
@@ -1825,9 +1825,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setDeliveryMethod('DIGITAL')}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'DIGITAL' ? 'border-[#16a34a] bg-[#16a34a]/5' : 'border-slate-200 dark:border-white/10'}`}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'DIGITAL' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'DIGITAL' ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'DIGITAL' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Smartphone size={18} />
               </div>
               <div className="flex-1">
@@ -1841,9 +1841,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setDeliveryMethod('POS_STANDARD')}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_STANDARD' ? 'border-[#16a34a] bg-[#16a34a]/5' : 'border-slate-200 dark:border-white/10'}`}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_STANDARD' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_STANDARD' ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_STANDARD' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Mail size={18} />
               </div>
               <div className="flex-1">
@@ -1851,7 +1851,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <p className="text-[10px] text-slate-400">Jabodetabek Rp 10.000 · Luar Rp 15.000</p>
               </div>
               {deliveryMethod === 'POS_STANDARD' && (
-                <span className="text-xs font-black text-[#16a34a]">{formatIDR(deliveryFee)}</span>
+                <span className="text-xs font-black text-ds-green">{formatIDR(deliveryFee)}</span>
               )}
             </button>
 
@@ -1859,9 +1859,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setDeliveryMethod('POS_OVERNIGHT')}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_OVERNIGHT' ? 'border-[#16a34a] bg-[#16a34a]/5' : 'border-slate-200 dark:border-white/10'}`}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_OVERNIGHT' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_OVERNIGHT' ? 'bg-[#16a34a] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_OVERNIGHT' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Package size={18} />
               </div>
               <div className="flex-1">
@@ -1869,7 +1869,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <p className="text-[10px] text-slate-400">Jabodetabek Rp 20.000 · Luar Rp 25.000</p>
               </div>
               {deliveryMethod === 'POS_OVERNIGHT' && (
-                <span className="text-xs font-black text-[#16a34a]">{formatIDR(deliveryFee)}</span>
+                <span className="text-xs font-black text-ds-green">{formatIDR(deliveryFee)}</span>
               )}
             </button>
           </div>
@@ -1884,7 +1884,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     key={r}
                     type="button"
                     onClick={() => setDeliveryRegion(r)}
-                    className={`py-3 rounded-2xl border-2 text-xs font-black uppercase tracking-widest transition-all ${deliveryRegion === r ? 'border-[#16a34a] bg-[#16a34a]/10 text-[#15803d] dark:text-[#22c55e]' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}
+                    className={`py-3 rounded-2xl border-2 text-xs font-black uppercase tracking-widest transition-all ${deliveryRegion === r ? 'border-ds-green bg-ds-green/10 text-ds-green-dk dark:text-ds-green' : 'border-slate-200 dark:border-white/10 text-slate-400'}`}
                   >
                     {r === 'JABODETABEK' ? 'Jabodetabek' : 'Luar Jabodetabek'}
                   </button>
@@ -1938,7 +1938,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
     <div className="flex flex-col items-center gap-6 py-8">
       {submitting && (
         <>
-          <Loader2 className="w-16 h-16 text-[#16a34a] animate-spin" />
+          <Loader2 className="w-16 h-16 text-ds-green animate-spin" />
           <p className="text-slate-500 dark:text-slate-400 text-sm">Memproses order polis…</p>
         </>
       )}
@@ -1963,7 +1963,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           </p>
           <div className="bg-slate-50 dark:bg-white/5 rounded-2xl px-6 py-4 mb-4">
             <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Nomor Order</p>
-            <p className="text-2xl font-black text-[#16a34a]">{orderNumber}</p>
+            <p className="text-2xl font-black text-ds-green">{orderNumber}</p>
           </div>
 
           {/* Payment section */}
@@ -1998,7 +1998,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => window.open(invoiceUrl, '_blank', 'noopener,noreferrer')}
-                className="text-xs font-bold text-[#16a34a] underline"
+                className="text-xs font-bold text-ds-green underline"
               >
                 Buka Kembali Link Pembayaran
               </button>
@@ -2038,7 +2038,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] flex flex-col font-sora">
+    <div className="min-h-screen bg-ds-card2 dark:bg-ds-card flex flex-col font-sora">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-white/10">
         <button

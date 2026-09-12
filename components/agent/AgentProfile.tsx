@@ -190,7 +190,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               </div>
             )}
             <div className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow">
-              <Camera size={11} className="text-[#0B3D2E]" />
+              <Camera size={11} className="text-sp-emerald" />
             </div>
           </button>
           <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />

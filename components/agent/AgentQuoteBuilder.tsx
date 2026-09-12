@@ -700,9 +700,9 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
                     {lang === Language.EN ? p.enDesc : p.idDesc}
                   </p>
-                  {active && <CheckCircle2 size={14} className="text-[#16a34a] mt-2" />}
+                  {active && <CheckCircle2 size={14} className="text-ds-green mt-2" />}
                   {p.ojk && (
-                    <span className="mt-1.5 inline-block text-[8px] font-black uppercase tracking-widest bg-[#16a34a]/10 text-[#16a34a] px-2 py-0.5 rounded-full">OJK</span>
+                    <span className="mt-1.5 inline-block text-[8px] font-black uppercase tracking-widest bg-ds-green/10 text-ds-green px-2 py-0.5 rounded-full">OJK</span>
                   )}
                 </button>
               );
@@ -752,7 +752,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
                   className="w-full rounded-[1.5rem] overflow-hidden text-left active:scale-95 transition-all shadow-lg"
                 >
-                  <div className="bg-gradient-to-r from-[#16a34a] to-[#15803d] p-5">
+                  <div className="bg-gradient-to-r from-ds-green to-ds-green-dk p-5">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">🛒</div>
                       <div>
@@ -1005,47 +1005,47 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {step === 'quote_summary' && (product === 'CAR' || product === 'MOTORCYCLE') && (
         <div className="space-y-4">
           {/* Addon Coverage Selection */}
-          <div className="bg-white dark:bg-[#242836] rounded-2xl p-4 border border-gray-200 dark:border-[#3A3F52] space-y-3">
-            <p className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-[#B8BFD0]">Perluasan Jaminan</p>
+          <div className="bg-white dark:bg-ds-card rounded-2xl p-4 border border-gray-200 dark:border-ds-border space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-ds-ink2">Perluasan Jaminan</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setAddons(v => ({ ...v, flood: !v.flood }))}
-                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.flood ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.flood ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-ds-border bg-gray-50 dark:bg-ds-card2'}`}
               >
                 <p className="text-xs font-bold text-gray-800 dark:text-white">🌊 Banjir & Badai</p>
-                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Perluasan bencana alam</p>
+                <p className="text-[10px] text-gray-500 dark:text-ds-ink3">Perluasan bencana alam</p>
               </button>
               <button
                 onClick={() => setAddons(v => ({ ...v, earthquake: !v.earthquake }))}
-                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.earthquake ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.earthquake ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-ds-border bg-gray-50 dark:bg-ds-card2'}`}
               >
                 <p className="text-xs font-bold text-gray-800 dark:text-white">⚡ Gempa & Tsunami</p>
-                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Perluasan gempa bumi</p>
+                <p className="text-[10px] text-gray-500 dark:text-ds-ink3">Perluasan gempa bumi</p>
               </button>
               <button
                 onClick={() => setAddons(v => ({ ...v, riot: !v.riot }))}
-                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.riot ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.riot ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-ds-border bg-gray-50 dark:bg-ds-card2'}`}
               >
                 <p className="text-xs font-bold text-gray-800 dark:text-white">🔥 Huru-Hara</p>
-                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Kerusuhan & SRCC</p>
+                <p className="text-[10px] text-gray-500 dark:text-ds-ink3">Kerusuhan & SRCC</p>
               </button>
               <button
                 onClick={() => setAddons(v => ({ ...v, paDriver: !v.paDriver }))}
-                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.paDriver ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-[#3A3F52] bg-gray-50 dark:bg-[#2C3142]'}`}
+                className={`p-3 rounded-xl text-left border-2 transition-all ${addons.paDriver ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-gray-200 dark:border-ds-border bg-gray-50 dark:bg-ds-card2'}`}
               >
                 <p className="text-xs font-bold text-gray-800 dark:text-white">🧑‍✈️ PA Pengemudi</p>
-                <p className="text-[10px] text-gray-500 dark:text-[#8E95A8]">Kecelakaan diri pengemudi</p>
+                <p className="text-[10px] text-gray-500 dark:text-ds-ink3">Kecelakaan diri pengemudi</p>
               </button>
             </div>
             {/* TPL selector */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#8E95A8]">TPL (Tanggung Jawab Pihak Ketiga)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-ds-ink3">TPL (Tanggung Jawab Pihak Ketiga)</label>
               <div className="flex gap-2">
                 {[0, 10000000, 25000000, 50000000].map(limit => (
                   <button
                     key={limit}
                     onClick={() => setAddons(v => ({ ...v, tplLimit: v.tplLimit === limit ? 0 : limit }))}
-                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.tplLimit === limit ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-[#2C3142] text-gray-500 dark:text-[#8E95A8]'}`}
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.tplLimit === limit ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-ds-card2 text-gray-500 dark:text-ds-ink3'}`}
                   >
                     {limit === 0 ? 'Tidak' : `${limit / 1000000}jt`}
                   </button>
@@ -1054,13 +1054,13 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             </div>
             {/* PA Passenger seats */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#8E95A8]">PA Penumpang (jumlah kursi)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-ds-ink3">PA Penumpang (jumlah kursi)</label>
               <div className="flex gap-2">
                 {[0, 1, 2, 4].map(seats => (
                   <button
                     key={seats}
                     onClick={() => setAddons(v => ({ ...v, paPassengerSeats: v.paPassengerSeats === seats ? 0 : seats }))}
-                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.paPassengerSeats === seats ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-[#2C3142] text-gray-500 dark:text-[#8E95A8]'}`}
+                    className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${addons.paPassengerSeats === seats ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-ds-card2 text-gray-500 dark:text-ds-ink3'}`}
                   >
                     {seats === 0 ? 'Tidak' : `${seats} kursi`}
                   </button>

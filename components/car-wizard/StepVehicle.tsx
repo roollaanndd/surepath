@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2, AlertCircle } from 'lucide-react';
 import { VEHICLE_BRANDS, getModelsForBrand, getMarketValueForYear } from '../../services/vehicleDatabase';
 import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
+import { compressImageBase64 } from '../../services/geminiService';
 import { ScannerOverlay, formatIDR } from './WizardUI';
 import { REGEX } from '../../services/authService';
 
@@ -175,7 +176,12 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
     const reader = new FileReader();
     reader.onload = async () => {
         const base64 = reader.result as string;
-        setStnkBase64(base64);
+
+        // Keep only a downscaled copy in component state. This is read back
+        // solely by generateStnkPdf, and holding the raw multi-megabyte camera
+        // capture for the rest of the wizard is memory the Android WebView does
+        // not have to spare.
+        compressImageBase64(base64, 1600).then(setStnkBase64, () => setStnkBase64(base64));
 
         // Use the new structured STNK OCR service. Falls back to the legacy
         // Gemini path automatically if the new edge function isn't deployed.

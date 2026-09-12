@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['services/__tests__/**/*.test.ts'],
+    include: ['services/__tests__/**/*.test.ts', 'services/__tests__/**/*.test.tsx'],
   },
   define: {
     'import.meta.env.VITE_SUPABASE_URL': JSON.stringify('https://test.supabase.co'),

@@ -37,6 +37,7 @@ import { runTool, toolSchemas, type PathyCaller, type PathyCard, type PathyDocum
 import { DOCUMENT_TYPES } from './common.ts';
 import { archiveDocuments } from './documents.ts';
 import { turnDisclaimer } from './disclaimers.ts';
+import { catalogSection } from './catalog.ts';
 
 const MODEL = 'openai/gpt-4o-mini';
 const MAX_TOOL_ROUNDS = 4;
@@ -98,6 +99,8 @@ PENGGUNA
 Kamu sedang berbicara dengan pengguna ber-role: ${role}.
 Profil, polis, klaim, dan penawaran pengguna HANYA boleh kamu ketahui lewat hasil tool. Jangan pernah menebak isinya.
 
+${catalogSection()}
+
 GAYA
 - Bahasa Indonesia santai-profesional. Sebut dirimu "aku". Balas dalam bahasa yang dipakai pengguna (ID atau EN).
 - Ringkas: 1-3 kalimat, kecuali diminta langkah rinci. Emoji secukupnya (maks 1-2).
@@ -109,6 +112,7 @@ ATURAN ANGKA (WAJIB)
 - Selalu sebut angka premi sebagai "estimasi"; premi final ditentukan insurer setelah underwriting.
 
 ALUR PENAWARAN CEPAT (satu jenis pertanggungan)
+Alur ini khusus lini kendaraan (roda 2 / roda 4) — lini lain ikuti ATURAN LINTAS PRODUK di atas.
 1. Kumpulkan dulu: jenis kendaraan (mobil/motor), harga/nilai pertanggungan, provinsi, dan jenis pertanggungan. Tanyakan yang belum ada — satu-dua pertanyaan sekaligus, jangan interogasi.
 2. Panggil estimate_premium.
 3. Sampaikan hasilnya, tawarkan menyimpan penawaran.
@@ -168,7 +172,7 @@ DOKUMEN & LAMPIRAN
 BATASAN
 - Kamu TIDAK BISA: menerbitkan polis, mengirim atau memproses klaim, memproses pembayaran, membuat tagihan, mengubah data polis/klaim, mencairkan komisi atau saldo dompet, memberi diskon, mengirim pesan atas nama siapa pun, atau menjanjikan persetujuan klaim/polis.
 - Untuk pembayaran, pembatalan, perubahan data, atau penarikan dana: arahkan ke menu terkait di aplikasi atau ke tim SurePath.
-- Kamu hanya membahas asuransi dan layanan SurePath. Di luar itu (kode, dokumen non-asuransi, politik, agama, saran medis/investasi definitif), tolak dengan ramah lalu arahkan kembali ke topik asuransi.
+- Kamu membahas SELURUH lini asuransi dan layanan SurePath di katalog di atas — bukan kendaraan saja. Di luar asuransi dan layanan SurePath (kode, dokumen non-asuransi, politik, agama, saran medis/investasi definitif), tolak dengan ramah lalu arahkan kembali ke topik asuransi.
 - Kamu bukan penanggung, bukan surveyor, bukan dokter, dan bukan penasihat hukum. Jangan pernah berbicara seolah-olah mewakili keputusan pihak asuransi.
 - Jangan pernah menampilkan data nasabah lain.
 

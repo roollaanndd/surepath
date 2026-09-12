@@ -33,7 +33,7 @@ import { supabase } from './supabaseService';
 import { VEHICLE_BRANDS, getModelsForBrand } from './vehicleDatabase';
 import { REGEX } from './authService';
 import { lookupPlate } from './plateCodes';
-import { extractStnkData as legacyExtractStnkData } from './geminiService';
+import { extractStnkData as legacyExtractStnkData, compressImageBase64 } from './geminiService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -117,15 +117,33 @@ export async function extractStnkOcr(
   base64: string,
   mime = 'image/jpeg',
 ): Promise<StnkOcrResult> {
+  // Downscale FIRST. This path used to post the raw camera capture, which is
+  // the single cause behind both halves of the bug report: a 4-12 MB phone
+  // photo becomes a ~5.5-16 MB base64 request body, big enough to exhaust the
+  // Android WebView (the app looks like it closed itself) and big enough for
+  // the edge function to reject before the model sees anything (which reads as
+  // "the AI cannot read my STNK"). 1600px keeps STNK text legible — the legacy
+  // Gemini path has read these fine at 1200px — while cutting the payload by
+  // roughly an order of magnitude. compressImageBase64 resolves to the input
+  // unchanged if the image fails to load, so this cannot make the flow worse.
+  const compressed = await compressImageBase64(base64, 1600);
+
   // Strip data: prefix if present (Supabase functions want raw base64).
-  const rawBase64 = base64.includes(',')
-    ? base64.split(',')[1] ?? base64
-    : base64;
+  const rawBase64 = compressed.includes(',')
+    ? compressed.split(',')[1] ?? compressed
+    : compressed;
+
+  // The compressor re-encodes to JPEG, so the caller's mime (e.g. image/png
+  // or image/heic) would now mislabel the bytes and the model would fail to
+  // decode them. Read the type back off the data: prefix instead, and only
+  // fall back to the caller's value when compression returned the original.
+  const mimeMatch = compressed.match(/^data:([^;,]+)[;,]/);
+  const effectiveMime = mimeMatch ? mimeMatch[1] : mime;
 
   // Try the new structured edge function first.
   try {
     const { data, error } = await supabase.functions.invoke('stnk-ocr', {
-      body: { image_base64: rawBase64, mime_type: mime },
+      body: { image_base64: rawBase64, mime_type: effectiveMime },
     });
 
     if (error) {
@@ -141,7 +159,7 @@ export async function extractStnkOcr(
   // proxy under the hood). Returns a subset of fields but keeps the flow
   // working if the new edge function isn't deployed yet.
   try {
-    const legacy = await legacyExtractStnkData(base64, mime);
+    const legacy = await legacyExtractStnkData(compressed, effectiveMime);
     if (legacy.success && legacy.data) {
       return normaliseFromLegacy(legacy.data);
     }

@@ -175,6 +175,10 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
   const [payments, setPayments] = useState<Record<string, SpPayment>>({});
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  // The pay button used to just stop spinning when invoice creation failed,
+  // telling the agent nothing. They would assume the tap missed and retry
+  // forever, or assume the client had been billed when nobody had.
+  const [payError, setPayError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -191,6 +195,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
 
   const handlePay = async (order: SpPolicyOrder) => {
     setPayingOrderId(order.id);
+    setPayError(null);
     const result = await createXenditInvoice({
       order_id: order.id,
       order_number: order.order_number ?? order.id,
@@ -214,6 +219,12 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
         } as SpPayment,
       }));
       window.open(result.invoice_url, '_blank', 'noopener,noreferrer');
+    } else {
+      setPayError(
+        `Tagihan untuk ${order.order_number ?? order.id} gagal dibuat. ` +
+        'Klien belum ditagih dan polis belum aktif. Coba lagi sebentar; ' +
+        'kalau tetap gagal, teruskan nomor pesanan ini ke tim SurePath.',
+      );
     }
     setPayingOrderId(null);
   };
@@ -327,6 +338,18 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {payError && (
+        <div className="mx-4 mb-4 p-4 rounded-2xl bg-ds-amber-lt border border-ds-amber/30 flex items-start gap-3">
+          <p className="text-[0.7rem] text-ds-amber font-semibold leading-relaxed flex-1">{payError}</p>
+          <button
+            onClick={() => setPayError(null)}
+            className="text-[0.6rem] font-black uppercase tracking-widest text-ds-amber shrink-0"
+          >
+            Tutup
+          </button>
         </div>
       )}
 

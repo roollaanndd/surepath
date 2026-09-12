@@ -4,6 +4,51 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.13 — 2026-09-13
+
+### Nasabah dirayakan atas polis yang tidak pernah ditagih
+
+Ini penyebab **5 order / 0 invoice / 0 pembayaran**, dan jauh lebih buruk daripada sekadar funnel mampet.
+
+Di `CarInsuranceWizard`, saat pembuatan invoice gagal:
+
+```ts
+if (invoice?.invoice_url) { link = invoice.invoice_url; window.open(link); }
+// ...tidak ada else
+setInvoiceUrl(link);       // null
+setIsSuccess(true);        // layar sukses
+setShowBurst(true);        // confetti
+```
+
+Nasabah menyelesaikan seluruh wizard, pembuatan tagihan gagal diam-diam, lalu **aplikasi merayakannya dengan confetti**. Layar sukses hanya menampilkan tautan bayar lewat `{invoiceUrl && ...}` — jadi yang terlihat adalah "Pesanan Diterima" tanpa satu pun cara membayar. Mereka pulang dengan keyakinan sudah punya polis yang tidak pernah ada tagihannya.
+
+Sekarang kegagalan ditampilkan apa adanya: pesanan **tetap disimpan** (membuangnya hanya akan memancing pesanan ganda), confetti tidak jalan, dan muncul blok amber berisi nomor pesanan plus kalimat yang tidak bisa disalahpahami — *"Polis kamu belum aktif sampai premi dibayar."*
+
+Tiga titik lain dengan pola yang sama ikut diperbaiki:
+
+| Berkas | Dulu | Sekarang |
+|---|---|---|
+| `CarInsuranceWizard` | confetti + tanpa tautan bayar | blok amber + nomor pesanan |
+| `CustomInsuranceWizard` | `setError` ada tapi dirender di form, sedangkan layar sukses mengambil alih | pesan dipindah ke layar sukses |
+| `PAInsuranceWizard` | sama — `submitError` tidak pernah terlihat | pesan dipindah ke layar sukses |
+| `AgentOrderStatus` | tombol Bayar berhenti berputar, tanpa kata | banner amber + nomor pesanan |
+
+Dua di antaranya menarik: `setError` **sudah dipanggil**, hanya saja dirender di cabang form sementara `if (isSuccess)` mengambil alih layar lebih dulu. Perbaikan pertama saya sendiri kena jebakan ini dan baru ketahuan saat diperiksa ulang.
+
+`VehicleUnderwritingWizard` sudah benar sejak awal dan tidak disentuh.
+
+### Dua lubang keamanan dari advisor — sudah ditutup di produksi
+
+Keduanya bisa dijangkau hanya dengan anon key yang memang ikut terkirim ke browser.
+
+**`sp_db_object_backup` tanpa RLS.** Tabel ini menyimpan kolom `definition` — sumber SQL fungsi, trigger, dan policy database. Siapa pun bisa membacanya: peta lengkap logika keamanan sisi server. RLS dinyalakan, deny-all, sama seperti tabel sensitif lain.
+
+**`soft_delete()` bisa dipanggil pengguna biasa.** `SECURITY DEFINER`, dan satu-satunya pemeriksaannya adalah "sudah login" — **tidak ada cek kepemilikan**. Nasabah mana pun yang memegang sebuah row id bisa menghapus komisi, penarikan, atau pembayaran milik agen lain. `force_delete()` sebenarnya aman (ada `is_admin()`), tapi keduanya **tidak dipanggil dari kode aplikasi sama sekali** — diverifikasi di `services/`, `components/`, dan `supabase/functions/`. Keduanya alat operator, jadi PUBLIC memang tidak pernah butuh EXECUTE. Dicabut; `service_role` tidak terpengaruh.
+
+Diverifikasi setelah migrasi: `anon` dan `authenticated` kini `false`, `service_role` tetap `true`.
+
+---
+
 ## v2.5.12 — 2026-09-12
 
 ### Apps mitra: hijaunya ternyata bukan hijau brand

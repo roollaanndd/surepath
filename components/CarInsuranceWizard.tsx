@@ -60,6 +60,10 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  // Set when the order saved but the payment invoice could not be created.
+  // Before this existed the wizard celebrated anyway and the customer walked
+  // away believing they had bought a policy they had never been billed for.
+  const [invoiceFailed, setInvoiceFailed] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [vehicle, setVehicle] = useState({
@@ -495,6 +499,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
       // Create Xendit invoice for immediate payment
       let link: string | null = null;
+      let failed = false;
       if (!payLaterMode) {
         const invoice = await createXenditInvoice({
           order_id: order.id,
@@ -508,13 +513,20 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         if (invoice?.invoice_url) {
           link = invoice.invoice_url;
           window.open(link, '_blank', 'noopener,noreferrer');
+        } else {
+          // The order is real and saved — throwing here would be a lie and would
+          // tempt the customer into re-submitting a duplicate. Say plainly that
+          // billing failed and send them somewhere they can still pay.
+          failed = true;
         }
       }
 
       setInvoiceUrl(link);
+      setInvoiceFailed(failed);
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
-      setShowBurst(true);
+      // No confetti over a purchase nobody was billed for.
+      if (!failed) setShowBurst(true);
     } catch (e) {
       console.error('handlePaymentResult:', e);
       setSubmitError('Gagal memproses pesanan. Silakan coba lagi.');
@@ -587,6 +599,18 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
            </div>
 
            <div className="w-full max-w-sm space-y-4">
+              {invoiceFailed && (
+                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-700 flex items-center gap-2">
+                       <AlertTriangle size={14}/> Pesanan tersimpan, tagihan belum terbit
+                    </p>
+                    <p className="text-[0.7rem] text-amber-800 leading-relaxed">
+                       Pesanan <span className="font-bold">{orderNumber}</span> sudah tercatat, tapi halaman pembayaran
+                       gagal dibuat. <span className="font-bold">Polis kamu belum aktif sampai premi dibayar.</span>{' '}
+                       Buka menu Polis untuk mencoba membayar lagi, atau hubungi tim SurePath dengan menyebut nomor pesanan di atas.
+                    </p>
+                 </div>
+              )}
               {invoiceUrl && (
                  <a
                    href={invoiceUrl}

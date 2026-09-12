@@ -103,6 +103,10 @@ export default function CustomInsuranceWizard({
       if (invoice?.invoice_url) {
         setInvoiceUrl(invoice.invoice_url);
         window.open(invoice.invoice_url, '_blank', 'noopener,noreferrer');
+      } else {
+        // Silence here used to leave the buyer on a success screen with no way
+        // to pay, believing they were covered.
+        setError('Pesanan tersimpan, tapi halaman pembayaran gagal dibuat. Polis belum aktif sampai premi dibayar — coba lagi dari menu Polis, atau hubungi tim SurePath dengan menyebut nomor pesanan.');
       }
       setIsSuccess(true);
     } catch (e) {
@@ -130,6 +134,14 @@ export default function CustomInsuranceWizard({
             Pesanan berhasil dikirim. Polis aktif setelah pembayaran dikonfirmasi.
           </p>
         </div>
+        {error && (
+          <div className="w-full max-w-sm mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left">
+            <p className="text-[0.6rem] font-black uppercase tracking-widest text-amber-700 mb-1.5">
+              Tagihan belum terbit
+            </p>
+            <p className="text-[0.7rem] text-amber-800 leading-relaxed">{error}</p>
+          </div>
+        )}
         <div className="w-full max-w-sm bg-white dark:bg-white/5 border border-black/5 rounded-[3rem] p-8 space-y-4 shadow-xl mb-10">
           <div className="flex justify-between items-center text-[0.6rem] font-black uppercase text-gray-400 tracking-widest">
             <span>No. Pesanan</span>

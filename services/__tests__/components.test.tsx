@@ -68,7 +68,9 @@ describe('OperatorLogin', () => {
 
   it('shows Operator Portal heading', () => {
     render(<OperatorLogin onLoginSuccess={vi.fn()} onBack={vi.fn()} />);
-    expect(screen.getByText(/Operator/i)).toBeTruthy();
+    // The screen carries both an "Operator Session" eyebrow and an "Operator
+    // App" heading, so a bare getByText is ambiguous. Assert the heading.
+    expect(screen.getByRole('heading', { name: /Operator/i })).toBeTruthy();
   });
 });
 
@@ -84,7 +86,7 @@ describe('InsurerLogin', () => {
 
   it('shows Insurer Portal heading', () => {
     render(<InsurerLogin onLoginSuccess={vi.fn()} onBack={vi.fn()} />);
-    expect(screen.getByText(/Insurer/i)).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Insurer/i })).toBeTruthy();
   });
 });
 

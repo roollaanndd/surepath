@@ -4,6 +4,59 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.9 — 2026-09-12
+
+### STNK: foto mentah dikirim apa adanya — itu penyebab gagal baca *dan* keluar dari apps
+
+Satu akar, dua gejala. `services/stnkOcr.ts` mem-POST hasil jepretan kamera **tanpa dikompres**:
+
+```ts
+const rawBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
+await supabase.functions.invoke('stnk-ocr', { body: { image_base64: rawBase64, ... } });
+```
+
+Foto HP modern 4–12 MB menjadi ±5,5–16 MB setelah base64 dan di-JSON-kan ke dalam request body. Itu cukup besar untuk **menghabiskan memori WebView Android** (aplikasi tampak menutup sendiri) dan cukup besar untuk **ditolak edge function sebelum model melihat gambarnya** — yang bagi pengguna terbaca sebagai "AI tidak bisa membaca STNK saya".
+
+Yang ganjil: kompresornya **sudah ada** di `geminiService.ts` dan dipakai jalur Gemini lama (1024–1200px), tapi tidak diekspor — sehingga jalur `stnk-ocr`, yang justru jalur utama, tidak pernah memakainya.
+
+| Perbaikan | Berkas |
+|---|---|
+| `compressImageBase64` diekspor | `services/geminiService.ts` |
+| Kompres ke 1600px sebelum dikirim (turun ±1 orde besaran) | `services/stnkOcr.ts` |
+| `mime_type` diturunkan dari hasil kompresi | `services/stnkOcr.ts` |
+| State hanya menyimpan salinan terkompresi | `StepVehicle.tsx` |
+
+`mime_type` penting dan nyaris terlewat: kompresor selalu menghasilkan JPEG, jadi mengirim `image/png` dari file asli akan membuat model gagal men-decode. Sekarang dibaca balik dari prefix `data:`.
+
+Karena perbaikan ada di `extractStnkOcr`, **kedua** wizard ikut sembuh — pembelian nasabah dan underwriting agen.
+
+### Uji komponen 11 buah ternyata tidak pernah dijalankan
+
+Menulis regression test untuk kegagalan STNK menyingkap bahwa `vitest.config.ts` hanya menyertakan `*.test.ts` — sedangkan `services/__tests__/components.test.tsx` sudah ada di repo dan **tidak pernah ikut berjalan**. Setelah pola `.tsx` ditambahkan, 11 uji itu hidup dan 2 di antaranya merah: bukan bug produk, melainkan `getByText(/Operator/i)` yang kini ambigu karena layar memuat "Operator Session" *dan* "Operator App". Diperbaiki jadi `getByRole('heading')`.
+
+Total suite: 216 → **239 lulus**.
+
+### Pathy: dari "hanya mobil" menjadi seluruh katalog
+
+Pathy bukan dilarang membahas lini lain — prompt-nya **tidak pernah menyebut apa yang dijual SurePath**, sementara semua contoh alur di dalamnya kendaraan. Model menggeneralisasi dari contoh.
+
+`catalog.ts` baru menuliskan katalog sebenarnya, diverifikasi ke produksi (bukan diasumsikan):
+
+| Lini | Sifat |
+|---|---|
+| Kendaraan roda 4 & roda 2 (Komprehensif/TLO) | **bisa dihitung premi** — ada tarif OJK |
+| Jiwa (Term, Whole, Unit Link, Endowment) | pengajuan lewat agen |
+| Kesehatan Kumpulan karyawan | pengajuan portal B2B |
+| Armada korporasi, Surety Bond | pengajuan portal B2B |
+
+Pemisahan **QUOTABLE vs SUBMISSION** adalah inti rancangannya. Hanya kendaraan yang punya tabel tarif, jadi hanya kendaraan yang boleh menghasilkan angka. Membiarkan Pathy mengarang premi kesehatan akan jadi bug yang jauh lebih buruk daripada kesempitan yang digantikannya.
+
+Kesehatan perorangan dijawab jujur: belum tersedia di aplikasi, tawarkan dihubungkan ke tim — bukan mengarang plafon atau daftar rumah sakit. Edukasi umum lintas lini tetap boleh, karena itu penjelasan, bukan penawaran.
+
+⚠️ Bagian Pathy ini **belum aktif di produksi** — `pathy-agent` masih versi 3 sementara repo sudah v2.5.0+. Butuh deploy edge function (lihat catatan v2.5.1).
+
+---
+
 ## v2.5.8 — 2026-09-11
 
 ### Verifikasi email agen: sudah terpasang, tinggal dinyalakan

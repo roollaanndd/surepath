@@ -134,7 +134,17 @@ export interface SurveyAnalysisResult {
 
 // ─── Image compression ────────────────────────────────────────────────────────
 
-async function compressImageBase64(base64: string, maxWidthPx = 1024): Promise<string> {
+/**
+ * Downscale a phone photo before it goes anywhere near the network.
+ *
+ * Exported because stnk-ocr (the primary STNK path) was posting the raw
+ * camera capture: a modern phone photo is 4-12 MB, which is ~5.5-16 MB once
+ * base64-encoded and JSON-stringified into a request body. That is large
+ * enough to exhaust the Android WebView (the app appears to close itself)
+ * and large enough to be rejected by the edge function before the model ever
+ * sees the image — which reads to the user as "the AI cannot read my STNK".
+ */
+export async function compressImageBase64(base64: string, maxWidthPx = 1024): Promise<string> {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {

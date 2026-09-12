@@ -1,9 +1,27 @@
 # SurePath Session Context
-**Updated:** 2026-09-11 (v2.5.7 — email palsu ditolak di pendaftaran; v2.5.6 — gerbang kepercayaan akun + rancangan pelapisan keamanan; v2.5.5 — kode sumber server bocor lewat sourcemap di dist/, diperbaiki; v2.5.4 — ranjau KEDUA jalur uang diperbaiki & sudah aktif; v2.5.3 — perkakas anti gagal-diam + 2 kanal notifikasi admin ketahuan mati; v2.5.2 — dua cacat diam ditemukan, satu di jalur uang; v2.5.1 — config.toml + jalur deploy tanpa secret; v2.5.0 — Pathy: unggah dokumen, ekstraksi tersimpan, dan berhenti memvonis klaim)
+**Updated:** 2026-09-12 (v2.5.9 — STNK kirim foto mentah: penyebab gagal-baca DAN keluar-apps; Pathy lintas produk; 11 uji komponen ternyata tak pernah jalan; v2.5.8 — verifikasi email agen siap aktif, STNK gagal tidak lagi diam; `xendit-webhook` ter-deploy v10 `verify_jwt=false`)
 
 ## Current State
+- **main = v2.5.9.** `APP_VERSION` di `src/version.ts` = sumber kebenaran.
+
+### ✅ `xendit-webhook` SUDAH di-deploy (v10, 2026-09-11)
+`verify_jwt` dulu `true`, sehingga platform menolak SETIAP callback Xendit dengan 401 sebelum badan fungsi jalan — padahal fungsinya punya auth sendiri lewat `x-callback-token` (fail-closed). Bukti bahwa ia tidak pernah sekali pun berjalan: `sp_payments` **kosong**. Di-deploy lewat MCP dari sumber repo (19.487 karakter, satu berkas), lalu diverifikasi: seluruh konstanta uang cocok (`> 100`, `0.02`, `25000`, 7 hari / 180 hari, kedua `Math.round`).
+
+### ⚠️ `pathy-agent` & `data-gateway` MASIH belum di-deploy
+Pemblokirnya **bukan izin** — sudah diuji tiga jalur dan semuanya buntu dari sesi Claude:
+| Jalur | Hasil |
+|---|---|
+| Supabase CLI | tidak terpasang, tidak ada `SUPABASE_ACCESS_TOKEN` |
+| Egress langsung | `api.supabase.com` → HTTP 000, diblokir kebijakan sandbox |
+| MCP `deploy_edge_function` | `pathy-agent` butuh 11 berkas = **152.543 karakter** inline dalam satu panggilan |
+
+`xendit-webhook` bisa karena 19 KB satu berkas. `pathy-agent` delapan kali lebih besar; menyalin-ulang 4.000 baris (termasuk `serviceTools.ts` yang menghitung premi) tanpa jaminan byte-parity bukan taruhan yang sepadan dengan satu toggle dashboard.
+
+**Solusi sekali-untuk-selamanya (butuh owner):** Supabase Dashboard → Project Settings → Integrations → GitHub → connect `roollaanndd/surepath`. Atau set repo secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`.
+
+Sejak v2.5.9 workflow `deploy-edge-functions.yml` **GAGAL merah** kalau ada fungsi berubah tapi tidak ter-deploy — sebelumnya hijau sambil tidak mengirim apa pun, dan itulah sebabnya `pathy-agent` tertinggal berhari-hari tanpa ada yang sadar.
+
 - **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
-- **main = v2.5.0.** `APP_VERSION` di `src/version.ts` = sumber kebenaran; `package.json` 1.40.0 lagging.
 - ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0 + v2.5.0** (9 tool layanan v2.3.0, lalu v2.5.0: `disclaimers.ts` & `documents.ts` baru, `indication` di coverage/klaim, `save_document_data`, arsip `sp_user_documents`). Tanpa itu semuanya tidak ada di produksi:
   `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
   Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.

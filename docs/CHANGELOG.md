@@ -4,6 +4,36 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.10 — 2026-09-12
+
+### Deploy edge function yang gagal kini merah, bukan hijau
+
+`deploy-edge-functions.yml` menulis peringatan ke run summary lalu **keluar dengan status sukses**. Sebuah centang hijau dibaca sebagai "sudah terkirim", jadi `pathy-agent` tertinggal dua rilis di belakang produksi selama berhari-hari sementara setiap run melaporkan berhasil — persis penyakit gagal-diam yang dikejar sepanjang v2.5.2–v2.5.5, kali ini di perkakasnya sendiri.
+
+Sekarang, kalau ada fungsi yang **berubah** tapi tidak ter-deploy karena secret belum diset, run-nya **gagal**:
+
+```
+::error::Edge functions changed but were NOT deployed (pathy-agent).
+```
+
+Push yang tidak menyentuh `supabase/functions/**` tetap hijau — tidak ada yang perlu dikirim, jadi tidak ada yang perlu dilaporkan. Yang merah hanya keadaan yang memang rusak.
+
+### Catatan deploy: mengapa `pathy-agent` tetap tidak bisa dari sesi Claude
+
+Bukan soal izin. Tiga jalur diuji dan semuanya buntu:
+
+| Jalur | Hasil |
+|---|---|
+| Supabase CLI | tidak terpasang, `SUPABASE_ACCESS_TOKEN` tidak ada |
+| Egress langsung | `api.supabase.com` → HTTP 000, diblokir kebijakan sandbox |
+| MCP `deploy_edge_function` | butuh 11 berkas = **152.543 karakter** inline dalam satu panggilan |
+
+`xendit-webhook` (v2.5.8) bisa di-deploy justru karena kecil: 19.487 karakter, satu berkas — muat dalam satu panggilan, dan hasilnya bisa diverifikasi byte-per-byte lewat readback. `pathy-agent` delapan kali lebih besar; menyalin-ulang 4.000 baris termasuk `serviceTools.ts` yang menghitung premi, tanpa jaminan byte-parity, bukan taruhan yang sepadan melawan satu toggle dashboard yang memperbaikinya permanen.
+
+`.memory/CONTEXT.md` disegarkan supaya sesi berikutnya tidak mengulang penelusuran yang sama.
+
+---
+
 ## v2.5.9 — 2026-09-12
 
 ### STNK: foto mentah dikirim apa adanya — itu penyebab gagal baca *dan* keluar dari apps

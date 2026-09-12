@@ -100,6 +100,47 @@ Deno.serve(async (req) => {
       db.from('sp_insurer_activity_log').insert({ insurer_id: insurerId, order_id: orderId, action: logAction, details: { ...details, ip, user_agent: userAgent }, ip_address: ip, user_agent: userAgent }).then(() => {}, () => {});
     };
 
+    // ── Jejak aktivitas per pengguna (v2.5.14) ──────────────────────────
+    //
+    // Dipasang di dispatcher, bukan di 100+ action satu per satu. Setiap aksi
+    // terautentikasi lewat sini dengan caller yang SUDAH diverifikasi, jadi
+    // cakupannya lengkap dengan sendirinya dan tidak bisa dipalsukan klien —
+    // alasan yang sama kenapa gerbang kepercayaan juga duduk di titik ini.
+    //
+    // NILAI parameter sengaja tidak pernah disimpan. Payload aplikasi ini
+    // membawa NIK, foto base64, dan kata sandi; menyalinnya ke tabel audit
+    // justru menciptakan salinan kedua dari data yang sedang kita lindungi.
+    // Nama kuncinya saja sudah menjawab "mengakses apa".
+    const reqStartedAt = Date.now();
+    const reqIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? req.headers.get('x-real-ip') ?? null;
+    const reqUserAgent = req.headers.get('user-agent')?.slice(0, 255) ?? null;
+
+    const recordActivity = (
+      actor: Caller | null,
+      status: 'OK' | 'DENIED' | 'ERROR',
+      httpStatus: number,
+    ): void => {
+      // Fire-and-forget: an audit write must never fail the request it audits.
+      try {
+        const p = params as Record<string, unknown>;
+        const target = p?.id ?? p?.order_id ?? p?.claim_id ?? p?.user_id ?? p?.agent_id ?? null;
+        db.from('sp_activity_log').insert({
+          actor_id:    actor?.spUser?.id ?? null,
+          actor_email: actor?.email || null,
+          actor_role:  actor?.role ?? null,
+          action,
+          target_id:   target == null ? null : String(target).slice(0, 100),
+          status,
+          http_status: httpStatus,
+          duration_ms: Date.now() - reqStartedAt,
+          param_keys:  p ? Object.keys(p).slice(0, 40) : [],
+          ip:          reqIp,
+          user_agent:  reqUserAgent,
+        }).then(() => {}, () => {});
+      } catch { /* never let auditing break the call it is auditing */ }
+    };
+
     // Auth
     let caller: Caller;
     // Dipakai gerbang kepercayaan di bawah. Diambil dari sesi yang sudah
@@ -156,6 +197,9 @@ Deno.serve(async (req) => {
         { isAdmin: caller.isAdmin },
       );
       if (!trust.allowed) {
+        // Attempts matter as much as successes — a blocked action is exactly
+        // what an admin needs to see.
+        recordActivity(caller, 'DENIED', 403);
         return json({
           error: trust.message,
           code: trust.code,
@@ -182,7 +226,11 @@ Deno.serve(async (req) => {
       await handleQuotationsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
-    if (result) return json(result.body, result.status);
+    if (result) {
+      recordActivity(caller, result.status < 400 ? 'OK' : 'DENIED', result.status);
+      return json(result.body, result.status);
+    }
+    recordActivity(caller, 'ERROR', 400);
     return json({ error: `Unknown action: ${action}` }, 400);
 
   } catch (e) {

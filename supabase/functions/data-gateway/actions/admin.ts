@@ -9,6 +9,68 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
   switch (action) {
+    // ── Jejak aktivitas (v2.5.14) ─────────────────────────────────────────
+    // Dibaca CMS. Admin-only: isi tabel ini adalah siapa-melakukan-apa untuk
+    // SELURUH pengguna, jadi aksesnya sama ketatnya dengan daftar pengguna.
+    case 'admin_activity_log': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        let q = db
+          .from('sp_activity_log')
+          .select('id, created_at, actor_id, actor_email, actor_role, action, target_id, status, http_status, duration_ms, param_keys, ip, user_agent')
+          .order('created_at', { ascending: false })
+          .limit(Math.min(Number(params.limit ?? 200), 1000));
+        if (params.actor_id) q = q.eq('actor_id', String(params.actor_id));
+        if (params.actor_email) q = q.ilike('actor_email', `%${String(params.actor_email)}%`);
+        if (params.action_name) q = q.eq('action', String(params.action_name));
+        if (params.status) q = q.eq('status', String(params.status));
+        if (params.role) q = q.eq('actor_role', String(params.role));
+        if (params.since) q = q.gte('created_at', String(params.since));
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+
+    // Ringkasan per pengguna: menjawab "siapa paling aktif dan sedang apa"
+    // tanpa menarik ribuan baris ke browser.
+    case 'admin_activity_summary': {
+        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        const sinceIso = String(
+          params.since ?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        );
+        const { data, error } = await db
+          .from('sp_activity_log')
+          .select('actor_id, actor_email, actor_role, action, status, created_at')
+          .gte('created_at', sinceIso)
+          .order('created_at', { ascending: false })
+          .limit(5000);
+        if (error) return json({ error: error.message }, 400);
+
+        const byUser = new Map<string, {
+          actor_id: string | null; actor_email: string | null; actor_role: string | null;
+          total: number; denied: number; last_seen: string; top_action: string;
+          actions: Record<string, number>;
+        }>();
+        for (const r of (data ?? []) as Record<string, string>[]) {
+          const key = r.actor_email || r.actor_id || 'anonim';
+          let e = byUser.get(key);
+          if (!e) {
+            e = { actor_id: r.actor_id ?? null, actor_email: r.actor_email ?? null,
+                  actor_role: r.actor_role ?? null, total: 0, denied: 0,
+                  last_seen: r.created_at, top_action: r.action, actions: {} };
+            byUser.set(key, e);
+          }
+          e.total += 1;
+          if (r.status === 'DENIED') e.denied += 1;
+          e.actions[r.action] = (e.actions[r.action] ?? 0) + 1;
+          if (r.created_at > e.last_seen) e.last_seen = r.created_at;
+        }
+        const rows = [...byUser.values()].map(e => ({
+          ...e,
+          top_action: Object.entries(e.actions).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '',
+        })).sort((a, b) => b.total - a.total);
+        return json({ data: rows, since: sinceIso });
+      }
+
     case 'admin_list_users': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db

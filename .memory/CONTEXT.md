@@ -8,30 +8,46 @@
 `verify_jwt` dulu `true`, sehingga platform menolak SETIAP callback Xendit dengan 401 sebelum badan fungsi jalan — padahal fungsinya punya auth sendiri lewat `x-callback-token` (fail-closed). Bukti bahwa ia tidak pernah sekali pun berjalan: `sp_payments` **kosong**. Di-deploy lewat MCP dari sumber repo (19.487 karakter, satu berkas), lalu diverifikasi: seluruh konstanta uang cocok (`> 100`, `0.02`, `25000`, 7 hari / 180 hari, kedua `Math.round`).
 
 ### ⚠️ `pathy-agent` & `data-gateway` MASIH belum di-deploy
-Pemblokirnya **bukan izin** — sudah diuji tiga jalur dan semuanya buntu dari sesi Claude:
-| Jalur | Hasil |
+
+**Diselidiki tuntas 13 Sep 2026 — jangan ulangi penelusurannya.**
+
+Koreksi atas catatan sebelumnya: dulu tertulis "Supabase CLI tidak terpasang".
+Itu **salah** — CLI-nya bisa dipasang (`npm i -g supabase` → v2.117.0 berhasil,
+registry.npmjs.org ada di noProxy). Yang sebenarnya memblokir adalah **jaringan**.
+
+| Jalur | Hasil (diuji ulang 13 Sep) |
 |---|---|
-| Supabase CLI | tidak terpasang, tidak ada `SUPABASE_ACCESS_TOKEN` |
-| Egress langsung | `api.supabase.com` → HTTP 000, diblokir kebijakan sandbox |
-| MCP `deploy_edge_function` | `pathy-agent` butuh 11 berkas = **152.543 karakter** inline dalam satu panggilan |
+| Supabase CLI | ✅ terpasang v2.117.0 — bukan pemblokir |
+| `api.supabase.com` | ❌ HTTP 000 — ditolak kebijakan proxy organisasi |
+| `<project>.supabase.co/functions/v1/*` | ❌ HTTP 000 — sama |
+| MCP `deploy_edge_function` | ✅ berfungsi, tapi isi berkas harus inline |
 
-`xendit-webhook` bisa karena 19 KB satu berkas. `pathy-agent` delapan kali lebih besar; menyalin-ulang 4.000 baris (termasuk `serviceTools.ts` yang menghitung premi) tanpa jaminan byte-parity bukan taruhan yang sepadan dengan satu toggle dashboard.
+Ukuran kalau dibundel esbuild (temuan baru — jauh lebih kecil dari sumber mentah):
 
-**Solusi sekali-untuk-selamanya (butuh owner):** Supabase Dashboard → Project Settings → Integrations → GitHub → connect `roollaanndd/surepath`. Atau set repo secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`.
+| Fungsi | Sumber mentah | Bundel + jaga baris | Bundel minified penuh |
+|---|---|---|---|
+| `pathy-agent` | 152.543 | 98.143 | 80.065 |
+| `data-gateway` | 220.586 | — | 103.833 |
 
-Sejak v2.5.9 workflow `deploy-edge-functions.yml` **GAGAL merah** kalau ada fungsi berubah tapi tidak ter-deploy — sebelumnya hijau sambil tidak mengirim apa pun, dan itulah sebabnya `pathy-agent` tertinggal berhari-hari tanpa ada yang sadar.
+Tetap tidak dilakukan, dan alasannya bukan ukuran semata:
+- **`data-gateway` sedang BERFUNGSI** dan melayani kelima portal. Satu karakter
+  salah mematikan seluruh aplikasi, dan tidak ada rollback murah (redeploy versi
+  lama = mengetik ulang 100 KB lagi). Blast radius-nya tidak sepadan.
+- **`pathy-agent`** blast radius-nya sempit (chat saja), tapi emisi verbatim
+  80–98 KB kode hasil generate tidak punya redundansi semantik untuk menangkap
+  kesalahan saat ditulis, dan verifikasinya baru terjadi SETELAH produksi berubah.
+- Mem-bypass kebijakan proxy organisasi bukan opsi.
 
-- **Skema versi berubah:** deret `1.x` ditutup di v1.57.0, dilanjutkan dari **2.1.0** (keputusan owner).
-- ⚠️ **`pathy-agent` PERLU DI-DEPLOY ULANG untuk v2.3.0 + v2.5.0** (9 tool layanan v2.3.0, lalu v2.5.0: `disclaimers.ts` & `documents.ts` baru, `indication` di coverage/klaim, `save_document_data`, arsip `sp_user_documents`). Tanpa itu semuanya tidak ada di produksi:
-  `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-  Deploy setelah web v2.3.0 ter-merge, supaya kartu `claim_start` dsb. sudah bisa dirender klien.
-- ⚠️ **`data-gateway` MASIH belum di-deploy** (`actions/users.ts` 409 ROLE_REQUIRED + `actions/misc.ts` `save_quote` → `quote_data`). Jalankan dari mesin dengan source:
-  `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
-  Situs tidak rusak tanpa itu. Alasan tidak dilakukan dari sesi Claude: MCP deploy menuntut 17 berkas (~200 KB) di-inline; menyalin-ulang dispatcher inti (termasuk `orders.ts`/`wallet.ts` yang menyentuh uang) tanpa verifikasi byte-parity sebelum live, risikonya tidak sepadan.
+**Solusi sekali-untuk-selamanya (butuh owner):** Supabase Dashboard → Project
+Settings → Integrations → GitHub → connect `roollaanndd/surepath`. Atau set repo
+secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`
+(workflow `deploy-edge-functions.yml` sudah memakai `supabase/setup-cli@v1`,
+dan runner GitHub punya jaringan — jadi begitu secret ada, semuanya jalan).
 
-## v2.5.7 — Email palsu ditolak di titik pendaftaran (2026-09-11)
-Tiga lapis: `AuthGate.tsx` + `AgentOnboarding.tsx` sebelum `signUp()` (**aktif otomatis via Vercel**), dan `ensure_profile` di gateway (menunggu deploy). Menolak SEBELUM signUp supaya tidak meninggalkan akun auth yatim.
-Satu sumber kebenaran: klien mengimpor `isUntrustedEmail` langsung dari `_shared/trust.ts` (tsc + vite OK, terverifikasi ter-bundle di `AuthGate-*.js`).
+Menunggu deploy gateway: Pathy lintas produk (v2.5.9/2.5.14), gerbang
+kepercayaan (v2.5.6), `ensure_profile` tolak email palsu (v2.5.7), jejak
+aktivitas (v2.5.14).
+
 ### ⚠️ Cacat yang ditangkap uji — JANGAN diulang
 Versi pertama penjaga server menolak SEBELUM cek profil-sudah-ada. `ensure_profile` jalan di SETIAP login → akan **mengunci 6 akun domain mencurigakan yang sudah ada**. `signupRole.test.ts` menangkapnya (6 merah). Penjaga dipindah ke jalur profil-BARU saja + 2 uji mengunci keduanya.
 ### Sengaja TIDAK dikerjakan

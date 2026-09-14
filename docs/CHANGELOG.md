@@ -4,6 +4,46 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.15 — 2026-09-14
+
+### Submenu website berlatar hitam — video-nya tidak dihapus, justru ditambahkan
+
+Empat dari sepuluh halaman situs berlatar hitam polos sementara sisanya memutar video. Penyebabnya ternyata **dua hal berbeda**, dan itu yang membuatnya tidak selesai dengan satu perbaikan.
+
+**Penyebab 1 — `bgVideo` tidak dikirim.** `SiteLayout` memakai
+`background: bgVideo ? 'transparent' : th.sectionBg1`, jadi tanpa prop itu latarnya jatuh ke `hsl(222 47% 11%)`. Contact dan StaticInfo (rumah semua submenu: Privasi, Syarat, Cookie, FAQ) tidak pernah mengirimnya.
+
+**Penyebab 2 — section-nya opaque.** Ini yang lebih halus. Menambahkan `bgVideo` saja **tidak cukup**: kedua halaman membungkus isinya dalam `<section style={{ background: sectionBg2 }}>` yang menutupi video dari atas.
+
+Bukti bahwa ini memang akarnya — halaman yang video-nya terlihat tidak memakai `sectionBg` sama sekali:
+
+| Halaman | pemakaian `sectionBg` | video terlihat |
+|---|---|---|
+| About, Products | **0** | ✅ |
+| Contact | 5 | ❌ |
+| StaticInfo | 2 | ❌ |
+
+Jadi section-nya dibuat transparan, mengikuti bentuk yang sudah benar di About/Products. Kartu di dalamnya **tetap opaque** — `sectionBg3` di Contact baris 111 sengaja dibiarkan, karena itu kotak berisi teks yang harus tetap terbaca di atas video.
+
+### Dua halaman lain: hitam hardcoded, di luar `SiteLayout`
+
+`BlogPage` (`#0a0a0a`) dan `ProductInfoPage` (`hsl(0 0% 8%)`) tidak memakai `SiteLayout` sama sekali, jadi prop apa pun tidak akan menyentuhnya. Keduanya diberi `<video>` fixed sendiri — persis pola yang sudah terbukti jalan di `PremiumCalculatorPage`, yang juga di luar `SiteLayout`.
+
+Latarnya tidak dibuat transparan melainkan **scrim semi-transparan** `rgba(6,9,18,0.86)`, nilai yang sama dipakai halaman kalkulator: keduanya halaman bacaan panjang, dan bobot itu menjaga teks tetap terbaca sementara geraknya tetap tembus.
+
+Satu ketidakselarasan lagi ikut ketahuan: `ProductInfoPage` memaksa `body { background: hsl(0 0% 8%) !important }` — **hitam yang berbeda** dari `hsl(222 47% 11%)` milik situs. Dua hitam berbeda itu sendiri sudah jadi sumber ketidakselarasan; kini disamakan.
+
+### Hasil
+
+| | Sebelum | Sesudah |
+|---|---|---|
+| Halaman dengan latar video | 6 / 10 | **10 / 10** |
+| Latar hitam hardcoded | 4 | **0** |
+
+Tidak ada satu pun video yang dihapus. `bg4` yang tadinya hanya dipakai kalkulator kini tetap di sana; `bg1`–`bg3` dipakai ulang agar halaman bersebelahan tidak kembar.
+
+---
+
 ## v2.5.14 — 2026-09-13
 
 ### Jejak aktivitas per pengguna, dicatat di satu titik

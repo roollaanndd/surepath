@@ -7,7 +7,7 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg2, sectionBg3, accent } = th;
+  const { cardBg, cardBorder, cardShadow, textMuted, textMain, sectionBg3, accent } = th;
 
   const config = useWebsiteConfig('footer');
 
@@ -38,10 +38,10 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
   const inputStyle = { background: cardBg, borderColor: cardBorder, color: textMain } as React.CSSProperties;
 
   return (
-    <SiteLayout {...props} active="contact">
+    <SiteLayout {...props} active="contact" bgVideo="/bg2.mp4">
 
       {/* ─── Header ─── */}
-      <section className="pt-36 pb-14 px-5 text-center" style={{ background: sectionBg2 }}>
+      <section className="pt-36 pb-14 px-5 text-center">
         <Reveal>
           <SectionLabel darkMode={props.darkMode}>{t('Hubungi Kami', 'Contact Us')}</SectionLabel>
           <h1 className="font-bold leading-tight tracking-tight mb-4" style={{ fontSize: 'clamp(2rem,5vw,3.25rem)', color: textMain }}>
@@ -54,7 +54,7 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Main content ─── */}
-      <section className="pb-24 px-5" style={{ background: sectionBg2, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="pb-24 px-5" style={{ borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-6xl mx-auto pt-16 grid grid-cols-1 lg:grid-cols-2 gap-10">
 
           {/* Contact form */}
@@ -144,7 +144,7 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
       </section>
 
       {/* ─── Agent CTA ─── */}
-      <section className="py-16 px-5" style={{ background: sectionBg3, borderTop: `1px solid ${cardBorder}` }}>
+      <section className="py-16 px-5" style={{ borderTop: `1px solid ${cardBorder}` }}>
         <div className="max-w-3xl mx-auto text-center">
           <Reveal>
             <SectionLabel darkMode={props.darkMode}>{t('Konsultasi Gratis', 'Free Consultation')}</SectionLabel>

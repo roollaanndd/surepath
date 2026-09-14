@@ -177,7 +177,15 @@ function SchemaScript({ a }: { a: Article }) {
 /* ── Article Detail ───────────────────────────────────────────────────────── */
 function ArticleView({ a, onBack, onSignIn }: { a: Article; onBack: () => void; onSignIn: () => void }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e5e7eb', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'rgba(6,9,18,0.86)', color: '#e5e7eb', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
+      {/* Fixed looping video background — matches the rest of the site. These two
+          pages sit outside SiteLayout, so they carry their own copy, the same way
+          PremiumCalculatorPage already does. */}
+      <video autoPlay muted loop playsInline preload="auto"
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
+        <source src="/bg2.mp4" type="video/mp4" />
+      </video>
+
       <style>{BLOG_CSS}</style>
       <SchemaScript a={a} />
 
@@ -276,7 +284,15 @@ function ArticleCard({ a, onSelect }: { a: Article; onSelect: () => void }) {
 function BlogListing({ onBack, onSelect }: { onBack: () => void; onSelect: (slug: string) => void }) {
   const [featured, ...rest] = ARTICLES;
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e5e7eb', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'rgba(6,9,18,0.86)', color: '#e5e7eb', fontFamily: 'Inter, sans-serif', position: 'relative' }}>
+      {/* Fixed looping video background — matches the rest of the site. These two
+          pages sit outside SiteLayout, so they carry their own copy, the same way
+          PremiumCalculatorPage already does. */}
+      <video autoPlay muted loop playsInline preload="auto"
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
+        <source src="/bg2.mp4" type="video/mp4" />
+      </video>
+
       <style>{BLOG_CSS}</style>
       <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 24px 80px' }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, color: GREEN, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 36, fontSize: 15 }}>

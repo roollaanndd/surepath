@@ -64,7 +64,7 @@ const StaticInfoPage: React.FC<Props> = (props) => {
 
   if (!content || !meta) {
     return (
-      <SiteLayout {...props}>
+      <SiteLayout {...props} bgVideo="/bg1.mp4">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <p className="mb-4" style={{ color: th.textMain }}>{isEN ? 'Page not found.' : 'Halaman tidak ditemukan.'}</p>
@@ -91,11 +91,11 @@ const StaticInfoPage: React.FC<Props> = (props) => {
   };
 
   return (
-    <SiteLayout {...props}>
+    <SiteLayout {...props} bgVideo="/bg1.mp4">
       <ScrollProgress color={color} color2={color2} />
 
       {/* ═══ Hero ═══ */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden" style={{ background: th.sectionBg1 }}>
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
         {/* Drifting aurora blobs in the page's two accent colors */}
         <div className="absolute -top-20 left-[12%] w-96 h-96 rounded-full blur-3xl pointer-events-none"
           style={{ background: `radial-gradient(circle, ${color}${darkMode ? '30' : '20'}, transparent 68%)`, animation: 'spx-drift 11s ease-in-out infinite' }} />
@@ -127,7 +127,7 @@ const StaticInfoPage: React.FC<Props> = (props) => {
       </section>
 
       {/* ═══ Sections — alternating 3D reveals, tilt on hover ═══ */}
-      <section className="pb-24 px-6" style={{ background: th.sectionBg1 }}>
+      <section className="pb-24 px-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {content.sections.map((s, i) => (
             <Reveal3D key={i} delay={i * 70} from={i % 2 === 0 ? 'left' : 'right'}>

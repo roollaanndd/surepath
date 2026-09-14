@@ -1,8 +1,8 @@
 # SurePath Session Context
-**Updated:** 2026-09-12 (v2.5.9 — STNK kirim foto mentah: penyebab gagal-baca DAN keluar-apps; Pathy lintas produk; 11 uji komponen ternyata tak pernah jalan; v2.5.8 — verifikasi email agen siap aktif, STNK gagal tidak lagi diam; `xendit-webhook` ter-deploy v10 `verify_jwt=false`)
+**Updated:** 2026-09-14 (v2.5.15 — latar video selaras di 10/10 halaman situs; v2.5.14 — jejak aktivitas per pengguna + rancangan arsitektur CMS; v2.5.13 — tema CMS ikut token; v2.5.12 — kesiapan Play Store)
 
 ## Current State
-- **main = v2.5.9.** `APP_VERSION` di `src/version.ts` = sumber kebenaran.
+- **main = v2.5.15.** `APP_VERSION` di `src/version.ts` = sumber kebenaran.
 
 ### ✅ `xendit-webhook` SUDAH di-deploy (v10, 2026-09-11)
 `verify_jwt` dulu `true`, sehingga platform menolak SETIAP callback Xendit dengan 401 sebelum badan fungsi jalan — padahal fungsinya punya auth sendiri lewat `x-callback-token` (fail-closed). Bukti bahwa ia tidak pernah sekali pun berjalan: `sp_payments` **kosong**. Di-deploy lewat MCP dari sumber repo (19.487 karakter, satu berkas), lalu diverifikasi: seluruh konstanta uang cocok (`> 100`, `0.02`, `25000`, 7 hari / 180 hari, kedua `Math.round`).

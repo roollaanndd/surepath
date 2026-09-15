@@ -3,6 +3,38 @@
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
 > Snapshot per 7 Juli 2026 (v1.23.0), project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
+## Rekaman Pathy — `sp_pathy_messages` (diapply 15 September 2026, v2.5.17)
+
+Tabel rekaman percakapan Pathy. **Diapply langsung ke produksi** lewat MCP.
+
+Tidak seperti tabel sensitif lain yang deny-all dan hanya lewat gateway, tabel ini
+sengaja punya RLS yang mengizinkan akses langsung dari browser — karena
+`pathy-agent` belum bisa di-deploy, dan lewat gateway berarti fitur ini tidak ada.
+
+| Policy | Perintah | Aturan |
+|---|---|---|
+| `pathy insert own` | INSERT | `auth.uid() is not null` |
+| `pathy select own` | SELECT | `user_id = auth.uid()` |
+| `pathy select admin` | SELECT | `is_admin()` |
+
+**Tidak ada policy UPDATE/DELETE** — append-only untuk semua peran.
+
+Identitas tidak dipercayakan pada klien: trigger `sp_pathy_messages_stamp`
+menimpa `user_id`, `user_email`, dan `source` dari JWT sebelum baris tersimpan,
+serta memotong `content` di 8000 karakter. `EXECUTE` pada fungsi triggernya
+dicabut dari `anon`/`authenticated` supaya tidak bisa dipanggil sebagai RPC.
+
+Diverifikasi di produksi dengan menyamar sebagai dua pengguna (lalu di-rollback):
+pemalsuan `user_id` ditolak, pemalsuan `source=AGENT` ditolak, dan pengguna B
+melihat 0 baris milik A.
+
+## `sp_activity_log` — ADA tapi MATI (per 15 September 2026)
+
+Tabel ada sejak v2.5.14, tapi **0 baris dan tanpa satu pun RLS policy** (deny-all).
+Penulisnya duduk di dispatcher `data-gateway` yang belum ter-deploy, dan
+pembacanya (`admin_activity_log`) juga action gateway yang belum ada. Jadi menu
+Jejak Aktivitas di CMS akan tetap kosong sampai gateway naik — itu bukan bug.
+
 ## Notifikasi admin real-time (diperbarui 8 September 2026)
 
 Pendaftaran nasabah & agen memberi kabar ke Telegram **langsung dari database** —

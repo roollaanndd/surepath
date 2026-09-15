@@ -4,6 +4,26 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.17 — 2026-09-15
+
+### Rekaman percakapan Pathy per pengguna, terlihat di CMS
+
+Pathy selama ini **tidak menyimpan apa pun** — tidak ada satu pun `insert` di `pathy-agent`. Setiap percakapan hilang begitu tab ditutup, jadi tidak ada cara menelusuri keluhan pengguna, dan tidak ada cara tahu apa yang sebenarnya ditanyakan orang.
+
+Menu **Rekaman Pathy** di CMS: ringkasan per pengguna (berapa percakapan, berapa pesan, terakhir kapan) → klik → transkrip lengkap, dikelompokkan per percakapan, dengan penanda tool yang dipakai dan jawaban yang *degraded*.
+
+**Ditulis dari browser, bukan dari agen — dan itu bukan kompromi keamanan.** `pathy-agent` belum bisa di-deploy dari lingkungan ini, dan menunggu berarti fitur ini tidak ada sama sekali. Browser memang peserta percakapannya, jadi ia tahu isinya. Yang tidak dipercayakan padanya adalah **identitas**: `user_id`, `user_email` dan `source` ditimpa dari JWT oleh trigger database sebelum baris tersimpan. Diuji langsung di produksi dengan menyamar sebagai dua pengguna: A mencoba menulis atas nama B dan mengaku `source=AGENT` — keduanya ditolak, dan B tidak bisa melihat satu pun baris A.
+
+RLS: pemilik membaca miliknya sendiri, admin membaca semua, dan **tidak ada policy UPDATE/DELETE sama sekali** — ini rekaman, bukan draf. Append-only untuk semua peran, admin sekalipun.
+
+Perekaman duduk di pembungkus `pathyChat`, bukan di dalamnya, karena jalur suksesnya ada empat; menempelkannya satu per satu berarti cepat atau lambat ada yang terlewat — dan cacat semacam itu diam.
+
+13 uji mengunci dua hal yang paling mahal kalau salah: perekaman **tidak pernah** boleh menggagalkan obrolan (RLS menolak, jaringan putus — dua-duanya harus lewat tanpa melempar), dan ringkasan per pengguna harus menghitung benar.
+
+### Catatan jujur soal Jejak Aktivitas
+
+Tabel `sp_activity_log` **sudah ada di produksi, tapi 0 baris dan tanpa satu pun RLS policy** (deny-all, gateway-only). Penulisnya ada di dispatcher `data-gateway` yang belum ter-deploy, jadi menu Jejak Aktivitas masih kosong dan akan tetap kosong sampai gateway naik. Itu tidak berubah di rilis ini.
+
 ## v2.5.16 — 2026-09-15
 
 ### Konsol Operasi — CMS akhirnya bisa menunjukkan apa yang TIDAK terjadi

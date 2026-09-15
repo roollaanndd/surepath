@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -17,6 +17,7 @@ const SettingsView = lazy(() => import('./AdminViews').then(m => ({ default: m.S
 const InventoryView = lazy(() => import('./AdminViews').then(m => ({ default: m.InventoryView })));
 const SecurityView = lazy(() => import('./AdminViews').then(m => ({ default: m.SecurityView })));
 const OpsConsoleView = lazy(() => import('./OpsConsoleView'));
+const PathyTranscriptsView = lazy(() => import('./PathyTranscriptsView'));
 const ActivityLogView = lazy(() => import('./ActivityLogView'));
 const LedgerView = lazy(() => import('./AdminViews').then(m => ({ default: m.LedgerView })));
 const ReportsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ReportsView })));
@@ -108,6 +109,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
   { id: 'ai_admin',         label: 'AI Admin Agent',      icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'ai_finance',       label: 'AI Finance Agent',    icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+  { id: 'pathy_logs',       label: 'Rekaman Pathy',       icon: MessageSquare,   roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'activity_log',     label: 'Jejak Aktivitas',     icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'security',         label: 'Keamanan',            icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN] },
   { id: 'settings',         label: 'Pengaturan',          icon: Settings,        roles: [UserRole.MASTER_ADMIN] },
@@ -646,6 +648,7 @@ const AdminPortal = ({
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;
       case 'ops_console':      return <OpsConsoleView />;
+      case 'pathy_logs':       return <PathyTranscriptsView />;
       case 'activity_log':     return <ActivityLogView />;
       case 'security':         return <SecurityView />;
       case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} currentUserRole={userRole} /></SettingsErrorBoundary>;

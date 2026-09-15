@@ -5,7 +5,7 @@ import {
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck,
+  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -16,6 +16,7 @@ const ApprovalsView = lazy(() => import('./AdminViews').then(m => ({ default: m.
 const SettingsView = lazy(() => import('./AdminViews').then(m => ({ default: m.SettingsView })));
 const InventoryView = lazy(() => import('./AdminViews').then(m => ({ default: m.InventoryView })));
 const SecurityView = lazy(() => import('./AdminViews').then(m => ({ default: m.SecurityView })));
+const OpsConsoleView = lazy(() => import('./OpsConsoleView'));
 const ActivityLogView = lazy(() => import('./ActivityLogView'));
 const LedgerView = lazy(() => import('./AdminViews').then(m => ({ default: m.LedgerView })));
 const ReportsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ReportsView })));
@@ -69,6 +70,7 @@ type MenuItem =
 const MENU_ITEMS: MenuItem[] = [
   // OVERVIEW
   { id: '_sep1', isSeparator: true, groupLabel: 'Overview',           roles: ALL_ROLES },
+  { id: 'ops_console',      label: 'Konsol Operasi',      icon: Gauge,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'reports',          label: 'Laporan',             icon: BarChart3,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
   { id: 'analytics',        label: 'Analytics',           icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
@@ -643,6 +645,7 @@ const AdminPortal = ({
       case 'website_editor':   return <WebsiteEditorAdmin />;
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;
+      case 'ops_console':      return <OpsConsoleView />;
       case 'activity_log':     return <ActivityLogView />;
       case 'security':         return <SecurityView />;
       case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} currentUserRole={userRole} /></SettingsErrorBoundary>;

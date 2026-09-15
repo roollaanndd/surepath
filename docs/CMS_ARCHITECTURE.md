@@ -37,7 +37,7 @@ Polanya satu: **CMS bisa menampilkan apa yang ADA, tapi tidak bisa menampilkan a
 
 ## 3. Bagaimana seharusnya CMS berfungsi
 
-### Lapis 1 — Konsol operasi harian (paling mendesak)
+### Lapis 1 — Konsol operasi harian ✅ (dikerjakan di v2.5.16)
 
 Satu layar pertama yang menjawab *"apa yang perlu saya kerjakan pagi ini"*:
 
@@ -46,6 +46,13 @@ Satu layar pertama yang menjawab *"apa yang perlu saya kerjakan pagi ini"*:
 - **Macet** — apa pun yang tidak berpindah status lebih dari N hari.
 
 Ini murni komposisi ulang data yang **sudah ada**; tidak butuh tabel baru.
+
+**Terkirim di v2.5.16 sebagai menu Konsol Operasi**, dan sengaja dibangun hanya
+di atas `admin_list_orders` + `admin_list_payments` — dua action yang sudah hidup
+di gateway produksi sejak 16 Juli. Keduanya diperiksa byte-identical antara versi
+terpasang dan repo sebelum dipakai. Konsekuensinya penting: layar ini **tidak
+ikut antre di belakang deploy edge function** seperti Jejak Aktivitas, dan
+berguna sejak hari ia mendarat.
 
 ### Lapis 2 — Pengawasan pengguna (dikerjakan di rilis ini)
 
@@ -70,10 +77,15 @@ Tetap seperti sekarang, tapi turun prioritas. Ini yang jarang disentuh.
 
 ## 4. Urutan yang disarankan
 
-1. **Jejak Aktivitas** — selesai di v2.5.14, menunggu deploy gateway
-2. **Antrean bertindak + corong** — dampak bisnis terbesar, tidak butuh tabel baru
+1. ~~**Jejak Aktivitas**~~ — selesai di v2.5.14, **menunggu deploy gateway**
+2. ~~**Antrean bertindak + corong**~~ — selesai di v2.5.16, **sudah live** (tanpa deploy gateway)
 3. **Kesehatan sistem** — mencegah terulangnya "tertinggal berhari-hari tanpa sadar"
 4. Konfigurasi — biarkan
+
+Urutan 1 dan 2 tertukar dalam praktik, dan itu pelajarannya sendiri: fitur yang
+bisa disusun dari action yang **sudah ter-deploy** mendarat utuh, sementara yang
+butuh action baru berhenti di separuh jalan. Saat merencanakan fitur CMS
+berikutnya, periksa dulu apakah pertanyaannya bisa dijawab dari action yang ada.
 
 ## 5. Yang harus diingat setiap menambah fitur CMS
 

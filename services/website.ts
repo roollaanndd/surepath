@@ -7,6 +7,7 @@
 
 import { supabase, callGateway, callPublicGateway } from './db';
 import { createAdminNotification } from './notifications';
+import { recordPathyTurn } from './pathyLog';
 import type {
   SpWebsiteConfig,
   SpPolicyOrder,
@@ -475,7 +476,34 @@ export interface PathyReply {
 // than the 15s data-gateway timeout.
 const PATHY_TIMEOUT_MS = 45_000;
 
+/**
+ * Pathy, dengan rekaman percakapannya.
+ *
+ * Perekaman duduk di PEMBUNGKUS, bukan di dalam, karena jalur sukses di dalam
+ * ada empat (agen langsung, dan tiga jalur jatuh ke basis pengetahuan).
+ * Menempelkannya satu per satu berarti cepat atau lambat ada yang terlewat —
+ * dan cacat semacam itu diam: fiturnya terlihat jalan sampai ada yang mencari
+ * transkrip yang ternyata tidak pernah tersimpan.
+ *
+ * `void` di depan panggilannya disengaja: obrolan tidak boleh menunggu tabel
+ * audit, dan tidak boleh gagal karenanya.
+ */
 export async function pathyChat(
+  message: string,
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
+  documents?: PathyDocument[],
+): Promise<PathyReply> {
+  const reply = await pathyChatInner(message, conversationHistory, documents);
+  void recordPathyTurn({
+    question: message,
+    answer: reply.reply,
+    toolsUsed: reply.toolsUsed,
+    degraded: reply.degraded,
+  });
+  return reply;
+}
+
+async function pathyChatInner(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   documents?: PathyDocument[],

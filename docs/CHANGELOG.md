@@ -4,6 +4,22 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.16 — 2026-09-15
+
+### Konsol Operasi — CMS akhirnya bisa menunjukkan apa yang TIDAK terjadi
+
+CMS selama ini bisa menampilkan apa yang **ada**, tapi tidak apa yang **seharusnya ada tapi tidak terjadi**. Untuk bisnis asuransi, justru yang kedua itu uangnya: 5 order mandek sejak Juli dan **0 invoice** pernah terbentuk sepanjang aplikasi hidup — dua-duanya tidak salah di layar mana pun, karena tidak ada layar yang menghitung selisih antar tahap.
+
+Menu **Konsol Operasi** ditaruh paling atas, di atas Dashboard, karena ini yang harus dibuka duluan.
+
+**Corong** — order dibuat → invoice terbit → dibayar → polis terbit. Selisih antar tahap ditampilkan *di antara* tahapnya (`−2`), bukan sebagai kolom terpisah, supaya kebocoran terbaca sebagai bagian dari alur dan bukan statistik yang harus dicari sendiri. Kondisi "ada order, nol invoice" memunculkan peringatan eksplisit: itu menghentikan pendapatan sepenuhnya, bukan memperlambatnya.
+
+**Antrean bertindak** — diurutkan berdasarkan **umur**, bukan tanggal buat. Order berumur 60 hari harus berteriak, dan pengurutan terbaru-di-atas justru menguburnya. Antrean menjawab "siapa yang harus bergerak", bukan sekadar "order ini di mana": `APPROVED` tanpa invoice dan `APPROVED` dengan invoice belum dibayar punya status yang **sama persis** tapi pekerjaannya di meja orang yang berbeda — yang pertama kebocoran uang, yang kedua menunggu nasabah. Nilai rupiah yang menunggu ditagih dijumlahkan.
+
+**Tidak menunggu deploy gateway.** Seluruhnya komposisi ulang dari dua action yang sudah hidup di produksi sejak 16 Juli (`admin_list_orders`, `admin_list_payments`) — diverifikasi byte-identical antara versi terpasang dan repo sebelum dipakai. Lapis 1 di `docs/CMS_ARCHITECTURE.md` selesai.
+
+12 uji baru mengunci aritmetikanya — termasuk kasus invoice kedaluwarsa setelah dibayar (tidak boleh membatalkan pembayaran), order batal/ditolak (keputusan, bukan kebocoran), dan tanggal yang hilang (tidak boleh menyamar sebagai paling mendesak).
+
 ## v2.5.15 — 2026-09-14
 
 ### Submenu website berlatar hitam — video-nya tidak dihapus, justru ditambahkan

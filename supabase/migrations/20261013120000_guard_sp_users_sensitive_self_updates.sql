@@ -16,7 +16,7 @@ BEGIN
   -- Trusted server-side service calls are allowed to perform admin workflows.
   -- Ordinary authenticated users must not alter authorization or verification
   -- state, financial balances, commission terms, or agent hierarchy themselves.
-  IF auth.uid() IS NOT NULL AND auth.role() <> 'service_role'
+  IF auth.uid() IS NOT NULL AND COALESCE(auth.role(), '') <> 'service_role'
      AND NOT public.is_admin() THEN
     IF NEW.role IS DISTINCT FROM OLD.role
        OR NEW.allowed_apps IS DISTINCT FROM OLD.allowed_apps

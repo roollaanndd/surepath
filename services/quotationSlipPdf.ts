@@ -291,7 +291,7 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
 function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   const { yearTag, titleMain, titleMid, titleAccent, slipType, logoDataUrl, qrDataUrl, eQuoteUrl } = ctx;
 
-  // Full dark green background + subtle decorative circles
+  // Clean white cover with subtle green decorative accents
   doc.setFillColor(...COLOR.darkBg);
   doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
   doc.setFillColor(243, 250, 245);
@@ -300,10 +300,10 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.circle(70, PAGE_H - 180, 95, 'F');
 
   // ─── Top row: logo + quotation stamp ──────────────────────────────────
-  drawSurePathLogo(doc, MARGIN, MARGIN + 6, 'light', logoDataUrl);
+  drawSurePathLogo(doc, MARGIN, MARGIN + 6, 'dark', logoDataUrl);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('QUOTATION SLIP', PAGE_W - MARGIN, MARGIN + 2, { align: 'right' });
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
@@ -312,7 +312,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   // ─── Doc class label ──────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(`// QUOTATION SLIP — ${slipType}`, MARGIN, MARGIN + 62);
 
   // ─── Title block ──────────────────────────────────────────────────────
@@ -385,7 +385,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   const qrCardW = 150;
 
   // QR card (white so the QR scans reliably)
-  doc.setFillColor(...COLOR.ink);
+  doc.setFillColor(...COLOR.white);
   doc.roundedRect(MARGIN, cardY, qrCardW, cardH, 10, 10, 'F');
   if (qrDataUrl) {
     doc.addImage(qrDataUrl, 'PNG', MARGIN + (qrCardW - 88) / 2, cardY + 10, 88, 88, undefined, 'FAST');
@@ -428,7 +428,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
     if (d.agentPhone) {
       doc.setFont('courier', 'bold');
       doc.setFontSize(10);
-      doc.setTextColor(...COLOR.emerald);
+      doc.setTextColor(...COLOR.emeraldDeep);
       doc.text(d.agentPhone, agX + 16, cardY + 70);
     }
   } else {
@@ -758,7 +758,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const rowsH = rows.length * 17;
   const cardH = 34 + rowsH + 36;
 
-  doc.setFillColor(...COLOR.ink);
+  doc.setFillColor(...COLOR.white);
   doc.roundedRect(MARGIN, y, cardW, cardH, 12, 12, 'F');
   // Total band (deep green) — drawn as bottom part of the card
   doc.setFillColor(...COLOR.emeraldDeep);
@@ -788,7 +788,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.setTextColor(...COLOR.ink);
+  doc.setTextColor(...COLOR.white);
   doc.text('TOTAL PEMBAYARAN', MARGIN + 16, y + cardH - 14);
   doc.setFontSize(15);
   doc.text(`${currency} ${d.totalPremium}`, MARGIN + cardW - 16, y + cardH - 13, { align: 'right' });
@@ -800,7 +800,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const otherW = (CONTENT_W - qrW - 20) / 2;
 
   // QR card (white)
-  doc.setFillColor(...COLOR.ink);
+  doc.setFillColor(...COLOR.white);
   doc.roundedRect(MARGIN, y, qrW, rowCardH, 10, 10, 'F');
   if (qrDataUrl) {
     doc.addImage(qrDataUrl, 'PNG', MARGIN + (qrW - 84) / 2, y + 8, 84, 84, undefined, 'FAST');
@@ -825,7 +825,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.roundedRect(bkX, y, otherW, rowCardH, 10, 10, 'FD');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('TRANSFER PEMBAYARAN KE', bkX + 14, y + 18);
   doc.setFontSize(12);
   doc.text(d.bankName, bkX + 14, y + 36);
@@ -857,7 +857,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.roundedRect(agX, y, otherW, rowCardH, 10, 10, 'FD');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('BUTUH BANTUAN? HUBUNGI', agX + 14, y + 18);
   doc.setFontSize(12);
   doc.setTextColor(...COLOR.ink);
@@ -868,7 +868,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.text(d.agentName ? `Agen Resmi SurePath${d.agentCode ? ` · ${d.agentCode}` : ''}` : 'PT. Ruang Proteksi Indonesia', agX + 14, y + 50);
   doc.setFont('courier', 'bold');
   doc.setFontSize(10);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(d.agentPhone || 'halo@myinsurepath.com', agX + 14, y + 66);
   doc.setDrawColor(...COLOR.borderMuted);
   doc.line(agX + 14, y + 78, agX + otherW - 14, y + 78);
@@ -906,7 +906,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
     doc.circle(sx + 15, y + 16, 8, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.setTextColor(...COLOR.darkBg);
+    doc.setTextColor(...COLOR.ink);
     doc.text(s.num, sx + 15, y + 19, { align: 'center' });
 
     doc.setFont('helvetica', 'bold');

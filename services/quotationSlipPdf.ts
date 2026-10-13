@@ -699,7 +699,7 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PAGE 4 — KONFIRMASI & PEMBAYARAN (dark green)
+// PAGE 4 — KONFIRMASI & PEMBAYARAN (white corporate palette)
 // ═══════════════════════════════════════════════════════════════════════════
 function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const { currency, closingTitle, closingAccent, closingDesc,
@@ -708,11 +708,11 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFillColor(...COLOR.darkBg);
   doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
-  doc.setFillColor(20, 70, 40);
+  doc.setFillColor(243, 250, 245);
   doc.circle(PAGE_W - 50, 160, 100, 'F');
 
   // Top row
-  drawSurePathLogo(doc, MARGIN, MARGIN + 6, 'light', logoDataUrl);
+  drawSurePathLogo(doc, MARGIN, MARGIN + 6, 'dark', logoDataUrl);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...COLOR.inkMuted);

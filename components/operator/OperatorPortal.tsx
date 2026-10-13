@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
+import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
@@ -237,7 +238,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
                 className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
               >
                 <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
-                  <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+                  <PathyNavIcon id={id} size={28} active={active} />
                 </span>
                 <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
                   {labelId}

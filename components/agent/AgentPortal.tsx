@@ -289,7 +289,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       />
 
       {/* Main Content */}
-      <main className="relative z-10 pt-16 pb-32 min-h-screen">
+      <main className="relative z-10 pb-32 min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />

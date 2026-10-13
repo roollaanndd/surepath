@@ -111,7 +111,7 @@ function cacheTcLocally(userId: string): void {
 }
 
 const App = () => {
-  const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done') === '1');
+  const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done_v2') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -441,7 +441,7 @@ const App = () => {
     navigate('/');
   }, [navigate]);
 
-  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
+  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done_v2', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
   if (oauthLoading && !currentUser) return <PortalLoader />;
   if (pendingRoleUser) return (
     <RoleSelectionScreen

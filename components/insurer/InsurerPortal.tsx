@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
+import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
@@ -187,7 +188,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
               >
                 <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
                   style={active ? { background: 'var(--ds-green-tint, rgba(0,193,106,0.12))', color: 'var(--ds-green, #059669)' } : { color: 'var(--ds-ink3)' }}>
-                  <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+                  <ManagedPortalIcon id={id} size={20} imageClassName="w-5 h-5 object-contain" fallback={<Icon size={20} strokeWidth={active ? 2.6 : 2} />} />
                 </span>
                 <span
                   className="text-[9px] font-black uppercase tracking-widest leading-none transition-colors"

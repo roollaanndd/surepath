@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import {
   Zap, ShieldCheck,
-  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw
+  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw,
+  House, ShieldPlus, FileWarning, History
 } from 'lucide-react';
 import { Language } from '../../types';
-import { IcHome, IcBuy, IcPathy, IcClaim, IcHistory, IcBell } from '../shared/CustomerIcons';
+import { IcPathy, IcBell } from '../shared/CustomerIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import NotificationDrawer from '../shared/NotificationDrawer';
@@ -53,11 +54,11 @@ interface Props {
 const PATHY_TAB = 'pathy';
 
 const TABS: { id: string; labelEn: string; labelId: string; Icon: PortalTab['Icon']; center?: boolean; overlay?: boolean }[] = [
-  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: IcHome },
-  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: IcBuy },
+  { id: 'home',     labelEn: 'Home',    labelId: 'Beranda', Icon: House },
+  { id: 'products', labelEn: 'Buy',     labelId: 'Beli',    Icon: ShieldPlus },
   { id: PATHY_TAB,  labelEn: 'Pathy',   labelId: 'Pathy',   Icon: IcPathy, center: true, overlay: true },
-  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: IcClaim },
-  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: IcHistory },
+  { id: 'claim',    labelEn: 'Claim',   labelId: 'Klaim',   Icon: FileWarning },
+  { id: 'history',  labelEn: 'History', labelId: 'Riwayat', Icon: History },
 ];
 
 const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products }) => {
@@ -401,7 +402,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <div className={`absolute left-0 top-3 bottom-3 w-1.5 rounded-r-full ${p.bg ?? 'bg-ds-card2'} opacity-80`} />
                     {/* oversized ghost icon watermark */}
                     <div className={`absolute -right-4 -bottom-6 opacity-[0.06] group-hover:opacity-[0.12] group-hover:-rotate-6 transition-all duration-500 ${p.color ?? 'text-ds-ink3'}`}>
-                      {typeof p.icon === 'function' && <p.icon size={104} strokeWidth={1.4} />}
+                      {p.icon && React.createElement(p.icon, { size: 104, strokeWidth: 1.4 })}
                     </div>
                     {/* hover glow */}
                     <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -409,7 +410,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     </div>
                     {/* icon tile — gradient ring, lifts on hover */}
                     <div className={`relative z-10 w-14 h-14 rounded-[1.15rem] flex items-center justify-center flex-shrink-0 ${p.bg ?? 'bg-ds-card2'} ${p.color ?? 'text-ds-ink3'} shadow-ds-sm ring-1 ring-black/5 group-hover:scale-110 group-hover:-rotate-6 group-hover:shadow-lg transition-all duration-300`}>
-                      {typeof p.icon === 'function' && <p.icon size={26} strokeWidth={2} />}
+                      {p.icon && React.createElement(p.icon, { size: 26, strokeWidth: 2 })}
                     </div>
                     <div className="flex-1 min-w-0 relative z-10">
                       <div className="flex items-center gap-2 mb-1">
@@ -656,6 +657,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           tabs={TABS.map(tab => ({ ...tab, label: lang === Language.EN ? tab.labelEn : tab.labelId }))}
           activeId={activeTab}
           onSelect={handleTabSelect}
+          modernIcons
         />
       )}
 

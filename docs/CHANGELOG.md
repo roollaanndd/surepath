@@ -4,6 +4,15 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.18 — 2026-10-13
+
+### Penyegaran UI lintas portal
+
+- Modernisasi onboarding dengan identitas warna hijau SurePath dan layout yang lebih nyaman di mobile.
+- Perbaikan hierarki teks, jarak konten, dan target sentuh pada portal nasabah dan agen.
+- Perbaikan safe-area dan navigasi mobile pada portal operator dan B2B, serta padding responsif pada admin.
+- Tidak ada perubahan yang dimaksudkan pada flow bisnis, kalkulasi premi, backend, autentikasi, atau hak akses.
+
 ## v2.5.17 — 2026-09-15
 
 ### Rekaman percakapan Pathy per pengguna, terlihat di CMS

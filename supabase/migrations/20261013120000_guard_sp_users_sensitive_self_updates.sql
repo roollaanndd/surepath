@@ -13,11 +13,9 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $function$
 BEGIN
-  -- Trusted server-side service calls are allowed to perform admin workflows.
-  -- Ordinary authenticated users must not alter authorization or verification
-  -- state, financial balances, commission terms, or agent hierarchy themselves.
-  IF auth.uid() IS NOT NULL AND COALESCE(auth.role(), '') <> 'service_role'
-     AND NOT public.is_admin() THEN
+  IF auth.uid() IS NOT NULL
+     AND COALESCE(auth.role(), '') <> 'service_role'
+     AND COALESCE(public.is_admin(), false) = false THEN
     IF NEW.role IS DISTINCT FROM OLD.role
        OR NEW.allowed_apps IS DISTINCT FROM OLD.allowed_apps
        OR NEW.verified IS DISTINCT FROM OLD.verified
@@ -42,7 +40,6 @@ BEGIN
         USING ERRCODE = '42501';
     END IF;
   END IF;
-
   RETURN NEW;
 END;
 $function$;

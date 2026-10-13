@@ -10,7 +10,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
-import { SplashScreen, AppEntryScreen } from './src/routes/splash';
+import { RevampedSplashScreen as SplashScreen, RevampedAppEntryScreen as AppEntryScreen } from './src/routes/RevampedSplashScreen';
 import { RevampedPortalLoader as PortalLoader } from './src/routes/RevampedPortalLoader';
 import AppUpdateNotification from './components/AppUpdateNotification';
 import { APP_VERSION } from './src/version';
@@ -111,7 +111,7 @@ function cacheTcLocally(userId: string): void {
 }
 
 const App = () => {
-  const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done') === '1');
+  const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done_v2') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -441,7 +441,7 @@ const App = () => {
     navigate('/');
   }, [navigate]);
 
-  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
+  if (!isLoaded) return <SplashScreen onFinish={() => { sessionStorage.setItem('sp_splash_done_v2', '1'); setIsLoaded(true); }} lang={lang} setLang={handleSetLang} darkMode={darkMode} />;
   if (oauthLoading && !currentUser) return <PortalLoader />;
   if (pendingRoleUser) return (
     <RoleSelectionScreen

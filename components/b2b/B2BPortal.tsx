@@ -131,12 +131,14 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
               </div>
             </div>
 
-            <button className="relative w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center">
+            <button type="button" aria-label={t("Notifications", "Notifikasi")} className="relative w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center">
               <Bell size={15} className="text-ds-ink2" />
             </button>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
+              aria-label={t("Toggle theme", "Ganti tema")}
+              aria-pressed={darkMode}
               className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center"
             >
               {darkMode
@@ -147,7 +149,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black ring-2 ring-ds-green/25"
+              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black ring-2 ring-ds-green/25" style={{ background: "linear-gradient(135deg, #00C16A, #047857)" }}
             >
               {companyInitials}
             </button>

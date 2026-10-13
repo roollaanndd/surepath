@@ -1,6 +1,6 @@
 # SurePath — Arsitektur Sistem
 
-> Peta sistem untuk recall cepat. Terakhir diperbarui: 7 Juli 2026 (v1.23.0).
+> Peta sistem untuk recall cepat. Terakhir diperbarui: 13 Oktober 2026. Version source of truth: `src/version.ts`; verify it before release.
 
 ## Diagram Alur Data
 
@@ -90,6 +90,14 @@ Operator + Insurer app berlangganan **Supabase Realtime** ke Postgres changes pa
 - Role admin: `MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR, INSURANCE_ADMIN, OPERATOR` (v1.18.0).
 - Rate limiting (v1.23.0): 60 req/jam per IP, 200 req/jam per insurer-token, via `sp_rate_limits` + `increment_rate_limit()`.
 - Activity logging (v1.23.0): setiap aksi insurer di-insert ke `sp_insurer_activity_log` (append-only).
+
+## UI dan batas perubahan yang disetujui (13 Oktober 2026)
+
+- Portal yang dicakup: Customer, Agent, Operator, Insurer, Admin CMS, dan B2B partner, termasuk onboarding dan navigasi bersama.
+- Modernisasi visual harus mempertahankan flow bisnis, perhitungan premi, underwriting, pembayaran, klaim, autentikasi, dan role-based authorization.
+- Logo/icon SurePath harus memakai aset resmi yang tersedia, bukan versi yang digambar ulang atau perkiraan.
+- Validasi responsif mencakup mobile viewport, safe-area, target sentuh, keyboard focus, contrast, dan reduced motion.
+- PDF quotation memakai generator bersama; perubahan generator harus melewati pemeriksaan render nyata sebelum merge.
 
 ## Deployment Surface
 

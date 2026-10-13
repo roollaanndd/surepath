@@ -12,12 +12,12 @@ import { fetchWebsiteSection } from '../services/supabaseService';
 
 type Role = 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'INSURER';
 
-/* Per-role visual accent — INSURER uses the purple identity, others emerald */
+/* SurePath identity: use the approved logo asset and green palette across roles. */
 const ACCENT: Record<Role, { bg: string; btn: string; btnShadow: string; dot: string; dotDim: string }> = {
-  CUSTOMER: { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
-  AGENT:    { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
-  OPERATOR: { bg: 'linear-gradient(170deg, #064e3b 0%, #065f46 42%, #047857 100%)', btn: 'linear-gradient(135deg, #059669, #047857)', btnShadow: '0 14px 30px -12px rgba(5,150,105,0.65)', dot: '#059669', dotDim: 'rgba(5,150,105,0.25)' },
-  INSURER:  { bg: 'linear-gradient(170deg, #1E1B4B 0%, #2E1065 42%, #5B21B6 100%)', btn: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', btnShadow: '0 14px 30px -12px rgba(124,58,237,0.65)', dot: '#7c3aed', dotDim: 'rgba(124,58,237,0.25)' },
+  CUSTOMER: { bg: 'radial-gradient(ellipse at 50% 28%, #f1f9e8 0%, #f8fbf7 42%, #ffffff 100%)', btn: 'linear-gradient(135deg, #79b943, #08743b)', btnShadow: '0 12px 26px -12px rgba(8,116,59,0.45)', dot: '#08743b', dotDim: 'rgba(8,116,59,0.18)' },
+  AGENT:    { bg: 'radial-gradient(ellipse at 50% 28%, #f1f9e8 0%, #f8fbf7 42%, #ffffff 100%)', btn: 'linear-gradient(135deg, #79b943, #08743b)', btnShadow: '0 12px 26px -12px rgba(8,116,59,0.45)', dot: '#08743b', dotDim: 'rgba(8,116,59,0.18)' },
+  OPERATOR: { bg: 'radial-gradient(ellipse at 50% 28%, #f1f9e8 0%, #f8fbf7 42%, #ffffff 100%)', btn: 'linear-gradient(135deg, #79b943, #08743b)', btnShadow: '0 12px 26px -12px rgba(8,116,59,0.45)', dot: '#08743b', dotDim: 'rgba(8,116,59,0.18)' },
+  INSURER:  { bg: 'radial-gradient(ellipse at 50% 28%, #f1f9e8 0%, #f8fbf7 42%, #ffffff 100%)', btn: 'linear-gradient(135deg, #79b943, #08743b)', btnShadow: '0 12px 26px -12px rgba(8,116,59,0.45)', dot: '#08743b', dotDim: 'rgba(8,116,59,0.18)' },
 };
 
 interface OnboardingFlowProps {
@@ -154,15 +154,16 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
       `}</style>
 
       {/* skip */}
-      <div className="flex justify-end px-6 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
+      <div className="flex items-center justify-between gap-4 px-6 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
+        <img src="/logo-full.png" alt="SurePath — Your Path to Protection" className="h-8 w-auto max-w-[170px] object-contain" />
         <button onClick={finish}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-white/70 hover:text-white bg-white/10 border border-white/15 backdrop-blur-md transition-colors active:scale-95">
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest text-ds-green hover:text-ds-ink bg-white/85 border border-emerald-900/10 shadow-sm transition-colors active:scale-95">
           {isID ? 'Lewati' : 'Skip'} <X size={12} />
         </button>
       </div>
 
       {/* illustration */}
-      <div className="ob-anim oa flex-1 flex items-center justify-center" key={`scene-${step}`} style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
+      <div className="ob-anim oa flex-1 flex items-center justify-center px-4 min-h-0" key={`scene-${step}`} style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
         <ArtKeyframes />
         <AgentArtKeyframes />
         {React.createElement(slides[step].Art)}
@@ -170,12 +171,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
 
       {/* bottom glass card */}
       <div className="px-5 pb-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-        <div className="sp-glass-strong rounded-[2.2rem] px-7 pt-8 pb-7 text-center" key={`copy-${step}`}
+        <div className="bg-white/95 backdrop-blur-xl border border-emerald-900/10 shadow-[0_20px_60px_-30px_rgba(7,74,43,0.28)] rounded-[2rem] px-6 sm:px-7 pt-7 pb-6 text-center" key={`copy-${step}`}
           style={{ animation: 'ob-slide-in 0.45s cubic-bezier(.22,1,.36,1)' }}>
-          <h2 className="text-[1.45rem] font-black tracking-tight leading-snug text-ds-ink dark:text-white mb-2.5">
+          <h2 className="text-[1.45rem] font-black tracking-tight leading-snug text-ds-ink mb-2.5">
             {isID ? slides[step].id[0] : slides[step].en[0]}
           </h2>
-          <p className="text-sm leading-relaxed text-ds-ink2 dark:text-slate-300 max-w-xs mx-auto mb-7">
+          <p className="text-sm leading-relaxed text-ds-ink2 max-w-xs mx-auto mb-7">
             {isID ? slides[step].id[1] : slides[step].en[1]}
           </p>
 

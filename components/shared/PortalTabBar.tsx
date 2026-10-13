@@ -29,7 +29,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
     }}
   >
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
-      {tabs.map(({ id, label, Icon, center, overlay }) => {
+      {tabs.map(({ id, label, center, overlay }) => {
         const active = !overlay && activeId === id;
 
         if (center) {

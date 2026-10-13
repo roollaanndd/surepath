@@ -45,7 +45,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const [resending, setResending]   = useState(false);
   const [error, setError]           = useState<string | null>(null);
   const [lang]                      = useState<Language>(initialLang);
-  const [regRole, setRegRole]       = useState<UserRole>(UserRole.CUSTOMER);
+  const [regRole, setRegRole]       = useState<UserRole | null>(null);
   const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
   const [otpCode, setOtpCode]       = useState('');
@@ -225,6 +225,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // ── Supabase register ────────────────────────────────────────────────────────
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (regRole !== UserRole.AGENT && regRole !== UserRole.CUSTOMER) {
+      setError(t('Choose an account type before continuing.', 'Pilih tipe akun terlebih dahulu sebelum melanjutkan.'));
+      return;
+    }
     if (regRole === UserRole.AGENT) {
       setShowAgentOnboarding(true);
       return;
@@ -576,7 +580,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 {t('Sign In', 'Masuk')}
               </button>
               <button
-                onClick={() => { setMode('REGISTER'); setError(null); }}
+                onClick={() => { setMode('REGISTER'); setRegRole(null); setError(null); }}
                 className={`relative flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'REGISTER' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 {t('Register', 'Daftar')}
@@ -651,6 +655,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {mode === 'REGISTER' && !regRole && (
+                <p className="text-[0.65rem] text-amber-600 font-semibold px-1" role="status">
+                  {t('Select Nasabah or Mitra to continue.', 'Pilih Nasabah atau Mitra untuk melanjutkan.')}
+                </p>
+              )}
               {mode === 'REGISTER' && formData.password.length > 0 && formData.password.length < 6 && (
                 <p className="text-[0.6rem] text-amber-400 font-bold px-1">
                   {t('Password must be at least 6 characters', 'Password minimal 6 karakter')}
@@ -675,7 +684,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (mode === 'REGISTER' && !regRole)}
                 className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]" style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}
               >
                 {loading ? (
@@ -686,7 +695,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       ? t('Sign In', 'Masuk')
                       : regRole === UserRole.AGENT
                         ? t('Continue to Partner Setup', 'Lanjut ke Setup Mitra')
-                        : t('Create Account', 'Buat Akun')}
+                        : regRole === UserRole.CUSTOMER
+                          ? t('Create Account', 'Buat Akun')
+                          : t('Choose Account Type', 'Pilih Tipe Akun')}
                     <ArrowRight size={14} />
                   </>
                 )}

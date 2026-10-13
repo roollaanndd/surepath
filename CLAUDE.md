@@ -1,5 +1,17 @@
 # CLAUDE.md
 
+## Current product and release guidance (2026-10-13)
+
+- Treat the six role experiences as in-scope UI surfaces: Customer, Agent, Admin, Operator, Insurer, and B2B partner, plus shared onboarding/navigation. The latest accepted direction is a visual modernization of the existing UI, not a workflow redesign.
+- **Brand fidelity:** use the exact approved SurePath logo/icon assets from the repository/user-provided brand files. Do not redraw, approximate, recolor, or substitute logo artwork. Confirm rendered assets in preview before release.
+- **UI-only changes:** preserve existing business flows, premium calculations, underwriting rules, payment/claims behavior, authentication, authorization, and role-based data access. Keep changes presentation-only unless explicitly approved otherwise.
+- **Mobile quality:** check narrow viewports, keyboard focus, accessible labels/contrast, touch targets, reduced motion, and iOS safe-area spacing.
+- **Release gates:** PR CI (quality-check + unit-tests) and Vercel preview must pass before merge. After merge, verify the production deployment URL/status and smoke-test the affected portal. A successful preview is not proof that production or native apps have updated.
+- **Native apps:** this repo’s Android Capacitor app bundles `dist` locally. Web merges deploy through Vercel; they do NOT update an installed APK. For native UI updates, bump/check app version, run `npm run build && npx cap sync android`, build/sign an APK/AAB in Android Studio, and follow the store/sideload release process. Do not claim native rollout without a built artifact and distribution confirmation.
+- **PDF quotation:** PR #140 is gated on a real rendered-PDF visual review before merge. Inspect all four pages, QR readability/target, totals/fees, long names, tables, terms/disclaimers, and page breaks. CI alone is not sufficient.
+- Version source of truth is `src/version.ts`; check current `main` before describing the released version. Version bump PRs are not releases until CI passes, they are merged, and deployment is verified.
+
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What This Is

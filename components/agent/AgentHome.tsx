@@ -6,6 +6,7 @@ import {
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
+import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
 import { getAgentCoinBalance } from '../../services/supabaseService';
@@ -271,7 +272,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               className={`flex flex-col items-center gap-2 py-3.5 px-1 rounded-2xl bg-ds-card ${action.color} cursor-pointer group active:scale-[0.98] hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-ds-border/70 dark:ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green`}
               style={{ boxShadow: '0 10px 30px -12px rgba(11,17,32,0.12)', ['--ic-tint' as string]: action.tint }}
             >
-              <span className="w-11 h-11 rounded-xl bg-ds-green-tint/70 flex items-center justify-center"><action.Ic size={23} strokeWidth={1.9} className="group-hover:scale-105 transition-transform duration-200" /></span>
+              <span className="w-11 h-11 rounded-xl bg-ds-green-tint/70 flex items-center justify-center"><ManagedPortalIcon id={action.tab} size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<action.Ic size={23} strokeWidth={1.9} className="group-hover:scale-105 transition-transform duration-200" />} /></span>
               <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
             </button>
           ))}

@@ -172,7 +172,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       </main>
 
       {/* Floating bottom tab nav — bank-style pills (emerald identity) */}
-      <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
+      <nav className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
         <div className="flex items-center justify-around px-1 py-2">
           {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
@@ -180,10 +180,13 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
+                type="button"
+                aria-label={labelId}
+                aria-current={active ? "page" : undefined}
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
               >
                 <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
-                  style={active ? { background: 'rgba(124,58,237,0.12)', color: '#059669' } : { color: 'var(--ds-ink3)' }}>
+                  style={active ? { background: 'var(--ds-green-tint, rgba(0,193,106,0.12))', color: 'var(--ds-green, #059669)' } : { color: 'var(--ds-ink3)' }}>
                   <Icon size={20} strokeWidth={active ? 2.6 : 2} />
                 </span>
                 <span

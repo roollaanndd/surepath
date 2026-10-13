@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp, ChevronRight, Target,
-  Star, Coins,
+  TrendingUp, ChevronRight, Target, Star, Coins,
+  FilePlus2, UsersRound, ShieldAlert, FileCheck2, Trophy, Network, RefreshCw, FilePenLine
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
@@ -12,7 +12,6 @@ import { getAgentCoinBalance } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
 import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
-import { IcQuote, IcClients, IcClaims, IcPolicy, IcRank, IcNetwork, IcRenewal, IcEndorse, IcTarget } from './AgentIcons';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
@@ -84,14 +83,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   // Custom hand-drawn duotone icons (AgentIcons) — Stitch design system tiles
   const quickActions = [
-    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: IcQuote,   color: 'text-sky-600',     tint: 'rgba(14,165,233,0.13)'  },
-    { tab: 'clients',      label: t('Clients', 'Klien'),    Ic: IcClients, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
-    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: IcClaims,  color: 'text-rose-500',    tint: 'rgba(244,63,94,0.12)'   },
-    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: IcPolicy,  color: 'text-emerald-700', tint: 'rgba(4,120,87,0.13)'    },
-    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: IcRank,    color: 'text-amber-600',   tint: 'rgba(245,158,11,0.14)'  },
-    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: IcNetwork, color: 'text-violet-600',  tint: 'rgba(139,92,246,0.13)'  },
-    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: IcRenewal, color: 'text-cyan-600',    tint: 'rgba(6,182,212,0.13)'   },
-    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: IcEndorse, color: 'text-slate-600',   tint: 'rgba(100,116,139,0.13)' },
+    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: FilePlus2,   color: 'text-sky-600',     tint: 'rgba(14,165,233,0.13)'  },
+    { tab: 'clients',      label: t('Clients', 'Klien'),    Ic: UsersRound, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
+    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: ShieldAlert,  color: 'text-rose-500',    tint: 'rgba(244,63,94,0.12)'   },
+    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: FileCheck2,  color: 'text-emerald-700', tint: 'rgba(4,120,87,0.13)'    },
+    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: Trophy,    color: 'text-amber-600',   tint: 'rgba(245,158,11,0.14)'  },
+    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: Network, color: 'text-violet-600',  tint: 'rgba(139,92,246,0.13)'  },
+    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: RefreshCw, color: 'text-cyan-600',    tint: 'rgba(6,182,212,0.13)'   },
+    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: FilePenLine, color: 'text-slate-600',   tint: 'rgba(100,116,139,0.13)' },
   ];
 
   return (
@@ -269,10 +268,10 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             <button
               key={`${action.tab}-${action.label}`}
               onClick={() => onNavigate(action.tab)}
-              className={`flex flex-col items-center gap-2 py-3.5 px-1 rounded-[1.5rem] bg-ds-card ${action.color} cursor-pointer group active:scale-90 hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-black/[0.03] dark:ring-white/10`}
+              className={`flex flex-col items-center gap-2 py-3.5 px-1 rounded-2xl bg-ds-card ${action.color} cursor-pointer group active:scale-[0.98] hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-ds-border/70 dark:ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green`}
               style={{ boxShadow: '0 10px 30px -12px rgba(11,17,32,0.12)', ['--ic-tint' as string]: action.tint }}
             >
-              <action.Ic size={30} className="group-hover:scale-110 transition-transform duration-200" />
+              <span className="w-11 h-11 rounded-xl bg-ds-green-tint/70 flex items-center justify-center"><action.Ic size={23} strokeWidth={1.9} className="group-hover:scale-105 transition-transform duration-200" /></span>
               <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
             </button>
           ))}

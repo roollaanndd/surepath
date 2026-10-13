@@ -155,12 +155,12 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 pb-32 min-h-screen">
+      <main className="pt-16 pb-[calc(7rem+env(safe-area-inset-bottom))] min-h-screen">
         {renderTab()}
       </main>
 
       {/* Bottom Tab Navigation */}
-      <nav className="fixed bottom-6 inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
+      <nav className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-around px-1 py-2.5">
           {TABS.map(({ id, labelEn, labelId, Icon }) => {
             const active = activeTab === id;
@@ -174,8 +174,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.5 : 2} />
-                <span className="text-[8px] font-black uppercase tracking-widest leading-none">
+                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                <span className="text-[10px] font-bold tracking-wide leading-tight">
                   {lang === Language.EN ? labelEn : labelId}
                 </span>
               </button>

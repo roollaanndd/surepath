@@ -5,7 +5,8 @@ import {
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';
-import { validateVehiclePhoto, analyzeVehicleSurvey, extractStnkData } from '../../services/geminiService';
+import { validateVehiclePhoto, analyzeVehicleSurvey } from '../../services/geminiService';
+import { extractStnkOcr } from '../../services/stnkOcr';
 
 interface StepSurveyProps {
   survey: any;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, ShieldCheck, Bell, Sun, Moon } from 'lucide-react';
 import { Language } from '../../types';
+import { PathyNavIcon } from '../shared/PathyNavIcon';
 import {
   getB2BSubmissions,
   getB2BQuotes,
@@ -174,7 +175,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
-                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                <PathyNavIcon id={id} size={28} active={active} />
                 <span className="text-[10px] font-bold tracking-wide leading-tight">
                   {lang === Language.EN ? labelEn : labelId}
                 </span>

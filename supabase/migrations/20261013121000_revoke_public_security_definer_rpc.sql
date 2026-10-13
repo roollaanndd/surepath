@@ -1,8 +1,8 @@
 -- Re-apply least-privilege EXECUTE grants after SECURITY DEFINER functions
 -- were added/replaced after the earlier hardening migration. Trigger-only and
 -- service-role-only helpers must not be exposed through PostgREST /rpc/*.
--- This changes function grants only; trigger execution and service_role access
--- are retained.
+-- Trigger functions with no arguments are invoked by PostgreSQL triggers, not
+-- directly by clients. Service_role keeps the access required by trusted code.
 
 DO $$
 DECLARE

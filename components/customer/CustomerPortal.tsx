@@ -174,13 +174,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           : 0;
         return (
           <PageTransition>
-            <div className="space-y-4 pb-32">
+            <div className="space-y-6 pb-32">
               {/* Greeting row */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-ds-ink3 font-medium">{timeGreeting},</p>
+                  <p className="text-sm text-ds-ink3 font-medium">{timeGreeting},</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <h3 className="text-xl font-black text-ds-ink tracking-tight">
+                    <h3 className="text-2xl font-black text-ds-ink tracking-tight leading-tight">
                       {currentUser?.name?.split(' ')[0]}
                     </h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black text-white" style={{ background: '#00C896' }}>
@@ -193,7 +193,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   onClick={() => navigate('profile')}
                   className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
                 >
-                  <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-base shadow-ds-green">
+                  <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-base shadow-ds-green ring-4 ring-ds-green/10">
                     {currentUser?.name?.[0]}
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-ds-bg" style={{ background: '#00C896' }} />
@@ -231,7 +231,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00C16A' }} />
-                      <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">{t('Protection Score', 'Skor Proteksi')}</p>
+                      <p className="text-[10px] font-black text-white/65 uppercase tracking-widest">{t('Protection Score', 'Skor Proteksi')}</p>
                     </div>
                     {latestPolicy ? (
                       <>
@@ -246,8 +246,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     ) : (
                       <>
                         <h4 className="text-lg font-black text-white leading-tight">{t('Start Protecting', 'Mulai Lindungi')}</h4>
-                        <p className="text-[11px] text-white/50 mt-1">{t('Get covered in minutes', 'Terlindungi dalam hitungan menit')}</p>
-                        <button onClick={() => navigate('products')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white active:scale-95 transition-transform inline-block" style={{ background: '#00C16A' }}>
+                        <p className="text-sm text-white/75 mt-1">{t('Get covered in minutes', 'Terlindungi dalam hitungan menit')}</p>
+                        <button onClick={() => navigate('products')} className="mt-4 min-h-11 px-4 py-2.5 rounded-xl text-sm font-bold text-white active:scale-95 transition-transform inline-flex items-center justify-center" style={{ background: '#00C16A' }}>
                           {t('Get Protected', 'Mulai Sekarang')} →
                         </button>
                       </>

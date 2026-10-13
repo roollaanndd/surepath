@@ -229,7 +229,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
       {/* Floating bottom tab nav — bank-style pills */}
       <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
         <div className="flex items-center justify-around px-1 py-2">
-          {TABS.map(({ id, labelId, Icon }) => {
+          {TABS.map(({ id, labelId }) => {
             const active = activeTab === id;
             return (
               <button

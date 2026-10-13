@@ -1,4 +1,5 @@
 import React from 'react';
+import { PathyNavIcon } from './PathyNavIcon';
 
 /* Shared bottom navigation for customer and agent portals. */
 export interface PortalTab {
@@ -28,7 +29,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
     }}
   >
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
-      {tabs.map(({ id, label, Icon, center, overlay }) => {
+      {tabs.map(({ id, label, center, overlay }) => {
         const active = !overlay && activeId === id;
 
         if (center) {
@@ -50,7 +51,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
                   ['--ic-tint' as string]: 'rgba(255,255,255,0.18)',
                 }}
               >
-                <Icon size={26} />
+                <PathyNavIcon id={id} size={34} active={active} />
               </span>
               <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                 {label}
@@ -73,7 +74,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
               className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
               style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
             >
-              <Icon size={23} />
+              <PathyNavIcon id={id} size={28} active={active} />
             </span>
             <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}

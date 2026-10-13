@@ -167,14 +167,13 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             return (
               <button
                 key={id}
+                type="button"
                 onClick={() => setActiveTab(id)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all duration-200 ${
-                  active
-                    ? 'bg-emerald-500 text-white scale-110 shadow-lg shadow-emerald-500/30'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
+                aria-label={lang === Language.EN ? labelEn : labelId}
+                aria-current={active ? "page" : undefined}
+                className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl min-w-[52px] min-h-[48px] justify-center transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green ${active ? "text-ds-green" : "text-ds-ink3 hover:text-ds-ink2"}`}
               >
-                <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />
+                <span aria-hidden="true" className={`w-9 h-8 rounded-xl flex items-center justify-center ${active ? "bg-ds-green-tint" : ""}`}><Icon size={21} strokeWidth={active ? 2.3 : 1.8} /></span>
                 <span className="text-[9px] font-black uppercase tracking-widest leading-none">
                   {lang === Language.EN ? labelEn : labelId}
                 </span>

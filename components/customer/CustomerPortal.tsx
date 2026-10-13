@@ -645,7 +645,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       {/* Main content */}
       <main
         ref={scrollRef}
-        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pt-[4.75rem] pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
+        style={!isFullscreen ? { paddingTop: 'calc(4.75rem + env(safe-area-inset-top, 0px))' } : undefined}
       >
         <Suspense fallback={<WizardLoader />}>
           {renderContent()}

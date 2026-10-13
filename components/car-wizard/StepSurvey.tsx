@@ -42,20 +42,24 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       const base64 = reader.result as string;
       const mimeType = base64.split(';')[0].split(':')[1] || 'image/jpeg';
       try {
-        const response = await extractStnkData(base64, mimeType);
-        if (response.success && response.data) {
+        const response = await extractStnkOcr(base64, mimeType);
+        const hasReadableFields = Boolean(response.plate || response.brand || response.vin || response.engineNo);
+        if (response.status !== 'ERROR' && hasReadableFields) {
           setSurvey((prev: any) => ({ ...prev, stnk: base64 }));
           setStnkResult({
-            ownerName: response.data.owner || 'TIDAK TERDETEKSI',
-            plate: response.data.plate || 'TIDAK TERDETEKSI',
-            vin: response.data.vin || 'TIDAK TERDETEKSI',
-            engine: response.data.engine || 'TIDAK TERDETEKSI',
-            color: response.data.color || 'TIDAK TERDETEKSI',
-            year: response.data.year || vehicle.year.toString(),
-            status: response.data.status
+            ownerName: response.ownerName || 'TIDAK TERDETEKSI',
+            plate: response.plate || 'TIDAK TERDETEKSI',
+            vin: response.vin || 'TIDAK TERDETEKSI',
+            engine: response.engineNo || 'TIDAK TERDETEKSI',
+            color: response.color || 'TIDAK TERDETEKSI',
+            year: response.year?.toString() || vehicle.year.toString(),
+            status: response.status,
+            confidence: response.confidence,
+            notes: response.notes,
+            source: response.source,
           });
         } else {
-          setStnkError('Gagal membaca STNK. Pastikan foto jelas dan tidak terpotong, lalu coba lagi.');
+          setStnkError(response.notes || 'Gagal membaca STNK dengan cukup yakin. Pastikan foto jelas dan tidak terpotong, lalu coba lagi atau isi data secara manual.');
         }
       } finally {
         setLoading(false);

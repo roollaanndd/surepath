@@ -53,6 +53,7 @@ import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnline
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SurePathLogo } from '../Navbar';
+import { PathyNavIcon } from '../shared/PathyNavIcon';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -381,7 +382,7 @@ const AdminPortal = ({
                   : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
               }`}
             >
-              <Icon size={17} className="flex-shrink-0" />
+              <PathyNavIcon id={navItem.id} size={30} active={activeTab === navItem.id} className="flex-shrink-0 drop-shadow-sm" />
               <span className="text-[0.68rem] font-bold tracking-wide">{navItem.label}</span>
             </button>
           );

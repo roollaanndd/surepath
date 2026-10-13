@@ -83,14 +83,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   // Custom hand-drawn duotone icons (AgentIcons) — Stitch design system tiles
   const quickActions = [
-    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: FilePlus2,   color: 'text-sky-600',     tint: 'rgba(14,165,233,0.13)'  },
+    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: FilePlus2,   color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
     { tab: 'clients',      label: t('Clients', 'Klien'),    Ic: UsersRound, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
-    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: ShieldAlert,  color: 'text-rose-500',    tint: 'rgba(244,63,94,0.12)'   },
-    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: FileCheck2,  color: 'text-emerald-700', tint: 'rgba(4,120,87,0.13)'    },
-    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: Trophy,    color: 'text-amber-600',   tint: 'rgba(245,158,11,0.14)'  },
-    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: Network, color: 'text-violet-600',  tint: 'rgba(139,92,246,0.13)'  },
-    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: RefreshCw, color: 'text-cyan-600',    tint: 'rgba(6,182,212,0.13)'   },
-    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: FilePenLine, color: 'text-slate-600',   tint: 'rgba(100,116,139,0.13)' },
+    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: ShieldAlert,  color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
+    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: FileCheck2,  color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'    },
+    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: Trophy,    color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
+    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: Network, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
+    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: RefreshCw, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
+    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: FilePenLine, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)' },
   ];
 
   return (

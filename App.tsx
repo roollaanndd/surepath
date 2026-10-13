@@ -10,7 +10,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
-import { SplashScreen, AppEntryScreen } from './src/routes/splash';
+import { RevampedSplashScreen as SplashScreen, RevampedAppEntryScreen as AppEntryScreen } from './src/routes/RevampedSplashScreen';
 import { RevampedPortalLoader as PortalLoader } from './src/routes/RevampedPortalLoader';
 import AppUpdateNotification from './components/AppUpdateNotification';
 import { APP_VERSION } from './src/version';

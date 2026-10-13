@@ -11,7 +11,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { SurePathLogo } from '../Navbar';
-import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
@@ -227,18 +226,22 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
       </main>
 
       {/* Floating bottom tab nav — bank-style pills */}
-      <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
+      <nav className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
         <div className="flex items-center justify-around px-1 py-2">
-          {TABS.map(({ id, labelId }) => {
+          {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
+                type="button"
+                aria-label={labelId}
+                aria-current={active ? "page" : undefined}
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green
                 className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
               >
                 <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
-                  <PathyNavIcon id={id} size={28} active={active} />
+                  <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />
                 </span>
                 <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
                   {labelId}

@@ -46,8 +46,8 @@ export default function PortalIconManager() {
 
   useEffect(() => {
     const unsubscribe = subscribePortalIconStyles(setStyles);
-    Promise.all([getPortalIconMap(true), Promise.resolve(getPortalIconStyles())])
-      .then(([map, currentStyles]) => { setIcons(map); setStyles(currentStyles); })
+    getPortalIconMap(true)
+      .then(map => { setIcons(map); setStyles(getPortalIconStyles()); })
       .catch(() => setError('Gagal memuat konfigurasi ikon.'));
     return unsubscribe;
   }, []);

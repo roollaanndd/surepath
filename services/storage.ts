@@ -157,3 +157,18 @@ export async function uploadB2BDocument(
 
   return path;
 }
+
+
+/** Upload an app navigation icon managed from the admin dashboard. */
+export async function uploadPortalIcon(file: File, iconKey: string): Promise<string | null> {
+  const ext = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'png');
+  const path = `app-icons/${iconKey}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from('website-assets').upload(path, file, {
+    upsert: false,
+    contentType: file.type || 'image/png',
+    cacheControl: '31536000',
+  });
+  if (error) { console.error('uploadPortalIcon:', error); return null; }
+  const { data } = supabase.storage.from('website-assets').getPublicUrl(path);
+  return data.publicUrl;
+}

@@ -1,6 +1,6 @@
 # SurePath — Panduan Deployment
 
-> Terakhir diperbarui: 7 Juli 2026 (v1.23.0).
+> Terakhir diperbarui: 13 Oktober 2026. Versi rilis harus diverifikasi dari `src/version.ts` dan deployment production.
 
 ## Ringkasan: 3 hal yang dideploy TERPISAH
 
@@ -150,6 +150,15 @@ npx cap sync android
 - Konsekuensi: perubahan frontend butuh rilis APK baru.
 - Origin WebView = `https://localhost` → sudah diizinkan di CORS data-gateway (v4).
 - OAuth redirect native: `com.myinsurepath.os://auth-callback`.
+
+## Checklist rilis UI/web/native (diperbarui 13 Oktober 2026)
+
+1. Pastikan CI (`quality-check` dan `unit-tests`) lulus dan Vercel preview dapat dibuka.
+2. Untuk perubahan UI, verifikasi portal yang terdampak di desktop dan mobile; cek logo resmi, flow tetap, keyboard/focus, safe-area, dan target sentuh.
+3. Merge ke `main`, lalu tunggu status deployment production sukses dan smoke-test URL production.
+4. Pastikan `src/version.ts` dan `docs/CHANGELOG.md` sesuai dengan rilis yang benar-benar di-merge.
+5. Web/PWA update tidak otomatis memperbarui APK native yang sudah terpasang. Jalankan `npm run build && npx cap sync android`, build/sign APK/AAB, dan distribusikan secara terpisah.
+6. PDF quotation: jangan merge redesign sebelum render nyata empat halaman diperiksa, termasuk QR, jumlah premi/biaya, nama panjang, tabel, disclaimer, dan page breaks.
 
 ## Checklist rilis fitur yang menyentuh gateway
 

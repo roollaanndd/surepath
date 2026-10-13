@@ -371,7 +371,6 @@ const AdminPortal = ({
             );
           }
           const navItem = item as { id: string; label: string; icon: React.ElementType; roles: UserRole[] };
-          const Icon = navItem.icon;
           return (
             <button
               key={navItem.id}

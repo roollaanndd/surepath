@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, ShieldCheck, Bell, Sun, Moon } from 'lucide-react';
 import { Language } from '../../types';
-import { PathyNavIcon } from '../shared/PathyNavIcon';
 import {
   getB2BSubmissions,
   getB2BQuotes,
@@ -102,20 +101,20 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] text-slate-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl border-b border-slate-100 dark:border-white/5">
+      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <ShieldCheck size={16} className="text-white" strokeWidth={3} />
+            <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center">
+              <ShieldCheck size={18} className="text-ds-green" strokeWidth={2.2} />
             </div>
             <div>
               <div className="font-black text-sm tracking-tighter uppercase leading-none">
                 Sure<span className="text-emerald-500">Path</span>{' '}
                 <span className="text-emerald-500">B2B</span>
               </div>
-              <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+              <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none">
                 {t('Client Portal', 'Portal Klien')}
               </div>
             </div>
@@ -131,23 +130,23 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
               </div>
             </div>
 
-            <button className="relative w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-              <Bell size={14} className="text-slate-600 dark:text-slate-300" />
+            <button className="relative w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center">
+              <Bell size={15} className="text-ds-ink2" />
             </button>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"
+              className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center"
             >
               {darkMode
-                ? <Sun size={14} className="text-amber-400" />
-                : <Moon size={14} className="text-slate-600" />
+                ? <Sun size={15} className="text-ds-amber" />
+                : <Moon size={15} className="text-ds-ink2" />
               }
             </button>
 
             <button
               onClick={() => setActiveTab('profile')}
-              className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center ml-1 text-white text-[10px] font-black"
+              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black ring-2 ring-ds-green/25"
             >
               {companyInitials}
             </button>
@@ -163,7 +162,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       {/* Bottom Tab Navigation */}
       <nav className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-around px-1 py-2.5">
-          {TABS.map(({ id, labelEn, labelId }) => {
+          {TABS.map(({ id, labelEn, labelId, Icon }) => {
             const active = activeTab === id;
             return (
               <button
@@ -175,8 +174,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
                     : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
-                <PathyNavIcon id={id} size={28} active={active} />
-                <span className="text-[10px] font-bold tracking-wide leading-tight">
+                <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />
+                <span className="text-[9px] font-black uppercase tracking-widest leading-none">
                   {lang === Language.EN ? labelEn : labelId}
                 </span>
               </button>

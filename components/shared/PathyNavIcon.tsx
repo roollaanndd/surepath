@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getPortalIconMap, subscribePortalIcons } from '../../services/portalIcons';
 
 /**
  * Pathy navigation illustrations — custom mascot-led UI icons for SurePath.
@@ -21,6 +22,14 @@ const propFor = (id: string) => {
 };
 
 export const PathyNavIcon: React.FC<Props> = ({ id, size = 30, active = false, className = '' }) => {
+  const [imageMap, setImageMap] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const unsubscribe = subscribePortalIcons(setImageMap);
+    getPortalIconMap().catch(() => {});
+    return unsubscribe;
+  }, []);
+  const imageUrl = imageMap[id];
+  if (imageUrl) return <img src={imageUrl} width={size} height={size} alt="" aria-hidden="true" draggable={false} className={className} style={{ objectFit: 'contain', display: 'block', flexShrink: 0 }} />;
   const prop = propFor(id);
   const accent = active ? '#B7F34A' : '#00C16A';
   return (

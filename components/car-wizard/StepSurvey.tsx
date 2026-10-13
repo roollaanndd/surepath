@@ -105,7 +105,11 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
               } 
             }));
           } catch (e) {
-            setPhotoValidation(prev => ({ ...prev, [slotId]: { status: 'VALID' } })); // Fallback
+            // A failed AI check is not evidence that the photo is valid.
+            setPhotoValidation(prev => ({
+              ...prev,
+              [slotId]: { status: 'INVALID', msg: 'Validasi AI gagal. Coba unggah ulang atau periksa koneksi.' }
+            }));
           }
       };
     };
@@ -116,6 +120,11 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
     const images = Object.entries(survey.photos).map(([slotId, data]) => ({ slotId, data: data as string }));
     if (images.length < 3) {
       console.warn("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
+      return;
+    }
+    const unverified = images.filter(({ slotId }) => photoValidation[slotId]?.status !== 'VALID');
+    if (unverified.length > 0) {
+      console.warn('Semua foto harus lolos validasi sebelum analisa kendaraan. Periksa atau unggah ulang foto yang belum valid.');
       return;
     }
     setAnalyzing(true);

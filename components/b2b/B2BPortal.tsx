@@ -102,6 +102,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   return (
     <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
+      <div aria-hidden className="sp-ambient" />
       {/* Top Header */}
       <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
         <div className="flex items-center justify-between px-5 py-3">
@@ -160,7 +161,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       </main>
 
       {/* Bottom Tab Navigation */}
-      <nav className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
+      <nav aria-label={t("Main navigation", "Navigasi utama")} className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] inset-x-4 z-50 sp-glass-strong rounded-[2rem] border border-ds-border/70" style={{ boxShadow: "0 18px 40px -16px rgba(11,17,32,0.4)" }}>
         <div className="flex items-center justify-around px-1 py-2.5">
           {TABS.map(({ id, labelEn, labelId, Icon }) => {
             const active = activeTab === id;

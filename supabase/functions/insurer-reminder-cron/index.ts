@@ -13,8 +13,8 @@
 //   Schedule: 0 */4 * * *  (every 4 hours)
 //   Function: insurer-reminder-cron
 //
-// Auth: Cron webhook uses a CRON_SECRET header for auth. If not set, falls
-// back to checking the User-Agent contains "supabase" (cron runtime).
+// Auth: requires the configured x-cron-secret header. Do not fall back to
+// User-Agent checks; headers can be spoofed and a missing secret must fail closed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -28,10 +28,10 @@ Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
-  // Auth: check CRON_SECRET header (set in Supabase secrets)
+  // Fail closed if CRON_SECRET is missing or does not match the caller's secret.
   const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
   const providedSecret = req.headers.get('x-cron-secret') ?? '';
-  if (cronSecret && providedSecret !== cronSecret) {
+  if (!cronSecret || providedSecret !== cronSecret) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...CORS, 'Content-Type': 'application/json' },

@@ -76,6 +76,59 @@ for (const fn of declared) {
   }
 }
 
+// Authentication is a deployment invariant, not just a comment in config.toml.
+// Any endpoint with platform JWT verification disabled must be explicitly reviewed
+// here so a future config edit cannot silently expose a new function.
+const verifyJwtFalseAllowlist = new Map([
+  ['data-gateway', 'Validates Supabase JWTs in code and explicitly allowlists public actions.'],
+  ['quotations-gateway', 'Serves public quotation links; private actions validate Supabase JWTs in code.'],
+  ['daily-report', 'Scheduled job; must enforce its own trusted scheduler/secret check.'],
+  ['insurer-reminder-cron', 'Scheduled job; must enforce its own trusted scheduler/secret check.'],
+  ['xendit-webhook', 'Authenticates server callbacks with the Xendit x-callback-token.'],
+]);
+
+// Parse each function block and require an explicit verify_jwt setting.
+const functionSettings = new Map();
+let currentFunction = null;
+for (const line of toml.split(/\\r?\\n/)) {
+  const section = line.match(/^\\[functions\\.([A-Za-z0-9_-]+)\\]\\s*$/);
+  if (section) {
+    currentFunction = section[1];
+    functionSettings.set(currentFunction, null);
+    continue;
+  }
+  if (/^\\[/.test(line)) {
+    currentFunction = null;
+    continue;
+  }
+  if (currentFunction) {
+    const setting = line.match(/^\\s*verify_jwt\\s*=\\s*(true|false)\\s*(?:#.*)?$/);
+    if (setting) functionSettings.set(currentFunction, setting[1] === 'true');
+  }
+}
+
+for (const fn of declared) {
+  if (!functionSettings.has(fn) || functionSettings.get(fn) === null) {
+    problems.push(`"${fn}" must explicitly set verify_jwt = true or false in ${CONFIG}.`);
+    continue;
+  }
+  if (functionSettings.get(fn) === false && !verifyJwtFalseAllowlist.has(fn)) {
+    problems.push(
+      `"${fn}" disables platform JWT verification without an explicit security exception.`,
+      `    → Review its in-function authentication, then document the reason in verifyJwtFalseAllowlist.`,
+    );
+  }
+}
+
+for (const [fn, reason] of verifyJwtFalseAllowlist) {
+  if (!declared.has(fn)) {
+    problems.push(`JWT-disabled exception "${fn}" is stale: no [functions.${fn}] declaration exists.`);
+  } else if (functionSettings.get(fn) !== false) {
+    problems.push(`JWT-disabled exception "${fn}" must explicitly set verify_jwt = false.`);
+  }
+  if (!reason.trim()) problems.push(`JWT-disabled exception "${fn}" needs a non-empty rationale.`);
+}
+
 if (problems.length > 0) fail(problems);
 
 console.log(`✓ Edge function: ${declared.size} dideklarasikan, ${excused.size} sengaja tidak dihidupkan, ${onDisk.length} di repo — semua punya sikap tertulis.`);

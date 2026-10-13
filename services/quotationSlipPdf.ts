@@ -26,8 +26,8 @@ async function getJsPDF(): Promise<any> {
 
 // ─── Brand colors ───────────────────────────────────────────────────────────
 const COLOR = {
-  darkBg:        [14, 42, 28] as [number, number, number],    // #0E2A1C
-  darkBgMid:     [23, 50, 25] as [number, number, number],    // #173219
+  darkBg:        [255, 255, 255] as [number, number, number],   // white corporate cover
+  darkBgMid:     [243, 250, 245] as [number, number, number], // soft green panels
   emerald:       [132, 204, 69] as [number, number, number],  // #84CC45 (bright lime)
   emeraldBright: [138, 200, 65] as [number, number, number],  // #8AC841
   emeraldDeep:   [11, 94, 46] as [number, number, number],    // #0B5E2E (table header)
@@ -294,9 +294,9 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   // Full dark green background + subtle decorative circles
   doc.setFillColor(...COLOR.darkBg);
   doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
-  doc.setFillColor(20, 70, 40);
+  doc.setFillColor(243, 250, 245);
   doc.circle(PAGE_W - 50, 210, 130, 'F');
-  doc.setFillColor(15, 55, 32);
+  doc.setFillColor(232, 244, 235);
   doc.circle(70, PAGE_H - 180, 95, 'F');
 
   // ─── Top row: logo + quotation stamp ──────────────────────────────────
@@ -317,7 +317,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   // ─── Title block ──────────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.setFontSize(40);
   doc.text(titleMain, MARGIN, 168);
   doc.text(titleMid, MARGIN, 212);
@@ -328,7 +328,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   const lede = stripHtml(d.ledeHtml || '');
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   const ledeLines = doc.splitTextToSize(lede, CONTENT_W).slice(0, 3);
   doc.text(ledeLines, MARGIN, 242);
 
@@ -362,19 +362,19 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6.5);
-    doc.setTextColor(150, 168, 158);
+    doc.setTextColor(...COLOR.inkMuted);
     doc.text(c.label, cx, cy);
 
     doc.setFont(c.mono ? 'courier' : 'helvetica', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...(c.accent ? COLOR.emerald : COLOR.white));
+    doc.setTextColor(...(c.accent ? COLOR.emerald : COLOR.ink));
     const vLines = doc.splitTextToSize(c.value, colW - 28).slice(0, 2);
     doc.text(vLines, cx, cy + 15);
 
     if (c.sub) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
-      doc.setTextColor(210, 225, 215);
+      doc.setTextColor(...COLOR.inkMuted);
       doc.text(String(c.sub), cx, cy + 15 + vLines.length * 12);
     }
   });
@@ -385,7 +385,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   const qrCardW = 150;
 
   // QR card (white so the QR scans reliably)
-  doc.setFillColor(...COLOR.white);
+  doc.setFillColor(...COLOR.ink);
   doc.roundedRect(MARGIN, cardY, qrCardW, cardH, 10, 10, 'F');
   if (qrDataUrl) {
     doc.addImage(qrDataUrl, 'PNG', MARGIN + (qrCardW - 88) / 2, cardY + 10, 88, 88, undefined, 'FAST');
@@ -419,11 +419,11 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   if (d.agentName) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.setTextColor(...COLOR.white);
+    doc.setTextColor(...COLOR.ink);
     doc.text(d.agentName, agX + 16, cardY + 40);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(210, 225, 215);
+    doc.setTextColor(...COLOR.inkMuted);
     doc.text(`Agen Resmi SurePath${d.agentCode ? ` · ${d.agentCode}` : ''}`, agX + 16, cardY + 54);
     if (d.agentPhone) {
       doc.setFont('courier', 'bold');
@@ -434,11 +434,11 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   } else {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.setTextColor(...COLOR.white);
+    doc.setTextColor(...COLOR.ink);
     doc.text('Tim SurePath', agX + 16, cardY + 40);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    doc.setTextColor(210, 225, 215);
+    doc.setTextColor(...COLOR.inkMuted);
     doc.text('PT. Ruang Proteksi Indonesia', agX + 16, cardY + 54);
     doc.setFont('courier', 'bold');
     doc.setFontSize(10);
@@ -452,11 +452,11 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.line(agX + 16, cardY + 84, agX + agW - 16, cardY + 84);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.5);
-  doc.setTextColor(150, 168, 158);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('MASA BERLAKU PENAWARAN', agX + 16, cardY + 98);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   const validityText = d.validUntil
     ? `Berlaku sampai ${d.validUntil} — konfirmasi sebelum tanggal tersebut.`
     : 'Berlaku 30 hari sejak tanggal penerbitan.';
@@ -475,11 +475,11 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text('PT. Ruang Proteksi Indonesia', MARGIN, footerY + 13);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('SurePath — Digital Insurance Distribution Platform', MARGIN, footerY + 24);
   doc.setTextColor(...COLOR.emerald);
   doc.text('myinsurepath.com', MARGIN, footerY + 34);
@@ -715,7 +715,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   drawSurePathLogo(doc, MARGIN, MARGIN + 6, 'light', logoDataUrl);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(150, 168, 158);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('KONFIRMASI & PEMBAYARAN', PAGE_W - MARGIN, MARGIN + 2, { align: 'right' });
   doc.setTextColor(...COLOR.emerald);
   doc.setFontSize(8.5);
@@ -732,7 +732,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   y += 28;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(26);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text(closingTitle, MARGIN, y);
   y += 28;
   doc.setTextColor(...COLOR.emerald);
@@ -742,7 +742,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   y += 20;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   const descLines = doc.splitTextToSize(closingDesc, CONTENT_W - 20).slice(0, 3);
   doc.text(descLines, MARGIN, y);
   y += descLines.length * 11 + 12;
@@ -758,7 +758,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const rowsH = rows.length * 17;
   const cardH = 34 + rowsH + 36;
 
-  doc.setFillColor(...COLOR.white);
+  doc.setFillColor(...COLOR.ink);
   doc.roundedRect(MARGIN, y, cardW, cardH, 12, 12, 'F');
   // Total band (deep green) — drawn as bottom part of the card
   doc.setFillColor(...COLOR.emeraldDeep);
@@ -788,7 +788,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text('TOTAL PEMBAYARAN', MARGIN + 16, y + cardH - 14);
   doc.setFontSize(15);
   doc.text(`${currency} ${d.totalPremium}`, MARGIN + cardW - 16, y + cardH - 13, { align: 'right' });
@@ -800,7 +800,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const otherW = (CONTENT_W - qrW - 20) / 2;
 
   // QR card (white)
-  doc.setFillColor(...COLOR.white);
+  doc.setFillColor(...COLOR.ink);
   doc.roundedRect(MARGIN, y, qrW, rowCardH, 10, 10, 'F');
   if (qrDataUrl) {
     doc.addImage(qrDataUrl, 'PNG', MARGIN + (qrW - 84) / 2, y + 8, 84, 84, undefined, 'FAST');
@@ -834,21 +834,21 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.text(d.bankAccount, bkX + 14, y + 54);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text(`a.n. ${d.bankAccountName}`, bkX + 14, y + 68);
   doc.setDrawColor(...COLOR.borderMuted);
   doc.line(bkX + 14, y + 78, bkX + otherW - 14, y + 78);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.3);
-  doc.setTextColor(150, 168, 158);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('BERITA TRANSFER', bkX + 14, y + 90);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.8);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text(doc.splitTextToSize(d.transferMemo, otherW - 28).slice(0, 2), bkX + 14, y + 100);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.3);
-  doc.setTextColor(150, 168, 158);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text(`Jatuh tempo: ${d.paymentDueDate}`, bkX + 14, y + 120);
 
   // Agent / contact card
@@ -860,11 +860,11 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setTextColor(...COLOR.emerald);
   doc.text('BUTUH BANTUAN? HUBUNGI', agX + 14, y + 18);
   doc.setFontSize(12);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text(d.agentName || 'Tim SurePath', agX + 14, y + 36);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text(d.agentName ? `Agen Resmi SurePath${d.agentCode ? ` · ${d.agentCode}` : ''}` : 'PT. Ruang Proteksi Indonesia', agX + 14, y + 50);
   doc.setFont('courier', 'bold');
   doc.setFontSize(10);
@@ -874,7 +874,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.line(agX + 14, y + 78, agX + otherW - 14, y + 78);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.3);
-  doc.setTextColor(150, 168, 158);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('TOTAL JATUH TEMPO', agX + 14, y + 90);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
@@ -911,12 +911,12 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(...COLOR.white);
+    doc.setTextColor(...COLOR.ink);
     doc.text(doc.splitTextToSize(s.title, stepW - 40)[0], sx + 29, y + 19);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.8);
-    doc.setTextColor(210, 225, 215);
+    doc.setTextColor(...COLOR.inkMuted);
     doc.text(doc.splitTextToSize(s.desc, stepW - 22).slice(0, 5), sx + 11, y + 36);
   });
 
@@ -924,7 +924,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   y += stepH + 14;
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(6.8);
-  doc.setTextColor(170, 190, 178);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text(doc.splitTextToSize(NOT_CONFIRMATION_ID, CONTENT_W), MARGIN, y);
 
   // ─── Footer ─────────────────────────────────────────────────────────────
@@ -933,10 +933,10 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text('SurePath', MARGIN, footerY + 13);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(210, 225, 215);
+  doc.setTextColor(...COLOR.inkMuted);
   doc.text('· PT. Ruang Proteksi Indonesia · ', MARGIN + doc.getTextWidth('SurePath'), footerY + 13);
   doc.setTextColor(...COLOR.emerald);
   doc.text('myinsurepath.com', MARGIN + doc.getTextWidth('SurePath · PT. Ruang Proteksi Indonesia · '), footerY + 13);

@@ -688,7 +688,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
             <SidebarContent />
           </aside>
         </div>

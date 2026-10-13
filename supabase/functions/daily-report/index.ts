@@ -6,8 +6,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // channel is configured. Called by Supabase cron (see cron.job daily-report),
 // never from a browser.
 //
-// Auth: accepts the internal cron header `x-supabase-cron: 1` (same pattern as
-// backup-daily) OR `Authorization: Bearer <CRON_SECRET>` for manual/legacy runs.
+// Auth: requires Authorization: Bearer <CRON_SECRET>. A custom request header
+// such as x-supabase-cron is not proof of origin because any caller can spoof it.
+// Configure CRON_SECRET in Supabase and in the scheduled invocation.
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
@@ -21,12 +22,11 @@ function fmtIDR(n: number) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok');
 
-  // Authorize: internal cron header OR bearer CRON_SECRET.
-  const isCron = req.headers.get('x-supabase-cron') === '1';
+  // Fail closed when the secret is missing or the caller cannot prove possession.
   const authHeader = req.headers.get('authorization') ?? '';
   const providedSecret = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   const secretOk = CRON_SECRET !== '' && providedSecret === CRON_SECRET;
-  if (!isCron && !secretOk) {
+  if (!secretOk) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json' },
     });

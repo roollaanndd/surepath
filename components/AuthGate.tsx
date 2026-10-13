@@ -383,10 +383,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   // ── Premium design tokens (no green) ──────────────────────────────────────
   const GRAD = 'linear-gradient(135deg, #16a34a 0%, #059669 100%)';
-  const inputCls = 'w-full h-12 pl-11 pr-4 rounded-2xl border border-emerald-900/10 bg-white/80 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-150';
+  const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ fontFamily: "'Sora', sans-serif", background: '#f6faf7' }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(135deg, #f7fbf8 0%, #edf7f1 48%, #ffffff 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
 
       {/* Ambient emerald wash — same language as the apps */}
       <div className="absolute inset-0 pointer-events-none" style={{
@@ -397,10 +397,24 @@ const AuthGate: React.FC<AuthGateProps> = ({
         backgroundSize: '28px 28px',
       }} />
 
-      <div className="relative z-10 w-full max-w-sm mx-auto px-6 flex flex-col items-center gap-6">
+      <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
+
+        {/* Responsive login hero; preserves existing authentication actions and official logo component */}
+        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 bg-white/75 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
+          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
+            <div aria-hidden="true" className="absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/15" />
+            <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
+            <div aria-hidden="true" className="absolute right-12 bottom-[-4.5rem] h-36 w-36 rounded-full bg-lime-300/20 blur-2xl" />
+            <div className="relative max-w-xs text-white">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
+              <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
+              <p className="mt-2 text-xs leading-relaxed text-emerald-50/90 sm:text-sm">{t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-3">
           <div className="relative">
             <div className="absolute -inset-6 rounded-full blur-3xl opacity-20" style={{ background: GRAD }} />
             <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center sp-glass">
@@ -542,7 +556,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
         {/* Main form */}
         {(mode === 'LOGIN' || mode === 'REGISTER') && (
           /* Gradient-border card wrapper */
-          <div className="w-full sp-glass rounded-[2.3rem] p-7 space-y-6">
+          <div className="w-full sp-glass rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-7 md:p-8 space-y-6 shadow-[0_24px_70px_-30px_rgba(6,95,70,0.28)]">
           <div className="w-full space-y-6">
 
             {/* Sliding-pill tab switcher */}

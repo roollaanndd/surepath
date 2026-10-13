@@ -1,5 +1,12 @@
 # SurePath — Changelog
 
+## Login page revamp — 2026-10-13 (proposed)
+
+- Add a responsive SurePath-green hero panel and refine login-card spacing, field styling, and mobile safe-area padding.
+- Keep the existing official SurePath logo component, sign-in/register modes, Google OAuth, email OTP/magic link, password reset, and existing authentication/profile resolution unchanged.
+- UI-only change; no backend, authorization, role, or business-flow changes.
+
+
 ---
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.

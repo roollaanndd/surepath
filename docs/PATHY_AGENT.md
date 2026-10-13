@@ -2,7 +2,7 @@
 
 > Edge function: `supabase/functions/pathy-agent/`. Deploy manual:
 > `supabase functions deploy pathy-agent --project-ref uyjgeteelnswphyzkjwi`
-> Versi deploy saat ini: **v3** (7 September 2026) — ⚠️ **belum mencakup v2.3.0 dan v2.5.0**; deploy ulang wajib.
+> Versi deploy saat ini: **v4** (13 Oktober 2026) — mencakup service tools v2.3.0 dan pembaruan dokumen v2.5.0. Diverifikasi setelah deployment Supabase.
 > Klien: `pathyChat()` di `services/website.ts`, UI di `components/shared/PathyChat.tsx`.
 
 ## Aturan nomor satu: Pathy tidak memutuskan klaim

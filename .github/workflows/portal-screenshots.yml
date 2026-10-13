@@ -7,6 +7,10 @@ on:
         description: "Public URL to capture (preview or production)"
         required: true
         default: "https://surepath-git-feat-pathy-icons-all-portals-roollaanndds-projects.vercel.app"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/portal-screenshots.yml"
   pull_request:
     paths:
       - ".github/workflows/portal-screenshots.yml"

@@ -5,7 +5,7 @@ import { PathyNavIcon } from './PathyNavIcon';
 export interface PortalTab {
   id: string;
   label: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
+  Icon: React.ElementType<{ size?: number; strokeWidth?: number; className?: string }>;
   center?: boolean;
   overlay?: boolean;
 }
@@ -14,12 +14,14 @@ export interface PortalTabBarProps {
   tabs: PortalTab[];
   activeId: string;
   onSelect: (id: string) => void;
+  /** Use crisp Lucide line icons in the customer portal; keep the branded mascot in the agent portal. */
+  modernIcons?: boolean;
 }
 
 const GREEN_GRADIENT = 'linear-gradient(135deg, #00C16A, #047857)';
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-card';
 
-const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect }) => (
+const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false }) => (
   <nav
     aria-label="Navigasi utama"
     className="fixed inset-x-4 z-50 sp-glass-strong rounded-[2rem]"
@@ -29,7 +31,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
     }}
   >
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
-      {tabs.map(({ id, label, center, overlay }) => {
+      {tabs.map(({ id, label, Icon, center, overlay }) => {
         const active = !overlay && activeId === id;
 
         if (center) {
@@ -74,7 +76,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
               className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
               style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
             >
-              <PathyNavIcon id={id} size={28} active={active} />
+              {modernIcons ? <Icon size={22} strokeWidth={active ? 2.2 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />}
             </span>
             <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}

@@ -1,21 +1,11 @@
 import React from 'react';
 
-/* ─── PortalTabBar — the one floating bottom nav for every SurePath portal ───
-   Extracted from the Agent portal (bank-style pill with a raised center
-   action) so Customer and Agent share the exact same geometry, icon sizes and
-   active treatment.
-
-   A tab flagged `center` is rendered raised above the bar. It may either be a
-   real page (`id` switches the tab) or an overlay action such as opening
-   Pathy — pass `overlay: true` and it will not be highlighted as a page. */
-
+/* Shared bottom navigation for customer and agent portals. */
 export interface PortalTab {
   id: string;
   label: string;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
-  /** Raised center action (one per bar) */
   center?: boolean;
-  /** Center action opens an overlay instead of switching page */
   overlay?: boolean;
 }
 
@@ -26,11 +16,16 @@ export interface PortalTabBarProps {
 }
 
 const GREEN_GRADIENT = 'linear-gradient(135deg, #00C16A, #047857)';
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-card';
 
 const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect }) => (
   <nav
-    className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]"
-    style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}
+    aria-label="Navigasi utama"
+    className="fixed inset-x-4 z-50 sp-glass-strong rounded-[2rem]"
+    style={{
+      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
+      boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)',
+    }}
   >
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
       {tabs.map(({ id, label, Icon, center, overlay }) => {
@@ -40,12 +35,14 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
           return (
             <button
               key={id}
+              type="button"
               onClick={() => onSelect(id)}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
-              className="relative -mt-8 flex flex-col items-center gap-1 active:scale-95 transition-transform motion-reduce:transition-none motion-reduce:active:scale-100"
+              className={`relative -mt-8 flex flex-col items-center gap-1 active:scale-95 transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
             >
               <span
+                aria-hidden="true"
                 className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all ${active ? 'scale-105' : ''}`}
                 style={{
                   background: GREEN_GRADIENT,
@@ -65,12 +62,14 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect })
         return (
           <button
             key={id}
+            type="button"
             onClick={() => onSelect(id)}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
-            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center"
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center ${FOCUS_RING}`}
           >
             <span
+              aria-hidden="true"
               className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
               style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
             >

@@ -58,7 +58,7 @@ Rules:
 - "status" = "UNCLEAR" when the image is blurry, rotated, partially captured, or not an STNK at all.
 - "confidence" is your overall self-assessed confidence (0.0 to 1.0) for the readable fields.
 - For "plate": preserve the standard format with single spaces (e.g. "B 1234 ABC", "AB 123 CD"). Remove any leading/trailing whitespace.
-- For "vin": remove all whitespace and dashes. If the printed VIN uses letters I, O, or Q (which VIN spec forbids), substitute them with the most likely valid VIN character (1, 0, 0 respectively) and mention this in "notes".
+- For "vin": remove whitespace and dashes only when the characters are clearly readable. Never substitute I/O/Q or any other character based on a guess. If a character is ambiguous, return an empty VIN (or the clearly readable portion only if the schema permits it) and explain the ambiguity in "notes".
 - For "fuel": normalise to the canonical BENSIN/DIESEL/HYBRID/LISTRIK/LPG values. If the document says "Premium" or "Pertamax", use "BENSIN".
 - For dates: use dd-mm-yyyy format. If only yyyy-mm-dd is visible, convert to dd-mm-yyyy.
 - If the image is rotated, mentally rotate it before extracting.

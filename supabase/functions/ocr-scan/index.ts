@@ -7,7 +7,7 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 type DocType = 'KTP' | 'STNK';
 
 interface OcrResult {
-  status: 'OK' | 'MOCK' | 'ERROR';
+  status: 'OK' | 'ERROR';
   doc_type: DocType;
   fields: Record<string, string>;
 }
@@ -82,26 +82,6 @@ function parseSTNK(text: string): Record<string, string> {
   return fields;
 }
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-function mockData(docType: DocType): Record<string, string> {
-  if (docType === 'KTP') {
-    return {
-      nik: '3175012345678901',
-      name: 'BUDI SANTOSO',
-      dob: '01-01-1985',
-      address: 'JL. SUDIRMAN NO. 10, JAKARTA SELATAN',
-    };
-  }
-  return {
-    plate_number: 'B 1234 ABC',
-    make: 'TOYOTA',
-    model: 'AVANZA',
-    chassis_no: 'MHKM5EA3JFJ123456',
-    engine_no: 'DR42J123456',
-  };
-}
-
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -159,9 +139,13 @@ Deno.serve(async (req) => {
     }
 
     if (!apiKey) {
-      // Return mock data when key unavailable
-      const result: OcrResult = { status: 'MOCK', doc_type, fields: mockData(doc_type) };
-      return json(result);
+      // Never present fabricated sample data as a successful document read.
+      return json({
+        status: 'ERROR',
+        doc_type,
+        fields: {},
+        message: 'OCR service is not configured. Please contact support or use manual entry.',
+      }, 503);
     }
 
     // Call Google Vision API

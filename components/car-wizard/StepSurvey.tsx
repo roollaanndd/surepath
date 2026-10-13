@@ -5,7 +5,8 @@ import {
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';
-import { validateVehiclePhoto, analyzeVehicleSurvey, extractStnkData } from '../../services/geminiService';
+import { validateVehiclePhoto, analyzeVehicleSurvey } from '../../services/geminiService';
+import { extractStnkOcr } from '../../services/stnkOcr';
 
 interface StepSurveyProps {
   survey: any;
@@ -27,6 +28,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 }) => {
 
   const [stnkError, setStnkError] = React.useState<string | null>(null);
+  const [surveyActionError, setSurveyActionError] = React.useState<string | null>(null);
   const [analyzing, setAnalyzing] = React.useState(false);
 
   const handleStnkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,20 +42,24 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       const base64 = reader.result as string;
       const mimeType = base64.split(';')[0].split(':')[1] || 'image/jpeg';
       try {
-        const response = await extractStnkData(base64, mimeType);
-        if (response.success && response.data) {
+        const response = await extractStnkOcr(base64, mimeType);
+        const hasReadableFields = Boolean(response.plate || response.brand || response.vin || response.engineNo);
+        if (response.status !== 'ERROR' && hasReadableFields) {
           setSurvey((prev: any) => ({ ...prev, stnk: base64 }));
           setStnkResult({
-            ownerName: response.data.owner || 'TIDAK TERDETEKSI',
-            plate: response.data.plate || 'TIDAK TERDETEKSI',
-            vin: response.data.vin || 'TIDAK TERDETEKSI',
-            engine: response.data.engine || 'TIDAK TERDETEKSI',
-            color: response.data.color || 'TIDAK TERDETEKSI',
-            year: response.data.year || vehicle.year.toString(),
-            status: response.data.status
+            ownerName: response.ownerName || 'TIDAK TERDETEKSI',
+            plate: response.plate || 'TIDAK TERDETEKSI',
+            vin: response.vin || 'TIDAK TERDETEKSI',
+            engine: response.engineNo || 'TIDAK TERDETEKSI',
+            color: response.color || 'TIDAK TERDETEKSI',
+            year: response.year?.toString() || vehicle.year.toString(),
+            status: response.status,
+            confidence: response.confidence,
+            notes: response.notes,
+            source: response.source,
           });
         } else {
-          setStnkError('Gagal membaca STNK. Pastikan foto jelas dan tidak terpotong, lalu coba lagi.');
+          setStnkError(response.notes || 'Gagal membaca STNK dengan cukup yakin. Pastikan foto jelas dan tidak terpotong, lalu coba lagi atau isi data secara manual.');
         }
       } finally {
         setLoading(false);
@@ -66,6 +72,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
   const handlePhotoUpload = async (file: File, slotId: string, slotLabel: string) => {
     if (!file) return;
+    setSurveyActionError(null);
     
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -105,7 +112,11 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
               } 
             }));
           } catch (e) {
-            setPhotoValidation(prev => ({ ...prev, [slotId]: { status: 'VALID' } })); // Fallback
+            // A failed AI check is not evidence that the photo is valid.
+            setPhotoValidation(prev => ({
+              ...prev,
+              [slotId]: { status: 'INVALID', msg: 'Validasi AI gagal. Coba unggah ulang atau periksa koneksi.' }
+            }));
           }
       };
     };
@@ -113,9 +124,15 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
   };
 
   const runSurveyAI = async () => {
+    setSurveyActionError(null);
     const images = Object.entries(survey.photos).map(([slotId, data]) => ({ slotId, data: data as string }));
     if (images.length < 3) {
-      console.warn("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
+      setSurveyActionError('Unggah minimal 3 foto mobil sebelum memulai analisis.');
+      return;
+    }
+    const unverified = images.filter(({ slotId }) => photoValidation[slotId]?.status !== 'VALID');
+    if (unverified.length > 0) {
+      setSurveyActionError('Analisis belum bisa dimulai. Tunggu validasi selesai dan unggah ulang foto yang gagal atau belum tervalidasi.');
       return;
     }
     setAnalyzing(true);
@@ -529,6 +546,13 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                  )}
               </div>
             ) : (
+              <>
+              {surveyActionError && (
+                <div role="alert" className="mb-3 px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-2">
+                  <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{surveyActionError}</p>
+                </div>
+              )}
               <button
                 onClick={runSurveyAI}
                 disabled={analyzing}
@@ -540,6 +564,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                   <><Sparkles size={16} /> Analisa Kendaraan AI</>
                 )}
               </button>
+              </>
             )}
          </div>
       )}

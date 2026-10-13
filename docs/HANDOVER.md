@@ -3,15 +3,14 @@
 This document is the entry point for taking over, deploying, and operating the
 SurePath platform. It assumes no prior context.
 
-**Current version: v1.23.0** (2026-07-07). See `docs/CHANGELOG.md` for the full
-version history.
+**Current version on `main`: v2.5.17** at the time of this documentation update. Verify `src/version.ts` and the latest merged changelog entry before deployment; a proposed version bump is not a released version. See `docs/CHANGELOG.md` for history.
 
 ---
 
 ## 1. What SurePath Is
 
 A full-stack digital insurance (insurtech) platform for the Indonesian market.
-As of v1.23.0 the platform is composed of **5 portal apps** plus a public
+The platform is composed of **5 portal apps** plus a public
 website and B2B portal:
 
 - **Customer app** (PWA, `/`) — browse products, get OJK-rated quotes, buy
@@ -157,7 +156,17 @@ See `docs/SECURITY_POLICY.md` for the full policy. Summary of the last audit:
 
 ---
 
-## 8. Documentation Index
+## 8. Current UI and release rules (2026-10-13)
+
+- Current approved direction: modernize existing screens across Customer, Agent, Admin, Operator, Insurer, and B2B without changing business flows or role permissions.
+- Use exact approved SurePath logo/icon assets; verify in rendered preview rather than relying on source inspection alone.
+- Merge gate: CI and Vercel preview must pass. After merge, verify the production deployment. Web/PWA deployment does not update an already-installed native Android APK.
+- Native Android update requires `npm run build`, `npx cap sync android`, a signed APK/AAB build, and distribution. Confirm the artifact/version before saying native users have the latest build.
+- Quotation PDF PR #140 must not merge until a rendered PDF has been visually checked across all four pages, including QR, totals, long names, tables, disclaimers, and page breaks.
+
+---
+
+## 9. Documentation Index
 
 | Doc | Contents |
 |-----|----------|
@@ -173,7 +182,7 @@ See `docs/SECURITY_POLICY.md` for the full policy. Summary of the last audit:
 
 ---
 
-## 9. Demo Accounts (staging)
+## 10. Demo Accounts (staging)
 
 | Role | Email | Password |
 |------|-------|----------|

@@ -104,7 +104,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
+      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center">
@@ -158,7 +158,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 pb-[calc(7rem+env(safe-area-inset-bottom))] min-h-screen">
+      <main className="pb-[calc(7rem+env(safe-area-inset-bottom))] min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
         {renderTab()}
       </main>
 

@@ -788,7 +788,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  doc.setTextColor(...COLOR.white);
+  doc.setTextColor(...COLOR.ink);
   doc.text('TOTAL PEMBAYARAN', MARGIN + 16, y + cardH - 14);
   doc.setFontSize(15);
   doc.text(`${currency} ${d.totalPremium}`, MARGIN + cardW - 16, y + cardH - 13, { align: 'right' });

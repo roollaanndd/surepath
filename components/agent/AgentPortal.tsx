@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Language } from '../../types';
-import { IcHome, IcPolicy, IcCreate, IcWallet, IcProfile, IcBell } from './AgentIcons';
+import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
+import { IcBell } from './AgentIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import {
@@ -40,11 +41,11 @@ interface Props {
 }
 
 const TABS: PortalTab[] = [
-  { id: 'home',       label: 'Beranda', Icon: IcHome },
-  { id: 'policy',     label: 'Polis',   Icon: IcPolicy },
-  { id: 'quotes',     label: 'Buat',    Icon: IcCreate, center: true },
-  { id: 'commission', label: 'Dompet',  Icon: IcWallet },
-  { id: 'profile',    label: 'Profil',  Icon: IcProfile },
+  { id: 'home',       label: 'Beranda', Icon: House },
+  { id: 'policy',     label: 'Polis',   Icon: FileText },
+  { id: 'quotes',     label: 'Buat',    Icon: Plus, center: true },
+  { id: 'commission', label: 'Dompet',  Icon: Wallet },
+  { id: 'profile',    label: 'Profil',  Icon: UserRound },
 ];
 
 // Polis tab: order tracking + quote builder toggle
@@ -301,7 +302,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      <PortalTabBar tabs={TABS} activeId={activeTab} onSelect={handleTabChange} />
+      <PortalTabBar tabs={TABS} activeId={activeTab} onSelect={handleTabChange} modernIcons />
 
       {/* Notification drawer */}
       {showNotifications && (

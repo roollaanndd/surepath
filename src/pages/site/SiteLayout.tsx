@@ -316,27 +316,26 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
   const th = useSiteTheme(page.darkMode);
   const pwa = usePwa();
 
-  // The background video sits at zIndex -1 behind the hero, so it is invisible
-  // during first paint — defer its ~0.7-1 MB download until the page has loaded
-  // and the browser is idle, instead of competing with critical resources.
-  const [bgReady, setBgReady] = useState(false);
+  // Keep the shared background video mounted as soon as a page requests it.
+  // Delaying attachment until browser idle made autoplay unreliable on mobile
+  // and left some screens showing only a static/empty background.
+  const [bgReady, setBgReady] = useState(Boolean(bgVideo));
   useEffect(() => {
-    if (!bgVideo) return;
-    let idleId: number | undefined;
-    const schedule = () => {
-      const ric = (window as any).requestIdleCallback as undefined | ((cb: () => void, opts?: { timeout: number }) => number);
-      idleId = ric ? ric(() => setBgReady(true), { timeout: 4000 }) : window.setTimeout(() => setBgReady(true), 1500) as unknown as number;
-    };
-    if (document.readyState === 'complete') schedule();
-    else window.addEventListener('load', schedule, { once: true });
-    return () => {
-      window.removeEventListener('load', schedule);
-      const cic = (window as any).cancelIdleCallback;
-      if (idleId !== undefined) {
-        if (cic) cic(idleId); else clearTimeout(idleId);
-      }
-    };
+    setBgReady(Boolean(bgVideo));
   }, [bgVideo]);
+
+  const bgVideoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (!bgVideo || !bgReady) return;
+    const video = bgVideoRef.current;
+    if (!video) return;
+    const attemptPlay = () => {
+      if (video.paused) video.play().catch(() => {});
+    };
+    attemptPlay();
+    document.addEventListener('visibilitychange', attemptPlay);
+    return () => document.removeEventListener('visibilitychange', attemptPlay);
+  }, [bgVideo, bgReady]);
 
   return (
     <SiteChromeContext.Provider value={{ onInstall: pwa.handleInstallClick, installed: pwa.pwaInstalled }}>
@@ -345,7 +344,7 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
 
         {/* Fixed looping video background — sits behind all page content */}
         {bgVideo && bgReady && (
-          <video autoPlay muted loop playsInline preload="auto"
+          <video ref={bgVideoRef} autoPlay muted loop playsInline preload="auto"
             style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
             <source src={bgVideo} type="video/mp4" />
           </video>

@@ -5,7 +5,7 @@ import { PathyNavIcon } from './PathyNavIcon';
 export interface PortalTab {
   id: string;
   label: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ElementType<{ size?: number; strokeWidth?: number; className?: string }>;
   center?: boolean;
   overlay?: boolean;
 }

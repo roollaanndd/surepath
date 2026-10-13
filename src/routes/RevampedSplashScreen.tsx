@@ -92,16 +92,23 @@ export const RevampedSplashScreen: React.FC<Props> = ({ lang, setLang, darkMode,
 type EntryProps = { name: string; onDone: () => void; lang: Language; darkMode: boolean };
 
 export const RevampedAppEntryScreen: React.FC<EntryProps> = ({ name, onDone, lang, darkMode }) => {
+  const doneRef = useRef(onDone);
+  useEffect(() => { doneRef.current = onDone; }, [onDone]);
   useEffect(() => {
-    const t = window.setTimeout(onDone, 2100);
+    const t = window.setTimeout(() => doneRef.current(), 2100);
     return () => window.clearTimeout(t);
-  }, [onDone]);
+  }, []);
   const copy = COPY[lang === Language.EN ? 'EN' : 'ID'];
   const bg = darkMode ? '#071a13' : '#f5fbf7';
   const fg = darkMode ? '#e8fff3' : '#064e3b';
   return (
     <main className="fixed inset-0 z-[4999] flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-5 text-center"
       style={{ background: bg, color: fg, fontFamily: "'Sora', sans-serif" }}>
+      <style>{`
+        @keyframes sp-new-shimmer { from { transform:translateX(-130%); } to { transform:translateX(280%); } }
+        @keyframes sp-new-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
+        @media (prefers-reduced-motion: reduce) { .sp-new-motion, .sp-new-motion * { animation:none !important; transition:none !important; } }
+      `}</style>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 38%,rgba(0,193,106,.14),transparent 55%)' }} />
       <div className="relative z-10 flex flex-col items-center">
         <div className="mb-5" style={{ animation: 'sp-new-float 2.8s ease-in-out infinite' }}><PathyMascot accentRgb="0,193,106" size={124} /></div>

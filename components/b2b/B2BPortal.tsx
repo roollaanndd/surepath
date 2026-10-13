@@ -163,7 +163,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       {/* Bottom Tab Navigation */}
       <nav className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] inset-x-3 z-50 bg-white/90 dark:bg-[#111]/90 backdrop-blur-2xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-white/5">
         <div className="flex items-center justify-around px-1 py-2.5">
-          {TABS.map(({ id, labelEn, labelId, Icon }) => {
+          {TABS.map(({ id, labelEn, labelId }) => {
             const active = activeTab === id;
             return (
               <button

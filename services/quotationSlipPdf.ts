@@ -321,7 +321,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(40);
   doc.text(titleMain, MARGIN, 168);
   doc.text(titleMid, MARGIN, 212);
-  doc.setTextColor(...COLOR.emeraldBright);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(titleAccent, MARGIN + doc.getTextWidth(titleMid + ' '), 212);
 
   // Lede paragraph
@@ -413,7 +413,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('DISIAPKAN OLEH', agX + 16, cardY + 20);
 
   if (d.agentName) {
@@ -442,7 +442,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
     doc.text('PT. Ruang Proteksi Indonesia', agX + 16, cardY + 54);
     doc.setFont('courier', 'bold');
     doc.setFontSize(10);
-    doc.setTextColor(...COLOR.emerald);
+    doc.setTextColor(...COLOR.emeraldDeep);
     doc.text('halo@myinsurepath.com', agX + 16, cardY + 70);
   }
 
@@ -481,14 +481,14 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(7.5);
   doc.setTextColor(...COLOR.inkMuted);
   doc.text('SurePath — Digital Insurance Distribution Platform', MARGIN, footerY + 24);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('myinsurepath.com', MARGIN, footerY + 34);
   doc.setTextColor(170, 190, 178);
   doc.text(' · Bekerja sama dengan perusahaan asuransi berizin & diawasi OJK', MARGIN + doc.getTextWidth('myinsurepath.com'), footerY + 34);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(`SUREPATH.QS.${yearTag}`, PAGE_W - MARGIN, footerY + 13, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
@@ -717,7 +717,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(7);
   doc.setTextColor(...COLOR.inkMuted);
   doc.text('KONFIRMASI & PEMBAYARAN', PAGE_W - MARGIN, MARGIN + 2, { align: 'right' });
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
   doc.text('Hal. 4 dari 4', PAGE_W - MARGIN, MARGIN + 14, { align: 'right' });
@@ -725,7 +725,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   let y = MARGIN + 56;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('// KONFIRMASI & PEMBAYARAN', MARGIN, y);
 
   // Closing title
@@ -735,7 +735,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setTextColor(...COLOR.ink);
   doc.text(closingTitle, MARGIN, y);
   y += 28;
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(closingAccent, MARGIN, y);
 
   // Closing description
@@ -878,7 +878,7 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.text('TOTAL JATUH TEMPO', agX + 14, y + 90);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(`${currency} ${totalPremiumClean}`, agX + 14, y + 106);
 
   // ─── 3-step process ───────────────────────────────────────────────────
@@ -938,12 +938,12 @@ function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLOR.inkMuted);
   doc.text('· PT. Ruang Proteksi Indonesia · ', MARGIN + doc.getTextWidth('SurePath'), footerY + 13);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text('myinsurepath.com', MARGIN + doc.getTextWidth('SurePath · PT. Ruang Proteksi Indonesia · '), footerY + 13);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
-  doc.setTextColor(...COLOR.emerald);
+  doc.setTextColor(...COLOR.emeraldDeep);
   doc.text(`${d.quotationNumber} · Hal. 4 dari 4`, PAGE_W - MARGIN, footerY + 13, { align: 'right' });
 }
 

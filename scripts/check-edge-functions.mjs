@@ -90,19 +90,19 @@ const verifyJwtFalseAllowlist = new Map([
 // Parse each function block and require an explicit verify_jwt setting.
 const functionSettings = new Map();
 let currentFunction = null;
-for (const line of toml.split(/\\r?\\n/)) {
-  const section = line.match(/^\\[functions\\.([A-Za-z0-9_-]+)\\]\\s*$/);
+for (const line of toml.split(/\r?\n/)) {
+  const section = line.match(/^\[functions\.([A-Za-z0-9_-]+)\]\s*$/);
   if (section) {
     currentFunction = section[1];
     functionSettings.set(currentFunction, null);
     continue;
   }
-  if (/^\\[/.test(line)) {
+  if (/^\[/.test(line)) {
     currentFunction = null;
     continue;
   }
   if (currentFunction) {
-    const setting = line.match(/^\\s*verify_jwt\\s*=\\s*(true|false)\\s*(?:#.*)?$/);
+    const setting = line.match(/^\s*verify_jwt\s*=\s*(true|false)\s*(?:#.*)?$/);
     if (setting) functionSettings.set(currentFunction, setting[1] === 'true');
   }
 }

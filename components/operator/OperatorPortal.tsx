@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
 import { Language } from '../../types';
+import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
@@ -219,7 +220,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] min-h-screen">
+      <main className="relative z-10 pb-[calc(6rem+env(safe-area-inset-bottom))] min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
         <div key={tabKey} data-sp-anim style={{ animation: 'spFadeIn 0.25s ease-out' }}>
           {renderTab()}
         </div>
@@ -240,7 +241,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
                 className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
               >
                 <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
-                  <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />
+                  <ManagedPortalIcon id={id} size={21} imageClassName="w-[21px] h-[21px] object-contain" fallback={<Icon size={21} strokeWidth={active ? 2.3 : 1.8} />} />
                 </span>
                 <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
                   {labelId}

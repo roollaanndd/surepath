@@ -27,6 +27,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 }) => {
 
   const [stnkError, setStnkError] = React.useState<string | null>(null);
+  const [surveyActionError, setSurveyActionError] = React.useState<string | null>(null);
   const [analyzing, setAnalyzing] = React.useState(false);
 
   const handleStnkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +67,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
   const handlePhotoUpload = async (file: File, slotId: string, slotLabel: string) => {
     if (!file) return;
+    setSurveyActionError(null);
     
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -117,14 +119,15 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
   };
 
   const runSurveyAI = async () => {
+    setSurveyActionError(null);
     const images = Object.entries(survey.photos).map(([slotId, data]) => ({ slotId, data: data as string }));
     if (images.length < 3) {
-      console.warn("Harap unggah minimal 3 foto mobil sebelum memulai analisa.");
+      setSurveyActionError('Unggah minimal 3 foto mobil sebelum memulai analisis.');
       return;
     }
     const unverified = images.filter(({ slotId }) => photoValidation[slotId]?.status !== 'VALID');
     if (unverified.length > 0) {
-      console.warn('Semua foto harus lolos validasi sebelum analisa kendaraan. Periksa atau unggah ulang foto yang belum valid.');
+      setSurveyActionError('Analisis belum bisa dimulai. Tunggu validasi selesai dan unggah ulang foto yang gagal atau belum tervalidasi.');
       return;
     }
     setAnalyzing(true);
@@ -538,6 +541,12 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                  )}
               </div>
             ) : (
+              {surveyActionError && (
+                <div role="alert" className="mb-3 px-4 py-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-2">
+                  <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+                  <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">{surveyActionError}</p>
+                </div>
+              )}
               <button
                 onClick={runSurveyAI}
                 disabled={analyzing}

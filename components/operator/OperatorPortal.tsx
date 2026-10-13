@@ -237,8 +237,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
                 type="button"
                 aria-label={labelId}
                 aria-current={active ? "page" : undefined}
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green
-                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
               >
                 <span className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}>
                   <Icon size={21} strokeWidth={active ? 2.3 : 1.8} />

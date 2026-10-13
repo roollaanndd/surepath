@@ -99,11 +99,11 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <PromoBanner />
 
       {/* Greeting */}
-      <motion.div className="px-5 pt-12 pb-1" {...reveal(0)}>
+      <motion.div className="px-5 pt-10 pb-2 sm:pt-12" {...reveal(0)}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-ds-ink3 font-medium">{greeting()},</p>
-            <h2 className="text-2xl font-black text-ds-ink tracking-tight">
+            <p className="text-sm text-ds-ink3 font-medium">{greeting()},</p>
+            <h2 className="text-[26px] leading-tight font-black text-ds-ink tracking-tight">
               {agent?.name?.split(' ')[0] ?? 'Mitra'}
             </h2>
           </div>
@@ -125,7 +125,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </motion.div>
 
       {/* Commission Hero — premium bank-card look, the focal point of the screen */}
-      <motion.div className="px-5 pt-4" {...reveal(1)}>
+      <motion.div className="px-5 pt-3 sm:pt-4" {...reveal(1)}>
         <AgentArtKeyframes />
         <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)', boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)' }}>
           {/* glow + fine card pattern */}
@@ -139,7 +139,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           </svg>
           {/* card chip + contactless (bank-card identity) */}
           <div className="relative z-10 flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <span className="inline-block w-9 h-7 rounded-md" style={{ background: 'linear-gradient(135deg, #FDE047, #EAB308)', boxShadow: 'inset 0 0 0 1px rgba(113,63,18,0.35)' }}>
                 <svg viewBox="0 0 36 28" className="w-full h-full" fill="none"><path d="M0 14h36M18 0v28M6 7h24M6 21h24" stroke="rgba(113,63,18,0.45)" strokeWidth="1.4" /></svg>
               </span>
@@ -150,12 +150,12 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
           <div className="relative z-10 flex items-center gap-5">
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: 'rgba(253,224,71,0.75)' }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] mb-2" style={{ color: 'rgba(253,224,71,0.75)' }}>
                 {t('Commission this month', 'Komisi Bulan Ini')}
               </p>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-white/40 text-base font-medium">Rp</span>
-                <span className="text-4xl font-black font-mono leading-none tracking-tight"
+                <span className="text-3xl sm:text-4xl font-black font-mono leading-none tracking-tight break-words"
                   style={{ backgroundImage: 'linear-gradient(160deg, #FFFDF0 10%, #FDE047 55%, #EAB308 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
                   {stats.totalCommissionMonth >= 1000000
                     ? `${(stats.totalCommissionMonth / 1000000).toFixed(1)}jt`

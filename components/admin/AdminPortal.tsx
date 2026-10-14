@@ -36,6 +36,7 @@ const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
 const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
 const VehiclePricelistAdmin = lazy(() => import('./VehiclePricelistAdmin'));
 const WebsiteEditorAdmin = lazy(() => import('./WebsiteEditorAdmin'));
+const PortalIconManagerView = lazy(() => import('./PortalIconManager'));
 const AIAdminView = lazy(() => import('./AIAdminView'));
 const AIFinanceView = lazy(() => import('./AIFinanceView'));
 const AnalyticsDashboard = lazy(() => import('./AnalyticsDashboard'));
@@ -108,6 +109,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: '_sep6', isSeparator: true, groupLabel: 'Platform',           roles: ALL_ROLES },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
+  { id: 'portal_icons',     label: 'Icon Manager',         icon: FileImage,       roles: [UserRole.MASTER_ADMIN] },
   { id: 'ai_admin',         label: 'AI Admin Agent',      icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'ai_finance',       label: 'AI Finance Agent',    icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'pathy_logs',       label: 'Rekaman Pathy',       icon: MessageSquare,   roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -645,6 +647,7 @@ const AdminPortal = ({
       case 'product_config':   return <ProductConfigAdmin />;
       case 'tier_promo':       return <TierPromoConfigAdmin />;
       case 'website_editor':   return <WebsiteEditorAdmin />;
+      case 'portal_icons':     return <PortalIconManagerView />;
       case 'ai_admin':         return <AIAdminView />;
       case 'ai_finance':       return <AIFinanceView />;
       case 'ops_console':      return <OpsConsoleView />;
@@ -663,7 +666,7 @@ const AdminPortal = ({
   const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
 
   return (
-    <div className={`flex h-screen overflow-hidden font-sans ${rootBg}`}>
+    <div className={`flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
       {/* ── Animated background ───────────────────────────────────────────── */}
       <style>{`
         @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,-40px) scale(1.15)} }
@@ -685,7 +688,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
             <SidebarContent />
           </aside>
         </div>
@@ -694,7 +697,7 @@ const AdminPortal = ({
       {/* ── Main ───────────────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header */}
-        <header className={`h-16 border-b flex items-center justify-between px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`}>
+        <header className={`min-h-16 border-b flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`} style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
           <div className="flex items-center gap-4">
             {isMobile && (
               <button onClick={() => setMobileOpen(true)} className={`p-2 rounded-xl ${'bg-ds-card2 text-ds-ink3'}`}>

@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
+import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
@@ -114,7 +115,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       `}</style>
 
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none">
+      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center overflow-hidden">
@@ -165,14 +166,14 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 pt-16 pb-32 min-h-screen">
+      <main className="relative z-10 pb-32 min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
         <div key={tabKey} data-sp-anim style={{ animation: 'spFadeIn 0.25s ease-out' }}>
           {renderTab()}
         </div>
       </main>
 
       {/* Floating bottom tab nav — bank-style pills (emerald identity) */}
-      <nav className="fixed bottom-5 inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
+      <nav className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
         <div className="flex items-center justify-around px-1 py-2">
           {TABS.map(({ id, labelId, Icon }) => {
             const active = activeTab === id;
@@ -180,11 +181,14 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center"
+                type="button"
+                aria-label={labelId}
+                aria-current={active ? "page" : undefined}
+                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
               >
                 <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
-                  style={active ? { background: 'rgba(124,58,237,0.12)', color: '#059669' } : { color: 'var(--ds-ink3)' }}>
-                  <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+                  style={active ? { background: 'var(--ds-green-tint, rgba(0,193,106,0.12))', color: 'var(--ds-green, #059669)' } : { color: 'var(--ds-ink3)' }}>
+                  <ManagedPortalIcon id={id} size={20} imageClassName="w-5 h-5 object-contain" fallback={<Icon size={20} strokeWidth={active ? 2.6 : 2} />} />
                 </span>
                 <span
                   className="text-[9px] font-black uppercase tracking-widest leading-none transition-colors"

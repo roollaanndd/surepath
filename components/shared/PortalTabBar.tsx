@@ -1,5 +1,6 @@
 import React from 'react';
 import { PathyNavIcon } from './PathyNavIcon';
+import ManagedPortalIcon from './ManagedPortalIcon';
 
 /* Shared bottom navigation for customer and agent portals. */
 export interface PortalTab {
@@ -53,7 +54,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
                   ['--ic-tint' as string]: 'rgba(255,255,255,0.18)',
                 }}
               >
-                <PathyNavIcon id={id} size={34} active={active} />
+                <ManagedPortalIcon id={id} size={34} imageClassName="w-[34px] h-[34px] object-contain" fallback={<PathyNavIcon id={id} size={34} active={active} />} />
               </span>
               <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                 {label}
@@ -76,7 +77,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
               className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
               style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
             >
-              {modernIcons ? <Icon size={22} strokeWidth={active ? 2.2 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />}
+              <ManagedPortalIcon id={id} size={22} imageClassName="w-[22px] h-[22px] object-contain" fallback={modernIcons ? <Icon size={22} strokeWidth={active ? 2.2 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />} />
             </span>
             <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}

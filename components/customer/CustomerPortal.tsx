@@ -5,7 +5,7 @@ import {
   House, ShieldPlus, FileWarning, History
 } from 'lucide-react';
 import { Language } from '../../types';
-import { IcPathy, IcBell } from '../shared/CustomerIcons';
+import { IcPathy, IcBell, IcBuy, IcClaim, IcHistory } from '../shared/CustomerIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import NotificationDrawer from '../shared/NotificationDrawer';

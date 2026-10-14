@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type SurePathIconStyle = 'studio' | 'orbit' | 'bold';
 type Props = { id: string; size?: number; style?: SurePathIconStyle; className?: string; active?: boolean };
 

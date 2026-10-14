@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getPortalIconMap, getPortalIconStyles, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
+import { getPortalIconMap, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon from './SurePathIcon';
 
 type Props = { id: string; size?: number; active?: boolean; className?: string };

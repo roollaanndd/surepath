@@ -246,7 +246,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           </div>
           <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
             <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0 text-ds-green">
-              <IcTarget size={20} />
+              <Target size={20} />
             </div>
             <div>
               <p className="text-[9px] text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getPortalIconMap, getPortalIconStyles, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
+import { getPortalIconMap, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon from './SurePathIcon';
 
 type Props = {
@@ -21,6 +21,7 @@ export default function ManagedPortalIcon({ id, size = 24, fallback, className =
   }, []);
   const src = icons[id];
   if (src) return <img src={src} alt="" aria-hidden="true" draggable={false} width={size} height={size} className={imageClassName || className} style={{ width: size, height: size, objectFit: 'contain', display: 'block', flexShrink: 0 }} />;
+  if (!id && fallback) return <>{fallback}</>;
   return <span className={className} style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
     <SurePathIcon id={id} size={size} style={styles[id] || 'studio'} className={imageClassName} />
   </span>;

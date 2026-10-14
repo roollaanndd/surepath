@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ImagePlus, Trash2, Loader2, CheckCircle2, Search, Sparkles, Palette, RotateCcw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ImagePlus, Loader2, CheckCircle2, Search, Sparkles, Palette, RotateCcw } from 'lucide-react';
 import { getPortalIconMap, getPortalIconStyles, removePortalIcon, savePortalIcon, setPortalIconStyle, subscribePortalIconStyles, type PortalIconMap, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon, { type SurePathIconStyle } from '../shared/SurePathIcon';
 

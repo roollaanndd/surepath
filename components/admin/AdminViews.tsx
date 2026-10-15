@@ -1894,6 +1894,14 @@ export const AgentManagementView = () => {
               </div>
               <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
               <p className="text-[0.6rem] font-bold text-emerald-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
+              {(a as any).agreement_no ? (
+                <p className="mt-1 text-[0.62rem] font-semibold text-ds-ink2">
+                  <span className="text-ds-ink3">No. Perjanjian:</span> <span className="font-mono text-emerald-500">{(a as any).agreement_no}</span>
+                  {(a as any).agreement_accepted_at && <span className="ml-2 text-ds-ink3">{new Date((a as any).agreement_accepted_at).toLocaleDateString('id-ID')}</span>}
+                </p>
+              ) : (
+                <p className="mt-1 text-[0.58rem] text-ds-ink3">Perjanjian belum tercatat</p>
+              )}
             </div>
           </button>
 

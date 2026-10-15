@@ -129,7 +129,9 @@ const App = () => {
     // param ending in "code" (promo_code, referral_code, agent_code, all
     // used elsewhere in this app), leaving oauthLoading stuck true for
     // users who never went through an OAuth redirect at all.
-    return new URLSearchParams(window.location.search).has('code') || window.location.hash.includes('access_token=');
+    const recoveryHash = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+    return new URLSearchParams(window.location.search).has('code')
+      || (window.location.hash.includes('access_token=') && !recoveryHash);
   });
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang]           = useState<Language>(detectLang);
@@ -467,6 +469,26 @@ const App = () => {
   }
 
   const pathname = currentPath;
+  const isPasswordRecovery =
+    new URLSearchParams(window.location.search).get('reset') === '1' ||
+    new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+
+  // Recovery links redirect to the site root with ?reset=1. Mount AuthGate
+  // before the marketing homepage so the PASSWORD_RECOVERY event and session
+  // are handled by the reset form, not the normal post-login router.
+  if (isPasswordRecovery) {
+    return (
+      <Suspense fallback={<PortalLoader lang={lang} />}>
+        <AuthGate
+          initialLang={lang}
+          initialMode="RESET_PASSWORD"
+          onAuthSuccess={handleAuthSuccess}
+          externalError={loginError}
+          onDismissExternalError={() => setLoginError(null)}
+        />
+      </Suspense>
+    );
+  }
 
   if (pathname === '/payment/success' || pathname === '/payment/failed') {
     return <Suspense fallback={<PortalLoader />}><PaymentRedirect status={pathname === '/payment/success' ? 'success' : 'failed'} /></Suspense>;

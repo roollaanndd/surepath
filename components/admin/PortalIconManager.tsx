@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ImagePlus, Loader2, CheckCircle2, Search, Sparkles, Palette, RotateCcw } from 'lucide-react';
 import { getPortalIconMap, getPortalIconStyles, removePortalIcon, savePortalIcon, setPortalIconStyle, subscribePortalIconStyles, type PortalIconMap, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon, { type SurePathIconStyle } from '../shared/SurePathIcon';
+import SketchPngLibrary from './SketchPngLibrary';
 
 const ICONS = [
   { id: 'home', label: 'Beranda', group: 'Navigasi' }, { id: 'dashboard', label: 'Dashboard', group: 'Navigasi' },
@@ -103,6 +104,7 @@ export default function PortalIconManager() {
       </div>
       {error&&<p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">{error}</p>}{notice&&<p role="status" className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700"><CheckCircle2 size={17}/>{notice}</p>}
       <div className="flex items-center justify-between gap-3"><div><h3 className="text-lg font-black text-ds-ink">Koleksi ikon</h3><p className="mt-0.5 text-xs text-ds-ink3">Pilih karakter visual atau unggah ilustrasi milikmu.</p></div><span className="rounded-xl bg-ds-green-tint px-3 py-2 text-xs font-extrabold text-ds-green">{group}</span></div>
+      <SketchPngLibrary />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
         {filtered.map(item=>{const selected=styles[item.id]||'studio';const custom=!!icons[item.id];return <article key={item.id} className="group relative min-w-0 overflow-hidden rounded-[22px] border border-ds-border bg-ds-card p-3 sm:p-4 transition-all duration-200 hover:-translate-y-1 hover:border-ds-green/40 hover:shadow-lg hover:shadow-ds-green/5">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 opacity-0 transition-opacity group-hover:opacity-100"/><div className="flex items-start justify-between gap-2"><span className="rounded-full border border-ds-border bg-ds-card2 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-ds-ink3">{item.group}</span>{custom&&<span className="rounded-full bg-violet-500/10 px-2 py-1 text-[9px] font-bold text-violet-600">CUSTOM</span>}</div>

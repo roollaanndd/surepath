@@ -218,6 +218,10 @@ npm run dev          # Vite dev server on :5173
 npm run build        # Production build (TypeScript checked)
 ```
 
+### AI coding agent
+
+Konteks proyek untuk AI coding agent ada di `AGENTS.md` (root repo) — dibaca otomatis oleh agent yang memakai konvensi `AGENTS.md`. Claude Code memakai `CLAUDE.md`. Keduanya harus diubah bersamaan.
+
 ---
 
 ## Demo Accounts

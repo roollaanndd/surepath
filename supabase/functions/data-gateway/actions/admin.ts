@@ -81,7 +81,26 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
         if (params.role) q = q.eq('role', params.role);
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
-        return json({ data });
+
+        // Join each agent's latest signed agreement into the admin agent list.
+        const agentIds = (data ?? []).filter((u: any) => u.role === 'AGENT').map((u: any) => u.id);
+        const agreementByAgent: Record<string, any> = {};
+        if (agentIds.length) {
+          const { data: agreements } = await db.from('sp_agent_agreements')
+            .select('agent_id, agreement_no, accepted_at, doc_version')
+            .in('agent_id', agentIds)
+            .order('accepted_at', { ascending: false });
+          for (const agreement of agreements ?? []) {
+            if (!agreementByAgent[agreement.agent_id]) agreementByAgent[agreement.agent_id] = agreement;
+          }
+        }
+        const enriched = (data ?? []).map((u: any) => ({
+          ...u,
+          agreement_no: agreementByAgent[u.id]?.agreement_no ?? null,
+          agreement_accepted_at: agreementByAgent[u.id]?.accepted_at ?? null,
+          agreement_doc_version: agreementByAgent[u.id]?.doc_version ?? null,
+        }));
+        return json({ data: enriched });
       }
 
     case 'admin_get_user': {

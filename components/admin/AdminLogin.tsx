@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
 import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
@@ -26,6 +26,115 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState<string | null>(null);
 
+  const authorizeAdminSession = async (authUser: any, session: any, attemptedEmail?: string) => {
+    const normalEmail = String(authUser?.email ?? attemptedEmail ?? '').trim().toLowerCase();
+    if (!authUser || !session?.access_token || !normalEmail) {
+      setError('Login Google tidak menghasilkan sesi yang valid. Silakan coba lagi.');
+      return false;
+    }
+
+    try {
+      const gwRes = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action: 'get_my_profile' }),
+      });
+      const gwData: { data?: any; error?: string } = await gwRes.json();
+      const spUser = gwRes.ok ? (gwData.data ?? null) : null;
+
+      // Google OAuth may authenticate an identity, but it must never provision
+      // an application profile or grant access by itself. Only an existing
+      // sp_users record with an authorized admin role/apps may enter.
+      if (!spUser) {
+        await supabase.auth.signOut();
+        recordFailedAttempt(normalEmail);
+        setError('Akun Google ini belum terdaftar di database SurePath. Hubungi administrator.');
+        return false;
+      }
+
+      const allowedApps: string[] = Array.isArray(spUser.allowed_apps) ? spUser.allowed_apps : [];
+      const canAccessAdmin = ADMIN_ROLES.includes(spUser.role as UserRole) || allowedApps.includes('ADMIN');
+      if (!canAccessAdmin) {
+        await supabase.auth.signOut();
+        recordFailedAttempt(normalEmail);
+        setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
+        return false;
+      }
+
+      clearRateLimit(normalEmail);
+      onLoginSuccess({
+        id: spUser.id,
+        name: spUser.name,
+        email: spUser.email,
+        role: spUser.role,
+        supabaseId: authUser.id,
+        nodeId: spUser.agent_code ?? `SP-${authUser.id.slice(0, 8).toUpperCase()}`,
+        allowed_apps: allowedApps,
+        trustScore: spUser.trust_score ?? 85,
+        token: session.access_token,
+      });
+      return true;
+    } catch {
+      await supabase.auth.signOut();
+      setError('Gagal memverifikasi akses admin. Silakan coba lagi.');
+      return false;
+    }
+  };
+
+  // Supabase returns here after Google OAuth. Verify the session against the
+  // existing SurePath profile before rendering the admin portal.
+  useEffect(() => {
+    const callbackUrl = new URL(window.location.href);
+    const isOAuthCallback =
+      callbackUrl.searchParams.has('code') ||
+      window.location.hash.includes('access_token=') ||
+      window.location.hash.includes('error=');
+    if (!isOAuthCallback) return;
+
+    let active = true;
+    setLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (!active) return;
+        if (sessionError || !data.session || !data.session.user) {
+          setError('Login Google gagal atau sesi tidak valid. Silakan coba lagi.');
+          return;
+        }
+        await authorizeAdminSession(data.session.user, data.session, data.session.user.email);
+        if (active) {
+          // Remove OAuth tokens/code from the visible URL after verification.
+          window.history.replaceState({}, document.title, '/admin');
+        }
+      } catch {
+        if (active) setError('Tidak dapat memverifikasi akun Google. Silakan coba lagi.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/admin` },
+      });
+      if (oauthError) setError(`Login Google gagal: ${oauthError.message}`);
+    } catch {
+      setError('Tidak dapat memulai login Google. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -47,54 +156,10 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
       });
 
       if (!authError && authData.user && authData.session) {
-        const gwRes = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authData.session.access_token}`,
-          },
-          body: JSON.stringify({ action: 'get_my_profile' }),
-        });
-        const gwData: { data?: any; error?: string } = await gwRes.json();
-        const spUser = gwData.data ?? null;
-
-        if (!spUser) {
-          await supabase.auth.signOut();
-          recordFailedAttempt(normalEmail);
-          setError('Akun tidak ditemukan di profil SurePath. Hubungi administrator.');
-          return;
-        }
-
-        // Multi-app access: admin if role in ADMIN_ROLES OR allowed_apps includes 'ADMIN'
-        const allowedApps: string[] = Array.isArray((spUser as any).allowed_apps) ? (spUser as any).allowed_apps : [];
-        const canAccessAdmin = ADMIN_ROLES.includes(spUser.role as UserRole) || allowedApps.includes('ADMIN');
-        if (!canAccessAdmin) {
-          await supabase.auth.signOut();
-          recordFailedAttempt(normalEmail);
-          setError('Akses ditolak. Akun ini tidak memiliki izin admin.');
-          return;
-        }
-
-        clearRateLimit(normalEmail);
-        onLoginSuccess({
-          id:           spUser.id,
-          name:         spUser.name,
-          email:        spUser.email,
-          role:         spUser.role,
-          supabaseId:   authData.user.id,
-          nodeId:       spUser.agent_code ?? `SP-${authData.user.id.slice(0, 8).toUpperCase()}`,
-          allowed_apps: allowedApps ?? null,
-          trustScore: spUser.trust_score ?? 85,
-          token:      authData.session.access_token,
-        });
+        await authorizeAdminSession(authData.user, authData.session, normalEmail);
         return;
       }
 
-      // Supabase Auth is the only login path — the legacy IndexedDB fallback
-      // (previously reachable in production, allowing anyone who extracted
-      // VITE_ADMIN_KEY from the client bundle to log in as master@surepath.ai)
-      // has been removed rather than DEV-gated, since a gated insecure path
-      // is still a liability if the gate is ever refactored away.
       recordFailedAttempt(normalEmail);
       setError('Kredensial salah atau akun tidak ditemukan.');
     } catch {
@@ -259,6 +324,23 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                 }
               </button>
             </form>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1" style={{ background: 'rgba(6,78,59,0.12)' }} />
+              <span style={{ fontSize: '0.52rem', color: '#94a3b8', letterSpacing: '0.18em', fontWeight: 700 }}>ATAU</span>
+              <div className="h-px flex-1" style={{ background: 'rgba(6,78,59,0.12)' }} />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40"
+              style={{ background: '#ffffff', color: '#334155', border: '1px solid rgba(6,78,59,0.16)', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}
+            >
+              <span aria-hidden="true" className="flex items-center justify-center w-5 h-5 rounded-full font-bold" style={{ fontSize: '0.95rem', color: '#4285F4', fontFamily: 'Arial, sans-serif' }}>G</span>
+              Lanjutkan dengan Google
+            </button>
           </div>
         </div>
 

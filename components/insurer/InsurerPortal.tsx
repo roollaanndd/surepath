@@ -18,6 +18,7 @@ import InsurerClaims from './InsurerClaims';
 import InsurerPayments from './InsurerPayments';
 import InsurerProfile from './InsurerProfile';
 import InsurerNotifications from './InsurerNotifications';
+import PolicyUploadReminder from './PolicyUploadReminder';
 
 interface Props {
   authToken: string;
@@ -108,6 +109,10 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && (
         <OnboardingFlow role="INSURER" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
+      )}
+      {/* Popup pengingat SLA upload polis (72 jam setelah APPROVED) */}
+      {!showOnboarding && (
+        <PolicyUploadReminder authToken={authToken} onGoToOrders={() => handleTabChange('orders')} />
       )}
       <style>{`
         @keyframes spFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }

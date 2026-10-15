@@ -55,6 +55,8 @@ export interface InsurerOrder {
   insurer_decision_at?: string | null;
   policy_number: string | null;
   policy_document_url: string | null;
+  // SLA v1.50.0: batas waktu upload softcopy polis setelah insurer APPROVED
+  policy_upload_deadline?: string | null;
   vehicle_image_url: string | null;
   vehicle_details: Record<string, any> | null;
   created_at: string;
@@ -69,6 +71,7 @@ export interface InsurerKpi {
   request_info: number;
   declined: number;
   issued: number;
+  awaiting_policy?: number;
 }
 
 export interface InsurerDashboard {

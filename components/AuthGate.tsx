@@ -15,7 +15,7 @@ import { OjkBadge, EncryptionBadge } from './ui';
 interface AuthGateProps {
   onAuthSuccess: (user: any) => void;
   initialLang?: Language;
-  initialMode?: 'LOGIN' | 'REGISTER';
+  initialMode?: 'LOGIN' | 'REGISTER' | 'RESET_PASSWORD';
   // Surface an error the parent produced (e.g. profile-fetch failed transiently
   // during OAuth callback so we sent the user back here instead of the role
   // picker). We display it in the same error slot as our own login errors.
@@ -161,18 +161,25 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
   // ── Handle email confirmation redirect + auth state changes ───────────────
   useEffect(() => {
-    // If user arrives from email confirmation link, they already have a session
+    // Password recovery must stay on the reset form instead of resolving the
+    // recovery session as a normal app login.
+    const isPasswordRecovery =
+      new URLSearchParams(window.location.search).get('reset') === '1' ||
+      new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
+
+    if (isPasswordRecovery) setMode('RESET_PASSWORD');
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) resolveAndLogin(session.user);
+      if (session?.user && !isPasswordRecovery) resolveAndLogin(session.user);
     });
 
-    // Listen for SIGNED_IN (email link click while page is open, or 3rd-party)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        resolveAndLogin(session.user);
-      }
       if (event === 'PASSWORD_RECOVERY') {
         setMode('RESET_PASSWORD');
+        return;
+      }
+      if (event === 'SIGNED_IN' && session?.user && !isPasswordRecovery) {
+        resolveAndLogin(session.user);
       }
     });
 
@@ -370,6 +377,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
     ev.preventDefault(); setLoading(true); setError(null);
     const { error: e } = await supabase.auth.updateUser({ password: newPassword });
     if (e) { setError(e.message); setLoading(false); return; }
+    // Leave recovery mode before resolving the authenticated user, otherwise
+    // the reset route would keep rendering this form after the password saves.
+    window.history.replaceState({}, '', window.location.pathname);
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) await resolveAndLogin(session.user);
     setLoading(false);

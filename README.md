@@ -1,8 +1,8 @@
 # SurePath — Insurtech Mobile Platform
 
-**Current version: v1.23.0** (2026-07-07). See `docs/CHANGELOG.md` for full history.
+**Current version on `main`: v2.5.17** (version bump to v2.5.18 is proposed separately; check `src/version.ts` and `docs/CHANGELOG.md` before announcing a release). See `docs/CHANGELOG.md` for full history.
 
-SurePath is a full-stack insurtech platform for Indonesian markets. Agents sell motor/car insurance to customers, premiums are collected via Xendit, and commissions are credited to agent wallets and disbursed on request. As of v1.23.0 the platform spans **5 portal apps** (Customer / Agent / Operator / Insurer / Admin CMS) plus a public website and B2B portal.
+SurePath is a full-stack insurtech platform for Indonesian markets. Agents sell motor/car insurance to customers, premiums are collected via Xendit, and commissions are credited to agent wallets and disbursed on request. The platform spans **5 portal apps** (Customer / Agent / Operator / Insurer / Admin CMS) plus a public website and B2B portal.
 
 ---
 

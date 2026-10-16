@@ -70,7 +70,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             onClick={() => onSelect(id)}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center ${FOCUS_RING}`}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${FOCUS_RING}`}
           >
             <span
               aria-hidden="true"

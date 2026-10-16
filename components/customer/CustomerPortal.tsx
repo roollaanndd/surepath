@@ -27,7 +27,7 @@ import { PageTransition } from '../car-wizard/WizardUI';
 import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOrder, type SpClaim, type SpNotification } from '../../services/supabaseService';
 import { HeroCard, AICard, StatCard, SectionLabel, CoverageRow, FeaturedCard } from '../shared/cards';
 import { HeroProtected, EmptyStateSearch } from '../shared/Illustrations';
-import { CircularActionGrid, LiveBadge, ClayCard, ReferralCard } from '../ui';
+import { CircularActionGrid, ClayCard, ReferralCard } from '../ui';
 import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { CLAIM_OPEN_EVENT } from '../../services/claimHandoff';
 import OrderDetailSheet from './OrderDetailSheet';
@@ -192,7 +192,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <button
                   type="button"
                   onClick={() => navigate('profile')}
-                  className="relative cursor-pointer active:scale-95 transition-transform focus:outline-none"
+                  aria-label={t('Open profile', 'Buka profil')}
+                  className="relative cursor-pointer active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-bg"
                 >
                   <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-base shadow-ds-green ring-4 ring-ds-green/10">
                     {currentUser?.name?.[0]}
@@ -285,13 +286,6 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   />
                 </ClayCard>
               </div>
-
-              {/* Live social proof — "Sedang Ramai" pattern from Livin' */}
-              {!latestPolicy && (
-                <div className="flex justify-center">
-                  <LiveBadge count={43} label={t('buying insurance now', 'orang sedang beli asuransi')} />
-                </div>
-              )}
 
               {/* Pathy AI card */}
               <AICard

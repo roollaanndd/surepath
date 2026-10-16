@@ -59,10 +59,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mark as PROCESSING first to prevent double-trigger
-    await supabase.from('sp_withdrawals')
+    // Atomically claim the withdrawal. Two requests may both have read APPROVED above;
+    // the conditional update ensures only one can transition APPROVED → PROCESSING.
+    // A failed/empty claim must never call Xendit.
+    const { data: claimedWithdrawal, error: claimError } = await supabase
+      .from('sp_withdrawals')
       .update({ status: 'PROCESSING', updated_at: new Date().toISOString() })
-      .eq('id', withdrawal_id);
+      .eq('id', withdrawal_id)
+      .eq('status', 'APPROVED')
+      .select('id')
+      .maybeSingle();
+
+    if (claimError) {
+      console.error('Withdrawal claim failed:', claimError.code ?? 'unknown');
+      return new Response(JSON.stringify({ error: 'Could not claim withdrawal for processing' }), {
+        status: 409, headers: { ...CORS, 'Content-Type': 'application/json' }
+      });
+    }
+    if (!claimedWithdrawal) {
+      return new Response(JSON.stringify({ error: 'Withdrawal is already being processed or is no longer approved' }), {
+        status: 409, headers: { ...CORS, 'Content-Type': 'application/json' }
+      });
+    }
 
     const external_id = `WD-${withdrawal_id.replace(/-/g, '').slice(0, 16)}-${Date.now()}`;
 
@@ -86,22 +104,24 @@ Deno.serve(async (req) => {
     });
 
     if (!xenditRes.ok) {
-      const errText = await xenditRes.text();
-      console.error('Xendit disbursement error:', errText);
+      // Provider error bodies may contain sensitive account/payment details.
+      // Do not return or persist the raw body. The HTTP status is enough for triage.
+      const providerStatus = xenditRes.status;
+      console.error('Xendit disbursement rejected:', { status: providerStatus });
 
-      // Reverse the wallet deduction
+      // Reverse the wallet deduction only for a definite non-2xx provider response.
       await supabase.rpc('reverse_withdrawal', {
         p_withdrawal_id: withdrawal_id,
         p_agent_id:      wd.agent_id,
         p_amount:        wd.amount,
-        p_reason:        'Disbursement gagal: ' + errText.slice(0, 100),
+        p_reason:        `Disbursement rejected by provider (HTTP ${providerStatus})`,
       });
 
       await supabase.from('sp_withdrawals').update({
         status:         'FAILED',
-        failure_reason: errText.slice(0, 500),
+        failure_reason: `Provider rejected disbursement (HTTP ${providerStatus})`,
         updated_at:     new Date().toISOString(),
-      }).eq('id', withdrawal_id);
+      }).eq('id', withdrawal_id).eq('status', 'PROCESSING');
 
       // Notify agent
       await supabase.from('sp_notifications').insert({
@@ -113,7 +133,7 @@ Deno.serve(async (req) => {
         read:     false,
       });
 
-      return new Response(JSON.stringify({ error: 'Xendit disbursement failed', detail: errText }), {
+      return new Response(JSON.stringify({ error: 'Xendit disbursement failed; contact an administrator if the issue persists' }), {
         status: 502, headers: { ...CORS, 'Content-Type': 'application/json' }
       });
     }
@@ -144,8 +164,11 @@ Deno.serve(async (req) => {
     );
 
   } catch (err) {
-    console.error('xendit-disburse error:', err);
-    return new Response(JSON.stringify({ error: 'Internal error', detail: String(err) }), {
+    // A network failure can happen after the provider accepted the payout.
+    // Keep PROCESSING for reconciliation; do not automatically refund/retry an
+    // outcome that is unknown, and never expose raw provider/runtime errors.
+    console.error('xendit-disburse unexpected failure:', err instanceof Error ? err.name : 'unknown');
+    return new Response(JSON.stringify({ error: 'Internal error; withdrawal requires reconciliation' }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' }
     });
   }

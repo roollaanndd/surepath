@@ -65,7 +65,6 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
   const paid = commissions.filter(c => c.status === 'PAID');
   const pending = commissions.filter(c => c.status === 'PENDING');
@@ -80,7 +79,9 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   const lastMonth = paid
     .filter(c => {
       const d = new Date(c.created_at ?? 0);
-      return d >= startOfLastMonth && d <= endOfLastMonth;
+      // Use the start of this month as an exclusive upper bound. Comparing
+      // against endOfLastMonth at midnight excluded almost the entire final day.
+      return d >= startOfLastMonth && d < startOfMonth;
     })
     .reduce((s, c) => s + c.commission_amount, 0);
 
@@ -200,7 +201,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
           <p className="font-black text-lg tracking-tight text-ds-ink">{formatIDR(lastMonth)}</p>
           <p className="text-[10px] text-ds-ink3 font-bold mt-1">{paid.filter(c => {
             const d = new Date(c.created_at ?? 0);
-            return d >= startOfLastMonth && d <= endOfLastMonth;
+            return d >= startOfLastMonth && d < startOfMonth;
           }).length} {t('transactions', 'transaksi')}</p>
         </div>
       </div>

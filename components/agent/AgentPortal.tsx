@@ -296,7 +296,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             <p className="text-ds-ink3 text-sm font-bold">{t('Loading your dashboard…', 'Memuat dashboard…')}</p>
           </div>
         ) : (
-          <div key={tabKey} data-sp-anim style={{ animation: 'spFadeIn 0.25s ease-out' }}>
+          <div key={tabKey} data-sp-anim className="sp-page-enter">
             {renderTab()}
           </div>
         )}

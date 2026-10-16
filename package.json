@@ -23,8 +23,8 @@
     "build:android": "node scripts/sync-android-version.mjs && npm run build && npx cap sync android"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
+    "@capacitor/android": "^8.4.3",
+    "@capacitor/core": "^8.4.3",
     "@sentry/react": "^10.63.0",
     "@supabase/supabase-js": "^2.106.0",
     "@types/cors": "^2.8.19",
@@ -33,7 +33,7 @@
     "@vercel/analytics": "^2.0.1",
     "cors": "^2.8.6",
     "dexie": "^4.2.1",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "express": "^5.2.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.562.0",
@@ -54,10 +54,11 @@
     "brace-expansion": "^2.0.3",
     "fast-uri": "^3.1.1",
     "body-parser": "^2.3.0",
-    "serialize-javascript": "^7.0.3"
+    "serialize-javascript": "^7.0.3",
+    "qs": "^6.16.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.0",
+    "@capacitor/cli": "^8.4.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",

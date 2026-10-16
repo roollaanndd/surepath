@@ -167,7 +167,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
 
       {/* Main Content */}
       <main className="relative z-10 pb-32 min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
-        <div key={tabKey} data-sp-anim style={{ animation: 'spFadeIn 0.25s ease-out' }}>
+        <div key={tabKey} data-sp-anim className="sp-page-enter">
           {renderTab()}
         </div>
       </main>

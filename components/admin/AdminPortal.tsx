@@ -377,7 +377,7 @@ const AdminPortal = ({
             <button
               key={navItem.id}
               onClick={() => { setActiveTab(navItem.id); setMobileOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left sp-interactive-surface ${
                 activeTab === navItem.id
                   ? 'bg-ds-green-tint text-ds-green border border-ds-green/20'
                   : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
@@ -662,7 +662,7 @@ const AdminPortal = ({
 
   // ── Layout vars ────────────────────────────────────────────────────────────
   const rootBg   = 'bg-ds-bg text-ds-ink';
-  const headerBg = 'bg-ds-card/80 backdrop-blur-xl border-ds-border shadow-ds-sm';
+  const headerBg = 'sp-glass-strong border-ds-border shadow-ds-sm transition-[background-color,border-color,box-shadow] duration-300';
   const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
 
   return (
@@ -679,7 +679,7 @@ const AdminPortal = ({
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
-        <aside className={`w-64 border-r flex flex-col p-6 flex-shrink-0 z-20 backdrop-blur-3xl ${sidebarBg}`}>
+        <aside className={`w-64 border-r flex flex-col p-6 flex-shrink-0 z-20 sp-glass-strong ${sidebarBg}`}>
           <SidebarContent />
         </aside>
       )}
@@ -688,7 +688,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 ${sidebarBg} ${'bg-ds-card shadow-ds-sm'}`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
             <SidebarContent />
           </aside>
         </div>

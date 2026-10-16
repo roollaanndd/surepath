@@ -160,7 +160,9 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
       {/* Main Content */}
       <main className="pb-[calc(7rem+env(safe-area-inset-bottom))] min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
-        {renderTab()}
+        <div key={activeTab} className="sp-page-enter">
+          {renderTab()}
+        </div>
       </main>
 
       {/* Bottom Tab Navigation */}

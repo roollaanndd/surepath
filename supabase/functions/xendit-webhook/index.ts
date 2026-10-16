@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     });
 
     const { external_id, id: xendit_invoice_id, status, payment_method, payment_channel, paid_amount, paid_at } = payload;
+    const normalizedStatus = typeof status === 'string' ? status.toUpperCase() : 'PENDING';
 
     if (!external_id) {
       return new Response('Missing external_id', { status: 400, headers: CORS });
@@ -73,7 +74,7 @@ Deno.serve(async (req) => {
     const { data: payment, error: payErr } = await supabase
       .from('sp_payments')
       .update({
-        status:          status?.toUpperCase() ?? 'PENDING',
+        status:          normalizedStatus,
         payment_method:  payment_method ?? null,
         payment_channel: payment_channel ?? null,
         paid_amount:     paid_amount ?? null,
@@ -83,16 +84,25 @@ Deno.serve(async (req) => {
         updated_at:      new Date().toISOString(),
       })
       .eq('external_id', external_id)
+      // Atomic replay guard: PostgreSQL rechecks this predicate after a concurrent
+      // update commits, so only one PAID callback can transition this row and run
+      // the downstream wallet/commission side effects.
+      .neq('status', 'PAID')
       .select('order_id, amount')
-      .single();
+      .maybeSingle();
 
-    if (payErr || !payment) {
-      console.error('Payment update error:', payErr);
+    if (payErr) {
+      console.error('Payment update failed:', payErr.code ?? 'unknown');
+      return new Response('ok', { status: 200, headers: CORS });
+    }
+    if (!payment) {
+      // Already PAID (including a concurrent duplicate), or no matching payment.
+      // Never repeat downstream credits for a callback that did not claim the row.
       return new Response('ok', { status: 200, headers: CORS });
     }
 
     // If PAID — advance order to UNDER_REVIEW, auto-generate review token, notify all parties
-    if (status === 'PAID' && payment.order_id) {
+    if (normalizedStatus === 'PAID' && payment.order_id) {
       // ── AMOUNT VERIFICATION: prevent fraud via tampered order rows ──────
       // Compare the amount Xendit actually received against the order's
       // total_premium. If they don't match (within Rp 100 rounding tolerance),
@@ -403,7 +413,7 @@ Deno.serve(async (req) => {
     }
 
     // If EXPIRED — update order and notify agent
-    if (status === 'EXPIRED' && payment.order_id) {
+    if (normalizedStatus === 'EXPIRED' && payment.order_id) {
       const { data: order } = await supabase
         .from('sp_policy_orders')
         .select('agent_id, order_number, product_name, client_name')

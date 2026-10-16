@@ -310,7 +310,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           agentId={agent?.id ?? ''}
           lang={lang}
           onClose={() => { setShowNotifications(false); setUnreadCount(0); }}
-          onNavigate={setActiveTab}
+          onNavigate={handleTabChange}
         />
       )}
 

@@ -184,9 +184,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <h3 className="text-2xl font-black text-ds-ink tracking-tight leading-tight">
                       {currentUser?.name?.split(' ')[0]}
                     </h3>
+{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black text-white" style={{ background: '#00C896' }}>
-                      {currentUser?.trustScore || 85}
+                      {Math.max(0, Math.min(100, currentUser.trustScore))}
                     </span>
+                    )}
                   </div>
                 </div>
                 <button
@@ -202,38 +204,39 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </button>
               </div>
 
-              {/* Protection Score Hero — with character illustration */}
+              {/* Protection overview — show a score only when the account provides one */}
               <HeroCard>
                 {/* Character illustration — top right of hero card */}
                 <div className="absolute top-2 right-2 opacity-90 pointer-events-none">
                   <HeroProtected size={90} />
                 </div>
                 <div className="flex items-center gap-5 relative z-10">
-                  {/* SVG Protection Score Ring */}
-                  <div className="relative flex-shrink-0">
-                    <svg width="86" height="86" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7"/>
-                      <circle
-                        cx="50" cy="50" r="38"
-                        fill="none"
-                        stroke="#00C16A"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray="238.76"
-                        strokeDashoffset={238.76 * (1 - Math.min(100, currentUser?.trustScore ?? 85) / 100)}
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xl font-black text-white leading-none">{currentUser?.trustScore ?? 85}</span>
-                      <span className="text-[8px] text-white/40 font-bold">/100</span>
+                  {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && (
+                    <div className="relative flex-shrink-0">
+                      <svg width="86" height="86" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7"/>
+                        <circle
+                          cx="50" cy="50" r="38"
+                          fill="none"
+                          stroke="#00C16A"
+                          strokeWidth="7"
+                          strokeLinecap="round"
+                          strokeDasharray="238.76"
+                          strokeDashoffset={238.76 * (1 - Math.max(0, Math.min(100, currentUser.trustScore)) / 100)}
+                          transform="rotate(-90 50 50)"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-xl font-black text-white leading-none">{Math.max(0, Math.min(100, currentUser.trustScore))}</span>
+                        <span className="text-[8px] text-white/40 font-bold">/100</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {/* Text */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00C16A' }} />
-                      <p className="text-[10px] font-black text-white/65 uppercase tracking-widest">{t('Protection Score', 'Skor Proteksi')}</p>
+                      <p className="text-[10px] font-black text-white/65 uppercase tracking-widest">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? t('Protection Score', 'Skor Proteksi') : t('Your Coverage', 'Perlindungan Anda')}</p>
                     </div>
                     {latestPolicy ? (
                       <>

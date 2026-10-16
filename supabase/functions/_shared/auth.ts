@@ -54,11 +54,36 @@ export async function verifyAuth(
   let role: string | null = null;
   if (serviceKey) {
     const db = createClient(supabaseUrl, serviceKey);
-    const { data: spUser } = await db
+
+    // Use parameterized equality filters rather than interpolating identity data
+    // into PostgREST's .or() filter grammar. Prefer the immutable Auth user ID;
+    // fall back to email only for legacy profiles whose row ID differs.
+    const { data: userById, error: idLookupError } = await db
       .from('sp_users')
       .select('role')
-      .or(`id.eq.${authId},email.eq.${email}`)
+      .eq('id', authId)
       .maybeSingle();
+
+    if (idLookupError) {
+      console.error('Auth role lookup by ID failed:', idLookupError.code ?? 'unknown');
+      return { errorResponse: json({ error: 'Unable to verify account permissions' }, 503) };
+    }
+
+    let spUser = userById;
+    if (!spUser && email) {
+      const { data: userByEmail, error: emailLookupError } = await db
+        .from('sp_users')
+        .select('role')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (emailLookupError) {
+        console.error('Auth role lookup by email failed:', emailLookupError.code ?? 'unknown');
+        return { errorResponse: json({ error: 'Unable to verify account permissions' }, 503) };
+      }
+      spUser = userByEmail;
+    }
+
     role = spUser?.role ?? null;
   }
 

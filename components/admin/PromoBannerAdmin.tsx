@@ -41,7 +41,11 @@ const PromoBannerAdmin: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const set = (field: Partial<SpWebsiteConfig>) => setForm(prev => ({ ...prev, ...field }));
+  const set = (field: Partial<SpWebsiteConfig>) => {
+    setSaved(false);
+    setSaveError(null);
+    setForm(prev => ({ ...prev, ...field }));
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

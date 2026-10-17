@@ -31,7 +31,16 @@ async function invokeFinancing<T>(action: string, params: Record<string, unknown
     headers: { 'x-correlation-id': crypto.randomUUID(), ...headers },
   });
   if (error) {
-    // Do not expose raw provider or database errors to the UI.
+    // Read only the sanitized public error code from the Edge Function response.
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      try {
+        const payload = await context.clone().json() as { error?: string; message?: string };
+        throw new Error(payload.error || payload.message || 'Financing service is unavailable.');
+      } catch (parseError) {
+        if (parseError instanceof Error && parseError.message !== 'Unexpected end of JSON input') throw parseError;
+      }
+    }
     throw new Error(error.message || 'Financing service is unavailable.');
   }
   if (!data || data.error) {

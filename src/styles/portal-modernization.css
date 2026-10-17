@@ -9,7 +9,6 @@
   --sp-ui-shadow-card: 0 10px 28px -18px rgba(15, 23, 42, .28);
   --sp-ui-shadow-hover: 0 18px 38px -22px rgba(0, 59, 47, .32);
   --sp-ui-ring: rgba(0, 193, 106, .22);
-  isolation: isolate;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
@@ -21,11 +20,11 @@
   outline: 2px solid var(--ds-green, #00a85b);
   outline-offset: 3px;
 }
-.sp-modern-app :where(input, select, textarea) {
+.sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
   border-radius: var(--sp-ui-radius-control);
   transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
-.sp-modern-app :where(input, select, textarea):focus {
+.sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):focus {
   box-shadow: 0 0 0 4px var(--sp-ui-ring);
 }
 .sp-modern-app :where(button) {
@@ -47,9 +46,6 @@
   animation-duration: 240ms;
   animation-timing-function: cubic-bezier(.2, .8, .2, 1);
   animation-fill-mode: both;
-}
-.sp-modern-app :where(a, button):not(:disabled):hover {
-  --sp-hover-lift: -1px;
 }
 .sp-modern-app :where(.overflow-y-auto, .overflow-auto) {
   scrollbar-width: thin;

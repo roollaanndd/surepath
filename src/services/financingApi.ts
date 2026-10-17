@@ -250,3 +250,91 @@ export async function reconcileFinancingStatementLine(input: {
   });
   return result.data;
 }
+
+
+export type FinancingApplicationDocument = {
+  id: string;
+  application_id: string;
+  document_type: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  verification_status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  created_at: string;
+  download_url?: string | null;
+};
+
+export async function uploadFinancingApplicationDocument(applicationId: string, file: File, documentType: string): Promise<FinancingApplicationDocument> {
+  const allowedTypes = ['application/pdf','image/jpeg','image/png','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+  if (!allowedTypes.includes(file.type)) throw new Error('Unsupported file type. Upload PDF, JPG, PNG, DOC/DOCX, or XLS/XLSX.');
+  if (file.size < 1 || file.size > 10 * 1024 * 1024) throw new Error('Each document must be smaller than or equal to 10 MB.');
+  if (!/^[0-9a-f-]{36}$/i.test(applicationId)) throw new Error('The application ID is invalid.');
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-150) || 'document';
+  const path = applicationId + '/' + crypto.randomUUID() + '-' + safeName;
+  const { error: uploadError } = await supabase.storage.from('financing-application-documents').upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError) throw new Error('Document upload failed: ' + uploadError.message);
+  let sha256: string | undefined;
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    sha256 = Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  } catch { /* SHA-256 is supplemental; storage and access controls remain mandatory. */ }
+  try {
+    const result = await invokeFinancing<{ data: FinancingApplicationDocument }>('register_application_document', {
+      application_id: applicationId, document_type: documentType, file_name: file.name.slice(0, 180),
+      storage_path: path, content_type: file.type, size_bytes: file.size, sha256,
+    });
+    return result.data;
+  } catch (error) {
+    await supabase.storage.from('financing-application-documents').remove([path]);
+    throw error;
+  }
+}
+
+export async function listFinancingApplicationDocuments(applicationId: string): Promise<{ data: FinancingApplicationDocument[] }> {
+  return invokeFinancing('list_application_documents', { application_id: applicationId });
+}
+
+export type FinancingApprovalStep = {
+  id: string;
+  application_id: string;
+  step_order: number;
+  step_code: string;
+  step_label: string;
+  required_role: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  decision_note?: string | null;
+  decided_by?: string | null;
+  decided_at?: string | null;
+  created_at: string;
+  application?: { application_number?: string; requested_amount?: number | string; status?: string; customer?: { display_name?: string } | null } | null;
+};
+
+export async function createFinancingApprovalWorkflow(applicationId: string): Promise<{ data: FinancingApprovalStep[] }> {
+  return invokeFinancing('create_approval_workflow', { application_id: applicationId });
+}
+
+export async function listFinancingApprovalWorkflows(limit = 150): Promise<{ data: FinancingApprovalStep[] }> {
+  return invokeFinancing('list_approval_workflows', { limit });
+}
+
+export async function decideFinancingApprovalStep(input: { stepId: string; decision: 'APPROVE' | 'REJECT'; note: string }): Promise<{ data: FinancingApprovalStep }> {
+  return invokeFinancing('decide_approval_step', { step_id: input.stepId, decision: input.decision, note: input.note });
+}
+
+export type FinancingFinanceReportRow = {
+  id: string;
+  journal_number: string;
+  source_type: string;
+  source_id: string;
+  currency: string;
+  status: string;
+  memo: string;
+  created_at: string;
+  debit: number;
+  credit: number;
+  entries?: Array<{ debit: number | string; credit: number | string; account?: { account_code?: string; account_name?: string } | null }>;
+};
+
+export async function getFinancingTransactionReport(startDate: string, endDate: string): Promise<{ data: FinancingFinanceReportRow[]; totals: { transaction_count: number; debit: number; credit: number; truncated: boolean }; start_date: string; end_date: string; as_of: string }> {
+  return invokeFinancing('finance_transaction_report', { start_date: startDate, end_date: endDate });
+}

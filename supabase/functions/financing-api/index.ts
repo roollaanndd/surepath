@@ -115,6 +115,61 @@ Deno.serve(async (req) => {
       return json({ data: { totalApplications: total ?? 0, amountRequestedIdr: amountRequested, byStatus, partial: (total ?? 0) > (statuses?.length ?? 0), asOf: new Date().toISOString() }, correlationId }, 200, headers);
     }
 
+    if (action === "list_partner_providers") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("COMPLIANCE") || roles.has("AUDITOR"))) {
+        return json({ error: "FORBIDDEN", message: "Partner configuration access is restricted.", correlationId }, 403, headers);
+      }
+      const { data, error } = await db.from("sp_financing_partner_providers")
+        .select("id,provider_code,provider_name,capability,environment,status,endpoint_base_url,secret_env_key,created_at,updated_at")
+        .order("provider_code").order("environment");
+      if (error) throw error;
+      const safeData = (data ?? []).map((provider: Record<string, unknown>) => ({
+        id: provider.id, provider_code: provider.provider_code, provider_name: provider.provider_name,
+        capability: provider.capability, environment: provider.environment, status: provider.status,
+        endpoint_configured: Boolean(provider.endpoint_base_url), secret_env_key_configured: Boolean(provider.secret_env_key),
+        created_at: provider.created_at, updated_at: provider.updated_at,
+      }));
+      return json({ data: safeData, correlationId }, 200, headers);
+    }
+
+    if (action === "configure_partner_provider") {
+      if (!roles.has("FINANCING_ADMIN")) return json({ error: "FORBIDDEN", message: "Only a financing administrator can configure partner metadata.", correlationId }, 403, headers);
+      const providerCode = safeString(params.provider_code, 40);
+      const providerName = safeString(params.provider_name, 120);
+      const capability = safeString(params.capability, 40);
+      const environment = safeString(params.environment, 20);
+      const endpoint = safeString(params.endpoint_base_url, 500);
+      const secretEnvKey = safeString(params.secret_env_key, 80);
+      const capabilities = new Set(["IDENTITY_VERIFICATION", "CREDIT_BUREAU", "SLIK", "DOCUMENT_VERIFICATION", "VEHICLE_VALUATION"]);
+      if (!/^[A-Z][A-Z0-9_]{1,39}$/.test(providerCode) || providerName.length < 2 ||
+          !capabilities.has(capability) || !["SANDBOX", "PRODUCTION"].includes(environment) ||
+          !endpoint.startsWith("https://") || !/^[A-Z][A-Z0-9_]{2,79}$/.test(secretEnvKey)) {
+        return json({ error: "VALIDATION_ERROR", message: "Use an uppercase provider code, supported capability, SANDBOX/PRODUCTION environment, HTTPS endpoint, and secret environment-variable name (never a secret value).", correlationId }, 400, headers);
+      }
+      let parsedEndpoint: URL;
+      try { parsedEndpoint = new URL(endpoint); } catch { return json({ error: "VALIDATION_ERROR", message: "Invalid endpoint URL.", correlationId }, 400, headers); }
+      const host = parsedEndpoint.hostname.toLowerCase();
+      const privateHost = host === "localhost" || host === "127.0.0.1" || host === "::1" ||
+        host.endsWith(".local") || /^10\./.test(host) || /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(host) || host === "0.0.0.0";
+      if (parsedEndpoint.protocol !== "https:" || parsedEndpoint.username || parsedEndpoint.password ||
+          parsedEndpoint.search || parsedEndpoint.hash || privateHost) {
+        return json({ error: "VALIDATION_ERROR", message: "Endpoint must be a public HTTPS base URL without credentials, query, or fragment.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_upsert_partner_provider", {
+        p_user_id: userId, p_provider_code: providerCode, p_provider_name: providerName,
+        p_capability: capability, p_environment: environment, p_endpoint_base_url: parsedEndpoint.toString().replace(/\/$/, ""),
+        p_secret_env_key: secretEnvKey, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/financing_admin_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/invalid_partner_configuration/.test(error.message)) return json({ error: "VALIDATION_ERROR", message: error.message.split("\\n")[0], correlationId }, 400, headers);
+        console.error("partner provider configuration failed", correlationId, error.code);
+        return json({ error: "PARTNER_CONFIGURATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: { ...data, outboundCallsEnabled: false, note: "Registry only: no partner request is sent until a reviewed provider-specific adapter and sandbox tests are implemented." }, correlationId }, 201, headers);
+    }
+
     if (action === "list_product_rules") {
       const { data, error } = await db.from("sp_financing_product_rules")
         .select("id,product_id,version,active,min_amount,max_amount,min_tenor_months,max_tenor_months,annual_interest_rate_pct,max_dti_pct,min_monthly_income,created_at,product:sp_financing_products(code,name)")

@@ -151,3 +151,9 @@ verify_jwt = true
 # hidup di project ini tetapi sumbernya tidak ada di repo ini. Sengaja TIDAK
 # dideklarasikan — mendeklarasikannya berarti men-deploy dari sumber yang tidak
 # kita punya. Jangan tambahkan.
+
+# Financing gateway owns its auth boundary so it can expose only the isolated,
+# rate-limited synthetic demo routes without a Supabase JWT. Authenticated
+# financing actions verify the user's session and explicit financing role inside.
+[functions.financing-gateway]
+verify_jwt = false

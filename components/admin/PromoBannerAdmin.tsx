@@ -203,7 +203,7 @@ const PromoBannerAdmin: React.FC = () => {
             <div className="rounded-2xl overflow-hidden border border-ds-border">
               {previewVisible ? (
                 imageUrl ? (
-                  <div className="relative w-full" style={{ height: 72 }}>
+                  <div className="relative w-full sp-media-frame" style={{ height: 72 }}>
                     <img
                       src={imageUrl}
                       alt=""

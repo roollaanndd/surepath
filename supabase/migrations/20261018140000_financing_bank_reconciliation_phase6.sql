@@ -54,6 +54,7 @@ alter table public.sp_financing_disbursement_requests add column if not exists b
 alter table public.sp_financing_disbursement_requests add column if not exists bank_statement_line_id uuid references public.sp_financing_bank_statement_lines(id);
 create unique index if not exists sp_financing_repayments_statement_line_unique on public.sp_financing_repayments(bank_statement_line_id) where bank_statement_line_id is not null;
 create unique index if not exists sp_financing_disbursements_statement_line_unique on public.sp_financing_disbursement_requests(bank_statement_line_id) where bank_statement_line_id is not null;
+create unique index if not exists sp_financing_disbursement_external_reference_unique on public.sp_financing_disbursement_requests(external_reference) where external_reference is not null;
 
 alter table public.sp_financing_reconciliation_batches enable row level security;
 alter table public.sp_financing_bank_statement_lines enable row level security;
@@ -82,6 +83,7 @@ begin
  end if;
  if length(trim(coalesce(p_statement_reference,'')))<6 or length(p_statement_reference)>120
   or length(trim(coalesce(p_masked_bank_account,'')))<4 or length(p_masked_bank_account)>40
+  or p_masked_bank_account !~ '.*([*•]{2,}|[Xx]{2,}).*'
   or p_period_start is null or p_period_end is null or p_period_end<p_period_start
   or jsonb_typeof(p_lines)<>'array' or jsonb_array_length(p_lines)<1 or jsonb_array_length(p_lines)>500 then
   raise exception 'invalid_reconciliation_batch';
@@ -214,12 +216,14 @@ begin
  end if;
  select coalesce(jsonb_agg(jsonb_build_object('id',b.id,'statement_reference',b.statement_reference,
   'masked_bank_account',b.masked_bank_account,'period_start',b.period_start,'period_end',b.period_end,
-  'status',b.status,'line_count',b.line_count,'matched_count',x.matched_count,'exception_count',x.exception_count,'created_at',b.created_at)
+  'status',b.status,'line_count',b.line_count,'matched_count',b.matched_count,'exception_count',b.exception_count,'created_at',b.created_at)
   order by b.created_at desc),'[]'::jsonb)
- into v_result from public.sp_financing_reconciliation_batches b
- left join lateral (select count(*) filter(where status='MATCHED') matched_count,count(*) filter(where status='EXCEPTION') exception_count
-  from public.sp_financing_bank_statement_lines l where l.batch_id=b.id) x on true
- order by b.created_at desc limit least(100,greatest(1,coalesce(p_limit,50)));
+ into v_result from (
+  select b.*,x.matched_count,x.exception_count from public.sp_financing_reconciliation_batches b
+  left join lateral (select count(*) filter(where status='MATCHED') matched_count,count(*) filter(where status='EXCEPTION') exception_count
+   from public.sp_financing_bank_statement_lines l where l.batch_id=b.id) x on true
+  order by b.created_at desc limit least(100,greatest(1,coalesce(p_limit,50)))
+ ) b;
  return v_result;
 end;
 $$;

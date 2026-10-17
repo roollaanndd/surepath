@@ -303,7 +303,7 @@ Deno.serve(async (req) => {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
       const accountId = safeString(params.loan_account_id, 40);
       let query = db.from("sp_financing_repayments")
-        .select("id,loan_account_id,amount,currency,payment_date,channel,external_reference,status,received_by,created_at")
+        .select("id,loan_account_id,amount,currency,payment_date,channel,external_reference,status,received_by,bank_reconciled,bank_reconciled_at,bank_statement_line_id,created_at")
         .order("payment_date", { ascending: false }).limit(Math.min(200, Math.max(1, Number(params.limit) || 50)));
       if (accountId) {
         if (!/^[0-9a-f-]{36}$/i.test(accountId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
@@ -445,7 +445,7 @@ Deno.serve(async (req) => {
     if (action === "list_disbursement_requests") {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("DISBURSEMENT_MAKER") || roles.has("DISBURSEMENT_CHECKER") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
       const { data, error } = await db.from("sp_financing_disbursement_requests")
-        .select("id,loan_account_id,amount,status,maker_user_id,checker_user_id,idempotency_key,external_reference,created_at,updated_at")
+        .select("id,loan_account_id,amount,status,maker_user_id,checker_user_id,idempotency_key,external_reference,bank_reconciled,bank_reconciled_at,bank_statement_line_id,created_at,updated_at")
         .order("created_at", { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit) || 25)));
       if (error) throw error;
       return json({ data: data ?? [], correlationId }, 200, headers);

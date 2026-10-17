@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
 
 const DEMO_TENANT_ID = 'f1000000-0000-4000-8000-000000000001';
 const VALID_STATUSES = new Set([
@@ -92,7 +93,6 @@ export default async function handler(req: any, res: any) {
   const demo = demoMode && tenantId === DEMO_TENANT_ID && !bearer;
   const canWrite = demo || ['tenant_admin', 'operations_manager', 'credit_manager', 'credit_analyst'].includes(role);
   const canDecide = demo || ['tenant_admin', 'credit_manager'].includes(role);
-  const isTenantScoped = (row: any) => row && row.tenant_id === tenantId;
 
   async function audit(action: string, entityType: string, entityId: string, beforeState?: unknown, afterState?: unknown) {
     const { error } = await db.from('financing_audit_events').insert({
@@ -267,5 +267,5 @@ export default async function handler(req: any, res: any) {
 }
 
 function cryptoRandomSuffix() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+  return randomBytes(4).toString('hex').toUpperCase();
 }

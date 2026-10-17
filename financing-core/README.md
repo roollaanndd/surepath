@@ -1,39 +1,49 @@
-# SurePath Financing Core — temporary monorepo module
+# SurePath Financing Core — v1 foundation
 
-Status: **prototype/demo scaffold; not production-ready**.
+This isolated multi-finance workspace is built inside the SurePath repository while preserving the existing insurance modules. It is a foundational LOS/LMS implementation, not yet a licensed lender's production system. It does not execute disbursements or collect money.
 
-This module is temporarily hosted inside `roollaanndd/surepath` under `financing-core/` until a dedicated private repository can be created. Keep the financing domain logically isolated; do not reuse insurance policy tables as financing records.
+## Included in this branch
 
-## Pilot scope
+- Responsive database-backed workspace at `/financing/dashboard`: overview, applications, customers, credit review, contracts, disbursements, repayments, collections, products, reports/audit and settings.
+- Vercel serverless API at `/api/financing/*`.
+- Supabase schema for tenants, products, customers, applications, documents, credit decisions, contracts, loan accounts, disbursement requests, repayment schedules/transactions, collection cases and audit events.
+- Tenant resolution from verified Supabase Auth `app_metadata.financing_tenant_id`; role from `app_metadata.financing_role`.
+- Server-side product amount/tenor validation, application state transitions, optimistic updates and audit events.
+- Synthetic tenant + product catalogue only. No sample customers, balances or repayment transactions are seeded.
 
-- Multi-product applications: motor vehicle, multipurpose, heavy equipment, working capital, and configurable partner products.
-- Partner/tenant isolation for SurePath and each finance provider.
-- Application intake, customer consent references, document checklist, verification requests, credit assessment, maker-checker decisions, offers/contracts, disbursement, repayment ledger, and insurance placement.
-- Mutiara Finance is the first pilot partner; all access routes, bureau/e-KYC providers, and official verification integrations must be jointly validated with Mutiara before integration.
+## Setup
 
-## Domain boundaries
+1. Apply `supabase/migrations/202610180001_financing_core.sql` to the intended Supabase project.
+2. Configure server-only Vercel environment variables:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY` (never expose this as a `VITE_*` variable)
+3. For an isolated test deployment only, set `FINANCING_DEMO_MODE=true`. Unauthenticated access is restricted to the synthetic sandbox tenant. Turn this off for partner/production deployments.
+4. In authenticated mode, assign users through a trusted admin process with Supabase `app_metadata.financing_tenant_id` and `app_metadata.financing_role`. Supported roles: `tenant_admin`, `operations_manager`, `credit_manager`, `credit_analyst`, `viewer`. Do not let users self-assign these claims.
+5. Test `GET /api/financing/health`, `GET /api/financing/products`, create an application, then walk it through `new → documents_pending → documents_verified → credit_review`. Verify audit events for every write.
+6. For partner production, disable demo mode and configure tenant identity/roles before exposing the route. Complete partner acceptance and compliance review before enabling integrations.
 
-- Financing applications and credit decisions are separate from insurance policies and insurer underwriting.
-- Consent is explicit, purpose-bound, timestamped, revocable where applicable, and auditable.
-- No production SLIK/OJK, Dukcapil, bank, payment, e-signature, or insurer integration is assumed.
-- Demo UI uses fictional static records only. Demo access never creates a real user or grants a production role.
+## API
 
-## Required production controls
+- `GET /api/financing/health`
+- `GET /api/financing/overview`
+- `GET /api/financing/products`
+- `GET /api/financing/customers`
+- `GET /api/financing/applications?limit=100&status=credit_review`
+- `POST /api/financing/applications` — creates a customer and application
+- `PATCH /api/financing/applications/:id` — validates workflow transition
+- `POST /api/financing/applications/:id/decision` — credit-manager role required outside sandbox; rationale is mandatory
+- `GET /api/financing/contracts`
+- `GET /api/financing/disbursements`
+- `GET /api/financing/repayments`
+- `GET /api/financing/collections`
+- `GET /api/financing/audit-events`
 
-1. Real Supabase Auth/SSO identity with server-validated tenant membership and role scopes.
-2. Least-privilege database role, verified tenant isolation/RLS, immutable audit history, idempotent financial operations.
-3. Maker-checker approval; separate credit analyst, approver, operations, and finance roles.
-4. Encrypted documents, retention policy, data-subject handling, consent evidence, security monitoring.
-5. Reconciliation for disbursements and repayments; append-only double-entry ledger before any live money movement.
-6. Independent security review, UAT with Mutiara, compliance/legal approval, and verified build/deployment.
+## Not enabled yet
 
-## Architecture direction
+- Real disbursement, bank transfer, repayment collection or payment-provider execution.
+- Credit bureau/SLIK, KYC vendors, e-signature, banking APIs and partner webhooks.
+- Production contract generation/signing and legally reviewed loan schedules/interest calculations.
+- Production identity/role administration UI, MFA enforcement, document storage lifecycle and retention jobs.
+- General-ledger posting, reconciliation, provisioning, portfolio-at-risk calculations and regulatory filing exports.
 
-- Web workspace: React/TypeScript, shared SurePath design system, dedicated financing routes.
-- API: versioned REST contract, JWT authentication, tenant context, schema validation, correlation IDs, idempotency.
-- Data: PostgreSQL; separate financing schema/tables with row-level security and audit trail.
-- Integrations: provider adapters behind explicit allowlists and per-partner configuration, never direct client-side secrets.
-
-## Release gates
-
-Do not enable real customer data, credit decisions, contracts, disbursement, or repayment processing until backend implementation, migrations, semantic typecheck, unit/integration/E2E tests, RLS isolation tests, partner UAT, and compliance review are complete.
+The disbursement and repayment screens currently read persisted records only; they do not execute money movement. Empty states are intentional until real data is configured. No hardcoded portfolio KPIs are presented as live metrics.

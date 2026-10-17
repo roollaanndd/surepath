@@ -56,6 +56,7 @@ const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
 const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
 const HomePage          = lazy(() => import('./src/pages/HomePage'));
 const ProductsPage      = lazy(() => import('./src/pages/ProductsPage'));
+const FinancingPage     = lazy(() => import('./src/pages/FinancingPage'));
 const AITechPage        = lazy(() => import('./src/pages/AITechPage'));
 const HowItWorksPage    = lazy(() => import('./src/pages/HowItWorksPage'));
 const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
@@ -559,6 +560,11 @@ const App = () => {
 
   if (pathname === '/kalkulator') {
     return <Suspense fallback={<PortalLoader />}><PremiumCalculatorPage lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
+  }
+
+  // Financing workspace: public, read-only demo until production financing auth/API are configured.
+  if (pathname === '/financing') {
+    return <Suspense fallback={<PortalLoader lang={lang} />}><FinancingPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={handleSetLang} darkMode={darkMode} setDarkMode={setDarkMode} /></Suspense>;
   }
 
   const MARKETING_PAGES: Record<string, React.FC<any>> = {

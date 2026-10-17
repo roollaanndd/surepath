@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download, WalletCards } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
@@ -59,6 +59,7 @@ const NAV_LINKS = [
   { path: '/how-it-works', id: 'how-it-works', label: ['Cara Kerja', 'How It Works'] as const },
   { path: '/about',        id: 'about',        label: ['Tentang', 'About'] as const },
   { path: '/blog',         id: 'blog',         label: ['Blog', 'Blog'] as const },
+  { path: '/financing',    id: 'financing',    label: ['Pembiayaan', 'Financing'] as const },
 ];
 
 const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navigate, lang, setLang, darkMode, active }) => {
@@ -115,6 +116,11 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
           <Globe size={12} /> {lang}
         </button>
+        <button onClick={() => go('/financing')}
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:-translate-y-0.5"
+          style={{ background: 'linear-gradient(135deg,#15803d,#10b981)', color: '#ffffff', boxShadow: '0 8px 22px rgba(16,185,129,.2)' }}>
+          <WalletCards size={13} /> {t('Masuk Pembiayaan', 'Financing Login')}
+        </button>
         <button onClick={() => go('/admin')}
           className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
@@ -150,6 +156,10 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
               <Download size={13} /> {t('Install App', 'Install App')}
             </button>
           )}
+          <button onClick={() => go('/financing')} className="flex items-center justify-center gap-2 w-full mt-3 py-3 rounded-xl text-xs font-black text-white"
+            style={{ background: 'linear-gradient(135deg,#15803d,#10b981)' }}>
+            <WalletCards size={14} /> {t('Masuk Pembiayaan', 'Financing Login')}
+          </button>
           <div className="flex gap-2 mt-2">
             <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
               style={{ borderColor: th.cardBorder, color: th.textMuted }}>Admin</button>

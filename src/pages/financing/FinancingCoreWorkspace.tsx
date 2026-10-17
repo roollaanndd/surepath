@@ -26,8 +26,9 @@ const nav: { label: string; key: ModuleKey; icon: React.ElementType }[] = [
 const moduleTitle = Object.fromEntries(nav.map((item) => [item.key, item.label])) as Record<ModuleKey, string>;
 const rupiah = (value: unknown) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value || 0));
 const dateLabel = (value: unknown) => value ? new Date(String(value)).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-const statusLabel = (status: string) => status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-const statusTone = (status: string) => {\n  status = status.toLowerCase();
+const statusLabel = (status: string) => status.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+const statusTone = (status: string) => {
+  status = status.toLowerCase();
   if (['approved', 'active', 'signed', 'settled', 'paid', 'resolved'].includes(status)) return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
   if (['rejected', 'failed', 'written_off'].includes(status)) return 'bg-rose-50 text-rose-700 ring-rose-200';
   if (['credit_review', 'pending_approval', 'overdue', 'high', 'critical'].includes(status)) return 'bg-amber-50 text-amber-800 ring-amber-200';

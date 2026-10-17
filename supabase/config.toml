@@ -100,6 +100,9 @@ verify_jwt = true
 [functions.xendit-webhook]
 verify_jwt = false
 
+[functions.financing-api]
+verify_jwt = true
+
 [functions.submit-policy-insurer]
 verify_jwt = true
 

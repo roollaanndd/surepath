@@ -79,3 +79,55 @@ export async function createFinancingApplication(input: {
   }, { 'x-idempotency-key': idempotencyKey });
   return result.data;
 }
+
+export type FinancingRepaymentSchedule = {
+  id: string;
+  loan_account_id: string;
+  installment_number: number;
+  due_date: string;
+  principal_due: number | string;
+  interest_due: number | string;
+  fees_due: number | string;
+  amount_paid: number | string;
+  status: string;
+  schedule_version: number;
+  principal_opening_balance: number | string;
+  scheduled_payment: number | string;
+  generated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FinancingLedgerJournal = {
+  id: string;
+  journal_number: string;
+  source_type: string;
+  source_id: string;
+  currency: string;
+  status: string;
+  correlation_id: string;
+  memo: string;
+  created_by: string;
+  created_at: string;
+};
+
+export type FinancingTrialBalanceRow = {
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  total_debit: number | string;
+  total_credit: number | string;
+  net_debit: number | string;
+};
+
+export async function listFinancingRepaymentSchedules(limit = 100, loanAccountId?: string): Promise<{ data: FinancingRepaymentSchedule[]; correlationId?: string }> {
+  return invokeFinancing('list_repayment_schedules', { limit, ...(loanAccountId ? { loan_account_id: loanAccountId } : {}) });
+}
+
+export async function listFinancingLedgerJournals(limit = 50): Promise<{ data: FinancingLedgerJournal[]; correlationId?: string }> {
+  return invokeFinancing('list_ledger_journals', { limit });
+}
+
+export async function getFinancingTrialBalance(): Promise<{ data: FinancingTrialBalanceRow[]; correlationId?: string }> {
+  return invokeFinancing('get_ledger_trial_balance');
+}

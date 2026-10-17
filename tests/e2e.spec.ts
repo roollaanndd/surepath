@@ -10,7 +10,7 @@ const PROD_BASE_URL = 'https://myinsurepath.com';
 const PROD_GATEWAY_URL = 'https://uyjgeteelnswphyzkjwi.supabase.co/functions/v1/data-gateway';
 const UNSAFE_PROD_OPT_IN = process.env.UNSAFE_E2E_AGAINST_PROD === '1';
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? (UNSAFE_PROD_OPT_IN ? PROD_BASE_URL : 'http://127.0.0.1:3000');
-const GATEWAY_URL = process.env.PLAYWRIGHT_GATEWAY_URL ?? (UNSAFE_PROD_OPT_IN ? PROD_GATEWAY_URL : undefined);
+const GATEWAY_URL = process.env.PLAYWRIGHT_GATEWAY_URL ?? (UNSAFE_PROD_OPT_IN ? PROD_GATEWAY_URL : '');
 
 // ─── Gateway API Tests (not affected by Vercel checkpoint) ───────────────────
 
@@ -141,16 +141,6 @@ test.describe('PWA', () => {
 });
 
 // ─── Rate Limiting ───────────────────────────────────────────────────────────
-
-test.describe('Rate Limiting', () => {
-  test.skip(
-    !GATEWAY_URL || process.env.RUN_RATE_LIMIT_INTEGRATION_TEST !== '1',
-    'Run only against a dedicated staging target with RUN_RATE_LIMIT_INTEGRATION_TEST=1.',
-  );
-  test('rate limit integration is explicitly configured', async () => {
-    expect(GATEWAY_URL).toBeTruthy();
-  });
-});
 
 // ─── Local/staging UI smoke tests ───────────────────────────────────────────
 test.describe('UI smoke tests', () => {

@@ -278,7 +278,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   }
 
   return (
-    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
+    <div className="sp-modern-app min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && agreementOk && (
         <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />

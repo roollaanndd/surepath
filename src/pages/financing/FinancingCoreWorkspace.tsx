@@ -27,7 +27,7 @@ const moduleTitle = Object.fromEntries(nav.map((item) => [item.key, item.label])
 const rupiah = (value: unknown) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value || 0));
 const dateLabel = (value: unknown) => value ? new Date(String(value)).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const statusLabel = (status: string) => status.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-const statusTone = (status: string) => {
+const statusTone = (status: string) => {\n  status = status.toLowerCase();
   if (['approved', 'active', 'signed', 'settled', 'paid', 'resolved'].includes(status)) return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
   if (['rejected', 'failed', 'written_off'].includes(status)) return 'bg-rose-50 text-rose-700 ring-rose-200';
   if (['credit_review', 'pending_approval', 'overdue', 'high', 'critical'].includes(status)) return 'bg-amber-50 text-amber-800 ring-amber-200';
@@ -48,7 +48,7 @@ const FinancingCoreWorkspace: React.FC<SitePageProps> = () => {
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  const [productCode, setProductCode] = useState('MOTOR');
+  const [productCode, setProductCode] = useState('MOTOR_VEHICLE');
   const [amount, setAmount] = useState('250000000');
   const [tenor, setTenor] = useState('36');
   const [purpose, setPurpose] = useState('');
@@ -107,7 +107,7 @@ const FinancingCoreWorkspace: React.FC<SitePageProps> = () => {
     try {
       const result = await financingRequest<{ data: FinancingApplication }>('applications', {
         method: 'POST',
-        body: { customerName, productCode, requestedAmount: Number(amount), tenorMonths: Number(tenor), purpose },
+        body: { customerName, productCode, requestedAmount: Number(amount), tenorMonths: Number(tenor), purpose, customerType: 'BUSINESS' },
       });
       setApplications((current) => [result.data, ...current]);
       setShowCreate(false); setCustomerName(''); setPurpose('');
@@ -122,7 +122,7 @@ const FinancingCoreWorkspace: React.FC<SitePageProps> = () => {
   const changeStatus = async (application: FinancingApplication, status: string) => {
     setBusyId(application.id); setError('');
     try {
-      await financingRequest(`applications/${application.id}`, { method: 'PATCH', body: { status } });
+      await financingRequest(`applications/${application.id}`, { method: 'PATCH', body: { status, expectedVersion: application.version, reason: 'Updated from Financing Core workspace' } });
       setNotice(`${application.application_number} moved to ${statusLabel(status)}.`);
       await load(module, true);
     } catch (e: any) { setError(e?.message || 'Status could not be changed.'); }
@@ -140,7 +140,7 @@ const FinancingCoreWorkspace: React.FC<SitePageProps> = () => {
     setBusyId(application.id); setError('');
     try {
       await financingRequest(`applications/${application.id}/decision`, {
-        method: 'POST', body: { decision, rationale: rationale.trim(), score, policyVersion: 'pilot-v1' },
+        method: 'POST', body: { decision, rationale: rationale.trim(), score, policyVersion: 'pilot-v1', expectedVersion: application.version },
       });
       setNotice(`Decision recorded for ${application.application_number}.`);
       await load(module, true);
@@ -161,17 +161,17 @@ const FinancingCoreWorkspace: React.FC<SitePageProps> = () => {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-[.12em] text-slate-500"><tr><th className="px-5 py-3">Application</th><th className="px-5 py-3">Product</th><th className="px-5 py-3">Requested</th><th className="px-5 py-3">Tenor</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Submitted</th><th className="px-5 py-3">Workflow</th></tr></thead>
-          <tbody>{filteredApplications.filter((item) => !creditOnly || item.status === 'credit_review').map((item) => <tr key={item.id} className="border-t border-slate-100 hover:bg-emerald-50/30">
+          <tbody>{filteredApplications.filter((item) => !creditOnly || String(item.status).toUpperCase() === 'CREDIT_REVIEW').map((item) => <tr key={item.id} className="border-t border-slate-100 hover:bg-emerald-50/30">
             <td className="px-5 py-4"><p className="font-bold text-slate-900">{item.customer?.display_name || 'Customer record'}</p><p className="mt-1 text-xs text-slate-400">{item.application_number}</p></td>
             <td className="px-5 py-4 text-slate-600">{item.product?.name || '—'}</td><td className="px-5 py-4 font-semibold tabular-nums">{rupiah(item.requested_amount)}</td>
-            <td className="px-5 py-4 text-slate-600">{item.tenor_months} months</td>
+            <td className="px-5 py-4 text-slate-600">{item.requested_tenor_months ?? item.tenor_months ?? '—'} months</td>
             <td className="px-5 py-4"><span className={'rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset ' + statusTone(item.status)}>{statusLabel(item.status)}</span></td>
             <td className="px-5 py-4 text-slate-500">{dateLabel(item.submitted_at)}</td>
             <td className="px-5 py-4"><div className="flex min-w-[210px] flex-wrap gap-1.5">
-              {item.status === 'new' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'documents_pending')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:border-emerald-400 disabled:opacity-50">Request docs</button>}
-              {item.status === 'documents_pending' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'documents_verified')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:border-emerald-400 disabled:opacity-50">Verify docs</button>}
+              {String(item.status).toUpperCase() === 'NEW' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'documents_pending')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:border-emerald-400 disabled:opacity-50">Request docs</button>}
+              {String(item.status).toUpperCase() === 'DOCUMENTS_PENDING' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'documents_verified')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:border-emerald-400 disabled:opacity-50">Verify docs</button>}
               {item.status === 'documents_verified' && <button disabled={busyId === item.id} onClick={() => void changeStatus(item, 'credit_review')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold hover:border-emerald-400 disabled:opacity-50">Send to credit</button>}
-              {item.status === 'credit_review' && <><button disabled={busyId === item.id} onClick={() => void decide(item, 'approve')} className="rounded-lg bg-emerald-700 px-2 py-1 text-[11px] font-bold text-white disabled:opacity-50">Approve</button><button disabled={busyId === item.id} onClick={() => void decide(item, 'reject')} className="rounded-lg border border-rose-200 px-2 py-1 text-[11px] font-semibold text-rose-700 disabled:opacity-50">Reject</button><button disabled={busyId === item.id} onClick={() => void decide(item, 'refer')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold disabled:opacity-50">Refer</button></>}
+              {String(item.status).toUpperCase() === 'CREDIT_REVIEW' && <><button disabled={busyId === item.id} onClick={() => void decide(item, 'approve')} className="rounded-lg bg-emerald-700 px-2 py-1 text-[11px] font-bold text-white disabled:opacity-50">Approve</button><button disabled={busyId === item.id} onClick={() => void decide(item, 'reject')} className="rounded-lg border border-rose-200 px-2 py-1 text-[11px] font-semibold text-rose-700 disabled:opacity-50">Reject</button><button disabled={busyId === item.id} onClick={() => void decide(item, 'refer')} className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold disabled:opacity-50">Refer</button></>}
               {busyId === item.id && <LoaderCircle size={15} className="animate-spin text-emerald-700"/>}
             </div></td>
           </tr>)}

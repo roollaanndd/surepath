@@ -35,7 +35,7 @@ export async function financingRequest<T = any>(
 ): Promise<T> {
   const sessionResult = await supabase.auth.getSession().catch(() => ({ data: { session: null } } as any));
   const token = sessionResult?.data?.session?.access_token as string | undefined;
-  const isDemo = !token;
+  const isDemo = !token || demoMode;
   const method = options.method || 'GET';
   const parts = route.replace(/^\/+/, '').split('/').filter(Boolean);
   let action = parts[0] || 'health';

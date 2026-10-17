@@ -22,7 +22,7 @@ const TRANSITIONS: Record<string, string[]> = {
 function response(body: unknown, status = 200, headers: Record<string,string> = {}) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
 }
-function fail(message: string, status = 400) { return response({ error: message }, status); }
+function fail(message: string, status = 400, headers: Record<string,string> = {}) { return response({ error: message }, status, headers); }
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -137,10 +137,10 @@ Deno.serve(async (req: Request) => {
       const amount = Number(params.requestedAmount);
       const tenor = Number(params.tenorMonths);
       const product = DEMO_PRODUCTS.find((item) => item.code === productCode);
-      if (customerName.length < 2 || customerName.length > 160) return fail('Use a fictional customer name between 2 and 160 characters.', 400);
-      if (!product) return fail('Choose an available financing product.', 400);
-      if (!Number.isFinite(amount) || amount < product.min_amount || amount > product.max_amount) return fail('Requested amount is outside the product limits.', 400);
-      if (!Number.isInteger(tenor) || tenor < product.tenor_min_months || tenor > product.tenor_max_months) return fail('Requested tenor is outside the product limits.', 400);
+      if (customerName.length < 2 || customerName.length > 160) return fail('Use a fictional customer name between 2 and 160 characters.', 400, headers);
+      if (!product) return fail('Choose an available financing product.', 400, headers);
+      if (!Number.isFinite(amount) || amount < product.min_amount || amount > product.max_amount) return fail('Requested amount is outside the product limits.', 400, headers);
+      if (!Number.isInteger(tenor) || tenor < product.tenor_min_months || tenor > product.tenor_max_months) return fail('Requested tenor is outside the product limits.', 400, headers);
       const { data, error } = await db.from('sp_financing_demo_applications').insert({
         application_number: 'SPF-DEMO-' + crypto.randomUUID().slice(0, 8).toUpperCase(),
         customer_name: customerName, customer_type: params.customerType === 'INDIVIDUAL' ? 'INDIVIDUAL' : 'BUSINESS',
@@ -153,9 +153,9 @@ Deno.serve(async (req: Request) => {
     }
     if (action === 'demo_transition_application') {
       const app = await getDemoApp(String(params.id || ''));
-      if (!app) return fail('Application not found.', 404);
+      if (!app) return fail('Application not found.', 404, headers);
       const target = String(params.targetStatus || '');
-      if (!TRANSITIONS[app.status]?.includes(target)) return fail('Invalid application status transition.', 409);
+      if (!TRANSITIONS[app.status]?.includes(target)) return fail('Invalid application status transition.', 409, headers);
       if (app.version !== Number(params.expectedVersion)) return fail('Application changed; refresh and retry.', 409);
       const { data, error } = await db.from('sp_financing_demo_applications').update({ status: target, version: app.version + 1, updated_at: new Date().toISOString() }).eq('id', app.id).eq('version', app.version).select('*').maybeSingle();
       if (error) throw error;
@@ -165,14 +165,14 @@ Deno.serve(async (req: Request) => {
     }
     if (action === 'demo_decide_application') {
       const app = await getDemoApp(String(params.id || ''));
-      if (!app) return fail('Application not found.', 404);
-      if (app.status !== 'CREDIT_REVIEW') return fail('Application must be in credit review first.', 409);
+      if (!app) return fail('Application not found.', 404, headers);
+      if (app.status !== 'CREDIT_REVIEW') return fail('Application must be in credit review first.', 409, headers);
       const decision = String(params.decision || '');
-      if (!['APPROVED','DECLINED','REFERRED'].includes(decision)) return fail('Invalid decision.', 400);
+      if (!['APPROVED','DECLINED','REFERRED'].includes(decision)) return fail('Invalid decision.', 400, headers);
       const score = params.score == null ? null : Number(params.score);
-      if (score !== null && (!Number.isInteger(score) || score < 0 || score > 100)) return fail('Score must be between 0 and 100.', 400);
+      if (score !== null && (!Number.isInteger(score) || score < 0 || score > 100)) return fail('Score must be between 0 and 100.', 400, headers);
       const rationale = String(params.rationale || '').trim();
-      if (rationale.length < 3 || rationale.length > 1000) return fail('A decision rationale is required.', 400);
+      if (rationale.length < 3 || rationale.length > 1000) return fail('A decision rationale is required.', 400, headers);
       const { data, error } = await db.from('sp_financing_demo_applications').update({
         status: decision, credit_score: score, decision_rationale: rationale, version: app.version + 1, updated_at: new Date().toISOString(),
       }).eq('id', app.id).eq('version', app.version).select('*').maybeSingle();
@@ -232,11 +232,11 @@ Deno.serve(async (req: Request) => {
       const productCode = String(params.productCode || '');
       const amount = Number(params.requestedAmount);
       const tenor = Number(params.tenorMonths);
-      if (customerName.length < 2 || customerName.length > 160) return fail('Customer name must be 2–160 characters.', 400);
+      if (customerName.length < 2 || customerName.length > 160) return fail('Customer name must be 2–160 characters.', 400, headers);
       const productPolicy = DEMO_PRODUCTS.find((product) => product.code === productCode);
-      if (!productPolicy) return fail('Invalid product code.', 400);
-      if (!Number.isFinite(amount) || amount < productPolicy.min_amount || amount > productPolicy.max_amount) return fail('Requested amount is outside the product limits.', 400);
-      if (!Number.isInteger(tenor) || tenor < productPolicy.tenor_min_months || tenor > productPolicy.tenor_max_months) return fail('Requested tenor is outside the product limits.', 400);
+      if (!productPolicy) return fail('Invalid product code.', 400, headers);
+      if (!Number.isFinite(amount) || amount < productPolicy.min_amount || amount > productPolicy.max_amount) return fail('Requested amount is outside the product limits.', 400, headers);
+      if (!Number.isInteger(tenor) || tenor < productPolicy.tenor_min_months || tenor > productPolicy.tenor_max_months) return fail('Requested tenor is outside the product limits.', 400, headers);
       const idempotencyKey = String(params.idempotencyKey || crypto.randomUUID());
       const requestHash = await sha256(JSON.stringify({ customerName, productCode, amount, tenor, customerType: params.customerType || 'BUSINESS', purpose: params.purpose || '' }));
       const { data, error } = await db.rpc('sp_financing_create_application', {
@@ -268,7 +268,7 @@ Deno.serve(async (req: Request) => {
       if (!roleHas(roles, ['CREDIT_APPROVER'])) return response({ error: 'Credit approver role required' }, 403, headers);
       const decisionMap: Record<string, string> = { approve: 'APPROVED', reject: 'DECLINED', refer: 'REFERRED' };
       const decision = decisionMap[String(params.decision || '').toLowerCase()];
-      if (!decision) return fail('Invalid credit decision.', 400);
+      if (!decision) return fail('Invalid credit decision.', 400, headers);
       const { data, error } = await db.rpc('sp_financing_record_credit_decision', {
         p_user_id: actorId, p_application_id: String(params.id || ''), p_expected_version: Number(params.expectedVersion),
         p_decision: decision, p_score: params.score == null ? null : Number(params.score),

@@ -81,6 +81,10 @@ export async function financingRequest<T = any>(
     delete params.status;
   }
   if (isDemo && action === 'demo_record_credit_decision') action = 'demo_decide_application';
+  if (isDemo && action === 'demo_decide_application') {
+    const decisions: Record<string, string> = { approve: 'APPROVED', reject: 'DECLINED', refer: 'REFERRED' };
+    params.decision = decisions[String(params.decision || '').toLowerCase()] || String(params.decision || '').toUpperCase();
+  }
 
   // Production and sandbox use the same UX but separate server-side actions and tables.
   if (isDemo && action === 'demo_create_application') {

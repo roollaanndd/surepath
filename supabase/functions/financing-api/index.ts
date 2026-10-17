@@ -80,10 +80,10 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  const isDemo = !actorId;
+  const isDemo = !actorId || roles.length === 0;
   const demoAction = action.startsWith('demo_');
   if (action === 'health') {
-    return response({ service: 'surepath-financing-gateway', configured: true, mode: isDemo ? 'sandbox' : (roles.length ? 'authenticated' : 'unassigned'), roles }, 200, headers);
+    return response({ service: 'surepath-financing-gateway', configured: true, mode: isDemo ? 'sandbox' : 'authenticated', roles }, 200, headers);
   }
   if (isDemo !== demoAction) return response({ error: isDemo ? 'Use sandbox actions in the isolated demo workspace' : 'Sandbox endpoints cannot be used with an authenticated session' }, 403, headers);
   if (isDemo) {

@@ -62,7 +62,7 @@ export async function getMyWallet(strict = false): Promise<AgentWallet | null> {
   const { data, error } = await supabase
     .from('sp_agent_wallets')
     .select('*')
-    .single();
+    .maybeSingle();
   if (error) {
     if (strict) throw error;
     return null;

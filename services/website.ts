@@ -54,11 +54,16 @@ export async function upsertWebsiteSection(payload: Partial<SpWebsiteConfig> & {
   return data as SpWebsiteConfig;
 }
 
-export async function resetWebsiteSection(sectionKey: string): Promise<void> {
-  await supabase
+export async function resetWebsiteSection(sectionKey: string): Promise<boolean> {
+  const { error } = await supabase
     .from('sp_website_config')
     .update({ headline: null, subtitle: null, cta_text: null, cta_secondary_text: null, bg_type: 'none', bg_value: null, is_visible: true, extra_json: {}, updated_at: new Date().toISOString() })
     .eq('section_key', sectionKey);
+  if (error) {
+    console.error('resetWebsiteSection:', error);
+    return false;
+  }
+  return true;
 }
 
 // ─── Page views / traffic ─────────────────────────────────────────────────────

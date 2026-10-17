@@ -651,7 +651,36 @@ Deno.serve(async (req) => {
         console.error("financing create application failed", correlationId, error.code);
         return json({ error: "APPLICATION_CREATE_FAILED", correlationId }, 500, headers);
       }
-      return json({ data, correlationId }, 201, headers);
+      const applicationId = typeof data?.id === "string" ? data.id : "";
+      let approvalWorkflowInitialized = false;
+      if (applicationId) {
+        const { data: existingSteps, error: existingStepsError } = await db.from("sp_financing_approval_steps")
+          .select("id").eq("application_id", applicationId).limit(1);
+        if (!existingStepsError && !(existingSteps ?? []).length) {
+          const steps = [
+            { application_id: applicationId, step_order: 1, step_code: "DOCUMENT_VERIFICATION", step_label: "Document verification", required_role: "VERIFICATION_ANALYST", requested_by: userId },
+            { application_id: applicationId, step_order: 2, step_code: "CREDIT_REVIEW", step_label: "Credit review", required_role: "CREDIT_ANALYST", requested_by: userId },
+            { application_id: applicationId, step_order: 3, step_code: "CREDIT_APPROVAL", step_label: "Credit approval", required_role: "CREDIT_APPROVER", requested_by: userId },
+            { application_id: applicationId, step_order: 4, step_code: "FINANCE_CONTROL", step_label: "Finance control", required_role: "SERVICING_FINANCE", requested_by: userId },
+          ];
+          const { error: workflowError } = await db.from("sp_financing_approval_steps").insert(steps);
+          if (!workflowError) {
+            approvalWorkflowInitialized = true;
+            await db.from("sp_financing_audit_events").insert({
+              actor_user_id: userId, action: "APPROVAL_WORKFLOW_CREATED", entity_type: "application",
+              entity_id: applicationId, correlation_id: correlationId, outcome: "SUCCESS",
+              details: { step_count: steps.length, sequence: steps.map((step) => step.step_code), automatic: true },
+            });
+          } else {
+            console.error("automatic approval workflow initialization failed", correlationId, workflowError.code);
+          }
+        } else if ((existingSteps ?? []).length) {
+          approvalWorkflowInitialized = true;
+        } else {
+          console.error("approval workflow lookup failed", correlationId, existingStepsError?.code);
+        }
+      }
+      return json({ data: { ...data, approval_workflow_initialized: approvalWorkflowInitialized }, correlationId }, 201, headers);
     }
 
     if (action === "transition_application") {

@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Activity, AlertCircle, ArrowDownRight, ArrowRight, ArrowUpRight, Banknote,
+  Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
   Bell, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, ChevronDown,
   ChevronLeft, ChevronRight, CircleDollarSign, ClipboardCheck, Clock3, CreditCard,
   Download, FileCheck2, FileClock, FileText, Filter, Gauge, HandCoins, LayoutDashboard,
-  LogOut, Menu, Plus, Search, Settings2, ShieldCheck, SlidersHorizontal, Sparkles,
-  Users, Wallet, X, Zap,
+  Menu, Plus, Search, Settings2, ShieldCheck,
+  Users, Wallet, X,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
-import { SitePageProps, useSiteTheme } from './site/siteKit';
+import { SitePageProps } from './site/siteKit';
 
 type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'contracts' | 'disbursements' | 'repayments' | 'collections' | 'products' | 'reports' | 'settings';
 
@@ -82,7 +82,6 @@ const statusTone: Record<string, string> = {
 
 const FinancingPage: React.FC<SitePageProps> = (props) => {
   const { lang } = props;
-  const th = useSiteTheme(props.darkMode);
   const [module, setModule] = useState<ModuleKey>('overview');
   const [applications, setApplications] = useState(initialApplications);
   const [search, setSearch] = useState('');
@@ -94,7 +93,6 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [newProduct, setNewProduct] = useState('Motor Vehicle');
   const [newAmount, setNewAmount] = useState('250000000');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const isId = lang !== 'en';
   const titleByModule: Record<ModuleKey, string> = {
     overview: 'Overview', applications: 'Applications', customers: 'Customers',
     credit: 'Credit assessment', contracts: 'Contracts', disbursements: 'Disbursements',
@@ -130,7 +128,6 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
 
   const panel = 'rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_10px_30px_rgba(15,23,42,0.035)] backdrop-blur-xl';
   const muted = 'text-slate-500';
-  const activeModule = navGroups.flatMap((group) => group.items).find((item) => item.key === module);
   const pageTitle = titleByModule[module];
 
   const renderApplicationsTable = (title: string, subtitle: string) => (

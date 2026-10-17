@@ -393,10 +393,10 @@ const AgentWalletView: React.FC = () => {
       if (!uid) throw new Error('Sesi pengguna tidak tersedia. Silakan masuk kembali.');
       setAgentId(uid);
       const [w, t, wd, cb] = await Promise.all([
-        getMyWallet(),
-        getMyWalletTransactions(50),
-        getMyWithdrawals(20),
-        getAgentCoinBalance(uid),
+        getMyWallet(true),
+        getMyWalletTransactions(50, true),
+        getMyWithdrawals(20, true),
+        getAgentCoinBalance(uid, true),
       ]);
       setWallet(w);
       setTxns(t);

@@ -5,7 +5,7 @@ import type { SpCommission, SpQuote, AgentStats } from './dbTypes';
 
 // ─── Commissions ──────────────────────────────────────────────────────────────
 
-export async function getAgentCommissions(agentId: string): Promise<SpCommission[]> {
+export async function getAgentCommissions(agentId: string, strict = false): Promise<SpCommission[]> {
   const { data, error } = await supabase
     .from('sp_commissions')
     .select('*')
@@ -13,6 +13,7 @@ export async function getAgentCommissions(agentId: string): Promise<SpCommission
     .order('created_at', { ascending: false });
   if (error) {
     console.error('getAgentCommissions error:', error);
+    if (strict) throw error;
     return [];
   }
   return (data ?? []) as SpCommission[];
@@ -115,7 +116,7 @@ export async function getLeaderboard(): Promise<Array<{ agent_id: string; agent_
 
 // ─── Agent Stats ──────────────────────────────────────────────────────────────
 
-export async function getAgentStats(agentId: string): Promise<AgentStats> {
+export async function getAgentStats(agentId: string, strict = false): Promise<AgentStats> {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
@@ -124,6 +125,10 @@ export async function getAgentStats(agentId: string): Promise<AgentStats> {
     supabase.from('sp_clients').select('id', { count: 'exact', head: true }).eq('agent_id', agentId),
     supabase.from('sp_policies').select('id', { count: 'exact', head: true }).eq('agent_id', agentId).eq('status', 'ACTIVE'),
   ]);
+
+  const queryError = commissionsRes.error ?? clientsRes.error ?? policiesRes.error;
+  if (queryError && strict) throw queryError;
+  if (queryError) console.error('getAgentStats query error:', queryError);
 
   const commissions: SpCommission[] = (commissionsRes.data ?? []) as SpCommission[];
 

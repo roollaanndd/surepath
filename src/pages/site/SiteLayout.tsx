@@ -161,7 +161,7 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
             <WalletCards size={14} /> {t('Masuk Pembiayaan', 'Financing Login')}
           </button>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border
+            <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
               style={{ borderColor: th.cardBorder, color: th.textMuted }}>Admin</button>
             <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black text-white"
               style={{ background: th.textMain }}>{t('Masuk', 'Get Started')}</button>

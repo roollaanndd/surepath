@@ -1,4 +1,4 @@
-import { supabase } from '../../services/supabaseService';
+import { supabase } from '../../../services/supabaseService';
 
 export type FinancingProduct = {
   id: string; code: string; name: string; category: string; currency: string;

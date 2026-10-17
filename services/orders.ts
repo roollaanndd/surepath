@@ -116,12 +116,16 @@ export async function getAgentOrders(_agentId: string): Promise<SpPolicyOrder[]>
   return (data ?? []) as SpPolicyOrder[];
 }
 
-export async function getCustomerOrders(_clientId: string): Promise<SpPolicyOrder[]> {
+export async function getCustomerOrders(_clientId: string, strict = false): Promise<SpPolicyOrder[]> {
   // Routed through the gateway, which scopes results to the authenticated
   // caller's own orders (client_id = caller). The param is kept for signature
   // stability but the server derives ownership; it is not trusted.
   const { data, error } = await callGateway('get_my_orders');
-  if (error) { console.error('getCustomerOrders:', error); return []; }
+  if (error) {
+    console.error('getCustomerOrders:', error);
+    if (strict) throw error;
+    return [];
+  }
   return (data ?? []) as SpPolicyOrder[];
 }
 

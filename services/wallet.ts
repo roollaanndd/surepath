@@ -27,12 +27,16 @@ export async function getAgentCoinLedger(agentId: string): Promise<SpCoinLedger[
   return (data ?? []) as SpCoinLedger[];
 }
 
-export async function getAgentCoinBalance(agentId: string): Promise<number> {
+export async function getAgentCoinBalance(agentId: string, strict = false): Promise<number> {
   const { data, error } = await supabase
     .from('sp_coin_ledger')
     .select('type, coins')
     .eq('agent_id', agentId);
-  if (error) { console.error('getAgentCoinBalance:', error); return 0; }
+  if (error) {
+    console.error('getAgentCoinBalance:', error);
+    if (strict) throw error;
+    return 0;
+  }
   return (data ?? []).reduce((sum: number, row: any) => {
     return sum + (row.type === 'REDEEMED' ? -row.coins : row.coins);
   }, 0);
@@ -54,35 +58,49 @@ export async function redeemCoins(
 
 // ─── Agent Wallet ─────────────────────────────────────────────────────────────
 
-export async function getMyWallet(): Promise<AgentWallet | null> {
+export async function getMyWallet(strict = false): Promise<AgentWallet | null> {
   const { data, error } = await supabase
     .from('sp_agent_wallets')
     .select('*')
-    .single();
-  if (error) return null;
+    .maybeSingle();
+  if (error) {
+    if (strict) throw error;
+    return null;
+  }
   return data as AgentWallet;
 }
 
-export async function getMyWalletTransactions(limit = 50): Promise<WalletTransaction[]> {
+export async function getMyWalletTransactions(limit = 50, strict = false): Promise<WalletTransaction[]> {
   const { data, error } = await supabase
     .from('sp_wallet_transactions')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
-  if (error) { console.error('getMyWalletTransactions:', error); return []; }
+  if (error) {
+    console.error('getMyWalletTransactions:', error);
+    if (strict) throw error;
+    return [];
+  }
   return (data ?? []) as WalletTransaction[];
 }
 
-export async function getMyWithdrawals(limit = 20): Promise<Withdrawal[]> {
+export async function getMyWithdrawals(limit = 20, strict = false): Promise<Withdrawal[]> {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  if (!user) {
+    if (strict) throw new Error('Sesi pengguna tidak tersedia.');
+    return [];
+  }
   const { data, error } = await supabase
     .from('sp_withdrawals')
     .select('*')
     .eq('agent_id', user.id)
     .order('created_at', { ascending: false })
     .limit(limit);
-  if (error) { console.error('getMyWithdrawals:', error); return []; }
+  if (error) {
+    console.error('getMyWithdrawals:', error);
+    if (strict) throw error;
+    return [];
+  }
   return (data ?? []) as Withdrawal[];
 }
 

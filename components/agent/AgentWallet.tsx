@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   getMyWallet, getMyWalletTransactions, getMyWithdrawals,
-  requestWithdrawal, getAgentCoinBalance, redeemCoins,
+  requestWithdrawal, getAgentCoinBalance,
   supabase,
   type AgentWallet, type WalletTransaction, type Withdrawal
 } from '../../services/supabaseService';
@@ -94,7 +94,6 @@ const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () =
 
 interface WithdrawFormProps {
   balance: number;
-  agentId: string;
   coinBalance: number;
   onSuccess: () => void;
   onCancel: () => void;
@@ -105,7 +104,7 @@ interface WithdrawFormProps {
 }
 
 const WithdrawForm: React.FC<WithdrawFormProps> = ({
-  balance, agentId, coinBalance, onSuccess, onCancel,
+  balance, coinBalance, onSuccess, onCancel,
   savedAccounts, onSaveAccount, onDeleteAccount, profileName,
 }) => {
   const [amount, setAmount] = useState('');
@@ -115,8 +114,6 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
   const [accLabel, setAccLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
-  const [includeCoin, setIncludeCoin] = useState(false);
-  const [coinRedeem, setCoinRedeem] = useState(0);
   const [showTnC, setShowTnC] = useState(false);
   const [addingNew, setAddingNew] = useState(savedAccounts.length === 0);
 
@@ -136,34 +133,27 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
   const doSubmit = async () => {
     setErr('');
     setLoading(true);
-    let coinRpValue = 0;
-    let coinsRedeemed = false;
-    if (includeCoin && coinRedeem > 0) {
-      const ok = await redeemCoins(agentId, coinRedeem, 'Pencairan ke rekening bank');
-      if (!ok) { setErr('Gagal mencairkan koin. Coba lagi.'); setLoading(false); return; }
-      coinRpValue = coinRedeem * 1000;
-      coinsRedeemed = true;
-    }
-    const totalAmount = amt + coinRpValue;
-    const res = await requestWithdrawal({ amount: totalAmount, bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim() });
-    setLoading(false);
-    if (res.success) {
-      const existing = savedAccounts.find(a => a.account_number === accNum.trim() && a.bank_code === bankCode);
-      if (!existing) {
-        onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
-      }
-      onSuccess();
-    } else {
-      // If coins were redeemed but withdrawal failed, we need to refund them.
-      // Log the issue — the admin can manually credit the coins back.
-      if (coinsRedeemed) {
-        console.error('CRITICAL: Coins redeemed but withdrawal failed. Manual refund needed.', {
-          agentId, coinRedeem, coinRpValue, withdrawalError: res.error,
-        });
-        setErr(`Penarikan gagal: ${res.error ?? 'Terjadi kesalahan'}. Koin kamu sudah dicairkan — tim kami akan mengembalikannya otomatis. Hubungi dukungan jika tidak kembali dalam 24 jam.`);
+    try {
+      const res = await requestWithdrawal({
+        amount: amt,
+        bank_code: bankCode,
+        account_number: accNum.trim(),
+        account_holder_name: accName.trim(),
+      });
+      if (res.success) {
+        const existing = savedAccounts.find(a => a.account_number === accNum.trim() && a.bank_code === bankCode);
+        if (!existing) {
+          onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
+        }
+        onSuccess();
       } else {
         setErr(res.error ?? 'Terjadi kesalahan');
       }
+    } catch (err) {
+      console.error('Error submitting withdrawal:', err);
+      setErr('Permintaan penarikan tidak berhasil. Periksa koneksi dan coba kembali.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,7 +171,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
     <>
       {showTnC && (
         <WithdrawalTnCModal
-          amount={amt + (includeCoin ? coinRedeem * 1000 : 0)}
+          amount={amt}
           fee={fee}
           onAccept={() => { setShowTnC(false); doSubmit(); }}
           onCancel={() => setShowTnC(false)}
@@ -254,23 +244,11 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
         </div>
 
         {coinBalance > 0 && (
-          <div className="rounded-2xl border border-ds-border p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div onClick={() => setIncludeCoin(v => !v)} className={`w-10 h-5 rounded-full transition-colors relative ${includeCoin ? 'bg-ds-amber' : 'bg-ds-card2'}`}>
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${includeCoin ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </div>
-              <div>
-                <p className="text-xs font-black text-ds-ink">Cairkan Koin Sekaligus</p>
-                <p className="text-[10px] text-ds-ink3">Saldo: {coinBalance.toLocaleString('id-ID')} poin = {IDR(coinBalance * 1000)}</p>
-              </div>
-            </label>
-            {includeCoin && (
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5">Jumlah Koin (maks {coinBalance.toLocaleString('id-ID')})</label>
-                <input type="number" min={1} max={coinBalance} value={coinRedeem} onChange={e => setCoinRedeem(Math.min(coinBalance, Math.max(0, Number(e.target.value))))} className="w-full bg-ds-card border border-ds-border rounded-xl px-4 py-3 text-sm font-bold text-ds-ink outline-none focus:border-ds-amber/50" />
-                <p className="text-[10px] text-ds-amber font-bold mt-1">= {IDR(coinRedeem * 1000)} ditambahkan</p>
-              </div>
-            )}
+          <div role="note" className="rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4 space-y-1.5">
+            <p className="text-xs font-black text-ds-ink">Saldo koin: {coinBalance.toLocaleString('id-ID')} poin</p>
+            <p className="text-[10px] leading-relaxed text-ds-ink3">
+              Penukaran koin ke rekening sedang dinonaktifkan sementara untuk memastikan pencatatan saldo dan penarikan tetap akurat. Poin kamu tetap tersimpan dan tidak digunakan dalam penarikan ini.
+            </p>
           </div>
         )}
 
@@ -287,13 +265,6 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
             <Info size={16} className="text-ds-amber mt-0.5 flex-shrink-0" />
             <p className="text-xs text-amber-300">Penarikan di atas Rp 10 juta memerlukan persetujuan L1 + L2.</p>
-          </div>
-        )}
-
-        {includeCoin && coinRedeem > 0 && (
-          <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex justify-between">
-            <span className="text-xs font-black text-amber-300">Total Penarikan</span>
-            <span className="text-xs font-black text-amber-300">{IDR(amt + coinRedeem * 1000)}</span>
           </div>
         )}
 
@@ -332,8 +303,8 @@ const AgentWalletView: React.FC = () => {
   const [newAccNum, setNewAccNum] = useState('');
   const [newAccName, setNewAccName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [coinBalance, setCoinBalance] = useState(0);
-  const [agentId, setAgentId] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>(() => {
     try {
       const raw = BANK_STORAGE?.getItem(SAVED_BANKS_KEY);
@@ -370,28 +341,46 @@ const AgentWalletView: React.FC = () => {
 
   const load = async () => {
     setLoading(true);
-    const authUser = await supabase.auth.getUser();
-    const uid = authUser.data.user?.id ?? '';
-    setAgentId(uid);
-    const [w, t, wd, cb] = await Promise.all([
-      getMyWallet(),
-      getMyWalletTransactions(50),
-      getMyWithdrawals(20),
-      uid ? getAgentCoinBalance(uid) : Promise.resolve(0),
-    ]);
-    setWallet(w);
-    setTxns(t);
-    setWithdrawals(wd);
-    setCoinBalance(cb);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const authUser = await supabase.auth.getUser();
+      const uid = authUser.data.user?.id ?? '';
+      if (!uid) throw new Error('Sesi pengguna tidak tersedia. Silakan masuk kembali.');
+      const [w, t, wd, cb] = await Promise.all([
+        getMyWallet(true),
+        getMyWalletTransactions(50, true),
+        getMyWithdrawals(20, true),
+        getAgentCoinBalance(uid, true),
+      ]);
+      setWallet(w);
+      setTxns(t);
+      setWithdrawals(wd);
+      setCoinBalance(cb);
+    } catch (err) {
+      console.error('Error loading agent wallet:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div role="status" aria-live="polite" className="flex flex-col items-center justify-center gap-3 py-20">
         <RefreshCw size={24} className="animate-spin motion-reduce:animate-none" style={{ color: '#00C896' }} />
+        <span className="text-xs font-semibold text-ds-ink3">Memuat data dompet…</span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="mx-4 my-8 rounded-2xl border border-ds-red/25 bg-ds-red/5 p-5">
+        <h2 className="text-sm font-black text-ds-ink">Data dompet belum dapat dimuat</h2>
+        <p className="mt-2 text-xs leading-relaxed text-ds-ink3">Saldo dan riwayat belum bisa diverifikasi. Demi keamanan, penarikan dana dinonaktifkan sampai data berhasil dimuat.</p>
+        <button type="button" onClick={() => void load()} className="mt-4 min-h-11 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-white">Coba lagi</button>
       </div>
     );
   }
@@ -407,7 +396,6 @@ const AgentWalletView: React.FC = () => {
         </div>
         <WithdrawForm
           balance={wallet?.balance ?? 0}
-          agentId={agentId}
           coinBalance={coinBalance}
           onSuccess={() => { setShowWithdrawForm(false); load(); }}
           onCancel={() => setShowWithdrawForm(false)}

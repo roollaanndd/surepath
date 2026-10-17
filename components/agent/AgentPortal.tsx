@@ -104,6 +104,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [commissions, setCommissions] = useState<SpCommission[]>([]);
   const [clients, setClients] = useState<SpClient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoadError, setDataLoadError] = useState(false);
 
   useEffect(() => {
     if (darkMode) {
@@ -126,27 +127,53 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const loadData = async () => {
     if (!agent?.id) return;
     setLoading(true);
+    setDataLoadError(false);
     try {
-      const [statsData, commissionsData, clientsData, notifData] = await Promise.all([
-        getAgentStats(agent.id),
-        getAgentCommissions(agent.id),
-        getAgentClients(agent.id),
-        getNotifications(agent.id),
+      // Keep each dashboard panel independent: a notification outage should not
+      // hide otherwise healthy commission, client, or policy data.
+      const results = await Promise.allSettled([
+        getAgentStats(agent.id, true),
+        getAgentCommissions(agent.id, true),
+        getAgentClients(agent.id, true),
+        getNotifications(agent.id, true),
       ]);
-      setStats(statsData);
-      setCommissions(commissionsData);
-      setClients(clientsData);
-      setUnreadCount(notifData.filter(n => !n.read).length);
+      const [statsResult, commissionsResult, clientsResult, notificationsResult] = results;
+      let hasError = results.some(result => result.status === 'rejected');
 
-      // Fetch tier from DB
-      const { data: tierData } = await supabase
-        .from('sp_users')
-        .select('tier')
-        .eq('id', agent?.id)
-        .single();
-      if (tierData?.tier) setAgentTier(tierData.tier);
+      if (statsResult.status === 'fulfilled') setStats(statsResult.value);
+      else console.error('Error loading agent stats:', statsResult.reason);
+
+      if (commissionsResult.status === 'fulfilled') setCommissions(commissionsResult.value);
+      else console.error('Error loading agent commissions:', commissionsResult.reason);
+
+      if (clientsResult.status === 'fulfilled') setClients(clientsResult.value);
+      else console.error('Error loading agent clients:', clientsResult.reason);
+
+      if (notificationsResult.status === 'fulfilled') {
+        setUnreadCount(notificationsResult.value.filter(n => !n.read).length);
+      } else {
+        console.error('Error loading agent notifications:', notificationsResult.reason);
+      }
+
+      // Tier is optional metadata; a failure here should not break the dashboard.
+      try {
+        const { data: tierData, error: tierError } = await supabase
+          .from('sp_users')
+          .select('tier')
+          .eq('id', agent.id)
+          .single();
+        if (tierError) {
+          console.error('Error loading optional agent tier metadata:', tierError);
+        } else if (tierData?.tier) {
+          setAgentTier(tierData.tier);
+        }
+      } catch (tierError) {
+        console.error('Error loading optional agent tier metadata:', tierError);
+      }
+      setDataLoadError(hasError);
     } catch (err) {
       console.error('Error loading agent data:', err);
+      setDataLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -296,9 +323,20 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             <p className="text-ds-ink3 text-sm font-bold">{t('Loading your dashboard…', 'Memuat dashboard…')}</p>
           </div>
         ) : (
-          <div key={tabKey} data-sp-anim className="sp-page-enter">
-            {renderTab()}
-          </div>
+          <>
+            {dataLoadError && (
+              <div role="alert" aria-live="polite" className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4">
+                <p className="text-sm font-bold text-ds-ink">{t('Some dashboard data could not be refreshed.', 'Sebagian data dashboard belum berhasil dimuat.')}</p>
+                <p className="mt-1 text-xs text-ds-ink3">{t('You can keep using available sections or retry the refresh.', 'Kamu tetap bisa menggunakan bagian yang tersedia atau mencoba memuat ulang.')}</p>
+                <button type="button" onClick={() => void loadData()} disabled={loading} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+                  {t('Retry refresh', 'Coba muat ulang')}
+                </button>
+              </div>
+            )}
+            <div key={tabKey} data-sp-anim className="sp-page-enter">
+              {renderTab()}
+            </div>
+          </>
         )}
       </main>
 

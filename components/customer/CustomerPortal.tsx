@@ -74,6 +74,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [notifications, setNotifications] = useState<SpNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [dataLoadError, setDataLoadError] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SpPolicyOrder | null>(null);
 
   useEffect(() => {
@@ -85,18 +86,30 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const loadCustomerData = useCallback(async () => {
     if (!currentUser?.id) return;
     setRefreshing(true);
+    setDataLoadError(false);
     try {
+      // Load each customer panel independently so one unavailable endpoint
+      // does not discard successful policy, claim, or notification results.
       const [orders, claims, notifs] = await Promise.allSettled([
-        getCustomerOrders(currentUser.id),
-        getCustomerClaims(currentUser.id),
-        getNotifications(currentUser.id),
+        getCustomerOrders(currentUser.id, true),
+        getCustomerClaims(currentUser.id, true),
+        getNotifications(currentUser.id, true),
       ]);
+      const hasError = [orders, claims, notifs].some(result => result.status === 'rejected');
       if (orders.status === 'fulfilled') {
         setCustomerPolicies(orders.value);
-        if (orders.value.length > 0) setLatestPolicy(orders.value[0]);
+        setLatestPolicy(orders.value[0] ?? null);
+      } else {
+        console.error('Error loading customer policies:', orders.reason);
       }
       if (claims.status === 'fulfilled') setCustomerClaims(claims.value);
+      else console.error('Error loading customer claims:', claims.reason);
       if (notifs.status === 'fulfilled') setNotifications(notifs.value);
+      else console.error('Error loading customer notifications:', notifs.reason);
+      setDataLoadError(hasError);
+    } catch (err) {
+      console.error('Error loading customer data:', err);
+      setDataLoadError(true);
     } finally {
       setRefreshing(false);
     }
@@ -645,6 +658,15 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         className={isFullscreen ? 'relative z-10 h-screen overflow-y-auto' : 'relative z-10 pb-32 px-5 min-h-screen overflow-y-auto no-scrollbar'}
         style={!isFullscreen ? { paddingTop: 'calc(4.75rem + env(safe-area-inset-top, 0px))' } : undefined}
       >
+        {dataLoadError && (
+          <div role="alert" aria-live="polite" className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4">
+            <p className="text-sm font-bold text-ds-ink">{t('Some information could not be refreshed.', 'Sebagian informasi belum berhasil dimuat.')}</p>
+            <p className="mt-1 text-xs text-ds-ink3">{t('Your available information remains visible. Try refreshing to check again.', 'Informasi yang tersedia tetap ditampilkan. Coba muat ulang untuk memeriksa kembali.')}</p>
+            <button type="button" onClick={() => void loadCustomerData()} disabled={refreshing} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+              {refreshing ? t('Refreshing…', 'Memuat ulang…') : t('Refresh data', 'Muat ulang data')}
+            </button>
+          </div>
+        )}
         <Suspense fallback={<WizardLoader />}>
           <div key={activePage} className="sp-page-enter">
             {renderContent()}

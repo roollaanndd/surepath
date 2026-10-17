@@ -102,7 +102,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
+    <div className="sp-modern-app min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
       <div aria-hidden className="sp-ambient" />
       {/* Top Header */}
       <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>

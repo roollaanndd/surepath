@@ -666,7 +666,7 @@ const AdminPortal = ({
   const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
 
   return (
-    <div className={`flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
+    <div className={`sp-modern-app flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
       {/* ── Animated background ───────────────────────────────────────────── */}
       <style>{`
         @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,-40px) scale(1.15)} }

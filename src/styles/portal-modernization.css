@@ -1,0 +1,72 @@
+/*
+ * SurePath cross-portal visual layer
+ * Scope: authenticated customer, agent, operator, insurer, B2B and admin apps only.
+ * No landing-page, business logic, API, auth, calculation or permission changes.
+ */
+.sp-modern-app {
+  --sp-ui-radius-card: 1.25rem;
+  --sp-ui-radius-control: .875rem;
+  --sp-ui-shadow-card: 0 10px 28px -18px rgba(15, 23, 42, .28);
+  --sp-ui-shadow-hover: 0 18px 38px -22px rgba(0, 59, 47, .32);
+  --sp-ui-ring: rgba(0, 193, 106, .22);
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+.sp-modern-app ::selection { background: rgba(0, 193, 106, .2); color: inherit; }
+.sp-modern-app :where(button, a, input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+.sp-modern-app :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ds-green, #00a85b);
+  outline-offset: 3px;
+}
+.sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  border-radius: var(--sp-ui-radius-control);
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):focus {
+  box-shadow: 0 0 0 4px var(--sp-ui-ring);
+}
+.sp-modern-app :where(button) {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+.sp-modern-app :where(button:not(:disabled):active) { transform: scale(.985); }
+.sp-modern-app :where(button:disabled) { cursor: not-allowed; }
+.sp-modern-app :where(div, section, article):where(.rounded-2xl, .rounded-3xl):where(.bg-white, .bg-ds-card, .bg-ds-card2, .bg-ds-surface) {
+  box-shadow: var(--sp-ui-shadow-card);
+  border-color: var(--ds-border, #e2e8f0);
+}
+.sp-modern-app :where(.sp-glass-strong) {
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
+}
+.sp-modern-app :where([data-sp-anim], .sp-page-enter) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(.2, .8, .2, 1);
+  animation-fill-mode: both;
+}
+.sp-modern-app :where(.overflow-y-auto, .overflow-auto) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, .35) transparent;
+}
+.sp-modern-app :where(.overflow-y-auto, .overflow-auto)::-webkit-scrollbar { width: 6px; height: 6px; }
+.sp-modern-app :where(.overflow-y-auto, .overflow-auto)::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, .32);
+  border-radius: 999px;
+}
+.sp-modern-app :where(.overflow-y-auto, .overflow-auto)::-webkit-scrollbar-track { background: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  .sp-modern-app :where(div, section, article):where(.rounded-2xl, .rounded-3xl):where(.bg-white, .bg-ds-card, .bg-ds-card2, .bg-ds-surface):hover {
+    box-shadow: var(--sp-ui-shadow-hover);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app *, .sp-modern-app *::before, .sp-modern-app *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

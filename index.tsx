@@ -12,6 +12,7 @@ import { registerSW } from 'virtual:pwa-register';
 import * as Sentry from '@sentry/react';
 import App from './App';
 import './styles.css';
+import './src/styles/portal-modernization.css';
 
 // Error monitoring — no-op unless VITE_SENTRY_DSN is configured in the env
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;

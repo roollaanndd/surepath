@@ -30,8 +30,8 @@ async function sha256(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-function canTransition(role: string, from: string, to: string): boolean {
-  if (role === "FINANCING_ADMIN") return true;
+function canTransition(roles: Set<string>, from: string, to: string): boolean {
+  if (roles.has("FINANCING_ADMIN")) return true;
   const allowed: Record<string, Record<string, string[]>> = {
     ORIGINATION: { NEW: ["SUBMITTED", "CANCELLED"], SUBMITTED: ["DOCUMENTS_PENDING"] },
     VERIFICATION_ANALYST: { SUBMITTED: ["DOCUMENTS_PENDING", "VERIFICATION"], DOCUMENTS_PENDING: ["VERIFICATION"], VERIFICATION: ["DOCUMENTS_PENDING"] },
@@ -39,10 +39,10 @@ function canTransition(role: string, from: string, to: string): boolean {
     CREDIT_APPROVER: { CREDIT_REVIEW: ["APPROVED", "DECLINED", "REFERRED"] },
     CONTRACT_OFFICER: { APPROVED: ["OFFERED"], OFFERED: ["CONTRACTED"] },
   };
-  return (allowed[role]?.[from] ?? []).includes(to);
+  return Array.from(roles).some((role) => (allowed[role]?.[from] ?? []).includes(to));
 }
-function canCreate(role: string): boolean {
-  return role === "FINANCING_ADMIN" || role === "ORIGINATION";
+function canCreate(roles: Set<string>): boolean {
+  return roles.has("FINANCING_ADMIN") || roles.has("ORIGINATION");
 }
 
 Deno.serve(async (req) => {
@@ -67,10 +67,11 @@ Deno.serve(async (req) => {
   const userId = userData.user.id;
   const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
-  const { data: roleRow, error: roleError } = await db.from("sp_financing_user_roles")
-    .select("role,active").eq("user_id", userId).maybeSingle();
+  const { data: roleRows, error: roleError } = await db.from("sp_financing_user_roles")
+    .select("role").eq("user_id", userId).eq("active", true);
   if (roleError) return json({ error: "AUTHORIZATION_UNAVAILABLE", correlationId }, 503, headers);
-  if (!roleRow?.active || !READ_ROLES.has(roleRow.role)) {
+  const roles = new Set((roleRows ?? []).map((row: { role: string }) => row.role));
+  if (roles.size === 0 || !Array.from(roles).some((role) => READ_ROLES.has(role))) {
     await db.from("sp_financing_audit_events").insert({
       actor_user_id: userId, action: "FINANCING_ACCESS_DENIED", entity_type: "api",
       correlation_id: correlationId, outcome: "DENIED", details: { reason: "missing_or_inactive_role" },
@@ -115,7 +116,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create_application") {
-      if (!canCreate(roleRow.role)) return json({ error: "FORBIDDEN", message: "This role cannot create applications.", correlationId }, 403, headers);
+      if (!canCreate(roles)) return json({ error: "FORBIDDEN", message: "This role cannot create applications.", correlationId }, 403, headers);
       const customerName = safeString(params.customer_name, 160);
       const customerType = safeString(params.customer_type, 20) || "INDIVIDUAL";
       const productCode = safeString(params.product_code, 40);
@@ -166,7 +167,7 @@ Deno.serve(async (req) => {
       const { data: current, error: currentError } = await db.from("sp_financing_applications").select("id,status,version").eq("id", applicationId).maybeSingle();
       if (currentError) throw currentError;
       if (!current) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
-      if (!canTransition(roleRow.role, current.status, targetStatus)) return json({ error: "FORBIDDEN_TRANSITION", correlationId }, 403, headers);
+      if (!canTransition(roles, current.status, targetStatus)) return json({ error: "FORBIDDEN_TRANSITION", correlationId }, 403, headers);
       const { data, error } = await db.rpc("sp_financing_transition_application", {
         p_user_id: userId, p_application_id: applicationId, p_expected_version: expectedVersion,
         p_target_status: targetStatus, p_reason: reason, p_correlation_id: correlationId,

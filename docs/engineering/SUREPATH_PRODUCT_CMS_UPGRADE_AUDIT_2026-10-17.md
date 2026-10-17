@@ -4,16 +4,17 @@
 
 SurePath has an existing semantic design token layer, glass surfaces, page-entry motion primitives, and reduced-motion support. The next visual pass should use these consistently across customer, agent, insurer, operator, finance, and CMS screens instead of adding unrelated animation systems to each portal.
 
-The CMS is connected to Supabase's `sp_website_config` table. Public pages read these sections at runtime and retain bundled defaults when the CMS is unavailable. CMS writes currently use the authenticated browser client. The former RLS write policy allowed any authenticated account to modify public website configuration; this patch restricts writes to `MASTER_ADMIN` and `ADMIN` roles while preserving public reads.
+The CMS is connected to Supabase's `sp_website_config` table. Public pages read these sections at runtime and retain bundled defaults when the CMS is unavailable. CMS writes use the authenticated browser client. The repository's original migration defined a broad authenticated-write policy; the live project currently has an `is_admin()` write policy that also includes finance/insurance-admin roles. This patch narrows website publishing to `MASTER_ADMIN` and `ADMIN` while preserving public reads. The RLS migration is not live until applied after staging verification.
 
 ## Changes in this patch
 
-1. **CMS integrity feedback** — website-section and promo-banner editors no longer display a false success when the Supabase upsert returns no row. Errors are surfaced with accessible alerts. Image upload failures are surfaced, and loading flags are reset in `finally` blocks.
-2. **CMS role security** — added migration `20261017020000_restrict_website_config_writes.sql`, which replaces the broad authenticated-write policy with an admin-role policy. Public read access remains unchanged so the marketing site can render CMS-managed content.
-3. **Public CMS resilience** — the shared website-config hook cancels stale async updates when a page section changes and gracefully falls back to bundled content when a fetch fails.
-4. **Accessibility** — added accessible names to sign-in email/password fields and password-visibility controls, associated operator login labels with their fields, and labeled the vehicle-value slider.
-5. **Safe E2E defaults** — integration tests require an explicit gateway URL; production needs an explicit opt-in. The rate-limit test no longer sends a burst of requests by default. Playwright starts the local Vite server for UI smoke tests.
-6. **Lint isolation** — generated ECC/AI tooling directories are excluded from application linting.
+1. **Shared visual transitions and media** — route changes use the existing `sp-page-enter` primitive across the app; CMS banner previews use the shared image-reveal motion and lazy/deferred image decoding. Both respect reduced-motion settings.
+2. **CMS integrity feedback** — website-section and promo-banner editors no longer display a false success when the Supabase upsert returns no row. Errors are surfaced with accessible alerts. Image upload failures are surfaced, and loading flags are reset in `finally` blocks.
+3. **CMS role security** — added migration `20261017020000_restrict_website_config_writes.sql`, which replaces the broad authenticated-write policy with an admin-role policy. Public read access remains unchanged so the marketing site can render CMS-managed content.
+4. **Public CMS resilience** — the shared website-config hook cancels stale async updates when a page section changes and gracefully falls back to bundled content when a fetch fails.
+5. **Accessibility** — added accessible names to sign-in email/password fields and password-visibility controls, associated operator login labels with their fields, and labeled the vehicle-value slider.
+6. **Safe E2E defaults** — integration tests require an explicit gateway URL; production needs an explicit opt-in. The rate-limit test no longer sends a burst of requests by default. Playwright starts the local Vite server for UI smoke tests.
+7. **Lint isolation** — generated ECC/AI tooling directories are excluded from application linting.
 
 ## Verification requirements
 

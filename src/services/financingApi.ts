@@ -131,3 +131,54 @@ export async function listFinancingLedgerJournals(limit = 50): Promise<{ data: F
 export async function getFinancingTrialBalance(): Promise<{ data: FinancingTrialBalanceRow[]; correlationId?: string }> {
   return invokeFinancing('get_ledger_trial_balance');
 }
+
+export type FinancingRepaymentRecord = {
+  id: string;
+  loan_account_id: string;
+  amount: number | string;
+  currency: string;
+  payment_date: string;
+  channel: string;
+  external_reference: string | null;
+  status: string;
+  received_by: string | null;
+  created_at: string;
+};
+
+export async function listFinancingRepayments(limit = 50, loanAccountId?: string): Promise<{ data: FinancingRepaymentRecord[]; correlationId?: string }> {
+  return invokeFinancing('list_repayments', { limit, ...(loanAccountId ? { loan_account_id: loanAccountId } : {}) });
+}
+
+export async function recordFinancingRepayment(input: {
+  loanAccountId: string;
+  amount: number;
+  channel: string;
+  externalReference: string;
+  paymentDate: string;
+}): Promise<Record<string, unknown>> {
+  const result = await invokeFinancing<{ data: Record<string, unknown> }>('record_repayment', {
+    loan_account_id: input.loanAccountId,
+    amount: input.amount,
+    channel: input.channel,
+    external_reference: input.externalReference,
+    payment_date: input.paymentDate,
+  }, { 'x-idempotency-key': crypto.randomUUID() });
+  return result.data;
+}
+
+export async function allocateFinancingRepayment(input: {
+  repaymentId: string;
+  scheduleId: string;
+  principalAmount: number;
+  interestAmount: number;
+  feesAmount: number;
+}): Promise<Record<string, unknown>> {
+  const result = await invokeFinancing<{ data: Record<string, unknown> }>('allocate_repayment', {
+    repayment_id: input.repaymentId,
+    schedule_id: input.scheduleId,
+    principal_amount: input.principalAmount,
+    interest_amount: input.interestAmount,
+    fees_amount: input.feesAmount,
+  }, { 'x-idempotency-key': crypto.randomUUID() });
+  return result.data;
+}

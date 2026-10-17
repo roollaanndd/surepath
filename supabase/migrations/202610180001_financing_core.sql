@@ -202,7 +202,13 @@ create table if not exists public.financing_audit_events (
 create index if not exists financing_audit_tenant_time_idx on public.financing_audit_events (tenant_id, created_at desc);
 
 -- Tenant RLS. The API also validates tenant + role before every privileged operation.
-do $$
+alter table public.financing_tenants enable row level security;
+drop policy if exists financing_tenant_isolation on public.financing_tenants;
+create policy financing_tenant_isolation on public.financing_tenants
+  using (id::text = (auth.jwt() -> 'app_metadata' ->> 'financing_tenant_id'))
+  with check (id::text = (auth.jwt() -> 'app_metadata' ->> 'financing_tenant_id'));
+
+do $
 declare t text;
 begin
   foreach t in array array['financing_products','financing_customers','financing_applications','financing_documents','financing_credit_decisions','financing_contracts','financing_loan_accounts','financing_disbursements','financing_repayment_schedules','financing_repayments','financing_collection_cases','financing_audit_events'] loop

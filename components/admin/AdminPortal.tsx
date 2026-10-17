@@ -841,7 +841,9 @@ const AdminPortal = ({
               );
             })()}
             <Suspense fallback={<AdminViewLoader />}>
-              {renderContent()}
+              <div key={activeTab} className="sp-page-enter">
+                {renderContent()}
+              </div>
             </Suspense>
           </div>
         </div>

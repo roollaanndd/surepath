@@ -21,7 +21,7 @@
       ]
     },
     {
-      "source": "/(?!sw\\.js$|workbox-.*\\.js$)(.*\\.js|.*\\.css|.*\\.woff2?|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.ico)",
+      "source": "/(.*\\.css|.*\\.woff2?|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.ico)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

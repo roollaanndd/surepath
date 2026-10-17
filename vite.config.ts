@@ -12,6 +12,10 @@ export default defineConfig(() => {
       plugins: [
         react(),
         VitePWA({
+          // Explicit registration + autoUpdate means the generated client checks for
+          // a new worker on app startup and activates it without a manual prompt.
+          // skipWaiting/clientsClaim below let the new worker take over open tabs.
+          injectRegister: 'auto',
           registerType: 'autoUpdate',
           includeAssets: ['apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512.png'],
           workbox: {

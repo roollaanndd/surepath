@@ -115,6 +115,114 @@ Deno.serve(async (req) => {
       return json({ data: { totalApplications: total ?? 0, amountRequestedIdr: amountRequested, byStatus, partial: (total ?? 0) > (statuses?.length ?? 0), asOf: new Date().toISOString() }, correlationId }, 200, headers);
     }
 
+    if (action === "list_product_rules") {
+      const { data, error } = await db.from("sp_financing_product_rules")
+        .select("id,product_id,version,active,min_amount,max_amount,min_tenor_months,max_tenor_months,annual_interest_rate_pct,max_dti_pct,min_monthly_income,created_at,product:sp_financing_products(code,name)")
+        .eq("active", true).order("created_at", { ascending: false });
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "configure_product_rule") {
+      if (!roles.has("FINANCING_ADMIN")) return json({ error: "FORBIDDEN", message: "Only a financing administrator can configure underwriting rules.", correlationId }, 403, headers);
+      const productCode = safeString(params.product_code, 40);
+      const minAmount = Number(params.min_amount), maxAmount = Number(params.max_amount);
+      const minTenor = Number(params.min_tenor_months), maxTenor = Number(params.max_tenor_months);
+      const annualRate = Number(params.annual_interest_rate_pct), maxDti = Number(params.max_dti_pct);
+      const minIncome = Number(params.min_monthly_income);
+      if (!PRODUCT_CODES.has(productCode) || !Number.isFinite(minAmount) || !Number.isFinite(maxAmount) ||
+          !Number.isInteger(minTenor) || !Number.isInteger(maxTenor) || !Number.isFinite(annualRate) ||
+          !Number.isFinite(maxDti) || !Number.isFinite(minIncome)) {
+        return json({ error: "VALIDATION_ERROR", message: "Complete all product rule fields with valid numeric values.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_configure_product_rule", {
+        p_user_id: userId, p_product_code: productCode, p_min_amount: minAmount, p_max_amount: maxAmount,
+        p_min_tenor_months: minTenor, p_max_tenor_months: maxTenor,
+        p_annual_interest_rate_pct: annualRate, p_max_dti_pct: maxDti,
+        p_min_monthly_income: minIncome, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/financing_admin_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/invalid_product_rule|product_unavailable/.test(error.message)) return json({ error: "VALIDATION_ERROR", message: error.message.split("\\n")[0], correlationId }, 400, headers);
+        console.error("financing product rule configuration failed", correlationId, error.code);
+        return json({ error: "RULE_CONFIGURATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "evaluate_credit") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("CREDIT_ANALYST"))) {
+        return json({ error: "FORBIDDEN", message: "Credit analyst access is required.", correlationId }, 403, headers);
+      }
+      const applicationId = safeString(params.application_id, 40);
+      const monthlyIncome = Number(params.monthly_income);
+      const obligations = Number(params.existing_monthly_obligations);
+      const downPayment = Number(params.down_payment ?? 0);
+      const notes = safeString(params.notes, 2000);
+      if (!/^[0-9a-f-]{36}$/i.test(applicationId) || !Number.isFinite(monthlyIncome) || monthlyIncome <= 0 ||
+          !Number.isFinite(obligations) || obligations < 0 || !Number.isFinite(downPayment) || downPayment < 0 ||
+          notes.length > 2000) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide a valid application, monthly income, obligations and down payment.", correlationId }, 400, headers);
+      }
+      const { data: app, error: appError } = await db.from("sp_financing_applications")
+        .select("id,product_id,requested_amount,requested_tenor_months,status,product:sp_financing_products(code,name)")
+        .eq("id", applicationId).maybeSingle();
+      if (appError) throw appError;
+      if (!app) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      if (app.status !== "CREDIT_REVIEW") return json({ error: "APPLICATION_NOT_IN_CREDIT_REVIEW", correlationId }, 409, headers);
+      const { data: rule, error: ruleError } = await db.from("sp_financing_product_rules")
+        .select("id,version,min_amount,max_amount,min_tenor_months,max_tenor_months,annual_interest_rate_pct,max_dti_pct,min_monthly_income")
+        .eq("product_id", app.product_id).eq("active", true).maybeSingle();
+      if (ruleError) throw ruleError;
+      if (!rule) return json({ error: "RULES_NOT_CONFIGURED", message: "An approved active product rule set is required before assessment.", correlationId }, 409, headers);
+      const amount = Number(app.requested_amount);
+      if (downPayment > amount) return json({ error: "VALIDATION_ERROR", message: "Down payment cannot exceed the requested amount.", correlationId }, 400, headers);
+      const principal = Math.max(0, amount - downPayment);
+      const monthlyRate = Number(rule.annual_interest_rate_pct) / 1200;
+      const tenor = Number(app.requested_tenor_months);
+      const payment = monthlyRate === 0 ? principal / tenor : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -tenor));
+      const dti = ((obligations + payment) / monthlyIncome) * 100;
+      const reasons: string[] = [];
+      if (amount < Number(rule.min_amount) || amount > Number(rule.max_amount)) reasons.push("AMOUNT_OUTSIDE_POLICY");
+      if (tenor < Number(rule.min_tenor_months) || tenor > Number(rule.max_tenor_months)) reasons.push("TENOR_OUTSIDE_POLICY");
+      if (monthlyIncome < Number(rule.min_monthly_income)) reasons.push("INCOME_BELOW_POLICY_MINIMUM");
+      if (dti > Number(rule.max_dti_pct)) reasons.push("DTI_ABOVE_POLICY_LIMIT");
+      const hardIneligible = reasons.includes("AMOUNT_OUTSIDE_POLICY") || reasons.includes("TENOR_OUTSIDE_POLICY");
+      const outcome = hardIneligible ? "INELIGIBLE" : reasons.length ? "REFER" : "RECOMMEND_REVIEW";
+      const { data, error } = await db.rpc("sp_financing_record_credit_assessment", {
+        p_user_id: userId, p_application_id: applicationId, p_rule_id: rule.id,
+        p_monthly_income: monthlyIncome, p_existing_monthly_obligations: obligations, p_down_payment: downPayment,
+        p_estimated_monthly_payment: Number(payment.toFixed(2)), p_debt_to_income_pct: Number(dti.toFixed(3)),
+        p_outcome: outcome, p_reason_codes: reasons, p_notes: notes, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/credit_analyst_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/application_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/application_not_in_credit_review|product_rule_mismatch/.test(error.message)) return json({ error: "ASSESSMENT_CONFLICT", correlationId }, 409, headers);
+        if (/product_rule_not_found|invalid_credit_assessment/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("credit assessment failed", correlationId, error.code);
+        return json({ error: "ASSESSMENT_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: { ...data, currency: "IDR", annualInterestRatePct: Number(rule.annual_interest_rate_pct), humanDecisionRequired: true }, correlationId }, 201, headers);
+    }
+
+    if (action === "list_credit_assessments") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("CREDIT_ANALYST") || roles.has("CREDIT_APPROVER") || roles.has("AUDITOR"))) {
+        return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      }
+      const applicationId = safeString(params.application_id, 40);
+      let query = db.from("sp_financing_credit_assessments")
+        .select("id,application_id,rule_version,assessor_user_id,monthly_income,existing_monthly_obligations,down_payment,estimated_monthly_payment,debt_to_income_pct,outcome,reason_codes,notes,created_at")
+        .order("created_at", { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit) || 25)));
+      if (applicationId) {
+        if (!/^[0-9a-f-]{36}$/i.test(applicationId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        query = query.eq("application_id", applicationId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
     if (action === "create_application") {
       if (!canCreate(roles)) return json({ error: "FORBIDDEN", message: "This role cannot create applications.", correlationId }, 403, headers);
       const customerName = safeString(params.customer_name, 160);

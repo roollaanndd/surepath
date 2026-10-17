@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { createFinancingApplication, getFinancingOverview, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow } from '../services/financingApi';
+import { createFinancingApplication, getFinancingOverview, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, listFinancingReconciliationBatches, listFinancingReconciliationLines, importFinancingReconciliationBatch, reconcileFinancingStatementLine, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow, type FinancingReconciliationBatch, type FinancingStatementLine } from '../services/financingApi';
 import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
@@ -10,7 +10,7 @@ import {
   Users, Wallet, X,
 } from 'lucide-react';
 
-type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'contracts' | 'disbursements' | 'repayments' | 'collections' | 'products' | 'reports' | 'settings';
+type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'contracts' | 'disbursements' | 'repayments' | 'reconciliation' | 'collections' | 'products' | 'reports' | 'settings';
 
 type Application = {
   id: string;
@@ -66,6 +66,7 @@ const navGroups: { label: string; items: { key: ModuleKey; label: string; icon: 
     { key: 'contracts', label: 'Contracts', icon: FileCheck2 },
     { key: 'disbursements', label: 'Disbursements', icon: Banknote },
     { key: 'repayments', label: 'Repayment ledger', icon: CreditCard },
+    { key: 'reconciliation', label: 'Bank reconciliation', icon: ShieldCheck },
     { key: 'collections', label: 'Collections', icon: HandCoins, count: '8' },
   ]},
   { label: 'CONFIGURATION', items: [
@@ -130,6 +131,20 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [allocationPrincipal, setAllocationPrincipal] = useState('0');
   const [allocationInterest, setAllocationInterest] = useState('0');
   const [allocationFees, setAllocationFees] = useState('0');
+  const [reconciliationState, setReconciliationState] = useState<'idle' | 'loading' | 'live' | 'forbidden' | 'error'>('idle');
+  const [reconciliationBatches, setReconciliationBatches] = useState<FinancingReconciliationBatch[]>([]);
+  const [reconciliationLines, setReconciliationLines] = useState<FinancingStatementLine[]>([]);
+  const [selectedBatchId, setSelectedBatchId] = useState('');
+  const [lineTargetIds, setLineTargetIds] = useState<Record<string, string>>({});
+  const [lineTargetTypes, setLineTargetTypes] = useState<Record<string, 'REPAYMENT' | 'DISBURSEMENT'>>({});
+  const [showImportReconciliation, setShowImportReconciliation] = useState(false);
+  const [statementReference, setStatementReference] = useState('');
+  const [maskedBankAccount, setMaskedBankAccount] = useState('****1234');
+  const [statementPeriodStart, setStatementPeriodStart] = useState(() => new Date().toISOString().slice(0,10));
+  const [statementPeriodEnd, setStatementPeriodEnd] = useState(() => new Date().toISOString().slice(0,10));
+  const [statementLinesJson, setStatementLinesJson] = useState('[]');
+  const [reconciliationSaving, setReconciliationSaving] = useState(false);
+
 
 
 
@@ -173,10 +188,36 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     return () => { active = false; };
   }, [module, backendMode]);
 
+  useEffect(() => {
+    if (module !== 'reconciliation' || backendMode !== 'live') return;
+    let active = true;
+    setReconciliationState('loading');
+    listFinancingReconciliationBatches(50).then(async result => {
+      if (!active) return;
+      const items = result.data ?? [];
+      setReconciliationBatches(items);
+      const firstBatch = items[0];
+      setSelectedBatchId(firstBatch?.id ?? '');
+      if (firstBatch) {
+        const lineResult = await listFinancingReconciliationLines(firstBatch.id);
+        if (!active) return;
+        setReconciliationLines(lineResult.data ?? []);
+      } else {
+        setReconciliationLines([]);
+      }
+      setReconciliationState('live');
+    }).catch((error: unknown) => {
+      if (!active) return;
+      const message = error instanceof Error ? error.message : '';
+      setReconciliationState(/FORBIDDEN|403|UNAUTHENTICATED/i.test(message) ? 'forbidden' : 'error');
+    });
+    return () => { active = false; };
+  }, [module, backendMode]);
+
   const titleByModule: Record<ModuleKey, string> = {
     overview: 'Overview', applications: 'Applications', customers: 'Customers',
     credit: 'Credit assessment', contracts: 'Contracts', disbursements: 'Disbursements',
-    repayments: 'Repayment ledger', collections: 'Collections', products: 'Financing products',
+    repayments: 'Repayment ledger', reconciliation: 'Bank reconciliation', collections: 'Collections', products: 'Financing products',
     reports: 'Reports & analytics', settings: 'Workspace settings',
   };
   const filteredApplications = useMemo(() => applications.filter((app) => {
@@ -200,6 +241,74 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setLiveJournals(journals.data ?? []);
     setTrialBalance(balance.data ?? []);
     setServicingState('live');
+  };
+
+  const refreshReconciliation = async (preferredBatchId?: string) => {
+    const result = await listFinancingReconciliationBatches(50);
+    const items = result.data ?? [];
+    setReconciliationBatches(items);
+    const nextId = preferredBatchId && items.some(item => item.id === preferredBatchId)
+      ? preferredBatchId
+      : selectedBatchId && items.some(item => item.id === selectedBatchId)
+        ? selectedBatchId : items[0]?.id ?? '';
+    setSelectedBatchId(nextId);
+    if (nextId) {
+      const lineResult = await listFinancingReconciliationLines(nextId);
+      setReconciliationLines(lineResult.data ?? []);
+    } else {
+      setReconciliationLines([]);
+    }
+    setReconciliationState('live');
+  };
+
+  const importReconciliation = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (reconciliationSaving) return;
+    setReconciliationSaving(true);
+    try {
+      const parsed: unknown = JSON.parse(statementLinesJson);
+      if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > 500) {
+        throw new Error('Statement lines must be a JSON array containing 1–500 normalized lines.');
+      }
+      const result = await importFinancingReconciliationBatch({
+        statementReference: statementReference.trim(),
+        maskedBankAccount: maskedBankAccount.trim(),
+        periodStart: statementPeriodStart,
+        periodEnd: statementPeriodEnd,
+        lines: parsed as Array<{ transaction_date: string; direction: 'IN' | 'OUT'; amount: number; external_reference: string; description_hash?: string }>,
+      });
+      const newBatchId = typeof result.id === 'string' ? result.id : undefined;
+      await refreshReconciliation(newBatchId);
+      setShowImportReconciliation(false);
+      setStatementReference('');
+      setStatementLinesJson('[]');
+      notify('Statement batch imported. Lines still require exact-reference reconciliation.');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Could not import statement batch.');
+    } finally {
+      setReconciliationSaving(false);
+    }
+  };
+
+  const reconcileStatementLine = async (line: FinancingStatementLine) => {
+    const entityId = (lineTargetIds[line.id] ?? '').trim();
+    const entityType = lineTargetTypes[line.id] ?? (line.direction === 'IN' ? 'REPAYMENT' : 'DISBURSEMENT');
+    if (!entityId) {
+      notify('Enter the repayment or disbursement UUID to match this statement line.');
+      return;
+    }
+    if (reconciliationSaving) return;
+    setReconciliationSaving(true);
+    try {
+      const result = await reconcileFinancingStatementLine({ statementLineId: line.id, entityType, entityId });
+      await refreshReconciliation(selectedBatchId);
+      if (result.matched === true) notify('Statement line matched and reconciliation journal posted.');
+      else notify('Statement line flagged as exception: ' + String(result.reason ?? 'Review required.'));
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Could not reconcile statement line.');
+    } finally {
+      setReconciliationSaving(false);
+    }
   };
 
   const saveRepaymentReceipt = async (event: React.FormEvent) => {
@@ -382,6 +491,24 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     if (module === 'customers') return <div className={panel + ' overflow-hidden'}><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Customer directory</h2><p className={'mt-1 text-xs ' + muted}>Fictional business and individual customer profiles</p></div><div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3">{['PT Nusantara Logistik','CV Sinar Mobilindo','PT Cipta Karya Mandiri','UD Berkah Niaga','PT Aruna Distribusi','CV Mitra Perkasa'].map((name, i) => <div key={name} className="rounded-xl border border-slate-100 p-4"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-black text-slate-600">{name.replace(/[^A-Z]/g, '').slice(0, 2) || 'SP'}</span><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{name}</p><p className="mt-1 text-xs text-slate-400">{i % 2 ? 'Individual / SME' : 'Business customer'} · Demo</p></div></div><div className="mt-4 flex justify-between border-t border-slate-100 pt-3 text-xs"><span className="text-slate-400">Applications</span><span className="font-bold text-slate-700">{(i % 3) + 1}</span></div></div>)}</div></div>;
     if (module === 'contracts') return <div className={panel + ' overflow-hidden'}><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Contract management</h2><p className={'mt-1 text-xs ' + muted}>Illustrative offer, approval and signing lifecycle</p></div><div className="grid gap-4 p-5 md:grid-cols-3">{[{title:'Offers prepared',value:'19',icon:FileText},{title:'Awaiting signature',value:'12',icon:FileClock},{title:'Executed contracts',value:'46',icon:FileCheck2}].map((item)=><div key={item.title} className="rounded-xl border border-slate-100 p-5"><item.icon className="text-emerald-700" size={21}/><p className="mt-4 text-2xl font-black text-slate-900">{item.value}</p><p className="mt-1 text-sm text-slate-500">{item.title}</p></div>)}</div><div className="mx-5 mb-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">E-signature and contract storage integrations are not connected in this demo.</div></div>;
     if (module === 'disbursements') return <div className="grid gap-4 md:grid-cols-3">{[{title:'Awaiting approval',value:'7',amount:'Rp 1.28B'},{title:'Scheduled',value:'4',amount:'Rp 640M'},{title:'Disbursed this month',value:'32',amount:'Rp 4.82B'}].map((item)=><div key={item.title} className={panel+' p-5'}><Banknote className="text-emerald-700" size={21}/><p className="mt-4 text-2xl font-black text-slate-900">{item.value}</p><p className="mt-1 text-sm text-slate-500">{item.title}</p><p className="mt-4 border-t border-slate-100 pt-3 text-sm font-bold text-slate-700">{item.amount}</p></div>)}<div className={panel+' p-5 md:col-span-3'}><h2 className="font-bold text-slate-900">Disbursement controls</h2><p className="mt-2 text-sm leading-relaxed text-slate-500">Maker-checker approval, verified beneficiary details, signed contract, and a confirmed funding instruction should be required before a real disbursement. This screen is simulation only.</p></div></div>;
+    if (module === 'reconciliation') {
+      const money = (value: number | string) => rupiah(Number(value ?? 0));
+      return <div className="space-y-5">
+        {backendMode !== 'live' ? <div className={panel+' p-5'}><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 text-amber-600" size={19}/><div><h2 className="font-bold text-slate-900">Bank reconciliation · live access required</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">This workspace cannot access the authenticated reconciliation API. No fictional bank statement data is shown.</p></div></div></div> : <>
+          <div className={panel+' p-5'}>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Statement batches</h2><p className="mt-1 text-xs text-slate-500">Import normalized statement lines from an independently verified bank statement.</p></div><div className="flex gap-2"><button onClick={()=>{setReconciliationState('loading');refreshReconciliation().catch((e:unknown)=>setReconciliationState(e instanceof Error&&/FORBIDDEN|403/i.test(e.message)?'forbidden':'error'));}} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Activity size={14} className="mr-1 inline"/> Refresh</button><button onClick={()=>setShowImportReconciliation(true)} className="rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800">Import statement</button></div></div>
+            {reconciliationState==='loading'&&<p className="py-8 text-sm text-slate-500">Loading reconciliation batches…</p>}
+            {reconciliationState==='forbidden'&&<div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Access restricted.</strong> Ask an administrator to assign an approved SERVICING_FINANCE, FINANCING_ADMIN or AUDITOR role.</div>}
+            {reconciliationState==='error'&&<div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">Reconciliation API unavailable. No sample data is substituted.</div>}
+            {reconciliationState==='live'&&<div className="mt-4 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Statement</th><th className="px-3 py-3">Period</th><th className="px-3 py-3">Lines</th><th className="px-3 py-3">Matched</th><th className="px-3 py-3">Exceptions</th><th className="px-3 py-3">Status</th><th className="px-3 py-3"></th></tr></thead><tbody>{reconciliationBatches.map(batch=><tr key={batch.id} className={'border-t border-slate-100 '+(batch.id===selectedBatchId?'bg-emerald-50/50':'')}><td className="px-3 py-3"><p className="font-semibold text-slate-800">{batch.statement_reference}</p><p className="mt-1 text-xs text-slate-500">{batch.masked_bank_account}</p></td><td className="px-3 py-3 text-xs text-slate-600">{batch.period_start} – {batch.period_end}</td><td className="px-3 py-3 text-slate-600">{batch.line_count}</td><td className="px-3 py-3 text-emerald-700">{batch.matched_count}</td><td className="px-3 py-3 text-rose-700">{batch.exception_count}</td><td className="px-3 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{batch.status}</span></td><td className="px-3 py-3"><button onClick={()=>{setSelectedBatchId(batch.id);setReconciliationState('loading');listFinancingReconciliationLines(batch.id).then(r=>{setReconciliationLines(r.data??[]);setReconciliationState('live');}).catch((e:unknown)=>setReconciliationState(e instanceof Error&&/FORBIDDEN|403/i.test(e.message)?'forbidden':'error'));}} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-white">View lines</button></td></tr>)}</tbody></table>{reconciliationBatches.length===0&&<p className="py-8 text-center text-sm text-slate-500">No bank statements imported yet.</p>}</div>}
+          </div>
+          <div className={panel+' overflow-hidden'}>
+            <div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Statement lines</h2><p className="mt-1 text-xs text-slate-500">Match requires exact direction, amount, external reference and eligible transaction status. Exceptions do not post journals.</p></div>
+            {reconciliationState==='live'&&selectedBatchId&&<div className="overflow-x-auto"><table className="w-full min-w-[1050px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Date / line</th><th className="px-3 py-3">Direction</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">External reference</th><th className="px-3 py-3">Match target UUID</th><th className="px-3 py-3">Type</th><th className="px-3 py-3">Status</th><th className="px-3 py-3"></th></tr></thead><tbody>{reconciliationLines.map(line=><tr key={line.id} className="border-t border-slate-100"><td className="px-3 py-3 text-xs text-slate-600">{line.transaction_date}<p className="mt-1 text-[10px] text-slate-400">Line {line.line_number}</p></td><td className="px-3 py-3"><span className={'rounded-full px-2 py-1 text-xs font-bold '+(line.direction==='IN'?'bg-emerald-50 text-emerald-700':'bg-sky-50 text-sky-700')}>{line.direction}</span></td><td className="px-3 py-3 font-semibold text-slate-800">{money(line.amount)}</td><td className="px-3 py-3 font-mono text-xs text-slate-600">{line.external_reference}</td><td className="px-3 py-3"><input disabled={line.status!=='UNMATCHED'} value={lineTargetIds[line.id]??''} onChange={e=>setLineTargetIds(current=>({...current,[line.id]:e.target.value}))} placeholder={line.direction==='IN'?'Repayment UUID':'Disbursement UUID'} className="w-64 rounded-lg border border-slate-200 px-2.5 py-2 font-mono text-[10px] outline-none focus:border-emerald-500 disabled:bg-slate-50"/></td><td className="px-3 py-3"><select disabled={line.status!=='UNMATCHED'} value={lineTargetTypes[line.id]??(line.direction==='IN'?'REPAYMENT':'DISBURSEMENT')} onChange={e=>setLineTargetTypes(current=>({...current,[line.id]:e.target.value as 'REPAYMENT'|'DISBURSEMENT'}))} className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs disabled:bg-slate-50"><option value="REPAYMENT">Repayment</option><option value="DISBURSEMENT">Disbursement</option></select></td><td className="px-3 py-3"><span className={'rounded-full px-2 py-1 text-xs font-semibold '+(line.status==='MATCHED'?'bg-emerald-50 text-emerald-700':line.status==='EXCEPTION'?'bg-rose-50 text-rose-700':'bg-amber-50 text-amber-800')}>{line.status}</span>{line.exception_code&&<p className="mt-1 text-[10px] text-rose-700">{line.exception_code}</p>}</td><td className="px-3 py-3">{line.status==='UNMATCHED'&&<button disabled={reconciliationSaving} onClick={()=>reconcileStatementLine(line)} className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50">Match</button>}{line.status==='MATCHED'&&<span className="text-xs text-emerald-700">Posted</span>}</td></tr>)}</tbody></table>{reconciliationLines.length===0&&<p className="py-8 text-center text-sm text-slate-500">Select a batch to view its statement lines.</p>}</div>}
+          </div>
+        </>}
+      </div>;
+    }
     if (module === 'repayments') {
       const money = (value: number | string) => rupiah(Number(value ?? 0));
       return <div className="space-y-5">
@@ -484,6 +611,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
           </div>
         </div>
 
+        {showImportReconciliation && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={importReconciliation} className="w-full max-w-2xl rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><ShieldCheck size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Import bank statement lines</h2><p className="mt-1 text-sm text-slate-500">Paste normalized JSON from an independently verified statement. No bank connection is made.</p></div><button type="button" onClick={()=>setShowImportReconciliation(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close import form"><X size={18}/></button></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-slate-700">Statement reference<input required minLength={6} maxLength={120} value={statementReference} onChange={e=>setStatementReference(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Masked bank account<input required minLength={4} maxLength={40} value={maskedBankAccount} onChange={e=>setMaskedBankAccount(e.target.value)} placeholder="****1234" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/><span className="mt-1 block text-[11px] font-normal text-rose-700">Do not enter a full bank account number.</span></label><label className="block text-sm font-semibold text-slate-700">Period start<input required type="date" value={statementPeriodStart} onChange={e=>setStatementPeriodStart(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Period end<input required type="date" value={statementPeriodEnd} onChange={e=>setStatementPeriodEnd(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label></div><label className="mt-4 block text-sm font-semibold text-slate-700">Normalized statement lines JSON<textarea required rows={8} value={statementLinesJson} onChange={e=>setStatementLinesJson(e.target.value)} spellCheck={false} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500" placeholder={'[{"transaction_date":"2026-10-18","direction":"IN","amount":1000000,"external_reference":"BANK-REF-123"}]'}/></label><p className="mt-2 text-[11px] leading-relaxed text-slate-500">Each line needs transaction_date, direction (IN/OUT), amount and external_reference. Optional description_hash must be SHA-256. Raw bank descriptions and unmasked account numbers are not accepted.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowImportReconciliation(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={reconciliationSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60">{reconciliationSaving?'Importing…':'Import statement'}</button></div></form></div>}
         {showRecordRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentReceipt} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><CreditCard size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Record repayment receipt</h2><p className="mt-1 text-sm text-slate-500">Records an internal receipt only; no bank settlement is verified.</p></div><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close repayment form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Loan account UUID<input required value={paymentAccountId} onChange={e=>setPaymentAccountId(e.target.value)} placeholder="Paste loan account ID" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Amount (IDR)<input required type="number" min="0.01" step="0.01" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Channel<input required minLength={2} maxLength={60} value={paymentChannel} onChange={e=>setPaymentChannel(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">External receipt reference<input maxLength={200} value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder="Bank / payment provider reference" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Payment date<input required type="date" value={paymentDate} onChange={e=>setPaymentDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Saving…" : "Save receipt"}</button></div></form></div>}
         {showAllocateRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentAllocation} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-800"><CircleDollarSign size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Allocate repayment</h2><p className="mt-1 text-sm text-slate-500">Enter explicit component amounts. Allocation is posted to the ledger.</p></div><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close allocation form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Repayment UUID<input required value={allocationPaymentId} onChange={e=>setAllocationPaymentId(e.target.value)} placeholder="Copy Payment ID from receipts table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Schedule UUID<input required value={allocationScheduleId} onChange={e=>setAllocationScheduleId(e.target.value)} placeholder="Copy Schedule ID from schedule table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><div className="grid gap-3 sm:grid-cols-3"><label className="block text-sm font-semibold text-slate-700">Principal<input required type="number" min="0" step="0.01" value={allocationPrincipal} onChange={e=>setAllocationPrincipal(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Interest<input required type="number" min="0" step="0.01" value={allocationInterest} onChange={e=>setAllocationInterest(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Fees<input required type="number" min="0" step="0.01" value={allocationFees} onChange={e=>setAllocationFees(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label></div></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Posting…" : "Post allocation"}</button></div></form></div>}
         {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}

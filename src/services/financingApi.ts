@@ -184,3 +184,69 @@ export async function allocateFinancingRepayment(input: {
   }, { 'x-idempotency-key': input.idempotencyKey ?? crypto.randomUUID() });
   return result.data;
 }
+
+export type FinancingReconciliationBatch = {
+  id: string;
+  statement_reference: string;
+  masked_bank_account: string;
+  period_start: string;
+  period_end: string;
+  status: string;
+  line_count: number;
+  matched_count: number;
+  exception_count: number;
+  created_at: string;
+};
+
+export type FinancingStatementLine = {
+  id: string;
+  batch_id: string;
+  line_number: number;
+  transaction_date: string;
+  direction: 'IN' | 'OUT';
+  amount: number | string;
+  external_reference: string;
+  status: string;
+  matched_entity_type: string | null;
+  matched_entity_id: string | null;
+  matched_at: string | null;
+  exception_code: string | null;
+};
+
+export async function listFinancingReconciliationBatches(limit = 50): Promise<{ data: FinancingReconciliationBatch[]; correlationId?: string }> {
+  return invokeFinancing('list_reconciliation_batches', { limit });
+}
+
+export async function listFinancingReconciliationLines(batchId: string): Promise<{ data: FinancingStatementLine[]; correlationId?: string }> {
+  return invokeFinancing('list_reconciliation_lines', { batch_id: batchId });
+}
+
+export async function importFinancingReconciliationBatch(input: {
+  statementReference: string;
+  maskedBankAccount: string;
+  periodStart: string;
+  periodEnd: string;
+  lines: Array<{ transaction_date: string; direction: 'IN' | 'OUT'; amount: number; external_reference: string; description_hash?: string }>;
+}): Promise<Record<string, unknown>> {
+  const result = await invokeFinancing<{ data: Record<string, unknown> }>('import_reconciliation_batch', {
+    statement_reference: input.statementReference,
+    masked_bank_account: input.maskedBankAccount,
+    period_start: input.periodStart,
+    period_end: input.periodEnd,
+    lines: input.lines,
+  });
+  return result.data;
+}
+
+export async function reconcileFinancingStatementLine(input: {
+  statementLineId: string;
+  entityType: 'REPAYMENT' | 'DISBURSEMENT';
+  entityId: string;
+}): Promise<Record<string, unknown>> {
+  const result = await invokeFinancing<{ data: Record<string, unknown> }>('reconcile_statement_line', {
+    statement_line_id: input.statementLineId,
+    entity_type: input.entityType,
+    entity_id: input.entityId,
+  });
+  return result.data;
+}

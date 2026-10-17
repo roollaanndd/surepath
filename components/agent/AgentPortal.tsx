@@ -163,14 +163,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           .eq('id', agent.id)
           .single();
         if (tierError) {
-          hasError = true;
-          console.error('Error loading agent tier:', tierError);
+          console.error('Error loading optional agent tier metadata:', tierError);
         } else if (tierData?.tier) {
           setAgentTier(tierData.tier);
         }
       } catch (tierError) {
-        hasError = true;
-        console.error('Error loading agent tier:', tierError);
+        console.error('Error loading optional agent tier metadata:', tierError);
       }
       setDataLoadError(hasError);
     } catch (err) {

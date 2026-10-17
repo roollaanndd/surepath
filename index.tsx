@@ -27,7 +27,26 @@ if (SENTRY_DSN) {
 // Explicit SW registration — guarantees PWA install/offline works even if
 // the auto-injected registerSW.js script is blocked or dropped by a proxy.
 try {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+
+      // Trigger an explicit update check when the installed PWA starts.
+      // This is especially useful for Home Screen installs that may sit in the
+      // background for long periods between launches.
+      const checkForUpdate = () => {
+        if (document.visibilityState !== 'visible') return;
+        void registration.update().catch(() => {
+          // A temporary offline/network failure must not interrupt app use.
+        });
+      };
+
+      checkForUpdate();
+      document.addEventListener('visibilitychange', checkForUpdate);
+      window.addEventListener('pageshow', checkForUpdate);
+    },
+  });
 } catch (e) {
   console.warn('SW registration failed (non-blocking):', e);
 }

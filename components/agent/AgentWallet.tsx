@@ -268,13 +268,6 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           </div>
         )}
 
-        {includeCoin && coinRedeem > 0 && (
-          <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex justify-between">
-            <span className="text-xs font-black text-amber-300">Total Penarikan</span>
-            <span className="text-xs font-black text-amber-300">{IDR(amt + coinRedeem * 1000)}</span>
-          </div>
-        )}
-
         {err && <p className="text-xs text-ds-red font-bold px-1">{err}</p>}
 
         <div className="flex gap-3 pt-2">

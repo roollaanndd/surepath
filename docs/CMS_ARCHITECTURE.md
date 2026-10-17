@@ -2,23 +2,22 @@
 
 ## 1. Bagaimana CMS tersambung ke apps (kondisi nyata)
 
-Tidak ada backend CMS yang terpisah. CMS, apps nasabah, apps mitra, portal operator, dan portal asuransi **berbagi satu database dan satu pintu**:
+Tidak ada backend CMS terpisah, tetapi **tidak semua data melewati jalur yang sama**. Ada dua jalur yang harus dibedakan:
 
 ```
-CMS  ─┐
-apps nasabah ─┤
-apps mitra  ─┼─► data-gateway (service_role) ─► Postgres (RLS deny-all)
-operator   ─┤
-asuransi   ─┘
+Marketing site ── anon SELECT + RLS ──► sp_website_config
+Website Editor ── authenticated client + admin-only RLS ──► sp_website_config
+Customer / agent / insurer / operator / finance portals
+             ──► data-gateway (service_role) ──► operational tables
 ```
 
-Konsekuensinya tajam dan sering disalahpahami:
+- **Konten website** — `services/website.ts` membaca `sp_website_config` langsung melalui Supabase client. Public SELECT memang disengaja agar halaman marketing dapat merender konten CMS saat pengunjung belum login.
+- **CMS writes** — `WebsiteEditorAdmin` dan `PromoBannerAdmin` menyimpan konten melalui Supabase Auth session dan harus dibatasi oleh RLS ke role administrator yang benar. UI yang tersembunyi saja bukan kontrol keamanan. Migration awal di repo masih memiliki policy write yang terlalu luas; migration baru pada PR #189 mempersempitnya ke `MASTER_ADMIN` dan `ADMIN`. Jangan menganggap perubahan ini live sampai migration diterapkan dan diuji.
+- **Data operasional sensitif** — order, klaim, pembayaran, wallet, komisi, dan data administrasi yang ditandai gateway-only harus tetap melewati action server-side pada `data-gateway`. Jangan menambahkan akses browser langsung ke tabel tersebut.
+- **CMS operasional** — banyak menu admin memang menggunakan action `admin_*` di gateway. Menambah menu tanpa memverifikasi action, otorisasi, dan deployment backend hanya menghasilkan layar kosong atau gagal diam-diam.
+- **Tidak ada push otomatis dari CMS ke semua app.** Konten website dibaca saat pemuatan halaman/section; perubahan terlihat pada refresh atau pemuatan berikutnya kecuali fitur realtime memang dirancang secara eksplisit.
 
-- **Kemampuan CMS = daftar action `admin_*` di gateway.** Tidak lebih. Menambah menu di sidebar tanpa menambah action hanya menambah layar kosong.
-- **Tidak ada push dari CMS ke apps.** Apps menarik data saat dibuka. Perubahan di CMS terlihat di apps pada pemuatan berikutnya, bukan seketika. Kalau butuh seketika, jalurnya notifikasi (`sp_notifications`, WhatsApp Fonnte, email Resend) — bukan "CMS mengubah layar pengguna".
-- **Browser tidak pernah menyentuh tabel sensitif.** Semua lewat gateway. Karena itu fitur CMS apa pun yang membaca data baru **selalu** butuh action gateway baru, dan action gateway baru **selalu** butuh deploy edge function.
-
-Titik terakhir ini yang paling sering jadi kejutan: pekerjaan CMS terbagi dua bagian dengan jadwal rilis berbeda — bagian browser naik otomatis lewat Vercel, bagian gateway menunggu deploy manual.
+Konsekuensi rilis: perubahan React naik lewat Vercel; perubahan RLS harus diterapkan lewat alur migrasi Supabase; perubahan action gateway juga memerlukan deploy Edge Function. Ketiganya adalah rilis yang berbeda dan harus diverifikasi masing-masing.
 
 ## 2. Masalahnya: CMS ini editor konfigurasi, bukan konsol operasi
 

@@ -94,6 +94,7 @@ as $$
 declare
   v_app public.sp_financing_applications%rowtype;
   v_allowed boolean := false;
+  v_old_status text;
 begin
   if p_user_id is null then raise exception 'actor_required'; end if;
   if length(coalesce(p_reason,'')) < 3 or length(p_reason) > 1000 then raise exception 'reason_required'; end if;
@@ -115,6 +116,7 @@ begin
   end;
   if not v_allowed then raise exception 'invalid_state_transition'; end if;
 
+  v_old_status := v_app.status;
   update public.sp_financing_applications
     set status=p_target_status, version=version+1, updated_at=now()
     where id=p_application_id and version=p_expected_version
@@ -122,7 +124,7 @@ begin
   insert into public.sp_financing_audit_events(actor_user_id,action,entity_type,entity_id,correlation_id,outcome,details)
     values (p_user_id,'APPLICATION_STATUS_CHANGED','financing_application',v_app.id::text,
       coalesce(nullif(p_correlation_id,''),gen_random_uuid()::text),'SUCCESS',
-      jsonb_build_object('from',v_app.status,'to',p_target_status,'reason',p_reason,'version',v_app.version));
+      jsonb_build_object('from',v_old_status,'to',p_target_status,'reason',p_reason,'version',v_app.version));
   return jsonb_build_object('id',v_app.id,'application_number',v_app.application_number,'status',v_app.status,'version',v_app.version,'updated_at',v_app.updated_at);
 end;
 $$;

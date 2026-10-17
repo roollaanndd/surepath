@@ -19,6 +19,7 @@ const PromoBannerAdmin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,13 +47,20 @@ const PromoBannerAdmin: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const url = await uploadSectionImage(file, 'promo_banner');
-    setUploading(false);
-    if (url) {
-      set({ extra_json: { ...form.extra_json, image_url: url } });
+    setSaveError(null);
+    try {
+      const url = await uploadSectionImage(file, 'promo_banner');
+      if (url) {
+        set({ extra_json: { ...form.extra_json, image_url: url } });
+      } else {
+        setSaveError('Gagal mengunggah gambar banner. Periksa format dan ukuran file, lalu coba lagi.');
+      }
+    } catch {
+      setSaveError('Unggahan gambar banner gagal. Periksa koneksi dan izin penyimpanan.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    // Reset input so same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleRemoveImage = () => {
@@ -61,17 +69,28 @@ const PromoBannerAdmin: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await upsertWebsiteSection({
-      section_key: 'promo_banner',
-      headline: form.headline ?? '',
-      subtitle: form.subtitle ?? '',
-      is_visible: form.is_visible ?? false,
-      bg_type: 'none',
-      extra_json: { image_url: form.extra_json?.image_url ?? null },
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaved(false);
+    setSaveError(null);
+    try {
+      const result = await upsertWebsiteSection({
+        section_key: 'promo_banner',
+        headline: form.headline ?? '',
+        subtitle: form.subtitle ?? '',
+        is_visible: form.is_visible ?? false,
+        bg_type: 'none',
+        extra_json: { image_url: form.extra_json?.image_url ?? null },
+      });
+      if (!result) {
+        setSaveError('Gagal menyimpan banner. Periksa koneksi dan hak akses CMS, lalu coba lagi.');
+        return;
+      }
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('Terjadi kesalahan saat menyimpan banner. Perubahan belum dipastikan tersimpan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const previewVisible = !!(form.headline && form.is_visible);
@@ -227,6 +246,7 @@ const PromoBannerAdmin: React.FC = () => {
         </div>
       )}
 
+      {saveError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">{saveError}</p>}
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}

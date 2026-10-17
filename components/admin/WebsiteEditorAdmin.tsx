@@ -46,6 +46,7 @@ const WebsiteEditorAdmin: React.FC = () => {
   const [activeKey, setActiveKey] = useState<SectionKey>('hero');
   const [form, setForm] = useState<SpWebsiteConfig>(defaultSection('hero'));
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'background'>('content');
@@ -69,19 +70,31 @@ const WebsiteEditorAdmin: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await upsertWebsiteSection({
-      section_key:        form.section_key,
-      headline:           form.headline,
-      subtitle:           form.subtitle,
-      cta_text:           form.cta_text,
-      cta_secondary_text: form.cta_secondary_text,
-      bg_type:            form.bg_type,
-      bg_value:           form.bg_value,
-      is_visible:         form.is_visible,
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaved(false);
+    setSaveError(null);
+    try {
+      const result = await upsertWebsiteSection({
+        section_key:        form.section_key,
+        headline:           form.headline,
+        subtitle:           form.subtitle,
+        cta_text:           form.cta_text,
+        cta_secondary_text: form.cta_secondary_text,
+        bg_type:            form.bg_type,
+        bg_value:           form.bg_value,
+        is_visible:         form.is_visible,
+      });
+      if (!result) {
+        setSaveError('Gagal menyimpan perubahan. Periksa koneksi dan hak akses CMS, lalu coba lagi.');
+        return;
+      }
+      setForm(result);
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('Terjadi kesalahan saat menyimpan. Perubahan belum dipastikan tersimpan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = async () => {
@@ -96,10 +109,17 @@ const WebsiteEditorAdmin: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const url = await uploadSectionImage(file, activeKey);
-    setUploading(false);
-    if (url) set({ bg_value: url });
-    e.target.value = '';
+    setSaveError(null);
+    try {
+      const url = await uploadSectionImage(file, activeKey);
+      if (url) set({ bg_value: url });
+      else setSaveError('Gagal mengunggah gambar. Periksa format dan ukuran file, lalu coba lagi.');
+    } catch {
+      setSaveError('Unggahan gambar gagal. Periksa koneksi dan izin penyimpanan.');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -432,6 +452,7 @@ const WebsiteEditorAdmin: React.FC = () => {
           )}
         </div>
 
+        {saveError && <p role="alert" className="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">{saveError}</p>}
         {/* Action buttons */}
         <div className="flex items-center gap-3 mt-5">
           <button

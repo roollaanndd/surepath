@@ -23,7 +23,17 @@ export const useT = (lang: Language) => useCallback((id: string, en: string) => 
 export const useWebsiteConfig = (sectionKey: string): SpWebsiteConfig | null => {
   const [config, setConfig] = useState<SpWebsiteConfig | null>(null);
   useEffect(() => {
-    fetchWebsiteSection(sectionKey).then(data => { if (data) setConfig(data); });
+    let active = true;
+    setConfig(null);
+    fetchWebsiteSection(sectionKey)
+      .then(data => {
+        if (active && data) setConfig(data);
+      })
+      .catch(() => {
+        // The public site deliberately falls back to bundled defaults if CMS is unavailable.
+        if (active) setConfig(null);
+      });
+    return () => { active = false; };
   }, [sectionKey]);
   return config;
 };

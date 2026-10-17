@@ -8,12 +8,18 @@ import { defineConfig } from '@playwright/test';
 const PROD_URL = 'https://myinsurepath.com';
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ??
-  (process.env.UNSAFE_E2E_AGAINST_PROD === '1' ? PROD_URL : 'http://localhost:3000');
+  (process.env.UNSAFE_E2E_AGAINST_PROD === '1' ? PROD_URL : 'http://127.0.0.1:3000');
 
 export default defineConfig({
   testDir: './tests',
   timeout: 30000,
   retries: 1,
+  webServer: {
+    command: 'npm run dev -- --host 127.0.0.1',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 30_000,
+  },
   use: {
     baseURL,
     headless: true,

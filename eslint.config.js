@@ -42,6 +42,8 @@ export default tseslint.config(
       // keluaran build, bukan sumber. Dipindahkan ke sini dari dist/ di v2.5.5
       // supaya tidak ikut terpublikasi ke internet.
       'dist/', 'build-server/', 'node_modules/', 'supabase/functions/',
+      // ECC and other AI tooling are generated local developer resources, not app source.
+      '.agents/**', '.claude/**', '.memory/**',
       '*.cjs', '*.js', 'server.ts', 'scripts/',
       'android/', 'public/',
       'eslint.config.js',

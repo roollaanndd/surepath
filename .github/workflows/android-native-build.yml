@@ -69,6 +69,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
+          # The checked-in wrapper JAR is corrupt; this job invokes the pinned Gradle distribution directly, never ./gradlew.
+          validate-wrappers: false
 
       - name: Install JavaScript dependencies
         run: npm ci

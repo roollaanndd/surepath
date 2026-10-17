@@ -196,3 +196,6 @@ $function$;
 
 revoke all on function public.sp_financing_record_credit_decision(uuid,uuid,integer,text,integer,text,text,text) from public, anon, authenticated;
 grant execute on function public.sp_financing_record_credit_decision(uuid,uuid,integer,text,integer,text,text,text) to service_role;
+
+-- Identity-backed demo audit inserts need sequence privileges for service_role.
+grant usage, select on sequence public.sp_financing_demo_audit_events_id_seq to service_role;

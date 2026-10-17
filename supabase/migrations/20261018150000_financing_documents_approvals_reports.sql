@@ -48,6 +48,12 @@ revoke all on public.sp_financing_approval_steps from anon,authenticated;
 grant select on public.sp_financing_application_documents,public.sp_financing_approval_steps to service_role;
 grant insert,update,delete on public.sp_financing_application_documents,public.sp_financing_approval_steps to service_role;
 
+-- Storage policy role checks must be able to read only the caller's own role row.
+grant select on public.sp_financing_user_roles to authenticated;
+drop policy if exists "users can read own financing role" on public.sp_financing_user_roles;
+create policy "users can read own financing role" on public.sp_financing_user_roles
+ for select to authenticated using (user_id = (select auth.uid()));
+
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values ('financing-application-documents','financing-application-documents',false,10485760,
  array['application/pdf','image/jpeg','image/png','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
   Bell, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, ChevronDown,
@@ -7,8 +8,6 @@ import {
   Menu, Plus, Search, Settings2, ShieldCheck,
   Users, Wallet, X,
 } from 'lucide-react';
-import SiteLayout from './site/SiteLayout';
-import { SitePageProps } from './site/siteKit';
 
 type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'contracts' | 'disbursements' | 'repayments' | 'collections' | 'products' | 'reports' | 'settings';
 
@@ -77,6 +76,10 @@ const statusTone: Record<string, string> = {
 };
 
 const FinancingPage: React.FC<SitePageProps> = (props) => {
+  // This is an isolated, fictional demo workspace. It is intentionally not a production auth session.
+  const [demoEntered, setDemoEntered] = useState(() => {
+    try { return sessionStorage.getItem('sp_financing_demo_session') === 'active'; } catch { return false; }
+  });
   
   const [module, setModule] = useState<ModuleKey>('overview');
   const [applications, setApplications] = useState(initialApplications);
@@ -220,9 +223,45 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     return <div className={panel+' p-5 sm:p-6'}><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Settings2 size={21}/></span><div><h2 className="font-bold text-slate-900">Workspace configuration</h2><p className="mt-1 text-sm text-slate-500">Configuration areas for a future production tenant</p></div></div><div className="mt-6 divide-y divide-slate-100">{[{title:'Partner / tenant profile',desc:'Finance partner identity, branding and operational scope'},{title:'Roles & permissions',desc:'Role-based access for admin, credit analyst, operations and collections'},{title:'Approval matrix',desc:'Maker-checker rules, limits and delegated approval'},{title:'Product and pricing rules',desc:'Partner-owned eligibility, rates, fees and product versions'},{title:'Verification providers',desc:'Approved provider credentials and consent controls'},{title:'Audit and retention',desc:'Access logs, decision trails, retention and export policy'}].map((item)=><button key={item.title} onClick={()=>notify(item.title+' requires authenticated backend configuration.')} className="flex w-full items-center justify-between gap-4 py-4 text-left"><span><span className="block text-sm font-semibold text-slate-800">{item.title}</span><span className="mt-1 block text-xs text-slate-500">{item.desc}</span></span><ChevronRight size={17} className="shrink-0 text-slate-400"/></button>)}</div></div>;
   };
 
+  if (!demoEntered) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#071b15] px-4 py-10 text-white">
+        <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: 'radial-gradient(circle at 15% 15%, rgba(16,185,129,.28), transparent 34%), radial-gradient(circle at 85% 80%, rgba(20,184,166,.20), transparent 32%)' }} />
+        <div className="relative w-full max-w-lg rounded-3xl border border-white/15 bg-white/[0.07] p-7 shadow-2xl backdrop-blur-2xl sm:p-9">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300"><Building2 size={25} /></span>
+            <div><p className="text-xl font-black tracking-tight">SurePath <span className="text-emerald-300">Financing Core</span></p><p className="mt-1 text-xs text-emerald-100/70">Multi-finance operations workspace</p></div>
+          </div>
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-amber-200/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-amber-100"><ShieldCheck size={13} /> Restricted demo environment</div>
+          <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Masuk ke dashboard demo</h1>
+          <p className="mt-3 text-sm leading-6 text-emerald-50/75">Coba alur kerja pembiayaan dengan data fiktif untuk pilot Mutiara Finance. Tidak ada transaksi, pencairan, atau perubahan data produksi.</p>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/15 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[.14em] text-emerald-100/55">Demo profile</p>
+            <p className="mt-2 text-sm font-semibold">angkouw84+admindemo@gmail.com</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+              <span className="rounded-full bg-emerald-300/10 px-2.5 py-1 text-emerald-200">Role: Financing Demo</span>
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-white/70">Read-only production boundary</span>
+            </div>
+          </div>
+          <button onClick={() => { try { sessionStorage.setItem('sp_financing_demo_session', 'active'); } catch {} setDemoEntered(true); }} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-3.5 text-sm font-black text-emerald-950 shadow-lg shadow-emerald-950/25 transition hover:bg-emerald-300">
+            Masuk sebagai Demo <ArrowRight size={17} />
+          </button>
+          <p className="mt-4 text-center text-[11px] leading-5 text-white/45">Demo access saja — bukan autentikasi produksi. Seluruh data hanya contoh dan interaksi tersimpan sementara di browser.</p>
+          <a href="/" onClick={(event) => { event.preventDefault(); props.navigate("/"); }} className="mt-5 block text-center text-xs font-semibold text-emerald-200/75 hover:text-white">← Kembali ke SurePath</a>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <SiteLayout {...props} active="financing" bgVideo="/bg1.mp4">
-      <main className="min-h-screen bg-[#f5f7f8] px-3 pb-12 pt-24 text-slate-900 sm:px-5 sm:pt-28 lg:px-7">
+    <div className="min-h-screen bg-[#f5f7f8] text-slate-900">
+      <header className="border-b border-slate-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3">
+          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white"><Building2 size={21} /></span><div><p className="text-sm font-black text-slate-900">SurePath <span className="text-emerald-700">Financing Core</span></p><p className="mt-0.5 text-[10px] text-slate-500">Independent operations workspace · Demo</p></div></div>
+          <div className="flex items-center gap-2"><span className="hidden rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:inline-flex">angkouw84+admindemo@gmail.com</span><button onClick={() => { try { sessionStorage.removeItem('sp_financing_demo_session'); } catch {} setDemoEntered(false); }} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Keluar Demo</button></div>
+        </div>
+      </header>
+      <main className="min-h-screen bg-[#f5f7f8] px-3 pb-12 pt-5 text-slate-900 sm:px-5 sm:pt-6 lg:px-7">
         <div className="mx-auto max-w-[1600px]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-800 px-4 py-3 text-white shadow-lg shadow-emerald-950/10 sm:px-5">
             <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Building2 size={21}/></span><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold">SurePath Financing Core</p><span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[.14em] text-amber-100">Demo environment</span></div><p className="mt-1 text-xs text-emerald-100/70">Multi-finance operations workspace · Mutiara Finance pilot</p></div></div>
@@ -258,7 +297,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
 
         {toast && <div role="status" className="fixed bottom-5 right-5 z-[120] flex max-w-sm items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-2xl"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600"/><span>{toast}</span><button onClick={()=>setToast('')} className="ml-2 text-slate-400" aria-label="Dismiss notification"><X size={15}/></button></div>}
       </main>
-    </SiteLayout>
+    </div>
   );
 };
 

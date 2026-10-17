@@ -94,7 +94,7 @@ export async function financingRequest<T = any>(
     params.expectedVersion = Number(params.expectedVersion || 1);
   }
 
-  const { data, error } = await supabase.functions.invoke('financing-gateway', { body: { action, params } });
+  const { data, error } = await supabase.functions.invoke('financing-api', { body: { action, params } });
   if (error) {
     let message = error.message || 'Financing gateway request failed';
     try {

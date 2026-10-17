@@ -1,0 +1,85 @@
+name: Ruflo Isolation Preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/ruflo-isolation-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package-preflight:
+    name: Inspect pinned Ruflo package in isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      npm_config_ignore_scripts: 'true'
+      CI: 'true'
+    steps:
+      - name: Checkout read-only source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download exact Ruflo release without running lifecycle scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/ruflo-preflight"
+          mkdir -p "$WORK"
+          cd "$WORK"
+          npm pack ruflo@3.56.10 --ignore-scripts --json > pack.json
+          TARBALL="$(node -e "const p=JSON.parse(require('node:fs').readFileSync('pack.json','utf8')); process.stdout.write(p[0].filename)")"
+          tar -xzf "$TARBALL"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p = JSON.parse(fs.readFileSync('package/package.json', 'utf8'));
+          if (p.version !== '3.56.10') throw new Error(`Unexpected Ruflo version: ${p.version}`);
+          if (p.license !== 'MIT') throw new Error(`Unexpected license: ${p.license}`);
+          const lifecycle = ['preinstall', 'install', 'postinstall', 'prepare']
+            .filter((name) => typeof p.scripts?.[name] === 'string');
+          console.log(JSON.stringify({
+            name: p.name,
+            version: p.version,
+            license: p.license,
+            bin: p.bin ?? null,
+            dependencyCount: Object.keys(p.dependencies ?? {}).length,
+            optionalDependencyCount: Object.keys(p.optionalDependencies ?? {}).length,
+            lifecycleScripts: lifecycle
+          }, null, 2));
+          if (lifecycle.length) {
+            throw new Error('Install lifecycle scripts require manual review before this package may execute.');
+          }
+          if (!p.bin || typeof p.bin !== 'object') throw new Error('No CLI binary declared in package manifest.');
+          NODE
+
+      - name: Install the tarball in a disposable directory with scripts disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/ruflo-preflight"
+          mkdir -p "$WORK/install"
+          cd "$WORK/install"
+          TARBALL="$(find "$WORK" -maxdepth 1 -name 'ruflo-3.56.10.tgz' -print -quit)"
+          test -n "$TARBALL"
+          npm install --ignore-scripts --no-audit --no-fund "$TARBALL"
+
+      - name: Audit the installed dependency graph
+        run: npm audit --prefix "$RUNNER_TEMP/ruflo-preflight/install" --omit=dev --audit-level=high
+
+      - name: Smoke-test CLI without credentials or repo write access
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HOME="$RUNNER_TEMP/ruflo-home"
+          mkdir -p "$HOME"
+          "$RUNNER_TEMP/ruflo-preflight/install/node_modules/.bin/ruflo" --version

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
   Bell, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, ChevronDown,
@@ -74,7 +75,7 @@ const statusTone: Record<string, string> = {
   'In progress': 'bg-sky-50 text-sky-700 ring-sky-200',
 };
 
-const FinancingPage: React.FC = () => {
+const FinancingPage: React.FC<SitePageProps> = (props) => {
   // This is an isolated, fictional demo workspace. It is intentionally not a production auth session.
   const [demoEntered, setDemoEntered] = useState(() => {
     try { return sessionStorage.getItem('sp_financing_demo_session') === 'active'; } catch { return false; }
@@ -246,7 +247,7 @@ const FinancingPage: React.FC = () => {
             Masuk sebagai Demo <ArrowRight size={17} />
           </button>
           <p className="mt-4 text-center text-[11px] leading-5 text-white/45">Demo access saja — bukan autentikasi produksi. Seluruh data hanya contoh dan interaksi tersimpan sementara di browser.</p>
-          <a href="/" className="mt-5 block text-center text-xs font-semibold text-emerald-200/75 hover:text-white">← Kembali ke SurePath</a>
+          <a href="/" onClick={(event) => { event.preventDefault(); props.navigate("/"); }} className="mt-5 block text-center text-xs font-semibold text-emerald-200/75 hover:text-white">← Kembali ke SurePath</a>
         </div>
       </main>
     );

@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
   Bell, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, ChevronDown,
-  ChevronLeft, ChevronRight, CircleDollarSign, ClipboardCheck, Clock3, CreditCard,
-  Download, FileCheck2, FileClock, FileText, Filter, Gauge, HandCoins, LayoutDashboard,
+  ChevronRight, CircleDollarSign, ClipboardCheck, Clock3, CreditCard,
+  FileCheck2, FileClock, FileText, Filter, Gauge, HandCoins, LayoutDashboard,
   Menu, Plus, Search, Settings2, ShieldCheck,
   Users, Wallet, X,
 } from 'lucide-react';

@@ -115,6 +115,123 @@ Deno.serve(async (req) => {
       return json({ data: { totalApplications: total ?? 0, amountRequestedIdr: amountRequested, byStatus, partial: (total ?? 0) > (statuses?.length ?? 0), asOf: new Date().toISOString() }, correlationId }, 200, headers);
     }
 
+    if (action === "create_contract") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("CONTRACT_OFFICER"))) {
+        return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      }
+      const applicationId = safeString(params.application_id, 40);
+      const expectedVersion = Number(params.expected_version);
+      const termsVersion = safeString(params.terms_version, 80);
+      if (!/^[0-9a-f-]{36}$/i.test(applicationId) || !Number.isInteger(expectedVersion) || expectedVersion < 1 || termsVersion.length < 2) {
+        return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_create_contract", {
+        p_user_id: userId, p_application_id: applicationId, p_expected_version: expectedVersion,
+        p_terms_version: termsVersion, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/contract_officer_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/application_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/version_conflict|application_not_approved|contract_already_exists|product_rules_not_configured|application_outside_product_policy/.test(error.message)) return json({ error: "CONTRACT_CREATION_CONFLICT", message: error.message.split("\\n")[0], correlationId }, 409, headers);
+        if (/terms_version_required/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("contract creation failed", correlationId, error.code);
+        return json({ error: "CONTRACT_CREATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "verify_contract_signature") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("COMPLIANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const contractId = safeString(params.contract_id, 40);
+      const expectedVersion = Number(params.expected_application_version);
+      const signatureRef = safeString(params.external_signature_ref, 200);
+      if (!/^[0-9a-f-]{36}$/i.test(contractId) || !Number.isInteger(expectedVersion) || expectedVersion < 1 || signatureRef.length < 6) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide contract ID, current application version and a signature evidence reference.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_verify_contract_signature", {
+        p_user_id: userId, p_contract_id: contractId, p_expected_application_version: expectedVersion,
+        p_external_signature_ref: signatureRef, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/signature_verifier_required|maker_checker_violation/.test(error.message)) return json({ error: "FORBIDDEN", message: "A separate compliance verifier is required.", correlationId }, 403, headers);
+        if (/contract_not_found|application_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/contract_not_pending_signature|version_conflict|application_not_offered/.test(error.message)) return json({ error: "SIGNATURE_VERIFICATION_CONFLICT", correlationId }, 409, headers);
+        if (/signature_evidence_required/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("signature verification failed", correlationId, error.code);
+        return json({ error: "SIGNATURE_VERIFICATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: { ...data, manualEvidenceVerification: true, moneyMoved: false }, correlationId }, 200, headers);
+    }
+
+    if (action === "create_disbursement_request") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("DISBURSEMENT_MAKER"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const accountId = safeString(params.loan_account_id, 40);
+      const amount = Number(params.amount);
+      const beneficiaryRef = safeString(params.beneficiary_ref, 160);
+      const idempotencyKey = safeString(req.headers.get("x-idempotency-key"), 128);
+      if (!/^[0-9a-f-]{36}$/i.test(accountId) || !Number.isFinite(amount) || amount <= 0 ||
+          beneficiaryRef.length < 3 || idempotencyKey.length < 8) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide a valid loan account, amount, beneficiary reference and x-idempotency-key.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_create_disbursement_request", {
+        p_user_id: userId, p_loan_account_id: accountId, p_amount: amount,
+        p_beneficiary_ref: beneficiaryRef, p_idempotency_key: idempotencyKey, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/disbursement_maker_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/loan_account_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/idempotency_conflict|loan_not_pending_disbursement|partial_disbursement_not_supported/.test(error.message)) return json({ error: "DISBURSEMENT_REQUEST_CONFLICT", message: error.message.split("\\n")[0], correlationId }, 409, headers);
+        if (/invalid_disbursement_request/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("disbursement request failed", correlationId, error.code);
+        return json({ error: "DISBURSEMENT_REQUEST_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: { ...data, moneyMoved: false }, correlationId }, 201, headers);
+    }
+
+    if (action === "approve_disbursement") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("DISBURSEMENT_CHECKER"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const requestId = safeString(params.request_id, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(requestId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      const { data, error } = await db.rpc("sp_financing_approve_disbursement", {
+        p_user_id: userId, p_request_id: requestId, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/disbursement_checker_required|maker_checker_violation/.test(error.message)) return json({ error: "FORBIDDEN", message: "A different disbursement checker is required.", correlationId }, 403, headers);
+        if (/disbursement_request_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/disbursement_not_pending_approval/.test(error.message)) return json({ error: "DISBURSEMENT_APPROVAL_CONFLICT", correlationId }, 409, headers);
+        console.error("disbursement approval failed", correlationId, error.code);
+        return json({ error: "DISBURSEMENT_APPROVAL_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: { ...data, moneyMoved: false }, correlationId }, 200, headers);
+    }
+
+    if (action === "list_contracts") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("CONTRACT_OFFICER") || roles.has("COMPLIANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const { data, error } = await db.from("sp_financing_contracts")
+        .select("id,application_id,contract_number,status,principal_amount,annual_rate,tenor_months,terms_version,signed_at,created_by,created_at,updated_at")
+        .order("created_at", { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit) || 25)));
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "list_loan_accounts") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("DISBURSEMENT_MAKER") || roles.has("DISBURSEMENT_CHECKER") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const { data, error } = await db.from("sp_financing_loan_accounts")
+        .select("id,contract_id,account_number,principal_amount,outstanding_principal,currency,status,disbursed_at,closed_at,created_at,updated_at")
+        .order("created_at", { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit) || 25)));
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "list_disbursement_requests") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("DISBURSEMENT_MAKER") || roles.has("DISBURSEMENT_CHECKER") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const { data, error } = await db.from("sp_financing_disbursement_requests")
+        .select("id,loan_account_id,amount,status,maker_user_id,checker_user_id,idempotency_key,external_reference,created_at,updated_at")
+        .order("created_at", { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit) || 25)));
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
     if (action === "list_partner_providers") {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("COMPLIANCE") || roles.has("AUDITOR"))) {
         return json({ error: "FORBIDDEN", message: "Partner configuration access is restricted.", correlationId }, 403, headers);

@@ -75,6 +75,13 @@ Client roles have no direct table grants. The service role is used only inside t
 - No providers are configured. No provider-specific adapter, credentials, outbound calls, KYC/SLIK/bureau lookup, or live partner integration is enabled. Provider metadata can only be configured by FINANCING_ADMIN and is never automatically activated.
 - Vercel deployment is currently rate-limited by the provider; no frontend UI changes are included in this phase.
 
+## Phase 4 contract and disbursement controls (backend deployed)
+- Migration financing_loan_operations_phase4 is applied in production; financing-api is deployed as version 6 with gateway JWT verification enabled.
+- Added role-gated contract creation, manual signature-evidence verification by a separate compliance user, loan-account creation in PENDING_DISBURSEMENT, and disbursement maker-checker request/approval.
+- SQL checks confirm four Phase 4 RPCs exist, lifecycle tables have RLS enabled, and anon/authenticated roles cannot execute privileged RPCs.
+- These controls do not call e-signature or payout providers and do not move money. No active financing roles are assigned, so protected actions are unavailable until authorized role provisioning.
+- Vercel builds remain rate-limited by the provider; this phase includes no frontend changes.
+
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.
 - No loan contract signing, loan schedule, disbursement, payment allocation, collections execution or double-entry loan ledger is implemented yet.

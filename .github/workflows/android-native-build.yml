@@ -50,7 +50,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Set up Java
@@ -118,7 +118,6 @@ jobs:
         if: always()
         env:
           SIGNED: ${{ steps.signing.outputs.signed || 'false' }}
-          APP_VERSION: ${{ env.APP_VERSION }}
         run: |
           {
             echo '## SurePath Android build'

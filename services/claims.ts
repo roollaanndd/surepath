@@ -90,8 +90,12 @@ export async function getAllClaims(): Promise<SpClaim[]> {
   return (data ?? []) as SpClaim[];
 }
 
-export async function getCustomerClaims(_userId: string): Promise<SpClaim[]> {
+export async function getCustomerClaims(_userId: string, strict = false): Promise<SpClaim[]> {
   const { data, error } = await callGateway('get_my_claims');
-  if (error) { console.error('getCustomerClaims:', error); return []; }
+  if (error) {
+    console.error('getCustomerClaims:', error);
+    if (strict) throw error;
+    return [];
+  }
   return (data ?? []) as SpClaim[];
 }

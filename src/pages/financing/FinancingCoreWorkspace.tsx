@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Activity, AlertTriangle, ArrowDownLeft, ArrowRight, BadgeCheck, Banknote,
+  Activity, AlertTriangle, ArrowDownLeft, ArrowRight, Banknote,
   BriefcaseBusiness, Building2, CalendarClock, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardCheck, CreditCard, FileCheck2, FileClock, FileText,
   Gauge, HandCoins, LayoutDashboard, LoaderCircle, LockKeyhole, Plus, RefreshCw,

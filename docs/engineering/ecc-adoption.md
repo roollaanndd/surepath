@@ -1,38 +1,39 @@
-# ECC Adoption in SurePath
+# ECC Toolkit in SurePath
 
-**Status:** project policy integrated on branch `chore/ecc-engineering-system`; full upstream runtime/tool catalog is not vendored or installed by this change.
+SurePath uses the upstream Everything Claude Code (ECC) toolkit as a project-local developer toolset. The installer pins ECC to release `2.2.3` and installs the broad engineering catalog supported by ECC's Antigravity project adapter into `.agents/`. One unrelated restricted module is intentionally excluded.
 
-## Upstream
+Upstream: https://github.com/affaan-m/ECC
+Release: `ecc-universal@2.2.3`
+License: MIT; upstream attribution and license remain with ECC.
 
-- Repository: https://github.com/affaan-m/ECC
-- License: MIT (retain the upstream copyright/license notice when redistributing upstream code)
-- Purpose: reusable engineering workflows, specialist agents/skills, hooks, memory/learning patterns, and security scanning.
+## Install
 
-SurePath adopts ECC's research-first, plan/test/review/verify loop while keeping product-specific security and release requirements in `/AGENTS.md`.
+From the repository root, preview the exact operations first:
 
-## How this is used
+```bash
+bash scripts/install-ecc.sh --dry-run
+```
 
-AI coding tools that read repository-level `AGENTS.md` should follow the SurePath rules automatically. Contributors should read that file before changing code. For the complete upstream toolset, follow the current official installation guide for the coding harness being used; supported features vary by harness. Do not blindly copy a full global install into this project or stack multiple installation methods.
+Then install the project-local toolkit:
 
-## SurePath-specific policy
+```bash
+bash scripts/install-ecc.sh
+```
 
-ECC is an engineering aid, not a security certification. It does not replace:
-- GitHub CI and dependency auditing;
-- Supabase RLS and server-side authorization reviews;
-- secret scanning and vulnerability remediation;
-- tests of insurer, agent, customer, commission, and wallet flows;
-- verification of the actual Vercel deployment and production user journeys.
+The installer writes into `.agents/`, which is ignored by the existing `.gitignore` so generated tooling does not pollute application releases or client handover. Run the install in each developer workspace that needs ECC. Node.js 18 or newer and network access to the npm registry are required.
 
-Known security follow-up: the existing security work had unresolved dependency audit findings involving Capacitor Android and transitive `esbuild`/`qs` packages. Verify current lockfile/audit state and close or formally triage those findings before treating the security baseline as complete.
+## What is included
 
-## Adoption sequence
+The selected compatible modules cover coding agents, skills, rules, workflow commands, database and TypeScript practices, test/review workflows, security review, research/documentation, DevOps, and related engineering support. ECC's installer automatically skips components unsupported by the selected project adapter.
 
-1. Apply the SurePath project rules in `AGENTS.md`.
-2. Use the plan → test → implement → independent review → verify loop for non-trivial work.
-3. Keep security checks in CI and require fixes/explicit triage for high-severity findings.
-4. Add harness-specific ECC hooks/skills only after checking the current upstream installation guide, project compatibility, and CI behavior.
-5. Verify CI, merge status, and the deployed production behavior separately.
+## SurePath guardrails
 
-## Attribution
+- Root `AGENTS.md` remains the source of truth for SurePath-specific engineering and security requirements.
+- Preserve Supabase RLS and server-side authorization; never expose secrets, service-role keys, customer data, or insurance documents to agents or logs.
+- Review hooks and executable scripts before enabling them. A security scanner is useful evidence, not a security certification.
+- ECC does not replace dependency auditing, CI, negative authorization tests, webhook replay tests, or production verification.
+- The ECC toolkit is developer tooling; it must not be imported into or bundled with the customer-facing Vite application.
 
-ECC remains maintained by its upstream authors. SurePath is adopting and adapting its engineering methodology; this document does not imply ownership of the upstream project or its name.
+## Updating
+
+Do not silently float to latest. Review ECC release notes and source, update the pinned version and module selection intentionally, preview the installer, then run SurePath quality gates. Do not stack multiple install methods for the same coding harness.

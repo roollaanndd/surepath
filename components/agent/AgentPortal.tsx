@@ -132,10 +132,10 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       // Keep each dashboard panel independent: a notification outage should not
       // hide otherwise healthy commission, client, or policy data.
       const results = await Promise.allSettled([
-        getAgentStats(agent.id),
-        getAgentCommissions(agent.id),
-        getAgentClients(agent.id),
-        getNotifications(agent.id),
+        getAgentStats(agent.id, true),
+        getAgentCommissions(agent.id, true),
+        getAgentClients(agent.id, true),
+        getNotifications(agent.id, true),
       ]);
       const [statsResult, commissionsResult, clientsResult, notificationsResult] = results;
       let hasError = results.some(result => result.status === 'rejected');

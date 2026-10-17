@@ -82,6 +82,13 @@ Client roles have no direct table grants. The service role is used only inside t
 - These controls do not call e-signature or payout providers and do not move money. No active financing roles are assigned, so protected actions are unavailable until authorized role provisioning.
 - Vercel builds remain rate-limited by the provider; this phase includes no frontend changes.
 
+## Phase 5 servicing and ledger (backend deployed)
+- Migration financing_servicing_ledger_phase5 is applied to production Supabase; financing-api is deployed as version 7 with gateway JWT verification enabled.
+- Added amortization schedule generation after operator-attested disbursement settlement, idempotent repayment receipt, explicit component-level allocation, balanced double-entry journals, and trial-balance reporting.
+- SQL checks confirm eight ledger accounts, RLS on the new ledger/allocation tables and existing repayment tables, and no execute privilege for anon/authenticated on repayment/allocation RPCs. An acceptance test confirmed unbalanced journals are rejected before posting.
+- The production database currently has zero repayment records and zero journals; no test transaction or customer data was created. No active financing roles are assigned.
+- Settlement/payment entries are operator-attested records only. No bank integration, independent bank reconciliation, or money movement is enabled. Vercel dashboard UI is not yet wired to Phase 5 actions.
+
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.
 - No loan contract signing, loan schedule, disbursement, payment allocation, collections execution or double-entry loan ledger is implemented yet.

@@ -682,6 +682,151 @@ Deno.serve(async (req) => {
       return json({ data, correlationId }, 200, headers);
     }
 
+    if (action === "register_application_document") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("ORIGINATION") || roles.has("VERIFICATION_ANALYST") || roles.has("CREDIT_ANALYST") || roles.has("CREDIT_APPROVER") || roles.has("SERVICING_FINANCE") || roles.has("COMPLIANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const applicationId = safeString(params.application_id, 40);
+      const documentType = safeString(params.document_type, 40);
+      const fileName = safeString(params.file_name, 180);
+      const storagePath = safeString(params.storage_path, 500);
+      const contentType = safeString(params.content_type, 120);
+      const sizeBytes = Number(params.size_bytes);
+      const sha = safeString(params.sha256, 64);
+      const allowedTypes = ["IDENTITY","PROOF_OF_ADDRESS","INCOME_OR_BANK_STATEMENT","BUSINESS_REGISTRATION","TAX_DOCUMENT","FINANCIAL_STATEMENT","COLLATERAL","SIGNED_CONSENT","OTHER"];
+      const allowedMime = ["application/pdf","image/jpeg","image/png","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      if (!/^[0-9a-f-]{36}$/i.test(applicationId) || !allowedTypes.includes(documentType) || fileName.length < 1 ||
+          !storagePath.startsWith(applicationId + "/") || !allowedMime.includes(contentType) ||
+          !Number.isInteger(sizeBytes) || sizeBytes < 1 || sizeBytes > 10485760 || (sha && !/^[a-f0-9]{64}$/i.test(sha))) {
+        return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      }
+      const { data: application, error: appError } = await db.from("sp_financing_applications").select("id").eq("id", applicationId).maybeSingle();
+      if (appError) throw appError;
+      if (!application) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      const { data: object, error: objectError } = await db.storage.from("financing-application-documents").createSignedUrl(storagePath, 60);
+      if (objectError || !object?.signedUrl) return json({ error: "DOCUMENT_OBJECT_NOT_FOUND", correlationId }, 400, headers);
+      const { data, error } = await db.from("sp_financing_application_documents").insert({
+        application_id: applicationId, document_type: documentType, file_name: fileName,
+        storage_path: storagePath, content_type: contentType, size_bytes: sizeBytes,
+        sha256: sha || null, uploaded_by: userId,
+      }).select("id,application_id,document_type,file_name,content_type,size_bytes,verification_status,created_at").single();
+      if (error) {
+        console.error("application document metadata registration failed", correlationId, error.code);
+        return json({ error: "DOCUMENT_REGISTER_FAILED", correlationId }, 500, headers);
+      }
+      await db.from("sp_financing_audit_events").insert({
+        actor_user_id: userId, action: "APPLICATION_DOCUMENT_UPLOADED", entity_type: "application_document",
+        entity_id: data.id, correlation_id: correlationId, outcome: "SUCCESS",
+        details: { application_id: applicationId, document_type: documentType, content_type: contentType, size_bytes: sizeBytes },
+      });
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "list_application_documents") {
+      if (!Array.from(roles).some((role) => ["FINANCING_ADMIN","ORIGINATION","VERIFICATION_ANALYST","CREDIT_ANALYST","CREDIT_APPROVER","SERVICING_FINANCE","COMPLIANCE","AUDITOR"].includes(role))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const applicationId = safeString(params.application_id, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(applicationId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      const { data, error } = await db.from("sp_financing_application_documents")
+        .select("id,application_id,document_type,file_name,storage_path,content_type,size_bytes,sha256,verification_status,verification_note,uploaded_by,created_at,verified_by,verified_at")
+        .eq("application_id", applicationId).order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      const documents = await Promise.all((data ?? []).map(async (document: Record<string, unknown>) => {
+        const { data: signed } = await db.storage.from("financing-application-documents").createSignedUrl(String(document.storage_path), 300);
+        const { storage_path: _path, ...safeDocument } = document;
+        return { ...safeDocument, download_url: signed?.signedUrl ?? null };
+      }));
+      return json({ data: documents, correlationId }, 200, headers);
+    }
+
+    if (action === "create_approval_workflow") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("ORIGINATION"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const applicationId = safeString(params.application_id, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(applicationId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      const { data: application, error: appError } = await db.from("sp_financing_applications").select("id,created_by").eq("id", applicationId).maybeSingle();
+      if (appError) throw appError;
+      if (!application) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      const { data: existing, error: existingError } = await db.from("sp_financing_approval_steps").select("id,step_order,step_code,status").eq("application_id", applicationId).order("step_order");
+      if (existingError) throw existingError;
+      if ((existing ?? []).length) return json({ data: existing, already_exists: true, correlationId }, 200, headers);
+      const steps = [
+        { application_id: applicationId, step_order: 1, step_code: "DOCUMENT_VERIFICATION", step_label: "Document verification", required_role: "VERIFICATION_ANALYST", requested_by: userId },
+        { application_id: applicationId, step_order: 2, step_code: "CREDIT_REVIEW", step_label: "Credit review", required_role: "CREDIT_ANALYST", requested_by: userId },
+        { application_id: applicationId, step_order: 3, step_code: "CREDIT_APPROVAL", step_label: "Credit approval", required_role: "CREDIT_APPROVER", requested_by: userId },
+        { application_id: applicationId, step_order: 4, step_code: "FINANCE_CONTROL", step_label: "Finance control", required_role: "SERVICING_FINANCE", requested_by: userId },
+      ];
+      const { data, error } = await db.from("sp_financing_approval_steps").insert(steps).select("id,application_id,step_order,step_code,step_label,required_role,status,requested_by,created_at");
+      if (error) throw error;
+      await db.from("sp_financing_audit_events").insert({
+        actor_user_id: userId, action: "APPROVAL_WORKFLOW_CREATED", entity_type: "application",
+        entity_id: applicationId, correlation_id: correlationId, outcome: "SUCCESS",
+        details: { step_count: steps.length, sequence: steps.map((step) => step.step_code) },
+      });
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "list_approval_workflows") {
+      if (!Array.from(roles).some((role) => ["FINANCING_ADMIN","VERIFICATION_ANALYST","CREDIT_ANALYST","CREDIT_APPROVER","SERVICING_FINANCE","AUDITOR","COMPLIANCE"].includes(role))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const limit = Math.min(300, Math.max(1, Number(params.limit) || 150));
+      const { data, error } = await db.from("sp_financing_approval_steps")
+        .select("id,application_id,step_order,step_code,step_label,required_role,status,decision_note,requested_by,decided_by,decided_at,created_at,application:sp_financing_applications(application_number,requested_amount,status,customer:sp_financing_customers(display_name))")
+        .order("created_at", { ascending: false }).limit(limit);
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "decide_approval_step") {
+      const stepId = safeString(params.step_id, 40);
+      const decision = safeString(params.decision, 20);
+      const note = safeString(params.note, 1000);
+      if (!/^[0-9a-f-]{36}$/i.test(stepId) || !["APPROVE","REJECT"].includes(decision) || note.length < 3) return json({ error: "VALIDATION_ERROR", message: "A valid step, decision, and reason of at least 3 characters are required.", correlationId }, 400, headers);
+      const { data: step, error: stepError } = await db.from("sp_financing_approval_steps").select("*").eq("id", stepId).maybeSingle();
+      if (stepError) throw stepError;
+      if (!step) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      if (step.status !== "PENDING") return json({ error: "APPROVAL_ALREADY_DECIDED", correlationId }, 409, headers);
+      if (!roles.has("FINANCING_ADMIN") && !roles.has(step.required_role)) return json({ error: "FORBIDDEN", message: "Your role cannot decide this approval layer.", correlationId }, 403, headers);
+      if (step.requested_by === userId) return json({ error: "MAKER_CHECKER_VIOLATION", message: "The person who initiated this approval workflow cannot approve its steps.", correlationId }, 403, headers);
+      const { data: prior, error: priorError } = await db.from("sp_financing_approval_steps").select("status").eq("application_id", step.application_id).lt("step_order", step.step_order);
+      if (priorError) throw priorError;
+      if ((prior ?? []).some((item: {status:string}) => item.status !== "APPROVED")) return json({ error: "APPROVAL_SEQUENCE_BLOCKED", message: "Earlier approval layers must be approved first.", correlationId }, 409, headers);
+      const now = new Date().toISOString();
+      const { data, error } = await db.from("sp_financing_approval_steps").update({
+        status: decision === "APPROVE" ? "APPROVED" : "REJECTED", decision_note: note, decided_by: userId, decided_at: now,
+      }).eq("id", stepId).eq("status", "PENDING").select("id,application_id,step_order,step_code,step_label,required_role,status,decision_note,decided_by,decided_at").maybeSingle();
+      if (error) throw error;
+      if (!data) return json({ error: "APPROVAL_ALREADY_DECIDED", correlationId }, 409, headers);
+      if (decision === "REJECT") {
+        await db.from("sp_financing_approval_steps").update({ status: "SKIPPED", decision_note: "Skipped after earlier layer rejected", decided_by: userId, decided_at: now })
+          .eq("application_id", step.application_id).gt("step_order", step.step_order).eq("status", "PENDING");
+      }
+      await db.from("sp_financing_audit_events").insert({
+        actor_user_id: userId, action: decision === "APPROVE" ? "APPROVAL_LAYER_APPROVED" : "APPROVAL_LAYER_REJECTED",
+        entity_type: "approval_step", entity_id: stepId, correlation_id: correlationId,
+        outcome: "SUCCESS", details: { application_id: step.application_id, step_code: step.step_code, note },
+      });
+      return json({ data, correlationId }, 200, headers);
+    }
+
+    if (action === "finance_transaction_report") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const startDate = safeString(params.start_date, 10);
+      const endDate = safeString(params.end_date, 10);
+      const validDate = (value: string) => /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+      if (!validDate(startDate) || !validDate(endDate) || endDate < startDate) return json({ error: "VALIDATION_ERROR", message: "Provide valid start_date and end_date.", correlationId }, 400, headers);
+      const span = (Date.parse(endDate + "T00:00:00Z") - Date.parse(startDate + "T00:00:00Z")) / 86400000;
+      if (span > 366) return json({ error: "DATE_RANGE_TOO_LARGE", message: "Choose a report range of 367 days or less.", correlationId }, 400, headers);
+      const nextDay = new Date(Date.parse(endDate + "T00:00:00Z") + 86400000).toISOString();
+      const { data: journals, error } = await db.from("sp_financing_ledger_journals")
+        .select("id,journal_number,source_type,source_id,currency,status,memo,created_at,entries:sp_financing_ledger_entries(debit,credit,account:sp_financing_ledger_accounts(account_code,account_name))")
+        .gte("created_at", startDate + "T00:00:00.000Z").lt("created_at", nextDay)
+        .order("created_at", { ascending: true }).limit(1000);
+      if (error) throw error;
+      const rows = (journals ?? []).map((journal: Record<string, unknown>) => {
+        const entries = Array.isArray(journal.entries) ? journal.entries as Array<Record<string, unknown>> : [];
+        const debit = entries.reduce((sum, entry) => sum + Number(entry.debit ?? 0), 0);
+        const credit = entries.reduce((sum, entry) => sum + Number(entry.credit ?? 0), 0);
+        return { id: journal.id, journal_number: journal.journal_number, source_type: journal.source_type, source_id: journal.source_id, currency: journal.currency, status: journal.status, memo: journal.memo, created_at: journal.created_at, debit, credit, entries };
+      });
+      return json({ data: rows, totals: { transaction_count: rows.length, debit: rows.reduce((sum, row) => sum + row.debit, 0), credit: rows.reduce((sum, row) => sum + row.credit, 0), truncated: rows.length === 1000 }, start_date: startDate, end_date: endDate, as_of: new Date().toISOString(), correlationId }, 200, headers);
+    }
+
     return json({ error: "UNKNOWN_ACTION", correlationId }, 400, headers);
   } catch (error) {
     console.error("financing API failed", correlationId, error instanceof Error ? error.message : "unknown");

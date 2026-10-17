@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createFinancingApplication, getFinancingOverview, listFinancingApplications, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode } from '../services/financingApi';
 import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
@@ -36,12 +37,22 @@ const products = [
   { name: 'Multipurpose', sub: 'Secured or unsecured personal', count: 28, color: '#a78bfa', rate: 'Partner-configured' },
   { name: 'Heavy Equipment', sub: 'Asset-backed business financing', count: 16, color: '#fbbf24', rate: 'Partner-configured' },
   { name: 'Working Capital', sub: 'SME cash-flow financing', count: 31, color: '#34d399', rate: 'Partner-configured' },
-  { name: 'Other Financing', sub: 'Configurable partner products', count: 11, color: '#fb7185', rate: 'Partner-configured' },
 ];
 
 const rupiah = (amount: number) => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
 }).format(amount);
+
+const mapApiApplications = (records: FinancingApplicationRecord[]): Application[] => records.map((record) => ({
+  id: record.application_number,
+  customer: record.customer?.display_name ?? 'Customer',
+  product: record.product?.name ?? record.product?.code ?? 'Financing',
+  amount: Number(record.requested_amount),
+  submitted: new Date(record.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+  status: ({ NEW: 'New application', SUBMITTED: 'Submitted', DOCUMENTS_PENDING: 'Awaiting documents', VERIFICATION: 'Verification', CREDIT_REVIEW: 'Credit review', REFERRED: 'Referred', APPROVED: 'Approved', DECLINED: 'Rejected', OFFERED: 'Offer prepared', CONTRACTED: 'Contracted', BOOKED: 'Booked', CANCELLED: 'Cancelled' } as Record<string, string>)[record.status] ?? record.status,
+  owner: 'Financing workspace',
+  score: 0,
+}));
 
 
 const navGroups: { label: string; items: { key: ModuleKey; label: string; icon: React.ElementType; count?: string }[] }[] = [
@@ -85,6 +96,8 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   });
   
   const [module, setModule] = useState<ModuleKey>('overview');
+  const [backendMode, setBackendMode] = useState<'checking' | 'live' | 'demo' | 'forbidden'>('checking');
+  const [liveOverview, setLiveOverview] = useState<FinancingOverview | null>(null);
   const [applications, setApplications] = useState(initialApplications);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All statuses');
@@ -93,8 +106,27 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [toast, setToast] = useState('');
   const [newCustomer, setNewCustomer] = useState('');
   const [newProduct, setNewProduct] = useState('Motor Vehicle');
+  const [newCustomerType, setNewCustomerType] = useState<'INDIVIDUAL' | 'BUSINESS'>('BUSINESS');
+  const [newTenor, setNewTenor] = useState('12');
   const [newAmount, setNewAmount] = useState('250000000');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([listFinancingApplications(100), getFinancingOverview()])
+      .then(([result, overview]) => {
+        if (!active) return;
+        setApplications(mapApiApplications(result.data));
+        setLiveOverview(overview);
+        setBackendMode('live');
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        const message = error instanceof Error ? error.message : '';
+        setBackendMode(/FORBIDDEN|financing role|UNAUTHENTICATED|401|403/i.test(message) ? 'forbidden' : 'demo');
+      });
+    return () => { active = false; };
+  }, []);
   const titleByModule: Record<ModuleKey, string> = {
     overview: 'Overview', applications: 'Applications', customers: 'Customers',
     credit: 'Credit assessment', contracts: 'Contracts', disbursements: 'Disbursements',
@@ -112,9 +144,35 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 3200);
   };
-  const addDemoApplication = (event: React.FormEvent) => {
+  const addDemoApplication = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newCustomer.trim() || Number(newAmount) <= 0) return;
+    if (backendMode === 'live') {
+      const codeByProduct: Record<string, FinancingProductCode> = {
+        'Motor Vehicle': 'MOTOR_VEHICLE', 'Multipurpose': 'MULTIPURPOSE',
+        'Heavy Equipment': 'HEAVY_EQUIPMENT', 'Working Capital': 'WORKING_CAPITAL',
+      };
+      try {
+        await createFinancingApplication({
+          customerName: newCustomer.trim(), customerType: newCustomerType,
+          productCode: codeByProduct[newProduct] ?? 'MOTOR_VEHICLE',
+          amount: Number(newAmount), tenorMonths: Number(newTenor),
+        });
+        const [result, overview] = await Promise.all([listFinancingApplications(100), getFinancingOverview()]);
+        setApplications(mapApiApplications(result.data));
+        setLiveOverview(overview);
+        setShowNewApplication(false);
+        setNewCustomer('');
+        setNewCustomerType('BUSINESS');
+        setNewAmount('250000000');
+        setNewTenor('12');
+        setModule('applications');
+        notify('Application saved to the financing database.');
+      } catch (error) {
+        notify(error instanceof Error ? error.message : 'Could not save application. No local fallback was created.');
+      }
+      return;
+    }
     const next: Application = {
       id: 'SPF-DEMO-' + String(applications.length + 201).padStart(3, '0'),
       customer: newCustomer.trim(), product: newProduct, amount: Number(newAmount),
@@ -123,7 +181,9 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setApplications((current) => [next, ...current]);
     setShowNewApplication(false);
     setNewCustomer('');
+    setNewCustomerType('BUSINESS');
     setNewAmount('250000000');
+    setNewTenor('12');
     setModule('applications');
     notify('Demo application created locally. No real customer record was saved.');
   };
@@ -176,10 +236,10 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     <>
       <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {[
-          { label: 'Applications received', value: '128', delta: '+12.8%', note: 'vs previous month', icon: FileText, iconBg: 'bg-emerald-50 text-emerald-700', up: true },
-          { label: 'Financing requested', value: 'Rp 8.45B', delta: '+8.2%', note: 'sample portfolio', icon: CircleDollarSign, iconBg: 'bg-sky-50 text-sky-700', up: true },
-          { label: 'Pending credit review', value: '24', delta: '7 urgent', note: 'need attention', icon: ClipboardCheck, iconBg: 'bg-violet-50 text-violet-700', up: false },
-          { label: 'Repayment collected', value: 'Rp 2.16B', delta: '96.4%', note: 'illustrative collection rate', icon: Wallet, iconBg: 'bg-amber-50 text-amber-700', up: true },
+          { label: 'Applications received', value: backendMode === 'checking' ? '…' : liveOverview ? String(liveOverview.totalApplications) : '128', delta: liveOverview ? 'Live' : '+12.8%', note: liveOverview ? 'persisted applications' : 'vs previous month', icon: FileText, iconBg: 'bg-emerald-50 text-emerald-700', up: true },
+          { label: 'Financing requested', value: backendMode === 'checking' ? '…' : liveOverview ? rupiah(liveOverview.amountRequestedIdr) : 'Rp 8.45B', delta: liveOverview ? 'Live' : '+8.2%', note: liveOverview ? (liveOverview.partial ? 'partial portfolio window' : 'persisted requests') : 'sample portfolio', icon: CircleDollarSign, iconBg: 'bg-sky-50 text-sky-700', up: true },
+          { label: 'Pending credit review', value: backendMode === 'checking' ? '…' : liveOverview ? String(liveOverview.byStatus.CREDIT_REVIEW ?? 0) : '24', delta: liveOverview ? 'Live' : '7 urgent', note: liveOverview ? 'credit review status' : 'need attention', icon: ClipboardCheck, iconBg: 'bg-violet-50 text-violet-700', up: false },
+          { label: 'Repayment collected', value: backendMode === 'checking' ? '…' : liveOverview ? '—' : 'Rp 2.16B', delta: liveOverview ? 'Not enabled' : '96.4%', note: liveOverview ? 'servicing module pending' : 'illustrative collection rate', icon: Wallet, iconBg: 'bg-amber-50 text-amber-700', up: true },
         ].map((kpi) => <div key={kpi.label} className={panel + ' p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg'}>
           <div className="flex items-start justify-between"><span className="max-w-[150px] text-sm font-medium text-slate-500">{kpi.label}</span><span className={'flex h-10 w-10 items-center justify-center rounded-xl ' + kpi.iconBg}><kpi.icon size={19} /></span></div>
           <p className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-[28px]">{kpi.value}</p>
@@ -190,27 +250,27 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
         <section className={panel + ' p-5 sm:p-6'}>
           <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Application pipeline</h2><p className={'mt-1 text-xs ' + muted}>Distribution by current workflow stage</p></div><button onClick={() => setModule('applications')} className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900">View applications <ArrowRight size={14} /></button></div>
           <div className="mt-6 space-y-4">
-            {[['New application', 18, 128, '#64748b'], ['Document verification', 26, 128, '#0ea5e9'], ['Credit assessment', 24, 128, '#8b5cf6'], ['Offer & contract', 19, 128, '#f59e0b'], ['Approved / disbursement', 41, 128, '#10b981']].map(([label, value, total, color]) => <div key={String(label)}><div className="mb-2 flex items-center justify-between text-xs"><span className="font-medium text-slate-600">{label}</span><span className="font-bold tabular-nums text-slate-800">{value} <span className="font-normal text-slate-400">cases</span></span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full transition-all" style={{ width: (Number(value) / Number(total) * 100 * 2.5) + '%', background: String(color) }} /></div></div>)}
+            {(liveOverview ? [['New application', liveOverview.byStatus.NEW ?? 0, Math.max(liveOverview.totalApplications, 1), '#64748b'], ['Document verification', (liveOverview.byStatus.SUBMITTED ?? 0) + (liveOverview.byStatus.DOCUMENTS_PENDING ?? 0) + (liveOverview.byStatus.VERIFICATION ?? 0), Math.max(liveOverview.totalApplications, 1), '#0ea5e9'], ['Credit assessment', (liveOverview.byStatus.CREDIT_REVIEW ?? 0) + (liveOverview.byStatus.REFERRED ?? 0), Math.max(liveOverview.totalApplications, 1), '#8b5cf6'], ['Offer & contract', (liveOverview.byStatus.OFFERED ?? 0) + (liveOverview.byStatus.CONTRACTED ?? 0), Math.max(liveOverview.totalApplications, 1), '#f59e0b'], ['Approved / booked', (liveOverview.byStatus.APPROVED ?? 0) + (liveOverview.byStatus.BOOKED ?? 0), Math.max(liveOverview.totalApplications, 1), '#10b981']] : [['New application', 18, 128, '#64748b'], ['Document verification', 26, 128, '#0ea5e9'], ['Credit assessment', 24, 128, '#8b5cf6'], ['Offer & contract', 19, 128, '#f59e0b'], ['Approved / disbursement', 41, 128, '#10b981']]).map(([label, value, total, color]) => <div key={String(label)}><div className="mb-2 flex items-center justify-between text-xs"><span className="font-medium text-slate-600">{label}</span><span className="font-bold tabular-nums text-slate-800">{value} <span className="font-normal text-slate-400">cases</span></span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full transition-all" style={{ width: (Number(value) / Number(total) * 100 * 2.5) + '%', background: String(color) }} /></div></div>)}
           </div>
           <div className="mt-6 grid grid-cols-3 gap-3 border-t border-slate-100 pt-5">
-            <div><p className="text-xs text-slate-400">Approval rate</p><p className="mt-1 text-lg font-black text-slate-900">64.2%</p></div>
-            <div><p className="text-xs text-slate-400">Avg. processing</p><p className="mt-1 text-lg font-black text-slate-900">2.4 days</p></div>
-            <div><p className="text-xs text-slate-400">Pending documents</p><p className="mt-1 text-lg font-black text-slate-900">18</p></div>
+            <div><p className="text-xs text-slate-400">Approval rate</p><p className="mt-1 text-lg font-black text-slate-900">{liveOverview ? "—" : "64.2%"}</p></div>
+            <div><p className="text-xs text-slate-400">Avg. processing</p><p className="mt-1 text-lg font-black text-slate-900">{liveOverview ? "—" : "2.4 days"}</p></div>
+            <div><p className="text-xs text-slate-400">Pending documents</p><p className="mt-1 text-lg font-black text-slate-900">{liveOverview ? String(liveOverview.byStatus.DOCUMENTS_PENDING ?? 0) : "18"}</p></div>
           </div>
         </section>
         <section className={panel + ' p-5 sm:p-6'}>
           <div className="flex items-start justify-between"><div><h2 className="font-bold text-slate-900">Operations queue</h2><p className={'mt-1 text-xs ' + muted}>Items requiring team action</p></div><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700"><Bell size={17} /></span></div>
           <div className="mt-4 space-y-1">
             {[
-              { title: 'Credit reviews waiting', desc: '24 applications in queue', num: '24', color: 'bg-violet-50 text-violet-700', key: 'credit' as ModuleKey },
-              { title: 'Incomplete documents', desc: '18 applications need follow-up', num: '18', color: 'bg-amber-50 text-amber-700', key: 'applications' as ModuleKey },
-              { title: 'Upcoming due dates', desc: '8 accounts need collection review', num: '08', color: 'bg-rose-50 text-rose-700', key: 'collections' as ModuleKey },
+              { title: 'Credit reviews waiting', desc: liveOverview ? String(liveOverview.byStatus.CREDIT_REVIEW ?? 0) + ' applications in queue' : '24 applications in queue', num: liveOverview ? String(liveOverview.byStatus.CREDIT_REVIEW ?? 0) : '24', color: 'bg-violet-50 text-violet-700', key: 'credit' as ModuleKey },
+              { title: 'Incomplete documents', desc: liveOverview ? String(liveOverview.byStatus.DOCUMENTS_PENDING ?? 0) + ' applications need follow-up' : '18 applications need follow-up', num: liveOverview ? String(liveOverview.byStatus.DOCUMENTS_PENDING ?? 0) : '18', color: 'bg-amber-50 text-amber-700', key: 'applications' as ModuleKey },
+              { title: 'Upcoming due dates', desc: liveOverview ? 'Loan servicing is not enabled in Phase 1' : '8 accounts need collection review', num: liveOverview ? '—' : '08', color: 'bg-rose-50 text-rose-700', key: 'collections' as ModuleKey },
             ].map((item) => <button key={item.title} onClick={() => setModule(item.key)} className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition hover:bg-slate-50"><span className={'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-black ' + item.color}>{item.num}</span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-800">{item.title}</span><span className="mt-1 block text-xs text-slate-400">{item.desc}</span></span><ChevronRight size={16} className="text-slate-400" /></button>)}
           </div>
           <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4"><div className="flex items-center gap-2 text-sm font-bold text-emerald-900"><ShieldCheck size={16} /> Control checklist</div><p className="mt-1.5 text-xs leading-relaxed text-emerald-800/80">Consent, maker-checker approval and audit trail must be enforced before production integrations are enabled.</p></div>
         </section>
       </div>
-      <div className="mt-5">{renderApplicationsTable('Recent applications', 'Latest activity across the demo portfolio')}</div>
+      <div className="mt-5">{renderApplicationsTable('Recent applications', liveOverview ? 'Latest persisted applications from the financing API' : 'Latest activity across the demo portfolio')}</div>
     </>
   );
 
@@ -260,15 +320,15 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     <div className="min-h-screen bg-[#f5f7f8] text-slate-900">
       <header className="border-b border-slate-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3">
-          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white"><Building2 size={21} /></span><div><p className="text-sm font-black text-slate-900">SurePath <span className="text-emerald-700">Financing Core</span></p><p className="mt-0.5 text-[10px] text-slate-500">Independent operations workspace · Demo</p></div></div>
+          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white"><Building2 size={21} /></span><div><p className="text-sm font-black text-slate-900">SurePath <span className="text-emerald-700">Financing Core</span></p><p className="mt-0.5 text-[10px] text-slate-500">Independent operations workspace · {backendMode === 'live' ? 'Live API' : 'Demo'}</p></div></div>
           <div className="flex items-center gap-2"><span className="hidden rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:inline-flex">angkouw84+admindemo@gmail.com</span><button onClick={() => { try { sessionStorage.removeItem('sp_financing_demo_session'); } catch {} setDemoEntered(false); }} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">Keluar Demo</button></div>
         </div>
       </header>
       <main className="min-h-screen bg-[#f5f7f8] px-3 pb-12 pt-5 text-slate-900 sm:px-5 sm:pt-6 lg:px-7">
         <div className="mx-auto max-w-[1600px]">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-800 px-4 py-3 text-white shadow-lg shadow-emerald-950/10 sm:px-5">
-            <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Building2 size={21}/></span><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold">SurePath Financing Core</p><span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[.14em] text-amber-100">Demo environment</span></div><p className="mt-1 text-xs text-emerald-100/70">Multi-finance operations workspace · Mutiara Finance pilot</p></div></div>
-            <div className="flex items-center gap-2 text-xs text-emerald-50/80"><span className="h-2 w-2 rounded-full bg-amber-300"/><span>Sample data only</span><span className="mx-1 hidden h-5 w-px bg-white/20 sm:block"/><span className="hidden sm:inline">No live credit bureau or disbursement connection</span></div>
+            <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Building2 size={21}/></span><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-bold">SurePath Financing Core</p><span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[.14em] text-amber-100">{backendMode === "live" ? "Live API" : "Demo environment"}</span></div><p className="mt-1 text-xs text-emerald-100/70">Multi-finance operations workspace · Mutiara Finance pilot</p></div></div>
+            <div className="flex items-center gap-2 text-xs text-emerald-50/80"><span className="h-2 w-2 rounded-full bg-amber-300"/><span>{backendMode === "live" ? "Persistent application data" : "Sample data only"}</span><span className="mx-1 hidden h-5 w-px bg-white/20 sm:block"/><span className="hidden sm:inline">No live credit bureau or disbursement connection</span></div>
           </div>
 
           <div className="grid items-start gap-5 lg:grid-cols-[235px_minmax(0,1fr)]">
@@ -287,14 +347,19 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
                 <div className="flex items-center gap-2"><span className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-500 sm:inline-flex"><CalendarDays size={14}/> 17 Oct 2026 <ChevronDown size={13}/></span><button onClick={()=>notify('Demo workspace refreshed. No live systems were queried.')} className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50" aria-label="Refresh demo"><Activity size={17}/></button><button onClick={()=>setShowNewApplication(true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3.5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-900/10 transition hover:bg-emerald-800 sm:text-sm"><Plus size={15}/> <span className="hidden sm:inline">New application</span><span className="sm:hidden">New</span></button></div>
               </header>
 
-              <div className="mb-5 flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50/80 px-4 py-3"><span className="mt-0.5 text-sky-700"><AlertCircle size={16}/></span><p className="text-xs leading-relaxed text-sky-900/80"><strong>Prototype notice:</strong> this is an interactive front-end demonstration using fictional data. Login/roles, persistent database, official verification, credit bureau/SLIK, e-signature, payment rails and real disbursement are not connected yet.</p></div>
+              <div className={"mb-5 flex items-start gap-3 rounded-xl px-4 py-3 " + (backendMode === 'live' ? 'border border-emerald-100 bg-emerald-50/80' : 'border border-sky-100 bg-sky-50/80')}>
+                <span className={backendMode === 'live' ? 'mt-0.5 text-emerald-700' : 'mt-0.5 text-sky-700'}><AlertCircle size={16}/></span>
+                <p className={"text-xs leading-relaxed " + (backendMode === 'live' ? 'text-emerald-900/80' : 'text-sky-900/80')}>
+                  {backendMode === 'live' ? <><strong>Backend connected:</strong> applications and overview are loaded from the authenticated financing API. Credit bureau, e-signature, loan servicing and money movement are not enabled.</> : backendMode === 'checking' ? <><strong>Checking financing API:</strong> if no authorized financing role is available, this workspace stays in demo mode.</> : backendMode === 'forbidden' ? <><strong>Demo mode:</strong> this account is not authorized for live financing data. Assign an approved financing role to enable access.</> : <><strong>Demo mode:</strong> the live API could not be reached. Displayed records are fictional and application creation remains local only.</>}
+                </p>
+              </div>
 
               {renderModuleContent()}
             </section>
           </div>
         </div>
 
-        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Create demo application</h2><p className="mt-1 text-sm text-slate-500">Adds a temporary local sample record only.</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">Add to demo</button></div></form></div>}
+        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
 
         {selectedApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Demo application</span><h2 className="mt-3 text-xl font-black text-slate-900">{selectedApplication.customer}</h2><p className="mt-1 text-sm text-slate-400">{selectedApplication.id}</p></div><button onClick={()=>setSelectedApplication(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close details"><X size={18}/></button></div><div className="mt-5 grid grid-cols-2 gap-3">{[{label:'Product',value:selectedApplication.product},{label:'Requested amount',value:rupiah(selectedApplication.amount)},{label:'Current status',value:selectedApplication.status},{label:'Credit score',value:selectedApplication.score?selectedApplication.score+'/100':'Not assessed'},{label:'Submitted',value:selectedApplication.submitted},{label:'Assigned owner',value:selectedApplication.owner}].map((item)=><div key={item.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-800">{item.value}</p></div>)}</div><p className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">This record is simulated. Credit decisions and status transitions are not persisted to a backend.</p><div className="mt-5 flex justify-end"><button onClick={()=>setSelectedApplication(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Close details</button></div></div></div>}
 

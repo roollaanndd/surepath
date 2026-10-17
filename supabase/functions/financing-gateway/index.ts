@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const DEMO_PRODUCTS = [
   { id: 'demo-motor', code: 'MOTOR_VEHICLE', name: 'Motor Vehicle Financing', category: 'Motor vehicle', min_amount: 10000000, max_amount: 2000000000, tenor_min_months: 6, tenor_max_months: 60, active: true },
@@ -18,19 +19,10 @@ const TRANSITIONS: Record<string, string[]> = {
   OFFERED: ['CONTRACTED','CANCELLED'],
   CONTRACTED: ['BOOKED'],
 };
-const demoRate = new Map<string, { count: number; reset: number }>();
-
 function response(body: unknown, status = 200, headers: Record<string,string> = {}) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
 }
 function fail(message: string, status = 400) { return response({ error: message }, status); }
-function demoAllowed(ip: string) {
-  const now = Date.now();
-  const current = demoRate.get(ip);
-  if (!current || current.reset < now) { demoRate.set(ip, { count: 1, reset: now + 60000 }); return true; }
-  current.count += 1;
-  return current.count <= 30;
-}
 async function sha256(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
@@ -87,8 +79,8 @@ Deno.serve(async (req: Request) => {
   }
   if (isDemo !== demoAction) return response({ error: isDemo ? 'Use sandbox actions in the isolated demo workspace' : 'Sandbox endpoints cannot be used with an authenticated session' }, 403, headers);
   if (isDemo) {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (!demoAllowed(ip)) return response({ error: 'Sandbox rate limit exceeded; try again in one minute' }, 429, headers);
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+    if (!await checkRateLimit(db, `ip:${ip}`, 'financing_demo', 30)) return response({ error: 'Sandbox rate limit exceeded; try again later' }, 429, headers);
   } else if (!roles.length) {
     return response({ error: 'This account has no active Financing Core role. Ask the financing administrator to assign one.' }, 403, headers);
   }

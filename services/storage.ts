@@ -89,12 +89,32 @@ export async function uploadLogoImage(file: File): Promise<string | null> {
   return data.publicUrl;
 }
 
+const WEBSITE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const WEBSITE_IMAGE_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
 export async function uploadSectionImage(file: File, sectionKey: string): Promise<string | null> {
-  const ext  = safeExt(file.name, ALLOWED_IMAGE_TYPES, 'jpg');
-  const path = `sections/${sectionKey}.${ext}`;
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const contentType = WEBSITE_IMAGE_TYPES[ext];
+  if (
+    !contentType ||
+    file.size <= 0 ||
+    file.size > WEBSITE_IMAGE_MAX_BYTES ||
+    (file.type !== '' && file.type !== contentType)
+  ) {
+    console.warn('uploadSectionImage: unsupported image type or size');
+    return null;
+  }
+
+  const safeSectionKey = sectionKey.replace(/[^a-z0-9_-]/gi, '_').slice(0, 64);
+  const path = `sections/${safeSectionKey}.${ext}`;
   const { error } = await supabase.storage
     .from('website-assets')
-    .upload(path, file, { upsert: true });
+    .upload(path, file, { upsert: true, contentType, cacheControl: '3600' });
   if (error) { console.error('uploadSectionImage:', error); return null; }
   const { data } = supabase.storage.from('website-assets').getPublicUrl(path);
   return data.publicUrl;

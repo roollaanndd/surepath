@@ -1,19 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { createFinancingApplication, getFinancingOverview, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, listFinancingReconciliationBatches, listFinancingReconciliationLines, importFinancingReconciliationBatch, reconcileFinancingStatementLine, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow, type FinancingReconciliationBatch, type FinancingStatementLine } from '../services/financingApi';
+import jsPDF from 'jspdf';
+import { createFinancingApplication, createFinancingApprovalWorkflow, decideFinancingApprovalStep, getFinancingOverview, getFinancingTransactionReport, listFinancingApprovalWorkflows, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, listFinancingReconciliationBatches, listFinancingReconciliationLines, importFinancingReconciliationBatch, reconcileFinancingStatementLine, uploadFinancingApplicationDocument, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow, type FinancingReconciliationBatch, type FinancingStatementLine, type FinancingApprovalStep, type FinancingFinanceReportRow } from '../services/financingApi';
 import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
   Bell, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, ChevronDown,
   ChevronRight, CircleDollarSign, ClipboardCheck, Clock3, CreditCard,
-  FileCheck2, FileClock, FileText, Filter, Gauge, HandCoins, LayoutDashboard,
-  Menu, Plus, Search, Settings2, ShieldCheck,
+  FileCheck2, FileClock, FileText, FileSpreadsheet, FileUp, Download, Filter, Gauge, HandCoins, LayoutDashboard,
+  ListChecks, Menu, Plus, Search, Settings2, ShieldCheck,
   Users, Wallet, X,
 } from 'lucide-react';
 
-type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'contracts' | 'disbursements' | 'repayments' | 'reconciliation' | 'collections' | 'products' | 'reports' | 'settings';
+type ModuleKey = 'overview' | 'applications' | 'customers' | 'credit' | 'approvals' | 'contracts' | 'disbursements' | 'repayments' | 'reconciliation' | 'collections' | 'products' | 'reports' | 'settings';
 
 type Application = {
   id: string;
+  databaseId?: string;
   customer: string;
   product: string;
   amount: number;
@@ -45,6 +47,7 @@ const rupiah = (amount: number) => new Intl.NumberFormat('id-ID', {
 
 const mapApiApplications = (records: FinancingApplicationRecord[]): Application[] => records.map((record) => ({
   id: record.application_number,
+  databaseId: record.id,
   customer: record.customer?.display_name ?? 'Customer',
   product: record.product?.name ?? record.product?.code ?? 'Financing',
   amount: Number(record.requested_amount),
@@ -61,6 +64,7 @@ const navGroups: { label: string; items: { key: ModuleKey; label: string; icon: 
     { key: 'applications', label: 'Applications', icon: FileText, count: '128' },
     { key: 'customers', label: 'Customers', icon: Users },
     { key: 'credit', label: 'Credit assessment', icon: Gauge, count: '24' },
+    { key: 'approvals', label: 'Approval layering', icon: ListChecks },
   ]},
   { label: 'OPERATIONS', items: [
     { key: 'contracts', label: 'Contracts', icon: FileCheck2 },
@@ -110,6 +114,17 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [newCustomerType, setNewCustomerType] = useState<'INDIVIDUAL' | 'BUSINESS'>('BUSINESS');
   const [newTenor, setNewTenor] = useState('12');
   const [newAmount, setNewAmount] = useState('250000000');
+  const [newDocuments, setNewDocuments] = useState<File[]>([]);
+  const [newDocumentType, setNewDocumentType] = useState('IDENTITY');
+  const [approvalState, setApprovalState] = useState<'idle' | 'loading' | 'live' | 'forbidden' | 'error'>('idle');
+  const [approvalSteps, setApprovalSteps] = useState<FinancingApprovalStep[]>([]);
+  const [approvalNotes, setApprovalNotes] = useState<Record<string, string>>({});
+  const [financeReportState, setFinanceReportState] = useState<'idle' | 'loading' | 'live' | 'forbidden' | 'error'>('idle');
+  const [financeReportRows, setFinanceReportRows] = useState<FinancingFinanceReportRow[]>([]);
+  const [financeReportTotals, setFinanceReportTotals] = useState<{ transaction_count: number; debit: number; credit: number; truncated: boolean } | null>(null);
+  const [reportPeriod, setReportPeriod] = useState<'daily' | 'monthly' | 'custom'>('monthly');
+  const [reportStartDate, setReportStartDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10));
+  const [reportEndDate, setReportEndDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [servicingState, setServicingState] = useState<'idle' | 'loading' | 'live' | 'forbidden' | 'error'>('idle');
   const [liveSchedules, setLiveSchedules] = useState<FinancingRepaymentSchedule[]>([]);
@@ -214,9 +229,42 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     return () => { active = false; };
   }, [module, backendMode]);
 
+  useEffect(() => {
+    if (module !== 'approvals' || backendMode !== 'live') return;
+    let active = true;
+    setApprovalState('loading');
+    listFinancingApprovalWorkflows(200).then(result => {
+      if (!active) return;
+      setApprovalSteps(result.data ?? []);
+      setApprovalState('live');
+    }).catch((error: unknown) => {
+      if (!active) return;
+      const message = error instanceof Error ? error.message : '';
+      setApprovalState(/FORBIDDEN|403|UNAUTHENTICATED/i.test(message) ? 'forbidden' : 'error');
+    });
+    return () => { active = false; };
+  }, [module, backendMode]);
+
+  useEffect(() => {
+    if (module !== 'reports' || backendMode !== 'live') return;
+    let active = true;
+    setFinanceReportState('loading');
+    getFinancingTransactionReport(reportStartDate, reportEndDate).then(result => {
+      if (!active) return;
+      setFinanceReportRows(result.data ?? []);
+      setFinanceReportTotals(result.totals ?? null);
+      setFinanceReportState('live');
+    }).catch((error: unknown) => {
+      if (!active) return;
+      const message = error instanceof Error ? error.message : '';
+      setFinanceReportState(/FORBIDDEN|403|UNAUTHENTICATED/i.test(message) ? 'forbidden' : 'error');
+    });
+    return () => { active = false; };
+  }, [module, backendMode, reportStartDate, reportEndDate]);
+
   const titleByModule: Record<ModuleKey, string> = {
     overview: 'Overview', applications: 'Applications', customers: 'Customers',
-    credit: 'Credit assessment', contracts: 'Contracts', disbursements: 'Disbursements',
+    credit: 'Credit assessment', approvals: 'Approval layering', contracts: 'Contracts', disbursements: 'Disbursements',
     repayments: 'Repayment ledger', reconciliation: 'Bank reconciliation', collections: 'Collections', products: 'Financing products',
     reports: 'Reports & analytics', settings: 'Workspace settings',
   };
@@ -363,21 +411,38 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
         'Heavy Equipment': 'HEAVY_EQUIPMENT', 'Working Capital': 'WORKING_CAPITAL',
       };
       try {
-        await createFinancingApplication({
+        const created = await createFinancingApplication({
           customerName: newCustomer.trim(), customerType: newCustomerType,
           productCode: codeByProduct[newProduct] ?? 'MOTOR_VEHICLE',
           amount: Number(newAmount), tenorMonths: Number(newTenor),
         });
+        const applicationId = typeof created.id === 'string' ? created.id : '';
+        let followUpWarning = '';
+        if (applicationId) {
+          try { await createFinancingApprovalWorkflow(applicationId); }
+          catch (error) { followUpWarning = 'Application saved, but approval workflow could not be initialized: ' + (error instanceof Error ? error.message : 'unknown error'); }
+          for (const file of newDocuments) {
+            try { await uploadFinancingApplicationDocument(applicationId, file, newDocumentType); }
+            catch (error) {
+              followUpWarning = 'Application saved, but one or more documents did not upload. Open the application again and retry. ' + (error instanceof Error ? error.message : '');
+              break;
+            }
+          }
+        } else if (newDocuments.length) {
+          followUpWarning = 'Application saved, but document upload could not be linked because the server did not return an application ID.';
+        }
         const [result, overview] = await Promise.all([listFinancingApplications(100), getFinancingOverview()]);
         setApplications(mapApiApplications(result.data));
         setLiveOverview(overview);
         setShowNewApplication(false);
         setNewCustomer('');
+        setNewDocuments([]);
+        setNewDocumentType('IDENTITY');
         setNewCustomerType('BUSINESS');
         setNewAmount('250000000');
         setNewTenor('12');
         setModule('applications');
-        notify('Application saved to the financing database.');
+        notify(followUpWarning || 'Application saved with approval workflow initialized.');
       } catch (error) {
         notify(error instanceof Error ? error.message : 'Could not save application. No local fallback was created.');
       }
@@ -484,6 +549,67 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     </>
   );
 
+  const refreshApprovalSteps = async () => {
+    const result = await listFinancingApprovalWorkflows(200);
+    setApprovalSteps(result.data ?? []);
+    setApprovalState('live');
+  };
+
+  const submitApprovalDecision = async (step: FinancingApprovalStep, decision: 'APPROVE' | 'REJECT') => {
+    const note = (approvalNotes[step.id] ?? '').trim();
+    if (note.length < 3) {
+      notify('Please add a reason of at least 3 characters before deciding.');
+      return;
+    }
+    try {
+      await decideFinancingApprovalStep({ stepId: step.id, decision, note });
+      await refreshApprovalSteps();
+      setApprovalNotes((current) => ({ ...current, [step.id]: '' }));
+      notify(decision === 'APPROVE' ? 'Approval layer approved and audited.' : 'Approval layer rejected; later layers were skipped.');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Approval decision failed.');
+    }
+  };
+
+  const exportFinanceCsv = () => {
+    if (!financeReportRows.length) { notify('Generate a report with transactions before exporting.'); return; }
+    const rows = [
+      ['Journal number','Date (UTC)','Source type','Source ID','Memo','Status','Debit (IDR)','Credit (IDR)'],
+      ...financeReportRows.map((row) => [row.journal_number, row.created_at, row.source_type, row.source_id, row.memo ?? '', row.status, row.debit, row.credit]),
+    ];
+    const csv = '\\ufeff' + rows.map((row) => row.map((cell) => '"' + String(cell ?? '').replace(/"/g, '""') + '"').join(',')).join('\\r\\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'surepath-finance-' + reportStartDate + '-to-' + reportEndDate + '.csv';
+    link.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportFinancePdf = () => {
+    if (!financeReportRows.length) { notify('Generate a report with transactions before exporting.'); return; }
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    pdf.setFontSize(16); pdf.text('SurePath Finance Transaction Report', 40, 38);
+    pdf.setFontSize(9); pdf.text('Period: ' + reportStartDate + ' to ' + reportEndDate + ' | Generated: ' + new Date().toISOString(), 40, 56);
+    const columns = ['Journal','Date','Source','Memo','Status','Debit (IDR)','Credit (IDR)'];
+    const widths = [82, 90, 95, 180, 60, 90, 90];
+    let y = 82;
+    const drawHeader = () => {
+      let x = 40; pdf.setFont('helvetica','bold');
+      columns.forEach((column, index) => { pdf.text(column, x, y); x += widths[index]; });
+      y += 8; pdf.line(40, y, 800, y); y += 14; pdf.setFont('helvetica','normal');
+    };
+    drawHeader();
+    financeReportRows.forEach((row) => {
+      if (y > 550) { pdf.addPage(); y = 40; drawHeader(); }
+      const cells = [row.journal_number, new Date(row.created_at).toISOString().slice(0,10), row.source_type, String(row.memo ?? '').slice(0,36), row.status, Number(row.debit).toLocaleString('id-ID'), Number(row.credit).toLocaleString('id-ID')];
+      let x = 40;
+      cells.forEach((cell, index) => { pdf.text(String(cell), x, y, { maxWidth: widths[index] - 6 }); x += widths[index]; });
+      y += 14;
+    });
+    y += 12; pdf.setFont('helvetica','bold');
+    pdf.text('Transactions: ' + (financeReportTotals?.transaction_count ?? financeReportRows.length) + ' | Total debit: IDR ' + Number(financeReportTotals?.debit ?? 0).toLocaleString('id-ID') + ' | Total credit: IDR ' + Number(financeReportTotals?.credit ?? 0).toLocaleString('id-ID'), 40, Math.min(y, 570), { maxWidth: 760 });
+    pdf.save('surepath-finance-' + reportStartDate + '-to-' + reportEndDate + '.pdf');
+  };
+
   const renderModuleContent = () => {
     if (module === 'overview') return renderOverview();
     if (module === 'applications' || module === 'credit') return renderApplicationsTable(module === 'credit' ? 'Credit review queue' : 'All applications', module === 'credit' ? 'Simulated cases awaiting assessment and decision' : 'Search, filter and inspect the application pipeline');
@@ -534,7 +660,27 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
       </div>;
     }
     if (module === 'collections') return <div className={panel+' overflow-hidden'}><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-bold text-slate-900">Collections worklist</h2><p className={'mt-1 text-xs '+muted}>Illustrative collection queue · demo data only</p></div><div className="p-5"><p className="text-sm text-slate-600">Collections automation and live delinquency worklists have not been enabled. No live collections data is displayed here.</p></div></div>;
-    if (module === 'reports') return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{[{title:'Portfolio performance',desc:'Applications, approval rates and booked financing',icon:Activity},{title:'Credit quality',desc:'Decision distribution and risk indicators',icon:Gauge},{title:'Collections performance',desc:'Due amounts, overdue buckets and collection rate',icon:HandCoins},{title:'Product mix',desc:'Compare applications by financing product',icon:BriefcaseBusiness},{title:'Operational SLA',desc:'Processing time and outstanding work queues',icon:Clock3},{title:'Audit activity',desc:'Review decision and access events',icon:ShieldCheck}].map((report)=><button key={report.title} onClick={()=>notify('Demo report selected: '+report.title+'. Live data export is not connected.')} className={panel+' p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg'}><report.icon className="text-emerald-700" size={22}/><h3 className="mt-4 font-bold text-slate-900">{report.title}</h3><p className="mt-2 text-sm leading-relaxed text-slate-500">{report.desc}</p><span className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-emerald-700">Open report <ArrowRight size={13}/></span></button>)}</div>;
+    if (module === 'approvals') return <div className="space-y-4">
+      <div className={panel+' p-5'}><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Sequential approval queue</h2><p className="mt-1 text-sm text-slate-500">Document verification → credit review → credit approval → finance control. Each layer requires its assigned role and a reasoned decision.</p></div><button onClick={()=>{setApprovalState('loading');refreshApprovalSteps().catch((e:unknown)=>setApprovalState(e instanceof Error&&/FORBIDDEN|403/i.test(e.message)?'forbidden':'error'));}} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Activity size={14} className="mr-1 inline"/> Refresh queue</button></div>
+      {backendMode!=='live'&&<p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Approval queue requires an authenticated financing role. Demo records cannot approve live applications.</p>}
+      {approvalState==='loading'&&<p className="py-8 text-sm text-slate-500">Loading approval queue…</p>}
+      {approvalState==='forbidden'&&<p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Your current account has no role for this approval queue. No approval privileges are granted automatically.</p>}
+      {approvalState==='error'&&<p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">Could not load approval steps. Retry after checking the financing API.</p>}
+      {approvalState==='live'&&<div className="mt-5 space-y-3">{approvalSteps.length===0&&<div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">No approval workflows have been created yet. New applications create the standard four-layer workflow.</div>}{approvalSteps.map((step)=><div key={step.id} className="rounded-xl border border-slate-100 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold">Layer {step.step_order}</span><h3 className="font-bold text-slate-900">{step.step_label}</h3><span className={'rounded-full px-2.5 py-1 text-[10px] font-bold '+(step.status==='APPROVED'?'bg-emerald-50 text-emerald-700':step.status==='REJECTED'?'bg-rose-50 text-rose-700':step.status==='SKIPPED'?'bg-slate-100 text-slate-500':'bg-amber-50 text-amber-700')}>{step.status}</span></div><p className="mt-2 text-sm text-slate-500">{step.application?.application?.display_name ?? step.application?.customer?.display_name ?? 'Application'} · {step.application?.application_number ?? step.application_id} · {rupiah(Number(step.application?.requested_amount ?? 0))}</p><p className="mt-1 text-xs text-slate-400">Required role: {step.required_role}{step.decided_at?' · Decided '+new Date(step.decided_at).toLocaleString('id-ID'):''}</p>{step.decision_note&&<p className="mt-2 text-sm text-slate-600">Reason: {step.decision_note}</p>}</div></div>
+      {step.status==='PENDING'&&backendMode==='live'&&<div className="mt-3 flex flex-col gap-2 sm:flex-row"><input value={approvalNotes[step.id]??''} onChange={(e)=>setApprovalNotes(current=>({...current,[step.id]:e.target.value}))} placeholder="Decision reason (required)" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"/><button onClick={()=>void submitApprovalDecision(step,'APPROVE')} className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white">Approve</button><button onClick={()=>void submitApprovalDecision(step,'REJECT')} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700">Reject</button></div>}</div>)}</div>}
+      </div>
+    </div>;
+    if (module === 'reports') return <div className="space-y-4">
+      <div className={panel+' p-5'}><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Finance transaction report</h2><p className="mt-1 text-sm text-slate-500">Daily or monthly transaction journal report with double-entry totals. Exports include only authorized persisted ledger data.</p></div><div className="flex flex-wrap gap-2"><button onClick={exportFinanceCsv} disabled={financeReportState!=='live'||financeReportRows.length===0} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 disabled:opacity-40"><FileSpreadsheet size={14} className="mr-1 inline"/> Export Excel CSV</button><button onClick={exportFinancePdf} disabled={financeReportState!=='live'||financeReportRows.length===0} className="rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"><Download size={14} className="mr-1 inline"/> Export PDF</button></div></div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><label className="text-xs font-semibold text-slate-600">Report period<select value={reportPeriod} onChange={(e)=>{const value=e.target.value;setReportPeriod(value);const now=new Date();if(value==='daily'){const day=now.toISOString().slice(0,10);setReportStartDate(day);setReportEndDate(day);}else{setReportStartDate(new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10));setReportEndDate(now.toISOString().slice(0,10));}}} className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"><option value="daily">Daily</option><option value="monthly">Monthly to date</option><option value="custom">Custom range</option></select></label><label className="text-xs font-semibold text-slate-600">From<input type="date" value={reportStartDate} onChange={(e)=>{setReportStartDate(e.target.value);setReportPeriod('custom');}} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"/></label><label className="text-xs font-semibold text-slate-600">To<input type="date" value={reportEndDate} onChange={(e)=>{setReportEndDate(e.target.value);setReportPeriod('custom');}} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"/></label><div className="flex items-end"><button onClick={()=>{setFinanceReportState('loading');getFinancingTransactionReport(reportStartDate,reportEndDate).then(r=>{setFinanceReportRows(r.data??[]);setFinanceReportTotals(r.totals??null);setFinanceReportState('live');}).catch((e:unknown)=>setFinanceReportState(e instanceof Error&&/FORBIDDEN|403/i.test(e.message)?'forbidden':'error'));}} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Generate report</button></div></div>
+      {backendMode!=='live'&&<p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Finance reports require an authenticated finance, admin, or auditor role. Demo totals are not exported.</p>}
+      {financeReportState==='loading'&&<p className="py-8 text-sm text-slate-500">Generating report from ledger journals…</p>}
+      {financeReportState==='forbidden'&&<p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Access restricted: your account is not authorized to generate finance reports.</p>}
+      {financeReportState==='error'&&<p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">Could not generate the report. Check the date range and financing API.</p>}
+      {financeReportState==='live'&&<><div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Transactions</p><p className="mt-1 text-xl font-black text-slate-900">{financeReportTotals?.transaction_count??financeReportRows.length}</p></div><div className="rounded-xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Total debit</p><p className="mt-1 text-lg font-black text-slate-900">{rupiah(financeReportTotals?.debit??0)}</p></div><div className="rounded-xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Total credit</p><p className="mt-1 text-lg font-black text-slate-900">{rupiah(financeReportTotals?.credit??0)}</p></div></div>{financeReportTotals?.truncated&&<p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Report reached the 1,000 journal safety limit. Narrow the date range before exporting a complete report.</p>}<div className="mt-5 overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead><tr className="border-b border-slate-100 text-xs text-slate-400"><th className="py-3 pr-3">Journal</th><th className="py-3 pr-3">Date</th><th className="py-3 pr-3">Source</th><th className="py-3 pr-3">Memo</th><th className="py-3 pr-3 text-right">Debit</th><th className="py-3 text-right">Credit</th></tr></thead><tbody>{financeReportRows.map(row=><tr key={row.id} className="border-b border-slate-50"><td className="py-3 pr-3 font-semibold text-slate-800">{row.journal_number}</td><td className="py-3 pr-3 text-slate-500">{new Date(row.created_at).toLocaleDateString('id-ID')}</td><td className="py-3 pr-3 text-slate-600">{row.source_type}</td><td className="py-3 pr-3 text-slate-500">{row.memo||'—'}</td><td className="py-3 pr-3 text-right tabular-nums">{rupiah(row.debit)}</td><td className="py-3 text-right tabular-nums">{rupiah(row.credit)}</td></tr>)}</tbody></table>{financeReportRows.length===0&&<p className="py-8 text-center text-sm text-slate-500">No posted ledger journals found for this period.</p>}</div></>}
+      </div>
+      <div className={panel+' p-4 text-xs leading-relaxed text-slate-500'}>Excel export is CSV format, compatible with Microsoft Excel and spreadsheet tools. Reports are based on posted ledger journals, not unreconciled raw bank feeds. All amounts are IDR; timestamps in the source ledger are UTC.</div>
+    </div>;
     return <div className={panel+' p-5 sm:p-6'}><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Settings2 size={21}/></span><div><h2 className="font-bold text-slate-900">Workspace configuration</h2><p className="mt-1 text-sm text-slate-500">Configuration areas for a future production tenant</p></div></div><div className="mt-6 divide-y divide-slate-100">{[{title:'Partner / tenant profile',desc:'Finance partner identity, branding and operational scope'},{title:'Roles & permissions',desc:'Role-based access for admin, credit analyst, operations and collections'},{title:'Approval matrix',desc:'Maker-checker rules, limits and delegated approval'},{title:'Product and pricing rules',desc:'Partner-owned eligibility, rates, fees and product versions'},{title:'Verification providers',desc:'Approved provider credentials and consent controls'},{title:'Audit and retention',desc:'Access logs, decision trails, retention and export policy'}].map((item)=><button key={item.title} onClick={()=>notify(item.title+' requires authenticated backend configuration.')} className="flex w-full items-center justify-between gap-4 py-4 text-left"><span><span className="block text-sm font-semibold text-slate-800">{item.title}</span><span className="mt-1 block text-xs text-slate-500">{item.desc}</span></span><ChevronRight size={17} className="shrink-0 text-slate-400"/></button>)}</div></div>;
   };
 
@@ -614,7 +760,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
         {showImportReconciliation && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={importReconciliation} className="w-full max-w-2xl rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><ShieldCheck size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Import bank statement lines</h2><p className="mt-1 text-sm text-slate-500">Paste normalized JSON from an independently verified statement. No bank connection is made.</p></div><button type="button" onClick={()=>setShowImportReconciliation(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close import form"><X size={18}/></button></div><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-slate-700">Statement reference<input required minLength={6} maxLength={120} value={statementReference} onChange={e=>setStatementReference(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Masked bank account<input required minLength={4} maxLength={40} value={maskedBankAccount} onChange={e=>setMaskedBankAccount(e.target.value)} placeholder="****1234" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/><span className="mt-1 block text-[11px] font-normal text-rose-700">Do not enter a full bank account number.</span></label><label className="block text-sm font-semibold text-slate-700">Period start<input required type="date" value={statementPeriodStart} onChange={e=>setStatementPeriodStart(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Period end<input required type="date" value={statementPeriodEnd} onChange={e=>setStatementPeriodEnd(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label></div><label className="mt-4 block text-sm font-semibold text-slate-700">Normalized statement lines JSON<textarea required rows={8} value={statementLinesJson} onChange={e=>setStatementLinesJson(e.target.value)} spellCheck={false} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500" placeholder={'[{"transaction_date":"2026-10-18","direction":"IN","amount":1000000,"external_reference":"BANK-REF-123"}]'}/></label><p className="mt-2 text-[11px] leading-relaxed text-slate-500">Each line needs transaction_date, direction (IN/OUT), amount and external_reference. Optional description_hash must be SHA-256. Raw bank descriptions and unmasked account numbers are not accepted.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowImportReconciliation(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={reconciliationSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60">{reconciliationSaving?'Importing…':'Import statement'}</button></div></form></div>}
         {showRecordRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentReceipt} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><CreditCard size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Record repayment receipt</h2><p className="mt-1 text-sm text-slate-500">Records an internal receipt only; no bank settlement is verified.</p></div><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close repayment form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Loan account UUID<input required value={paymentAccountId} onChange={e=>setPaymentAccountId(e.target.value)} placeholder="Paste loan account ID" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Amount (IDR)<input required type="number" min="0.01" step="0.01" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Channel<input required minLength={2} maxLength={60} value={paymentChannel} onChange={e=>setPaymentChannel(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">External receipt reference<input maxLength={200} value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder="Bank / payment provider reference" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Payment date<input required type="date" value={paymentDate} onChange={e=>setPaymentDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Saving…" : "Save receipt"}</button></div></form></div>}
         {showAllocateRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentAllocation} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-800"><CircleDollarSign size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Allocate repayment</h2><p className="mt-1 text-sm text-slate-500">Enter explicit component amounts. Allocation is posted to the ledger.</p></div><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close allocation form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Repayment UUID<input required value={allocationPaymentId} onChange={e=>setAllocationPaymentId(e.target.value)} placeholder="Copy Payment ID from receipts table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Schedule UUID<input required value={allocationScheduleId} onChange={e=>setAllocationScheduleId(e.target.value)} placeholder="Copy Schedule ID from schedule table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><div className="grid gap-3 sm:grid-cols-3"><label className="block text-sm font-semibold text-slate-700">Principal<input required type="number" min="0" step="0.01" value={allocationPrincipal} onChange={e=>setAllocationPrincipal(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Interest<input required type="number" min="0" step="0.01" value={allocationInterest} onChange={e=>setAllocationInterest(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Fees<input required type="number" min="0" step="0.01" value={allocationFees} onChange={e=>setAllocationFees(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label></div></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Posting…" : "Post allocation"}</button></div></form></div>}
-        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
+        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4"><div className="flex items-center gap-2 text-sm font-bold text-slate-800"><FileUp size={17} className="text-emerald-700"/> Application documents</div><p className="mt-1 text-xs leading-relaxed text-slate-600">{newCustomerType==='INDIVIDUAL'?'Suggested: identity card, proof of address, income/bank statement, consent, and collateral evidence if applicable.':'Suggested: business registration, tax document, recent financial statements, authorized signatory identity, bank statement, consent, and collateral evidence if applicable.'}</p><label className="mt-3 block text-xs font-semibold text-slate-600">Document category<select value={newDocumentType} onChange={(e)=>setNewDocumentType(e.target.value)} className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm"><option value="IDENTITY">Identity / authorized signatory</option><option value="PROOF_OF_ADDRESS">Proof of address</option><option value="INCOME_OR_BANK_STATEMENT">Income / bank statement</option><option value="BUSINESS_REGISTRATION">Business registration</option><option value="TAX_DOCUMENT">Tax document</option><option value="FINANCIAL_STATEMENT">Financial statement</option><option value="COLLATERAL">Collateral evidence</option><option value="SIGNED_CONSENT">Signed consent</option><option value="OTHER">Other</option></select></label><input className="mt-3 block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-semibold file:text-emerald-800" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" onChange={(e)=>setNewDocuments(Array.from(e.target.files??[]))}/><p className="mt-2 text-[11px] text-slate-500">{newDocuments.length} file(s) selected · max 10 MB each · private storage</p></div><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
 
         {selectedApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Demo application</span><h2 className="mt-3 text-xl font-black text-slate-900">{selectedApplication.customer}</h2><p className="mt-1 text-sm text-slate-400">{selectedApplication.id}</p></div><button onClick={()=>setSelectedApplication(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close details"><X size={18}/></button></div><div className="mt-5 grid grid-cols-2 gap-3">{[{label:'Product',value:selectedApplication.product},{label:'Requested amount',value:rupiah(selectedApplication.amount)},{label:'Current status',value:selectedApplication.status},{label:'Credit score',value:selectedApplication.score?selectedApplication.score+'/100':'Not assessed'},{label:'Submitted',value:selectedApplication.submitted},{label:'Assigned owner',value:selectedApplication.owner}].map((item)=><div key={item.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-800">{item.value}</p></div>)}</div><p className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">This record is simulated. Credit decisions and status transitions are not persisted to a backend.</p><div className="mt-5 flex justify-end"><button onClick={()=>setSelectedApplication(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Close details</button></div></div></div>}
 

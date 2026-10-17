@@ -59,6 +59,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # For pull requests, scan the exact event head rather than the synthetic
+          # merge ref. This keeps Gitleaks' diff range aligned if the branch moves
+          # while a queued workflow is starting.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
       - name: Scan repository history for secrets
         uses: gitleaks/gitleaks-action@v2

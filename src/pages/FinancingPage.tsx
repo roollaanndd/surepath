@@ -43,11 +43,7 @@ const products = [
 const rupiah = (amount: number) => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
 }).format(amount);
-const compactRupiah = (amount: number) => {
-  if (amount >= 1000000000) return 'Rp ' + (amount / 1000000000).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + 'B';
-  if (amount >= 1000000) return 'Rp ' + (amount / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 0 }) + 'M';
-  return rupiah(amount);
-};
+
 
 const navGroups: { label: string; items: { key: ModuleKey; label: string; icon: React.ElementType; count?: string }[] }[] = [
   { label: 'WORKSPACE', items: [

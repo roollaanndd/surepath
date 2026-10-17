@@ -26,7 +26,7 @@ export async function financingRequest<T = any>(
   const sessionResult = await supabase.auth.getSession().catch(() => ({ data: { session: null } } as any));
   const token = sessionResult?.data?.session?.access_token as string | undefined;
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token && !demoMode) headers.Authorization = `Bearer ${token}`;
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   const query = options.query ? '?' + new URLSearchParams(options.query).toString() : '';
   const response = await fetch(`/api/financing/${route.replace(/^\/+/, '')}${query}`, {

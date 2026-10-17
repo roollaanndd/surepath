@@ -1,0 +1,143 @@
+name: Android native build
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'components/**'
+      - 'services/**'
+      - 'src/**'
+      - 'styles.css'
+      - 'index.tsx'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'capacitor.config.ts'
+      - 'android/**'
+      - 'scripts/sync-android-version.mjs'
+      - '.github/workflows/android-native-build.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'components/**'
+      - 'services/**'
+      - 'src/**'
+      - 'styles.css'
+      - 'index.tsx'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'capacitor.config.ts'
+      - 'android/**'
+      - 'scripts/sync-android-version.mjs'
+      - '.github/workflows/android-native-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Build SurePath Android app
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build web UI and sync native Android assets
+        run: npm run build:android
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder-key' }}
+
+      - name: Configure release signing when protected secrets are available
+        id: signing
+        if: github.event_name != 'pull_request'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" && -n "$ANDROID_KEYSTORE_PASSWORD" && -n "$ANDROID_KEY_ALIAS" && -n "$ANDROID_KEY_PASSWORD" ]]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/surepath-release.keystore
+            {
+              printf 'storeFile=surepath-release.keystore\n'
+              printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+              printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+              printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            } > android/keystore.properties
+            echo 'signed=true' >> "$GITHUB_OUTPUT"
+            echo 'Release signing configured.'
+          else
+            echo 'signed=false' >> "$GITHUB_OUTPUT"
+            echo 'Release signing secrets are not configured; this build will be unsigned and cannot update an existing signed installation.'
+          fi
+
+      - name: Build release APK and Play Store bundle
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleRelease bundleRelease
+
+      - name: Verify native package contains current UI assets
+        shell: bash
+        run: |
+          test -s android/app/build/outputs/apk/release/app-release.apk
+          test -s android/app/build/outputs/bundle/release/app-release.aab
+          test -s android/app/src/main/assets/public/index.html
+          grep -q 'assets/index-' android/app/src/main/assets/public/index.html
+          echo 'Android APK/AAB and bundled web entrypoint exist.'
+
+      - name: Publish build summary
+        if: always()
+        env:
+          SIGNED: ${{ steps.signing.outputs.signed || 'false' }}
+          APP_VERSION: ${{ env.APP_VERSION }}
+        run: |
+          {
+            echo '## SurePath Android build'
+            echo
+            echo '- Web UI was rebuilt from the checked-out source and synced into the native Android project.'
+            if [[ "$SIGNED" == 'true' ]]; then
+              echo '- Release signing: configured from repository secrets.'
+              echo '- The APK can update an existing install only if this keystore matches the installed app signing key.'
+            else
+              echo '- Release signing: not configured; artifacts are unsigned and cannot update an existing signed installation.'
+              echo '- Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD to create installable update artifacts.'
+            fi
+            echo '- Store publishing is intentionally not automated by this workflow.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Android release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: surepath-android-${{ github.sha }}
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14

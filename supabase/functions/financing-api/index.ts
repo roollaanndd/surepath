@@ -780,6 +780,9 @@ Deno.serve(async (req) => {
       const { data: step, error: stepError } = await db.from("sp_financing_approval_steps").select("*").eq("id", stepId).maybeSingle();
       if (stepError) throw stepError;
       if (!step) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      const { data: applicationOwner, error: ownerError } = await db.from("sp_financing_applications").select("created_by").eq("id", step.application_id).maybeSingle();
+      if (ownerError) throw ownerError;
+      if (applicationOwner?.created_by === userId) return json({ error: "MAKER_CHECKER_VIOLATION", message: "The application creator cannot approve their own application.", correlationId }, 403, headers);
       if (step.status !== "PENDING") return json({ error: "APPROVAL_ALREADY_DECIDED", correlationId }, 409, headers);
       if (!roles.has("FINANCING_ADMIN") && !roles.has(step.required_role)) return json({ error: "FORBIDDEN", message: "Your role cannot decide this approval layer.", correlationId }, 403, headers);
       if (step.requested_by === userId) return json({ error: "MAKER_CHECKER_VIOLATION", message: "The person who initiated this approval workflow cannot approve its steps.", correlationId }, 403, headers);
@@ -810,12 +813,12 @@ Deno.serve(async (req) => {
       const endDate = safeString(params.end_date, 10);
       const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
       if (!validDate(startDate) || !validDate(endDate) || endDate < startDate) return json({ error: "VALIDATION_ERROR", message: "Provide valid start_date and end_date.", correlationId }, 400, headers);
-      const span = (Date.parse(endDate + "T00:00:00Z") - Date.parse(startDate + "T00:00:00Z")) / 86400000;
+      const span = (Date.parse(endDate + "T00:00:00+07:00") - Date.parse(startDate + "T00:00:00Z")) / 86400000;
       if (span > 366) return json({ error: "DATE_RANGE_TOO_LARGE", message: "Choose a report range of 367 days or less.", correlationId }, 400, headers);
       const nextDay = new Date(Date.parse(endDate + "T00:00:00Z") + 86400000).toISOString();
       const { data: journals, error } = await db.from("sp_financing_ledger_journals")
         .select("id,journal_number,source_type,source_id,currency,status,memo,created_at,entries:sp_financing_ledger_entries(debit,credit,account:sp_financing_ledger_accounts(account_code,account_name))")
-        .gte("created_at", startDate + "T00:00:00.000Z").lt("created_at", nextDay)
+        .gte("created_at", startDate + "T00:00:00+07:00").lt("created_at", nextDay)
         .order("created_at", { ascending: true }).limit(1000);
       if (error) throw error;
       const rows = (journals ?? []).map((journal: Record<string, unknown>) => {

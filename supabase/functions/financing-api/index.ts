@@ -52,6 +52,7 @@ Deno.serve(async (req: Request) => {
     'Vary': 'Origin',
   };
   if (req.method === 'OPTIONS') return new Response('ok', { status: 204, headers });
+  if (req.method === 'GET') return response({ service: 'financing-api', status: 'ok', apiVersion: 'v1', mode: 'edge-health' }, 200, headers);
   if (req.method !== 'POST') return response({ error: 'Method not allowed' }, 405, headers);
 
   const url = Deno.env.get('SUPABASE_URL') || '';
@@ -224,7 +225,7 @@ Deno.serve(async (req: Request) => {
     }
     if (action === 'applications' || action === 'list_applications') {
       let query = db.from('sp_financing_applications').select('id,application_number,customer_id,product_id,requested_amount,currency,requested_tenor_months,status,source_channel,notes,version,created_at,updated_at,customer:sp_financing_customers(display_name,customer_type),product:sp_financing_products(name,code)').order('created_at', { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit || 100))));
-      if (typeof params.status === 'string') query = query.eq('status', params.status);
+      if (typeof params.status === 'string') query = query.eq('status', params.status.toUpperCase());
       const { data, error } = await query;
       if (error) throw error;
       return response({ data: data || [], mode: 'authenticated' }, 200, headers);

@@ -1,49 +1,41 @@
-# SurePath Financing Core — v1 foundation
+# SurePath Financing Core — v1 / phase 2
 
-This isolated multi-finance workspace is built inside the SurePath repository while preserving the existing insurance modules. It is a foundational LOS/LMS implementation, not yet a licensed lender's production system. It does not execute disbursements or collect money.
+This workspace extends the existing SurePath Financing Core foundation already present in Supabase. It reuses the live `sp_financing_*` tables and secured RPCs; it does not create a duplicate `financing_*` schema or expose service-role access through Vercel.
 
-## Included in this branch
+## Included
 
-- Responsive database-backed workspace at `/financing/dashboard`: overview, applications, customers, credit review, contracts, disbursements, repayments, collections, products, reports/audit and settings.
-- Vercel serverless API at `/api/financing/*`.
-- Supabase schema for tenants, products, customers, applications, documents, credit decisions, contracts, loan accounts, disbursement requests, repayment schedules/transactions, collection cases and audit events.
-- Tenant resolution from verified Supabase Auth `app_metadata.financing_tenant_id`; role from `app_metadata.financing_role`.
-- Server-side product amount/tenor validation, application state transitions, optimistic updates and audit events.
-- Synthetic tenant + product catalogue only. No sample customers, balances or repayment transactions are seeded.
+- Responsive Multifinance Control Center at `/financing/dashboard`.
+- Supabase Edge Function `financing-gateway` as the API boundary.
+- Authenticated mode using explicit active roles in `sp_financing_user_roles`.
+- Isolated public sandbox stored only in `sp_financing_demo_*` tables; sandbox actions cannot touch production financing tables.
+- Multi-product catalogue: motor vehicle, multipurpose, heavy equipment, and working capital.
+- Application creation uses existing `sp_financing_create_application` RPC with idempotency.
+- Status transitions use existing `sp_financing_transition_application` RPC with optimistic version checks.
+- Credit decisions use a new transactional RPC that updates application status, stores the decision, and emits an audit event.
+- Phase-2 tables for contracts, loan accounts, maker-checker disbursement requests, repayment schedules/transactions and collections.
+- Shared database-backed rate limiting for public sandbox requests.
 
-## Setup
+## Database and function setup
 
-1. Apply `supabase/migrations/202610180001_financing_core.sql` to the intended Supabase project.
-2. Configure server-only Vercel environment variables:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY` (never expose this as a `VITE_*` variable)
-3. For an isolated test deployment only, set `FINANCING_DEMO_MODE=true`. Unauthenticated access is restricted to the synthetic sandbox tenant. Turn this off for partner/production deployments.
-4. In authenticated mode, assign users through a trusted admin process with Supabase `app_metadata.financing_tenant_id` and `app_metadata.financing_role`. Supported roles: `tenant_admin`, `operations_manager`, `credit_manager`, `credit_analyst`, `viewer`. Do not let users self-assign these claims.
-5. Test `GET /api/financing/health`, `GET /api/financing/products`, create an application, then walk it through `new → documents_pending → documents_verified → credit_review`. Verify audit events for every write.
-6. For partner production, disable demo mode and configure tenant identity/roles before exposing the route. Complete partner acceptance and compliance review before enabling integrations.
+1. The existing production Supabase project already contains phase-1 financing tables and RPCs. Do not recreate them.
+2. Apply `supabase/migrations/202610180001_financing_lms_phase2.sql` to add phase-2 servicing tables and the atomic credit-decision RPC.
+3. Deploy `supabase/functions/financing-gateway/index.ts` to the existing SurePath Supabase project. The function needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in its Edge Function environment (the existing project already uses these for its gateway).
+4. The function is configured with `verify_jwt = false` because it performs its own verified-session and role checks, and also serves the isolated public sandbox. Never add a public action that reads/writes production financing records.
+5. Authenticated users need an active role in `sp_financing_user_roles`. Roles: `FINANCING_ADMIN`, `ORIGINATION`, `VERIFICATION_ANALYST`, `CREDIT_ANALYST`, `CREDIT_APPROVER`, `CONTRACT_OFFICER`, `DISBURSEMENT_MAKER`, `DISBURSEMENT_CHECKER`, `SERVICING_FINANCE`, `COLLECTIONS`, `AUDITOR`, `COMPLIANCE`.
+6. The sandbox requires no account but stores only synthetic sample submissions in separate `sp_financing_demo_*` tables. Tell users to use fictional names only. Sandbox has no real disbursement or repayment execution.
 
-## API
+## API actions
 
-- `GET /api/financing/health`
-- `GET /api/financing/overview`
-- `GET /api/financing/products`
-- `GET /api/financing/customers`
-- `GET /api/financing/applications?limit=100&status=credit_review`
-- `POST /api/financing/applications` — creates a customer and application
-- `PATCH /api/financing/applications/:id` — validates workflow transition
-- `POST /api/financing/applications/:id/decision` — credit-manager role required outside sandbox; rationale is mandatory
-- `GET /api/financing/contracts`
-- `GET /api/financing/disbursements`
-- `GET /api/financing/repayments`
-- `GET /api/financing/collections`
-- `GET /api/financing/audit-events`
+The browser calls `supabase.functions.invoke('financing-gateway')` with an action and params:
+- `health`, `products`, `overview`, `applications`, `customers`
+- `create_application`, `transition_application`, `record_credit_decision`
+- `contracts`, `disbursements`, `repayments`, `collections`, `audit-events`
+- Public sandbox-only variants are prefixed with `demo_` and are restricted to synthetic tables.
 
-## Not enabled yet
+## Operational safety boundaries
 
-- Real disbursement, bank transfer, repayment collection or payment-provider execution.
-- Credit bureau/SLIK, KYC vendors, e-signature, banking APIs and partner webhooks.
-- Production contract generation/signing and legally reviewed loan schedules/interest calculations.
-- Production identity/role administration UI, MFA enforcement, document storage lifecycle and retention jobs.
-- General-ledger posting, reconciliation, provisioning, portfolio-at-risk calculations and regulatory filing exports.
-
-The disbursement and repayment screens currently read persisted records only; they do not execute money movement. Empty states are intentional until real data is configured. No hardcoded portfolio KPIs are presented as live metrics.
+- Disbursement requests are stored with maker/checker fields; this phase does not call a bank, transfer funds, or mark money as settled automatically.
+- Repayment records are not yet allocated against schedules; no balance is changed by a UI-only action.
+- Contract generation/signature, external KYC/SLIK, bank/payment provider integrations, general ledger, reconciliation, provisioning, PAR/NPF calculations and regulatory filing exports still need implementation and partner acceptance.
+- Production role assignment is explicit; the public sandbox cannot grant roles or query production data.
+- No illustrative portfolio totals are seeded as live metrics; empty states show when there is no database data.

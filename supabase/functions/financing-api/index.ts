@@ -164,7 +164,7 @@ Deno.serve(async (req: Request) => {
       if (!app) return fail('Application not found.', 404, headers);
       const target = String(params.targetStatus || params.target_status || '');
       if (!TRANSITIONS[app.status]?.includes(target)) return fail('Invalid application status transition.', 409, headers);
-      if (app.version !== Number(params.expectedVersion)) return fail('Application changed; refresh and retry.', 409, headers);
+      if (app.version !== Number(params.expectedVersion ?? params.expected_version)) return fail('Application changed; refresh and retry.', 409, headers);
       const { data, error } = await db.from('sp_financing_demo_applications').update({ status: target, version: app.version + 1, updated_at: new Date().toISOString() }).eq('id', app.id).eq('version', app.version).select('*').maybeSingle();
       if (error) throw error;
       if (!data) return fail('Application changed; refresh and retry.', 409);
@@ -236,10 +236,10 @@ Deno.serve(async (req: Request) => {
     }
     if (action === 'create_application') {
       if (!roleHas(roles, ['ORIGINATION'])) return response({ error: 'Origination role required' }, 403, headers);
-      const customerName = String(params.customerName || '').trim();
-      const productCode = String(params.productCode || '');
-      const amount = Number(params.requestedAmount);
-      const tenor = Number(params.tenorMonths);
+      const customerName = String(params.customerName || params.customer_name || '').trim();
+      const productCode = String(params.productCode || params.product_code || '');
+      const amount = Number(params.requestedAmount ?? params.requested_amount);
+      const tenor = Number(params.tenorMonths ?? params.requested_tenor_months);
       if (customerName.length < 2 || customerName.length > 160) return fail('Customer name must be 2–160 characters.', 400, headers);
       const productPolicy = DEMO_PRODUCTS.find((product) => product.code === productCode);
       if (!productPolicy) return fail('Invalid product code.', 400, headers);
@@ -278,7 +278,7 @@ Deno.serve(async (req: Request) => {
       const decision = decisionMap[String(params.decision || '').toLowerCase()];
       if (!decision) return fail('Invalid credit decision.', 400, headers);
       const { data, error } = await db.rpc('sp_financing_record_credit_decision', {
-        p_user_id: actorId, p_application_id: String(params.id || ''), p_expected_version: Number(params.expectedVersion),
+        p_user_id: actorId, p_application_id: String(params.id || params.application_id || ''), p_expected_version: Number(params.expectedVersion ?? params.expected_version),
         p_decision: decision, p_score: params.score == null ? null : Number(params.score),
         p_rationale: String(params.rationale || '').trim(), p_policy_version: String(params.policyVersion || 'pilot-v1'),
         p_correlation_id: String(params.correlationId || crypto.randomUUID()),

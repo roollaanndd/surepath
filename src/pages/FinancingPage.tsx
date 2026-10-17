@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { createFinancingApplication, getFinancingOverview, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingLedgerJournals, getFinancingTrialBalance, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingLedgerJournal, type FinancingTrialBalanceRow } from '../services/financingApi';
+import { createFinancingApplication, getFinancingOverview, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow } from '../services/financingApi';
 import { SitePageProps } from './site/siteKit';
 import {
   Activity, AlertCircle, ArrowRight, ArrowUpRight, Banknote,
@@ -114,6 +114,23 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [liveSchedules, setLiveSchedules] = useState<FinancingRepaymentSchedule[]>([]);
   const [liveJournals, setLiveJournals] = useState<FinancingLedgerJournal[]>([]);
   const [trialBalance, setTrialBalance] = useState<FinancingTrialBalanceRow[]>([]);
+  const [livePayments, setLivePayments] = useState<FinancingRepaymentRecord[]>([]);
+  const [showRecordRepayment, setShowRecordRepayment] = useState(false);
+  const [servicingSaving, setServicingSaving] = useState(false);
+  const [paymentIdempotencyKey, setPaymentIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [allocationIdempotencyKey, setAllocationIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [showAllocateRepayment, setShowAllocateRepayment] = useState(false);
+  const [paymentAccountId, setPaymentAccountId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('1000000');
+  const [paymentChannel, setPaymentChannel] = useState('BANK_TRANSFER');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [allocationPaymentId, setAllocationPaymentId] = useState('');
+  const [allocationScheduleId, setAllocationScheduleId] = useState('');
+  const [allocationPrincipal, setAllocationPrincipal] = useState('0');
+  const [allocationInterest, setAllocationInterest] = useState('0');
+  const [allocationFees, setAllocationFees] = useState('0');
+
 
 
   useEffect(() => {
@@ -138,11 +155,13 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setServicingState('loading');
     Promise.all([
       listFinancingRepaymentSchedules(100),
+      listFinancingRepayments(50),
       listFinancingLedgerJournals(50),
       getFinancingTrialBalance(),
-    ]).then(([schedules, journals, balance]) => {
+    ]).then(([schedules, payments, journals, balance]) => {
       if (!active) return;
       setLiveSchedules(schedules.data ?? []);
+      setLivePayments(payments.data ?? []);
       setLiveJournals(journals.data ?? []);
       setTrialBalance(balance.data ?? []);
       setServicingState('live');
@@ -171,6 +190,61 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setToast(message);
     window.setTimeout(() => setToast(''), 3200);
   };
+  const refreshServicingData = async () => {
+    const [schedules, payments, journals, balance] = await Promise.all([
+      listFinancingRepaymentSchedules(100), listFinancingRepayments(50),
+      listFinancingLedgerJournals(50), getFinancingTrialBalance(),
+    ]);
+    setLiveSchedules(schedules.data ?? []);
+    setLivePayments(payments.data ?? []);
+    setLiveJournals(journals.data ?? []);
+    setTrialBalance(balance.data ?? []);
+    setServicingState('live');
+  };
+
+  const saveRepaymentReceipt = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (servicingSaving) return;
+    setServicingSaving(true);
+    try {
+      await recordFinancingRepayment({
+        loanAccountId: paymentAccountId.trim(), amount: Number(paymentAmount), channel: paymentChannel.trim(),
+        externalReference: paymentReference.trim(), paymentDate: new Date(paymentDate + 'T12:00:00').toISOString(),
+        idempotencyKey: paymentIdempotencyKey,
+      });
+      await refreshServicingData();
+      setShowRecordRepayment(false);
+      setPaymentReference('');
+      setPaymentIdempotencyKey(crypto.randomUUID());
+      notify('Repayment receipt recorded. Bank reconciliation is still pending.');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Could not record repayment receipt.');
+    } finally {
+      setServicingSaving(false);
+    }
+  };
+
+  const saveRepaymentAllocation = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (servicingSaving) return;
+    setServicingSaving(true);
+    try {
+      await allocateFinancingRepayment({
+        repaymentId: allocationPaymentId.trim(), scheduleId: allocationScheduleId.trim(),
+        principalAmount: Number(allocationPrincipal), interestAmount: Number(allocationInterest), feesAmount: Number(allocationFees),
+        idempotencyKey: allocationIdempotencyKey,
+      });
+      await refreshServicingData();
+      setShowAllocateRepayment(false);
+      setAllocationIdempotencyKey(crypto.randomUUID());
+      notify('Repayment allocation posted to the ledger.');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Could not allocate repayment.');
+    } finally {
+      setServicingSaving(false);
+    }
+  };
+
   const addDemoApplication = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newCustomer.trim() || Number(newAmount) <= 0) return;
@@ -315,11 +389,15 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
           <div className="flex items-start gap-3"><AlertCircle className="mt-0.5 text-amber-600" size={19}/><div><h2 className="font-bold text-slate-900">Repayment ledger · demo mode</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">The live servicing API is not available to this session. The repayment and ledger views are not populated with fictional data in this panel. An authorized financing session is required to view production records.</p></div></div>
         </div> : <>
           <div className={panel+' p-5'}>
-            <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Repayment schedule</h2><p className="mt-1 text-xs text-slate-500">Persisted instalments from the financing API · IDR</p></div><button onClick={()=>{setServicingState('loading'); Promise.all([listFinancingRepaymentSchedules(100),listFinancingLedgerJournals(50),getFinancingTrialBalance()]).then(([s,j,b])=>{setLiveSchedules(s.data??[]);setLiveJournals(j.data??[]);setTrialBalance(b.data??[]);setServicingState('live');}).catch((e:unknown)=>{setServicingState(e instanceof Error&&/FORBIDDEN|403|UNAUTHENTICATED/i.test(e.message)?'forbidden':'error');});}} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Activity size={14} className="mr-1 inline"/> Refresh</button></div>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Repayment schedule</h2><p className="mt-1 text-xs text-slate-500">Persisted instalments from the financing API · IDR</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>{setServicingState('loading'); refreshServicingData().catch((e:unknown)=>{setServicingState(e instanceof Error&&/FORBIDDEN|403|UNAUTHENTICATED/i.test(e.message)?'forbidden':'error');});}} className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><Activity size={14} className="mr-1 inline"/> Refresh</button>{servicingState==='live' && <button onClick={()=>setShowRecordRepayment(true)} className="rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800">Record receipt</button>}{servicingState==='live' && <button onClick={()=>setShowAllocateRepayment(true)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-100">Allocate payment</button>}</div></div>
             {servicingState==='loading' && <p className="py-8 text-sm text-slate-500">Loading repayment records…</p>}
             {servicingState==='forbidden' && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Access restricted.</strong> This account has no servicing permission. Ask an administrator to assign an approved SERVICING_FINANCE or AUDITOR role.</div>}
             {servicingState==='error' && <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">The servicing API could not be loaded. No demo values are being substituted for production records.</div>}
-            {servicingState==='live' && <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Due date</th><th className="px-3 py-3">Account reference</th><th className="px-3 py-3">Installment</th><th className="px-3 py-3">Paid</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Version</th></tr></thead><tbody>{liveSchedules.map(row=><tr key={row.id} className="border-t border-slate-100"><td className="px-3 py-3 text-slate-600">{new Date(row.due_date+'T00:00:00').toLocaleDateString('id-ID')}</td><td className="px-3 py-3 font-mono text-xs text-slate-600">{row.loan_account_id.slice(0,8)}…</td><td className="px-3 py-3 font-semibold text-slate-800">{money(row.scheduled_payment || (Number(row.principal_due)+Number(row.interest_due)+Number(row.fees_due)))}</td><td className="px-3 py-3 text-slate-600">{money(row.amount_paid)}</td><td className="px-3 py-3"><span className={'rounded-full px-2.5 py-1 text-xs font-semibold '+(row.status==='PAID'?'bg-emerald-50 text-emerald-700':row.status==='OVERDUE'?'bg-rose-50 text-rose-700':'bg-sky-50 text-sky-700')}>{row.status}</span></td><td className="px-3 py-3 text-slate-500">v{row.schedule_version}</td></tr>)}</tbody></table>{liveSchedules.length===0&&<p className="py-8 text-center text-sm text-slate-500">No persisted repayment schedules yet.</p>}</div>}
+            {servicingState==='live' && <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Due date</th><th className="px-3 py-3">Account reference</th><th className="px-3 py-3">Schedule ID</th><th className="px-3 py-3">Installment</th><th className="px-3 py-3">Paid</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Version</th></tr></thead><tbody>{liveSchedules.map(row=><tr key={row.id} className="border-t border-slate-100"><td className="px-3 py-3 text-slate-600">{new Date(row.due_date+'T00:00:00').toLocaleDateString('id-ID')}</td><td className="px-3 py-3 font-mono text-xs text-slate-600">{row.loan_account_id.slice(0,8)}…</td><td className="px-3 py-3 font-mono text-[10px] text-slate-500" title={row.id}>{row.id}</td><td className="px-3 py-3 font-semibold text-slate-800">{money(row.scheduled_payment || (Number(row.principal_due)+Number(row.interest_due)+Number(row.fees_due)))}</td><td className="px-3 py-3 text-slate-600">{money(row.amount_paid)}</td><td className="px-3 py-3"><span className={'rounded-full px-2.5 py-1 text-xs font-semibold '+(row.status==='PAID'?'bg-emerald-50 text-emerald-700':row.status==='OVERDUE'?'bg-rose-50 text-rose-700':'bg-sky-50 text-sky-700')}>{row.status}</span></td><td className="px-3 py-3 text-slate-500">v{row.schedule_version}</td></tr>)}</tbody></table>{liveSchedules.length===0&&<p className="py-8 text-center text-sm text-slate-500">No persisted repayment schedules yet.</p>}</div>}
+          </div>
+          <div className={panel+' p-5'}>
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-900">Recent repayment receipts</h2><p className="mt-1 text-xs text-slate-500">Payment IDs can be used in the allocation form. Receipts remain unreconciled until verified.</p></div><span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800">Not bank-reconciled</span></div>
+            {servicingState==='live'&&<div className="mt-4 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Payment ID</th><th className="px-3 py-3">Date</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Channel</th><th className="px-3 py-3">Status</th></tr></thead><tbody>{livePayments.map(row=><tr key={row.id} className="border-t border-slate-100"><td className="px-3 py-3 font-mono text-[10px] text-slate-500" title={row.id}>{row.id}</td><td className="px-3 py-3 text-slate-600">{new Date(row.payment_date).toLocaleDateString('id-ID')}</td><td className="px-3 py-3 font-semibold text-slate-800">{money(row.amount)}</td><td className="px-3 py-3 text-slate-600">{row.channel}</td><td className="px-3 py-3"><span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">{row.status}</span></td></tr>)}</tbody></table>{livePayments.length===0&&<p className="py-8 text-center text-sm text-slate-500">No repayment receipts have been recorded.</p>}</div>}
           </div>
           <div className="grid gap-5 xl:grid-cols-2">
             <div className={panel+' p-5'}><h2 className="font-bold text-slate-900">Trial balance</h2><p className="mt-1 text-xs text-slate-500">Posted journal totals by ledger account</p>{servicingState==='live'&&<div className="mt-4 space-y-3">{trialBalance.map(row=><div key={row.account_code} className="border-b border-slate-100 pb-3 last:border-0"><div className="flex justify-between gap-2"><span className="text-sm font-semibold text-slate-800">{row.account_name}</span><span className="font-mono text-[10px] text-slate-400">{row.account_code}</span></div><div className="mt-1 flex flex-wrap justify-between gap-2 text-xs text-slate-500"><span>Dr {money(row.total_debit)}</span><span>Cr {money(row.total_credit)}</span><span className="font-bold text-slate-700">Net {money(row.net_debit)}</span></div></div>)}{trialBalance.length===0&&<p className="py-5 text-sm text-slate-500">No ledger accounts returned.</p>}</div>}</div>
@@ -406,6 +484,8 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
           </div>
         </div>
 
+        {showRecordRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentReceipt} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><CreditCard size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Record repayment receipt</h2><p className="mt-1 text-sm text-slate-500">Records an internal receipt only; no bank settlement is verified.</p></div><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close repayment form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Loan account UUID<input required value={paymentAccountId} onChange={e=>setPaymentAccountId(e.target.value)} placeholder="Paste loan account ID" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Amount (IDR)<input required type="number" min="0.01" step="0.01" value={paymentAmount} onChange={e=>setPaymentAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Channel<input required minLength={2} maxLength={60} value={paymentChannel} onChange={e=>setPaymentChannel(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">External receipt reference<input maxLength={200} value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder="Bank / payment provider reference" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Payment date<input required type="date" value={paymentDate} onChange={e=>setPaymentDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-normal outline-none focus:border-emerald-500"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowRecordRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Saving…" : "Save receipt"}</button></div></form></div>}
+        {showAllocateRepayment && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={saveRepaymentAllocation} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-800"><CircleDollarSign size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">Allocate repayment</h2><p className="mt-1 text-sm text-slate-500">Enter explicit component amounts. Allocation is posted to the ledger.</p></div><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close allocation form"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Repayment UUID<input required value={allocationPaymentId} onChange={e=>setAllocationPaymentId(e.target.value)} placeholder="Copy Payment ID from receipts table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Schedule UUID<input required value={allocationScheduleId} onChange={e=>setAllocationScheduleId(e.target.value)} placeholder="Copy Schedule ID from schedule table" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-3 font-mono text-xs outline-none focus:border-emerald-500"/></label><div className="grid gap-3 sm:grid-cols-3"><label className="block text-sm font-semibold text-slate-700">Principal<input required type="number" min="0" step="0.01" value={allocationPrincipal} onChange={e=>setAllocationPrincipal(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Interest<input required type="number" min="0" step="0.01" value={allocationInterest} onChange={e=>setAllocationInterest(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label><label className="block text-sm font-semibold text-slate-700">Fees<input required type="number" min="0" step="0.01" value={allocationFees} onChange={e=>setAllocationFees(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-2 py-3 font-normal outline-none focus:border-emerald-500"/></label></div></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowAllocateRepayment(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" disabled={servicingSaving} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{servicingSaving ? "Posting…" : "Post allocation"}</button></div></form></div>}
         {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
 
         {selectedApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Demo application</span><h2 className="mt-3 text-xl font-black text-slate-900">{selectedApplication.customer}</h2><p className="mt-1 text-sm text-slate-400">{selectedApplication.id}</p></div><button onClick={()=>setSelectedApplication(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close details"><X size={18}/></button></div><div className="mt-5 grid grid-cols-2 gap-3">{[{label:'Product',value:selectedApplication.product},{label:'Requested amount',value:rupiah(selectedApplication.amount)},{label:'Current status',value:selectedApplication.status},{label:'Credit score',value:selectedApplication.score?selectedApplication.score+'/100':'Not assessed'},{label:'Submitted',value:selectedApplication.submitted},{label:'Assigned owner',value:selectedApplication.owner}].map((item)=><div key={item.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-800">{item.value}</p></div>)}</div><p className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">This record is simulated. Credit decisions and status transitions are not persisted to a backend.</p><div className="mt-5 flex justify-end"><button onClick={()=>setSelectedApplication(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Close details</button></div></div></div>}

@@ -81,7 +81,7 @@ const statusTone: Record<string, string> = {
 };
 
 const FinancingPage: React.FC<SitePageProps> = (props) => {
-  const { lang } = props;
+  
   const [module, setModule] = useState<ModuleKey>('overview');
   const [applications, setApplications] = useState(initialApplications);
   const [search, setSearch] = useState('');

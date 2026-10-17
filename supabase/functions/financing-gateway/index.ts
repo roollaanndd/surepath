@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
     }
     if (action === 'demo_applications') {
       let query = db.from('sp_financing_demo_applications').select('*').order('created_at', { ascending: false }).limit(Math.min(100, Math.max(1, Number(params.limit || 100))));
-      if (typeof params.status === 'string') query = query.eq('status', params.status);
+      if (typeof params.status === 'string') query = query.eq('status', params.status.toUpperCase());
       const { data, error } = await query;
       if (error) throw error;
       const enriched = (data || []).map((row: any) => ({
@@ -196,7 +196,9 @@ Deno.serve(async (req: Request) => {
     if (action === 'products') {
       const { data, error } = await db.from('sp_financing_products').select('id,code,name,description,active').eq('active', true).order('name');
       if (error) throw error;
-      return response({ data: data || [], mode: 'authenticated' }, 200, headers);
+      const policies = DEMO_PRODUCTS;
+      const enriched = (data || []).map((row: any) => ({ ...(policies.find((item) => item.code === row.code) || {}), ...row }));
+      return response({ data: enriched, mode: 'authenticated' }, 200, headers);
     }
     if (action === 'overview') {
       const [apps, loans, schedules, collections] = await Promise.all([
@@ -239,9 +241,10 @@ Deno.serve(async (req: Request) => {
       const amount = Number(params.requestedAmount);
       const tenor = Number(params.tenorMonths);
       if (customerName.length < 2 || customerName.length > 160) return fail('Customer name must be 2–160 characters.', 400);
-      if (!DEMO_PRODUCTS.some((product) => product.code === productCode) && !['MOTOR_VEHICLE','MULTIPURPOSE','HEAVY_EQUIPMENT','WORKING_CAPITAL'].includes(productCode)) return fail('Invalid product code.', 400);
-      if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000000) return fail('Invalid requested amount.', 400);
-      if (!Number.isInteger(tenor) || tenor < 1 || tenor > 240) return fail('Invalid tenor.', 400);
+      const productPolicy = DEMO_PRODUCTS.find((product) => product.code === productCode);
+      if (!productPolicy) return fail('Invalid product code.', 400);
+      if (!Number.isFinite(amount) || amount < productPolicy.min_amount || amount > productPolicy.max_amount) return fail('Requested amount is outside the product limits.', 400);
+      if (!Number.isInteger(tenor) || tenor < productPolicy.tenor_min_months || tenor > productPolicy.tenor_max_months) return fail('Requested tenor is outside the product limits.', 400);
       const idempotencyKey = String(params.idempotencyKey || crypto.randomUUID());
       const requestHash = await sha256(JSON.stringify({ customerName, productCode, amount, tenor, customerType: params.customerType || 'BUSINESS', purpose: params.purpose || '' }));
       const { data, error } = await db.rpc('sp_financing_create_application', {

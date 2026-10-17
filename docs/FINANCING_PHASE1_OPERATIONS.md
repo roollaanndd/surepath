@@ -2,8 +2,8 @@
 
 ## Deployment status
 - Database migrations have been applied to the SurePath Supabase project `uyjgeteelnswphyzkjwi` as additive tables/functions only.
-- Edge Function `financing-api` is deployed with JWT verification enabled.
-- The frontend/API client changes are on branch `feat/financing-core-phase1` and are not live until the Vercel build is reviewed and promoted.
+- Edge Function financing-api is deployed and validates the bearer token with Supabase Auth inside the handler. Gateway-level verify_jwt should be rechecked as part of release hardening.
+- The Phase 1 frontend/API wiring is merged to main and the production deployment for commit 593f8538b795aec1a7b2434640484bc4ce563641 is READY. Production runtime/browser verification remains a separate acceptance check.
 - No financing user role is automatically assigned. No real application, credit bureau, signing, payment, or disbursement provider is enabled by this Phase 1.
 
 ## Role provisioning
@@ -58,6 +58,12 @@ Client roles have no direct table grants. The service role is used only inside t
 10. The dashboard displays API data only after successful authorized API responses; otherwise it explicitly remains in demo mode.
 11. Vercel preview build and browser smoke tests pass before promotion.
 12. Partner sandbox tests, credit calculation tests, ledger and money-movement controls remain release gates for later phases.
+
+## Phase 2 credit decisioning (in implementation)
+- Versioned product rules and credit assessments are added in migration 20261018100000_financing_credit_decisioning_phase2.sql.
+- No underwriting rules are seeded. A verified FINANCING_ADMIN must configure policy approved by the financing company before an assessment can run.
+- API actions: list_product_rules, configure_product_rule, evaluate_credit, and list_credit_assessments.
+- Assessment outcomes are advisory only (RECOMMEND_REVIEW, REFER, INELIGIBLE) and never auto-approve or decline an application. See docs/FINANCING_PHASE2_CREDIT_DECISIONING.md.
 
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.

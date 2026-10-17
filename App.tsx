@@ -409,6 +409,21 @@ const App = () => {
     return () => window.removeEventListener('popstate', fn);
   }, []);
 
+  // Apply the shared motion primitive when switching between any SurePath route.
+  // styles.css respects prefers-reduced-motion for this class.
+  const previousPathRef = useRef(currentPath);
+  useEffect(() => {
+    if (previousPathRef.current === currentPath) return;
+    previousPathRef.current = currentPath;
+    const root = document.getElementById('root');
+    if (!root) return;
+    root.classList.remove('sp-page-enter');
+    void root.offsetWidth;
+    root.classList.add('sp-page-enter');
+    const timeoutId = window.setTimeout(() => root.classList.remove('sp-page-enter'), 320);
+    return () => window.clearTimeout(timeoutId);
+  }, [currentPath]);
+
   // SEO: apply per-route <title>/description/canonical/OG/JSON-LD on every route
   // change. Without this every marketing/product/blog page inherited the
   // homepage metadata from index.html (duplicate-content signal). See src/seo/seo.ts.

@@ -199,7 +199,7 @@ create or replace function public.sp_financing_transition_application(
   p_correlation_id text
 ) returns jsonb
 language plpgsql security definer set search_path = public, pg_temp
-as $
+as $$
 declare
   v_app public.sp_financing_applications%rowtype;
   v_allowed boolean := false;
@@ -233,7 +233,7 @@ begin
   return jsonb_build_object('id',v_app.id,'application_number',v_app.application_number,'status',v_app.status,
     'version',v_app.version,'updated_at',v_app.updated_at);
 end;
-$;
+$$;
 
 revoke all on function public.sp_financing_create_contract(uuid,uuid,integer,text,text) from public, anon, authenticated;
 revoke all on function public.sp_financing_verify_contract_signature(uuid,uuid,integer,text,text) from public, anon, authenticated;

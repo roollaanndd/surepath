@@ -19,5 +19,11 @@ No changes to backend APIs, Supabase access, authentication, role permissions, i
 4. Confirm public landing page visuals are unchanged.
 5. Verify preview deployment before merging or claiming production rollout.
 
+## Validation status
+- GitHub Actions reported success for CI, Security Review and Android native build on the initial visual-layer commit.
+- A subsequent CSS refinement commit is now on this branch; its own checks must finish before merge.
+- Vercel's PR status is failing with a build-rate-limit notice. The current production deployment is on `main`, not this feature branch.
+- No cross-portal browser visual QA has been completed yet, so this is not a production rollout claim.
+
 ## Known limitation
-The configured Vercel connector previously returned HTTP 403 for the SurePath team scope. A preview URL and production rollout therefore cannot be claimed until deployment access and CI results are verified.
+Vercel access was previously returning HTTP 403 for the SurePath team scope and the PR status now points to a build-rate-limit page. A verified preview URL and production rollout therefore cannot be claimed until a preview is available and all visual QA gates pass.

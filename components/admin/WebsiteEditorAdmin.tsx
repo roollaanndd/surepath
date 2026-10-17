@@ -98,12 +98,25 @@ const WebsiteEditorAdmin: React.FC = () => {
   };
 
   const handleReset = async () => {
-    await resetWebsiteSection(activeKey);
-    setForm(defaultSection(activeKey));
+    setSaveError(null);
     setSaved(false);
+    try {
+      const reset = await resetWebsiteSection(activeKey);
+      if (!reset) {
+        setSaveError('Gagal mereset bagian website. Perubahan yang tersimpan belum diubah.');
+        return;
+      }
+      setForm(defaultSection(activeKey));
+    } catch {
+      setSaveError('Reset gagal. Periksa koneksi dan hak akses CMS, lalu coba lagi.');
+    }
   };
 
-  const set = (field: Partial<SpWebsiteConfig>) => setForm(prev => ({ ...prev, ...field }));
+  const set = (field: Partial<SpWebsiteConfig>) => {
+    setSaved(false);
+    setSaveError(null);
+    setForm(prev => ({ ...prev, ...field }));
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,10 +139,17 @@ const WebsiteEditorAdmin: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setLogoUploading(true);
-    const url = await uploadSectionImage(file, 'splash-logo');
-    setLogoUploading(false);
-    if (url) set({ cta_text: url });
-    e.target.value = '';
+    setSaveError(null);
+    try {
+      const url = await uploadSectionImage(file, 'splash-logo');
+      if (url) set({ cta_text: url });
+      else setSaveError('Gagal mengunggah logo splash. Periksa format dan ukuran file, lalu coba lagi.');
+    } catch {
+      setSaveError('Unggahan logo splash gagal. Periksa koneksi dan izin penyimpanan.');
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
   };
 
   const savedAt = form.updated_at ? new Date(form.updated_at).toLocaleString('id-ID') : null;

@@ -154,8 +154,10 @@ const PromoBannerAdmin: React.FC = () => {
                   <img
                     src={imageUrl}
                     alt="Banner preview"
+                    loading="lazy"
+                    decoding="async"
                     style={{ height: 80, objectFit: 'cover' }}
-                    className="rounded-xl border border-ds-border w-auto max-w-[200px]"
+                    className="sp-image-reveal rounded-xl border border-ds-border w-auto max-w-[200px]"
                   />
                   <button
                     onClick={handleRemoveImage}
@@ -201,7 +203,9 @@ const PromoBannerAdmin: React.FC = () => {
                     <img
                       src={imageUrl}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      className="sp-image-reveal absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50" />
                     <div className="relative h-full px-4 flex items-center justify-between gap-3 text-white">

@@ -146,7 +146,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora antialiased">
+    <div className="sp-modern-app min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora antialiased">
       <div aria-hidden className="sp-ambient" />
       {showOnboarding && (
         <OnboardingFlow role="OPERATOR" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />

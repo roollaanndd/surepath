@@ -484,7 +484,7 @@ const App = () => {
     );
   }
 
-  const pathname = currentPath;
+  const pathname = currentPath.replace(/\/+$/, '') || '/';
   const isPasswordRecovery =
     new URLSearchParams(window.location.search).get('reset') === '1' ||
     new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
@@ -563,7 +563,7 @@ const App = () => {
   }
 
   // Financing workspace: public, read-only demo until production financing auth/API are configured.
-  if (pathname === '/financing') {
+  if (pathname === '/financing' || pathname === '/financing/dashboard') {
     return <Suspense fallback={<PortalLoader lang={lang} />}><FinancingPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={handleSetLang} darkMode={darkMode} setDarkMode={setDarkMode} /></Suspense>;
   }
 

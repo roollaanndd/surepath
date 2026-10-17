@@ -5,7 +5,7 @@ import type { SpClient } from './dbTypes';
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
 
-export async function getAgentClients(agentId: string): Promise<SpClient[]> {
+export async function getAgentClients(agentId: string, strict = false): Promise<SpClient[]> {
   const { data, error } = await supabase
     .from('sp_clients')
     .select('*')
@@ -13,6 +13,7 @@ export async function getAgentClients(agentId: string): Promise<SpClient[]> {
     .order('created_at', { ascending: false });
   if (error) {
     console.error('getAgentClients error:', error);
+    if (strict) throw error;
     return [];
   }
   return (data ?? []) as SpClient[];

@@ -59,11 +59,14 @@ Client roles have no direct table grants. The service role is used only inside t
 11. Vercel preview build and browser smoke tests pass before promotion.
 12. Partner sandbox tests, credit calculation tests, ledger and money-movement controls remain release gates for later phases.
 
-## Phase 2 credit decisioning (in implementation)
-- Versioned product rules and credit assessments are added in migration 20261018100000_financing_credit_decisioning_phase2.sql.
+## Phase 2 credit decisioning (backend deployed)
+- Versioned product rules and credit assessments are applied to production Supabase by migration financing_credit_decisioning_phase2; the source migration is 20261018100000_financing_credit_decisioning_phase2.sql.
 - No underwriting rules are seeded. A verified FINANCING_ADMIN must configure policy approved by the financing company before an assessment can run.
 - API actions: list_product_rules, configure_product_rule, evaluate_credit, and list_credit_assessments.
 - Assessment outcomes are advisory only (RECOMMEND_REVIEW, REFER, INELIGIBLE) and never auto-approve or decline an application. See docs/FINANCING_PHASE2_CREDIT_DECISIONING.md.
+- Edge Function financing-api is deployed as version 4 with gateway JWT verification enabled. SQL checks confirm both Phase 2 tables have RLS enabled, client roles cannot execute the privileged RPCs, and service_role can configure rules.
+- No product rules or financing user roles are seeded, so credit assessments intentionally fail closed until authorized policy and user access are configured.
+- Vercel preview builds are currently rate-limited by the provider; no frontend UI was changed in Phase 2 and no browser E2E test is claimed.
 
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.

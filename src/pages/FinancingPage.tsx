@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import jsPDF from 'jspdf';
 import { createFinancingApplication, createFinancingApprovalWorkflow, decideFinancingApprovalStep, getFinancingOverview, getFinancingTransactionReport, listFinancingApprovalWorkflows, listFinancingApplicationDocuments, listFinancingApplications, listFinancingRepaymentSchedules, listFinancingRepayments, listFinancingLedgerJournals, getFinancingTrialBalance, recordFinancingRepayment, allocateFinancingRepayment, listFinancingReconciliationBatches, listFinancingReconciliationLines, importFinancingReconciliationBatch, reconcileFinancingStatementLine, uploadFinancingApplicationDocument, type FinancingApplicationRecord, type FinancingOverview, type FinancingProductCode, type FinancingRepaymentSchedule, type FinancingRepaymentRecord, type FinancingLedgerJournal, type FinancingTrialBalanceRow, type FinancingReconciliationBatch, type FinancingStatementLine, type FinancingApprovalStep, type FinancingApplicationDocument, type FinancingFinanceReportRow } from '../services/financingApi';
 import { SitePageProps } from './site/siteKit';
 import {
@@ -624,8 +623,9 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     link.click(); URL.revokeObjectURL(url);
   };
 
-  const exportFinancePdf = () => {
+  const exportFinancePdf = async () => {
     if (!financeReportRows.length) { notify('Generate a report with transactions before exporting.'); return; }
+    const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     pdf.setFontSize(16); pdf.text('SurePath Finance Transaction Report', 40, 38);
     pdf.setFontSize(9); pdf.text('Period: ' + reportStartDate + ' to ' + reportEndDate + ' | Generated: ' + new Date().toISOString(), 40, 56);

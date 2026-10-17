@@ -249,7 +249,7 @@ const WebsiteEditorAdmin: React.FC = () => {
               {/* Logo upload */}
               <div>
                 <label className={labelCls}>Logo Splash Screen</label>
-                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <input ref={logoInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleLogoUpload} />
                 <button
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
@@ -421,7 +421,7 @@ const WebsiteEditorAdmin: React.FC = () => {
 
                   {form.bg_type === 'image' ? (
                     <div className="space-y-3">
-                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}

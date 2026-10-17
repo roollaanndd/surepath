@@ -107,9 +107,23 @@ Deno.serve(async (req) => {
       // Provider error bodies may contain sensitive account/payment details.
       // Do not return or persist the raw body. The HTTP status is enough for triage.
       const providerStatus = xenditRes.status;
-      console.error('Xendit disbursement rejected:', { status: providerStatus });
+      console.error('Xendit disbursement response was not successful:', { status: providerStatus });
 
-      // Reverse the wallet deduction only for a definite non-2xx provider response.
+      // A 5xx response is ambiguous: the provider may have accepted the payout
+      // before failing to respond. Keep the withdrawal PROCESSING and do not
+      // refund the wallet automatically; an operator must reconcile provider state.
+      if (providerStatus >= 500) {
+        await supabase.from('sp_withdrawals').update({
+          failure_reason: `Provider outcome uncertain (HTTP ${providerStatus}); reconciliation required`,
+          updated_at: new Date().toISOString(),
+        }).eq('id', withdrawal_id).eq('status', 'PROCESSING');
+
+        return new Response(JSON.stringify({ error: 'Provider outcome uncertain; withdrawal requires reconciliation' }), {
+          status: 502, headers: { ...CORS, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // A 4xx response indicates a rejected request; reverse the wallet deduction.
       await supabase.rpc('reverse_withdrawal', {
         p_withdrawal_id: withdrawal_id,
         p_agent_id:      wd.agent_id,

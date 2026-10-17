@@ -339,11 +339,10 @@ begin
  v_total:=v_alloc.total_amount;
  v_journal_id:=public.sp_financing_post_journal(p_user_id,'PAYMENT_ALLOCATION',v_alloc.id::text,p_correlation_id,
   'Repayment allocation '||v_alloc.id::text,
-  jsonb_build_array(
-   jsonb_build_object('account_code','UNALLOCATED_RECEIPTS','debit',v_total,'credit',0),
-   jsonb_build_object('account_code','LOAN_PRINCIPAL_RECEIVABLE','debit',0,'credit',p_principal_amount),
-   jsonb_build_object('account_code','INTEREST_RECEIVABLE','debit',0,'credit',p_interest_amount),
-   jsonb_build_object('account_code','FEES_RECEIVABLE','debit',0,'credit',p_fees_amount)
+  (jsonb_build_array(jsonb_build_object('account_code','UNALLOCATED_RECEIPTS','debit',v_total,'credit',0))
+   || case when p_principal_amount>0 then jsonb_build_array(jsonb_build_object('account_code','LOAN_PRINCIPAL_RECEIVABLE','debit',0,'credit',p_principal_amount)) else '[]'::jsonb end
+   || case when p_interest_amount>0 then jsonb_build_array(jsonb_build_object('account_code','INTEREST_RECEIVABLE','debit',0,'credit',p_interest_amount)) else '[]'::jsonb end
+   || case when p_fees_amount>0 then jsonb_build_array(jsonb_build_object('account_code','FEES_RECEIVABLE','debit',0,'credit',p_fees_amount)) else '[]'::jsonb end
   ));
  update public.sp_financing_loan_accounts set outstanding_principal=round(outstanding_principal-p_principal_amount,2),updated_at=now()
  where id=v_account.id;

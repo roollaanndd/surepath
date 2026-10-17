@@ -91,9 +91,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
       // Load each customer panel independently so one unavailable endpoint
       // does not discard successful policy, claim, or notification results.
       const [orders, claims, notifs] = await Promise.allSettled([
-        getCustomerOrders(currentUser.id),
-        getCustomerClaims(currentUser.id),
-        getNotifications(currentUser.id),
+        getCustomerOrders(currentUser.id, true),
+        getCustomerClaims(currentUser.id, true),
+        getNotifications(currentUser.id, true),
       ]);
       const hasError = [orders, claims, notifs].some(result => result.status === 'rejected');
       if (orders.status === 'fulfilled') {

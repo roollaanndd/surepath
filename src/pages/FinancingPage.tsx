@@ -43,6 +43,17 @@ const rupiah = (amount: number) => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
 }).format(amount);
 
+const mapApiApplications = (records: FinancingApplicationRecord[]): Application[] => records.map((record) => ({
+  id: record.application_number,
+  customer: record.customer?.display_name ?? 'Customer',
+  product: record.product?.name ?? record.product?.code ?? 'Financing',
+  amount: Number(record.requested_amount),
+  submitted: new Date(record.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+  status: ({ NEW: 'New application', SUBMITTED: 'Submitted', DOCUMENTS_PENDING: 'Awaiting documents', VERIFICATION: 'Verification', CREDIT_REVIEW: 'Credit review', REFERRED: 'Referred', APPROVED: 'Approved', DECLINED: 'Rejected', OFFERED: 'Offer prepared', CONTRACTED: 'Contracted', BOOKED: 'Booked', CANCELLED: 'Cancelled' } as Record<string, string>)[record.status] ?? record.status,
+  owner: 'Financing workspace',
+  score: 0,
+}));
+
 
 const navGroups: { label: string; items: { key: ModuleKey; label: string; icon: React.ElementType; count?: string }[] }[] = [
   { label: 'WORKSPACE', items: [
@@ -95,19 +106,10 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
   const [toast, setToast] = useState('');
   const [newCustomer, setNewCustomer] = useState('');
   const [newProduct, setNewProduct] = useState('Motor Vehicle');
+  const [newCustomerType, setNewCustomerType] = useState<'INDIVIDUAL' | 'BUSINESS'>('BUSINESS');
+  const [newTenor, setNewTenor] = useState('12');
   const [newAmount, setNewAmount] = useState('250000000');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-
-  const mapApiApplications = (records: FinancingApplicationRecord[]): Application[] => records.map((record) => ({
-    id: record.application_number,
-    customer: record.customer?.display_name ?? 'Customer',
-    product: record.product?.name ?? record.product?.code ?? 'Financing',
-    amount: Number(record.requested_amount),
-    submitted: new Date(record.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    status: ({ NEW: 'New application', SUBMITTED: 'Submitted', DOCUMENTS_PENDING: 'Awaiting documents', VERIFICATION: 'Verification', CREDIT_REVIEW: 'Credit review', REFERRED: 'Referred', APPROVED: 'Approved', DECLINED: 'Rejected', OFFERED: 'Offer prepared', CONTRACTED: 'Contracted', BOOKED: 'Booked', CANCELLED: 'Cancelled' } as Record<string, string>)[record.status] ?? record.status,
-    owner: 'Financing workspace',
-    score: 0,
-  }));
 
   useEffect(() => {
     let active = true;
@@ -152,16 +154,18 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
       };
       try {
         await createFinancingApplication({
-          customerName: newCustomer.trim(), customerType: 'BUSINESS',
+          customerName: newCustomer.trim(), customerType: newCustomerType,
           productCode: codeByProduct[newProduct] ?? 'MOTOR_VEHICLE',
-          amount: Number(newAmount), tenorMonths: 12,
+          amount: Number(newAmount), tenorMonths: Number(newTenor),
         });
         const [result, overview] = await Promise.all([listFinancingApplications(100), getFinancingOverview()]);
         setApplications(mapApiApplications(result.data));
         setLiveOverview(overview);
         setShowNewApplication(false);
         setNewCustomer('');
+        setNewCustomerType('BUSINESS');
         setNewAmount('250000000');
+        setNewTenor('12');
         setModule('applications');
         notify('Application saved to the financing database.');
       } catch (error) {
@@ -177,7 +181,9 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
     setApplications((current) => [next, ...current]);
     setShowNewApplication(false);
     setNewCustomer('');
+    setNewCustomerType('BUSINESS');
     setNewAmount('250000000');
+    setNewTenor('12');
     setModule('applications');
     notify('Demo application created locally. No real customer record was saved.');
   };
@@ -231,7 +237,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
       <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {[
           { label: 'Applications received', value: liveOverview ? String(liveOverview.totalApplications) : '128', delta: liveOverview ? 'Live' : '+12.8%', note: liveOverview ? 'persisted applications' : 'vs previous month', icon: FileText, iconBg: 'bg-emerald-50 text-emerald-700', up: true },
-          { label: 'Financing requested', value: liveOverview ? rupiah(liveOverview.amountRequestedIdr) : 'Rp 8.45B', delta: liveOverview ? 'Live' : '+8.2%', note: liveOverview ? (liveOverview.partial ? 'partial sample window' : 'persisted requests') : 'sample portfolio', icon: CircleDollarSign, iconBg: 'bg-sky-50 text-sky-700', up: true },
+          { label: 'Financing requested', value: liveOverview ? rupiah(liveOverview.amountRequestedIdr) : 'Rp 8.45B', delta: liveOverview ? 'Live' : '+8.2%', note: liveOverview ? (liveOverview.partial ? 'partial portfolio window' : 'persisted requests') : 'sample portfolio', icon: CircleDollarSign, iconBg: 'bg-sky-50 text-sky-700', up: true },
           { label: 'Pending credit review', value: liveOverview ? String(liveOverview.byStatus.CREDIT_REVIEW ?? 0) : '24', delta: liveOverview ? 'Live' : '7 urgent', note: liveOverview ? 'credit review status' : 'need attention', icon: ClipboardCheck, iconBg: 'bg-violet-50 text-violet-700', up: false },
           { label: 'Repayment collected', value: liveOverview ? '—' : 'Rp 2.16B', delta: liveOverview ? 'Not enabled' : '96.4%', note: liveOverview ? 'servicing module pending' : 'illustrative collection rate', icon: Wallet, iconBg: 'bg-amber-50 text-amber-700', up: true },
         ].map((kpi) => <div key={kpi.label} className={panel + ' p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg'}>
@@ -353,7 +359,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
           </div>
         </div>
 
-        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
+        {showNewApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><form onSubmit={addDemoApplication} className="w-full max-w-lg rounded-2xl border border-white/60 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Plus size={20}/></span><h2 className="mt-4 text-xl font-black text-slate-900">{backendMode === 'live' ? 'Create financing application' : 'Create demo application'}</h2><p className="mt-1 text-sm text-slate-500">{backendMode === 'live' ? 'Saves a persistent application to the financing database.' : 'Adds a temporary local sample record only.'}</p></div><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close modal"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-sm font-semibold text-slate-700">Customer / business name<input required value={newCustomer} onChange={(e)=>setNewCustomer(e.target.value)} placeholder="e.g. PT Contoh Sejahtera" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label><label className="block text-sm font-semibold text-slate-700">Customer type<select value={newCustomerType} onChange={(e)=>setNewCustomerType(e.target.value as 'INDIVIDUAL' | 'BUSINESS')} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500"><option value="INDIVIDUAL">Individual</option><option value="BUSINESS">Business</option></select></label><label className="block text-sm font-semibold text-slate-700">Financing product<select value={newProduct} onChange={(e)=>setNewProduct(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{products.map((p)=><option key={p.name}>{p.name}</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested tenor (months)<select value={newTenor} onChange={(e)=>setNewTenor(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-normal outline-none focus:border-emerald-500">{[6,12,18,24,36,48,60,72,84,96,120].map((months)=><option key={months} value={months}>{months} months</option>)}</select></label><label className="block text-sm font-semibold text-slate-700">Requested amount (IDR)<input required type="number" min="1" step="1000000" value={newAmount} onChange={(e)=>setNewAmount(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-3 font-normal outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={()=>setShowNewApplication(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">{backendMode === 'live' ? 'Save application' : 'Add to demo'}</button></div></form></div>}
 
         {selectedApplication && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Demo application</span><h2 className="mt-3 text-xl font-black text-slate-900">{selectedApplication.customer}</h2><p className="mt-1 text-sm text-slate-400">{selectedApplication.id}</p></div><button onClick={()=>setSelectedApplication(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Close details"><X size={18}/></button></div><div className="mt-5 grid grid-cols-2 gap-3">{[{label:'Product',value:selectedApplication.product},{label:'Requested amount',value:rupiah(selectedApplication.amount)},{label:'Current status',value:selectedApplication.status},{label:'Credit score',value:selectedApplication.score?selectedApplication.score+'/100':'Not assessed'},{label:'Submitted',value:selectedApplication.submitted},{label:'Assigned owner',value:selectedApplication.owner}].map((item)=><div key={item.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-400">{item.label}</p><p className="mt-1 text-sm font-bold text-slate-800">{item.value}</p></div>)}</div><p className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">This record is simulated. Credit decisions and status transitions are not persisted to a backend.</p><div className="mt-5 flex justify-end"><button onClick={()=>setSelectedApplication(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Close details</button></div></div></div>}
 

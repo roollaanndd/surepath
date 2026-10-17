@@ -156,7 +156,7 @@ Deno.serve(async (req: Request) => {
       if (!app) return fail('Application not found.', 404, headers);
       const target = String(params.targetStatus || '');
       if (!TRANSITIONS[app.status]?.includes(target)) return fail('Invalid application status transition.', 409, headers);
-      if (app.version !== Number(params.expectedVersion)) return fail('Application changed; refresh and retry.', 409);
+      if (app.version !== Number(params.expectedVersion)) return fail('Application changed; refresh and retry.', 409, headers);
       const { data, error } = await db.from('sp_financing_demo_applications').update({ status: target, version: app.version + 1, updated_at: new Date().toISOString() }).eq('id', app.id).eq('version', app.version).select('*').maybeSingle();
       if (error) throw error;
       if (!data) return fail('Application changed; refresh and retry.', 409);

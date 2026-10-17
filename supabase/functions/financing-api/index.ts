@@ -115,6 +115,138 @@ Deno.serve(async (req) => {
       return json({ data: { totalApplications: total ?? 0, amountRequestedIdr: amountRequested, byStatus, partial: (total ?? 0) > (statuses?.length ?? 0), asOf: new Date().toISOString() }, correlationId }, 200, headers);
     }
 
+    if (action === "settle_disbursement_and_generate_schedule") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const requestId = safeString(params.request_id, 40);
+      const settlementRef = safeString(params.external_settlement_ref, 200);
+      const firstDueDate = safeString(params.first_due_date, 10);
+      if (!/^[0-9a-f-]{36}$/i.test(requestId) || settlementRef.length < 6 || !/^\d{4}-\d{2}-\d{2}$/.test(firstDueDate) ||
+          Number.isNaN(Date.parse(firstDueDate)) || new Date(firstDueDate).toISOString().slice(0,10) !== firstDueDate) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide a valid request UUID, settlement reference, and first due date (YYYY-MM-DD).", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_settle_disbursement_and_generate_schedule", {
+        p_user_id: userId, p_request_id: requestId, p_external_settlement_ref: settlementRef,
+        p_first_due_date: firstDueDate, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/servicing_finance_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/disbursement_request_not_found|loan_account_not_found|contract_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/disbursement_not_approved|loan_not_pending_disbursement|settlement_reference_conflict/.test(error.message)) return json({ error: "SETTLEMENT_CONFLICT", message: error.message.split("\\n")[0], correlationId }, 409, headers);
+        if (/settlement_evidence_required|invalid_contract_terms/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("disbursement settlement record failed", correlationId, error.code);
+        return json({ error: "SETTLEMENT_RECORD_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 200, headers);
+    }
+
+    if (action === "record_repayment") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const accountId = safeString(params.loan_account_id, 40);
+      const amount = Number(params.amount);
+      const channel = safeString(params.channel, 60);
+      const externalRef = safeString(params.external_reference, 200);
+      const idempotencyKey = safeString(req.headers.get("x-idempotency-key"), 128);
+      const paymentDate = safeString(params.payment_date, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(accountId) || !Number.isFinite(amount) || amount <= 0 || channel.length < 2 ||
+          idempotencyKey.length < 8 || !paymentDate || Number.isNaN(Date.parse(paymentDate))) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide a valid loan account, amount, channel, payment date, and x-idempotency-key.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_record_repayment", {
+        p_user_id: userId, p_loan_account_id: accountId, p_amount: amount, p_channel: channel,
+        p_external_reference: externalRef, p_idempotency_key: idempotencyKey,
+        p_payment_date: new Date(paymentDate).toISOString(), p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/servicing_finance_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/loan_account_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/idempotency_conflict/.test(error.message)) return json({ error: "IDEMPOTENCY_CONFLICT", correlationId }, 409, headers);
+        if (/loan_not_active/.test(error.message)) return json({ error: "LOAN_NOT_ACTIVE", correlationId }, 409, headers);
+        if (/invalid_repayment/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("repayment receipt failed", correlationId, error.code);
+        return json({ error: "REPAYMENT_RECORD_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "allocate_repayment") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const repaymentId = safeString(params.repayment_id, 40);
+      const scheduleId = safeString(params.schedule_id, 40);
+      const principal = Number(params.principal_amount ?? 0);
+      const interest = Number(params.interest_amount ?? 0);
+      const fees = Number(params.fees_amount ?? 0);
+      const idempotencyKey = safeString(req.headers.get("x-idempotency-key"), 128);
+      if (!/^[0-9a-f-]{36}$/i.test(repaymentId) || !/^[0-9a-f-]{36}$/i.test(scheduleId) ||
+          !Number.isFinite(principal) || !Number.isFinite(interest) || !Number.isFinite(fees) ||
+          principal < 0 || interest < 0 || fees < 0 || principal + interest + fees <= 0 || idempotencyKey.length < 8) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide valid repayment/schedule IDs, allocation amounts and x-idempotency-key.", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_allocate_repayment", {
+        p_user_id: userId, p_repayment_id: repaymentId, p_schedule_id: scheduleId,
+        p_principal_amount: principal, p_interest_amount: interest, p_fees_amount: fees,
+        p_idempotency_key: idempotencyKey, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/servicing_finance_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/repayment_not_found|schedule_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/idempotency_conflict/.test(error.message)) return json({ error: "IDEMPOTENCY_CONFLICT", correlationId }, 409, headers);
+        if (/not_allocatable|loan_account_mismatch|schedule_waived|exceeds_|invalid_allocation/.test(error.message)) return json({ error: "ALLOCATION_CONFLICT", message: error.message.split("\\n")[0], correlationId }, 409, headers);
+        console.error("repayment allocation failed", correlationId, error.code);
+        return json({ error: "ALLOCATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "list_repayment_schedules") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("COLLECTIONS") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const accountId = safeString(params.loan_account_id, 40);
+      let query = db.from("sp_financing_repayment_schedules")
+        .select("id,loan_account_id,installment_number,due_date,principal_due,interest_due,fees_due,amount_paid,status,schedule_version,principal_opening_balance,scheduled_payment,generated_by,created_at,updated_at")
+        .order("due_date", { ascending: true }).limit(Math.min(500, Math.max(1, Number(params.limit) || 100)));
+      if (accountId) {
+        if (!/^[0-9a-f-]{36}$/i.test(accountId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        query = query.eq("loan_account_id", accountId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "list_repayments") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const accountId = safeString(params.loan_account_id, 40);
+      let query = db.from("sp_financing_repayments")
+        .select("id,loan_account_id,amount,currency,payment_date,channel,external_reference,status,received_by,created_at")
+        .order("payment_date", { ascending: false }).limit(Math.min(200, Math.max(1, Number(params.limit) || 50)));
+      if (accountId) {
+        if (!/^[0-9a-f-]{36}$/i.test(accountId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        query = query.eq("loan_account_id", accountId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "list_ledger_journals") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const { data, error } = await db.from("sp_financing_ledger_journals")
+        .select("id,journal_number,source_type,source_id,currency,status,correlation_id,memo,created_by,created_at")
+        .order("created_at", { ascending: false }).limit(Math.min(200, Math.max(1, Number(params.limit) || 50)));
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "get_ledger_trial_balance") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const { data, error } = await db.rpc("sp_financing_get_ledger_trial_balance", { p_user_id: userId });
+      if (error) {
+        if (/ledger_access_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        console.error("trial balance query failed", correlationId, error.code);
+        return json({ error: "TRIAL_BALANCE_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
     if (action === "create_contract") {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("CONTRACT_OFFICER"))) {
         return json({ error: "FORBIDDEN", correlationId }, 403, headers);

@@ -666,6 +666,14 @@ Deno.serve(async (req) => {
       const { data: current, error: currentError } = await db.from("sp_financing_applications").select("id,status,version").eq("id", applicationId).maybeSingle();
       if (currentError) throw currentError;
       if (!current) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+      if (["APPROVED","OFFERED","CONTRACTED","BOOKED"].includes(targetStatus)) {
+        const { data: approvalSteps, error: approvalError } = await db.from("sp_financing_approval_steps")
+          .select("status").eq("application_id", applicationId);
+        if (approvalError) throw approvalError;
+        if ((approvalSteps ?? []).length > 0 && (approvalSteps ?? []).some((step: { status: string }) => step.status !== "APPROVED")) {
+          return json({ error: "APPROVAL_WORKFLOW_INCOMPLETE", message: "All approval layers must be approved before this application can advance.", correlationId }, 409, headers);
+        }
+      }
       if (!canTransition(roles, current.status, targetStatus)) return json({ error: "FORBIDDEN_TRANSITION", correlationId }, 403, headers);
       const { data, error } = await db.rpc("sp_financing_transition_application", {
         p_user_id: userId, p_application_id: applicationId, p_expected_version: expectedVersion,

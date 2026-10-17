@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- This app holds KTP numbers, policy documents and a live session.
+         Android auto-backup would copy that to the user's Google Drive
+         outside our control, so it is off. -->
     <application
-        <!-- This app holds KTP numbers, policy documents and a live session.
-             Android auto-backup would copy that to the user's Google Drive
-             outside our control, so it is off. -->
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"

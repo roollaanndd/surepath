@@ -808,7 +808,7 @@ Deno.serve(async (req) => {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
       const startDate = safeString(params.start_date, 10);
       const endDate = safeString(params.end_date, 10);
-      const validDate = (value: string) => /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+      const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
       if (!validDate(startDate) || !validDate(endDate) || endDate < startDate) return json({ error: "VALIDATION_ERROR", message: "Provide valid start_date and end_date.", correlationId }, 400, headers);
       const span = (Date.parse(endDate + "T00:00:00Z") - Date.parse(startDate + "T00:00:00Z")) / 86400000;
       if (span > 366) return json({ error: "DATE_RANGE_TOO_LARGE", message: "Choose a report range of 367 days or less.", correlationId }, 400, headers);

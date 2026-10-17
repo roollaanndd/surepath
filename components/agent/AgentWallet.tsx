@@ -94,7 +94,6 @@ const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () =
 
 interface WithdrawFormProps {
   balance: number;
-  agentId: string;
   coinBalance: number;
   onSuccess: () => void;
   onCancel: () => void;
@@ -105,7 +104,7 @@ interface WithdrawFormProps {
 }
 
 const WithdrawForm: React.FC<WithdrawFormProps> = ({
-  balance, agentId, coinBalance, onSuccess, onCancel,
+  balance, coinBalance, onSuccess, onCancel,
   savedAccounts, onSaveAccount, onDeleteAccount, profileName,
 }) => {
   const [amount, setAmount] = useState('');
@@ -313,7 +312,6 @@ const AgentWalletView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [coinBalance, setCoinBalance] = useState(0);
-  const [agentId, setAgentId] = useState('');
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>(() => {
     try {
       const raw = BANK_STORAGE?.getItem(SAVED_BANKS_KEY);
@@ -355,7 +353,6 @@ const AgentWalletView: React.FC = () => {
       const authUser = await supabase.auth.getUser();
       const uid = authUser.data.user?.id ?? '';
       if (!uid) throw new Error('Sesi pengguna tidak tersedia. Silakan masuk kembali.');
-      setAgentId(uid);
       const [w, t, wd, cb] = await Promise.all([
         getMyWallet(true),
         getMyWalletTransactions(50, true),
@@ -406,7 +403,6 @@ const AgentWalletView: React.FC = () => {
         </div>
         <WithdrawForm
           balance={wallet?.balance ?? 0}
-          agentId={agentId}
           coinBalance={coinBalance}
           onSuccess={() => { setShowWithdrawForm(false); load(); }}
           onCancel={() => setShowWithdrawForm(false)}

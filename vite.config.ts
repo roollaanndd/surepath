@@ -15,7 +15,9 @@ export default defineConfig(() => {
           // Explicit registration + autoUpdate means the generated client checks for
           // a new worker on app startup and activates it without a manual prompt.
           // skipWaiting/clientsClaim below let the new worker take over open tabs.
-          injectRegister: 'auto',
+          // Registration is managed explicitly in index.tsx so there is exactly one
+          // update controller and foreground update checks can be attached there.
+          injectRegister: null,
           registerType: 'autoUpdate',
           includeAssets: ['apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512.png'],
           workbox: {

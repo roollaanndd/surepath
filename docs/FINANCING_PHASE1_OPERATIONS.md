@@ -68,6 +68,13 @@ Client roles have no direct table grants. The service role is used only inside t
 - No product rules or financing user roles are seeded, so credit assessments intentionally fail closed until authorized policy and user access are configured.
 - Vercel preview builds are currently rate-limited by the provider; no frontend UI was changed in Phase 2 and no browser E2E test is claimed.
 
+## Phase 3 partner adapter foundation (backend deployed)
+- Provider registry and sanitized request-ledger schema are applied in production Supabase by migration financing_partner_adapter_foundation.
+- Edge Function financing-api is deployed as version 5 with gateway JWT verification enabled.
+- SQL checks confirm both provider tables have RLS enabled and the provider configuration RPC is not executable by anon/authenticated roles.
+- No providers are configured. No provider-specific adapter, credentials, outbound calls, KYC/SLIK/bureau lookup, or live partner integration is enabled. Provider metadata can only be configured by FINANCING_ADMIN and is never automatically activated.
+- Vercel deployment is currently rate-limited by the provider; no frontend UI changes are included in this phase.
+
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.
 - No loan contract signing, loan schedule, disbursement, payment allocation, collections execution or double-entry loan ledger is implemented yet.

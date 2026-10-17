@@ -155,6 +155,7 @@ export async function recordFinancingRepayment(input: {
   channel: string;
   externalReference: string;
   paymentDate: string;
+  idempotencyKey?: string;
 }): Promise<Record<string, unknown>> {
   const result = await invokeFinancing<{ data: Record<string, unknown> }>('record_repayment', {
     loan_account_id: input.loanAccountId,
@@ -162,7 +163,7 @@ export async function recordFinancingRepayment(input: {
     channel: input.channel,
     external_reference: input.externalReference,
     payment_date: input.paymentDate,
-  }, { 'x-idempotency-key': crypto.randomUUID() });
+  }, { 'x-idempotency-key': input.idempotencyKey ?? crypto.randomUUID() });
   return result.data;
 }
 
@@ -172,6 +173,7 @@ export async function allocateFinancingRepayment(input: {
   principalAmount: number;
   interestAmount: number;
   feesAmount: number;
+  idempotencyKey?: string;
 }): Promise<Record<string, unknown>> {
   const result = await invokeFinancing<{ data: Record<string, unknown> }>('allocate_repayment', {
     repayment_id: input.repaymentId,
@@ -179,6 +181,6 @@ export async function allocateFinancingRepayment(input: {
     principal_amount: input.principalAmount,
     interest_amount: input.interestAmount,
     fees_amount: input.feesAmount,
-  }, { 'x-idempotency-key': crypto.randomUUID() });
+  }, { 'x-idempotency-key': input.idempotencyKey ?? crypto.randomUUID() });
   return result.data;
 }

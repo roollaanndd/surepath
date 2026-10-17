@@ -54,3 +54,11 @@ SurePath's GitHub Security Review workflow currently runs a production dependenc
 ## Next implementation step
 
 Review Ruflo's pinned release and threat model, then run a time-boxed, read-only trial in an isolated runner. Do not add an executable Ruflo workflow until the exact CLI invocation, model-provider configuration, artifact handling, and sandbox restrictions have been reviewed.
+
+## Supply-chain preflight result — 2026-10-17
+
+The isolated GitHub Actions preflight downloaded the exact `ruflo@3.56.10` package with lifecycle scripts disabled and verified its manifest (MIT license; no preinstall/install/postinstall/prepare scripts). The dependency graph install also ran with scripts disabled in a disposable runner, with read-only repository permissions and no provider or production credentials.
+
+**The dependency audit failed and the CLI was not executed.** `npm audit --omit=dev --audit-level=high` reported 39 vulnerabilities in the resolved dependency graph: 24 moderate, 14 high, and 1 critical. Findings include a critical `protobufjs` code-execution advisory and additional high-severity transitive findings; the audit output reported no fix available for several affected dependency paths.
+
+Decision: **Ruflo is not approved to run against SurePath yet.** Do not merge the executable preflight workflow or give Ruflo source, model credentials, or system access until the dependency tree is remediated or a separately reviewed package/release passes a fresh audit. The failed preflight is a useful security result, not a successful agent trial. No Ruflo CLI command or agent was run, and no production secrets or data were accessed.

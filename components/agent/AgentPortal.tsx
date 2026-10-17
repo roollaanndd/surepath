@@ -138,7 +138,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         getNotifications(agent.id, true),
       ]);
       const [statsResult, commissionsResult, clientsResult, notificationsResult] = results;
-      let hasError = results.some(result => result.status === 'rejected');
+      const hasError = results.some(result => result.status === 'rejected');
 
       if (statsResult.status === 'fulfilled') setStats(statsResult.value);
       else console.error('Error loading agent stats:', statsResult.reason);

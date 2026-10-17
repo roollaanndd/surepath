@@ -1,6 +1,6 @@
 # SurePath CI — Quality Gate
 # Runs on every push to main + every PR.
-# Checks: TypeScript, ESLint, Build, Tests.
+# Checks: TypeScript, ESLint, build, unit tests, browser smoke tests.
 
 name: CI
 
@@ -10,8 +10,51 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   quality-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Edge function declarations
+        run: node scripts/check-edge-functions.mjs
+
+      - name: TypeScript check
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: ESLint
+        run: npx eslint components/ services/ src/ App.tsx
+
+      - name: Build and verify deployable output
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder-key' }}
+
+      - name: Upload build artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 7
+
+  unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -28,36 +71,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Menangkap edge function yang tidak punya sikap tertulis di
-      # supabase/config.toml — penyebab send-insurer-email hilang tanpa
-      # ketahuan. Deterministik dan cepat, jadi memblokir.
-      - name: Edge function declarations
-        run: node scripts/check-edge-functions.mjs
+      - name: Run unit tests
+        run: npm run test:unit
 
-      - name: TypeScript check
-        run: npx tsc --noEmit --skipLibCheck
-
-      - name: ESLint
-        run: npx eslint components/ services/ src/ App.tsx
-        continue-on-error: true # warnings don't fail CI
-
-      - name: Build
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'placeholder-key' }}
-
-      - name: Upload build artifacts
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: dist/
-          retention-days: 7
-
-  unit-tests:
+  browser-smoke-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -72,6 +91,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit
-        continue-on-error: true # tests are non-blocking for now
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run local browser smoke tests
+        run: npm run test:e2e
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-key
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000

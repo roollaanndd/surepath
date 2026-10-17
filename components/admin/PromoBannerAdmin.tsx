@@ -19,6 +19,7 @@ const PromoBannerAdmin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,19 +41,30 @@ const PromoBannerAdmin: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const set = (field: Partial<SpWebsiteConfig>) => setForm(prev => ({ ...prev, ...field }));
+  const set = (field: Partial<SpWebsiteConfig>) => {
+    setSaved(false);
+    setSaveError(null);
+    setForm(prev => ({ ...prev, ...field }));
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const url = await uploadSectionImage(file, 'promo_banner');
-    setUploading(false);
-    if (url) {
-      set({ extra_json: { ...form.extra_json, image_url: url } });
+    setSaveError(null);
+    try {
+      const url = await uploadSectionImage(file, 'promo_banner');
+      if (url) {
+        set({ extra_json: { ...form.extra_json, image_url: url } });
+      } else {
+        setSaveError('Gagal mengunggah gambar banner. Periksa format dan ukuran file, lalu coba lagi.');
+      }
+    } catch {
+      setSaveError('Unggahan gambar banner gagal. Periksa koneksi dan izin penyimpanan.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    // Reset input so same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleRemoveImage = () => {
@@ -61,17 +73,28 @@ const PromoBannerAdmin: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await upsertWebsiteSection({
-      section_key: 'promo_banner',
-      headline: form.headline ?? '',
-      subtitle: form.subtitle ?? '',
-      is_visible: form.is_visible ?? false,
-      bg_type: 'none',
-      extra_json: { image_url: form.extra_json?.image_url ?? null },
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaved(false);
+    setSaveError(null);
+    try {
+      const result = await upsertWebsiteSection({
+        section_key: 'promo_banner',
+        headline: form.headline ?? '',
+        subtitle: form.subtitle ?? '',
+        is_visible: form.is_visible ?? false,
+        bg_type: 'none',
+        extra_json: { image_url: form.extra_json?.image_url ?? null },
+      });
+      if (!result) {
+        setSaveError('Gagal menyimpan banner. Periksa koneksi dan hak akses CMS, lalu coba lagi.');
+        return;
+      }
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveError('Terjadi kesalahan saat menyimpan banner. Perubahan belum dipastikan tersimpan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const previewVisible = !!(form.headline && form.is_visible);
@@ -135,8 +158,10 @@ const PromoBannerAdmin: React.FC = () => {
                   <img
                     src={imageUrl}
                     alt="Banner preview"
+                    loading="lazy"
+                    decoding="async"
                     style={{ height: 80, objectFit: 'cover' }}
-                    className="rounded-xl border border-ds-border w-auto max-w-[200px]"
+                    className="sp-image-reveal rounded-xl border border-ds-border w-auto max-w-[200px]"
                   />
                   <button
                     onClick={handleRemoveImage}
@@ -160,7 +185,7 @@ const PromoBannerAdmin: React.FC = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     onChange={handleImageChange}
                     disabled={uploading}
@@ -178,11 +203,13 @@ const PromoBannerAdmin: React.FC = () => {
             <div className="rounded-2xl overflow-hidden border border-ds-border">
               {previewVisible ? (
                 imageUrl ? (
-                  <div className="relative w-full" style={{ height: 72 }}>
+                  <div className="relative w-full sp-media-frame" style={{ height: 72 }}>
                     <img
                       src={imageUrl}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      className="sp-image-reveal absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50" />
                     <div className="relative h-full px-4 flex items-center justify-between gap-3 text-white">
@@ -227,6 +254,7 @@ const PromoBannerAdmin: React.FC = () => {
         </div>
       )}
 
+      {saveError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">{saveError}</p>}
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}

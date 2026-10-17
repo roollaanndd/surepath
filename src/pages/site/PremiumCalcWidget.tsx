@@ -102,14 +102,14 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
 
         {/* Vehicle value */}
         <div className="mb-6">
-          <label style={fieldLabel}>{t('Harga Kendaraan', 'Vehicle Value')}</label>
+          <label htmlFor="vehicle-value-slider" style={fieldLabel}>{t('Harga Kendaraan', 'Vehicle Value')}</label>
           <div className="flex items-baseline justify-between mb-3">
             <span style={{ fontSize: '1.5rem', fontWeight: 800, color: th.textMain, letterSpacing: '-0.02em' }}>
               Rp {hargaJuta} <span style={{ fontSize: '0.85rem', fontWeight: 600, color: th.textMuted }}>{t('juta', 'mn')}</span>
             </span>
             <span style={{ fontSize: '0.75rem', color: th.textMuted }}>{rupiah(hargaJuta * 1_000_000)}</span>
           </div>
-          <input type="range" min={50} max={2000} step={5} value={hargaJuta}
+          <input id="vehicle-value-slider" aria-label={t('Vehicle value in millions of rupiah', 'Harga kendaraan dalam juta rupiah')} type="range" min={50} max={2000} step={5} value={hargaJuta}
             onChange={e => setHargaJuta(Number(e.target.value))}
             style={{ width: '100%', accentColor: th.accent, cursor: 'pointer', height: 6 }} />
           <div className="flex justify-between mt-1.5" style={{ fontSize: '0.65rem', color: th.textSubtle }}>

@@ -189,13 +189,13 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
             <form className="space-y-4" onSubmit={handleLogin}>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label htmlFor="operator-login-email" style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Email
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#059669' }} />
                   <input
-                    type="email" required autoComplete="username"
+                    id="operator-login-email" type="email" required autoComplete="username"
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="operator@surepath.id"
                     className="block w-full pl-10 pr-4 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
@@ -207,14 +207,15 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label htmlFor="operator-login-password" style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" size={13} style={{ color: '#059669' }} />
                   <input
-                    type={showPass ? 'text' : 'password'} required autoComplete="current-password"
+                    id="operator-login-password" type={showPass ? 'text' : 'password'} required autoComplete="current-password"
                     value={password} onChange={e => setPassword(e.target.value)}
+                    aria-label="Operator password"
                     placeholder="••••••••••••"
                     className="block w-full pl-10 pr-11 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
@@ -223,6 +224,8 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
                   />
                   <button
                     type="button" onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPass}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200"
                     style={{ color: '#94a3b8' }}
                     onMouseEnter={e => (e.currentTarget.style.color = '#059669')}

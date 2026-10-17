@@ -636,6 +636,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 <input
                   required
                   type="email"
+                  aria-label={t('Email address', 'Alamat email')}
                   autoComplete="email"
                   placeholder="email@contoh.com"
                   className={inputCls}
@@ -650,6 +651,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 <input
                   required
                   type={showPass ? 'text' : 'password'}
+                  aria-label={t('Password', 'Kata sandi')}
                   autoComplete={mode === 'LOGIN' ? 'current-password' : 'new-password'}
                   placeholder="Password"
                   minLength={mode === 'REGISTER' ? 6 : 1}
@@ -660,6 +662,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
+                  aria-label={showPass ? t('Hide password', 'Sembunyikan kata sandi') : t('Show password', 'Tampilkan kata sandi')}
+                  aria-pressed={showPass}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors"
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}

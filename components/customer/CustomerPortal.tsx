@@ -646,7 +646,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         style={!isFullscreen ? { paddingTop: 'calc(4.75rem + env(safe-area-inset-top, 0px))' } : undefined}
       >
         <Suspense fallback={<WizardLoader />}>
-          {renderContent()}
+          <div key={activePage} className="sp-page-enter">
+            {renderContent()}
+          </div>
         </Suspense>
       </main>
 

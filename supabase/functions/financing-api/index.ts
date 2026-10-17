@@ -115,6 +115,93 @@ Deno.serve(async (req) => {
       return json({ data: { totalApplications: total ?? 0, amountRequestedIdr: amountRequested, byStatus, partial: (total ?? 0) > (statuses?.length ?? 0), asOf: new Date().toISOString() }, correlationId }, 200, headers);
     }
 
+    if (action === "import_reconciliation_batch") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const statementReference = safeString(params.statement_reference, 120);
+      const maskedBankAccount = safeString(params.masked_bank_account, 40);
+      const periodStart = safeString(params.period_start, 10);
+      const periodEnd = safeString(params.period_end, 10);
+      const rawLines = Array.isArray(params.lines) ? params.lines as Array<Record<string, unknown>> : [];
+      const isDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+      if (statementReference.length < 6 || maskedBankAccount.length < 4 || !/[*•]{2,}|[Xx]{2,}/.test(maskedBankAccount) ||
+          !isDate(periodStart) || !isDate(periodEnd) || periodEnd < periodStart || rawLines.length < 1 || rawLines.length > 500) {
+        return json({ error: "VALIDATION_ERROR", message: "Provide a statement reference, masked bank account, valid period and 1–500 normalized statement lines.", correlationId }, 400, headers);
+      }
+      const lines: Array<Record<string, unknown>> = [];
+      for (const line of rawLines) {
+        const transactionDate = safeString(line.transaction_date, 10);
+        const direction = safeString(line.direction, 3);
+        const amount = Number(line.amount);
+        const externalReference = safeString(line.external_reference, 200);
+        const descriptionHash = safeString(line.description_hash, 64);
+        if (!isDate(transactionDate) || transactionDate < periodStart || transactionDate > periodEnd ||
+            !["IN", "OUT"].includes(direction) || !Number.isFinite(amount) || amount <= 0 ||
+            externalReference.length < 3 || (descriptionHash && !/^[a-f0-9]{64}$/i.test(descriptionHash))) {
+          return json({ error: "VALIDATION_ERROR", message: "Each statement line requires a valid date, IN/OUT direction, positive amount, external reference and optional SHA-256 description hash.", correlationId }, 400, headers);
+        }
+        lines.push({ transaction_date: transactionDate, direction, amount, external_reference: externalReference, ...(descriptionHash ? { description_hash: descriptionHash } : {}) });
+      }
+      const { data, error } = await db.rpc("sp_financing_import_reconciliation_batch", {
+        p_user_id: userId, p_statement_reference: statementReference, p_masked_bank_account: maskedBankAccount,
+        p_period_start: periodStart, p_period_end: periodEnd, p_lines: lines, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/reconciliation_access_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/statement_reference_already_imported/.test(error.message)) return json({ error: "STATEMENT_ALREADY_IMPORTED", correlationId }, 409, headers);
+        if (/invalid_reconciliation_batch|invalid_statement_line/.test(error.message)) return json({ error: "VALIDATION_ERROR", message: error.message.split("\\n")[0], correlationId }, 400, headers);
+        console.error("reconciliation batch import failed", correlationId, error.code);
+        return json({ error: "RECONCILIATION_IMPORT_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 201, headers);
+    }
+
+    if (action === "reconcile_statement_line") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const statementLineId = safeString(params.statement_line_id, 40);
+      const entityType = safeString(params.entity_type, 30);
+      const entityId = safeString(params.entity_id, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(statementLineId) || !/^[0-9a-f-]{36}$/i.test(entityId) ||
+          !["REPAYMENT", "DISBURSEMENT"].includes(entityType)) {
+        return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      }
+      const { data, error } = await db.rpc("sp_financing_reconcile_statement_line", {
+        p_user_id: userId, p_statement_line_id: statementLineId, p_entity_type: entityType,
+        p_entity_id: entityId, p_correlation_id: correlationId,
+      });
+      if (error) {
+        if (/reconciliation_access_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        if (/statement_line_not_found/.test(error.message)) return json({ error: "NOT_FOUND", correlationId }, 404, headers);
+        if (/statement_line_not_unmatched/.test(error.message)) return json({ error: "RECONCILIATION_CONFLICT", correlationId }, 409, headers);
+        if (/invalid_reconciliation_target/.test(error.message)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+        console.error("statement line reconciliation failed", correlationId, error.code);
+        return json({ error: "RECONCILIATION_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data, correlationId }, 200, headers);
+    }
+
+    if (action === "list_reconciliation_batches") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const limit = Math.min(100, Math.max(1, Number(params.limit) || 50));
+      const { data, error } = await db.rpc("sp_financing_list_reconciliation_batches", { p_user_id: userId, p_limit: limit });
+      if (error) {
+        if (/reconciliation_access_required/.test(error.message)) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+        console.error("reconciliation batch list failed", correlationId, error.code);
+        return json({ error: "RECONCILIATION_LIST_FAILED", correlationId }, 500, headers);
+      }
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
+    if (action === "list_reconciliation_lines") {
+      if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE") || roles.has("AUDITOR"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
+      const batchId = safeString(params.batch_id, 40);
+      if (!/^[0-9a-f-]{36}$/i.test(batchId)) return json({ error: "VALIDATION_ERROR", correlationId }, 400, headers);
+      const { data, error } = await db.from("sp_financing_bank_statement_lines")
+        .select("id,batch_id,line_number,transaction_date,direction,amount,external_reference,description_hash,status,matched_entity_type,matched_entity_id,matched_by,matched_at,exception_code,created_at")
+        .eq("batch_id", batchId).order("line_number", { ascending: true }).limit(500);
+      if (error) throw error;
+      return json({ data: data ?? [], correlationId }, 200, headers);
+    }
+
     if (action === "settle_disbursement_and_generate_schedule") {
       if (!(roles.has("FINANCING_ADMIN") || roles.has("SERVICING_FINANCE"))) return json({ error: "FORBIDDEN", correlationId }, 403, headers);
       const requestId = safeString(params.request_id, 40);

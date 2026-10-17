@@ -155,9 +155,10 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
       listFinancingRepayments(50),
       listFinancingLedgerJournals(50),
       getFinancingTrialBalance(),
-    ]).then(([schedules, journals, balance]) => {
+    ]).then(([schedules, payments, journals, balance]) => {
       if (!active) return;
       setLiveSchedules(schedules.data ?? []);
+      setLivePayments(payments.data ?? []);
       setLiveJournals(journals.data ?? []);
       setTrialBalance(balance.data ?? []);
       setServicingState('live');

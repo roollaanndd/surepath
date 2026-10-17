@@ -89,6 +89,12 @@ Client roles have no direct table grants. The service role is used only inside t
 - The production database currently has zero repayment records and zero journals; no test transaction or customer data was created. No active financing roles are assigned.
 - Settlement/payment entries are operator-attested records only. No bank integration, independent bank reconciliation, or money movement is enabled. Vercel dashboard UI is not yet wired to Phase 5 actions.
 
+## Phase 6 bank reconciliation (backend deployed)
+- Migration financing_bank_reconciliation_phase6 is applied to production Supabase; financing-api is deployed as version 8 with gateway JWT verification enabled.
+- Added normalized statement-batch import (masked account identifier only), exact-reference matching for incoming repayment receipts and outgoing disbursement settlements, and ledger postings to move clearing/suspense balances to the operating bank account.
+- SQL checks confirm two new reconciliation tables with RLS, nine active ledger accounts, no direct anon/authenticated execute on reconciliation RPCs, and zero reconciliation batches/lines created during testing. Unbalanced journal rejection was re-tested successfully.
+- This is operator-imported reconciliation, not a direct bank integration or automatic CSV parser. No bank transfers are initiated.
+
 ## Known Phase 1 limits
 - No production KYC/bureau/SLIK provider adapter is enabled.
 - No loan contract signing, loan schedule, disbursement, payment allocation, collections execution or double-entry loan ledger is implemented yet.

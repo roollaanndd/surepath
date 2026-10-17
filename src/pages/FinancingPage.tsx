@@ -617,7 +617,7 @@ const FinancingPage: React.FC<SitePageProps> = (props) => {
       ['Journal number','Date (UTC)','Source type','Source ID','Memo','Status','Debit (IDR)','Credit (IDR)'],
       ...financeReportRows.map((row) => [row.journal_number, row.created_at, row.source_type, row.source_id, row.memo ?? '', row.status, row.debit, row.credit]),
     ];
-    const csv = '\\ufeff' + rows.map((row) => row.map((cell) => '"' + String(cell ?? '').replace(/"/g, '""') + '"').join(',')).join('\\r\\n');
+    const csv = '\ufeff' + rows.map((row) => row.map((cell) => '"' + String(cell ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     const link = document.createElement('a');
     link.href = url; link.download = 'surepath-finance-' + reportStartDate + '-to-' + reportEndDate + '.csv';

@@ -22,7 +22,7 @@ export type FinancingRow = Record<string, unknown> & { id: string };
 let demoMode = false;
 const statusToApi: Record<string, string> = {
   new: 'NEW', submitted: 'SUBMITTED', documents_pending: 'DOCUMENTS_PENDING',
-  verification: 'VERIFICATION', credit_review: 'CREDIT_REVIEW', referred: 'REFERRED',
+  documents_verified: 'VERIFICATION', verification: 'VERIFICATION', credit_review: 'CREDIT_REVIEW', referred: 'REFERRED',
   approved: 'APPROVED', rejected: 'DECLINED', declined: 'DECLINED',
   offer_prepared: 'OFFERED', offered: 'OFFERED', contract_pending: 'CONTRACTED',
   contract_signed: 'CONTRACTED', contracted: 'CONTRACTED', active: 'BOOKED',
@@ -40,6 +40,7 @@ export async function financingRequest<T = any>(
   const parts = route.replace(/^\/+/, '').split('/').filter(Boolean);
   let action = parts[0] || 'health';
   const params: Record<string, any> = { ...(options.query || {}) };
+  if (typeof params.status === 'string') params.status = statusToApi[params.status.toLowerCase()] || params.status.toUpperCase();
 
   if (action === 'health') {
     action = 'health';

@@ -77,8 +77,11 @@ const statusTone: Record<string, string> = {
 
 const FinancingPage: React.FC<SitePageProps> = (props) => {
   // This is an isolated, fictional demo workspace. It is intentionally not a production auth session.
+  // This prototype is intentionally a one-click sandbox, not a real auth session.
+  // Open the dashboard immediately from its direct URL; no production identity is granted.
   const [demoEntered, setDemoEntered] = useState(() => {
-    try { return sessionStorage.getItem('sp_financing_demo_session') === 'active'; } catch { return false; }
+    try { sessionStorage.setItem('sp_financing_demo_session', 'active'); } catch {}
+    return true;
   });
   
   const [module, setModule] = useState<ModuleKey>('overview');

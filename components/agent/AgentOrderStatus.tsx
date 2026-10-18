@@ -82,6 +82,7 @@ const OrderSheet: React.FC<{
         {order.vehicle_image_url && (
           <img
             src={order.vehicle_image_url}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
             alt="Vehicle"
             className="rounded-2xl w-full object-cover max-h-40 border border-slate-100 dark:border-white/10 mb-4"
           />

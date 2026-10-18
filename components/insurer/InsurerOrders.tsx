@@ -409,7 +409,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         className={`w-full rounded-xl overflow-hidden border ${SHEET_BORDER} active:scale-[0.98] transition-transform`}
                       >
                         <img
-                          src={selectedOrder.vehicle_image_url} onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          src={selectedOrder.vehicle_image_url}
                           alt="Foto kendaraan"
                           className="w-full h-44 object-cover"
                           onError={(e) => { (e.currentTarget.parentElement as HTMLElement).innerHTML = '<div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400">Foto gagal dimuat</div>'; }}

@@ -121,15 +121,26 @@ const Hero = ({ onAction, onAdminAction, lang = "ID" }: HeroProps) => {
             }}
           ></div>
 
-          {/* Main Image Container */}
-          <div className="relative w-full max-w-lg aspect-[3/4] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 z-10 transform rotate-2 hover:rotate-0 transition-transform duration-700">
-            <img
-              src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=800&auto=format&fit=crop"
-              className="w-full h-full object-cover"
-              alt="Approachable Insurance"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+          {/* SurePath brand visual — no stock broker/people photography on the public entry page */}
+          <div
+            role="img"
+            aria-label={lang === "EN" ? "Abstract SurePath protection illustration" : "Ilustrasi perlindungan SurePath"}
+            className="relative w-full max-w-lg aspect-[3/4] rounded-[2rem] overflow-hidden shadow-2xl border border-emerald-300/20 z-10 transform rotate-2 hover:rotate-0 transition-transform duration-700"
+            style={{ background: 'radial-gradient(ellipse at 50% 35%, rgba(16,185,129,.24), transparent 48%), linear-gradient(145deg, #071a18 0%, #0a3027 48%, #07111a 100%)' }}
+          >
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute w-[72%] aspect-square rounded-full border border-emerald-300/20" />
+              <div className="absolute w-[54%] aspect-square rounded-full border border-emerald-300/25" />
+              <div className="absolute w-[38%] aspect-square rounded-full border border-emerald-300/30" />
+              <div className="relative w-44 h-52 flex items-center justify-center rounded-[3rem] border border-emerald-200/30 bg-emerald-300/10 shadow-[0_0_100px_rgba(16,185,129,.16)] backdrop-blur-sm">
+                <ShieldCheck size={112} strokeWidth={1.15} className="text-emerald-300 drop-shadow-[0_0_24px_rgba(52,211,153,.35)]" />
+              </div>
+            </div>
+            <div className="absolute bottom-8 left-7 right-7 rounded-2xl border border-white/10 bg-slate-950/65 p-5 backdrop-blur-md">
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-300">SurePath</p>
+              <p className="mt-2 text-2xl font-semibold leading-tight text-white">{lang === "EN" ? "Protection that moves with you." : "Perlindungan yang selalu bersama Anda."}</p>
+            </div>
           </div>
 
           {/* Floating Feature Bubbles */}

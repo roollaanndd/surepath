@@ -190,7 +190,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
 
       <main className="relative z-10 flex min-h-0 flex-1 flex-col px-4 sm:px-7 pt-4 pb-3">
         <section className="ob-scene relative mx-auto flex min-h-[235px] w-full max-w-[520px] flex-1 items-center justify-center overflow-hidden rounded-[30px] border border-white/50 shadow-[0_24px_70px_-32px_rgba(4,53,36,.65)] sm:rounded-[36px]" style={{ maxHeight: 'min(43vh, 430px)' }} aria-label={isID ? 'Ilustrasi fitur SurePath' : 'SurePath feature illustration'}>
-          {!imageFailed && (
+          {/* Customer onboarding uses SurePath's own vector illustrations, never stock people photos. */}
+          {role !== 'CUSTOMER' && !imageFailed && (
             <img
               src={slides[step].photo}
               alt=""
@@ -204,11 +205,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
           <div className="absolute inset-0 bg-gradient-to-t from-[#062a21]/90 via-[#073c2d]/35 to-[#0b4935]/20" aria-hidden="true" />
           <div className="ob-scene-grid absolute inset-0" aria-hidden="true" />
           <div className="ob-glow absolute -right-12 -top-16 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" style={{ animation: 'ob-glow 6s ease-in-out infinite' }} aria-hidden="true" />
-          {!imageFailed && <div className="absolute inset-0 bg-emerald-950/10" aria-hidden="true" />}
-          {imageFailed && (
+          {role !== 'CUSTOMER' && !imageFailed && <div className="absolute inset-0 bg-emerald-950/10" aria-hidden="true" />}
+          {(role === 'CUSTOMER' || imageFailed) && (
             <div className="ob-anim relative z-10 flex w-full items-center justify-center px-3 pt-7 pb-2" key={`scene-${step}`}>
               <ArtKeyframes />
-              <AgentArtKeyframes />
+              {role !== 'CUSTOMER' && <AgentArtKeyframes />}
               {React.createElement(slides[step].Art)}
             </div>
           )}

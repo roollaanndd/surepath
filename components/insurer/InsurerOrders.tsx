@@ -409,7 +409,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         className={`w-full rounded-xl overflow-hidden border ${SHEET_BORDER} active:scale-[0.98] transition-transform`}
                       >
                         <img
-                          src={selectedOrder.vehicle_image_url}
+                          src={selectedOrder.vehicle_image_url} onError={(e) => { e.currentTarget.style.display = "none"; }}
                           alt="Foto kendaraan"
                           className="w-full h-44 object-cover"
                           onError={(e) => { (e.currentTarget.parentElement as HTMLElement).innerHTML = '<div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400">Foto gagal dimuat</div>'; }}
@@ -580,7 +580,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
       {lightboxUrl && (
         <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white text-xl flex items-center justify-center">✕</button>
-          <img loading="lazy" src={lightboxUrl} alt="Dokumen" className="max-w-full max-h-full object-contain rounded-xl" />
+          <img loading="lazy" src={lightboxUrl} alt="Dokumen" className="max-w-full max-h-full object-contain rounded-xl" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
     </div>

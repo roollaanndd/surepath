@@ -339,7 +339,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                   >
                     <img
                       src={selectedOrder.vehicle_image_url}
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+
                       alt="Foto kendaraan"
                       className="w-full h-44 object-cover"
                       onError={(e) => { (e.currentTarget.parentElement as HTMLElement).innerHTML = '<div class="p-6 text-center text-xs text-gray-500 dark:text-gray-400">Foto gagal dimuat</div>'; }}

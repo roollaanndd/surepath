@@ -265,6 +265,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
               <div className="relative group">
                 <img
                   src={order.vehicle_image_url}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
                   alt="Foto kendaraan"
                   className="w-full rounded-2xl object-cover max-h-72 border border-white/10"
                 />

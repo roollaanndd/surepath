@@ -256,6 +256,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Foto Kendaraan</p>
                 <img
                   src={order.vehicle_image_url}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
                   alt="Vehicle"
                   className="rounded-2xl w-full object-cover max-h-40 border border-ds-border"
                 />

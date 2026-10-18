@@ -68,7 +68,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, onSelect, onLogout }) =
       {/* Header */}
       <div className="relative z-10 text-center mb-8">
         <div className="w-16 h-16 rounded-2xl sp-glass mx-auto mb-4 flex items-center justify-center">
-          <img loading="lazy" src="/logo-sm.png" alt="SurePath" className="w-11 h-12 object-contain" />
+          <img loading="lazy" src="/logo-sm.png" alt="SurePath" className="w-11 h-12 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">
           Selamat datang kembali

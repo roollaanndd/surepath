@@ -157,6 +157,7 @@ const PromoBannerAdmin: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <img
                     src={imageUrl}
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                     alt="Banner preview"
                     loading="lazy"
                     decoding="async"

@@ -387,7 +387,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
             if (url) {
               return (
                 <div key={i} className="relative aspect-square rounded-3xl overflow-hidden border-2 border-emerald-500/30 shadow-md group">
-                  <img src={url} alt={`photo-${i}`} className="w-full h-full object-cover" />
+                  <img src={url} alt={`photo-${i}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                   <button
                     onClick={() => handleRemovePhoto(i)}
                     className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur"

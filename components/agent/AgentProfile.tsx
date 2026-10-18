@@ -181,7 +181,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
           >
             {(profile as any)?.profile_photo_url
-              ? <img loading="lazy" src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" />
+              ? <img loading="lazy" src={(profile as any).profile_photo_url} alt="Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
               : <span>{initials}</span>
             }
             {avatarUploading && (

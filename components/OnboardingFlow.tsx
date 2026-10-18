@@ -177,7 +177,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
       `}</style>
 
       <header className="relative z-10 flex items-center justify-between gap-4 px-5 sm:px-7 pt-5 sm:pt-6" style={{ paddingTop: 'max(1.1rem, env(safe-area-inset-top))' }}>
-        <img src="/logo-full.png" alt="SurePath" className="h-8 sm:h-9 w-auto max-w-[165px] object-contain" />
+        <img src="/logo-full.png" alt="SurePath" className="h-8 sm:h-9 w-auto max-w-[165px] object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         <div className="flex items-center gap-3">
           <span className="hidden sm:inline text-[11px] font-semibold tracking-wide text-emerald-950/50">
             {isID ? 'LANGKAH' : 'STEP'} {step + 1} <span className="text-emerald-950/30">/ {slides.length}</span>

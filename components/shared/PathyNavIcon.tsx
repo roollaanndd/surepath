@@ -8,14 +8,34 @@ type Props = { id: string; size?: number; active?: boolean; className?: string }
 export const PathyNavIcon: React.FC<Props> = ({ id, size = 30, active = false, className = '' }) => {
   const [imageMap, setImageMap] = useState<Record<string, string>>({});
   const [styles, setStyles] = useState<PortalIconStyleMap>({});
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
   useEffect(() => {
     const unsubscribeIcons = subscribePortalIcons(setImageMap);
     const unsubscribeStyles = subscribePortalIconStyles(setStyles);
     getPortalIconMap().catch(() => {});
     return () => { unsubscribeIcons(); unsubscribeStyles(); };
   }, []);
+
   const imageUrl = imageMap[id];
-  if (imageUrl) return <img src={imageUrl} width={size} height={size} alt="" aria-hidden="true" draggable={false} className={className} style={{ objectFit: 'contain', display: 'block', flexShrink: 0 }} />;
+  useEffect(() => { setFailedSrc(null); }, [imageUrl]);
+
+  if (imageUrl && failedSrc !== imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        width={size}
+        height={size}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className={className}
+        style={{ objectFit: 'contain', display: 'block', flexShrink: 0 }}
+        onError={() => setFailedSrc(imageUrl)}
+      />
+    );
+  }
+
   return <SurePathIcon id={id} size={size} style={styles[id] || 'studio'} active={active} className={className} />;
 };
 

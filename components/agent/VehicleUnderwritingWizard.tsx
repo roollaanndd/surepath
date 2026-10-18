@@ -1386,6 +1386,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     <div className="flex items-center gap-2 mb-2">
                       {p.insurer_logo_url && (
                         <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
                           className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
                       )}
                       <p className={`font-black text-sm ${selected ? 'text-ds-green' : 'text-slate-700 dark:text-slate-200'}`}>

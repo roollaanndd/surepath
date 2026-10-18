@@ -217,62 +217,49 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 </button>
               </div>
 
-              {/* Protection overview — show a score only when the account provides one */}
-              <HeroCard>
-                {/* Character illustration — top right of hero card */}
-                <div className="absolute top-2 right-2 opacity-90 pointer-events-none">
-                  <HeroProtected size={90} />
-                </div>
-                <div className="flex items-center gap-5 relative z-10">
-                  {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && (
-                    <div className="relative flex-shrink-0">
-                      <svg width="86" height="86" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7"/>
-                        <circle
-                          cx="50" cy="50" r="38"
-                          fill="none"
-                          stroke="#00C16A"
-                          strokeWidth="7"
-                          strokeLinecap="round"
-                          strokeDasharray="238.76"
-                          strokeDashoffset={238.76 * (1 - Math.max(0, Math.min(100, currentUser.trustScore)) / 100)}
-                          transform="rotate(-90 50 50)"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl font-black text-white leading-none">{Math.max(0, Math.min(100, currentUser.trustScore))}</span>
-                        <span className="text-[8px] text-white/40 font-bold">/100</span>
-                      </div>
+              {/* Protection score — modern, data-led card; no person/stock illustration */}
+              <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-300/20 bg-gradient-to-br from-[#092E2A] via-[#0B4539] to-[#08785A] p-5 text-white shadow-[0_18px_48px_rgba(3,72,53,0.18)]">
+                <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/10" />
+                <div aria-hidden="true" className="pointer-events-none absolute -right-3 -top-7 h-28 w-28 rounded-full border border-white/10" />
+                <div className="relative z-10 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-white/[0.08] px-2.5 py-1">
+                      <ShieldCheck size={13} className="text-emerald-300" />
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-50/85">{t('Your protection score','Skor proteksi kamu')}</span>
                     </div>
-                  )}
-                  {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#00C16A' }} />
-                      <p className="text-[10px] font-black text-white/65 uppercase tracking-widest">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? t('Protection Score', 'Skor Proteksi') : t('Your Coverage', 'Perlindungan Anda')}</p>
-                    </div>
-                    {latestPolicy ? (
-                      <>
-                        <h4 className="text-lg font-black text-white leading-tight mb-2">{t('You\'re Protected', 'Kamu Terlindungi')}</h4>
-                        <div className="space-y-1.5">
-                          {coverageLabels.map(label => <CoverageRow key={label} label={label} />)}
-                        </div>
-                        <button onClick={() => navigate('history')} className="mt-3 px-3 py-1.5 rounded-xl text-[11px] font-black text-white border border-white/15 bg-white/10 active:scale-95 transition-transform inline-block">
-                          {t('View Policy', 'Lihat Polis')} →
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <h4 className="text-lg font-black text-white leading-tight">{t('Start Protecting', 'Mulai Lindungi')}</h4>
-                        <p className="text-sm text-white/75 mt-1">{t('Get covered in minutes', 'Terlindungi dalam hitungan menit')}</p>
-                        <button onClick={() => navigate('products')} className="mt-4 min-h-11 px-4 py-2.5 rounded-xl text-sm font-bold text-white active:scale-95 transition-transform inline-flex items-center justify-center" style={{ background: '#00C16A' }}>
-                          {t('Get Protected', 'Mulai Sekarang')} →
-                        </button>
-                      </>
-                    )}
+                    <h4 className="text-xl font-extrabold tracking-tight">{t('Protection, at a glance','Proteksi dalam satu ringkasan')}</h4>
+                    <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-white/65">{t('A quick view of your SurePath account score and coverage.','Ringkasan skor akun dan perlindungan SurePath kamu.')}</p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/20 bg-white/[0.09] shadow-inner">
+                    <ShieldCheck size={23} strokeWidth={1.8} className="text-emerald-200" />
                   </div>
                 </div>
-              </HeroCard>
+                <div className="relative z-10 mt-5 flex items-center gap-4">
+                  <div className="relative h-[94px] w-[94px] shrink-0">
+                    <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={t('Protection score meter','Meter skor proteksi')}>
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="7" />
+                      {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <circle cx="50" cy="50" r="40" fill="none" stroke="#6EE7B7" strokeWidth="7" strokeLinecap="round" strokeDasharray={251.33} strokeDashoffset={251.33 * (1 - Math.max(0,Math.min(100,currentUser.trustScore))/100)} />}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? <>
+                        <span className="text-[1.7rem] font-black leading-none tracking-tight">{Math.round(Math.max(0,Math.min(100,currentUser.trustScore)))}</span>
+                        <span className="mt-1 text-[9px] font-semibold text-white/50">/ 100</span>
+                      </> : <span className="px-2 text-center text-[10px] font-bold leading-tight text-white/70">{t('Not available','Belum tersedia')}</span>}
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? (currentUser.trustScore >= 80 ? t('Strong account score','Skor akun kuat') : currentUser.trustScore >= 50 ? t('Room to improve','Masih bisa ditingkatkan') : t('Build your protection profile','Lengkapi profil proteksi')) : t('Your coverage','Perlindungan kamu')}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/60">{latestPolicy ? t('Your policy details are available in your protection history.','Detail polis tersedia di riwayat proteksi.') : t('Explore available plans to start building your protection.','Lihat pilihan produk untuk mulai membangun proteksi.')}</p>
+                    {latestPolicy && <div className="mt-3 flex flex-wrap gap-1.5">{coverageLabels.map(label => <span key={label} className="rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold text-white/85">{label}</span>)}</div>}
+                  </div>
+                </div>
+                <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3">
+                  <span className="text-[11px] text-white/55">{t('Updated from your account profile','Mengikuti data profil akun')}</span>
+                  <button onClick={() => navigate(latestPolicy ? 'history' : 'products')} className="inline-flex min-h-9 items-center gap-1 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-extrabold text-[#073B2E] transition hover:bg-emerald-200 active:scale-[0.98]">
+                    {latestPolicy ? t('View history','Lihat riwayat') : t('Explore plans','Lihat produk')} <ArrowRight size={13} />
+                  </button>
+                </div>
+              </section>
 
               {/* My Protection — 3 metrics (wrapped in ClayCard for tangible feel) */}
               {latestPolicy && (
@@ -498,6 +485,25 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   </div>
                 </div>
               </HeroCard>
+
+              {/* Protection score — consistent with the home dashboard */}
+              <section className="relative overflow-hidden rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-r from-[#0B4539] to-[#08785A] p-4 text-white shadow-[0_12px_32px_rgba(3,72,53,0.14)]">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
+                    <ShieldCheck size={24} className="text-emerald-200" strokeWidth={1.8} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-emerald-100/70">{t('Protection score','Skor proteksi')}</p>
+                    <p className="mt-0.5 text-sm font-extrabold">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? (currentUser.trustScore >= 80 ? t('Strong account score','Skor akun kuat') : currentUser.trustScore >= 50 ? t('Room to improve','Masih bisa ditingkatkan') : t('Build your protection profile','Lengkapi profil proteksi')) : t('Score not available','Skor belum tersedia')}</p>
+                    <p className="mt-0.5 text-[11px] text-white/60">{t('Account score · not a measure of policy benefits','Skor akun · bukan ukuran manfaat polis')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-black leading-none">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? Math.round(Math.max(0,Math.min(100,currentUser.trustScore))) : '—'}</p>
+                    <p className="mt-1 text-[9px] font-bold text-white/50">/ 100</p>
+                  </div>
+                </div>
+                {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-emerald-300 transition-[width] duration-700" style={{width:`${Math.max(0,Math.min(100,currentUser.trustScore))}%`}} /></div>}
+              </section>
 
               {/* Policies */}
               <div className="space-y-3">

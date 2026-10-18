@@ -1,14 +1,15 @@
 export type SurePathIconStyle = 'studio' | 'orbit' | 'bold';
 type Props = { id: string; size?: number; style?: SurePathIconStyle; className?: string; active?: boolean };
 
+/**
+ * SurePath visual language: one coherent emerald / mint / lime palette.
+ * Keep icon geometry in code for crisp scaling; use real photography for
+ * emotional storytelling and retain CMS image overrides where explicitly set.
+ */
 const PALETTES = [
-  { a: '#2864F0', b: '#72C7FF', c: '#F9B84A', bg: '#EAF3FF', ink: '#163C82' },
-  { a: '#7C3AED', b: '#C4A7FF', c: '#FF718D', bg: '#F4EDFF', ink: '#48218E' },
-  { a: '#008D75', b: '#64E0BB', c: '#FFB547', bg: '#E3FBF3', ink: '#075C50' },
-  { a: '#F0643A', b: '#FFB36A', c: '#3A75F0', bg: '#FFF0E8', ink: '#8E351C' },
-  { a: '#E84272', b: '#FFA1BB', c: '#6955E8', bg: '#FFF0F5', ink: '#8C2145' },
+  { a: '#08743B', b: '#37C982', c: '#C7F36B', bg: '#EAF7EF', ink: '#124A32' },
 ];
-const paletteFor = (id: string) => PALETTES[[...id].reduce((n, c) => n + c.charCodeAt(0), 0) % PALETTES.length];
+const paletteFor = (_id: string) => PALETTES[0];
 
 function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; variant: SurePathIconStyle }) {
   const common = { stroke: p.ink, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -47,7 +48,7 @@ function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; v
     {key === 'quote' && <g {...stroke}><path d="M12 7h16l8 8v25H12Z" fill={p.bg}/><path d="M28 7v9h8" fill={p.b}/><path d="M18 23h12M18 28h10" stroke={p.a} strokeWidth="2"/><circle cx="34" cy="35" r="8" fill={p.c}/><path d="M34 30v10M31 33h4q3 2 0 4h-4" stroke={p.ink} strokeWidth="1.4"/></g>}
     {key === 'document' && <g {...stroke}><path d="M12 7h17l7 8v25H12Z" fill={p.bg}/><path d="M29 7v9h7" fill={p.b}/><path d="M18 23h12M18 28h12M18 33h8" stroke={p.a} strokeWidth="2"/><path d="m31 35 3 3 6-8" fill="none" stroke={p.c} strokeWidth="2.8"/></g>}
     {key === 'people' && <g {...stroke}><circle cx="18" cy="17" r="7" fill={p.b}/><circle cx="33" cy="19" r="5.5" fill={p.c}/><path d="M6 39q0-13 12-13t12 13Z" fill={p.a}/><path d="M27 29q10-4 14 8v2H28" fill={p.b}/><circle cx="16" cy="16" r="1" fill={p.ink}/><circle cx="20" cy="16" r="1" fill={p.ink}/><path d="M15 20q3 3 6 0" fill="none"/></g>}
-    {key === 'pathy' && <g {...stroke}><path d="M24 6v5" stroke={p.a} strokeWidth="2.5"/><circle cx="24" cy="5" r="3" fill={p.c}/><rect x="8" y="11" width="32" height="28" rx="10" fill={p.b}/><rect x="13" y="16" width="22" height="17" rx="6" fill={p.ink}/><circle cx="19" cy="23" r="2" fill="#C7FF72"/><circle cx="29" cy="23" r="2" fill="#C7FF72"/><path d="M19 28q5 5 10 0" stroke="#C7FF72" strokeWidth="2" fill="none"/><path d="M8 21H5v8h3M40 21h3v8h-3" fill={p.a}/><path d="M18 39v3M30 39v3" stroke={p.ink} strokeWidth="2.5"/></g>}
+    {key === 'pathy' && <g {...stroke}><path d="M24 6v5" stroke={p.a} strokeWidth="2.5"/><circle cx="24" cy="5" r="3" fill={p.c}/><rect x="8" y="11" width="32" height="28" rx="10" fill={p.b}/><rect x="13" y="16" width="22" height="17" rx="6" fill={p.ink}/><circle cx="19" cy="23" r="2" fill="#C7F36B"/><circle cx="29" cy="23" r="2" fill="#C7F36B"/><path d="M19 28q5 5 10 0" stroke="#C7F36B" strokeWidth="2" fill="none"/><path d="M8 21H5v8h3M40 21h3v8h-3" fill={p.a}/><path d="M18 39v3M30 39v3" stroke={p.ink} strokeWidth="2.5"/></g>}
     {key === 'trophy' && <g {...stroke}><path d="M15 8h18v9q0 11-9 13-9-2-9-13Z" fill={p.b}/><path d="M15 12H8v4q0 7 9 8M33 12h7v4q0 7-9 8" fill="none"/><path d="m24 15 2 4 4 .5-3 3 .8 4.5-3.8-2.2-3.8 2.2.8-4.5-3-3 4-.5Z" fill={p.c} stroke={p.ink} strokeWidth="1"/><path d="M18 38h12M21 30v8M27 30v8"/></g>}
     {key === 'network' && <g {...stroke}><path d="M24 20 11 11M24 20l14-8M24 20 12 36M24 20l14 16" stroke={p.a} strokeWidth="2.5"/><circle cx="24" cy="20" r="8" fill={p.b}/><circle cx="10" cy="10" r="6" fill={p.c}/><circle cx="38" cy="11" r="6" fill={p.a}/><circle cx="11" cy="37" r="6" fill={p.b}/><circle cx="38" cy="37" r="6" fill={p.c}/><circle cx="22" cy="19" r="1" fill={p.ink}/><circle cx="26" cy="19" r="1" fill={p.ink}/><path d="M21 23q3 2 6 0" fill="none"/></g>}
     {key === 'renewal' && <g {...stroke}><rect x="10" y="11" width="28" height="29" rx="5" fill={p.bg}/><path d="M10 19h28" stroke={p.a} strokeWidth="2.5"/><path d="M17 7v8M31 7v8" stroke={p.ink} strokeWidth="2.5"/><path d="M18 28a7 7 0 0 1 12-4l2 2M32 22v5h-5" fill="none" stroke={p.c} strokeWidth="2.5"/><path d="M30 32a7 7 0 0 1-12 3l-2-2M16 38v-5h5" fill="none" stroke={p.a} strokeWidth="2.5"/></g>}
@@ -68,6 +69,6 @@ export default function SurePathIcon({ id, size = 28, style = 'studio', classNam
   return <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true" focusable="false">
     <defs><linearGradient id={`sp-icon-${id.replace(/[^a-z0-9]/gi, '')}-${style}`} x1="7" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse"><stop stopColor={p.b}/><stop offset="1" stopColor={p.a}/></linearGradient></defs>
     <Artwork id={id} p={p} variant={style}/>
-    {active && <circle cx="40" cy="39" r="4" fill="#B7F34A" stroke="white" strokeWidth="1.5"/>}
+    {active && <circle cx="40" cy="39" r="4" fill="#C7F36B" stroke="white" strokeWidth="1.5"/>}
   </svg>;
 }

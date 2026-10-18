@@ -151,7 +151,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
               >
                 <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center font-black text-ds-green overflow-hidden">
                   {a.profile_photo_url ? (
-                    <img loading="lazy" src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
+                    <img loading="lazy" src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                   ) : (
                     (a.name?.charAt(0)?.toUpperCase() ?? '?')
                   )}

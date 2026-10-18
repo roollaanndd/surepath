@@ -14,6 +14,8 @@ const paletteFor = (_id: string) => PALETTES[0];
 function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; variant: SurePathIconStyle }) {
   const common = { stroke: p.ink, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   const key = /pathy|ai_admin|ai_finance|assistant/i.test(id) ? 'pathy'
+    : /bank|branch|banking|institution|finance_center/i.test(id) ? 'bank'
+    : /library|catalog|resource_center|knowledge/i.test(id) ? 'library'
     : /leaderboard|ranking|trophy|target/i.test(id) ? 'trophy'
     : /network|referral|team/i.test(id) ? 'network'
     : /renewal|refresh/i.test(id) ? 'renewal'
@@ -39,6 +41,8 @@ function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; v
     {variant === 'orbit' && <g fill="none" stroke={p.b} strokeWidth="1.4"><ellipse cx="24" cy="23" rx="20" ry="9" transform="rotate(-32 24 23)"/><circle cx="39" cy="10" r="2.5" fill={p.c} stroke="none"/></g>}
     {variant === 'studio' && <rect x="4" y="4" width="40" height="40" rx="13" fill={p.bg}/>}
     {variant === 'bold' && <path d="M24 3 44 14v20L24 45 4 34V14Z" fill={p.bg} stroke={p.b} strokeWidth="1.2"/>}
+    {key === 'bank' && <g {...stroke}><path d="M6 18 24 7l18 11Z" fill={p.b}/><path d="M9 20h30M7 39h34M10 22v14M18 22v14M30 22v14M38 22v14" stroke={p.ink} strokeWidth="2.2"/><path d="M6 39h36" stroke={p.a} strokeWidth="3"/><circle cx="24" cy="15" r="2" fill={p.c}/></g>}
+    {key === 'library' && <g {...stroke}><path d="M8 12 17 8l7 4-7 4Z" fill={p.b}/><path d="M8 12v23l9 5V16Z" fill={p.a}/><path d="M24 12 33 8l7 4-7 4Z" fill={p.c}/><path d="M24 12v23l9 5V16Z" fill={p.b}/><path d="M17 16v22M33 16v22" stroke={p.ink} strokeOpacity=".5"/><path d="M7 39 17 44l7-4 9 4 9-5" fill="none" stroke={p.ink} strokeWidth="1.6"/></g>}
     {key === 'home' && <g {...stroke}><path d="m9 23 15-13 15 13" fill="none"/><path d="M13 21v17h22V21L24 12Z" fill={p.b}/><path d="M21 38V27h7v11" fill={p.bg}/><path d="M17 23h4M29 23h4" stroke={p.ink}/><circle cx="36" cy="12" r="4" fill={p.c}/></g>}
     {key === 'car' && <g {...stroke}><path d="m8 28 4-10q1-3 5-3h13q4 0 6 5l3 8v7H8Z" fill={p.b}/><path d="m15 18-3 8h23l-4-8Z" fill={p.bg}/><path d="M7 29h34v6H7Z" fill={p.a}/><circle cx="15" cy="36" r="4" fill={p.ink}/><circle cx="34" cy="36" r="4" fill={p.ink}/><circle cx="15" cy="36" r="1.5" fill="white"/><circle cx="34" cy="36" r="1.5" fill="white"/><path d="M9 29h4M35 29h4" stroke={p.c} strokeWidth="2.5"/></g>}
     {key === 'travel' && <g {...stroke}><path d="m7 26 13-4 5-15q1-3 4-1l2 2-2 14 9 4q3 2 1 4l-2 1-12-3-8 10-3-1 3-11-8 2Z" fill={p.b}/><path d="m10 38 9-3" stroke={p.a} strokeWidth="3"/><circle cx="37" cy="10" r="5" fill={p.c}/></g>}

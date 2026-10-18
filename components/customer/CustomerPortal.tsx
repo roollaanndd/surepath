@@ -219,8 +219,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Protection score — modern, data-led card; no person/stock illustration */}
               <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-300/20 bg-gradient-to-br from-[#092E2A] via-[#0B4539] to-[#08785A] p-5 text-white shadow-[0_18px_48px_rgba(3,72,53,0.18)]">
-                <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/10" />
-                <div aria-hidden="true" className="pointer-events-none absolute -right-3 -top-7 h-28 w-28 rounded-full border border-white/10" />
+                <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-white/10 animate-pulse motion-reduce:animate-none" />
+                <div aria-hidden="true" className="pointer-events-none absolute -right-3 -top-7 h-28 w-28 rounded-full border border-white/10 animate-pulse motion-reduce:animate-none" />
                 <div className="relative z-10 flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-white/[0.08] px-2.5 py-1">
@@ -238,11 +238,11 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="relative h-[94px] w-[94px] shrink-0">
                     <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={t('Protection score meter','Meter skor proteksi')}>
                       <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="7" />
-                      {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <circle cx="50" cy="50" r="40" fill="none" stroke="#6EE7B7" strokeWidth="7" strokeLinecap="round" strokeDasharray={251.33} strokeDashoffset={251.33 * (1 - Math.max(0,Math.min(100,currentUser.trustScore))/100)} />}
+                      {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <circle cx="50" cy="50" r="40" fill="none" stroke="#6EE7B7" strokeWidth="7" strokeLinecap="round" strokeDasharray={251.33} strokeDashoffset={251.33 * (1 - Math.max(0,Math.min(100,currentUser.trustScore))/100)} className="transition-[stroke-dashoffset] duration-1000 ease-out motion-reduce:transition-none" />}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? <>
-                        <span className="text-[1.7rem] font-black leading-none tracking-tight">{Math.round(Math.max(0,Math.min(100,currentUser.trustScore)))}</span>
+                        <span className="text-[1.7rem] font-black leading-none tracking-tight animate-pop-in motion-reduce:animate-none">{Math.round(Math.max(0,Math.min(100,currentUser.trustScore)))}</span>
                         <span className="mt-1 text-[9px] font-semibold text-white/50">/ 100</span>
                       </> : <span className="px-2 text-center text-[10px] font-bold leading-tight text-white/70">{t('Not available','Belum tersedia')}</span>}
                     </div>
@@ -502,7 +502,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="mt-1 text-[9px] font-bold text-white/50">/ 100</p>
                   </div>
                 </div>
-                {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-emerald-300 transition-[width] duration-700" style={{width:`${Math.max(0,Math.min(100,currentUser.trustScore))}%`}} /></div>}
+                {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-emerald-300 transition-[width] duration-1000 ease-out motion-reduce:transition-none" style={{width:`${Math.max(0,Math.min(100,currentUser.trustScore))}%`}} /></div>}
               </section>
 
               {/* Policies */}

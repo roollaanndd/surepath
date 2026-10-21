@@ -158,3 +158,9 @@ npx cap sync android
 3. Apply migrasi DB jika ada (cek urutan: gateway dulu, baru lockdown RLS).
 4. Rebuild APK jika perubahan frontend penting untuk pengguna mobile.
 5. Smoke test: registrasi customer, registrasi agent, login keduanya, di web + APK.
+
+## ⚠️ data-gateway sedang berjalan di jalur darurat (21 Okt 2026)
+
+`data-gateway` v5 BUKAN deploy normal: ia shim yang memuat kodenya dari database saat boot, karena deploy inline memotong payload 104 KB dan mematikan produksi ±1 jam 20 menit. JANGAN hapus `public.dg_src_tmp` / `public.dg_bundle_tmp()`. Baca `docs/INCIDENT_2026-10-21_data-gateway.md` sebelum menyentuh fungsi ini.
+
+**JANGAN deploy fungsi besar dengan menempelkan isi bundel inline.** Ukur dulu ukurannya.

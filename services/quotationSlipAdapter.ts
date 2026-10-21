@@ -656,11 +656,17 @@ export function fromAgentQuote(q: AgentQuoteSource): QuotationSlipData {
   const periodStart = today.toISOString().slice(0, 10);
   const periodEnd = addYearsID(periodStart, 1);
   const sumInsured = q.vehiclePrice || 0;
-  const basePremium = q.rows.find(r => /premi\s+dasar|casco|base/i.test(r.label))?.amount ?? q.totalPremium * 0.9;
-  const addonRows = q.rows.filter(r => !/premi\s+dasar|casco|base|biaya|materai/i.test(r.label));
-  const addonPremium = addonRows.reduce((s, r) => s + r.amount, 0);
-  const adminFee = q.rows.find(r => /admin/i.test(r.label))?.amount ?? 50000;
-  const stampDuty = q.rows.find(r => /materai/i.test(r.label))?.amount ?? 10000;
+  // `rows` datang dari pemanggil — wizard beli mengisinya, Pathy juga, tapi
+  // satu bentuk ramping saja (atau satu baris tanpa label) dulu membuat
+  // seluruh unduhan PDF mati dengan "Cannot read properties of undefined".
+  // Setiap nilai di bawah sudah punya fallback-nya sendiri, jadi daftar kosong
+  // tetap menghasilkan slip yang benar — bukan layar gagal.
+  const rows = Array.isArray(q.rows) ? q.rows.filter(r => r && typeof r.label === 'string') : [];
+  const basePremium = rows.find(r => /premi\s+dasar|casco|base/i.test(r.label))?.amount ?? q.totalPremium * 0.9;
+  const addonRows = rows.filter(r => !/premi\s+dasar|casco|base|biaya|materai/i.test(r.label));
+  const addonPremium = addonRows.reduce((s, r) => s + (r.amount ?? 0), 0);
+  const adminFee = rows.find(r => /admin/i.test(r.label))?.amount ?? 50000;
+  const stampDuty = rows.find(r => /materai/i.test(r.label))?.amount ?? 10000;
   const discountAmount = q.discountAmount ?? 0;
   const netPremium = q.totalPremium - adminFee - stampDuty;
   const rate = q.ojkRate ? (q.ojkRate * 100).toFixed(2).replace('.', ',') + '%' : (sumInsured > 0 ? (basePremium / sumInsured * 100).toFixed(2).replace('.', ',') + '%' : '-');

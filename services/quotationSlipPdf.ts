@@ -282,7 +282,45 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   });
 
   const filename = `${data.quotationNumber.replace(/[/\s]/g, '_')}_Penawaran_${data.insurerShort}_${data.preparedForCompany.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}.pdf`;
-  doc.save(filename);
+  deliverPdf(doc, filename);
+}
+
+/**
+ * Menyerahkan PDF yang sudah jadi ke pengguna.
+ *
+ * `doc.save()` bekerja lewat `<a download>` + blob URL. Di browser biasa itu
+ * benar. Di WebView Android (APK Capacitor) atribut `download` TIDAK dihormati:
+ * tidak ada berkas, tidak ada error, tidak ada apa pun — PDF-nya sudah jadi di
+ * memori lalu hilang begitu saja. Itulah bentuk "PDF-nya tidak berfungsi" yang
+ * dilaporkan: generatornya tidak pernah gagal, pengirimannya yang gagal diam.
+ *
+ * Jadi di dalam shell native, berkas dibuka sebagai blob supaya WebView
+ * menyerahkannya ke penangan PDF sistem. Tidak ada plugin baru yang dipakai —
+ * menambah @capacitor/filesystem berarti build ulang native.
+ */
+function deliverPdf(doc: any, filename: string): void {
+  const isNativeShell =
+    typeof window !== 'undefined' &&
+    !!(window as any).Capacitor?.isNativePlatform?.();
+
+  if (!isNativeShell) {
+    doc.save(filename);
+    return;
+  }
+
+  try {
+    const url = URL.createObjectURL(doc.output('blob'));
+    const opened = window.open(url, '_blank');
+    if (!opened) {
+      // Popup ditolak: arahkan tab ini sendiri — lebih baik daripada senyap.
+      window.location.href = url;
+    }
+    // Jangan dicabut terlalu cepat; penangan sistem masih membacanya.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    // Kalau blob pun gagal, jalur lama masih lebih baik daripada tidak ada.
+    doc.save(filename);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

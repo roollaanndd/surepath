@@ -11,6 +11,53 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.6.1 — 2026-10-21
+
+**Analisa foto kendaraan: penyebabnya ditemukan, dan analisanya kini milik Pathy.**
+
+Laporan pemilik: analisa foto AI di menu pembelian asuransi kendaraan tidak
+berfungsi.
+
+Sisi server ternyata SEHAT, dan itu dibuktikan bukan diasumsikan: kunci
+OpenRouter diuji langsung dan menjawab 200, model `openai/gpt-4o` ada di
+allowlist `ai-proxy`, dan fungsinya terdeploy. Yang menentukan justru log
+produksi: **`ai-proxy` nol invokasi dalam 24 jam** padahal fiturnya dilaporkan
+mati. Permintaannya memang tidak pernah dikirim — jadi kegagalannya di klien,
+sebelum apa pun keluar.
+
+- **`compressImageBase64()` bisa menggantung selamanya.** Ia dipanggil SEBELUM
+  setiap permintaan AI, dan promise-nya hanya diselesaikan di `onload` atau
+  `onerror`. Kalau dua-duanya tidak pernah menyala — HEIC/HEIF dari iPhone pada
+  sebagian browser, berkas rusak, data URL terpotong — `await` tidak pernah
+  kembali: spinner menyala terus, nol permintaan, nol error. Sekarang promise-nya
+  dijamin selesai (penjaga sekali-pakai + timeout 10 detik), dan gagal kompresi
+  memulangkan gambar asli supaya pemanggilnya jalan terus. Perbaikan ini juga
+  menyembuhkan jalur lain yang memakai fungsi sama: validasi foto, OCR STNK/KTP,
+  analisa klaim.
+- **Sebab kegagalan kini ditampilkan.** Dulu semua sebab diganti menjadi "AI
+  tidak tersedia", sehingga laporan datang tanpa satu petunjuk pun dan harus
+  ditelusuri dari nol. Sekarang pesannya membawa sebab aslinya.
+- **Analisa dilakukan Pathy.** Jalurnya lewat `services/pathyVision.ts`, dan
+  hasilnya ikut tercatat di rekaman percakapan Pathy (`sp_pathy_messages`)
+  sehingga muncul di CMS bersama percakapan Pathy lainnya. Label UI mengikuti.
+- Perekaman tidak boleh pernah menggagalkan analisa yang sudah berhasil. `void`
+  saja tidak cukup — ia tetap mengevaluasi ekspresinya, jadi throw sinkron akan
+  merambat. Ditemukan oleh ujinya sendiri, lalu ditutup dengan try/catch.
+
+**Batasan yang perlu diketahui:** `pathy-agent` hari ini TIDAK bisa melihat
+gambar — parameter `documents`-nya hanya menerima field teks, dan
+`sanitizeDocuments()` membuang objek/array. Jadi panggilan vision-nya masih
+lewat `ai-proxy`, satu-satunya jalur vision yang ada dan terbukti sehat.
+Memindahkannya ke dalam `pathy-agent` butuh kemampuan vision baru di sisi
+server, dan itu berarti men-deploy `pathy-agent` — yang per 21 Okt berarti
+menaruh fungsi kedua di jalur darurat. Belum dilakukan, dan sengaja.
+
+Dua pemanggil lain (`VehicleUnderwritingWizard` di apps mitra dan
+`MPARInsuranceWizard`) masih memanggil jalur vision langsung, jadi hasilnya
+tidak masuk rekaman Pathy. Perbaikan anti-gantung tetap berlaku untuk keduanya.
+
+tsc bersih · ESLint 0 error · 294/294 uji · build bersih
+
 ## v2.6.0 — 2026-10-21
 
 **CRM & KPI marketing/sales — Fase 1.** Portal baru `/marketingapp` untuk karyawan

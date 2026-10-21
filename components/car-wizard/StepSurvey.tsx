@@ -5,7 +5,8 @@ import {
   FileSearch as ManualAuditIcon, Video, Car, CalendarClock, CheckCircle2, ImagePlus
 } from 'lucide-react';
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';
-import { validateVehiclePhoto, analyzeVehicleSurvey } from '../../services/geminiService';
+import { validateVehiclePhoto } from '../../services/geminiService';
+import { pathyAnalyzeVehiclePhotos } from '../../services/pathyVision';
 import { extractStnkOcr } from '../../services/stnkOcr';
 
 interface StepSurveyProps {
@@ -150,9 +151,11 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
 
     let response: any;
     try {
-      response = await analyzeVehicleSurvey(photoEntries, expectedData);
-    } catch {
-      response = { success: false };
+      // Lewat Pathy: hasilnya ikut tercatat di rekaman percakapan Pathy
+      // sehingga terlihat di CMS bersama percakapan Pathy lainnya.
+      response = await pathyAnalyzeVehiclePhotos(photoEntries, expectedData);
+    } catch (e) {
+      response = { success: false, error: String((e as Error)?.message ?? e) };
     }
 
     setLoading(false);
@@ -184,11 +187,19 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         recommendations: response.recommendations || [],
       }));
     } else {
+      // Sebab aslinya DITAMPILKAN, bukan disembunyikan di balik "AI tidak
+      // tersedia". Pesan lama membuat laporan "analisa foto tidak berfungsi"
+      // datang tanpa satu petunjuk pun, dan penelusurannya harus dimulai dari
+      // nol — itu memakan waktu berjam-jam pada 21 Okt 2026.
+      const sebab = typeof response?.error === 'string' && response.error.trim()
+        ? response.error.trim()
+        : 'sebab tidak diketahui';
+      setSurveyActionError(`Pathy belum bisa menganalisa foto: ${sebab}`);
       setSurvey((prev: any) => ({
         ...prev,
         score: 0,
         verdict: 'MANUAL_REQUIRED',
-        underwritingReport: 'AI tidak tersedia — lanjutkan dengan verifikasi manual.',
+        underwritingReport: `Pathy belum bisa menganalisa foto (${sebab}). Pesanan dilanjutkan dengan verifikasi manual.`,
         manualVerif: true,
       }));
     }
@@ -338,7 +349,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
             {loading && loadingType === 'SURVEY' ? (
               <div className="glass-card rounded-[3rem] shadow-2xl relative overflow-hidden bg-white dark:bg-black/20">
                  <SmartProcessingView
-                  label="Analisa AI"
+                  label="Analisa Pathy"
                   sublabel="AI SurePath sedang mengecek kecocokan data dan kondisi mobil kamu secara otomatis."
                  />
               </div>
@@ -412,7 +423,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                     <div className="p-6 bg-gray-50 dark:bg-white/[0.02] rounded-[2rem] border border-black/5 dark:border-white/5 relative z-10 space-y-4">
                        <div className="flex items-center gap-3">
                           <FileText size={14} className="text-emerald-500"/>
-                          <span className="text-[0.55rem] font-black uppercase text-emerald-500 tracking-widest">Laporan Hasil Surveyor AI</span>
+                          <span className="text-[0.55rem] font-black uppercase text-emerald-500 tracking-widest">Laporan Hasil Survei Pathy</span>
                        </div>
                        <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed">
                           {survey.underwritingReport || "Laporan kondisi mobil berdasarkan foto yang diunggah."}
@@ -458,11 +469,11 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                           <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0"><AlertTriangle size={20}/></div>
                           <div>
                              <h4 className="text-sm font-black uppercase text-amber-700 dark:text-amber-400 tracking-wide">Perlu Pemeriksaan Manual</h4>
-                             <p className="text-[0.55rem] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest">Analisa AI tidak dapat memberikan skor</p>
+                             <p className="text-[0.55rem] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-widest">Pathy belum dapat memberikan skor</p>
                           </div>
                        </div>
                        <p className="text-[0.65rem] text-gray-700 dark:text-amber-100/70 font-medium leading-relaxed">
-                          Analisa AI tidak dapat memberikan skor saat ini. Pesanan kamu akan ditinjau manual oleh tim/pihak asuransi. Polis belum tentu langsung disetujui. Silakan pantau status melalui email atau aplikasi.
+                          Pathy belum dapat memberikan skor saat ini. Pesanan kamu akan ditinjau manual oleh tim/pihak asuransi. Polis belum tentu langsung disetujui. Silakan pantau status melalui email atau aplikasi.
                        </p>
                        <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-300/50 dark:border-amber-700/30">
                           <p className="text-[0.6rem] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1">Langkah Selanjutnya</p>

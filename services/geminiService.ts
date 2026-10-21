@@ -144,19 +144,55 @@ export interface SurveyAnalysisResult {
  * and large enough to be rejected by the edge function before the model ever
  * sees the image — which reads to the user as "the AI cannot read my STNK".
  */
+/**
+ * FIX v2.6.1 — fungsi ini dulu bisa MENGGANTUNG SELAMANYA.
+ *
+ * Promise-nya hanya diselesaikan di `onload` atau `onerror`. Kalau dua-duanya
+ * tidak pernah menyala — terjadi pada sebagian browser untuk HEIC/HEIF dari
+ * iPhone, berkas rusak, atau data URL yang terpotong — `await` di pemanggilnya
+ * tidak pernah kembali. Akibatnya: spinner menyala terus, TIDAK ADA satu pun
+ * permintaan keluar ke AI, dan tidak ada error di mana pun.
+ *
+ * Itu cocok dengan bukti produksi 21 Okt 2026: `ai-proxy` tercatat **nol**
+ * invokasi dalam 24 jam padahal fitur analisa foto dilaporkan "tidak
+ * berfungsi" — permintaannya memang tidak pernah dikirim.
+ *
+ * Sekarang promise-nya dijamin selesai: satu penjaga `settle` sekali-pakai,
+ * plus timeout. Gagal kompresi bukan alasan membatalkan analisa, jadi
+ * fallback-nya tetap gambar asli — yang penting pemanggilnya JALAN TERUS.
+ */
+const COMPRESS_TIMEOUT_MS = 10_000;
+
 export async function compressImageBase64(base64: string, maxWidthPx = 1024): Promise<string> {
   return new Promise(resolve => {
+    let done = false;
+    const settle = (value: string) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+    // Jaring terakhir: apa pun yang terjadi pada decoder gambar browser,
+    // promise ini TETAP selesai.
+    const timer = setTimeout(() => settle(base64), COMPRESS_TIMEOUT_MS);
+
     const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, maxWidthPx / img.width);
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.82));
+      try {
+        const scale = Math.min(1, maxWidthPx / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { settle(base64); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        settle(canvas.toDataURL('image/jpeg', 0.82));
+      } catch {
+        // canvas bisa melempar (mis. gambar sangat besar, tainted canvas).
+        settle(base64);
+      }
     };
-    img.onerror = () => resolve(base64); // fallback if load fails
+    img.onerror = () => settle(base64);
     img.src = base64.startsWith('data:') ? base64 : `data:image/jpeg;base64,${base64}`;
   });
 }
@@ -478,8 +514,15 @@ Return JSON only (tidak ada teks di luar JSON):
 
     return { success: true, ...data, photoFlags: flagsWithIds };
   } catch (e) {
+    // Sebabnya DIBAWA ke pemanggil, tidak diganti pesan generik.
+    // Versi lama selalu memulangkan "Gagal menghubungkan ke Neural Engine."
+    // untuk sebab apa pun — sesi habis, model ditolak, rate limit, JSON tak
+    // terbaca — sehingga laporan "analisa AI tidak berfungsi" datang tanpa satu
+    // petunjuk pun, dan harus ditelusuri dari nol. Itu memakan waktu berjam-jam
+    // pada 21 Okt 2026.
     console.error('analyzeVehicleSurvey error:', e);
-    return { success: false, error: 'Gagal menghubungkan ke Neural Engine.' };
+    const sebab = String((e as Error)?.message ?? e).slice(0, 200);
+    return { success: false, error: `Analisa Pathy gagal: ${sebab}` };
   }
 };
 

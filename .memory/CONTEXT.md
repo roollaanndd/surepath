@@ -1,4 +1,59 @@
 # SurePath Session Context
+**Updated:** 2026-10-21 (v2.5.20 + INSIDEN data-gateway)
+
+## ⚠️ BACA DULU — data-gateway berjalan di jalur darurat
+
+21 Okt 2026 `data-gateway` MATI TOTAL ±1 jam 20 menit. Sebabnya: deploy lewat MCP
+dengan isi bundel ditempel inline. Payload 104 KB terpotong di ~8,5 KB, potongannya
+kebetulan valid secara sintaks, Supabase MENERIMANYA, dan v4 terbit TANPA
+`Deno.serve` — jadi tidak ada handler dan semua permintaan menggantung. Tanpa error
+sama sekali.
+
+**JANGAN deploy fungsi besar dengan isi inline.** Bundel data-gateway ≈ 104 ribu
+token (JS minified tokenisasinya ~1 karakter/token). Itu mustahil dalam satu
+panggilan, bukan sekadar berisiko. Ukur dulu.
+
+Produksi SEKARANG: `data-gateway` v5 = shim ±60 baris yang memuat kode gateway saat
+boot dari `public.dg_bundle_tmp()` (service_role saja) lalu
+`import("data:text/javascript,...")`. Dua hal krusial:
+- modul dinamis TIDAK BOLEH mengimpor apa pun (graf modul edge runtime statis), jadi
+  `createClient` diimpor statis di shim dan dititipkan via `globalThis.__sbCreateClient`;
+  penukaran baris impor dilakukan DI DALAM `dg_bundle_tmp()`
+- shim gagal-tertutup dan TERLIHAT: 503 dengan sebab, bukan menggantung
+
+**JANGAN DROP** `public.dg_src_tmp`, `public.dg_bundle_tmp()`, domain
+`"application/javascript"` — produksi mati pada cold start berikutnya. Sudah diberi
+COMMENT peringatan di DB. Urutan mengakhirinya ada di
+`docs/INCIDENT_2026-10-21_data-gateway.md`.
+
+### Jalur deploy yang SUDAH dibuktikan tertutup (jangan diulang)
+- CLI dari kontainer: `api.supabase.com` 403 kebijakan proxy
+- workflow `deploy-edge-functions.yml`: guard menolak, repo secret belum diisi
+- integrasi Supabase–GitHub (sudah dihubungkan pemilik): TIDAK men-deploy function
+- `import` dari host mana pun saat deploy: bundler menolak, termasuk domain Supabase
+- `import` modul remote saat runtime: `Module not found`, graf statis
+
+### Yang masih dibutuhkan dari pemilik
+Repo secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`,
+atau deploy CLI dari mesin lain. Itu mengakhiri jalur darurat DAN menyelesaikan
+masalah deploy yang berulang berminggu-minggu.
+
+## Verifikasi yang terbukti berguna
+`pg_net` dari dalam Postgres (`net.http_post` + `net._http_response`) adalah satu-satunya
+cara memverifikasi edge function dari lingkungan ini, karena `*.supabase.co` dan
+`myinsurepath.com` dua-duanya 403 dari kontainer. Dipakai untuk semua pembuktian
+insiden ini. Setelah SETIAP deploy: baca `get_edge_function` (sumber terdeploy) DAN
+kirim satu permintaan nyata. Status "success" tidak membuktikan apa pun.
+
+## Temuan data produksi (21 Okt, untuk rencana dashboard marketing)
+`sp_payments` 0 baris · `sp_commissions` 0 dari 13 tertaut order · `sp_policies` 0 dari 5
+tertaut order · order punya `policy_number` 0 dari 5 · `upline_id` terisi 0 dari 47 ·
+role MARKETING tidak ada. Rencana di `docs/MARKETING_CRM_PLAN.md`; Fase 0 (view
+kanonik `v_produksi`) adalah prasyarat, bukan opsional.
+
+---
+
+# SurePath Session Context
 **Updated:** 2026-09-14 (v2.5.15 — latar video selaras di 10/10 halaman situs; v2.5.14 — jejak aktivitas per pengguna + rancangan arsitektur CMS; v2.5.13 — tema CMS ikut token; v2.5.12 — kesiapan Play Store)
 
 ## Current State

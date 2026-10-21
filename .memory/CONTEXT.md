@@ -33,6 +33,23 @@ COMMENT peringatan di DB. Urutan mengakhirinya ada di
 - `import` dari host mana pun saat deploy: bundler menolak, termasuk domain Supabase
 - `import` modul remote saat runtime: `Module not found`, graf statis
 
+### Memperbarui kode gateway selagi jalur darurat dipakai (TERBUKTI 21 Okt)
+`node scripts/bundle-gateway.mjs <out>` → aset transit acak di `public/_dg/` →
+merge + picu deploy → `net.http_get` dari Postgres → **cocokkan md5** → cadangkan
+baris ke `id=2` → UPDATE `id=1` **di dalam blok DO** (UPDATE/DELETE lepas sering
+timeout lewat MCP) → deploy ulang shim untuk memaksa isolate baru → verifikasi
+200/401 → hapus aset. Nol emisi manual: git dan pg_net yang membawa bytes-nya.
+Langkah lengkap di `docs/INCIDENT_2026-10-21_data-gateway.md`.
+
+`dg_src_tmp` baris **`id=2` adalah CADANGAN**, bukan sampah.
+
+Bundel aktif per 21 Okt 15:30 UTC: md5 `d8b9c3fc30a8ce16d6a8ce852266c60d`,
+112.802 karakter, **114 aksi** termasuk 9 aksi marketing v2.6.0.
+
+Catatan lain: webhook GitHub→Vercel sempat tertunda ±8 menit, jadi merge tidak
+selalu langsung memicu build. Picu manual lewat MCP Vercel `create_deployment`
+dengan `gitSource` + sha, lalu cek alias `myinsurepath.com` muncul di hasilnya.
+
 ### Yang masih dibutuhkan dari pemilik
 Repo secret `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`,
 atau deploy CLI dari mesin lain. Itu mengakhiri jalur darurat DAN menyelesaikan

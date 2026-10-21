@@ -29,6 +29,7 @@ const rolePath = (user: any) => {
     const app = allowed[0];
     if (app === 'ADMIN' || ADMIN_ROLES.includes(user.role)) return '/admin';
     if (app === 'OPERATOR') return '/operatorapp';
+    if (app === 'MARKETING') return '/marketingapp';
     if (app === 'AGENT') return '/agapps';
     return '/custapp';
   }
@@ -36,6 +37,7 @@ const rolePath = (user: any) => {
   const role = user?.role;
   return ADMIN_ROLES.includes(role) ? '/admin'
     : role === UserRole.OPERATOR ? '/operatorapp'
+    : role === UserRole.MARKETING ? '/marketingapp'
     : role === UserRole.AGENT ? '/agapps' : '/custapp';
 };
 
@@ -50,6 +52,7 @@ const AuthGate          = lazy(() => import('./components/AuthGate'));
 const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
 const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
 const OperatorPortal    = lazy(() => import('./components/operator/OperatorPortal'));
+const MarketingPortal   = lazy(() => import('./components/marketing/MarketingPortal'));
 const OperatorLogin     = lazy(() => import('./components/operator/OperatorLogin'));
 const AppSelector       = lazy(() => import('./components/AppSelector'));
 const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
@@ -656,7 +659,7 @@ const App = () => {
   // ── Helper: does this user have access to a specific app? ─────────────────
   // Multi-app users (allowed_apps has the app listed) OR legacy single-role users
   // whose role matches the app's role.
-  const hasAppAccess = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN'): boolean => {
+  const hasAppAccess = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING'): boolean => {
     if (!currentUser) return false;
     const allowed: string[] | null | undefined = currentUser.allowed_apps;
     if (Array.isArray(allowed) && allowed.length > 0) {
@@ -665,6 +668,7 @@ const App = () => {
     // Legacy: use role
     if (app === 'ADMIN') return ADMIN_ROLES.includes(currentUser.role);
     if (app === 'OPERATOR') return currentUser.role === UserRole.OPERATOR;
+    if (app === 'MARKETING') return currentUser.role === UserRole.MARKETING;
     if (app === 'AGENT') return currentUser.role === UserRole.AGENT;
     if (app === 'CUSTOMER') return true; // everyone can be a customer
     return false;
@@ -678,6 +682,19 @@ const App = () => {
       <Suspense fallback={<PortalLoader lang={lang} />}>
         <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
       </Suspense>
+    );
+  }
+
+  // Marketing/sales (CRM + KPI). Memakai AuthGate yang sama seperti agen dan
+  // nasabah — tidak ada layar login tersendiri, karena marketing adalah
+  // pengguna Supabase Auth biasa dengan role MARKETING.
+  if (currentUser && hasAppAccess('MARKETING') && pathname === '/marketingapp') {
+    return (
+      <PortalErrorBoundary onReset={handleLogout}>
+        <Suspense fallback={<PortalLoader />}>
+          <MarketingPortal marketing={currentUser} onLogout={handleLogout} lang={lang} />
+        </Suspense>
+      </PortalErrorBoundary>
     );
   }
 

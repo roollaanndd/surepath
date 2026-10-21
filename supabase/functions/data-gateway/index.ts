@@ -35,6 +35,7 @@ import { handleTiersAction } from './actions/tiers.ts';
 // deployed and a MASTER_ADMIN-only SQL executor via HTTP is unnecessary
 // attack surface.
 import { handleQuotationsAction } from './actions/quotations.ts';
+import { handleMarketingAction } from './actions/marketing.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
@@ -230,6 +231,7 @@ Deno.serve(async (req) => {
       await handleAdminAction(action, ctx) ??
       await handleTiersAction(action, ctx) ??
       await handleQuotationsAction(action, ctx) ??
+      await handleMarketingAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
     if (result) {

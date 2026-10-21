@@ -11,6 +11,50 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.6.0 — 2026-10-21
+
+**CRM & KPI marketing/sales — Fase 1.** Portal baru `/marketingapp` untuk karyawan
+ber-role `MARKETING`: pipeline rekrutmen agen, daftar agen yang dipegang,
+pencatatan follow-up, dan antrean tindakan.
+
+Dibangun **lebih dulu** dari Fase 0 (tulang belakang produksi) dengan sengaja,
+karena bagian CRM tidak bergantung pada data produksi sama sekali — semua yang
+dibutuhkan pipeline sudah ada di `sp_users`.
+
+- **Peran baru `MARKETING`**, dan ia **tidak** masuk `ADMIN_ROLES` maupun
+  `FINANCE_ROLES`: ia mengelola orang, bukan uang.
+- **`sp_users.handler_id` dipisah dari `upline_id`.** `upline_id` semantiknya
+  referral antar-agen dan per 21 Okt 2026 terisi 0 dari 47 baris. Menumpanginya
+  akan mencampur dua hubungan berbeda dan membuat komisi override tidak bisa
+  dipertanggungjawabkan.
+- **`sp_agent_handler_history` append-only, ditulis oleh TRIGGER** — bukan oleh
+  kode aplikasi. Alasannya bukan kerapian: override dihitung dari siapa yang
+  memegang agen saat polis terbit, jadi kalau hanya nilai terkini tersimpan,
+  komisi historis berubah diam-diam. Trigger-nya dibuktikan di produksi untuk
+  tiga kasus: penugasan membuka 1 baris, update dengan handler sama tidak
+  menambah baris, pelepasan menutup baris.
+- **`sp_marketing_activities`** dengan `next_action` + `next_action_at` — dua
+  kolom itu yang mengubah buku harian menjadi CRM, karena darinya lahir antrean
+  "janji lewat tanggal".
+- **Antrean diurutkan berdasarkan UMUR**, mengikuti pola `OpsConsoleView`:
+  daftar yang diurutkan tanggal buat membuat yang mandek tenggelam.
+- **Kolom angka produksi belum dimunculkan**, dan itu dinyatakan terbuka di UI.
+  Sumbernya belum sah: `sp_payments` 0 baris, `sp_commissions` 0 dari 13 tertaut
+  order, `policy_number` 0 dari 5 terisi. Menampilkannya sekarang berarti angka
+  yang meyakinkan dan salah.
+- **Kartu "Marketing pendamping Anda"** di profil agen, read-only. Agen tidak
+  bisa mengganti handler-nya sendiri — kalau bisa, ia bisa mengalihkan komisi
+  orang lain.
+- Penugasan manual **ADMIN saja**; seorang marketing tidak bisa menugaskan agen
+  ke dirinya sendiri.
+- Tabel baru deny-all RLS; seluruh akses lewat `data-gateway`, otorisasi subtree
+  per aksi di `actions/marketing.ts`.
+
+tsc bersih · ESLint 0 error · 288/288 uji · build bersih
+
+> **Catatan deploy:** aksi gateway baru belum aktif di produksi sampai
+> `data-gateway` di-deploy ulang. Lihat `docs/INCIDENT_2026-10-21_data-gateway.md`.
+
 ## v2.5.20 — 2026-10-21
 
 ### PDF penawaran Pathy: generatornya tidak pernah gagal, pengirimannya yang gagal diam

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-SurePath (myinsurepath.com) is a full-stack insurtech platform for the Indonesian market: agents sell motor/car insurance, customers pay via Xendit, commissions are credited to agent wallets. **One React SPA serves 5 portal apps** (Customer `/custapp`, Agent `/agapps`, Operator `/operatorapp`, Insurer `/insurerapp`, Admin CMS `/admin`) plus the public marketing site, a B2B portal, and an Android APK (Capacitor wrapping the same web bundle). Routing uses **HashRouter**, so URLs are actually `/#/admin` etc.
+SurePath (myinsurepath.com) is a full-stack insurtech platform for the Indonesian market: agents sell motor/car insurance, customers pay via Xendit, commissions are credited to agent wallets. **One React SPA serves 5 portal apps** (Customer `/custapp`, Agent `/agapps`, Operator `/operatorapp`, Insurer `/insurerapp`, Admin CMS `/admin`) plus the public marketing site, a B2B portal, and an Android APK (Capacitor wrapping the same web bundle). Routing is **hand-rolled on the History API**, not a router library: `currentPath` is seeded from `window.location.pathname`, `navigate()` calls `history.pushState`, and a `popstate` listener keeps them in sync (`App.tsx`). URLs are plain paths — `/admin`, `/agapps` — and `vercel.json` rewrites everything to `index.html` so deep links resolve.
+
+> **There is no HashRouter.** `react-router` sits in `package.json` but is imported nowhere; this file previously claimed `/#/admin`, which is wrong and fails silently. `/#/agapps` leaves `pathname` at `/`, misses every route branch, and lands on the `if (currentUser)` catch-all — rendering the **Customer** portal to an agent with no error at all. Verified end-to-end in `tests/agentApp.spec.ts`.
 
 UI copy and most documentation are in **Bahasa Indonesia** — keep user-facing strings in Indonesian.
 

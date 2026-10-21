@@ -562,7 +562,18 @@ const App = () => {
     return <Suspense fallback={<PortalLoader />}><PremiumCalculatorPage lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
   }
 
-  // Financing workspace: public, read-only demo until production financing auth/API are configured.
+  // Financing workspace: TIDAK TERDAFTAR (unlisted) — sengaja tanpa tautan dari situs.
+  //
+  // Seluruh pintu masuknya dihapus dari SiteLayout (entri navbar + tombol CTA
+  // desktop dan mobile) atas permintaan pemilik: hanya yang punya tautannya yang
+  // masuk. Rutenya DIBIARKAN hidup — itu intinya, bukan kelalaian.
+  //
+  // Yang perlu diingat saat menyentuh ini: tidak terdaftar BUKAN kontrol akses.
+  // Siapa pun yang tahu/menebak alamatnya tetap masuk, dan rutenya ikut terbawa
+  // di bundel JS sehingga bisa ditemukan dari sana. Data produksi tetap dijaga
+  // di sisi server (financing-api menolak tanpa peran financing yang sah), tapi
+  // ruang kerja demo-nya terbuka bagi siapa pun yang sampai ke URL ini. Kalau
+  // suatu saat butuh penjagaan sebenarnya, penjaganya harus ada di pintu ini.
   if (pathname === '/financing' || pathname === '/financing/dashboard') {
     return <Suspense fallback={<PortalLoader lang={lang} />}><FinancingPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={handleSetLang} darkMode={darkMode} setDarkMode={setDarkMode} /></Suspense>;
   }

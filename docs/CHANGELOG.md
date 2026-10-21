@@ -11,6 +11,26 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.20 — 2026-10-21
+
+### PDF penawaran Pathy: generatornya tidak pernah gagal, pengirimannya yang gagal diam
+
+Dilaporkan "PDF-nya tidak berfungsi". Yang ditemukan justru sebaliknya: PDF-nya **selalu berhasil dibuat**.
+
+Dibuktikan dengan menjalankan payload `sp_quotes` produksi terbaru (20 Okt) lewat jalur yang persis dipakai tombol itu — `fromAgentQuote()` → `generateQuotationSlipPDF()` — dan keduanya lolos. Server Pathy juga sehat: 7 quotation tersimpan, terakhir sehari sebelum laporan.
+
+Akarnya ada di langkah terakhir. `doc.save()` bekerja lewat `<a download>`, dan **WebView Android tidak menghormati atribut `download`**: tidak ada berkas, tidak ada error, tidak ada apa pun. PDF selesai dibuat di memori lalu hilang. Di dalam shell native berkas kini dibuka sebagai blob supaya WebView menyerahkannya ke penangan PDF sistem; browser biasa tetap memakai jalur unduh lama. Tanpa plugin baru — `@capacitor/filesystem` akan menuntut build ulang native.
+
+Sekalian dikeraskan: `fromAgentQuote()` dulu memanggil `q.rows.find(...)` tanpa penjaga, jadi satu bentuk quotation tanpa `rows` mematikan seluruh unduhan dengan `Cannot read properties of undefined`. Setiap nilai sudah punya fallback-nya sendiri, jadi daftar kosong kini tetap menghasilkan slip yang benar.
+
+### Pathy layar penuh
+
+Panel Pathy dulu 22rem × 70vh di pojok. Ia menampilkan proposal, tabel opsi dan kartu PDF — isi yang terlalu besar untuk lubang sekecil itu. Kini layar penuh, menghormati safe-area notch/gesture bar, dan `aria-modal` dijujurkan jadi `true` karena ia memang menutupi seluruh layar.
+
+### Tab aktif kini terlihat
+
+Status aktif di navigasi bawah dulu hanya dibedakan **warna** hijau pada ikon dan label — terlalu halus untuk dilihat sekilas, dan tidak terbaca sama sekali oleh mata yang sulit membedakan warna. Kini tab aktif mendapat batang penanda, latar bertint, dan garis ikon yang lebih tebal: tiga isyarat, salah satunya bentuk. Tombol tengah mendapat ring saat aktif.
+
 ## v2.5.19 — 2026-10-21
 
 ### Financing Core tidak lagi terdaftar di situs publik

@@ -1122,11 +1122,20 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       {open && (
         <div
           role="dialog"
-          aria-modal="false"
+          aria-modal="true"
           aria-label={t('Asisten Pathy', 'Pathy assistant')}
           data-pathychat-anim
-          className={`fixed ${hideLauncher ? 'bottom-28' : 'bottom-48'} right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] flex flex-col rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]`}
-          style={{ animation: 'pathychat-pop 0.28s cubic-bezier(.22,1,.36,1)' }}
+          // Layar penuh. Pathy menampilkan proposal, tabel opsi dan kartu PDF —
+          // isi yang di panel 22rem/70vh harus digulir dalam lubang kecil.
+          // aria-modal ikut jadi true karena sekarang ia memang menutupi
+          // seluruh layar; bilang "false" akan membohongi pembaca layar.
+          className="fixed inset-0 z-[70] w-full flex flex-col overflow-hidden bg-white dark:bg-slate-900"
+          style={{
+            animation: 'pathychat-pop 0.28s cubic-bezier(.22,1,.36,1)',
+            // Hormati notch//gesture bar di APK dan iOS.
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
         >
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex-shrink-0">

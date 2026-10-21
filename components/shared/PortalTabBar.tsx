@@ -47,7 +47,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             >
               <span
                 aria-hidden="true"
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all ${active ? 'scale-105' : ''}`}
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white transition-all ${active ? 'scale-105 ring-4 ring-ds-green/35' : ''}`}
                 style={{
                   background: GREEN_GRADIENT,
                   boxShadow: '0 12px 26px -8px rgba(0,193,106,0.65), inset 0 1px 0 rgba(255,255,255,0.25)',
@@ -70,14 +70,23 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             onClick={() => onSelect(id)}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${FOCUS_RING}`}
+            className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${active ? 'bg-ds-green-tint' : ''} ${FOCUS_RING}`}
           >
+            {/* Penanda tab aktif. Sebelumnya status aktif hanya dibedakan
+                warna hijau pada ikon dan label — terlalu halus untuk dilihat
+                sekilas, apalagi di layar terang. Batang ini memberi satu
+                isyarat bentuk, bukan hanya warna, jadi ia tetap terbaca oleh
+                mata yang sulit membedakan warna. */}
             <span
               aria-hidden="true"
-              className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'bg-ds-green-tint text-ds-green' : 'text-ds-ink3'}`}
+              className={`absolute -top-0.5 left-1/2 -translate-x-1/2 h-1 rounded-full bg-ds-green transition-all duration-300 ease-out motion-reduce:transition-none ${active ? 'w-6 opacity-100' : 'w-0 opacity-0'}`}
+            />
+            <span
+              aria-hidden="true"
+              className={`w-9 h-8 rounded-xl flex items-center justify-center transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3'}`}
               style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
             >
-              <ManagedPortalIcon id={id} size={22} imageClassName="w-[22px] h-[22px] object-contain" fallback={modernIcons ? <Icon size={22} strokeWidth={active ? 2.2 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />} />
+              <ManagedPortalIcon id={id} size={22} imageClassName="w-[22px] h-[22px] object-contain" fallback={modernIcons ? <Icon size={22} strokeWidth={active ? 2.6 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />} />
             </span>
             <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}

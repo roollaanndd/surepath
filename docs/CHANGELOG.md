@@ -11,6 +11,30 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.5.19 — 2026-10-21
+
+### Financing Core tidak lagi terdaftar di situs publik
+
+Permintaan pemilik: hanya yang punya tautannya yang bisa masuk; orang umum tidak menemukannya dari website.
+
+Financing punya **tiga** pintu masuk dari situs, bukan satu — dan itu yang membuatnya mudah setengah-selesai:
+
+| Pintu masuk | Letak |
+|---|---|
+| Entri navbar `Pembiayaan / Financing` | `NAV_LINKS` — satu entri ini mengisi menu **desktop dan mobile** sekaligus |
+| Tombol CTA `Masuk Pembiayaan` (desktop) | header `SiteNav` |
+| Tombol CTA `Masuk Pembiayaan` (mobile) | menu tarik-turun |
+
+Ketiganya dihapus, plus impor ikon `WalletCards` yang jadi menganggur. Nol rujukan `/financing` tersisa di `SiteLayout`.
+
+**Rutenya sengaja dibiarkan hidup** — itu intinya. `/financing` dan `/financing/dashboard` tetap dilayani, jadi tautan yang sudah dibagikan tetap berfungsi.
+
+**Tidak ditambahkan ke `robots.txt`**, dan itu keputusan sadar: berkas itu bisa dibaca siapa pun, jadi menulis `Disallow: /financing` di sana justru mengumumkan alamat yang ingin disembunyikan. Tidak perlu pula — `/financing` tidak terdaftar di `PAGES` milik `src/seo/seo.ts`, sehingga `resolveSeo()` sudah memulangkan `noindex` untuk path tak dikenal, dan ia memang tidak ada di `sitemap.xml`. Diperiksa, bukan diasumsikan.
+
+9 uji baru menjaganya dari dua arah berlawanan: tautannya tidak boleh kembali, **dan** rutenya tidak boleh ikut terhapus saat ada yang "merapikan". Uji itu dibuktikan merah lebih dulu dengan mengembalikan entri navbar sementara — penjaga yang belum pernah terbukti gagal tidak menjaga apa pun.
+
+**Catatan penting:** tidak terdaftar bukan kontrol akses. Siapa pun yang tahu alamatnya tetap masuk, dan rutenya terbawa di bundel JS. Data produksi tetap aman di sisi server (`financing-api` menolak tanpa peran financing yang sah), tapi ruang kerja demo-nya terbuka bagi siapa pun yang sampai ke URL itu.
+
 ## v2.5.18 — 2026-10-13
 
 ### Penyegaran UI lintas portal

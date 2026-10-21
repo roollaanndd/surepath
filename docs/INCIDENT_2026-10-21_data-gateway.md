@@ -38,7 +38,7 @@ sekadar berisiko. Seharusnya diukur **sebelum** menyentuh produksi.
 
 ## Bagaimana produksi berjalan SEKARANG (sementara)
 
-`data-gateway` v5 adalah **shim ±60 baris**. Kode gateway sebenarnya dimuat saat boot:
+`data-gateway` adalah **shim ±60 baris**. Kode gateway sebenarnya dimuat saat boot:
 
 ```
 boot → fetch RPC public.dg_bundle_tmp() (service_role saja)
@@ -50,25 +50,54 @@ Dua detail yang membuatnya bisa jalan, dan dua-duanya hasil percobaan, bukan dug
 
 1. Modul dinamis **tidak boleh mengimpor apa pun** (graf statis). Jadi `createClient`
    diimpor **statis** di shim lalu dititipkan lewat `globalThis.__sbCreateClient`,
-   dan baris `import{createClient as pe}from"npm:..."` di bundel ditukar menjadi
-   `const pe=globalThis.__sbCreateClient;` — substitusi itu dilakukan **di dalam**
-   `dg_bundle_tmp()`, bukan dengan menulis ulang tabelnya.
+   dan baris `import{createClient as X}from"npm:..."` di bundel ditukar menjadi
+   `const X=globalThis.__sbCreateClient;` — substitusi itu dilakukan **di dalam**
+   `dg_bundle_tmp()` dengan `regexp_replace`, bukan dengan menulis ulang tabelnya,
+   dan agnostik terhadap alias minified apa pun.
 2. Shim-nya **gagal-tertutup dan terlihat**: kalau pemuatan gagal ia menjawab
    **503 dengan sebab**, bukan menggantung. Itu pelajaran langsung dari insiden ini.
 
 Verifikasi saat pemulihan:
 - `POST` tanpa token → `401 {"error":"Unauthorized: missing bearer token"}` (gerbang auth hidup)
 - `GET` → `200 {"status":"ok","service":"data-gateway","version":"1.30.0"}`
-- kode yang termuat mengandung `admin_activity_log` ×1, `admin_activity_summary` ×1, `Deno.serve` ×1
 
 ## ⚠️ JANGAN hapus ini sebelum deploy normal berhasil
 
-Produksi bergantung pada keduanya; menghapusnya mematikan portal pada cold start berikutnya.
-Keduanya sudah diberi `COMMENT` peringatan di database.
+Produksi bergantung padanya; menghapusnya mematikan portal pada cold start berikutnya.
+Semuanya sudah diberi `COMMENT` peringatan di database.
 
 - tabel `public.dg_src_tmp` (RLS aktif, 0 policy, 0 grant publik)
 - fungsi `public.dg_bundle_tmp()` (execute: `service_role` saja)
 - domain `"application/javascript"` (dipakai PostgREST agar memulangkan teks)
+- baris `dg_src_tmp` **`id = 2` adalah CADANGAN** bundel sebelumnya, bukan sampah
+
+## Cara memperbarui kode gateway selagi jalur darurat masih dipakai
+
+Dipakai 21 Okt untuk menghidupkan 9 aksi marketing v2.6.0. Tidak ada emisi manual
+di langkah mana pun — git dan `pg_net` yang membawa bytes-nya, jadi payload tidak
+mungkin terpotong seperti insiden awal.
+
+1. `node scripts/bundle-gateway.mjs <keluaran>` — membundel sumber repo. Catat md5.
+2. Taruh bundel itu sebagai aset **transit** bernama acak di `public/_dg/`, merge
+   ke `main`, picu deploy produksi. Aset ini bukan bagian aplikasi; tidak ada yang
+   mengimpornya.
+3. Dari Postgres: `net.http_get` aset itu, lalu **cocokkan md5-nya** dengan
+   langkah 1. Kalau beda, berhenti.
+4. Cadangkan baris aktif ke `id = 2` — ini rollback satu perintah.
+5. Update `id = 1` **di dalam blok `DO`** (UPDATE/DELETE lepas sering timeout lewat
+   MCP; di dalam `DO` tidak), dengan penjagaan: panjang minimum, `Deno.serve` ada,
+   aksi yang diharapkan ada.
+6. Deploy ulang shim dengan isi sama persis, untuk memaksa isolate baru — isolate
+   hangat tidak membaca ulang database.
+7. Verifikasi `GET` → `200 status:ok` dan `POST` tanpa token → `401`. `503` dengan
+   field `reason` berarti shim gagal-tertutup; baca sebabnya.
+8. Hapus aset transit dari repo, merge, deploy.
+
+Rollback kalau boot gagal: salin `js` dari `id = 2` ke `id = 1` di dalam blok `DO`,
+lalu ulangi langkah 6.
+
+Status 21 Okt 15:30 UTC: bundel aktif md5 `d8b9c3fc30a8ce16d6a8ce852266c60d`,
+112.802 karakter, **114 aksi** termasuk 9 aksi marketing. Boot terverifikasi.
 
 ## Cara mengakhiri jalur darurat ini (urutan wajib)
 
@@ -89,5 +118,8 @@ Keduanya sudah diberi `COMMENT` peringatan di database.
   (`get_edge_function`) dan dengan satu permintaan nyata — bukan dari status "success".
 - **Rollback disiapkan sebelum deploy.** v3 yang lama sudah diambil lebih dulu
   (sha256 `9a18d553…`), dan itu satu-satunya hal yang berjalan benar sejak awal.
+- **Cocokkan md5 di kedua ujung.** Saat bundel diperbarui 21 Okt, md5 hasil build
+  dan md5 isi database dicocokkan sebelum apa pun di-deploy — itu yang membuat
+  pembaruan kedua berjalan tanpa drama sama sekali.
 - `pg_net` dari dalam Postgres adalah alat verifikasi yang andal ketika jaringan
   kontainer diblokir — dipakai untuk semua pembuktian di atas.

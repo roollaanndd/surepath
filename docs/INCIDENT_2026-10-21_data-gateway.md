@@ -99,6 +99,30 @@ lalu ulangi langkah 6.
 Status 21 Okt 15:30 UTC: bundel aktif md5 `d8b9c3fc30a8ce16d6a8ce852266c60d`,
 112.802 karakter, **114 aksi** termasuk 9 aksi marketing. Boot terverifikasi.
 
+### Aset transit akan memicu alarm gitleaks — positif palsu, tapi JANGAN diabaikan begitu saja
+
+Langkah 2 membuat check **Secret scanning** merah. Terjadi 21 Okt pada PR #230:
+gitleaks melaporkan `generic-api-key` (entropi 3,73) di bundel transit, dan yang
+ditandai ternyata kode biasa di sekitar `i.l2_approved_by=a.authId` — identifier
+hasil minify yang entropinya tinggi, bukan kunci.
+
+Jangan percaya penjelasan itu tanpa memeriksa. Cara memverifikasinya pada bundel
+hasil build, dan hasilnya 21 Okt:
+
+| Pola dicari | Temuan |
+|---|---|
+| `eyJ…` (JWT) | 0 |
+| `sb_secret_…` / `sb_publishable_…` | 0 |
+| `xnd_…` (Xendit) | 0 |
+| `re_…` (Resend) | 0 |
+| `AIza…` (Google AI) | 0 |
+| `Deno.env.get` | 8 — semua rahasia dibaca dari env, tidak ada literal |
+
+Temuannya tetap tertinggal di riwayat `main` (commit yang menambahkan aset itu),
+bergabung dengan temuan historis benign lain di repo ini. Kalau ingin dibersihkan,
+tambahkan fingerprint-nya ke `.gitleaksignore` — itu keputusan pemilik, karena
+menekan temuan pemindai keamanan tidak boleh dilakukan diam-diam.
+
 ## Cara mengakhiri jalur darurat ini (urutan wajib)
 
 1. Isi repo secret: `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF=uyjgeteelnswphyzkjwi`,
@@ -116,6 +140,11 @@ Status 21 Okt 15:30 UTC: bundel aktif md5 `d8b9c3fc30a8ce16d6a8ce852266c60d`,
 - **Deploy yang diterima ≠ deploy yang benar.** Supabase menerima potongan yang
   valid secara sintaks. Setelah setiap deploy, verifikasi **dari sumber terdeploy**
   (`get_edge_function`) dan dengan satu permintaan nyata — bukan dari status "success".
+- **PR yang merged dan hijau juga bukan bukti.** PR #229 menghapus aset transit dan
+  merged bersih, tapi **tidak menghapus apa pun**: karena #228 di-squash, merge-base
+  #229 sudah usang sehingga dari sudut pandangnya aset itu belum pernah ada di `main`.
+  112 KB tetap terlayani publik di balik PR yang terlihat sukses. Periksa `main`
+  langsung, jangan status PR-nya.
 - **Rollback disiapkan sebelum deploy.** v3 yang lama sudah diambil lebih dulu
   (sha256 `9a18d553…`), dan itu satu-satunya hal yang berjalan benar sejak awal.
 - **Cocokkan md5 di kedua ujung.** Saat bundel diperbarui 21 Okt, md5 hasil build

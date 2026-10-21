@@ -60,6 +60,31 @@ Origin yang diizinkan:
 `admin_update_commission`, `admin_list_notifications`, `admin_mark_notification_read`,
 `admin_create_notification`, `admin_security_stats`, `admin_traffic_stats`.
 
+### Marketing/Sales CRM (v2.6.0 — role `MARKETING`)
+
+Otorisasi di `actions/marketing.ts`. Seorang `MARKETING` hanya melihat agen di
+**subtree**-nya (`handler_id` = dirinya, atau handler yang `marketing_parent_id`-nya
+dirinya). Batas itu dihitung dari peran yang sudah diverifikasi, **bukan** dari
+params — aturan yang sama dengan `agent_id`/`client_id` di modul lain.
+
+`MARKETING` **tidak** ada di `ADMIN_ROLES` maupun `FINANCE_ROLES`.
+
+| Action | Peran | Keterangan |
+|---|---|---|
+| `marketing_dashboard_summary` | MARKETING, ADMIN | Pipeline per tahap + jumlah mandek >14 hari, follow-up telat, agen tanpa handler |
+| `marketing_list_agents` | MARKETING, ADMIN | Agen di subtree + `stage`, `pernah_produksi`, hari sejak order/aktivitas |
+| `marketing_agent_detail` | MARKETING, ADMIN | Satu agen + aktivitas + riwayat handler + order. Batas kepemilikan ditegakkan dari `handler_id` baris itu sendiri |
+| `marketing_log_activity` | MARKETING | Catat follow-up. `marketing_id` diambil dari pemanggil, bukan params |
+| `marketing_list_activities` | MARKETING, ADMIN | `hanya_telat: true` → antrean janji lewat tanggal |
+| `marketing_list_unassigned` | MARKETING, ADMIN | Agen tanpa handler, diurutkan umur |
+| `marketing_assign_agent` | **ADMIN saja** | Tugaskan/lepas handler. Riwayat ditulis trigger `sp_users_handler_change`, bukan aksi ini |
+| `admin_marketing_overview` | ADMIN | Satu baris per marketing: jumlah agen, agen produktif |
+| `get_my_handler` | semua user login | Agen membaca pendampingnya sendiri; hanya nama, telepon, foto |
+
+Kolom **angka produksi** (premi, komisi, status bayar) sengaja belum disajikan:
+`sp_payments` 0 baris, `sp_commissions` 0 dari 13 tertaut order, `policy_number`
+0 dari 5 terisi (21 Okt 2026). Lihat `docs/MARKETING_CRM_PLAN.md` Fase 0.
+
 ## Cara Deploy (PENTING — tidak otomatis!)
 
 Edge function TIDAK ikut auto-deploy Vercel. Setelah mengubah `supabase/functions/data-gateway/index.ts`:

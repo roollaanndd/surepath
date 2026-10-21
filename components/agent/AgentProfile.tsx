@@ -14,6 +14,7 @@ import {
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
+import AgentHandlerCard from './AgentHandlerCard';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
@@ -243,6 +244,9 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           ))}
         </div>
       )}
+
+      {/* Marketing pendamping — read-only; penugasan hanya dari CMS. */}
+      <AgentHandlerCard />
 
       {/* Referral Link */}
       <div className="mx-5 mt-4 sp-glass rounded-2xl p-4">

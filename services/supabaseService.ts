@@ -24,6 +24,7 @@
 // to work because this file re-exports the union of all of the above.
 
 export * from './db';
+export * from './marketing';
 export * from './dbTypes';
 export * from './users';
 export * from './clients';

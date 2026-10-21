@@ -12,6 +12,10 @@ export enum UserRole {
   FINANCE_DIRECTOR = 'FINANCE_DIRECTOR',
   INSURANCE_ADMIN = 'INSURANCE_ADMIN',
   OPERATOR = 'OPERATOR', // Internal ops staff — uses /operatorapp (not /admin CMS)
+  // Karyawan marketing/sales — memakai /marketingapp sebagai CRM + KPI.
+  // SENGAJA bukan bagian dari ADMIN_ROLES maupun FINANCE_ROLES: ia mengelola
+  // orang, bukan uang, dan hanya melihat agen di subtree-nya sendiri.
+  MARKETING = 'MARKETING',
   AGENT = 'AGENT',
   CUSTOMER = 'CUSTOMER',
   B2B_CLIENT = 'B2B_CLIENT'

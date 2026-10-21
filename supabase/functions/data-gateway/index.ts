@@ -1,6 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // SurePath secure data gateway — thin dispatcher (v1.30.0)
 //
+// Deploy: JANGAN deploy fungsi ini dengan menempelkan isi bundel secara inline.
+// 21 Okt 2026 cara itu memotong payload di ~8 KB tanpa error, Supabase menerima
+// potongannya karena sintaksnya kebetulan valid, dan gateway terdeploy TANPA
+// Deno.serve sama sekali — kelima portal mati dan kegagalannya diam. Bundelnya
+// ~104 KB; pakai integrasi Supabase-GitHub atau CLI, yang mengirim berkas utuh.
+//
 // All action logic is in actions/*.ts domain modules.
 // This file handles: CORS, health check, auth, rate limiting, dispatch.
 //

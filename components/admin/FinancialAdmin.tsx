@@ -31,6 +31,34 @@ interface OrderRow {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+function exportOrdersCSV(rows: OrderRow[]) {
+  if (!rows.length) return;
+  const columns: Array<[string, (row: OrderRow) => string | number]> = [
+    ['Order', r => r.order_number ?? r.id],
+    ['Klien', r => r.client_name ?? ''],
+    ['Produk', r => r.product_name ?? ''],
+    ['Premi Bruto IDR', r => r.total_premium ?? 0],
+    ['Diskon IDR', r => r.discount_amount ?? 0],
+    ['Premi Bersih IDR', r => r.net_premium ?? 0],
+    ['Komisi IDR', r => r.commission_amount ?? 0],
+    ['Koin', r => r.coin_reward ?? 0],
+    ['Tanggal', r => r.created_at ?? ''],
+  ];
+  const escape = (value: string | number) => {
+    let s = String(value);
+    if (/^[=+@\\-]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  };
+  const csv = [columns.map(([name]) => escape(name)).join(','), ...rows.map(row => columns.map(([, get]) => escape(get(row))).join(','))].join('\\r\\n');
+  const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `surepath-order-keuangan-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function getDateRange(range: DateRange): { from: string | null; to: string | null } {
   const now = new Date();
   if (range === 'ALL') return { from: null, to: null };
@@ -215,10 +243,21 @@ const FinancialAdmin: React.FC = () => {
 
           {/* ── Recent Issued Orders ── */}
           <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
-            <div className="px-6 py-5 border-b border-ds-border">
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">
-                Order Terbaru — Status ISSUED
-              </p>
+            <div className="px-6 py-5 border-b border-ds-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">
+                  Order Terbaru — Status ISSUED
+                </p>
+                <p className="text-[10px] text-ds-ink3 mt-1">Maksimal 50 order terbaru untuk periode yang dipilih</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => exportOrdersCSV(orders)}
+                disabled={orders.length === 0}
+                className="px-4 py-2 rounded-xl border border-ds-border text-xs font-bold text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Ekspor CSV ({orders.length})
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[720px]">

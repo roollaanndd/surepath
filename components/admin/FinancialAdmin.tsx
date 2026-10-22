@@ -49,8 +49,8 @@ function exportOrdersCSV(rows: OrderRow[]) {
     if (/^[=+@\\-]/.test(s)) s = "'" + s;
     return '"' + s.replace(/"/g, '""') + '"';
   };
-  const csv = [columns.map(([name]) => escape(name)).join(','), ...rows.map(row => columns.map(([, get]) => escape(get(row))).join(','))].join('\\r\\n');
-  const blob = new Blob(['\\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = [columns.map(([name]) => escape(name)).join(','), ...rows.map(row => columns.map(([, get]) => escape(get(row))).join(','))].join(String.fromCharCode(13, 10));
+  const blob = new Blob([String.fromCharCode(65279), csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

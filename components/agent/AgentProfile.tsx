@@ -287,28 +287,44 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
       </div>
 
-      {/* Quick Nav */}
+      {/* Secondary navigation grouped by purpose */}
       {onNavigate && (
-        <div className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden">
-          {[
-            { id: 'network', label: 'Jaringan Downline', icon: Network },
-            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-            { id: 'renewals', label: 'Renewal Polis', icon: RefreshCw },
-            { id: 'endorsements', label: 'Endorsement', icon: FileEdit },
-          ].map(item => (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full"
-            >
-              <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0">
-                <item.icon size={16} />
-              </div>
-              <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
-              <ChevronRight size={16} className="text-ds-ink3" />
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="mx-5 mt-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">{t('Business', 'Bisnis')}</p>
+            <div className="rounded-2xl sp-glass overflow-hidden">
+              {[
+                { id: 'network', label: t('Agent network', 'Jaringan Agen'), icon: Network },
+                { id: 'leaderboard', label: t('Leaderboard', 'Papan Peringkat'), icon: Trophy },
+                { id: 'renewals', label: t('Policy renewals', 'Perpanjangan Polis'), icon: RefreshCw },
+                { id: 'endorsements', label: t('Policy endorsements', 'Perubahan Polis'), icon: FileEdit },
+              ].map(item => (
+                <button key={item.id} type="button" onClick={() => onNavigate(item.id)}
+                  className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full">
+                  <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={16} /></div>
+                  <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
+                  <ChevronRight size={16} className="text-ds-ink3" />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mx-5 mt-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">{t('Earnings', 'Penghasilan')}</p>
+            <div className="rounded-2xl sp-glass overflow-hidden">
+              {[
+                { id: 'commission', label: t('Commissions & history', 'Komisi & Riwayat'), icon: Coins },
+                { id: 'wallet', label: t('Wallet & withdrawals', 'Dompet & Penarikan'), icon: Wallet },
+              ].map(item => (
+                <button key={item.id} type="button" onClick={() => onNavigate(item.id)}
+                  className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full">
+                  <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={16} /></div>
+                  <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
+                  <ChevronRight size={16} className="text-ds-ink3" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Profile Info */}
@@ -525,9 +541,9 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
       </div>
 
-      {/* Bank Account */}
-      <div className="mx-5 mt-4">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Rekening Bank</p>
+      {/* Earnings account details */}
+      <div className="mx-5 mt-5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">{t('Earnings account', 'Rekening Penghasilan')}</p>
         {savedAccount ? (
           <div className="sp-glass rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -582,6 +598,18 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           </div>
         </div>
       )}
+
+      {/* Help and settings */}
+      <div className="mx-5 mt-5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">{t('Help & Settings', 'Bantuan & Pengaturan')}</p>
+        <div className="rounded-2xl sp-glass p-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center text-ds-green shrink-0"><ShieldCheck size={17} /></div>
+          <div>
+            <p className="text-sm font-semibold text-ds-ink">{t('Need help?', 'Butuh bantuan?')}</p>
+            <p className="text-xs leading-relaxed text-ds-ink3 mt-1">{t('Open the Pathy assistant from the floating assistant button for help with your account and workflow.', 'Buka asisten Pathy melalui tombol asisten mengambang untuk bantuan akun dan alur kerja.')}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Logout */}
       <button

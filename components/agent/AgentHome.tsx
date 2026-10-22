@@ -28,6 +28,7 @@ interface Props {
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [activeQuotesCount, setActiveQuotesCount] = useState(0);
+  const [savedDraftProduct, setSavedDraftProduct] = useState<string | null>(null);
   const reduce = useReducedMotion();
   const { tiers } = useTierDefinitions();
   const myTierDef = getTierByCode(tiers, agentTier);
@@ -39,6 +40,14 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(order.status)
       ).length))
       .catch(error => console.error('Unable to load active agent quotes:', error));
+
+    try {
+      const raw = window.sessionStorage.getItem('surepath:agent-quote-draft:' + agentId);
+      const draft = raw ? JSON.parse(raw) : null;
+      setSavedDraftProduct(draft?.product ?? null);
+    } catch {
+      setSavedDraftProduct(null);
+    }
   }, [agentId]);
 
   const monthlyTarget = agent?.monthly_target ?? 10000000;
@@ -96,6 +105,17 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
       <PromoBanner />
+
+      {savedDraftProduct && (
+        <div className="mx-5 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3" role="status">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><FilePlus2 size={18} /></div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-emerald-950">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
+            <p className="text-xs text-emerald-800 mt-0.5">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
+          </div>
+          <button type="button" onClick={() => onNavigate('quotes')} className="min-h-10 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white">{t('Resume', 'Lanjutkan')}</button>
+        </div>
+      )}
 
       {/* Greeting */}
       <motion.div className="px-5 pt-10 pb-2 sm:pt-12" {...reveal(0)}>

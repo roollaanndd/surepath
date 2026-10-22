@@ -574,11 +574,14 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         // Commission & coin calculations — insurer product rates take priority
         const baseCommRate = selectedInsurerProduct?.base_commission_rate
           ?? productConfig?.base_commission_rate ?? 0.10;
-        const cappedDiscountRate = selectedInsurerProduct
-          ? Math.min(discountRate, selectedInsurerProduct.max_discount_rate)
-          : discountRate;
+        const configuredMaxDiscount = selectedInsurerProduct?.max_discount_rate
+          ?? productConfig?.max_discount_rate ?? 0;
+        const safeMaxDiscount = Math.max(0, Math.min(configuredMaxDiscount, 0.25 - baseCommRate));
+        const cappedDiscountRate = Math.min(discountRate, safeMaxDiscount);
         const effectiveCommRate = Math.max(0, baseCommRate - cappedDiscountRate);
         const discountAmount = Math.round(breakdown.total * cappedDiscountRate);
+        // The client discount is funded from commission; keep the premium breakdown intact
+        // for insurer accounting, while the displayed client net is reduced by the same amount.
         const netPremium = breakdown.total - discountAmount;
         const commissionAmount = Math.round(breakdown.total * effectiveCommRate);
         const coinRate = selectedInsurerProduct?.coin_rate ?? productConfig?.coin_rate ?? 0.05;

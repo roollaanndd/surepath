@@ -1,15 +1,12 @@
 // quotationSlipPdf.ts
-// SurePath Quotation Slip Generator — 4-page US Letter PDF (v2)
+// SurePath Executive Quotation Slip Generator — adaptive 1–3 page US Letter PDF (v3)
 // Renders directly in browser via jsPDF — no backend needed.
 //
 // Layout:
-//  Page 1: Cover (dark green) — logo, title, meta grid, QR e-quotation card,
-//          agent card, "bukan konfirmasi" disclaimer
-//  Page 2: Data Nasabah & Objek Pertanggungan (light) — generic object details
-//          (vehicle, personal accident, property, …) + insurer brand strip
-//  Page 3: Perhitungan Premi, Subjectivity & Syarat Ketentuan (light)
-//  Page 4: Konfirmasi & Pembayaran (dark green) — billing, QR + e-quote link,
-//          bank transfer, agent contact, 3-step CTA
+//  Page 1: Executive cover, customer/object summary, QR e-quotation, agent card
+//  Page 2: Customer/object details, coverage and sum insured
+//  Page 3: Adaptive premium breakdown, subjectivity and terms
+//  Payment/confirmation remains available through the unique e-quotation QR link.
 //
 // Every PDF embeds a unique QR pointing at https://myinsurepath.com/q/{code}
 // (see services/quotationService.ts) where the customer can view the
@@ -269,8 +266,6 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   drawDataPage(doc, data, ctxShared);
   doc.addPage();
   drawPremiPage(doc, data, ctxShared);
-  doc.addPage();
-  drawPaymentPage(doc, data, ctxShared);
 
   // ─── Metadata ───────────────────────────────────────────────────────────
   doc.setProperties({
@@ -531,7 +526,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(170, 190, 178);
-  doc.text('Hal. 1 dari 4', PAGE_W - MARGIN, footerY + 24, { align: 'right' });
+  doc.text('Hal. 1 dari 3', PAGE_W - MARGIN, footerY + 24, { align: 'right' });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -737,7 +732,7 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PAGE 4 — KONFIRMASI & PEMBAYARAN (white corporate palette)
+// LEGACY PAGE 4 — retained for compatibility; not used by the adaptive 3-page template
 // ═══════════════════════════════════════════════════════════════════════════
 function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const { currency, closingTitle, closingAccent, closingDesc,

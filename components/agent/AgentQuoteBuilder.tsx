@@ -142,14 +142,14 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [printingQuote, setPrintingQuote] = useState(false);
   const [savedQuote, setSavedQuote] = useState<SpQuote | null>(null);
   const [createdPolicy, setCreatedPolicy] = useState<SpPolicy | null>(null);
-  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftRestoredForAgent, setDraftRestoredForAgent] = useState<string | null>(null);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const draftStorageKey = 'surepath:agent-quote-draft:' + agentId;
 
   // Resume the last non-sensitive draft for this signed-in agent. Customer
   // names and phone numbers are intentionally excluded from browser storage.
   useEffect(() => {
-    if (!agentId) { setDraftRestored(true); return; }
+    if (!agentId) { setDraftRestoredForAgent(null); return; }
     try {
       const raw = window.sessionStorage.getItem(draftStorageKey);
       if (raw) {
@@ -171,19 +171,23 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     } catch (error) {
       console.warn('Could not restore agent quote draft:', error);
     } finally {
-      setDraftRestored(true);
+      setDraftRestoredForAgent(agentId);
     }
   }, [agentId, draftStorageKey]);
 
   useEffect(() => {
-    if (!draftRestored || !agentId) return;
+    if (!agentId || draftRestoredForAgent !== agentId) return;
     try {
       if (step === 'success') {
         window.sessionStorage.removeItem(draftStorageKey);
         setDraftSavedAt(null);
         return;
       }
-      if (!product && step === 'product') return;
+      if (!product && step === 'product') {
+        window.sessionStorage.removeItem(draftStorageKey);
+        setDraftSavedAt(null);
+        return;
+      }
       const updatedAt = new Date().toISOString();
       window.sessionStorage.setItem(draftStorageKey, JSON.stringify({
         version: 1,
@@ -205,7 +209,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       // Private browsing / storage quota must never block quote creation.
       console.warn('Could not save agent quote draft:', error);
     }
-  }, [draftRestored, agentId, draftStorageKey, step, product, quoteMode, clientMode, selectedClientId, carInputs, addons, travelInputs, paInputs, mparInputs]);
+  }, [draftRestoredForAgent, agentId, draftStorageKey, step, product, quoteMode, clientMode, selectedClientId, carInputs, addons, travelInputs, paInputs, mparInputs]);
 
   // Route OJK products to full underwriting wizard
   if (vehicleWizardType) {

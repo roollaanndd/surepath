@@ -25,6 +25,7 @@ import {
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -572,11 +573,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const { code: productCode, name: productName } = productInfo(vehicleType, coverageType);
 
         // Commission & coin calculations — insurer product rates take priority
-        const baseCommRate = selectedInsurerProduct?.base_commission_rate
-          ?? productConfig?.base_commission_rate ?? 0.10;
+        const baseCommRate = Math.min(0.25, selectedInsurerProduct?.base_commission_rate
+          ?? productConfig?.base_commission_rate ?? 0.10);
         const configuredMaxDiscount = selectedInsurerProduct?.max_discount_rate
           ?? productConfig?.max_discount_rate ?? 0;
-        const safeMaxDiscount = Math.max(0, Math.min(configuredMaxDiscount, 0.25 - baseCommRate));
+        const safeMaxDiscount = Math.max(0, Math.min(configuredMaxDiscount, baseCommRate));
         const cappedDiscountRate = Math.min(discountRate, safeMaxDiscount);
         const effectiveCommRate = Math.max(0, baseCommRate - cappedDiscountRate);
         const discountAmount = Math.round(breakdown.total * cappedDiscountRate);
@@ -1395,10 +1396,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      {p.insurer_logo_url && (
-                        <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
-                          className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
-                      )}
+                      <span className="w-9 h-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center p-1 flex-shrink-0" style={{ background: INSURER_BRANDS[p.insurer_code ?? '']?.bg ?? '#ffffff' }}>
+                        {p.insurer_logo_url ? <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code} className="w-full h-full object-contain" /> : <InsurerLogo id={p.insurer_code ?? p.id} size={28} />}
+                      </span>
                       <p className={`font-black text-sm ${selected ? 'text-ds-green' : 'text-slate-700 dark:text-slate-200'}`}>
                         {p.insurer_name ?? p.insurer_code}
                       </p>
@@ -1418,7 +1418,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                       </p>
                     )}
                     <p className="text-[10px] text-slate-400">
-                      Maks diskon {(Math.max(0, Math.min(p.max_discount_rate ?? 0, 0.25 - (p.base_commission_rate ?? 0))) * 100).toFixed(1)}%
+                      Maks diskon {(Math.max(0, Math.min(p.max_discount_rate ?? 0, Math.min(0.25, p.base_commission_rate ?? 0))) * 100).toFixed(1)}%
                       {p.max_vehicle_age_years ? ` · Maks usia ${p.max_vehicle_age_years} thn` : ''}
                     </p>
                     <div className="mt-3 border-t border-slate-100 dark:border-white/10 pt-3 space-y-2">
@@ -1764,12 +1764,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
         {/* Discount & Commission Panel */}
         {(() => {
-          const baseCommRate = selectedInsurerProduct?.base_commission_rate
-            ?? productConfig?.base_commission_rate ?? 0.10;
+          const baseCommRate = Math.min(0.25, selectedInsurerProduct?.base_commission_rate
+            ?? productConfig?.base_commission_rate ?? 0.10);
           const configuredMaxDisc = selectedInsurerProduct?.max_discount_rate
             ?? productConfig?.max_discount_rate ?? 0;
           // Business guardrail: commission + client discount may never exceed 25% of premium.
-          const maxDisc = Math.max(0, Math.min(configuredMaxDisc, 0.25 - baseCommRate));
+          const maxDisc = Math.max(0, Math.min(configuredMaxDisc, baseCommRate));
           const cappedDisc = Math.min(discountRate, maxDisc);
           const effectiveComm = Math.max(0, baseCommRate - cappedDisc);
           const discountAmt = Math.round(breakdown.total * cappedDisc);

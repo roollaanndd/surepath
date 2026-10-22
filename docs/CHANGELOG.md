@@ -1,5 +1,14 @@
 # SurePath — Changelog
 
+## v2.6.6 — 2026-10-22
+
+**Keandalan dashboard keamanan admin.**
+
+- Dashboard keamanan kini menangani kegagalan pemuatan dan menampilkan pesan serta tombol coba lagi; polling tidak lagi membiarkan rejection tidak tertangani.
+- Analytics mempertahankan label periode GWP berbasis tahun-bulan dan tidak menampilkan Claims Ratio sebelum denominator premi tervalidasi tersedia.
+- Pemeriksaan akses action server tetap perlu diuji dengan akun tiap role; perubahan ini bukan sertifikasi keamanan menyeluruh.
+
+
 ## v2.6.5 — 2026-10-22
 
 **Perbaikan akurasi analytics admin.**

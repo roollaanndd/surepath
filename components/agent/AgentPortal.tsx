@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Language } from '../../types';
 import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
 import { IcBell } from './AgentIcons';
@@ -23,7 +23,7 @@ import AgentCommission from './AgentCommission';
 import AgentWalletView from './AgentWallet';
 import AgentLeaderboard from './AgentLeaderboard';
 import AgentClaims from './AgentClaims';
-import { AgentNotifications } from './AgentNotifications';
+import { AgentNotifications, type SpNotification } from './AgentNotifications';
 import AgentProfile from './AgentProfile';
 import RenewalManager from './RenewalManager';
 import AgentNetwork from './AgentNetwork';
@@ -90,6 +90,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationPopup, setNotificationPopup] = useState<SpNotification | null>(null);
+  const seenNotificationIds = useRef<Set<string>>(new Set());
 
   const [agentTier, setAgentTier] = useState<string | null>(null);
   const { tiers } = useTierDefinitions();
@@ -180,6 +182,45 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   useEffect(() => { loadData(); }, [agent?.id]);
+
+  // Account-scoped notification polling. Existing unread items update the badge
+  // on login; only newly-arrived items trigger a popup while this account is active.
+  useEffect(() => {
+    if (!agent?.id) return;
+    let cancelled = false;
+    let initialized = false;
+
+    const refreshNotifications = async () => {
+      try {
+        const items = await getNotifications(agent.id, true);
+        if (cancelled) return;
+        const currentIds = new Set(items.map(item => item.id));
+        if (!initialized) {
+          seenNotificationIds.current = currentIds;
+          const firstUnread = items.find(item => !item.read);
+          if (firstUnread) setNotificationPopup(firstUnread);
+          initialized = true;
+        } else {
+          const fresh = items.find(item => !seenNotificationIds.current.has(item.id));
+          if (fresh) setNotificationPopup(fresh);
+          seenNotificationIds.current = currentIds;
+        }
+        setUnreadCount(items.filter(item => !item.read).length);
+      } catch (error) {
+        // Notifications are non-critical; never interrupt the agent workflow.
+        console.error('Unable to refresh agent notifications:', error);
+      }
+    };
+
+    seenNotificationIds.current = new Set();
+    void refreshNotifications();
+    const interval = window.setInterval(() => { void refreshNotifications(); }, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      seenNotificationIds.current = new Set();
+    };
+  }, [agent?.id]);
 
   const handleTabChange = (tab: string) => {
     setTabKey(k => k + 1);
@@ -303,7 +344,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           </div>
         ) : undefined}
         unreadCount={unreadCount}
-        onBellClick={() => setShowNotifications(true)}
+        onBellClick={() => { setNotificationPopup(null); setShowNotifications(true); }}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
@@ -347,9 +388,40 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         <AgentNotifications
           agentId={agent?.id ?? ''}
           lang={lang}
-          onClose={() => { setShowNotifications(false); setUnreadCount(0); }}
+          onClose={() => {
+            setShowNotifications(false);
+            void getNotifications(agent?.id ?? '', true)
+              .then(items => setUnreadCount(items.filter(item => !item.read).length))
+              .catch(() => {});
+          }}
           onNavigate={handleTabChange}
         />
+      )}
+
+      {notificationPopup && !showNotifications && !showOnboarding && (
+        <div className="fixed right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-bottom-2"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.5rem)' }}
+          role="status" aria-live="polite">
+          <div className="rounded-2xl border border-ds-border bg-ds-card p-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 shrink-0 rounded-xl bg-ds-green-tint flex items-center justify-center text-ds-green">
+                <IcBell size={18} />
+              </div>
+              <button type="button" className="min-w-0 flex-1 text-left"
+                onClick={() => { setNotificationPopup(null); setShowNotifications(true); }}>
+                <span className="block text-[10px] font-black uppercase tracking-widest text-ds-green">{t('New notification', 'Notifikasi baru')}</span>
+                <span className="mt-1 block text-sm font-bold text-ds-ink">{notificationPopup.title}</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-ds-ink2">{notificationPopup.body}</span>
+                <span className="mt-2 block text-xs font-bold text-ds-green">{t('View notifications', 'Lihat notifikasi')}</span>
+              </button>
+              <button type="button" aria-label={t('Dismiss notification popup', 'Tutup popup notifikasi')}
+                onClick={() => setNotificationPopup(null)}
+                className="min-h-8 min-w-8 rounded-full text-ds-ink3 hover:bg-ds-card2 flex items-center justify-center">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Floating Pathy assistant */}

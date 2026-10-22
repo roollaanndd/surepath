@@ -142,6 +142,74 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [printingQuote, setPrintingQuote] = useState(false);
   const [savedQuote, setSavedQuote] = useState<SpQuote | null>(null);
   const [createdPolicy, setCreatedPolicy] = useState<SpPolicy | null>(null);
+  const [draftRestoredForAgent, setDraftRestoredForAgent] = useState<string | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const draftStorageKey = 'surepath:agent-quote-draft:' + agentId;
+
+  // Resume the last non-sensitive draft for this signed-in agent. Customer
+  // names and phone numbers are intentionally excluded from browser storage.
+  useEffect(() => {
+    if (!agentId) { setDraftRestoredForAgent(null); return; }
+    try {
+      const raw = window.sessionStorage.getItem(draftStorageKey);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft && draft.version === 1 && draft.agentId === agentId) {
+          if (draft.step && draft.step !== 'success') setStep(draft.step as Step);
+          if (draft.product) setProduct(draft.product as ProductType);
+          if (draft.quoteMode) setQuoteMode(draft.quoteMode as QuoteMode);
+          if (draft.clientMode) setClientMode(draft.clientMode as ClientMode);
+          if (draft.selectedClientId) setSelectedClientId(draft.selectedClientId);
+          if (draft.carInputs) setCarInputs(draft.carInputs);
+          if (draft.addons) setAddons(draft.addons);
+          if (draft.travelInputs) setTravelInputs(draft.travelInputs);
+          if (draft.paInputs) setPAInputs(draft.paInputs);
+          if (draft.mparInputs) setMPARInputs(draft.mparInputs);
+          setDraftSavedAt(draft.updatedAt ?? null);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not restore agent quote draft:', error);
+    } finally {
+      setDraftRestoredForAgent(agentId);
+    }
+  }, [agentId, draftStorageKey]);
+
+  useEffect(() => {
+    if (!agentId || draftRestoredForAgent !== agentId) return;
+    try {
+      if (step === 'success') {
+        window.sessionStorage.removeItem(draftStorageKey);
+        setDraftSavedAt(null);
+        return;
+      }
+      if (!product && step === 'product') {
+        window.sessionStorage.removeItem(draftStorageKey);
+        setDraftSavedAt(null);
+        return;
+      }
+      const updatedAt = new Date().toISOString();
+      window.sessionStorage.setItem(draftStorageKey, JSON.stringify({
+        version: 1,
+        agentId,
+        step,
+        product,
+        quoteMode,
+        clientMode,
+        selectedClientId,
+        carInputs,
+        addons,
+        travelInputs,
+        paInputs,
+        mparInputs,
+        updatedAt,
+      }));
+      setDraftSavedAt(updatedAt);
+    } catch (error) {
+      // Private browsing / storage quota must never block quote creation.
+      console.warn('Could not save agent quote draft:', error);
+    }
+  }, [draftRestoredForAgent, agentId, draftStorageKey, step, product, quoteMode, clientMode, selectedClientId, carInputs, addons, travelInputs, paInputs, mparInputs]);
 
   // Route OJK products to full underwriting wizard
   if (vehicleWizardType) {
@@ -491,6 +559,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
 
   return (
     <div className="bg-gray-50 min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
+      {draftSavedAt && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800" role="status">
+          <CheckCircle2 size={14} />
+          <span>{t('Draft saved automatically for this session.', 'Draf tersimpan otomatis untuk sesi ini.')}</span>
+        </div>
+      )}
       {/* Tab switcher */}
       <div className="flex gap-2 bg-white border border-gray-100 rounded-2xl p-1">
         <button

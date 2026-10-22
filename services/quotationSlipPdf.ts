@@ -1,15 +1,12 @@
 // quotationSlipPdf.ts
-// SurePath Quotation Slip Generator — 4-page US Letter PDF (v2)
+// SurePath Executive Quotation Slip Generator — adaptive 1–3 page US Letter PDF (v3)
 // Renders directly in browser via jsPDF — no backend needed.
 //
 // Layout:
-//  Page 1: Cover (dark green) — logo, title, meta grid, QR e-quotation card,
-//          agent card, "bukan konfirmasi" disclaimer
-//  Page 2: Data Nasabah & Objek Pertanggungan (light) — generic object details
-//          (vehicle, personal accident, property, …) + insurer brand strip
-//  Page 3: Perhitungan Premi, Subjectivity & Syarat Ketentuan (light)
-//  Page 4: Konfirmasi & Pembayaran (dark green) — billing, QR + e-quote link,
-//          bank transfer, agent contact, 3-step CTA
+//  Page 1: Executive cover, customer/object summary, QR e-quotation, agent card
+//  Page 2: Customer/object details, coverage and sum insured
+//  Page 3: Adaptive premium breakdown, subjectivity and terms
+//  Payment/confirmation remains available through the unique e-quotation QR link.
 //
 // Every PDF embeds a unique QR pointing at https://myinsurepath.com/q/{code}
 // (see services/quotationService.ts) where the customer can view the
@@ -71,6 +68,7 @@ export interface QuotationSlipData {
   objectSectionTitle?: string;          // default derived from productType
   objectDetails?: QuotationObjectField[]; // generic object rows; falls back to vehicle fields
   objectSummary?: string;               // one-liner used on the e-quotation page
+  coverPhotoUrl?: string;                // optional product-specific photo; falls back to a product category image
 
   // Parties
   preparedForCompany: string;     // Customer / company name
@@ -256,12 +254,25 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   const totalPremiumClean = fmtIDRShort(data.totalPremium);
   const discountAmountClean = fmtIDRShort(data.discountAmount);
 
+  const coverPhotoByProduct: Record<QuotationProductType, string> = {
+    MOTOR: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=80',
+    PA: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=80',
+    PROPERTY: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
+    TRAVEL: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80',
+    HEALTH: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=80',
+    OTHER: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80',
+  };
+  let coverPhotoDataUrl: string | null = null;
+  try {
+    coverPhotoDataUrl = await loadImageAsDataUrl(data.coverPhotoUrl || coverPhotoByProduct[productType]);
+  } catch { /* Product photo is decorative; PDF generation must still succeed. */ }
+
   const ctxShared = {
     yearTag, titleMain, titleMid, titleAccent, slipType, currency,
     closingTitle, closingAccent, closingDesc,
     periodStartShort, periodEndShort, bankNameShort,
     totalPremiumClean, discountAmountClean,
-    logoDataUrl, insurerLogoDataUrl, qrDataUrl, eQuoteUrl, productType,
+    logoDataUrl, insurerLogoDataUrl, qrDataUrl, eQuoteUrl, productType, coverPhotoDataUrl,
   };
 
   drawCoverPage(doc, data, ctxShared);
@@ -269,8 +280,6 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   drawDataPage(doc, data, ctxShared);
   doc.addPage();
   drawPremiPage(doc, data, ctxShared);
-  doc.addPage();
-  drawPaymentPage(doc, data, ctxShared);
 
   // ─── Metadata ───────────────────────────────────────────────────────────
   doc.setProperties({
@@ -327,7 +336,7 @@ function deliverPdf(doc: any, filename: string): void {
 // PAGE 1 — COVER (dark green)
 // ═══════════════════════════════════════════════════════════════════════════
 function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
-  const { yearTag, titleMain, titleMid, titleAccent, slipType, logoDataUrl, qrDataUrl, eQuoteUrl } = ctx;
+  const { yearTag, titleMain, titleMid, titleAccent, slipType, logoDataUrl, qrDataUrl, eQuoteUrl, coverPhotoDataUrl } = ctx;
 
   // Clean white cover with subtle green decorative accents
   doc.setFillColor(...COLOR.darkBg);
@@ -347,11 +356,20 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFont('helvetica', 'bold');
   doc.text(d.quotationNumber, PAGE_W - MARGIN, MARGIN + 14, { align: 'right' });
 
+  // Product-specific cover photo (falls back gracefully if image loading fails).
+  if (coverPhotoDataUrl) {
+    try {
+      doc.addImage(coverPhotoDataUrl, 'JPEG', PAGE_W - MARGIN - 208, 96, 208, 104, undefined, 'FAST');
+      doc.setFillColor(...COLOR.emeraldDeep);
+      doc.rect(PAGE_W - MARGIN - 208, 194, 208, 6, 'F');
+    } catch { /* Keep the cover usable even if the source image is unsupported. */ }
+  }
+
   // ─── Doc class label ──────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(...COLOR.emeraldDeep);
-  doc.text(`// QUOTATION SLIP — ${slipType}`, MARGIN, MARGIN + 62);
+  doc.text(`// SURAT PENAWARAN / QUOTATION SLIP — ${slipType}`, MARGIN, MARGIN + 62);
 
   // ─── Title block ──────────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
@@ -531,7 +549,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(170, 190, 178);
-  doc.text('Hal. 1 dari 4', PAGE_W - MARGIN, footerY + 24, { align: 'right' });
+  doc.text('Hal. 1 dari 3', PAGE_W - MARGIN, footerY + 24, { align: 'right' });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -558,6 +576,10 @@ function drawDataPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(18);
   doc.setTextColor(...COLOR.ink);
   doc.text('Data Nasabah & Objek Pertanggungan', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR.inkMuted);
+  doc.text('Customer & Insured Object Details', MARGIN, y + 12);
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(8);
@@ -681,6 +703,10 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(18);
   doc.setTextColor(...COLOR.ink);
   doc.text('Perhitungan Premi, Subjectivity & Syarat', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR.inkMuted);
+  doc.text('Premium Calculation, Subjectivities & Terms', MARGIN, y + 12);
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(8);
@@ -737,9 +763,9 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PAGE 4 — KONFIRMASI & PEMBAYARAN (white corporate palette)
+// LEGACY PAGE 4 — retained for compatibility; not used by the adaptive 3-page template
 // ═══════════════════════════════════════════════════════════════════════════
-function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
+export function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const { currency, closingTitle, closingAccent, closingDesc,
           periodStartShort, periodEndShort, discountAmountClean,
           totalPremiumClean, bankNameShort, logoDataUrl, qrDataUrl, eQuoteUrl, productType } = ctx;

@@ -211,3 +211,78 @@
 .sp-modern-app :where([data-accent="orange"], .sp-accent-orange) :where(.accent-icon, [data-accent-icon]) {
   color: var(--sp-accent);
 }
+
+
+/* Admin dashboard revamp: sharper hierarchy, calmer surfaces, warm accent restraint. */
+.sp-modern-app:has(aside),
+.sp-modern-app:has(aside) {
+  --sp-admin-orange: var(--ds-orange, #F97316);
+  --sp-admin-line: color-mix(in srgb, var(--ds-border, #dbe5df) 76%, transparent);
+}
+.sp-modern-app:has(aside) aside,
+.sp-modern-app:has(aside) aside {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, .32) transparent;
+}
+.sp-modern-app:has(aside) aside nav a,
+.sp-modern-app:has(aside) aside nav button,
+.sp-modern-app:has(aside) aside nav a,
+.sp-modern-app:has(aside) aside nav button {
+  border-radius: .8rem;
+  min-height: 42px;
+  margin-block: 2px;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.sp-modern-app:has(aside) aside nav a:hover,
+.sp-modern-app:has(aside) aside nav button:hover,
+.sp-modern-app:has(aside) aside nav a:hover,
+.sp-modern-app:has(aside) aside nav button:hover {
+  background: color-mix(in srgb, var(--ds-orange, #F97316) 8%, var(--ds-surface, white));
+}
+.sp-modern-app:has(aside) aside nav [aria-current="page"],
+.sp-modern-app:has(aside) aside nav [data-active="true"],
+.sp-modern-app:has(aside) aside nav [aria-current="page"],
+.sp-modern-app:has(aside) aside nav [data-active="true"] {
+  border-color: color-mix(in srgb, var(--ds-orange, #F97316) 28%, transparent);
+  background: color-mix(in srgb, var(--ds-orange, #F97316) 11%, var(--ds-surface, white));
+}
+.sp-modern-app:has(aside) main,
+.sp-modern-app:has(aside) main {
+  min-width: 0;
+  overscroll-behavior: contain;
+}
+.sp-modern-app:has(aside) main :where(.rounded-2xl, .rounded-3xl),
+.sp-modern-app:has(aside) main :where(.rounded-2xl, .rounded-3xl) {
+  border-color: var(--sp-admin-line, var(--ds-border, #dbe5df));
+}
+.sp-modern-app:has(aside) main :where(table thead),
+.sp-modern-app:has(aside) main :where(table thead) {
+  background: color-mix(in srgb, var(--ds-surface, white) 92%, var(--ds-orange, #F97316));
+}
+.sp-modern-app:has(aside) main :where(th),
+.sp-modern-app:has(aside) main :where(th) {
+  white-space: nowrap;
+}
+@media (max-width: 1023px) {
+  .sp-modern-app:has(aside),
+  .sp-modern-app:has(aside) {
+    min-width: 0;
+  }
+  .sp-modern-app:has(aside) main,
+  .sp-modern-app:has(aside) main {
+    width: 100%;
+    max-width: 100vw;
+  }
+  .sp-modern-app:has(aside) main :where(.grid),
+  .sp-modern-app:has(aside) main :where(.grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app:has(aside) aside nav a,
+  .sp-modern-app:has(aside) aside nav button,
+  .sp-modern-app:has(aside) aside nav a,
+  .sp-modern-app:has(aside) aside nav button {
+    transition: none !important;
+  }
+}

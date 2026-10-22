@@ -192,7 +192,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
     const refreshNotifications = async () => {
       try {
-        const items = await getNotifications(agent.id);
+        const items = await getNotifications(agent.id, true);
         if (cancelled) return;
         const currentIds = new Set(items.map(item => item.id));
         if (!initialized) {

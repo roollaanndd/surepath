@@ -1,5 +1,15 @@
 # SurePath — Changelog
 
+## v2.6.3 — 2026-10-22
+
+**Notifikasi pembaruan aplikasi.**
+
+- Naikkan versi aplikasi ke v2.6.3 agar instalasi PWA yang pernah mencatat versi sebelumnya dapat mendeteksi pembaruan.
+- Pop-up pada aplikasi terpasang menampilkan versi terbaru dan tombol **Buka ulang** untuk memuat versi terbaru.
+- Selaraskan versi package dan versi Android (`versionCode` 16, `versionName` 2.6.3).
+- Catatan: notifikasi muncul saat aplikasi terpasang dibuka; situs web tidak dapat memaksa membuka aplikasi di perangkat secara otomatis.
+
+
 ## Login page revamp — 2026-10-13 (proposed)
 
 - Add a responsive SurePath-green hero panel and refine login-card spacing, field styling, and mobile safe-area padding.

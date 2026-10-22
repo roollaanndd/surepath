@@ -6,7 +6,7 @@ import {
 import { callGateway } from '../../services/supabaseService';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-interface KPI { gwpYTD: number; policiesIssued: number; activeAgents: number; claimsRatio: number }
+interface KPI { gwpYTD: number; policiesIssued: number; activeAgents: number; claimsRatio: number | null }
 interface MonthPoint { month: string; gwp: number }
 interface ProductSlice { name: string; value: number }
 interface AgentBar { name: string; gwp: number }
@@ -91,9 +91,10 @@ const AnalyticsDashboard = () => {
       // ── KPI ────────────────────────────────────────────────────────────────
       const issuedOrders = orders.filter((o: any) => o.status === 'ISSUED');
       const gwpYTD = issuedOrders.reduce((s: number, o: any) => s + (o.total_premium ?? 0), 0);
-      const totalClaimAmt = claims.reduce((s: number, c: any) => s + (c.claim_amount ?? 0), 0);
-      const totalPremium = claims.reduce((s: number, c: any) => s + (c.total_premium ?? 0), 0);
-      const claimsRatio = totalPremium > 0 ? (totalClaimAmt / totalPremium) * 100 : 0;
+      // Claim rows alone do not establish the full earned-premium denominator.
+      // Do not present a misleading percentage until the gateway provides a
+      // period-aligned premium denominator for the same population.
+      const claimsRatio: number | null = null;
       setKpi({
         gwpYTD,
         policiesIssued: issuedOrders.length,
@@ -102,18 +103,23 @@ const AnalyticsDashboard = () => {
       });
 
       // ── GWP Trend: last 6 months ────────────────────────────────────────────
-      const trend: Record<number, number> = {};
+      const trend: Record<string, number> = {};
       const cutoff = new Date(now.getFullYear(), now.getMonth() - 5, 1);
       orders
         .filter((o: any) => ['ISSUED','APPROVED'].includes(o.status))
         .forEach((o: any) => {
           const d = new Date(o.created_at);
-          if (d >= cutoff) trend[d.getMonth()] = (trend[d.getMonth()] ?? 0) + (o.total_premium ?? 0);
+          if (!Number.isNaN(d.getTime()) && d >= cutoff) {
+            const key = `${d.getFullYear()}-${d.getMonth()}`;
+            trend[key] = (trend[key] ?? 0) + (o.total_premium ?? 0);
+          }
         });
       const trendData: MonthPoint[] = [];
       for (let i = 5; i >= 0; i--) {
-        const m = (now.getMonth() - i + 12) % 12;
-        trendData.push({ month: MONTH_NAMES[m], gwp: Math.round((trend[m] ?? 0) / 1_000_000 * 10) / 10 });
+        const period = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const m = period.getMonth();
+        const key = `${period.getFullYear()}-${m}`;
+        trendData.push({ month: `${MONTH_NAMES[m]} ${period.getFullYear()}`, gwp: Math.round((trend[key] ?? 0) / 1_000_000 * 10) / 10 });
       }
       setGwpTrend(trendData);
 
@@ -201,7 +207,7 @@ const AnalyticsDashboard = () => {
           <KPICard label="GWP YTD" value={formatM(kpi.gwpYTD * 1_000_000 > 0 ? kpi.gwpYTD : 0)} sub={formatIDR(kpi.gwpYTD)} />
           <KPICard label="Polis Diterbitkan" value={kpi.policiesIssued.toLocaleString('id-ID')} sub="Status ISSUED" />
           <KPICard label="Mitra Aktif" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
-          <KPICard label="Claims Ratio" value={`${kpi.claimsRatio}%`} sub="Klaim / Premi YTD" />
+          <KPICard label="Claims Ratio" value={kpi.claimsRatio === null ? 'N/A' : `${kpi.claimsRatio}%`} sub="Menunggu denominator premi terverifikasi" />
         </div>
       ) : null}
 

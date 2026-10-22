@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import '../../src/styles/portal-modernization.css';
 import { Language } from '../../types';
 import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
 import { IcBell } from './AgentIcons';

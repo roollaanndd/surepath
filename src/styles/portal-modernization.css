@@ -155,3 +155,59 @@
     transition: none !important;
   }
 }
+
+
+/* Responsive refinement: quick, subtle transitions; no layout-shifting animation. */
+.sp-modern-app {
+  --sp-ui-motion-fast: 140ms;
+  --sp-ui-motion-base: 220ms;
+  --sp-ui-ease: cubic-bezier(.2, .75, .25, 1);
+}
+.sp-modern-app :where(a, button, [role="button"], input, select, textarea) {
+  transition-timing-function: var(--sp-ui-ease);
+}
+.sp-modern-app :where(button, [role="button"]) {
+  min-height: 44px;
+}
+.sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  min-height: 44px;
+}
+.sp-modern-app :where(button, a, [role="button"]) {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-modern-app :where(button:not(:disabled), a, [role="button"]):hover {
+    filter: saturate(1.035);
+  }
+  .sp-modern-app :where(button:not(:disabled), a, [role="button"]):active {
+    transform: translateY(1px) scale(.99);
+  }
+}
+@media (max-width: 640px) {
+  .sp-modern-app {
+    overflow-wrap: anywhere;
+  }
+  .sp-modern-app :where(.grid) {
+    min-width: 0;
+  }
+  .sp-modern-app :where(input, select, textarea) {
+    font-size: max(16px, 1em);
+  }
+  .sp-modern-app :where(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sp-modern-app :where(.sp-page-enter, [data-screen], .sp-screen) {
+    animation-duration: 180ms;
+  }
+}
+/* Use the orange accent only when a component explicitly opts in. */
+.sp-modern-app :where([data-accent="orange"], .sp-accent-orange) {
+  --sp-accent: var(--ds-orange, #F97316);
+  --sp-accent-tint: var(--ds-orange-tint, #FFF1E6);
+}
+.sp-modern-app :where([data-accent="orange"], .sp-accent-orange) :where(.accent-icon, [data-accent-icon]) {
+  color: var(--sp-accent);
+}

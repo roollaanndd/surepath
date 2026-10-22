@@ -63,7 +63,7 @@ export async function getPortalIconMap(force = false): Promise<PortalIconMap> {
   try { return await pending; } finally { pending = null; }
 }
 
-export async function setPortalIconStyle(iconKey: string, style: 'studio' | 'orbit' | 'bold' | 'illustrative' | 'illustrative'): Promise<PortalIconStyleMap> {
+export async function setPortalIconStyle(iconKey: string, style: 'studio' | 'orbit' | 'bold' | 'illustrative'): Promise<PortalIconStyleMap> {
   if (!/^[a-z0-9_-]{1,64}$/i.test(iconKey)) throw new Error('Kunci ikon tidak valid.');
   const config = await readConfig();
   const nextStyles = { ...config.styles, [iconKey]: style };

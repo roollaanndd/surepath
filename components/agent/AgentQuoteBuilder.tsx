@@ -18,6 +18,9 @@ import { calcPremium as calcOjkPremium, getZone, getBaseRateByBand, getVehicleCa
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import AgentOrderStatus from './AgentOrderStatus';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
+import TravelInsuranceWizard from '../TravelInsuranceWizard';
+import PAInsuranceWizard from '../PAInsuranceWizard';
+import MPARInsuranceWizard from '../MPARInsuranceWizard';
 import {
   VEHICLE_BRANDS, getModelsForBrand, getMarketValue, getMarketValueForYear,
   MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto, getMarketValueForMotoYear,
@@ -237,6 +240,17 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
       />
     );
+  }
+
+  // Route direct purchases for non-vehicle products to their dedicated purchase flows.
+  if (activeProduct === 'buy_TRAVEL') {
+    return <TravelInsuranceWizard currentUser={agent} lang={lang} onComplete={() => { setActiveProduct(null); setStep('product'); }} />;
+  }
+  if (activeProduct === 'buy_PA') {
+    return <PAInsuranceWizard currentUser={agent} lang={lang} onComplete={() => { setActiveProduct(null); setStep('product'); }} />;
+  }
+  if (activeProduct === 'buy_MPAR') {
+    return <MPARInsuranceWizard currentUser={agent} lang={lang} onComplete={() => { setActiveProduct(null); setStep('product'); }} />;
   }
 
   // Route life insurance to life wizard

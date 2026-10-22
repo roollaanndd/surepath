@@ -92,3 +92,67 @@
     transform: none !important;
   }
 }
+
+
+/* Stronger cross-portal visual pass: premium surfaces, clearer hierarchy,
+   tactile controls and responsive safe-area spacing. Scoped to app portals. */
+.sp-modern-app {
+  --sp-ui-radius-card: 1.35rem;
+  --sp-ui-shadow-card: 0 12px 34px -22px rgba(7, 46, 34, .28), 0 2px 8px -6px rgba(15, 23, 42, .14);
+  --sp-ui-shadow-hover: 0 20px 44px -24px rgba(0, 91, 58, .34), 0 5px 12px -8px rgba(15, 23, 42, .18);
+  isolation: isolate;
+}
+.sp-modern-app :where(h1, h2, h3) {
+  text-wrap: balance;
+  letter-spacing: -.025em;
+}
+.sp-modern-app :where(.rounded-2xl, .rounded-3xl) {
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.sp-modern-app :where(button, [role="button"]) {
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+.sp-modern-app :where(button:not(:disabled), [role="button"]):focus-visible {
+  outline-offset: 3px;
+}
+.sp-modern-app :where(input, select, textarea) {
+  min-height: 2.75rem;
+  border-color: var(--ds-border, rgba(148, 163, 184, .45));
+}
+.sp-modern-app :where(textarea) { min-height: 6rem; }
+.sp-modern-app :where(input, select, textarea)::placeholder {
+  color: var(--ds-ink3, #82908a);
+  opacity: .78;
+}
+.sp-modern-app :where(nav a, nav button, aside a, aside button) {
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease;
+}
+.sp-modern-app :where(nav a:hover, nav button:hover, aside a:hover, aside button:hover) {
+  border-color: var(--ds-border, rgba(148, 163, 184, .4));
+}
+.sp-modern-app :where(table) { border-collapse: separate; border-spacing: 0; }
+.sp-modern-app :where(th) {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.sp-modern-app :where(td, th) { vertical-align: middle; }
+.sp-modern-app :where(img) { image-rendering: auto; }
+.sp-modern-app :where(.sp-glass, .sp-glass-strong) {
+  background-color: color-mix(in srgb, var(--ds-card, #fff) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-border, #dce6df) 72%, transparent);
+}
+@media (max-width: 640px) {
+  .sp-modern-app { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .sp-modern-app :where(button, [role="button"]) { touch-action: manipulation; }
+  .sp-modern-app :where(.rounded-2xl, .rounded-3xl) {
+    scroll-margin-top: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app :where(.rounded-2xl, .rounded-3xl, nav a, nav button, aside a, aside button) {
+    transition: none !important;
+  }
+}

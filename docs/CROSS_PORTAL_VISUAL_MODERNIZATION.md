@@ -19,11 +19,15 @@ No changes to backend APIs, Supabase access, authentication, role permissions, i
 4. Confirm public landing page visuals are unchanged.
 5. Verify preview deployment before merging or claiming production rollout.
 
-## Validation status
-- GitHub Actions reported success for CI, Security Review and Android native build on the initial visual-layer commit.
-- A subsequent CSS refinement commit is now on this branch; its own checks must finish before merge.
-- Vercel's PR status is failing with a build-rate-limit notice. The current production deployment is on `main`, not this feature branch.
-- No cross-portal browser visual QA has been completed yet, so this is not a production rollout claim.
+## Validation status (updated 2026-10-22)
+- The production deployment for commit `654fc758b2f94f0422931855dab3f89d12946e80` was reported by Vercel as `READY` and aliases `myinsurepath.com`.
+- GitHub reported all seven checks passing on that production commit, including build, quality, unit, browser smoke, security and Android build checks.
+- A follow-up CSS safety fix removes broad animations from every direct child of `main`; only explicitly marked screen elements receive screen-entry motion. This reduces animation replay during dynamic updates and avoids adding motion to long transactional lists.
+- These automated checks do not replace visual QA. Individual portal layouts, light/dark mode, mobile/desktop breakpoints, and authenticated navigation still require browser-based visual inspection before the full redesign can be called complete.
 
-## Known limitation
-Vercel access was previously returning HTTP 403 for the SurePath team scope and the PR status now points to a build-rate-limit page. A verified preview URL and production rollout therefore cannot be claimed until a preview is available and all visual QA gates pass.
+## Remaining validation
+1. Verify Customer, Agent, Operator, Insurer, B2B and Admin in light and dark mode, mobile and desktop.
+2. Check keyboard focus, reduced-motion mode, safe-area navigation and dialogs/drawers.
+3. Confirm the public landing page visuals are unchanged.
+4. Capture screenshots from the actual authenticated portals and inspect the production PWA on a device.
+5. Confirm preview/production build and all checks pass after the latest CSS commit.

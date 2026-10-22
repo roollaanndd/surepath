@@ -68,6 +68,7 @@ export interface QuotationSlipData {
   objectSectionTitle?: string;          // default derived from productType
   objectDetails?: QuotationObjectField[]; // generic object rows; falls back to vehicle fields
   objectSummary?: string;               // one-liner used on the e-quotation page
+  coverPhotoUrl?: string;                // optional product-specific photo; falls back to a product category image
 
   // Parties
   preparedForCompany: string;     // Customer / company name
@@ -253,12 +254,25 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   const totalPremiumClean = fmtIDRShort(data.totalPremium);
   const discountAmountClean = fmtIDRShort(data.discountAmount);
 
+  const coverPhotoByProduct: Record<QuotationProductType, string> = {
+    MOTOR: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=80',
+    PA: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=80',
+    PROPERTY: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
+    TRAVEL: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80',
+    HEALTH: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=80',
+    OTHER: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80',
+  };
+  let coverPhotoDataUrl: string | null = null;
+  try {
+    coverPhotoDataUrl = await loadImageAsDataUrl(data.coverPhotoUrl || coverPhotoByProduct[productType]);
+  } catch { /* Product photo is decorative; PDF generation must still succeed. */ }
+
   const ctxShared = {
     yearTag, titleMain, titleMid, titleAccent, slipType, currency,
     closingTitle, closingAccent, closingDesc,
     periodStartShort, periodEndShort, bankNameShort,
     totalPremiumClean, discountAmountClean,
-    logoDataUrl, insurerLogoDataUrl, qrDataUrl, eQuoteUrl, productType,
+    logoDataUrl, insurerLogoDataUrl, qrDataUrl, eQuoteUrl, productType, coverPhotoDataUrl,
   };
 
   drawCoverPage(doc, data, ctxShared);
@@ -322,7 +336,7 @@ function deliverPdf(doc: any, filename: string): void {
 // PAGE 1 — COVER (dark green)
 // ═══════════════════════════════════════════════════════════════════════════
 function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
-  const { yearTag, titleMain, titleMid, titleAccent, slipType, logoDataUrl, qrDataUrl, eQuoteUrl } = ctx;
+  const { yearTag, titleMain, titleMid, titleAccent, slipType, logoDataUrl, qrDataUrl, eQuoteUrl, coverPhotoDataUrl } = ctx;
 
   // Clean white cover with subtle green decorative accents
   doc.setFillColor(...COLOR.darkBg);
@@ -341,6 +355,15 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.text(d.quotationNumber, PAGE_W - MARGIN, MARGIN + 14, { align: 'right' });
+
+  // Product-specific cover photo (falls back gracefully if image loading fails).
+  if (coverPhotoDataUrl) {
+    try {
+      doc.addImage(coverPhotoDataUrl, 'JPEG', PAGE_W - MARGIN - 208, 96, 208, 104, undefined, 'FAST');
+      doc.setFillColor(...COLOR.emeraldDeep);
+      doc.rect(PAGE_W - MARGIN - 208, 194, 208, 6, 'F');
+    } catch { /* Keep the cover usable even if the source image is unsupported. */ }
+  }
 
   // ─── Doc class label ──────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');

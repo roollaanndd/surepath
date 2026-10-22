@@ -75,6 +75,7 @@ const AnalyticsDashboard = () => {
   const [paymentFunnel, setPaymentFunnel] = useState<PaymentFunnel | null>(null);
   const [pipeline, setPipeline] = useState<PipelineCounts | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -106,7 +107,7 @@ const AnalyticsDashboard = () => {
       const trend: Record<string, number> = {};
       const cutoff = new Date(now.getFullYear(), now.getMonth() - 5, 1);
       orders
-        .filter((o: any) => ['ISSUED','APPROVED'].includes(o.status))
+        .filter((o: any) => o.status === 'ISSUED')
         .forEach((o: any) => {
           const d = new Date(o.created_at);
           if (!Number.isNaN(d.getTime()) && d >= cutoff) {
@@ -172,7 +173,7 @@ const AnalyticsDashboard = () => {
       setLoadError(e?.message ?? 'Gagal memuat data analytics');
       setLoading(false);
     });
-  }, []);
+  }, [retryKey]);
 
   const maxPipeVal = pipeline ? Math.max(...Object.values(pipeline), 1) : 1;
 
@@ -195,7 +196,7 @@ const AnalyticsDashboard = () => {
             <p className="text-rose-600 dark:text-rose-400 font-bold text-sm mb-2">Gagal memuat data analytics</p>
             <p className="text-rose-500 dark:text-rose-500/70 text-xs mb-4">{loadError}</p>
             <button
-              onClick={() => { setLoading(true); setLoadError(null); window.location.reload(); }}
+              onClick={() => { setLoading(true); setLoadError(null); setRetryKey(v => v + 1); }}
               className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
             >
               Coba Lagi
@@ -206,7 +207,7 @@ const AnalyticsDashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard label="GWP YTD" value={formatM(kpi.gwpYTD * 1_000_000 > 0 ? kpi.gwpYTD : 0)} sub={formatIDR(kpi.gwpYTD)} />
           <KPICard label="Polis Diterbitkan" value={kpi.policiesIssued.toLocaleString('id-ID')} sub="Status ISSUED" />
-          <KPICard label="Mitra Aktif" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Terverifikasi" />
+          <KPICard label="Mitra Terverifikasi" value={kpi.activeAgents.toLocaleString('id-ID')} sub="Akun AGENT terverifikasi" />
           <KPICard label="Claims Ratio" value={kpi.claimsRatio === null ? 'N/A' : `${kpi.claimsRatio}%`} sub="Menunggu denominator premi terverifikasi" />
         </div>
       ) : null}

@@ -99,7 +99,7 @@ const AnalyticsDashboard = () => {
         gwpYTD,
         policiesIssued: issuedOrders.length,
         activeAgents: agents.length,
-        claimsRatio: Math.round(claimsRatio * 10) / 10,
+        claimsRatio: claimsRatio === null ? null : Math.round(claimsRatio * 10) / 10,
       });
 
       // ── GWP Trend: last 6 months ────────────────────────────────────────────

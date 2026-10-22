@@ -34,6 +34,18 @@ interface Props {
   clients: SpClient[];
   lang: Language;
   initialVehicleType?: VehicleType;
+  initialQuote?: {
+    clientId?: string;
+    clientName?: string;
+    clientPhone?: string;
+    brand?: string;
+    model?: string;
+    year?: number;
+    price?: number;
+    coverage?: 'COMPREHENSIVE' | 'TLO';
+    addons?: Partial<AddOns>;
+    discountRate?: number;
+  };
   onBack: () => void;
   onOrderCreated?: (orderNumber: string) => void;
 }
@@ -228,27 +240,36 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   agentId,
   clients,
   initialVehicleType,
+  initialQuote,
   onBack,
   onOrderCreated,
 }) => {
   // ── Step ──
-  // Skip vehicle-type selection when type was already chosen in QuoteBuilder
-  const [step, setStep] = useState(initialVehicleType ? 2 : 1);
+  // If converting a quote, continue at vehicle details and preserve all quote inputs.
+  const [step, setStep] = useState(initialQuote ? 3 : initialVehicleType ? 2 : 1);
 
   // ── Step 1: Vehicle Type ──
   const [vehicleType, setVehicleType] = useState<VehicleType>(initialVehicleType ?? 'CAR');
 
   // ── Step 2: Client ──
-  const [selectedClient, setSelectedClient] = useState<SpClient | null>(null);
-  const [manualClient, setManualClient] = useState({ name: '', phone: '', ktp: '' });
-  const [useManualClient, setUseManualClient] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<SpClient | null>(
+    () => clients.find(client => client.id === initialQuote?.clientId) ?? null
+  );
+  const [manualClient, setManualClient] = useState({
+    name: initialQuote?.clientName ?? '',
+    phone: initialQuote?.clientPhone ?? '',
+    ktp: '',
+  });
+  const [useManualClient, setUseManualClient] = useState(
+    () => !!initialQuote?.clientName && !clients.some(client => client.id === initialQuote.clientId)
+  );
   const [clientSearch, setClientSearch] = useState('');
 
   // ── Step 3: Vehicle Details ──
   const [vehicleDetails, setVehicleDetails] = useState({
-    make: '',
-    model: '',
-    year: currentYear,
+    make: initialQuote?.brand ?? '',
+    model: initialQuote?.model ?? '',
+    year: initialQuote?.year ?? currentYear,
     variant: '',
     plate: '',
     plateCode: '',
@@ -262,16 +283,18 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ── Step 4: Coverage ──
   const [province, setProvince] = useState('');
-  const [sumInsured, setSumInsured] = useState(0);
-  const [sumInsuredDisplay, setSumInsuredDisplay] = useState('');
-  const [coverageType, setCoverageType] = useState<CoverageType>('COMPREHENSIVE');
+  const [sumInsured, setSumInsured] = useState(initialQuote?.price ?? 0);
+  const [sumInsuredDisplay, setSumInsuredDisplay] = useState(
+    initialQuote?.price ? initialQuote.price.toLocaleString('id-ID') : ''
+  );
+  const [coverageType, setCoverageType] = useState<CoverageType>(initialQuote?.coverage ?? 'COMPREHENSIVE');
   const [addons, setAddons] = useState<AddOns>({
-    flood: false,
-    earthquake: false,
-    riot: false,
-    tplLimit: 0,
-    paDriver: false,
-    paPassengerSeats: 0,
+    flood: initialQuote?.addons?.flood ?? false,
+    earthquake: initialQuote?.addons?.earthquake ?? false,
+    riot: initialQuote?.addons?.riot ?? false,
+    tplLimit: initialQuote?.addons?.tplLimit ?? 0,
+    paDriver: initialQuote?.addons?.paDriver ?? false,
+    paPassengerSeats: initialQuote?.addons?.paPassengerSeats ?? 0,
   });
 
   // ── Step 4b: Insurer Selection ──
@@ -289,7 +312,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ── Step 6: Discount ──
   const [productConfig, setProductConfig] = useState<SpProductConfig | null>(null);
-  const [discountRate, setDiscountRate] = useState(0); // 0.00 – max_discount_rate
+  const [discountRate, setDiscountRate] = useState(initialQuote?.discountRate ?? 0); // 0.00 – max_discount_rate
 
   // ── Step 6b: Delivery ──
   const [deliveryMethod, setDeliveryMethod] = useState<'DIGITAL' | 'POS_STANDARD' | 'POS_OVERNIGHT'>('DIGITAL');

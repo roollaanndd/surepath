@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, ChevronRight, Target, Star, Coins,
-  FilePlus2, UsersRound, ShieldAlert, FileCheck2, Trophy, Network, RefreshCw, FilePenLine
+  FilePlus2, UsersRound, ShieldAlert, FileCheck2
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
@@ -9,7 +9,7 @@ import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
-import { getAgentCoinBalance, getAgentOrders } from '../../services/supabaseService';
+import { getAgentOrders } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
 import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
@@ -27,7 +27,6 @@ interface Props {
 
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
-  const [coinBalance, setCoinBalance] = useState(0);
   const [activeQuotesCount, setActiveQuotesCount] = useState(0);
   const reduce = useReducedMotion();
   const { tiers } = useTierDefinitions();
@@ -35,7 +34,6 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   useEffect(() => {
     if (!agentId) return;
-    getAgentCoinBalance(agentId).then(setCoinBalance).catch(() => {});
     getAgentOrders(agentId)
       .then(orders => setActiveQuotesCount(orders.filter(order =>
         ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(order.status)

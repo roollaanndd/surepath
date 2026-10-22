@@ -17,7 +17,9 @@ export const PathyNavIcon: React.FC<Props> = ({ id, size = 30, active = false, c
   }, []);
   const imageUrl = imageMap[id];
   if (imageUrl) return <img src={imageUrl} width={size} height={size} alt="" aria-hidden="true" draggable={false} className={className} style={{ objectFit: 'contain', display: 'block', flexShrink: 0 }} />;
-  return {styles[id] === 'illustrative' ? <SurePathIllustrationIcon id={id} size={size} active={active} className={className} /> : <SurePathIcon id={id} size={size} style={styles[id] || 'studio'} active={active} className={className} />};
+  return styles[id] === 'illustrative'
+    ? <SurePathIllustrationIcon id={id} size={size} active={active} className={className} />
+    : <SurePathIcon id={id} size={size} style={styles[id] || 'studio'} active={active} className={className} />;
 };
 
 export default PathyNavIcon;

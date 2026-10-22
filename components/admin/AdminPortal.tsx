@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, Component, lazy, Suspense } from 'react';
+import '../../src/styles/portal-modernization.css';
 import {
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
@@ -312,7 +313,7 @@ const AdminPortal = ({
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
   const SidebarContent = () => (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="sp-modern-app flex flex-col h-full min-h-0">
       {/* Back to website */}
       <button
         onClick={onLogout}

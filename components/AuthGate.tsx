@@ -39,6 +39,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
   onNeedsRoleSelection,
 }) => {
   type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'EMAIL_OTP_VERIFY' | 'RESET_PASSWORD';
+
+  // Jeda sebelum "kirim ulang" boleh ditekan lagi. Supabase menolak permintaan
+  // email yang terlalu rapat dengan 429, dan tombol yang dulu menelan error itu
+  // membuat pendaftar menekannya berulang kali sampai kena batas per jam —
+  // persis yang terjadi pada pendaftaran 22 Okt 2026 01:02 (lihat log auth).
+  const RESEND_COOLDOWN_S = 60;
   const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
   const [showPass, setShowPass]     = useState(false);
   const [loading, setLoading]       = useState(false);
@@ -46,9 +52,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const [error, setError]           = useState<string | null>(null);
   const [lang]                      = useState<Language>(initialLang);
   const [regRole, setRegRole]       = useState<UserRole | null>(null);
-  const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData]     = useState({ name: '', email: '', phone: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
   const [otpCode, setOtpCode]       = useState('');
+  // Sisa detik sebelum "kirim ulang" aktif lagi, dan hasil pengiriman terakhir
+  // apa adanya — berhasil maupun gagal.
+  const [resendIn, setResendIn]     = useState(0);
+  const [resendMsg, setResendMsg]   = useState<string | null>(null);
   const [newPassword, setNewPass]   = useState('');
   const [showNewPass, setShowNewPass] = useState(false);
 
@@ -211,10 +221,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
       if (authErr || !data.user) {
         const msg = authErr?.message ?? '';
-        const friendlyError = msg.includes('Email not confirmed')
-          ? t('Please confirm your email first. Check your inbox.', 'Konfirmasi email kamu dulu. Cek kotak masuk.')
-          : msg.includes('Invalid login credentials')
-          ? t('Email or password is incorrect.', 'Email atau password salah.')
+        // Email belum dikonfirmasi bukan kesalahan login: antar langsung ke
+        // layar verifikasi, tempat kodenya bisa dimasukkan atau dikirim ulang.
+        if (msg.includes('Email not confirmed')) {
+          setOtpCode(''); setResendMsg(null); setError(null);
+          setMode('CHECK_EMAIL');
+          setLoading(false);
+          return;
+        }
+        const friendlyError = msg.includes('Invalid login credentials')
+          // Supabase memulangkan pesan yang sama untuk password salah DAN untuk
+          // akun yang belum terverifikasi, jadi keduanya disebut.
+          ? t(
+              'Email or password is incorrect. If you just registered, verify your email first.',
+              'Email atau password salah. Kalau kamu baru mendaftar, verifikasi emailmu dulu.',
+            )
           : msg || t('Login failed. Please try again.', 'Login gagal. Coba lagi.');
         setError(friendlyError);
         setLoading(false);
@@ -271,7 +292,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
         // with the signup, which is the one thing that must survive the
         // email-confirmation round trip.
         options:  {
-          data: { name: formData.name, role: regRole, referral_code: refCode },
+          data: {
+            name: formData.name,
+            role: regRole,
+            ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
+            referral_code: refCode,
+          },
           // Where Supabase's confirmation link sends them back to. Without it
           // the link uses the dashboard Site URL, which silently breaks the
           // round trip if that is ever wrong. App.tsx already consumes the
@@ -299,7 +325,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
       }
 
       if (!data.session) {
-        // Email confirmation required
+        // Email perlu dikonfirmasi — layar verifikasi menerima kode 6 digit,
+        // jadi pendaftar punya jalan maju tanpa menunggu klik link.
+        setOtpCode(''); setResendMsg(null);
+        setResendIn(RESEND_COOLDOWN_S);
         setMode('CHECK_EMAIL');
         setLoading(false);
         return;
@@ -314,12 +343,54 @@ const AuthGate: React.FC<AuthGateProps> = ({
   };
 
   // ── Resend confirmation email ─────────────────────────────────────────────
+  // Versi lama MENELAN setiap error (`.catch(() => {})`) lalu menampilkan
+  // "Terkirim!" apa pun hasilnya. Jadi ketika Supabase menolak dengan 429,
+  // pendaftar melihat pesan sukses palsu, menekan lagi, dan akhirnya menabrak
+  // batas email per jam — lalu tidak bisa melanjutkan sama sekali. Sekarang
+  // hasilnya ditampilkan apa adanya dan tombolnya terkunci selama hitung mundur.
   const handleResend = async () => {
-    if (!formData.email || resending) return;
+    if (!formData.email || resending || resendIn > 0) return;
     setResending(true);
-    await supabase.auth.resend({ type: 'signup', email: formData.email }).catch(() => {});
-    setTimeout(() => setResending(false), 5000);
+    setResendMsg(null);
+    const { error: e } = await supabase.auth.resend({
+      type: 'signup',
+      email: formData.email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+
+    if (!e) {
+      setResendMsg(t('Sent. Check your inbox and spam folder.', 'Terkirim. Cek kotak masuk dan folder spam.'));
+      setResendIn(RESEND_COOLDOWN_S);
+      return;
+    }
+
+    const msg = e.message ?? '';
+    // Supabase menyebut sisa detiknya di dalam pesan; pakai itu sebagai
+    // hitung mundur supaya pendaftar tahu kapan boleh mencoba lagi.
+    const detik = Number(/after (\d+) seconds?/i.exec(msg)?.[1] ?? 0);
+    if (/rate limit/i.test(msg) && !detik) {
+      setResendMsg(t(
+        'Too many emails requested for now. Please wait about an hour, or use the link from the email we already sent.',
+        'Permintaan email sudah terlalu banyak. Tunggu sekitar satu jam, atau pakai link dari email yang sudah kami kirim.',
+      ));
+      setResendIn(RESEND_COOLDOWN_S);
+      return;
+    }
+    if (detik) {
+      setResendMsg(t(`Please wait ${detik} seconds before requesting again.`, `Tunggu ${detik} detik sebelum minta lagi.`));
+      setResendIn(detik);
+      return;
+    }
+    setResendMsg(msg || t('Could not resend. Try again shortly.', 'Gagal mengirim ulang. Coba lagi sebentar.'));
   };
+
+  // Hitung mundur tombol kirim ulang.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = window.setInterval(() => setResendIn(s => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [resendIn > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Google OAuth ─────────────────────────────────────────────────────────
   const handleGoogleSignIn = async () => {
@@ -372,6 +443,26 @@ const AuthGate: React.FC<AuthGateProps> = ({
     await resolveAndLogin(data.session.user);
   };
 
+  // ── Verifikasi pendaftaran — kode 6 digit dari email konfirmasi ──────────
+  // Pendaftar dulu hanya diberi layar "Cek Email Kamu": kalau emailnya telat,
+  // masuk spam, atau kena batas kirim, tidak ada satu pun jalan maju dari
+  // dalam aplikasi. Sekarang kodenya bisa langsung diketik di sini.
+  const handleVerifySignup = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    setLoading(true); setError(null);
+    resolvedRef.current = false;
+    const { data, error: e } = await supabase.auth.verifyOtp({
+      email: formData.email,
+      token: otpCode,
+      type: 'signup',
+    });
+    if (e || !data.session?.user) {
+      setError(e?.message ?? t('Invalid or expired code.', 'Kode salah atau sudah kedaluwarsa.'));
+      setLoading(false); return;
+    }
+    await resolveAndLogin(data.session.user);
+  };
+
   // ── Reset password (after email link) ────────────────────────────────────
   const handleResetPassword = async (ev: React.FormEvent) => {
     ev.preventDefault(); setLoading(true); setError(null);
@@ -389,6 +480,15 @@ const AuthGate: React.FC<AuthGateProps> = ({
     return (
       <AgentOnboarding
         lang={lang}
+        // Data dari layar daftar diteruskan supaya calon mitra tidak mengetik
+        // nama/email/telepon/password untuk kedua kalinya.
+        initial={{ name: formData.name, email: formData.email, password: formData.password, phone: formData.phone }}
+        onNeedsVerification={(email) => {
+          setFormData(prev => ({ ...prev, email }));
+          setOtpCode(''); setError(null); setResendMsg(null);
+          setShowAgentOnboarding(false);
+          setMode('CHECK_EMAIL');
+        }}
         onBack={() => setShowAgentOnboarding(false)}
         onSuccess={(agent) => onAuthSuccess({ ...agent, supabaseId: agent.id })}
       />
@@ -454,24 +554,50 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <CheckCircle2 size={32} className="text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-sm text-slate-500 mb-6">
-                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
+              <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Verify your email', 'Verifikasi email kamu')}</h3>
+              <p className="text-sm text-slate-500 mb-1">
+                {t('Your account has been created for ', 'Akun kamu sudah dibuat untuk ')}
                 <span className="text-emerald-700 font-bold">{formData.email}</span>.
-                {t(' Click it to activate your account.', ' Klik untuk mengaktifkan akunmu.')}
+              </p>
+              <p className="text-sm text-slate-500 mb-5">
+                {t(
+                  'Open the email from us, then either enter the verification code below or click the link inside.',
+                  'Buka email dari kami, lalu masukkan kode verifikasinya di bawah, atau klik link di dalamnya.',
+                )}
               </p>
             </div>
+
+            {/* Jalan maju dari dalam aplikasi: ketik kodenya di sini. */}
+            <form onSubmit={handleVerifySignup} className="space-y-3">
+              <input
+                type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                aria-label={t('6-digit verification code', 'Kode verifikasi 6 digit')}
+                placeholder="· · · · · ·" value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full text-center py-4 bg-white border border-slate-200 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] text-slate-900 placeholder:text-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 transition-all" />
+              {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading || otpCode.length < 6}
+                className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]"
+                style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Continue', 'Verifikasi & Lanjut')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+
+            {resendMsg && <p className="text-xs font-semibold text-slate-600 px-1" role="status">{resendMsg}</p>}
+
             <button
               onClick={handleResend}
-              disabled={resending}
+              disabled={resending || resendIn > 0}
               className="w-full py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-emerald-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)' }}
             >
               <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
-              {resending ? t('Sent!', 'Terkirim!') : t('Resend Email', 'Kirim Ulang Email')}
+              {resendIn > 0
+                ? t(`Resend in ${resendIn}s`, `Kirim ulang dalam ${resendIn} detik`)
+                : t('Resend email', 'Kirim ulang email')}
             </button>
             <button
-              onClick={() => setMode('LOGIN')}
+              onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); setResendMsg(null); }}
               className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors"
             >
               {t('Back to Login', 'Kembali ke Login')}
@@ -603,18 +729,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
               {mode === 'REGISTER' && (
                 <>
-                  <div className="relative">
-                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
-                    <input
-                      required
-                      placeholder={t('Full Name', 'Nama Lengkap')}
-                      aria-label={t('Full name', 'Nama lengkap')}
-                      autoComplete="name"
-                      className={inputCls}
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
+                  {/* Tipe akun ditanyakan DULU: ia menentukan kolom berikutnya
+                      dan tombol kirim, jadi menaruhnya di bawah membuat orang
+                      mengisi formulir lalu menemukan tombolnya mati. */}
+                  <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    {t('Register as', 'Daftar sebagai')}
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -633,6 +753,39 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       <Briefcase size={14} /> {t('Partner', 'Mitra')}
                     </button>
                   </div>
+
+                  <div className="relative">
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
+                    <input
+                      required
+                      placeholder={t('Full Name', 'Nama Lengkap')}
+                      aria-label={t('Full name', 'Nama lengkap')}
+                      autoComplete="name"
+                      className={inputCls}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Mitra wajib punya nomor telepon. Dulu kolom ini hanya ada
+                      di layar onboarding berikutnya, yang juga meminta ulang
+                      nama, email, dan password. */}
+                  {regRole === UserRole.AGENT && (
+                    <div className="relative">
+                      <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
+                      <input
+                        required
+                        type="tel"
+                        inputMode="tel"
+                        placeholder={t('Phone number', 'Nomor telepon')}
+                        aria-label={t('Phone number', 'Nomor telepon')}
+                        autoComplete="tel"
+                        className={inputCls}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
@@ -696,9 +849,22 @@ const AuthGate: React.FC<AuthGateProps> = ({
               )}
 
               {(error || externalError) && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs">
-                  <AlertCircle size={14} className="flex-shrink-0" />
-                  <span>{error ?? externalError}</span>
+                <div className="flex flex-col gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={14} className="flex-shrink-0" />
+                    <span>{error ?? externalError}</span>
+                  </div>
+                  {/* Jalan keluar, bukan sekadar pesan: pendaftar yang emailnya
+                      belum terverifikasi bisa langsung ke layar verifikasi. */}
+                  {mode === 'LOGIN' && formData.email.trim() !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => { setOtpCode(''); setResendMsg(null); setError(null); setMode('CHECK_EMAIL'); }}
+                      className="self-start font-bold uppercase tracking-widest text-emerald-700 hover:text-emerald-800 transition-colors"
+                    >
+                      {t('Verify my email', 'Verifikasi email saya')}
+                    </button>
+                  )}
                 </div>
               )}
 

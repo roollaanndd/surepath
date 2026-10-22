@@ -103,3 +103,58 @@ Jangan "merapikan" id ini — `sp_clients`, `sp_commissions`, dll mereferensikan
 | Pilihan "Mitra" di form registrasi tidak ikut ke signup | `options.data.role` di-hardcode `UserRole.CUSTOMER`, mengabaikan toggle `regRole` | Kirim `regRole` |
 | Login gagal sementara → user masuk sebagai nasabah | `resolveAndLogin` menangkap error lalu login dengan objek fallback ber-role `CUSTOMER` | Tampilkan error dan minta coba lagi; jangan pernah menebak role |
 | Layar login berkedip di tengah OAuth | Timeout 10 detik menurunkan `oauthLoading` walau pencarian profil masih berjalan | Timeout hanya berlaku kalau tidak ada proses yang berjalan |
+
+---
+
+## Pendaftaran macet — insiden 22 Oktober 2026
+
+Laporan pemilik: *"user jd input data 2x dan saat sdh input tidak bisa lanjut"*.
+
+Terbukti di produksi. Akun `auth.users` yang dibuat **22 Okt 01:02:44** (role `AGENT`,
+lengkap dengan nomor telepon) **tidak pernah terkonfirmasi dan tidak pernah login**, dan
+tidak punya baris `sp_users`. Log `auth_logs` pada menit-menit sesudahnya:
+
+| Waktu | Kejadian |
+|---|---|
+| 01:02:46 | `mail.send` — email konfirmasi terkirim **satu kali** |
+| 01:02:59 – 01:03:40 | **empat** `429: For security purposes, you can only request this after 45/23/22/8 seconds` |
+| 01:03:46 | `400: Email address "…" is invalid` — mencoba alamat lain |
+| 01:04:41 | **`429: email rate limit exceeded`** — batas email per jam proyek tercapai |
+| 01:04:51 | `400: Invalid login credentials` — mencoba masuk dengan akun yang belum terkonfirmasi |
+| 01:04:55 | beralih ke Google OAuth sebagai jalan terakhir |
+
+### Empat sebab, dan statusnya
+
+1. **Data diketik dua kali.** `AuthGate` meminta nama/email/password, lalu
+   `AgentOnboarding` langkah 1 meminta **semuanya lagi** sebagai kolom kosong, ditambah
+   telepon dan konfirmasi password. — **DIPERBAIKI**: `AgentOnboarding` menerima prop
+   `initial`; kalau lengkap, langkah 1 dilewati dan hanya KTP/alamat/persetujuan yang
+   diminta. Nomor telepon kini ditanyakan di layar daftar saat "Mitra" dipilih.
+2. **Tombol kirim ulang berbohong.** `handleResend` menelan setiap error
+   (`.catch(() => {})`) lalu selalu menampilkan "Terkirim!". Jadi empat penolakan 429 di
+   atas tampak seperti empat keberhasilan, dan pendaftar terus menekannya sampai menabrak
+   batas per jam. — **DIPERBAIKI**: hasilnya ditampilkan apa adanya, dengan hitung mundur
+   (`RESEND_COOLDOWN_S`) yang mengunci tombol, dan sisa detik dari pesan Supabase dipakai
+   sebagai durasi.
+3. **Tidak ada jalan maju dari dalam aplikasi.** Layar "Cek Email Kamu" hanya punya tombol
+   kirim ulang. Kalau emailnya telat, masuk spam, atau kena batas, pendaftar buntu. —
+   **DIPERBAIKI**: layar verifikasi menerima **kode 6 digit** (`verifyOtp` dengan
+   `type: 'signup'`), dan `Email not confirmed` saat login mengantar langsung ke sana.
+4. **Batas pengiriman email proyek.** `429: email rate limit exceeded` berasal dari SMTP
+   bawaan Supabase, yang hanya mengizinkan segelintir email per jam. **TIDAK BISA
+   diperbaiki dari kode** — lihat di bawah.
+
+### ⚠️ Dua setelan yang hanya bisa diubah dari dasbor Supabase
+
+Keduanya di luar jangkauan repo ini (Management API `api.supabase.com` diblokir kebijakan
+proxy dari kontainer), dan **keduanya wajib** supaya pendaftaran berjalan normal:
+
+1. **SMTP kustom** — *Project Settings → Authentication → SMTP Settings*. Tanpa ini,
+   SMTP bawaan Supabase membatasi email ke sekitar 2–4 per jam untuk SELURUH proyek, dan
+   pendaftar ke-3 pada jam yang sama tidak akan pernah menerima emailnya. Ini sebab
+   paling fatal dari keempatnya.
+2. **Kode 6 digit di email konfirmasi** — *Authentication → Email Templates → Confirm
+   signup*. Template bawaan hanya memuat `{{ .ConfirmationURL }}`, tanpa `{{ .Token }}`,
+   sehingga kolom kode di aplikasi tidak ada isinya untuk diketik. Templatenya sudah
+   disiapkan di **`supabase/email-templates/confirm-signup.html`** — tinggal disalin ke
+   dasbor. Sampai itu dilakukan, layar verifikasi tetap berfungsi lewat link di email.

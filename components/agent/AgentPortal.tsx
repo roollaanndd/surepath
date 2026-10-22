@@ -197,6 +197,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         const currentIds = new Set(items.map(item => item.id));
         if (!initialized) {
           seenNotificationIds.current = currentIds;
+          const firstUnread = items.find(item => !item.read);
+          if (firstUnread) setNotificationPopup(firstUnread);
           initialized = true;
         } else {
           const fresh = items.find(item => !seenNotificationIds.current.has(item.id));
@@ -386,7 +388,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         <AgentNotifications
           agentId={agent?.id ?? ''}
           lang={lang}
-          onClose={() => setShowNotifications(false)}
+          onClose={() => {
+            setShowNotifications(false);
+            void getNotifications(agent?.id ?? '', true)
+              .then(items => setUnreadCount(items.filter(item => !item.read).length))
+              .catch(() => {});
+          }}
           onNavigate={handleTabChange}
         />
       )}

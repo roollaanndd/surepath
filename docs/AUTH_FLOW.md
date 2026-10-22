@@ -158,3 +158,48 @@ proxy dari kontainer), dan **keduanya wajib** supaya pendaftaran berjalan normal
    sehingga kolom kode di aplikasi tidak ada isinya untuk diketik. Templatenya sudah
    disiapkan di **`supabase/email-templates/confirm-signup.html`** — tinggal disalin ke
    dasbor. Sampai itu dilakukan, layar verifikasi tetap berfungsi lewat link di email.
+
+---
+
+## Strategi masuk: Google dulu, email belakangan
+
+Pertanyaan pemilik (22 Okt 2026): bagaimana agar pengguna baru maupun lama bisa masuk
+dengan satu klik lewat akun Google, lalu pengkinian data dan verifikasi menyusul?
+
+Datanya mendukung arah itu, dan angkanya dari `auth.users` proyek ini sendiri:
+
+| Jalur | Akun | Terkonfirmasi | Pernah login |
+|---|---|---|---|
+| **Google** | 18 | **18 (100%)** | **18 (100%)** |
+| Email + password | 26 | 22 | 21 — **5 hilang (19%)** |
+
+**Google tidak membutuhkan verifikasi email sama sekali.** Google sudah memverifikasi
+alamatnya; 18 dari 18 akun Google punya `email_confirmed_at` terisi dan klaim
+`email_verified: true` sejak detik pertama. Tidak ada email yang dikirim, jadi jalur ini
+kebal terhadap batas SMTP, folder spam, dan keterlambatan kiriman — tiga hal yang
+menghabisi 19% pendaftar di jalur satunya.
+
+Alurnya hari ini sudah: **1 klik Google → 1 ketuk pilih Nasabah/Mitra
+(`RoleSelectionScreen`) → masuk**. Yang kurang hanyalah penempatan: tombol Google dulu
+terkubur DI BAWAH formulir email, sehingga jalur yang paling mungkin berhasil justru
+paling tidak terlihat. Sejak v2.6.3 ia menjadi aksi utama di paling atas.
+
+Pengkinian data (telepon, KTP, alamat) sebaiknya diminta **di dalam aplikasi setelah
+masuk**, bukan sebagai penghalang di pintu depan.
+
+### Verifikasi email yang gratis — untuk jalur email+password
+
+Hanya relevan bagi yang tidak memakai Google. Keduanya menyambung ke Supabase sebagai
+*custom SMTP*, dan angkanya dari halaman resmi masing-masing (Okt 2026):
+
+| | Gratis | Catatan |
+|---|---|---|
+| **Brevo** (rekomendasi) | **300 email/hari**, tanpa batas waktu, tanpa kartu kredit | SMTP relay port 587; cocok untuk lonjakan pendaftaran |
+| Resend | 3.000/bulan tetapi **hanya 100/hari** | Tanpa branding pihak ketiga; 100/hari terlalu sempit saat rekrutmen agen |
+
+Brevo dipilih karena batas hariannya tiga kali lipat — yang menentukan saat banyak agen
+mendaftar di hari yang sama, bukan totalnya per bulan.
+
+**Syarat agar emailnya masuk inbox, bukan spam:** SPF, DKIM, dan DMARC untuk
+`myinsurepath.com`. DNS domain ini **tidak** dikelola Vercel (API Vercel memulangkan nol
+record), jadi recordnya ditambahkan di tempat nameserver domain berada.

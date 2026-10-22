@@ -725,6 +725,36 @@ const AuthGate: React.FC<AuthGateProps> = ({
               </button>
             </div>
 
+            {/* ── Jalur tercepat, ditaruh paling atas ──────────────────────
+                Google sudah memverifikasi emailnya, jadi jalur ini TIDAK
+                mengirim email verifikasi sama sekali: tidak ada antrean SMTP,
+                tidak ada folder spam, tidak ada batas kirim per jam. Angkanya
+                di produksi (22 Okt 2026): 18 dari 18 pendaftar Google berhasil
+                masuk, sementara 5 dari 26 pendaftar email+password tidak
+                pernah berhasil. Dulu tombol ini terkubur DI BAWAH formulir
+                email, jadi jalur yang paling mungkin berhasil justru yang
+                paling tidak terlihat. */}
+            <div className="space-y-3">
+              <button onClick={handleGoogleSignIn} disabled={loading}
+                className="w-full h-14 rounded-2xl bg-white border-2 border-emerald-600/25 text-slate-800 font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_-12px_rgba(6,95,70,0.35)] hover:border-emerald-600/50 active:scale-[0.98] transition-all duration-150 disabled:opacity-40">
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span className="text-sm">{t('Continue with Google', 'Lanjut dengan Google')}</span>
+              </button>
+              <p className="text-center text-[0.7rem] font-semibold text-emerald-800/70">
+                {t('Fastest — no verification email needed', 'Paling cepat — tanpa perlu verifikasi email')}
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex-1 h-px bg-emerald-900/10" />
+                <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{t('Or use email', 'Atau pakai email')}</span>
+                <div className="flex-1 h-px bg-emerald-900/10" />
+              </div>
+            </div>
+
             <form onSubmit={mode === 'LOGIN' ? handleLogin : handleRegister} className="space-y-3">
 
               {mode === 'REGISTER' && (
@@ -890,31 +920,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
               </button>
             </form>
 
-            {(mode === 'LOGIN' || mode === 'REGISTER') && (
-              <div className="space-y-3 mt-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-emerald-900/10" />
-                  <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
-                  <div className="flex-1 h-px bg-emerald-900/10" />
-                </div>
-                <button onClick={handleGoogleSignIn} disabled={loading}
-                  className="w-full h-12 rounded-2xl bg-white border border-emerald-900/10 text-slate-700 font-medium text-sm flex items-center justify-center gap-3 shadow-sm hover:border-emerald-500/30 active:scale-[0.98] transition-all duration-150 disabled:opacity-40">
-                  <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-widest">{mode === 'REGISTER' ? t('Sign up with Google', 'Daftar dengan Google') : t('Continue with Google', 'Lanjut dengan Google')}</span>
+            {mode === 'LOGIN' && (
+              <div className="mt-4">
+                <button onClick={handleSendEmailOtp} disabled={loading}
+                  className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-700 transition-all active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}>
+                  <Mail size={16} />
+                  <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
-                {mode === 'LOGIN' && (
-                  <button onClick={handleSendEmailOtp} disabled={loading}
-                    className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-700 transition-all active:scale-[0.98] disabled:opacity-50"
-                    style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}>
-                    <Mail size={16} />
-                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
-                  </button>
-                )}
               </div>
             )}
           </div>

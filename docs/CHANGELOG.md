@@ -41,6 +41,15 @@ alamatnya, jadi jalur itu tidak mengirim email sama sekali dan kebal terhadap
 batas SMTP maupun folder spam. Tombolnya dulu terkubur di bawah formulir email;
 sekarang ia aksi utama di paling atas. Perilaku autentikasi tidak berubah.
 
+### Banner dan logo digabung jadi satu kartu merek
+
+Kartu hero hijau dan blok logo di bawahnya menjual hal yang sama dua kali dan
+memakan ±320px sebelum kolom isian pertama, sehingga di ponsel formulirnya
+tenggelam di bawah lipatan. Keduanya kini satu kartu: ubin logo dan wordmark
+berdampingan di dalam kartu hijaunya. Terukur di 390×844, tab Masuk: tinggi
+halaman **982px → 877px**, dan tombol Google, kolom email, serta tombol Masuk
+**ketiganya terlihat tanpa menggulir**.
+
 ### Layar pembuka baru
 
 Dibangun dari bentuk logo SurePath sebagai satu koreografi: perisainya menggambar

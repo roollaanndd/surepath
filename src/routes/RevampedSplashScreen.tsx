@@ -55,7 +55,7 @@ const BRAND_CSS = `
 @keyframes sp-wow-ride      { 0% { offset-distance: 0%; opacity: 0; } 12% { opacity: 1; } 82% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
 
 .sp-wow-mark      { position: relative; display: block; }
-.sp-wow-halo      { position: absolute; inset: -16%; border-radius: 50%; opacity: .6; animation: sp-wow-halo 3.8s ease-in-out infinite; pointer-events: none; }
+.sp-wow-halo      { position: absolute; inset: -22%; border-radius: 50%; opacity: .6; animation: sp-wow-halo 3.8s ease-in-out infinite; pointer-events: none; }
 .sp-wow-ring      { position: absolute; left: 50%; top: 50%; border-radius: 50%; animation: sp-wow-spin 26s linear infinite; pointer-events: none; }
 .sp-wow-svg       { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
                     animation: sp-wow-markout calc(500ms * var(--t)) cubic-bezier(.4,0,.2,1) calc(2080ms * var(--t)) both; }
@@ -113,10 +113,10 @@ const BrandMark: React.FC<MarkProps> = ({ size, uid, speed = 1 }) => {
       <div
         className="sp-wow-ring"
         style={{
-          width: h * 1.04,
-          height: h * 1.04,
-          marginLeft: -(h * 1.04) / 2,
-          marginTop: -(h * 1.04) / 2,
+          width: h * 1.12,
+          height: h * 1.12,
+          marginLeft: -(h * 1.12) / 2,
+          marginTop: -(h * 1.12) / 2,
           border: '1px dashed rgba(0,193,106,.22)',
         }}
       />
@@ -145,6 +145,10 @@ const BrandMark: React.FC<MarkProps> = ({ size, uid, speed = 1 }) => {
             <rect className="sp-wow-flood" x="-12" y="-22" width="146" height="166" fill={`url(#${g('flood')})`} />
           </mask>
         </defs>
+
+        {/* The whole mark is scaled to sit exactly where /logo.png lands, so
+            the cross-fade at the end reads as one shape settling, not two. */}
+        <g transform="translate(60,70) scale(1.19,1.08) translate(-60,-70)">
 
         {/* 2 — the green body floods in from the base of the shield */}
         <g clipPath={`url(#${g('clip')})`} mask={`url(#${g('mask')})`}>
@@ -186,6 +190,8 @@ const BrandMark: React.FC<MarkProps> = ({ size, uid, speed = 1 }) => {
           <path d="M54 51 C 61 41, 69 33, 78 27" stroke="#0E7A3C" strokeWidth="1.8" strokeLinecap="round" fill="none" />
         </g>
 
+        </g>
+
       </svg>
 
       <img className="sp-wow-logo" src="/logo.png" alt="" width={size} height={h} />
@@ -205,7 +211,10 @@ const Motes: React.FC = () => (
     {MOTES.map(m => (
       <span
         key={m.left}
-        className="sp-wow-mote absolute bottom-10"
+        // Mulai DI ATAS baris "Aman • Simpel • Pasti" dan pengalih bahasa
+        // (keduanya di bottom-7). Dari bottom-10 partikelnya terbit tepat di
+        // jalur itu dan terbaca sebagai noda, bukan sebagai dedaunan.
+        className="sp-wow-mote absolute bottom-32"
         style={{
           left: m.left,
           width: m.size,

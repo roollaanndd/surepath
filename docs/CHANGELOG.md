@@ -11,6 +11,45 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.6.3 — 2026-10-22
+
+**Pendaftaran tidak lagi buntu, Google jadi jalur utama, dan layar pembuka baru.**
+
+### Pendaftaran: sekali input, dan ada jalan maju
+
+Laporan pemilik: *"user jd input data 2x dan saat sdh input tidak bisa lanjut"*.
+Keduanya terbukti di produksi — akun yang dibuat 22 Okt 01:02:44 tidak pernah
+terkonfirmasi dan tidak pernah login. Tabel lengkap log insidennya ada di
+`docs/AUTH_FLOW.md`.
+
+- **Data tidak lagi diketik dua kali.** `AgentOnboarding` menerima data dari
+  layar daftar dan melewati langkah pertamanya; nomor telepon pindah ke layar
+  daftar, muncul saat "Mitra" dipilih. Tipe akun naik ke paling atas karena ia
+  menentukan kolom berikutnya dan tombol kirim.
+- **Tombol kirim ulang berhenti berbohong.** Dulu ia menelan setiap error lalu
+  selalu menulis "Terkirim!" — empat penolakan 429 beruntun karenanya terlihat
+  seperti empat keberhasilan. Kini hasilnya ditampilkan apa adanya, dengan
+  hitung mundur yang mengunci tombol.
+- **Layar verifikasi menerima kode 6 digit**, jadi tidak perlu menunggu klik
+  link. `Email not confirmed` saat login mengantar langsung ke sana.
+
+### Masuk dengan Google: satu klik, tanpa verifikasi email
+
+Angka dari `auth.users` sendiri: **Google 18 dari 18 berhasil masuk (100%)**,
+email+password 21 dari 26 — **5 orang hilang (19%)**. Google sudah memverifikasi
+alamatnya, jadi jalur itu tidak mengirim email sama sekali dan kebal terhadap
+batas SMTP maupun folder spam. Tombolnya dulu terkubur di bawah formulir email;
+sekarang ia aksi utama di paling atas. Perilaku autentikasi tidak berubah.
+
+### Layar pembuka baru
+
+Dibangun dari bentuk logo SurePath sebagai satu koreografi: perisainya menggambar
+dirinya sendiri, gradien hijau membanjir dari dasar, jalur putih menyapu
+melintasinya, daunnya mekar, lalu logo asli menyatu di atasnya sebelum kata
+"SurePath" muncul huruf demi huruf. **Bisa dilewati dengan satu ketukan** di mana
+saja, atau lewat tombol "Lewati". Durasi, mode gelap, pengalih bahasa, dan
+`prefers-reduced-motion` tetap seperti semula.
+
 ## v2.6.2 — 2026-10-22
 
 **Pesan gagal analisa Pathy jadi ramah, dan layar Masuk/Daftar lebih terbaca.**

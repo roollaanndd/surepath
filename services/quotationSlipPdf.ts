@@ -1,12 +1,12 @@
 // quotationSlipPdf.ts
-// SurePath Executive Quotation Slip Generator — adaptive 1–3 page US Letter PDF (v3)
+// SurePath Executive Quotation Slip Generator — four-page US Letter PDF (v4)
 // Renders directly in browser via jsPDF — no backend needed.
 //
 // Layout:
 //  Page 1: Executive cover, customer/object summary, QR e-quotation, agent card
 //  Page 2: Customer/object details, coverage and sum insured
-//  Page 3: Adaptive premium breakdown, subjectivity and terms
-//  Payment/confirmation remains available through the unique e-quotation QR link.
+//  Page 3: Premium breakdown, subjectivity and terms
+//  Page 4: Payment instructions, billing summary and confirmation QR.
 //
 // Every PDF embeds a unique QR pointing at https://myinsurepath.com/q/{code}
 // (see services/quotationService.ts) where the customer can view the
@@ -280,6 +280,8 @@ export async function generateQuotationSlipPDF(data: QuotationSlipData): Promise
   drawDataPage(doc, data, ctxShared);
   doc.addPage();
   drawPremiPage(doc, data, ctxShared);
+  doc.addPage();
+  drawPaymentPage(doc, data, ctxShared);
 
   // ─── Metadata ───────────────────────────────────────────────────────────
   doc.setProperties({

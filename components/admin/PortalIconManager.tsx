@@ -94,7 +94,7 @@ export default function PortalIconManager() {
           <div><div className="inline-flex items-center gap-2 rounded-full border border-ds-green/20 bg-ds-green-tint/50 px-3 py-1.5 text-[11px] font-black uppercase tracking-[.18em] text-ds-green"><Sparkles size={13}/> SurePath Visual Lab</div><h2 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight text-ds-ink">Icon Manager<span className="text-ds-green">.</span></h2><p className="mt-2 max-w-2xl text-sm sm:text-base text-ds-ink2">Satu bahasa visual untuk seluruh SurePath. Kurasi ilustrasi, atur gaya, dan kelola ikon kustom dari satu tempat.</p></div>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:min-w-[390px]">
             <div className="rounded-2xl border border-ds-border bg-ds-card2/70 p-3"><p className="text-[10px] sm:text-xs text-ds-ink3">Total ikon</p><p className="mt-1 text-2xl font-black text-ds-ink">{ICONS.length}</p></div>
-            <div className="rounded-2xl border border-ds-border bg-ds-card2/70 p-3"><p className="text-[10px] sm:text-xs text-ds-ink3">Gaya visual</p><p className="mt-1 text-2xl font-black text-ds-ink">03</p></div>
+            <div className="rounded-2xl border border-ds-border bg-ds-card2/70 p-3"><p className="text-[10px] sm:text-xs text-ds-ink3">Gaya visual</p><p className="mt-1 text-2xl font-black text-ds-ink">04</p></div>
             <div className="rounded-2xl border border-ds-border bg-ds-card2/70 p-3"><p className="text-[10px] sm:text-xs text-ds-ink3">Ikon kustom</p><p className="mt-1 text-2xl font-black text-ds-ink">{Object.keys(icons).length}</p></div>
           </div>
         </div>

@@ -143,6 +143,99 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
       </motion.div>
 
+      {/* Dynamic tier identity — the CMS controls name, color, emoji, thresholds and benefits. */}
+      {tiers.length > 0 && (
+        <motion.section className="px-5 pt-3" {...reveal(1)} aria-label={t('Agent tier', 'Tier agen')}>
+          {(() => {
+            const current = myTierDef ?? tiers.find(tier => tier.is_default) ?? tiers[0];
+            const next = tiers.find(tier => tier.rank > current.rank);
+            const tierColor = current.color || '#64748b';
+            const benefitEntries = Object.entries(current.benefits ?? {}).filter(([, value]) => value != null && String(value).trim() !== '').slice(0, 3);
+            return (
+              <div className="relative overflow-hidden rounded-[1.6rem] border p-4 sm:p-5"
+                style={{
+                  borderColor: `${tierColor}66`,
+                  background: `linear-gradient(125deg, ${tierColor}18 0%, var(--ds-card, #fff) 62%, ${tierColor}0d 100%)`,
+                  boxShadow: `0 12px 30px -22px ${tierColor}88`,
+                }}>
+                <div aria-hidden className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full blur-2xl" style={{ background: `${tierColor}22` }} />
+                <div className="relative flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[.18em] text-ds-ink3">{t('Your agent status', 'Status agen Anda')}</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border text-2xl shadow-sm"
+                        style={{ color: tierColor, background: `${tierColor}18`, borderColor: `${tierColor}55` }}>
+                        {current.emoji || '✦'}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-xl font-black text-ds-ink">{current.name}</h3>
+                        <p className="mt-0.5 text-xs text-ds-ink3">{current.is_default ? t('Starting tier', 'Tier awal') : t('Recognized partner tier', 'Tier mitra terverifikasi')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-wider"
+                    style={{ color: tierColor, background: `${tierColor}12`, borderColor: `${tierColor}55` }}>
+                    {current.is_default ? t('Basic', 'Dasar') : t('Tier aktif', 'Tier aktif')}
+                  </span>
+                </div>
+                <div className="relative mt-4 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl border border-ds-border/60 bg-ds-card/70 p-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">{t('Coin bonus', 'Bonus koin')}</p>
+                    <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((current.coin_bonus_rate ?? 0) * 100)}%</p>
+                  </div>
+                  <div className="rounded-xl border border-ds-border/60 bg-ds-card/70 p-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">{t('L1 override', 'Override L1')}</p>
+                    <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((current.l1_override_rate ?? 0) * 100)}%</p>
+                  </div>
+                  <div className="rounded-xl border border-ds-border/60 bg-ds-card/70 p-2.5">
+                    <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">{t('L2 override', 'Override L2')}</p>
+                    <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((current.l2_override_rate ?? 0) * 100)}%</p>
+                  </div>
+                </div>
+                {benefitEntries.length > 0 && (
+                  <div className="relative mt-3 flex flex-wrap gap-1.5">
+                    {benefitEntries.map(([key, value]) => (
+                      <span key={key} className="rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                        style={{ borderColor: `${tierColor}44`, color: 'var(--ds-ink2, #334155)', background: `${tierColor}0c` }}>
+                        {key.replace(/[_-]/g, ' ')}: {String(value)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {next && (
+                  <div className="relative mt-4 border-t pt-3" style={{ borderColor: `${tierColor}33` }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] font-bold text-ds-ink3">{t('Next tier', 'Tier berikutnya')}</p>
+                      <p className="text-xs font-black" style={{ color: next.color || '#64748b' }}>{next.emoji || '✦'} {next.name}</p>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-ds-ink2">
+                      {next.min_policies_count != null && <span className="rounded-lg bg-ds-card/80 px-2.5 py-1.5">{next.min_policies_count} {t('issued policies', 'polis terbit')}</span>}
+                      {next.min_premium_amount != null && <span className="rounded-lg bg-ds-card/80 px-2.5 py-1.5">GWP {formatIDR(next.min_premium_amount)}</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label={t('Available agent tiers', 'Daftar tier agen')}>
+            {tiers.map(tier => {
+              const active = tier.code === (myTierDef?.code ?? tiers.find(item => item.is_default)?.code);
+              const color = tier.color || '#64748b';
+              return (
+                <div key={tier.code} className="flex min-w-[112px] shrink-0 items-center gap-2 rounded-xl border px-3 py-2"
+                  style={{ borderColor: active ? `${color}99` : 'var(--ds-border, #e2e8f0)', background: active ? `${color}18` : 'var(--ds-card, #fff)' }}>
+                  <span className="text-lg" style={{ color }}>{tier.emoji || '✦'}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[10px] font-black" style={{ color: active ? color : 'var(--ds-ink, #0f172a)' }}>{tier.name}</p>
+                    <p className="text-[9px] text-ds-ink3">{active ? t('Your tier', 'Tier Anda') : `#${tier.rank + 1}`}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.section>
+      )}
+
       {/* Commission Hero — premium bank-card look, the focal point of the screen */}
       <motion.div className="px-5 pt-3 sm:pt-4" {...reveal(1)}>
         <AgentArtKeyframes />

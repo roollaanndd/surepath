@@ -765,7 +765,7 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
 // ═══════════════════════════════════════════════════════════════════════════
 // LEGACY PAGE 4 — retained for compatibility; not used by the adaptive 3-page template
 // ═══════════════════════════════════════════════════════════════════════════
-function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
+export function drawPaymentPage(doc: any, d: QuotationSlipData, ctx: any) {
   const { currency, closingTitle, closingAccent, closingDesc,
           periodStartShort, periodEndShort, discountAmountClean,
           totalPremiumClean, bankNameShort, logoDataUrl, qrDataUrl, eQuoteUrl, productType } = ctx;

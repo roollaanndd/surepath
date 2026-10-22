@@ -113,7 +113,7 @@ const FinancialAdmin: React.FC = () => {
       const pendingCommission = commissions.filter(c => c.status === 'PENDING').reduce((s, c) => s + (c.commission_amount ?? 0), 0);
 
       const earnedCoins   = coinRows.filter(r => r.type === 'EARNED').reduce((s, r) => s + (r.coins ?? 0), 0);
-      const redeemedCoins = coinRows.filter(r => r.type === 'REDEEMED').reduce((s, r) => s + (r.coins ?? 0), 0);
+      const redeemedCoins = coinRows.filter(r => r.type === 'REDEEMED').reduce((s, r) => s + Math.abs(r.coins ?? 0), 0);
       const outstandingCoins = Math.max(0, earnedCoins - redeemedCoins);
 
       setKpi({

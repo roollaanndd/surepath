@@ -286,3 +286,58 @@
     transition: none !important;
   }
 }
+
+
+/* Agent app premium refresh — scoped to the authenticated agent portal. */
+.sp-agent-premium {
+  --sp-agent-emerald: #087a58;
+  --sp-agent-emerald-deep: #005c43;
+  --sp-agent-lime: #b8e986;
+  --sp-agent-orange: #f28b3c;
+  --sp-agent-surface: rgba(255,255,255,.88);
+  --sp-agent-outline: rgba(8,122,88,.13);
+  background-image:
+    radial-gradient(ellipse at 8% 0%, rgba(184,233,134,.16), transparent 32rem),
+    radial-gradient(ellipse at 100% 18%, rgba(8,122,88,.07), transparent 28rem);
+}
+.sp-agent-premium .sp-glass-strong {
+  border-color: var(--sp-agent-outline);
+  box-shadow: 0 12px 34px -24px rgba(0,59,47,.32);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+}
+.sp-agent-premium [data-sp-anim] {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(.2,.8,.2,1);
+}
+.sp-agent-premium :where(button,a,[role="button"]) {
+  touch-action: manipulation;
+}
+.sp-agent-premium :where(button,a,[role="button"]):focus-visible {
+  outline: 2px solid var(--sp-agent-emerald);
+  outline-offset: 3px;
+}
+.sp-agent-premium :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),select,textarea) {
+  min-height: 2.75rem;
+  border-color: var(--sp-agent-outline);
+}
+.sp-agent-premium :where(.rounded-2xl,.rounded-3xl) {
+  transition: box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+.sp-agent-premium :where(.rounded-2xl,.rounded-3xl):hover {
+  border-color: rgba(8,122,88,.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium *, .sp-agent-premium *::before, .sp-agent-premium *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+@media (min-width: 768px) {
+  .sp-agent-premium main {
+    max-width: 52rem;
+    margin-inline: auto;
+  }
+}

@@ -1,5 +1,15 @@
 # SurePath — Changelog
 
+## v2.6.4 — 2026-10-22
+
+**Notifikasi update aplikasi dan konsistensi versi.**
+
+- Notifikasi pasca-pembaruan menampilkan versi yang aktif kepada pengguna PWA yang sudah dikendalikan service worker.
+- Jika service worker berganti saat aplikasi terbuka, tampilkan notifikasi pembaruan dengan tindakan muat ulang.
+- Versi aplikasi diselaraskan: `src/version.ts`, `package.json`, dan Android `versionName` menjadi 2.6.4; Android `versionCode` naik dari 16 ke 17.
+- Catatan perubahan ini menjadi sumber urutan versi berikutnya; setiap rilis harus menaikkan versi semver dan Android versionCode.
+- Batasan: notifikasi dalam aplikasi hanya terlihat ketika aplikasi dibuka/aktif; perangkat tidak dapat dipaksa menampilkan pop-up ketika aplikasi benar-benar tertutup.
+
 ## v2.6.3 — 2026-10-22
 
 **Notifikasi pembaruan aplikasi.**

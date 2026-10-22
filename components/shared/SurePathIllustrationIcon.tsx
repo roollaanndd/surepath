@@ -1,4 +1,3 @@
-import React from 'react';
 
 type Props = { id: string; size?: number; className?: string; active?: boolean };
 

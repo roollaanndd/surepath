@@ -7,6 +7,9 @@ import {
 import { ScannerOverlay, SmartProcessingView } from './WizardUI';
 import { validateVehiclePhoto } from '../../services/geminiService';
 import { pathyAnalyzeVehiclePhotos } from '../../services/pathyVision';
+
+/** Pesan yang dilihat pengguna saat analisa Pathy gagal, apa pun sebabnya. */
+const PESAN_OFFLINE = 'Mohon maaf, kami sedang offline saat ini.';
 import { extractStnkOcr } from '../../services/stnkOcr';
 
 interface StepSurveyProps {
@@ -187,19 +190,19 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
         recommendations: response.recommendations || [],
       }));
     } else {
-      // Sebab aslinya DITAMPILKAN, bukan disembunyikan di balik "AI tidak
-      // tersedia". Pesan lama membuat laporan "analisa foto tidak berfungsi"
-      // datang tanpa satu petunjuk pun, dan penelusurannya harus dimulai dari
-      // nol — itu memakan waktu berjam-jam pada 21 Okt 2026.
-      const sebab = typeof response?.error === 'string' && response.error.trim()
-        ? response.error.trim()
-        : 'sebab tidak diketahui';
-      setSurveyActionError(`Pathy belum bisa menganalisa foto: ${sebab}`);
+      // Pengguna melihat pesan ramah (permintaan pemilik, 22 Okt 2026); sebab
+      // teknisnya TIDAK dibuang. Ia tetap tercatat di rekaman Pathy
+      // (sp_pathy_messages, degraded=true) oleh pathyAnalyzeVehiclePhotos, dan
+      // di console. Jangan kembali ke pesan generik TANPA jejak: itu yang
+      // membuat laporan "analisa foto tidak berfungsi" pada 21 Okt harus
+      // ditelusuri dari nol selama berjam-jam.
+      console.warn('[StepSurvey] analisa Pathy gagal:', response?.error);
+      setSurveyActionError(PESAN_OFFLINE);
       setSurvey((prev: any) => ({
         ...prev,
         score: 0,
         verdict: 'MANUAL_REQUIRED',
-        underwritingReport: `Pathy belum bisa menganalisa foto (${sebab}). Pesanan dilanjutkan dengan verifikasi manual.`,
+        underwritingReport: `${PESAN_OFFLINE} Pesanan kamu tetap diproses dengan verifikasi manual oleh tim kami.`,
         manualVerif: true,
       }));
     }

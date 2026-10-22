@@ -86,7 +86,6 @@ const AnalyticsDashboard = () => {
       const analyticsData = (analyticsRaw as any) ?? {};
       const orders = (analyticsData.orders ?? []) as any[];
       const agents = (analyticsData.agents ?? []) as any[];
-      const claims = (analyticsData.claims ?? []) as any[];
       const payments = (analyticsData.payments ?? []) as any[];
 
       // ── KPI ────────────────────────────────────────────────────────────────

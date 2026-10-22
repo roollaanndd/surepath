@@ -48,6 +48,7 @@ const POLICY_DELIVERY_FEE = 20000;
 
 const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () => void, currentUser?: any, lang: Language }) => {
   const [step, setStep] = useState(0);
+  const isAgentVerified = currentUser?.verified === true;
   const [loading, setLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<'KTP' | 'STNK' | 'SURVEY' | null>(null);
   const [entryMode, setEntryMode] = useState<'DATABASE' | 'MANUAL'>('DATABASE');
@@ -436,9 +437,10 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
         premiumBreakdown.commissionRate,
       );
-      const coinReward = Math.round(
+      // Keep checkout reward aligned with the admin/agent coin formula: Rp 1,000 of reward value = 1 coin.
+      const coinReward = Math.floor(
         (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
-        (selectedProduct.coin_rate ?? 0),
+        (selectedProduct.coin_rate ?? 0) / 1000,
       );
 
       const order = await createPolicyOrder({
@@ -671,7 +673,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
        <div className="px-5 py-4">
           {step === 0 && <StepVehicle vehicle={vehicle} setVehicle={setVehicle} entryMode={entryMode} setEntryMode={setEntryMode} handlePlateChange={handlePlateChange} formatInputCurrency={(val) => new Intl.NumberFormat('id-ID').format(parseInt(val || "0"))} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} setStnkResult={setStnkResult} />}
           {step === 1 && <StepCoverage coverage={coverage} setCoverage={setCoverage} premiumBreakdown={premiumBreakdown} maxDiscountPercent={premiumBreakdown?.maxDiscountPercent ?? 25} />}
-          {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={availableProducts} selectedProviderId={selectedProductId} setSelectedProviderId={setSelectedProductId} premiumBreakdown={premiumBreakdown} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
+          {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={availableProducts} selectedProviderId={selectedProductId} setSelectedProviderId={setSelectedProductId} premiumBreakdown={premiumBreakdown} isAgentVerified={isAgentVerified} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}
           {step === 3 && <StepKYC kycData={kycData} setKycData={setKycData} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} verifiedFields={verifiedFields} setVerifiedFields={setVerifiedFields} />}
           {step === 4 && <StepPreSummary vehicle={vehicle} coverage={coverage} premiumBreakdown={premiumBreakdown} showBreakdown={showBreakdown} setShowBreakdown={setShowBreakdown} stnkResult={stnkResult} kycData={kycData} />}
           {step === 5 && <StepSurvey survey={survey} setSurvey={setSurvey} stnkResult={stnkResult} setStnkResult={setStnkResult} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} photoValidation={photoValidation} setPhotoValidation={setPhotoValidation} vehicle={vehicle} />}
@@ -710,6 +712,7 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                   <button
                      onClick={step === 6 ? handleCheckout : handleNext}
                      disabled={
+                       (step === 2 && !isAgentVerified) ||
                        (step === 5 && (survey.verdict === '' || survey.verdict === 'REJECTED' || (loading && loadingType === 'SURVEY'))) ||
                        (step === 6 && survey.verdict === 'REJECTED')
                      }

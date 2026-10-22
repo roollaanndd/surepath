@@ -384,7 +384,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
   if (section === 'transactions') {
      return (
         <div className="space-y-8 animate-fade-in">
-           {bizBanner}
+           {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <Card>
               <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
               <div className="space-y-4">
@@ -412,7 +412,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
 
   return (
   <div className="space-y-8 animate-fade-in">
-    {bizBanner}
+    {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
     {isDashboard && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-emerald-500" />

@@ -215,6 +215,8 @@ const AdminPortal = ({
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
+  // Preserve sidebar position if the inline SidebarContent component remounts during polling updates.
+  const sidebarScrollTop = useRef(0);
   const [transaksiStats, setTransaksiStats] = useState<{
     totalCustomers: number;
     totalOrders: number;
@@ -363,7 +365,11 @@ const AdminPortal = ({
       </div>
 
       {/* Nav — scrollable */}
-      <nav className="flex-1 overflow-y-auto no-scrollbar space-y-0.5 pr-1">
+      <nav
+        ref={node => { if (node) node.scrollTop = sidebarScrollTop.current; }}
+        onScroll={event => { sidebarScrollTop.current = event.currentTarget.scrollTop; }}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-0.5 pr-1"
+      >
         {filteredMenu.map(item => {
           if (item.isSeparator) {
             return (

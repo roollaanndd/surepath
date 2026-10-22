@@ -371,7 +371,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       product_type: product,
       status: 'SENT',
       premium_estimate: premium,
-      quote_data: currentInputs(),
+      quote_data: { ...currentInputs(), surepathCommercial: { selectedInsurer, discountPercent: safeDiscountPercent, discountAmount, grossCommission, netCommission: commission } },
     });
     setSaving(false);
     if (q) {
@@ -398,7 +398,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         premium,
         start_date: today.toISOString().split('T')[0],
         end_date: endDate.toISOString().split('T')[0],
-        coverage_details: currentInputs(),
+        coverage_details: { ...currentInputs(), surepathCommercial: { selectedInsurer, discountPercent: safeDiscountPercent, discountAmount, grossCommission, netCommission: commission } },
       });
       if (policy) {
         await addCommission({

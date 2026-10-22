@@ -1423,10 +1423,10 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     </p>
                     <div className="mt-3 border-t border-slate-100 dark:border-white/10 pt-3 space-y-2">
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="flex gap-0.5" aria-label={`Rating ${p.rating ?? 0} dari 5`}>
+                        <span className="flex gap-0.5" aria-label={`Rating ${(p as any).rating ?? 0} dari 5`}>
                           {[1,2,3,4,5].map(star => <span key={star} className={star <= Math.floor(p.rating ?? 0) ? 'text-amber-500' : 'text-slate-300'}>★</span>)}
                         </span>
-                        <span className="font-bold text-slate-600 dark:text-slate-300">{p.rating ? `${p.rating}/5` : 'Rating belum tersedia'}</span>
+                        <span className="font-bold text-slate-600 dark:text-slate-300">{(p as any).rating ? `${(p as any).rating}/5` : 'Rating belum tersedia'}</span>
                       </div>
                       {Array.isArray((p as any).benefits) && (p as any).benefits.length > 0 && <div><p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">Manfaat utama</p><p className="text-[11px] text-slate-500">{(p as any).benefits.slice(0, 3).join(' · ')}</p></div>}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

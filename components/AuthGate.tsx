@@ -395,7 +395,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
     );
   }
 
-  // ── Premium design tokens (no green) ──────────────────────────────────────
+  // ── Design tokens (emerald brand) ──────────────────────────────────────
   const GRAD = 'linear-gradient(135deg, #16a34a 0%, #059669 100%)';
   const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
 
@@ -439,7 +439,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: '#0f172a' }}>
               Sure<span style={{ background: 'linear-gradient(135deg,#059669,#16a34a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
             </h1>
-            <p style={{ fontSize: '0.6rem', fontWeight: 600, color: 'rgba(15,23,42,0.42)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
+            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(15,23,42,0.55)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
               {mode === 'REGISTER'
                 ? t('Create your account', 'Buat akun kamu')
                 : t('Welcome back', 'Selamat datang kembali')}
@@ -472,7 +472,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             </button>
             <button
               onClick={() => setMode('LOGIN')}
-              className="w-full h-10 rounded-xl text-slate-400 font-medium text-sm hover:text-emerald-700 transition-colors"
+              className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors"
             >
               {t('Back to Login', 'Kembali ke Login')}
             </button>
@@ -482,7 +482,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
         {/* Forgot password — enter email */}
         {mode === 'FORGOT_PASSWORD' && (
           <div className="w-full sp-glass rounded-[2.25rem] p-8 space-y-5">
-            <h3 className="text-2xl font-black text-slate-900 mb-1 text-center">{t('Reset Password', 'Reset Password')}</h3>
+            <h3 className="text-2xl font-black text-slate-900 mb-1 text-center">{t('Reset Password', 'Atur Ulang Password')}</h3>
             <p className="text-sm text-slate-500 mb-6 text-center">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div className="relative">
@@ -491,12 +491,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                   className={inputCls} />
               </div>
-              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
               <button type="submit" disabled={loading} className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]" style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Send Reset Link', 'Kirim Link Reset')}<ArrowRight size={14} /></>}
               </button>
             </form>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-slate-400 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back', 'Kembali')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back', 'Kembali')}</button>
           </div>
         )}
 
@@ -508,7 +508,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
               <p className="text-sm text-slate-500 mb-6">{t('Password reset link sent to ', 'Link reset dikirim ke ')}<span className="text-emerald-700 font-bold">{formData.email}</span>.</p>
             </div>
-            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-slate-400 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); }} className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
@@ -527,10 +527,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
               </p>
             </div>
             <form onSubmit={handleVerifyEmailOtp} className="space-y-3">
-              <input required type="text" inputMode="numeric" maxLength={6} placeholder="· · · · · ·" value={otpCode}
+              <input required type="text" inputMode="numeric" autoComplete="one-time-code" aria-label={t('6-digit code', 'Kode 6 digit')} maxLength={6} placeholder="· · · · · ·" value={otpCode}
                 onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                 className="w-full text-center py-4 bg-white/80 border border-emerald-900/10 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] text-slate-900 placeholder:text-slate-300 focus:border-emerald-500/60 transition-all" />
-              {error && <p className="text-rose-400 text-xs font-bold text-center">{error}</p>}
+              {error && <p className="text-rose-600 text-xs font-bold text-center">{error}</p>}
               <button type="submit" disabled={loading || otpCode.length < 6} className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]" style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Sign In', 'Verifikasi & Masuk')}<ArrowRight size={14} /></>}
               </button>
@@ -540,7 +540,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               {t('Resend Code', 'Kirim Ulang Kode')}
             </button>
-            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full h-10 rounded-xl text-slate-400 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
+            <button onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); }} className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors">{t('Back to Login', 'Kembali ke Login')}</button>
           </div>
         )}
 
@@ -551,14 +551,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <form onSubmit={handleResetPassword} className="space-y-3">
               <div className="relative">
                 <KeyRound size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
-                <input required type={showNewPass ? 'text' : 'password'} placeholder={t('New password (min 6 chars)', 'Password baru (min 6 karakter)')} minLength={6} value={newPassword}
+                <input required type={showNewPass ? 'text' : 'password'} placeholder={t('New password (min 6 chars)', 'Password baru (min 6 karakter)')} aria-label={t('New password', 'Password baru')} autoComplete="new-password" minLength={6} value={newPassword}
                   onChange={e => setNewPass(e.target.value)}
                   className={inputCls} />
-                <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors">
+                <button type="button" onClick={() => setShowNewPass(!showNewPass)} aria-label={showNewPass ? t('Hide password', 'Sembunyikan kata sandi') : t('Show password', 'Tampilkan kata sandi')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors">
                   {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+              {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
               <button type="submit" disabled={loading} className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]" style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}>
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Save Password', 'Simpan Password')}<ArrowRight size={14} /></>}
               </button>
@@ -574,7 +574,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           <div className="w-full space-y-6">
 
             {/* Sliding-pill tab switcher */}
-            <div className="relative flex bg-emerald-900/[0.05] p-1 rounded-2xl border border-emerald-900/10">
+            <div role="tablist" aria-label={t('Sign in or register', 'Masuk atau daftar')} className="relative flex bg-emerald-900/[0.05] p-1 rounded-2xl border border-emerald-900/10">
               {/* Sliding pill */}
               <div className="absolute top-1 bottom-1 rounded-xl transition-all duration-300 ease-out pointer-events-none"
                 style={{
@@ -584,14 +584,16 @@ const AuthGate: React.FC<AuthGateProps> = ({
                   boxShadow: '0 6px 22px -6px rgba(22,163,74,0.7)',
                 }} />
               <button
+                type="button" role="tab" aria-selected={mode === 'LOGIN'}
                 onClick={() => { setMode('LOGIN'); setError(null); }}
-                className={`relative flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'LOGIN' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`relative flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'LOGIN' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 {t('Sign In', 'Masuk')}
               </button>
               <button
+                type="button" role="tab" aria-selected={mode === 'REGISTER'}
                 onClick={() => { setMode('REGISTER'); setRegRole(null); setError(null); }}
-                className={`relative flex-1 py-3 rounded-xl text-[0.6rem] font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'REGISTER' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`relative flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors duration-200 ${mode === 'REGISTER' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 {t('Register', 'Daftar')}
               </button>
@@ -606,6 +608,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <input
                       required
                       placeholder={t('Full Name', 'Nama Lengkap')}
+                      aria-label={t('Full name', 'Nama lengkap')}
+                      autoComplete="name"
                       className={inputCls}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -615,14 +619,16 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <button
                       type="button"
                       onClick={() => setRegRole(UserRole.CUSTOMER)}
-                      className={`py-3 rounded-2xl text-[0.55rem] font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-emerald-900/10 text-slate-400 hover:border-emerald-900/25'}`}
+                      aria-pressed={regRole === UserRole.CUSTOMER}
+                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-600/40 hover:text-emerald-700'}`}
                     >
                       <Smartphone size={14} /> {t('Customer', 'Nasabah')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setRegRole(UserRole.AGENT)}
-                      className={`py-3 rounded-2xl text-[0.55rem] font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-emerald-900/10 text-slate-400 hover:border-emerald-900/25'}`}
+                      aria-pressed={regRole === UserRole.AGENT}
+                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-600/40 hover:text-emerald-700'}`}
                     >
                       <Briefcase size={14} /> {t('Partner', 'Mitra')}
                     </button>
@@ -670,12 +676,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
                 </button>
               </div>
               {mode === 'REGISTER' && !regRole && (
-                <p className="text-[0.65rem] text-amber-600 font-semibold px-1" role="status">
+                <p className="text-xs text-amber-700 font-semibold px-1" role="status">
                   {t('Select Nasabah or Mitra to continue.', 'Pilih Nasabah atau Mitra untuk melanjutkan.')}
                 </p>
               )}
               {mode === 'REGISTER' && formData.password.length > 0 && formData.password.length < 6 && (
-                <p className="text-[0.6rem] text-amber-400 font-bold px-1">
+                <p className="text-xs text-amber-700 font-semibold px-1" role="status">
                   {t('Password must be at least 6 characters', 'Password minimal 6 karakter')}
                 </p>
               )}
@@ -683,14 +689,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
               {mode === 'LOGIN' && (
                 <div className="flex justify-end">
                   <button type="button" onClick={() => { setMode('FORGOT_PASSWORD'); setError(null); }}
-                    className="text-[0.6rem] font-bold text-slate-400 hover:text-emerald-600 transition-colors uppercase tracking-widest">
+                    className="py-1 text-[0.7rem] font-bold text-slate-500 hover:text-emerald-600 transition-colors uppercase tracking-wider">
                     {t('Forgot password?', 'Lupa password?')}
                   </button>
                 </div>
               )}
 
               {(error || externalError) && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs">
                   <AlertCircle size={14} className="flex-shrink-0" />
                   <span>{error ?? externalError}</span>
                 </div>
@@ -722,7 +728,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <div className="space-y-3 mt-4">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-emerald-900/10" />
-                  <span className="text-[0.5rem] font-bold text-slate-400 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
+                  <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
                   <div className="flex-1 h-px bg-emerald-900/10" />
                 </div>
                 <button onClick={handleGoogleSignIn} disabled={loading}
@@ -749,9 +755,9 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        <p style={{ fontSize: '0.5rem', fontWeight: 600, color: 'rgba(15,23,42,0.30)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <p style={{ fontSize: '0.6rem', fontWeight: 600, color: 'rgba(15,23,42,0.50)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Shield size={10} style={{ color: 'rgba(5,150,105,0.55)' }} />
-          SurePath · Secure Connection
+          {t('SurePath · Secure connection', 'SurePath · Koneksi aman')}
         </p>
 
         {/* Trust signals — Indonesian insurance buyers explicitly look for

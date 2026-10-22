@@ -11,6 +11,30 @@
 
 > **Skema versi baru mulai rilis ini.** Deret `1.x` ditutup di v1.57.0; penomoran dilanjutkan dari **2.1.0**.
 
+## v2.6.2 — 2026-10-22
+
+**Pesan gagal analisa Pathy jadi ramah, dan layar Masuk/Daftar lebih terbaca.**
+
+- **Analisa foto kendaraan:** bila analisa Pathy gagal, pengguna kini melihat
+  *"Mohon maaf, kami sedang offline saat ini."* (permintaan pemilik). Sebab
+  teknisnya tidak dibuang — tetap tercatat di `console.warn` dan di rekaman
+  percakapan Pathy (CMS) supaya masih bisa ditelusuri. Pesanan tetap lanjut
+  dengan verifikasi manual.
+- **Login & daftar (`AuthGate.tsx`)** — tampilan saja, alur autentikasi tidak
+  berubah:
+  - Teks error/peringatan tadinya merah/kuning pucat (`rose-400`, `red-400`,
+    `amber-400`) di atas putih — nyaris tak terbaca. Kontrasnya dinaikkan.
+  - Label mini 0,5–0,6rem (tab Masuk/Daftar, Nasabah/Mitra, "Lupa password?",
+    pemisah, footer) dinaikkan ke ukuran terbaca.
+  - Tombol Nasabah/Mitra yang belum dipilih dulu abu pucat — tampak seperti
+    tombol nonaktif padahal wajib dipilih. Kini jelas bisa ditekan.
+  - Aksesibilitas: tab Masuk/Daftar memakai `role="tab"` + `aria-selected`,
+    pilihan peran memakai `aria-pressed`, input nama/OTP/password baru dan
+    tombol tampilkan-password diberi label; `autoComplete` untuk nama, OTP, dan
+    password baru.
+  - Bahasa: "Reset Password" → "Atur Ulang Password", "Secure Connection" →
+    "Koneksi aman".
+
 ## v2.6.1 — 2026-10-21
 
 **Analisa foto kendaraan: penyebabnya ditemukan, dan analisanya kini milik Pathy.**

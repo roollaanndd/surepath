@@ -80,14 +80,14 @@
 .sp-modern-app :where([data-screen], .sp-screen, .sp-page-enter) {
   animation: sp-screen-enter 220ms cubic-bezier(.2, .8, .2, 1) both;
 }
-.sp-modern-app main > :where(section, article, [data-page]) {
+.sp-modern-app :where(main, [role="main"]) > * {
   animation: sp-screen-enter 220ms cubic-bezier(.2, .8, .2, 1) both;
 }
 .sp-modern-app :where([data-transition="screen"]) {
   will-change: opacity, transform;
 }
 @media (prefers-reduced-motion: reduce) {
-  .sp-modern-app :where([data-screen], .sp-screen, .sp-page-enter, main > section, main > article, main > [data-page]) {
+  .sp-modern-app :where([data-screen], [data-view], [data-page], .sp-screen, .sp-page-enter, main > *, [role="main"] > *) {
     animation: none !important;
     transform: none !important;
   }

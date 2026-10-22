@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, ChevronUp, FileCheck } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, FileCheck, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BSubmissions, type SpB2BSubmission } from '../../services/supabaseService';
 
@@ -98,16 +98,37 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<FilterTab>('ALL');
 
   useEffect(() => {
-    if (!clientId) return;
-    setLoading(true);
-    getB2BSubmissions(clientId).then(data => {
-      setSubmissions(data);
-      setLoading(false);
-    });
-  }, [clientId]);
+    let cancelled = false;
+
+    const loadSubmissions = async () => {
+      if (!clientId) {
+        setSubmissions([]);
+        setLoading(false);
+        setLoadError(false);
+        return;
+      }
+
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const data = await getB2BSubmissions(clientId);
+        if (!cancelled) setSubmissions(data);
+      } catch (error) {
+        console.error('Unable to load B2B submissions:', error);
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadSubmissions();
+    return () => { cancelled = true; };
+  }, [clientId, reloadKey]);
 
   const filtered = filter === 'ALL' ? submissions : submissions.filter(s => s.status === filter);
   const sorted = filtered.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -136,6 +157,15 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
       {loading ? (
         <div className="flex justify-center py-16">
           <Loader2 size={28} className="animate-spin text-emerald-500" />
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 p-5 text-center space-y-3">
+          <AlertTriangle size={24} className="mx-auto text-amber-600 dark:text-amber-300" />
+          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{t('Could not load submissions.', 'Pengajuan belum dapat dimuat.')}</p>
+          <p className="text-xs text-amber-700 dark:text-amber-200/80">{t('Check your connection and try again. Your submissions have not been changed.', 'Periksa koneksi lalu coba lagi. Data pengajuan tidak diubah.')}</p>
+          <button type="button" onClick={() => setReloadKey(key => key + 1)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
+            <RefreshCw size={14} /> {t('Try again', 'Coba lagi')}
+          </button>
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">

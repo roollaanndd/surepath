@@ -83,15 +83,20 @@ const FinancialAdmin: React.FC = () => {
   });
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setLoading(true);
+      setLoadError(null);
       const { from, to } = getDateRange(range);
 
-      const { data: finRaw } = await callGateway('admin_financial_detail', { from, to });
+      try {
+      const { data: finRaw, error } = await callGateway('admin_financial_detail', { from, to });
+      if (error) throw new Error(String(error));
       const finData = (finRaw as any) ?? {};
       const ordersRes = { data: finData.orders ?? [], error: null, count: null };
       const commRes   = { data: finData.commissions ?? [], error: null };
@@ -126,12 +131,16 @@ const FinancialAdmin: React.FC = () => {
         activeAgents: agentsRes.count ?? 0,
       });
       setOrders(issuedOrders.slice(0, 50));
-      setLoading(false);
+      } catch (error) {
+        if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Gagal memuat laporan keuangan.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
-    load();
+    void load();
     return () => { cancelled = true; };
-  }, [range]);
+  }, [range, retryKey]);
 
   const RANGE_LABELS: Record<DateRange, string> = {
     THIS_MONTH: 'Bulan Ini',
@@ -171,6 +180,12 @@ const FinancialAdmin: React.FC = () => {
       {loading ? (
         <div className="flex justify-center py-24">
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+        </div>
+      ) : loadError ? (
+        <div className="p-8 rounded-2xl border border-rose-500/30 bg-rose-500/5 text-center">
+          <p className="font-bold text-rose-400 mb-2">Laporan keuangan gagal dimuat</p>
+          <p className="text-xs text-ds-ink3 mb-4">{loadError}</p>
+          <button onClick={() => setRetryKey(v => v + 1)} className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold">Coba Lagi</button>
         </div>
       ) : (
         <>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Component, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
 import {
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
@@ -216,8 +216,11 @@ const AdminPortal = ({
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
-  // Preserve sidebar position if the inline SidebarContent component remounts during polling updates.
+  // Preserve sidebar position without resetting scroll on every parent render.
   const sidebarScrollTop = useRef(0);
+  const setSidebarNavRef = useCallback((node: HTMLElement | null) => {
+    if (node) node.scrollTop = sidebarScrollTop.current;
+  }, []);
   const [transaksiStats, setTransaksiStats] = useState<{
     totalCustomers: number;
     totalOrders: number;
@@ -367,7 +370,7 @@ const AdminPortal = ({
 
       {/* Nav — scrollable */}
       <nav
-        ref={node => { if (node) node.scrollTop = sidebarScrollTop.current; }}
+        ref={setSidebarNavRef}
         onScroll={event => { sidebarScrollTop.current = event.currentTarget.scrollTop; }}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-0.5 pr-1"
       >

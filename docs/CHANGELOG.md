@@ -1,5 +1,15 @@
 # SurePath — Changelog
 
+## v2.6.7 — 2026-10-22
+
+**Revamp alur penawaran dan pembelian agen.**
+
+- Kartu tier yang besar dipindahkan dari beranda ke bagian Profil; beranda tetap menampilkan badge tier yang ringkas.
+- Alur produk agen menampilkan pilihan Buat Penawaran atau Beli Langsung sebelum input untuk produk non-kendaraan; pembelian langsung diarahkan ke wizard produk.
+- Penawaran kendaraan kini membawa data klien, kendaraan, coverage, perluasan, dan diskon ke wizard pembelian sehingga agen hanya melengkapi data yang belum tersedia.
+- Form penawaran menambahkan diskon estimasi (maksimum 15%); diskon final tetap tunduk pada batas produk/insurer dan persetujuan.
+- PWA version badge dan update notification menggunakan versi 2.6.7.
+
 ## v2.6.6 — 2026-10-22
 
 **Keandalan dashboard keamanan admin.**

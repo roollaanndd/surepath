@@ -346,7 +346,7 @@ function drawCoverPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(...COLOR.emeraldDeep);
-  doc.text(`// QUOTATION SLIP — ${slipType}`, MARGIN, MARGIN + 62);
+  doc.text(`// SURAT PENAWARAN / QUOTATION SLIP — ${slipType}`, MARGIN, MARGIN + 62);
 
   // ─── Title block ──────────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
@@ -553,6 +553,10 @@ function drawDataPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(18);
   doc.setTextColor(...COLOR.ink);
   doc.text('Data Nasabah & Objek Pertanggungan', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR.inkMuted);
+  doc.text('Customer & Insured Object Details', MARGIN, y + 12);
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(8);
@@ -676,6 +680,10 @@ function drawPremiPage(doc: any, d: QuotationSlipData, ctx: any) {
   doc.setFontSize(18);
   doc.setTextColor(...COLOR.ink);
   doc.text('Perhitungan Premi, Subjectivity & Syarat', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR.inkMuted);
+  doc.text('Premium Calculation, Subjectivities & Terms', MARGIN, y + 12);
 
   doc.setFont('courier', 'normal');
   doc.setFontSize(8);

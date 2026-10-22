@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
+import '../../src/styles/portal-modernization.css';
 import {
   Zap, ShieldCheck,
   Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw,
@@ -188,7 +189,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           : 0;
         return (
           <PageTransition>
-            <div className="space-y-6 pb-32">
+            <div className="sp-modern-app space-y-6 pb-32">
               {/* Greeting row */}
               <div className="flex items-center justify-between">
                 <div>

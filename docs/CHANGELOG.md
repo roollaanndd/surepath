@@ -1,5 +1,14 @@
 # SurePath — Changelog
 
+## v2.6.5 — 2026-10-22
+
+**Perbaikan akurasi analytics admin.**
+
+- Tren GWP enam bulan memakai kunci tahun-bulan, sehingga Januari dari tahun berbeda tidak tercampur dan label periode menunjukkan tahun.
+- Claims Ratio ditampilkan `N/A` sampai denominator premi yang sebanding dan tervalidasi tersedia; mencegah persentase menyesatkan dari baris klaim saja.
+- Ini perubahan frontend analytics; definisi dan query denominator server masih memerlukan validasi bisnis sebelum rasio dapat diaktifkan kembali.
+
+
 ## v2.6.4 — 2026-10-22
 
 **Notifikasi update aplikasi dan konsistensi versi.**

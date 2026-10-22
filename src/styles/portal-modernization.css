@@ -70,3 +70,25 @@
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Screen-level motion: subtle, fast, and safe for transactional workflows. */
+@keyframes sp-screen-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.sp-modern-app :where([data-screen], .sp-screen, .sp-page-enter) {
+  animation: sp-screen-enter 220ms cubic-bezier(.2, .8, .2, 1) both;
+}
+.sp-modern-app main > :where(section, article, [data-page]) {
+  animation: sp-screen-enter 220ms cubic-bezier(.2, .8, .2, 1) both;
+}
+.sp-modern-app :where([data-transition="screen"]) {
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app :where([data-screen], .sp-screen, .sp-page-enter, main > section, main > article, main > [data-page]) {
+    animation: none !important;
+    transform: none !important;
+  }
+}

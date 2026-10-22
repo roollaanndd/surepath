@@ -14,6 +14,7 @@ interface StepProvidersProps {
   selectedProviderId: string | null;
   setSelectedProviderId: (id: string | null) => void;
   premiumBreakdown: any;
+  isAgentVerified: boolean;
   showProviderBreakdown: boolean;
   setShowProviderBreakdown: (b: boolean) => void;
 }
@@ -58,7 +59,7 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
                         
                         <div className="space-y-3 bg-gray-50 dark:bg-black/20 p-4 rounded-2xl border border-black/5 dark:border-white/5">
                            <div className="flex justify-between items-center">
-                              <span className="text-[0.55rem] font-black uppercase text-gray-400">Biaya Admin</span>
+                              <span className="text-[0.55rem] font-black uppercase text-white/70">Biaya Admin</span>
                               <span className="text-xs font-black">{formatIDR(p.adminFee)}</span>
                            </div>
                            <div className="flex justify-between items-center pt-2 border-t border-black/5 dark:border-white/5">
@@ -85,7 +86,7 @@ const ComparisonModal = ({ isOpen, onClose, providers, selectedIds, premiumBreak
 
 const StepProviders: React.FC<StepProvidersProps> = ({
   sortBy, setSortBy, selectedProviderId, setSelectedProviderId,
-  premiumBreakdown, showProviderBreakdown, setShowProviderBreakdown,
+  premiumBreakdown, isAgentVerified, showProviderBreakdown, setShowProviderBreakdown,
   sortedProviders,
 }) => {
   const [compareList, setCompareList] = useState<string[]>([]);
@@ -109,6 +110,9 @@ const StepProviders: React.FC<StepProvidersProps> = ({
     benefits: p.benefits ?? [],
     authorizedGarage: p.authorizedGarage ?? false,
     claimSpeed: p.claimSpeed ?? '',
+    // Only mark a product recommended when the Admin CMS explicitly sets it.
+    isRecommended: p.is_recommended === true || p.recommended === true,
+    coinRate: Number(p.coin_rate ?? 0),
   }));
 
   const sortedList = [...dynamicProviders].sort((a, b) => {
@@ -181,17 +185,25 @@ const StepProviders: React.FC<StepProvidersProps> = ({
        </div>
 
        <div className="space-y-5">
+         {!isAgentVerified && (
+           <div className="rounded-2xl border border-amber-300/50 bg-gradient-to-r from-amber-500/15 via-orange-400/10 to-rose-500/10 p-4 text-sm text-slate-700 dark:text-slate-200 shadow-sm">
+             <p className="font-black">Verifikasi agen diperlukan</p>
+             <p className="mt-1 text-xs leading-relaxed">Pilihan produk, estimasi koin, dan proses pembelian baru dapat digunakan setelah akun agen diverifikasi oleh Admin.</p>
+           </div>
+         )}
          {sortedList.map((p, cardIdx) => {
            const finalPremi = (premiumBreakdown?.netPremium || 0) + p.adminFee + (p.stampDuty ?? premiumBreakdown?.stampDuty ?? 10000);
            const isSelected = selectedProviderId === p.id;
+           const coinBase = Math.max(0, Number(premiumBreakdown?.basicPremium || 0) + Number(premiumBreakdown?.expansionTotal || 0));
+           const estimatedCoins = Math.floor(coinBase * Number(p.coinRate || 0) / 1000);
            const isComparing = compareList.includes(p.id);
 
            return (
              <div
                key={p.id}
-               onClick={() => setSelectedProviderId(p.id)}
+               onClick={() => { if (isAgentVerified) setSelectedProviderId(p.id); }}
                style={{ animationDelay: `${cardIdx * 80}ms` }}
-               className={`p-6 rounded-[2.8rem] border-2 cursor-pointer transition-all duration-300 relative overflow-hidden group tap-feedback bg-white dark:bg-white/[0.03] animate-fade-in ${isSelected ? 'border-emerald-500 shadow-2xl scale-[1.01] ring-4 ring-emerald-500/15' : 'border-black/5 hover:border-emerald-500/30 hover:shadow-lg hover:scale-[1.005]'}`}
+               className={`p-6 rounded-[2.2rem] border cursor-pointer transition-all duration-300 relative overflow-hidden group tap-feedback text-white shadow-xl animate-fade-in ${['bg-gradient-to-br from-indigo-700 via-violet-700 to-fuchsia-800 border-violet-300/50','bg-gradient-to-br from-sky-700 via-blue-700 to-cyan-800 border-sky-300/50','bg-gradient-to-br from-amber-600 via-orange-600 to-rose-700 border-orange-300/50','bg-gradient-to-br from-fuchsia-700 via-pink-700 to-rose-800 border-pink-300/50','bg-gradient-to-br from-slate-700 via-slate-800 to-indigo-900 border-slate-300/40'][cardIdx % 5]} ${isSelected ? 'ring-4 ring-white/50 scale-[1.01] shadow-2xl' : 'hover:brightness-110 hover:scale-[1.005]'} ${!isAgentVerified ? 'opacity-75' : ''}`}
              >
                 <button 
                   onClick={(e) => toggleCompare(e, p.id)}
@@ -201,45 +213,47 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                    <span className="text-[0.5rem] font-black uppercase tracking-widest">{isComparing ? 'Membandingkan' : 'Bandingkan'}</span>
                 </button>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/25 via-white/5 to-transparent" />
+               {p.isRecommended && <div className="absolute right-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/20 px-3 py-1.5 text-[0.55rem] font-black uppercase tracking-wider text-white shadow-lg backdrop-blur-xl"><ShieldCheck size={12}/> SurePath Recommended</div>}
+               <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 pt-8 sm:pt-0">
                   <div className="flex items-center gap-4">
                     <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 border ${isSelected ? 'border-emerald-400 ring-2 ring-emerald-500/25' : 'border-black/5 dark:border-white/10'}`}
                       style={{ background: INSURER_BRANDS[p.logoId ?? p.id]?.bg ?? '#ecfdf5' }}>
                       <InsurerLogo id={p.logoId ?? p.id} size={38}/>
                     </div>
                     <div>
-                       <h4 className="font-black text-lg uppercase tracking-tighter leading-tight text-slate-900 dark:text-white">{p.name}</h4>
+                       <h4 className="font-black text-lg uppercase tracking-tighter leading-tight text-white">{p.name}</h4>
                        <div className="flex items-center gap-2 mt-1.5">
                           <div className="flex gap-0.5">
-                            {[1,2,3,4,5].map(i => <Star key={i} size={11} className={`${i <= Math.floor(p.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-white/10'}`}/>)}
+                            {[1,2,3,4,5].map(i => <Star key={i} size={11} className={`${i <= Math.floor(p.rating) ? 'fill-amber-400 text-amber-400' : 'text-white/30'}`}/>)}
                           </div>
-                          <span className="text-[0.65rem] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md">{p.rating}</span>
+                          <span className="text-[0.65rem] font-black text-white bg-white/15 px-2 py-0.5 rounded-md">{p.rating}</span>
                        </div>
                     </div>
                   </div>
 
                   <div className="w-full sm:w-auto text-left sm:text-right pt-3 sm:pt-0 border-t sm:border-t-0 border-black/5 dark:border-white/5 flex flex-col justify-center">
-                    <p className={`text-2xl font-black tracking-tighter leading-none transition-colors ${isSelected ? 'text-emerald-500' : 'text-gray-900 dark:text-white'}`}>{formatIDR(finalPremi)}</p>
-                    <p className="text-[0.5rem] text-gray-400 uppercase font-black mt-2 tracking-[0.2em] opacity-80">Total Premi Bersih</p>
+                    <p className={`text-2xl font-black tracking-tighter leading-none transition-colors text-white drop-shadow-md`}>{formatIDR(finalPremi)}</p>
+                    <p className="text-[0.5rem] text-white/75 uppercase font-black mt-2 tracking-[0.2em]">Total Premi Bersih</p>
                   </div>
                </div>
 
                {/* Details Section */}
-               <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-5 space-y-5 mb-2">
+               <div className="mt-4 border-t border-white/20 pt-5 space-y-5 mb-2 relative z-10">
                    {/* Quick stats row */}
                    <div className="flex flex-wrap gap-2">
-                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 text-amber-100 border border-white/20 backdrop-blur-md">
                            <Coins size={13} className="fill-amber-600 dark:fill-amber-400" />
-                           <span className="text-[0.6rem] font-black uppercase tracking-wider">+{p.extraCoinsPercent}% Cashback Koin</span>
+                           <span className="text-[0.6rem] font-black uppercase tracking-wider">{isAgentVerified ? `Estimasi ${estimatedCoins.toLocaleString('id-ID')} koin` : 'Koin setelah verifikasi'}</span>
                        </div>
                        {(p as any).authorizedGarage && (
-                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 text-emerald-100 border border-white/20">
                                <ShieldCheck size={13} />
                                <span className="text-[0.6rem] font-black uppercase tracking-wider">Bengkel Resmi</span>
                            </div>
                        )}
                        {(p as any).claimSpeed && (
-                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-900/30">
+                           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 text-sky-100 border border-white/20">
                                <Clock size={13} />
                                <span className="text-[0.6rem] font-black uppercase tracking-wider">Klaim {(p as any).claimSpeed}</span>
                            </div>
@@ -249,10 +263,10 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                    {/* Benefits */}
                    {(p as any).benefits && (p as any).benefits.length > 0 && (
                        <div className="space-y-2">
-                           <p className="text-[0.55rem] font-black uppercase text-gray-400 tracking-widest flex items-center gap-1.5"><Zap size={11} className="text-emerald-500"/> Keunggulan Utama</p>
+                           <p className="text-[0.55rem] font-black uppercase text-white/70 tracking-widest flex items-center gap-1.5"><Zap size={11} className="text-emerald-500"/> Keunggulan Utama</p>
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                {(p as any).benefits.map((b: string, i: number) => (
-                                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-black/5">
+                                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 border border-white/15">
                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                                        <span className="text-[0.6rem] font-medium text-gray-600 dark:text-gray-300 leading-tight">{b}</span>
                                    </div>
@@ -264,27 +278,27 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                    {/* Pros / Cons */}
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
-                           <p className="text-[0.55rem] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest flex items-center gap-1.5">
+                           <p className="text-[0.55rem] font-black uppercase text-emerald-100 tracking-widest flex items-center gap-1.5">
                                <CheckCircle2 size={12} /> Kelebihan
                            </p>
                            <ul className="space-y-1.5">
                                {p.advantages?.map((adv: string, i: number) => (
                                    <li key={i} className="flex items-start gap-2">
                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{adv}</span>
+                                       <span className="text-xs font-medium text-white/90 leading-relaxed">{adv}</span>
                                    </li>
                                ))}
                            </ul>
                        </div>
                        <div className="space-y-2">
-                           <p className="text-[0.55rem] font-black uppercase text-rose-500 dark:text-rose-400 tracking-widest flex items-center gap-1.5">
+                           <p className="text-[0.55rem] font-black uppercase text-rose-100 tracking-widest flex items-center gap-1.5">
                                <MinusCircle size={12} /> Kekurangan
                            </p>
                            <ul className="space-y-1.5">
                                {p.disadvantages?.map((dis: string, i: number) => (
                                    <li key={i} className="flex items-start gap-2">
                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                                       <span className="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{dis}</span>
+                                       <span className="text-xs font-medium text-white/90 leading-relaxed">{dis}</span>
                                    </li>
                                ))}
                            </ul>
@@ -296,24 +310,24 @@ const StepProviders: React.FC<StepProvidersProps> = ({
                  <div className="mt-6 pt-5 border-t border-black/5 dark:border-white/5">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setShowProviderBreakdown(!showProviderBreakdown); }}
-                      className="w-full py-4 px-6 bg-emerald-500/10 text-emerald-500 rounded-2xl text-[0.65rem] font-black uppercase flex items-center justify-center gap-3 hover:bg-emerald-500 hover:text-white transition-all shadow-sm active:scale-95"
+                      className="w-full py-4 px-6 bg-white/15 text-white border border-white/20 rounded-2xl text-[0.65rem] font-black uppercase flex items-center justify-center gap-3 hover:bg-emerald-500 hover:text-white transition-all shadow-sm active:scale-95"
                     >
                       <ReceiptText size={18}/>
                       {showProviderBreakdown ? 'Sembunyikan Rincian' : 'Audit Rincian Biaya'}
                     </button>
                     
                     {showProviderBreakdown && (
-                      <div className="mt-5 space-y-4 animate-fade-in px-5 py-4 bg-gray-50 dark:bg-black/40 rounded-3xl border border-black/5 dark:border-white/5 shadow-inner">
+                      <div className="mt-5 space-y-4 animate-fade-in px-5 py-4 bg-black/15 rounded-3xl border border-white/15 shadow-inner">
                         <div className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
-                          <span className="text-gray-400">Premi Dasar</span>
-                          <span className="text-gray-900 dark:text-white font-mono">{formatIDR(premiumBreakdown?.basicPremium || 0)}</span>
+                          <span className="text-white/70">Premi Dasar</span>
+                          <span className="text-white font-mono">{formatIDR(premiumBreakdown?.basicPremium || 0)}</span>
                         </div>
                         <div className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
                           <span className="text-gray-400">Biaya Admin ({p.name})</span>
                           <span className="text-gray-900 dark:text-white font-mono">{formatIDR(p.adminFee || 0)}</span>
                         </div>
                         <div className="flex justify-between text-[0.65rem] font-black uppercase tracking-widest">
-                          <span className="text-gray-400">Biaya Materai OJK</span>
+                          <span className="text-white/70">Biaya Materai OJK</span>
                           <span className="text-gray-900 dark:text-white font-mono">{formatIDR(premiumBreakdown?.stampDuty || 0)}</span>
                         </div>
                       </div>
@@ -323,7 +337,7 @@ const StepProviders: React.FC<StepProvidersProps> = ({
 
                {isSelected && (
                   <div className="absolute top-0 right-0 p-6 pointer-events-none">
-                     <div className="w-10 h-10 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-2xl animate-pop-in border-4 border-white dark:border-gray-900">
+                     <div className="w-10 h-10 bg-white text-indigo-700 rounded-2xl flex items-center justify-center shadow-2xl animate-pop-in border-4 border-white dark:border-gray-900">
                         <Check size={22} strokeWidth={4}/>
                      </div>
                   </div>

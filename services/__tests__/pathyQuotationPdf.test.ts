@@ -8,7 +8,7 @@
 // Jalurnya sama dengan yang dipanggil tombol itu:
 //   fromAgentQuote(quotation) -> generateQuotationSlipPDF(slip)
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fromAgentQuote } from '../quotationSlipAdapter';
 
 /** Baris produksi, apa adanya. */
@@ -56,7 +56,12 @@ describe('adapter: quotation Pathy -> slip PDF', () => {
 });
 
 describe('generator PDF', () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    // Keep this unit test deterministic: decorative image requests must not depend on remote hosts.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
 
   it('menghasilkan PDF dari slip hasil adapter', async () => {
     const { generateQuotationSlipPDF } = await import('../quotationSlipPdf');

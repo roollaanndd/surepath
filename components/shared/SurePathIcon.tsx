@@ -1,4 +1,4 @@
-export type SurePathIconStyle = 'studio' | 'orbit' | 'bold';
+export type SurePathIconStyle = 'studio' | 'orbit' | 'bold' | 'illustrative';
 type Props = { id: string; size?: number; style?: SurePathIconStyle; className?: string; active?: boolean };
 
 /**

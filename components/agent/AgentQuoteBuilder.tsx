@@ -110,7 +110,7 @@ const calcPremium = (product: ProductType, inputs: any, addonState?: AddonState)
 
 const COMMISSION_RATE: Record<ProductType, number> = { CAR: 0.12, MOTORCYCLE: 0.12, TRAVEL: 0.15, PA: 0.20, MPAR: 0.15 };
 
-const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent, quoteOnly = false }) => {
+const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, agent }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const toast = useToast();
 

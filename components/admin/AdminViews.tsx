@@ -338,7 +338,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
   const [policies, setPolicies] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {

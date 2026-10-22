@@ -513,36 +513,43 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
       <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
 
-        {/* Responsive login hero; preserves existing authentication actions and official logo component */}
-        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 bg-white/75 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
-          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
+        {/* ── Satu kartu merek ────────────────────────────────────────────────
+            Dulu ini DUA elemen terpisah: kartu hero hijau, lalu blok logo
+            besar di bawahnya dengan wordmark "SurePath" lagi. Keduanya
+            menjual hal yang sama dua kali dan memakan ±320px sebelum formulir,
+            sehingga di layar ponsel kolom isian tenggelam di bawah lipatan.
+            Sekarang logo dan wordmark menjadi satu lockup di dalam kartu
+            hijaunya — separuh tingginya, tanpa kehilangan satu pun unsur
+            merek. */}
+        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
+          <div className="relative overflow-hidden p-5 sm:p-6" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
             <div aria-hidden="true" className="absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/15" />
             <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
             <div aria-hidden="true" className="absolute right-12 bottom-[-4.5rem] h-36 w-36 rounded-full bg-lime-300/20 blur-2xl" />
-            <div className="relative max-w-xs text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
-              <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
-              <p className="mt-2 text-xs leading-relaxed text-emerald-50/90 sm:text-sm">{t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="absolute -inset-6 rounded-full blur-3xl opacity-20" style={{ background: GRAD }} />
-            <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center sp-glass">
-              <SurePathLogo className="w-[3.6rem] h-[3.6rem] object-contain" />
+            <div className="relative flex items-center gap-3.5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/95 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.45)]">
+                <SurePathLogo className="h-10 w-10 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-white">
+                  Sure<span className="text-lime-300">Path</span>
+                </h1>
+                {(mode === 'LOGIN' || mode === 'REGISTER') && (
+                  <p className="mt-1.5 text-[0.6rem] font-bold uppercase tracking-[0.26em] text-emerald-100/85">
+                    {mode === 'REGISTER'
+                      ? t('Create your account', 'Buat akun kamu')
+                      : t('Welcome back', 'Selamat datang kembali')}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: '#0f172a' }}>
-              Sure<span style={{ background: 'linear-gradient(135deg,#059669,#16a34a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
-            </h1>
-            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(15,23,42,0.55)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
-              {mode === 'REGISTER'
-                ? t('Create your account', 'Buat akun kamu')
-                : t('Welcome back', 'Selamat datang kembali')}
+
+            <p className="relative mt-4 max-w-xs text-lg font-bold leading-tight tracking-tight text-white sm:text-xl">
+              {t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}
+            </p>
+            <p className="relative mt-1.5 hidden max-w-xs text-sm leading-relaxed text-emerald-50/90 sm:block">
+              {t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}
             </p>
           </div>
         </div>

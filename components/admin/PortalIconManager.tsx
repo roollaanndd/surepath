@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ImagePlus, Loader2, CheckCircle2, Search, Sparkles, Palette, RotateCcw } from 'lucide-react';
 import { getPortalIconMap, getPortalIconStyles, removePortalIcon, savePortalIcon, setPortalIconStyle, subscribePortalIconStyles, type PortalIconMap, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon, { type SurePathIconStyle } from '../shared/SurePathIcon';
+import SurePathIllustrationIcon from '../shared/SurePathIllustrationIcon';
 import SketchPngLibrary from './SketchPngLibrary';
 
 const ICONS = [
@@ -34,6 +35,7 @@ const STYLES: { id: SurePathIconStyle; title: string; desc: string }[] = [
   { id: 'studio', title: 'Studio', desc: 'Ilustrasi dimensional' },
   { id: 'orbit', title: 'Orbit', desc: 'Aksen orbit dinamis' },
   { id: 'bold', title: 'Bold', desc: 'Siluet tegas' },
+  { id: 'illustrative', title: 'Illustrative', desc: 'Flat cartoon, tanpa glossy' },
 ];
 
 export default function PortalIconManager() {
@@ -96,7 +98,7 @@ export default function PortalIconManager() {
             <div className="rounded-2xl border border-ds-border bg-ds-card2/70 p-3"><p className="text-[10px] sm:text-xs text-ds-ink3">Ikon kustom</p><p className="mt-1 text-2xl font-black text-ds-ink">{Object.keys(icons).length}</p></div>
           </div>
         </div>
-        <div className="relative mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">{STYLES.map((s,i)=><div key={s.id} className="group flex items-center gap-3 rounded-2xl border border-ds-border bg-ds-card/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"><div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${i===0?'bg-emerald-500/10':i===1?'bg-cyan-500/10':'bg-violet-500/10'}`}><SurePathIcon id="pathy" size={43} style={s.id}/></div><div><p className="font-extrabold text-sm text-ds-ink">{s.title}</p><p className="mt-0.5 text-xs text-ds-ink3">{s.desc}</p><p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-ds-green">Style 0{i+1}</p></div></div>)}</div>
+        <div className="relative mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">{STYLES.map((s,i)=><div key={s.id} className="group flex items-center gap-3 rounded-2xl border border-ds-border bg-ds-card/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"><div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${i===0?'bg-emerald-500/10':i===1?'bg-cyan-500/10':'bg-violet-500/10'}`}>{s.id === "illustrative" ? <SurePathIllustrationIcon id="pathy" size={43}/> : <SurePathIcon id="pathy" size={43} style={s.id}/>}</div><div><p className="font-extrabold text-sm text-ds-ink">{s.title}</p><p className="mt-0.5 text-xs text-ds-ink3">{s.desc}</p><p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-ds-green">Style 0{i+1}</p></div></div>)}</div>
       </header>
       <div className="rounded-[24px] border border-ds-border bg-ds-card p-4 sm:p-5 shadow-sm">
         <div className="flex flex-col xl:flex-row xl:items-center gap-3"><div className="relative flex-1 min-w-0"><Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ds-ink3"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari nama ikon atau ID..." className="w-full rounded-2xl border border-ds-border bg-ds-card2 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-ds-green focus:ring-4 focus:ring-ds-green/10"/></div><div className="flex items-center gap-2 text-xs text-ds-ink3"><span className="inline-flex h-2 w-2 rounded-full bg-ds-green"/>{filtered.length} ikon ditampilkan</div></div>

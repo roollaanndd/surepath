@@ -481,15 +481,23 @@ export const SecurityView = () => {
   const [sessionActivity, setSessionActivity] = useState<Array<{ hour: number; count: number }>>([]);
   const [secStats, setSecStats] = useState<{ failedLogins24h: number; activeSessionsCount: number; lastLoginAt: string | null; blockedEntries: Array<{ email: string; attempts: number; until: number }> } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [stats, activity] = await Promise.all([
-      getSecurityStats(),
-      getSessionActivityByHour(),
-    ]);
-    setSecStats(stats);
-    setSessionActivity(activity);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [stats, activity] = await Promise.all([
+        getSecurityStats(),
+        getSessionActivityByHour(),
+      ]);
+      setSecStats(stats);
+      setSessionActivity(activity);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Gagal memuat data keamanan.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -502,6 +510,14 @@ export const SecurityView = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative">
+       {loadError && (
+         <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 flex flex-wrap items-center justify-between gap-3">
+           <p className="text-sm text-red-600">Data keamanan gagal dimuat: {loadError}</p>
+           <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl border border-ds-border px-3 py-2 text-xs font-bold disabled:opacity-50">
+             {loading ? 'Memuat…' : 'Coba lagi'}
+           </button>
+         </div>
+       )}
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Login Gagal (24 jam)"

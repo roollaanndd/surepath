@@ -265,25 +265,23 @@ Deno.serve(async (req) => {
               p_description:    `Komisi order ${orderDetails.order_number ?? ''} telah dikreditkan`,
             });
 
-            // 2. Credit the base policy reward plus the CMS-configured tier bonus.
-            // coin_reward is calculated from product coin_rate at quote/order time;
-            // coin_bonus_rate is an additional percentage on top of that base reward.
+            // 2. Tier-based coin bonus for selling agent.
+            // The base coin reward is awarded by the Admin policy-issuance flow;
+            // this payment webhook only adds the configured tier bonus.
             const agentTierCfg = agentRow?.tier ? (TIER_CFG[agentRow.tier] ?? STANDARD_CFG) : STANDARD_CFG;
-            const baseCoins = Math.max(0, Math.floor(Number(orderDetails.coin_reward ?? 0)));
-            const bonusCoins = Math.max(0, Math.round(baseCoins * agentTierCfg.coinBonusRate));
-            const totalCoins = baseCoins + bonusCoins;
-            if (order.agent_id && totalCoins > 0) {
-              const { error: coinErr } = await supabase.from('sp_coin_ledger').insert({
-                agent_id:    order.agent_id,
-                coins:       totalCoins,
-                rp_value:    totalCoins * 1000,
-                type:        'EARNED',
-                order_id:    payment.order_id,
-                description: bonusCoins > 0
-                  ? `Reward ${baseCoins} + bonus tier ${agentRow?.tier ?? defaultCode} ${bonusCoins} koin – order ${orderDetails.order_number ?? ''}`
-                  : `Reward dasar ${baseCoins} koin – order ${orderDetails.order_number ?? ''}`,
-              });
-              if (coinErr) console.error('Coin reward credit failed:', coinErr.code ?? 'unknown');
+            if (orderDetails.coin_reward && orderDetails.coin_reward > 0 && agentTierCfg.coinBonusRate > 0) {
+              const bonusCoins = Math.round(orderDetails.coin_reward * agentTierCfg.coinBonusRate);
+              if (bonusCoins > 0) {
+                const { error: coinErr } = await supabase.from('sp_coin_ledger').insert({
+                  agent_id:    order.agent_id,
+                  coins:       bonusCoins,
+                  rp_value:    bonusCoins * 1000,
+                  type:        'EARNED',
+                  order_id:    payment.order_id,
+                  description: `Bonus koin tier ${agentRow?.tier} – order ${orderDetails.order_number ?? ''}`,
+                });
+                if (coinErr) console.error('Tier coin bonus credit failed:', coinErr.code ?? 'unknown');
+              }
             }
 
             // 3. L1 upline override (based on L1 upline's own tier)

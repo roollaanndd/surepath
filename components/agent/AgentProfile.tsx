@@ -256,6 +256,37 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
       )}
 
+      {tierDef && (
+        <section className="mx-5 mt-4 rounded-2xl border border-ds-border bg-ds-card p-4" aria-label={t('Agent tier details', 'Detail tier agen')}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style={{ color: tierDef.color || '#64748b', background: `${tierDef.color || '#64748b'}18` }}>
+              {tierDef.emoji || '✦'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3">{t('Your partner tier', 'Tier mitra Anda')}</p>
+              <p className="text-base font-black text-ds-ink">{tierDef.name}</p>
+            </div>
+            <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ color: tierDef.color || '#64748b', background: `${tierDef.color || '#64748b'}18` }}>
+              {tierDef.is_default ? t('Starting tier', 'Tier awal') : t('Active tier', 'Tier aktif')}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-ds-card2 p-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">{t('Coin bonus', 'Bonus koin')}</p>
+              <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((tierDef.coin_bonus_rate ?? 0) * 100)}%</p>
+            </div>
+            <div className="rounded-xl bg-ds-card2 p-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">L1</p>
+              <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((tierDef.l1_override_rate ?? 0) * 100)}%</p>
+            </div>
+            <div className="rounded-xl bg-ds-card2 p-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-ds-ink3">L2</p>
+              <p className="mt-1 text-sm font-black text-ds-ink">{Math.round((tierDef.l2_override_rate ?? 0) * 100)}%</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Marketing pendamping — read-only; penugasan hanya dari CMS. */}
       <AgentHandlerCard />
 

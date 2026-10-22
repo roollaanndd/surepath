@@ -1,5 +1,14 @@
 # SurePath — Changelog
 
+## v2.6.8 — 2026-10-22
+
+**Responsive UI, smooth motion, and warm orange accents.**
+
+- Added a restrained orange secondary accent while keeping emerald as the primary brand color; light and dark themes have coordinated tokens.
+- Refined authenticated portal interactions with quicker transitions, subtle hover/press feedback, visible touch targets, and less intrusive screen-entry motion.
+- Improved mobile form sizing, horizontal table scrolling, and small-screen overflow behavior.
+- Respects reduced-motion preferences and avoids changing business logic, pricing, authorization, or transaction rules.
+
 ## v2.6.7 — 2026-10-22
 
 **Revamp alur penawaran dan pembelian agen.**

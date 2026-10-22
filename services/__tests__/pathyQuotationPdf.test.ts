@@ -60,7 +60,7 @@ describe('generator PDF', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('menghasilkan PDF 4 halaman termasuk instruksi pembayaran', async () => {
-    const addPageSpy = vi.spyOn(jsPDF.prototype, 'addPage');
+    const addPageSpy = vi.spyOn(jsPDF.API, 'addPage');
     const { generateQuotationSlipPDF } = await import('../quotationSlipPdf');
     const slip = fromAgentQuote(PATHY_QUOTATION);
     await expect(generateQuotationSlipPDF(slip)).resolves.toBeUndefined();

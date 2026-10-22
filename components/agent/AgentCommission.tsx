@@ -281,9 +281,9 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className={`font-black text-sm ${isEarned ? 'text-ds-amber' : 'text-ds-red'}`}>
-                      {isEarned ? '+' : '-'}{entry.coins.toLocaleString('id-ID')} koin
+                      {isEarned ? '+' : '-'}{Math.abs(entry.coins).toLocaleString('id-ID')} koin
                     </p>
-                    <p className="text-[10px] text-ds-ink3 font-bold">{formatIDR(entry.rp_value)}</p>
+                    <p className="text-[10px] text-ds-ink3 font-bold">{formatIDR(Math.abs(entry.rp_value))}</p>
                   </div>
                 </div>
               );

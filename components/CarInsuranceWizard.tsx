@@ -333,9 +333,10 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
         premiumBreakdown.commissionRate,
       );
-      const coinReward = Math.round(
+      // Match the server/admin formula: coin_rate is a decimal rate and each 1,000 IDR of reward value yields 1 coin.
+      const coinReward = Math.floor(
         (premiumBreakdown.basicPremium + premiumBreakdown.expansionTotal) *
-        (selectedProduct.coin_rate ?? 0),
+        (selectedProduct.coin_rate ?? 0) / 1000,
       );
       const order = await createPolicyOrder({
         agent_id: currentUser?.id ?? '',

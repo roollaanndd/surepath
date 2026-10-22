@@ -9,7 +9,7 @@ import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { formatIDR } from '../car-wizard/WizardUI';
 import RenewalAlerts from './RenewalAlerts';
-import { getAgentCoinBalance } from '../../services/supabaseService';
+import { getAgentCoinBalance, getAgentOrders } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
 import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
@@ -28,14 +28,19 @@ interface Props {
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [coinBalance, setCoinBalance] = useState(0);
+  const [activeQuotesCount, setActiveQuotesCount] = useState(0);
   const reduce = useReducedMotion();
   const { tiers } = useTierDefinitions();
   const myTierDef = getTierByCode(tiers, agentTier);
 
   useEffect(() => {
-    if (agentId) {
-      getAgentCoinBalance(agentId).then(setCoinBalance);
-    }
+    if (!agentId) return;
+    getAgentCoinBalance(agentId).then(setCoinBalance).catch(() => {});
+    getAgentOrders(agentId)
+      .then(orders => setActiveQuotesCount(orders.filter(order =>
+        ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(order.status)
+      ).length))
+      .catch(error => console.error('Unable to load active agent quotes:', error));
   }, [agentId]);
 
   const monthlyTarget = agent?.monthly_target ?? 10000000;
@@ -84,14 +89,10 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   // Custom hand-drawn duotone icons (AgentIcons) — Stitch design system tiles
   const quickActions = [
-    { tab: 'quotes',       label: t('Quote', 'Penawaran'),  Ic: FilePlus2,   color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
-    { tab: 'clients',      label: t('Clients', 'Klien'),    Ic: UsersRound, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
-    { tab: 'claims',       label: t('Claims', 'Klaim'),     Ic: ShieldAlert,  color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
-    { tab: 'policy',       label: t('Policy', 'Polis'),     Ic: FileCheck2,  color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'    },
-    { tab: 'leaderboard',  label: t('Rank', 'Ranking'),     Ic: Trophy,    color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
-    { tab: 'network',      label: t('Network', 'Jaringan'), Ic: Network, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'  },
-    { tab: 'renewals',     label: t('Renewal', 'Renewal'),  Ic: RefreshCw, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)'   },
-    { tab: 'endorsements', label: t('Endorse', 'Endors'),   Ic: FilePenLine, color: 'text-ds-green',    tint: 'rgba(0,193,106,0.14)' },
+    { tab: 'quotes',  label: t('New quote', 'Penawaran'), Ic: FilePlus2, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
+    { tab: 'clients', label: t('Clients', 'Klien'),       Ic: UsersRound, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
+    { tab: 'claims',  label: t('Claims', 'Klaim'),        Ic: ShieldAlert, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
+    { tab: 'policy',  label: t('Policies', 'Polis'),      Ic: FileCheck2, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
   ];
 
   return (
@@ -187,7 +188,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           {/* Inline micro-stats — the only place coins/clients/policies live */}
           <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex">
             {[
-              { label: t('Coins', 'Koin'), value: coinBalance.toLocaleString('id-ID') },
+              { label: t('Active quotes', 'Penawaran berjalan'), value: String(activeQuotesCount) },
               { label: t('Clients', 'Klien'), value: String(stats.clientsCount) },
               { label: t('Policies', 'Polis'), value: String(stats.policiesCount) },
             ].map((s, i) => (

@@ -687,7 +687,7 @@ const AdminPortal = ({
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
         <aside className={`w-64 border-r flex flex-col p-6 flex-shrink-0 z-20 sp-glass-strong ${sidebarBg}`}>
-          <SidebarContent />
+          {SidebarContent()}
         </aside>
       )}
 
@@ -696,7 +696,7 @@ const AdminPortal = ({
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
           <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
-            <SidebarContent />
+            {SidebarContent()}
           </aside>
         </div>
       )}

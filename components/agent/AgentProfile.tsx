@@ -3,7 +3,7 @@ import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, 
   Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet,
-  AlertCircle, Camera, Building2, ChevronRight,
+  AlertCircle, Camera, Building2, ChevronRight, FileCheck2, Download,
 } from 'lucide-react';
 import { Language } from '../../types';
 import { APP_VERSION } from '../../src/version';
@@ -15,6 +15,8 @@ import {
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import AgentHandlerCard from './AgentHandlerCard';
+import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements';
+import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 
 interface Props {
@@ -35,6 +37,9 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   const [profile, setProfile] = useState<SpUser | null>(null);
   const [stats, setStats] = useState<AgentStats | null>(null);
+  const [agreement, setAgreement] = useState<SpAgentAgreement | null>(null);
+  const [agreementLoading, setAgreementLoading] = useState(true);
+  const [agreementDownloading, setAgreementDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,16 +79,22 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   useEffect(() => {
     if (!agentId) return;
-    Promise.all([getAgentProfile(agentId), getAgentStats(agentId)]).then(
-      ([prof, st]) => {
+    setAgreementLoading(true);
+    Promise.all([getAgentProfile(agentId), getAgentStats(agentId), getMyAgreement()]).then(
+      ([prof, st, signedAgreement]) => {
+        setAgreement(signedAgreement);
         if (prof) {
           setProfile(prof);
           setForm({ name: prof.name, phone: prof.phone, address: prof.address ?? '' });
         }
         setStats(statsProp ?? st);
         setLoading(false);
+        setAgreementLoading(false);
       },
-    );
+    ).catch(() => {
+      setLoading(false);
+      setAgreementLoading(false);
+    });
   }, [agentId, statsProp]);
 
   const handleSave = async () => {
@@ -264,6 +275,63 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
         <p className="text-[9px] text-ds-ink3 mt-2">Bagikan link ini untuk merekrut agen baru di bawah kamu.</p>
       </div>
+
+      {/* Partnership agreement — fetched from the signed agreement record for the authenticated agent. */}
+      <section className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden" aria-labelledby="agent-agreement-heading">
+        <div className="px-5 py-4 flex items-center gap-3 border-b border-ds-border">
+          <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center">
+            <FileCheck2 className="w-5 h-5 text-ds-green" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 id="agent-agreement-heading" className="text-sm font-black text-ds-ink">{t('Partnership Agreement', 'Perjanjian Mitra')}</h3>
+            <p className="text-xs text-ds-ink3 mt-0.5">{t('Your signed agreement record', 'Catatan perjanjian yang telah disetujui')}</p>
+          </div>
+          {agreement && <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-ds-green-tint text-ds-green">{t('RECORDED', 'TERCATAT')}</span>}
+        </div>
+        <div className="p-5">
+          {agreementLoading ? (
+            <div className="flex items-center gap-2 text-sm text-ds-ink3"><Loader2 className="w-4 h-4 animate-spin" />{t('Loading agreement…', 'Memuat agreement…')}</div>
+          ) : agreement ? (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">{t('Agreement number', 'Nomor agreement')}</p>
+              <p className="font-mono text-base font-black text-ds-green break-all">{agreement.agreement_no}</p>
+              <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-ds-ink3">
+                <span>{t('Version', 'Versi')}: {agreement.doc_version}</span>
+                <span>{t('Accepted', 'Disetujui')}: {agreement.accepted_at ? new Date(agreement.accepted_at).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</span>
+              </div>
+              <button
+                type="button"
+                disabled={agreementDownloading}
+                onClick={async () => {
+                  setAgreementDownloading(true);
+                  try {
+                    await generateAgreementPDF({
+                      agreementNo: agreement.agreement_no,
+                      docVersion: agreement.doc_version,
+                      fullName: agreement.full_name,
+                      ktpNumber: agreement.ktp_number,
+                      acceptedAt: agreement.accepted_at,
+                      agentEmail: profile?.email ?? agent?.email,
+                      agentPhone: profile?.phone ?? agent?.phone,
+                    });
+                  } finally {
+                    setAgreementDownloading(false);
+                  }
+                }}
+                className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-ds-border bg-ds-card2 px-4 py-3 text-sm font-bold text-ds-ink disabled:opacity-50"
+              >
+                {agreementDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {t('Download agreement PDF', 'Unduh PDF agreement')}
+              </button>
+            </>
+          ) : (
+            <div className="flex items-start gap-2 text-sm text-ds-ink3">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-ds-amber" />
+              <span>{t('No signed agreement was found for this account. If you have already accepted it, refresh the app or contact support.', 'Agreement yang sudah ditandatangani belum ditemukan untuk akun ini. Jika sudah menyetujui, muat ulang aplikasi atau hubungi dukungan.')}</span>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Document Status */}
       <div className="mx-5 mt-4 rounded-2xl sp-glass overflow-hidden">

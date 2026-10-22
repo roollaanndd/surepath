@@ -38,7 +38,7 @@ export async function getAgentCoinBalance(agentId: string, strict = false): Prom
     return 0;
   }
   return (data ?? []).reduce((sum: number, row: any) => {
-    return sum + (row.type === 'REDEEMED' ? -row.coins : row.coins);
+    return sum + (row.type === 'REDEEMED' ? -Math.abs(Number(row.coins) || 0) : Number(row.coins) || 0);
   }, 0);
 }
 

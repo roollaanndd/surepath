@@ -344,7 +344,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           </div>
         ) : undefined}
         unreadCount={unreadCount}
-        onBellClick={() => setShowNotifications(true)}
+        onBellClick={() => { setNotificationPopup(null); setShowNotifications(true); }}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
@@ -398,7 +398,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         />
       )}
 
-      {notificationPopup && !showNotifications && (
+      {notificationPopup && !showNotifications && !showOnboarding && (
         <div className="fixed right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-bottom-2"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.5rem)' }}
           role="status" aria-live="polite">

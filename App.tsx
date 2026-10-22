@@ -720,7 +720,6 @@ const App = () => {
             <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
           </Suspense>
         </PortalErrorBoundary>
-        <AppUpdateNotification />
       </>
     );
   }
@@ -745,7 +744,6 @@ const App = () => {
             <CustomerPortal currentUser={currentUser} onLogout={handleLogout} lang={lang} products={products} />
           </Suspense>
         </PortalErrorBoundary>
-        <AppUpdateNotification />
       </>
     );
   }
@@ -757,7 +755,6 @@ const App = () => {
           <HomePage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
         </Suspense>
         <InstallPrompt lang={lang} />
-        <AppUpdateNotification />
       </div>
     );
   }
@@ -778,7 +775,10 @@ import { ToastProvider, ConfirmDialogProvider } from './components/ui';
 const AppWithProviders: React.FC = () => (
   <ToastProvider>
     <ConfirmDialogProvider>
-      <App />
+      <>
+        <App />
+        <AppUpdateNotification />
+      </>
     </ConfirmDialogProvider>
   </ToastProvider>
 );

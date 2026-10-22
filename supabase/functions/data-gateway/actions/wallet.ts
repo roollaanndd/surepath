@@ -106,7 +106,7 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         const coins = Number(params.coins);
         if (!coins || coins <= 0) return json({ error: 'coins must be positive' }, 400);
         const { data: ledger } = await db.from('sp_coin_ledger').select('type, coins').eq('agent_id', caller.spUser.id);
-        const balance = (ledger ?? []).reduce((s: number, r: any) => s + (r.type === 'REDEEMED' ? -r.coins : r.coins), 0);
+        const balance = (ledger ?? []).reduce((s: number, r: any) => s + (r.type === 'REDEEMED' ? -Math.abs(Number(r.coins) || 0) : Number(r.coins) || 0), 0);
         if (balance < coins) return json({ error: 'Insufficient balance' }, 400);
         const { error } = await db.from('sp_coin_ledger').insert({
           agent_id: caller.spUser.id,

@@ -425,7 +425,8 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           serverCommissionRate = Math.min(Number(agentRow.commission_rate), 0.30); // cap at 30%
         }
         const computedCommission = Math.round(Number(p.total_premium ?? 0) * serverCommissionRate);
-        const computedCoinReward = Math.round(Number(p.total_premium ?? 0) * serverCoinRate);
+        // coin_rate is the reward-value rate; 1 coin represents Rp1,000 (matches admin fallback and ledger rp_value).
+        const computedCoinReward = Math.floor(Number(p.total_premium ?? 0) * serverCoinRate / 1000);
         insertRow.commission_amount = computedCommission;
         insertRow.commission_rate   = serverCommissionRate;
         insertRow.coin_reward       = computedCoinReward;

@@ -1,3 +1,4 @@
+// TypeScript JSX runtime is automatic; keep this file free of an unused React import.
 
 type Props = { id: string; size?: number; className?: string; active?: boolean };
 

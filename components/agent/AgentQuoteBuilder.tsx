@@ -132,6 +132,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [product, setProduct] = useState<ProductType | null>(null);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>(null);
   const [discountRate, setDiscountRate] = useState(0); // percent, capped at 15% for quote estimates
+  const [convertQuoteToPurchase, setConvertQuoteToPurchase] = useState(false);
 
   useEffect(() => { setLocalClients(clients); }, [clients]);
 
@@ -215,6 +216,14 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     }
   }, [draftRestoredForAgent, agentId, draftStorageKey, step, product, quoteMode, clientMode, selectedClientId, carInputs, addons, travelInputs, paInputs, mparInputs]);
 
+  const clientName = clientMode === 'select'
+    ? (localClients.find(c => c.id === selectedClientId)?.name ?? '')
+    : clientMode === 'new' ? newClient.name : onetimeName;
+
+  const clientId = clientMode === 'select'
+    ? selectedClientId
+    : clientMode === 'new' ? (createdClientId || undefined) : undefined;
+
   // Route OJK products to full underwriting wizard
   if (vehicleWizardType) {
     return (
@@ -224,7 +233,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         clients={localClients}
         lang={lang}
         initialVehicleType={vehicleWizardType}
-        initialQuote={quoteMode === 'beli' ? {
+        initialQuote={convertQuoteToPurchase ? {
           clientId,
           clientName,
           clientPhone: clientMode === 'new' ? newClient.phone : (localClients.find(client => client.id === clientId)?.phone ?? ''),
@@ -264,14 +273,6 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       />
     );
   }
-
-  const clientName = clientMode === 'select'
-    ? (localClients.find(c => c.id === selectedClientId)?.name ?? '')
-    : clientMode === 'new' ? newClient.name : onetimeName;
-
-  const clientId = clientMode === 'select'
-    ? selectedClientId
-    : clientMode === 'new' ? (createdClientId || undefined) : undefined;
 
   const currentInputs = (): any => {
     if (product === 'CAR' || product === 'MOTORCYCLE') return carInputs;
@@ -787,7 +788,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               return (
                 <button
                   key={p.type}
-                  onClick={() => { setProduct(p.type); setActiveProduct(null); }}
+                  onClick={() => { setProduct(p.type); setActiveProduct(null); setConvertQuoteToPurchase(false); }}
                   className={`p-5 rounded-xl border text-left transition-all active:scale-95 ${
                     active
                       ? 'border-2 border-emerald-500 bg-emerald-50'
@@ -851,7 +852,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 </div>
               </button>
               <button
-                  onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
+                  onClick={() => { setQuoteMode('beli'); setConvertQuoteToPurchase(false); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
                   className="w-full rounded-[1.5rem] overflow-hidden text-left active:scale-95 transition-all shadow-lg"
                 >
                   <div className="bg-gradient-to-r from-ds-green to-ds-green-dk p-5">
@@ -1259,7 +1260,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           </a>
 
           <button
-            onClick={() => { setQuoteMode('beli'); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
+            onClick={() => { setQuoteMode('beli'); setConvertQuoteToPurchase(true); setVehicleWizardType(product as 'CAR' | 'MOTORCYCLE'); }}
             className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all w-full flex items-center justify-center gap-2"
           >
             <ChevronRight size={14} />

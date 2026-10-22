@@ -39,6 +39,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
   onNeedsRoleSelection,
 }) => {
   type AuthMode = 'LOGIN' | 'REGISTER' | 'CHECK_EMAIL' | 'FORGOT_PASSWORD' | 'FORGOT_SENT' | 'EMAIL_OTP_VERIFY' | 'RESET_PASSWORD';
+
+  // Jeda sebelum "kirim ulang" boleh ditekan lagi. Supabase menolak permintaan
+  // email yang terlalu rapat dengan 429, dan tombol yang dulu menelan error itu
+  // membuat pendaftar menekannya berulang kali sampai kena batas per jam —
+  // persis yang terjadi pada pendaftaran 22 Okt 2026 01:02 (lihat log auth).
+  const RESEND_COOLDOWN_S = 60;
   const [mode, setMode] = useState<AuthMode>(initialMode as AuthMode);
   const [showPass, setShowPass]     = useState(false);
   const [loading, setLoading]       = useState(false);
@@ -46,9 +52,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const [error, setError]           = useState<string | null>(null);
   const [lang]                      = useState<Language>(initialLang);
   const [regRole, setRegRole]       = useState<UserRole | null>(null);
-  const [formData, setFormData]     = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData]     = useState({ name: '', email: '', phone: '', password: '' });
   const [showAgentOnboarding, setShowAgentOnboarding] = useState(false);
   const [otpCode, setOtpCode]       = useState('');
+  // Sisa detik sebelum "kirim ulang" aktif lagi, dan hasil pengiriman terakhir
+  // apa adanya — berhasil maupun gagal.
+  const [resendIn, setResendIn]     = useState(0);
+  const [resendMsg, setResendMsg]   = useState<string | null>(null);
   const [newPassword, setNewPass]   = useState('');
   const [showNewPass, setShowNewPass] = useState(false);
 
@@ -211,10 +221,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
       if (authErr || !data.user) {
         const msg = authErr?.message ?? '';
-        const friendlyError = msg.includes('Email not confirmed')
-          ? t('Please confirm your email first. Check your inbox.', 'Konfirmasi email kamu dulu. Cek kotak masuk.')
-          : msg.includes('Invalid login credentials')
-          ? t('Email or password is incorrect.', 'Email atau password salah.')
+        // Email belum dikonfirmasi bukan kesalahan login: antar langsung ke
+        // layar verifikasi, tempat kodenya bisa dimasukkan atau dikirim ulang.
+        if (msg.includes('Email not confirmed')) {
+          setOtpCode(''); setResendMsg(null); setError(null);
+          setMode('CHECK_EMAIL');
+          setLoading(false);
+          return;
+        }
+        const friendlyError = msg.includes('Invalid login credentials')
+          // Supabase memulangkan pesan yang sama untuk password salah DAN untuk
+          // akun yang belum terverifikasi, jadi keduanya disebut.
+          ? t(
+              'Email or password is incorrect. If you just registered, verify your email first.',
+              'Email atau password salah. Kalau kamu baru mendaftar, verifikasi emailmu dulu.',
+            )
           : msg || t('Login failed. Please try again.', 'Login gagal. Coba lagi.');
         setError(friendlyError);
         setLoading(false);
@@ -271,7 +292,12 @@ const AuthGate: React.FC<AuthGateProps> = ({
         // with the signup, which is the one thing that must survive the
         // email-confirmation round trip.
         options:  {
-          data: { name: formData.name, role: regRole, referral_code: refCode },
+          data: {
+            name: formData.name,
+            role: regRole,
+            ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
+            referral_code: refCode,
+          },
           // Where Supabase's confirmation link sends them back to. Without it
           // the link uses the dashboard Site URL, which silently breaks the
           // round trip if that is ever wrong. App.tsx already consumes the
@@ -299,7 +325,10 @@ const AuthGate: React.FC<AuthGateProps> = ({
       }
 
       if (!data.session) {
-        // Email confirmation required
+        // Email perlu dikonfirmasi — layar verifikasi menerima kode 6 digit,
+        // jadi pendaftar punya jalan maju tanpa menunggu klik link.
+        setOtpCode(''); setResendMsg(null);
+        setResendIn(RESEND_COOLDOWN_S);
         setMode('CHECK_EMAIL');
         setLoading(false);
         return;
@@ -314,12 +343,54 @@ const AuthGate: React.FC<AuthGateProps> = ({
   };
 
   // ── Resend confirmation email ─────────────────────────────────────────────
+  // Versi lama MENELAN setiap error (`.catch(() => {})`) lalu menampilkan
+  // "Terkirim!" apa pun hasilnya. Jadi ketika Supabase menolak dengan 429,
+  // pendaftar melihat pesan sukses palsu, menekan lagi, dan akhirnya menabrak
+  // batas email per jam — lalu tidak bisa melanjutkan sama sekali. Sekarang
+  // hasilnya ditampilkan apa adanya dan tombolnya terkunci selama hitung mundur.
   const handleResend = async () => {
-    if (!formData.email || resending) return;
+    if (!formData.email || resending || resendIn > 0) return;
     setResending(true);
-    await supabase.auth.resend({ type: 'signup', email: formData.email }).catch(() => {});
-    setTimeout(() => setResending(false), 5000);
+    setResendMsg(null);
+    const { error: e } = await supabase.auth.resend({
+      type: 'signup',
+      email: formData.email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+
+    if (!e) {
+      setResendMsg(t('Sent. Check your inbox and spam folder.', 'Terkirim. Cek kotak masuk dan folder spam.'));
+      setResendIn(RESEND_COOLDOWN_S);
+      return;
+    }
+
+    const msg = e.message ?? '';
+    // Supabase menyebut sisa detiknya di dalam pesan; pakai itu sebagai
+    // hitung mundur supaya pendaftar tahu kapan boleh mencoba lagi.
+    const detik = Number(/after (\d+) seconds?/i.exec(msg)?.[1] ?? 0);
+    if (/rate limit/i.test(msg) && !detik) {
+      setResendMsg(t(
+        'Too many emails requested for now. Please wait about an hour, or use the link from the email we already sent.',
+        'Permintaan email sudah terlalu banyak. Tunggu sekitar satu jam, atau pakai link dari email yang sudah kami kirim.',
+      ));
+      setResendIn(RESEND_COOLDOWN_S);
+      return;
+    }
+    if (detik) {
+      setResendMsg(t(`Please wait ${detik} seconds before requesting again.`, `Tunggu ${detik} detik sebelum minta lagi.`));
+      setResendIn(detik);
+      return;
+    }
+    setResendMsg(msg || t('Could not resend. Try again shortly.', 'Gagal mengirim ulang. Coba lagi sebentar.'));
   };
+
+  // Hitung mundur tombol kirim ulang.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = window.setInterval(() => setResendIn(s => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [resendIn > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Google OAuth ─────────────────────────────────────────────────────────
   const handleGoogleSignIn = async () => {
@@ -372,6 +443,26 @@ const AuthGate: React.FC<AuthGateProps> = ({
     await resolveAndLogin(data.session.user);
   };
 
+  // ── Verifikasi pendaftaran — kode 6 digit dari email konfirmasi ──────────
+  // Pendaftar dulu hanya diberi layar "Cek Email Kamu": kalau emailnya telat,
+  // masuk spam, atau kena batas kirim, tidak ada satu pun jalan maju dari
+  // dalam aplikasi. Sekarang kodenya bisa langsung diketik di sini.
+  const handleVerifySignup = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    setLoading(true); setError(null);
+    resolvedRef.current = false;
+    const { data, error: e } = await supabase.auth.verifyOtp({
+      email: formData.email,
+      token: otpCode,
+      type: 'signup',
+    });
+    if (e || !data.session?.user) {
+      setError(e?.message ?? t('Invalid or expired code.', 'Kode salah atau sudah kedaluwarsa.'));
+      setLoading(false); return;
+    }
+    await resolveAndLogin(data.session.user);
+  };
+
   // ── Reset password (after email link) ────────────────────────────────────
   const handleResetPassword = async (ev: React.FormEvent) => {
     ev.preventDefault(); setLoading(true); setError(null);
@@ -389,6 +480,15 @@ const AuthGate: React.FC<AuthGateProps> = ({
     return (
       <AgentOnboarding
         lang={lang}
+        // Data dari layar daftar diteruskan supaya calon mitra tidak mengetik
+        // nama/email/telepon/password untuk kedua kalinya.
+        initial={{ name: formData.name, email: formData.email, password: formData.password, phone: formData.phone }}
+        onNeedsVerification={(email) => {
+          setFormData(prev => ({ ...prev, email }));
+          setOtpCode(''); setError(null); setResendMsg(null);
+          setShowAgentOnboarding(false);
+          setMode('CHECK_EMAIL');
+        }}
         onBack={() => setShowAgentOnboarding(false)}
         onSuccess={(agent) => onAuthSuccess({ ...agent, supabaseId: agent.id })}
       />
@@ -413,36 +513,43 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
       <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
 
-        {/* Responsive login hero; preserves existing authentication actions and official logo component */}
-        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 bg-white/75 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
-          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
+        {/* ── Satu kartu merek ────────────────────────────────────────────────
+            Dulu ini DUA elemen terpisah: kartu hero hijau, lalu blok logo
+            besar di bawahnya dengan wordmark "SurePath" lagi. Keduanya
+            menjual hal yang sama dua kali dan memakan ±320px sebelum formulir,
+            sehingga di layar ponsel kolom isian tenggelam di bawah lipatan.
+            Sekarang logo dan wordmark menjadi satu lockup di dalam kartu
+            hijaunya — separuh tingginya, tanpa kehilangan satu pun unsur
+            merek. */}
+        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
+          <div className="relative overflow-hidden p-5 sm:p-6" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
             <div aria-hidden="true" className="absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/15" />
             <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
             <div aria-hidden="true" className="absolute right-12 bottom-[-4.5rem] h-36 w-36 rounded-full bg-lime-300/20 blur-2xl" />
-            <div className="relative max-w-xs text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
-              <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
-              <p className="mt-2 text-xs leading-relaxed text-emerald-50/90 sm:text-sm">{t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="absolute -inset-6 rounded-full blur-3xl opacity-20" style={{ background: GRAD }} />
-            <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center sp-glass">
-              <SurePathLogo className="w-[3.6rem] h-[3.6rem] object-contain" />
+            <div className="relative flex items-center gap-3.5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/95 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.45)]">
+                <SurePathLogo className="h-10 w-10 object-contain" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold leading-none tracking-tight text-white">
+                  Sure<span className="text-lime-300">Path</span>
+                </h1>
+                {(mode === 'LOGIN' || mode === 'REGISTER') && (
+                  <p className="mt-1.5 text-[0.6rem] font-bold uppercase tracking-[0.26em] text-emerald-100/85">
+                    {mode === 'REGISTER'
+                      ? t('Create your account', 'Buat akun kamu')
+                      : t('Welcome back', 'Selamat datang kembali')}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: '#0f172a' }}>
-              Sure<span style={{ background: 'linear-gradient(135deg,#059669,#16a34a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
-            </h1>
-            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(15,23,42,0.55)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
-              {mode === 'REGISTER'
-                ? t('Create your account', 'Buat akun kamu')
-                : t('Welcome back', 'Selamat datang kembali')}
+
+            <p className="relative mt-4 max-w-xs text-lg font-bold leading-tight tracking-tight text-white sm:text-xl">
+              {t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}
+            </p>
+            <p className="relative mt-1.5 hidden max-w-xs text-sm leading-relaxed text-emerald-50/90 sm:block">
+              {t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}
             </p>
           </div>
         </div>
@@ -454,24 +561,50 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <CheckCircle2 size={32} className="text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
-              <p className="text-sm text-slate-500 mb-6">
-                {t('We sent a confirmation link to ', 'Kami kirim link konfirmasi ke ')}
+              <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Verify your email', 'Verifikasi email kamu')}</h3>
+              <p className="text-sm text-slate-500 mb-1">
+                {t('Your account has been created for ', 'Akun kamu sudah dibuat untuk ')}
                 <span className="text-emerald-700 font-bold">{formData.email}</span>.
-                {t(' Click it to activate your account.', ' Klik untuk mengaktifkan akunmu.')}
+              </p>
+              <p className="text-sm text-slate-500 mb-5">
+                {t(
+                  'Open the email from us, then either enter the verification code below or click the link inside.',
+                  'Buka email dari kami, lalu masukkan kode verifikasinya di bawah, atau klik link di dalamnya.',
+                )}
               </p>
             </div>
+
+            {/* Jalan maju dari dalam aplikasi: ketik kodenya di sini. */}
+            <form onSubmit={handleVerifySignup} className="space-y-3">
+              <input
+                type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                aria-label={t('6-digit verification code', 'Kode verifikasi 6 digit')}
+                placeholder="· · · · · ·" value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full text-center py-4 bg-white border border-slate-200 rounded-2xl outline-none text-2xl font-black tracking-[0.5em] text-slate-900 placeholder:text-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 transition-all" />
+              {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
+              <button type="submit" disabled={loading || otpCode.length < 6}
+                className="w-full h-12 rounded-2xl text-white font-bold text-sm transition-all duration-150 disabled:opacity-40 flex items-center justify-center gap-2 active:scale-[0.98]"
+                style={{ background: GRAD, boxShadow: '0 12px 26px -10px rgba(5,150,105,0.55)' }}>
+                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>{t('Verify & Continue', 'Verifikasi & Lanjut')}<ArrowRight size={14} /></>}
+              </button>
+            </form>
+
+            {resendMsg && <p className="text-xs font-semibold text-slate-600 px-1" role="status">{resendMsg}</p>}
+
             <button
               onClick={handleResend}
-              disabled={resending}
+              disabled={resending || resendIn > 0}
               className="w-full py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-emerald-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)' }}
             >
               <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
-              {resending ? t('Sent!', 'Terkirim!') : t('Resend Email', 'Kirim Ulang Email')}
+              {resendIn > 0
+                ? t(`Resend in ${resendIn}s`, `Kirim ulang dalam ${resendIn} detik`)
+                : t('Resend email', 'Kirim ulang email')}
             </button>
             <button
-              onClick={() => setMode('LOGIN')}
+              onClick={() => { setMode('LOGIN'); setError(null); setOtpCode(''); setResendMsg(null); }}
               className="w-full h-10 rounded-xl text-slate-500 font-medium text-sm hover:text-emerald-700 transition-colors"
             >
               {t('Back to Login', 'Kembali ke Login')}
@@ -599,22 +732,46 @@ const AuthGate: React.FC<AuthGateProps> = ({
               </button>
             </div>
 
+            {/* ── Jalur tercepat, ditaruh paling atas ──────────────────────
+                Google sudah memverifikasi emailnya, jadi jalur ini TIDAK
+                mengirim email verifikasi sama sekali: tidak ada antrean SMTP,
+                tidak ada folder spam, tidak ada batas kirim per jam. Angkanya
+                di produksi (22 Okt 2026): 18 dari 18 pendaftar Google berhasil
+                masuk, sementara 5 dari 26 pendaftar email+password tidak
+                pernah berhasil. Dulu tombol ini terkubur DI BAWAH formulir
+                email, jadi jalur yang paling mungkin berhasil justru yang
+                paling tidak terlihat. */}
+            <div className="space-y-3">
+              <button onClick={handleGoogleSignIn} disabled={loading}
+                className="w-full h-14 rounded-2xl bg-white border-2 border-emerald-600/25 text-slate-800 font-bold flex items-center justify-center gap-3 shadow-[0_10px_30px_-12px_rgba(6,95,70,0.35)] hover:border-emerald-600/50 active:scale-[0.98] transition-all duration-150 disabled:opacity-40">
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span className="text-sm">{t('Continue with Google', 'Lanjut dengan Google')}</span>
+              </button>
+              <p className="text-center text-[0.7rem] font-semibold text-emerald-800/70">
+                {t('Fastest — no verification email needed', 'Paling cepat — tanpa perlu verifikasi email')}
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex-1 h-px bg-emerald-900/10" />
+                <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{t('Or use email', 'Atau pakai email')}</span>
+                <div className="flex-1 h-px bg-emerald-900/10" />
+              </div>
+            </div>
+
             <form onSubmit={mode === 'LOGIN' ? handleLogin : handleRegister} className="space-y-3">
 
               {mode === 'REGISTER' && (
                 <>
-                  <div className="relative">
-                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
-                    <input
-                      required
-                      placeholder={t('Full Name', 'Nama Lengkap')}
-                      aria-label={t('Full name', 'Nama lengkap')}
-                      autoComplete="name"
-                      className={inputCls}
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
+                  {/* Tipe akun ditanyakan DULU: ia menentukan kolom berikutnya
+                      dan tombol kirim, jadi menaruhnya di bawah membuat orang
+                      mengisi formulir lalu menemukan tombolnya mati. */}
+                  <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    {t('Register as', 'Daftar sebagai')}
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -633,6 +790,39 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       <Briefcase size={14} /> {t('Partner', 'Mitra')}
                     </button>
                   </div>
+
+                  <div className="relative">
+                    <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
+                    <input
+                      required
+                      placeholder={t('Full Name', 'Nama Lengkap')}
+                      aria-label={t('Full name', 'Nama lengkap')}
+                      autoComplete="name"
+                      className={inputCls}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Mitra wajib punya nomor telepon. Dulu kolom ini hanya ada
+                      di layar onboarding berikutnya, yang juga meminta ulang
+                      nama, email, dan password. */}
+                  {regRole === UserRole.AGENT && (
+                    <div className="relative">
+                      <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-700/50" />
+                      <input
+                        required
+                        type="tel"
+                        inputMode="tel"
+                        placeholder={t('Phone number', 'Nomor telepon')}
+                        aria-label={t('Phone number', 'Nomor telepon')}
+                        autoComplete="tel"
+                        className={inputCls}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
@@ -696,9 +886,22 @@ const AuthGate: React.FC<AuthGateProps> = ({
               )}
 
               {(error || externalError) && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs">
-                  <AlertCircle size={14} className="flex-shrink-0" />
-                  <span>{error ?? externalError}</span>
+                <div className="flex flex-col gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-700 text-xs">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={14} className="flex-shrink-0" />
+                    <span>{error ?? externalError}</span>
+                  </div>
+                  {/* Jalan keluar, bukan sekadar pesan: pendaftar yang emailnya
+                      belum terverifikasi bisa langsung ke layar verifikasi. */}
+                  {mode === 'LOGIN' && formData.email.trim() !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => { setOtpCode(''); setResendMsg(null); setError(null); setMode('CHECK_EMAIL'); }}
+                      className="self-start font-bold uppercase tracking-widest text-emerald-700 hover:text-emerald-800 transition-colors"
+                    >
+                      {t('Verify my email', 'Verifikasi email saya')}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -724,31 +927,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
               </button>
             </form>
 
-            {(mode === 'LOGIN' || mode === 'REGISTER') && (
-              <div className="space-y-3 mt-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-emerald-900/10" />
-                  <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
-                  <div className="flex-1 h-px bg-emerald-900/10" />
-                </div>
-                <button onClick={handleGoogleSignIn} disabled={loading}
-                  className="w-full h-12 rounded-2xl bg-white border border-emerald-900/10 text-slate-700 font-medium text-sm flex items-center justify-center gap-3 shadow-sm hover:border-emerald-500/30 active:scale-[0.98] transition-all duration-150 disabled:opacity-40">
-                  <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-widest">{mode === 'REGISTER' ? t('Sign up with Google', 'Daftar dengan Google') : t('Continue with Google', 'Lanjut dengan Google')}</span>
+            {mode === 'LOGIN' && (
+              <div className="mt-4">
+                <button onClick={handleSendEmailOtp} disabled={loading}
+                  className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-700 transition-all active:scale-[0.98] disabled:opacity-50"
+                  style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}>
+                  <Mail size={16} />
+                  <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                 </button>
-                {mode === 'LOGIN' && (
-                  <button onClick={handleSendEmailOtp} disabled={loading}
-                    className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-700 transition-all active:scale-[0.98] disabled:opacity-50"
-                    style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}>
-                    <Mail size={16} />
-                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
-                  </button>
-                )}
               </div>
             )}
           </div>

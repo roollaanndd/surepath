@@ -11,12 +11,27 @@ interface Props {
   onSuccess: (agent: any) => void;
   onBack: () => void;
   lang: Language;
+  /**
+   * Data yang SUDAH diketik pendaftar di layar daftar. Tanpa ini, langkah 1 di
+   * bawah menampilkan nama/email/password sebagai kolom kosong — jadi calon
+   * mitra mengetik data yang sama DUA KALI. Laporan pemilik, 22 Okt 2026.
+   * Kalau lengkap, langkah 1 dilewati dan hanya data tambahan yang diminta.
+   */
+  initial?: { name: string; email: string; password: string; phone?: string };
+  /**
+   * Dipanggil begitu akun auth dibuat tetapi emailnya belum dikonfirmasi,
+   * supaya layar verifikasi yang sama dengan pendaftaran nasabah yang tampil —
+   * satu layar verifikasi, bukan jalan buntu kedua di dalam komponen ini.
+   */
+  onNeedsVerification?: (email: string, password: string) => void;
 }
 
-const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
+const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang, initial, onNeedsVerification }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
-  const [step, setStep] = useState(1);
+  // Langkah 1 hanya berguna kalau datanya belum ada.
+  const prefilled = Boolean(initial?.name?.trim() && initial?.email?.trim() && initial?.password);
+  const [step, setStep] = useState(prefilled ? 2 : 1);
   const [checkEmail, setCheckEmail] = useState(false);
   // Without a resend path, an agent whose confirmation mail lands in spam
   // is stuck: they cannot sign in and cannot re-register the same address.
@@ -26,12 +41,12 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Step 1 fields
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Step 1 fields — disemai dari layar daftar bila sudah diisi di sana.
+  const [name, setName] = useState(initial?.name ?? '');
+  const [email, setEmail] = useState(initial?.email ?? '');
+  const [phone, setPhone] = useState(initial?.phone ?? '');
+  const [password, setPassword] = useState(initial?.password ?? '');
+  const [confirmPassword, setConfirmPassword] = useState(initial?.password ?? '');
 
   // Step 2 fields
   const [ktp, setKtp] = useState('');
@@ -120,8 +135,11 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
     // 2) Email confirmation required — profile will be created by
     // ensure_profile (from the metadata above) on their first login.
     if (!data.session) {
-      setCheckEmail(true);
       setLoading(false);
+      // Layar verifikasi bersama (kode 6 digit + kirim ulang yang jujur) kalau
+      // induknya menyediakannya; layar di bawah hanya cadangan.
+      if (onNeedsVerification) { onNeedsVerification(email, password); return; }
+      setCheckEmail(true);
       return;
     }
 
@@ -150,7 +168,8 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
-            onClick={step === 1 ? onBack : () => setStep(1)}
+            onClick={step === 1 || prefilled ? onBack : () => setStep(1)}
+            aria-label={t('Back', 'Kembali')}
             className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 mb-6"
           >
             <ChevronLeft size={18} />
@@ -160,14 +179,16 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               {t('Partner Registration', 'Daftar Mitra')}
             </h1>
             <p className="text-sm text-gray-400 mb-8">
-              {t(`Step ${step} of 2`, `Langkah ${step} dari 2`)}
+              {prefilled
+                ? t('Last step — a few more details', 'Langkah terakhir — tinggal data tambahan')
+                : t(`Step ${step} of 2`, `Langkah ${step} dari 2`)}
             </p>
           </div>
         </div>
 
         {/* Progress indicator */}
         <div className="flex gap-2">
-          {[1, 2].map((s) => (
+          {(prefilled ? [2] : [1, 2]).map((s) => (
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
@@ -330,6 +351,26 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   {t('Optional details to complete your partner profile.', 'Detail opsional untuk melengkapi profil mitra Anda.')}
                 </p>
               </div>
+
+              {/* Data yang sudah diisi di layar daftar — ditampilkan supaya
+                  jelas tidak perlu diketik ulang. */}
+              {prefilled && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1.5">
+                  <p className="text-[0.7rem] font-bold uppercase tracking-widest text-gray-500">
+                    {t('Your details', 'Data kamu')}
+                  </p>
+                  <p className="text-sm font-semibold text-white">{name}</p>
+                  <p className="text-sm text-emerald-400">{email}</p>
+                  {phone && <p className="text-sm text-gray-400">{phone}</p>}
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="pt-1 text-[0.7rem] font-bold uppercase tracking-widest text-gray-400 hover:text-emerald-400 transition-colors"
+                  >
+                    {t('Edit', 'Ubah')}
+                  </button>
+                </div>
+              )}
 
               {/* KTP */}
               <div className="relative">

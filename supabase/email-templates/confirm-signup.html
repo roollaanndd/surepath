@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konfirmasi Pendaftaran SurePath</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .wrapper { max-width: 520px; margin: 0 auto; padding: 40px 16px; }
+    .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 24px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #0d2b1a 0%, #0a1f12 100%); padding: 36px 32px 28px; text-align: center; border-bottom: 1px solid #1e3a25; }
+    .logo-ring { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 18px; background: rgba(6,224,0,0.08); border: 1.5px solid rgba(6,224,0,0.25); margin-bottom: 14px; }
+    .logo-svg { width: 36px; height: 36px; }
+    .brand { font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.04em; }
+    .brand span { color: #06e000; }
+    .tagline { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.25em; text-transform: uppercase; margin-top: 4px; }
+    .body { padding: 32px 32px 24px; }
+    .greeting { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+    .headline { font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 20px; }
+    .otp-box { background: #0d1f10; border: 1.5px solid rgba(6,224,0,0.3); border-radius: 16px; padding: 22px; text-align: center; margin-bottom: 24px; }
+    .otp-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.25em; margin-bottom: 10px; }
+    .otp-code { font-size: 38px; font-weight: 900; color: #06e000; letter-spacing: 0.25em; font-variant-numeric: tabular-nums; }
+    .otp-expiry { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 8px; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider-line { flex: 1; height: 1px; background: #2a2a2a; }
+    .divider-text { font-size: 10px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.2em; white-space: nowrap; }
+    .cta-btn { display: block; width: 100%; text-align: center; background: #06e000; color: #030f00; text-decoration: none; font-size: 13px; font-weight: 800; padding: 15px 24px; border-radius: 14px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .cta-sub { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
+    .security-note { background: #1a1a1a; border-left: 3px solid rgba(6,224,0,0.3); border-radius: 0 8px 8px 0; padding: 12px 16px; margin-top: 24px; }
+    .security-note p { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+    .security-note strong { color: rgba(255,255,255,0.55); }
+    .footer { padding: 20px 32px 28px; border-top: 1px solid #1e1e1e; text-align: center; }
+    .footer p { font-size: 11px; color: rgba(255,255,255,0.2); line-height: 1.7; }
+    .footer a { color: rgba(6,224,0,0.6); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="logo-ring">
+          <svg class="logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 4L32 10V20C32 27.2 26.8 33.9 20 36C13.2 33.9 8 27.2 8 20V10L20 4Z" fill="rgba(6,224,0,0.15)" stroke="#06e000" stroke-width="1.5"/>
+            <path d="M15 20L18.5 23.5L25 17" stroke="#06e000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand">Sure<span>Path</span></div>
+        <div class="tagline">Asuransi Digital Terpercaya</div>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <p class="greeting">Halo! Terima kasih sudah mendaftar di SurePath.</p>
+        <p class="headline">Kode verifikasi pendaftaran kamu</p>
+
+        <!-- OTP Code -->
+        <div class="otp-box">
+          <div class="otp-label">Kode Verifikasi</div>
+          <div class="otp-code">{{ .Token }}</div>
+          <div class="otp-expiry">Berlaku 10 menit &nbsp;·&nbsp; Jangan bagikan ke siapapun</div>
+        </div>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <div class="divider-text">atau langsung klik tombol ini</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- Magic link button -->
+        <a href="{{ .ConfirmationURL }}" class="cta-btn">Konfirmasi Email Saya &rarr;</a>
+        <p class="cta-sub">Tombol di atas berlaku sekali dan akan kedaluwarsa dalam 10 menit.</p>
+
+        <!-- Security note -->
+        <div class="security-note">
+          <p>
+            <strong>Kamu tidak mendaftar?</strong> Abaikan email ini — tanpa konfirmasi, akunnya tidak akan aktif.
+            Jangan pernah memberikan kode ini kepada siapapun, termasuk tim SurePath.
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          Email ini dikirim oleh <strong style="color:rgba(255,255,255,0.4)">SurePath</strong> ke <strong style="color:rgba(255,255,255,0.4)">{{ .Email }}</strong><br/>
+          &copy; 2025 SurePath &nbsp;·&nbsp; <a href="https://myinsurepath.com">myinsurepath.com</a><br/>
+          <span style="color:rgba(255,255,255,0.1)">Pesan ini dibuat otomatis, mohon tidak membalas email ini.</span>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

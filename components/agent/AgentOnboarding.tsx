@@ -177,6 +177,20 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           ))}
         </div>
 
+        {step === 2 && !checkEmail && (
+          <div className="mt-4 mb-4 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-emerald-300 mb-2">
+              {t('What happens next', 'Langkah berikutnya')}
+            </p>
+            <div className="space-y-2 text-xs leading-relaxed text-gray-300">
+              <p className="flex gap-2"><span className="text-emerald-400 font-bold">1.</span>{t('Finish your registration details.', 'Selesaikan data pendaftaran.')}</p>
+              <p className="flex gap-2"><span className="text-emerald-400 font-bold">2.</span>{t('Confirm your email if prompted, then sign in.', 'Konfirmasi email jika diminta, lalu masuk.')}</p>
+              <p className="flex gap-2"><span className="text-emerald-400 font-bold">3.</span>{t('Review and accept the partner agreement; your agreement number will be saved to your account.', 'Baca dan setujui perjanjian mitra; nomor agreement akan disimpan ke akun Anda.')}</p>
+              <p className="flex gap-2"><span className="text-emerald-400 font-bold">4.</span>{t('Complete the app introduction and check your verification status in Profile.', 'Selesaikan pengenalan aplikasi dan cek status verifikasi di Profil.')}</p>
+            </div>
+          </div>
+        )}
+
         {/* Card */}
         <div className="bg-white/5 rounded-2xl border border-white/10 p-8">
 

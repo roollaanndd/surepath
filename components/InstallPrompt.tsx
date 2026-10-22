@@ -104,17 +104,17 @@ const InstallPrompt: React.FC<Props> = ({ lang }) => {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-          {t('Versi baru tersedia', 'New version available')}
+          {t('Update SurePath tersedia', 'SurePath update available')}
         </p>
         <p className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-          v{APP_VERSION} · {t('Muat ulang untuk memperbarui', 'Reload to update')}
+          v{APP_VERSION} · {t('Buka ulang aplikasi untuk memperbarui', 'Reopen the app to update')}
         </p>
       </div>
       <button
         onClick={() => { setInstalledVersion(APP_VERSION); window.location.reload(); }}
         className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider active:scale-95 transition-transform shrink-0"
       >
-        {t('Perbarui', 'Update')}
+        {t('Buka ulang', 'Reopen')}
       </button>
       <button onClick={() => setShowUpdate(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 shrink-0" aria-label={t('Tutup', 'Close')}>
         <X size={14} />

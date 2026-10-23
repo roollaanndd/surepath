@@ -48,7 +48,12 @@
   --ds-warning:      #F59E0B;  --ds-warning-tint: #FEF3C7;
   --ds-danger:       #EF4444;  --ds-danger-tint:  #FEE2E2;
   --ds-info:         #3B82F6;  --ds-info-tint:    #DBEAFE;
-  --ds-accent:       #7C3AED;  --ds-accent-tint:  #EDE9FE;
+  /* Warm secondary accent: use sparingly for highlights, selected states and visual rhythm. */
+  --ds-orange:       #F97316;
+  --ds-orange-hover: #EA580C;
+  --ds-orange-tint:  #FFF1E6;
+  --ds-accent:       var(--ds-orange);
+  --ds-accent-tint:  var(--ds-orange-tint);
 
   /* ── Legacy aliases (preserve for backward compat) ──────────────────── */
   --ds-card:         var(--ds-surface);
@@ -106,7 +111,11 @@
   --ds-warning-tint:   #3D2E0A;
   --ds-danger-tint:    #3D0A1A;
   --ds-info-tint:      #0A1E3D;
-  --ds-accent-tint:    #1E1040;
+  --ds-orange:         #FF9B54;
+  --ds-orange-hover:   #FFB47D;
+  --ds-orange-tint:    #3B2418;
+  --ds-accent:         var(--ds-orange);
+  --ds-accent-tint:    var(--ds-orange-tint);
 
   /* ── Legacy aliases follow the new values automatically ─────────────── */
 }

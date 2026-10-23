@@ -381,16 +381,23 @@ const B2BAdminView: React.FC = () => {
   const [b2bSubs, setB2bSubs] = useState<SpB2BSubmission[]>([]);
   const [lifeApps, setLifeApps] = useState<SpLifeApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [b2bFilter, setB2bFilter] = useState('ALL');
   const [lifeFilter, setLifeFilter] = useState('ALL');
   const [toast, setToast] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [subs, apps] = await Promise.all([getAllB2BSubmissions(), getAllLifeApplications()]);
-    setB2bSubs(subs);
-    setLifeApps(apps);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const [subs, apps] = await Promise.all([getAllB2BSubmissions(), getAllLifeApplications()]);
+      setB2bSubs(subs);
+      setLifeApps(apps);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Gagal memuat pengajuan B2B dan aplikasi jiwa.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -426,6 +433,14 @@ const B2BAdminView: React.FC = () => {
 
       {/* Content */}
       <div className="px-5 pb-8 space-y-3">
+        {loadError && (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+            <span><strong>Data belum berhasil dimuat.</strong> {loadError}</span>
+            <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-current px-3 py-2 font-semibold">
+              <RefreshCw size={14} /> Coba lagi
+            </button>
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-ds-ink3 text-sm gap-2">
             <RefreshCw size={16} className="animate-spin" /> Loading…

@@ -337,9 +337,13 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
   const [users, setUsers] = useState<any[]>([]);
   const [policies, setPolicies] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+        setLoading(true);
+        setLoadError(null);
         // Real data from Supabase via data-gateway (was reading empty local IndexedDB)
         const [usersRes, polRes, commRes] = await Promise.all([
           callGateway('admin_list_users', { limit: 500 }),
@@ -374,12 +378,13 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
            setUsers(allUsers);
         }
     };
-    fetchData().catch(() => {});
+    fetchData().catch((error) => setLoadError(error instanceof Error ? error.message : 'Gagal memuat data operasional.')).finally(() => setLoading(false));
   }, [section]);
 
   if (section === 'transactions') {
      return (
         <div className="space-y-8 animate-fade-in">
+           {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <Card>
               <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
               <div className="space-y-4">
@@ -407,6 +412,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
 
   return (
   <div className="space-y-8 animate-fade-in">
+    {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
     {isDashboard && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-emerald-500" />
@@ -481,15 +487,23 @@ export const SecurityView = () => {
   const [sessionActivity, setSessionActivity] = useState<Array<{ hour: number; count: number }>>([]);
   const [secStats, setSecStats] = useState<{ failedLogins24h: number; activeSessionsCount: number; lastLoginAt: string | null; blockedEntries: Array<{ email: string; attempts: number; until: number }> } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [stats, activity] = await Promise.all([
-      getSecurityStats(),
-      getSessionActivityByHour(),
-    ]);
-    setSecStats(stats);
-    setSessionActivity(activity);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [stats, activity] = await Promise.all([
+        getSecurityStats(),
+        getSessionActivityByHour(),
+      ]);
+      setSecStats(stats);
+      setSessionActivity(activity);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Gagal memuat data keamanan.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -502,6 +516,14 @@ export const SecurityView = () => {
 
   return (
     <div className="space-y-8 animate-fade-in relative">
+       {loadError && (
+         <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 flex flex-wrap items-center justify-between gap-3">
+           <p className="text-sm text-red-600">Data keamanan gagal dimuat: {loadError}</p>
+           <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl border border-ds-border px-3 py-2 text-xs font-bold disabled:opacity-50">
+             {loading ? 'Memuat…' : 'Coba lagi'}
+           </button>
+         </div>
+       )}
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Login Gagal (24 jam)"
@@ -620,10 +642,12 @@ interface LedgerTx { id: string; date: string; type: string; amount: number; sta
 export const LedgerView = () => {
     const [txs, setTxs] = useState<LedgerTx[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         const load = async () => {
             setLoading(true);
+            setLoadError(null);
             // Real ledger from Supabase (payments in, commissions + withdrawals out) — was empty local IndexedDB
             const [payments, withdrawals, commRes] = await Promise.all([
                 getAdminPayments(200),
@@ -673,9 +697,8 @@ export const LedgerView = () => {
 
             list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setTxs(list);
-            setLoading(false);
         };
-        load().catch(() => setLoading(false));
+        load().catch((error) => setLoadError(error instanceof Error ? error.message : 'Gagal memuat buku besar.')).finally(() => setLoading(false));
     }, []);
 
     const convert = (val: number) => {
@@ -697,6 +720,7 @@ export const LedgerView = () => {
 
     return (
         <div className="space-y-8 animate-fade-in text-white">
+           {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat buku besar: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
               <div>
                  <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-emerald-500">Besar</span></h2>

@@ -1,5 +1,42 @@
 # SurePath — Changelog
 
+## v2.6.8 — 2026-10-22
+
+**Responsive UI, smooth motion, and warm orange accents.**
+
+- Added a restrained orange secondary accent while keeping emerald as the primary brand color; light and dark themes have coordinated tokens.
+- Refined authenticated portal interactions with quicker transitions, subtle hover/press feedback, visible touch targets, and less intrusive screen-entry motion.
+- Improved mobile form sizing, horizontal table scrolling, and small-screen overflow behavior.
+- Respects reduced-motion preferences and avoids changing business logic, pricing, authorization, or transaction rules.
+
+## v2.6.7 — 2026-10-22
+
+**Revamp alur penawaran dan pembelian agen.**
+
+- Kartu tier yang besar dipindahkan dari beranda ke bagian Profil; beranda tetap menampilkan badge tier yang ringkas.
+- Alur produk agen menampilkan pilihan Buat Penawaran atau Beli Langsung sebelum input untuk produk non-kendaraan; pembelian langsung diarahkan ke wizard produk.
+- Penawaran kendaraan kini membawa data klien, kendaraan, coverage, perluasan, dan diskon ke wizard pembelian sehingga agen hanya melengkapi data yang belum tersedia.
+- Form penawaran menambahkan diskon estimasi (maksimum 15%); diskon final tetap tunduk pada batas produk/insurer dan persetujuan.
+- PWA version badge dan update notification menggunakan versi 2.6.7.
+
+## v2.6.6 — 2026-10-22
+
+**Keandalan dashboard keamanan admin.**
+
+- Dashboard keamanan kini menangani kegagalan pemuatan dan menampilkan pesan serta tombol coba lagi; polling tidak lagi membiarkan rejection tidak tertangani.
+- Analytics mempertahankan label periode GWP berbasis tahun-bulan dan tidak menampilkan Claims Ratio sebelum denominator premi tervalidasi tersedia.
+- Pemeriksaan akses action server tetap perlu diuji dengan akun tiap role; perubahan ini bukan sertifikasi keamanan menyeluruh.
+
+
+## v2.6.5 — 2026-10-22
+
+**Perbaikan akurasi analytics admin.**
+
+- Tren GWP enam bulan memakai kunci tahun-bulan, sehingga Januari dari tahun berbeda tidak tercampur dan label periode menunjukkan tahun.
+- Claims Ratio ditampilkan `N/A` sampai denominator premi yang sebanding dan tervalidasi tersedia; mencegah persentase menyesatkan dari baris klaim saja.
+- Ini perubahan frontend analytics; definisi dan query denominator server masih memerlukan validasi bisnis sebelum rasio dapat diaktifkan kembali.
+
+
 ## v2.6.4 — 2026-10-22
 
 **Notifikasi update aplikasi dan konsistensi versi.**

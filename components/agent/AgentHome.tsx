@@ -103,7 +103,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   ];
 
   return (
-    <div className="bg-ds-bg min-h-screen pb-28">
+    <div className="sp-agent-home bg-ds-bg min-h-screen pb-28">
       <PromoBanner />
 
       {savedDraftProduct && (
@@ -118,7 +118,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       )}
 
       {/* Greeting */}
-      <motion.div className="px-5 pt-10 pb-2 sm:pt-12" {...reveal(0)}>
+      <motion.div className="sp-agent-home__greeting px-5 pt-8 pb-2 sm:pt-10" {...reveal(0)}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-ds-ink3 font-medium">{greeting()},</p>
@@ -144,7 +144,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </motion.div>
 
       {/* Commission Hero — premium bank-card look, the focal point of the screen */}
-      <motion.div className="px-5 pt-3 sm:pt-4" {...reveal(1)}>
+      <motion.div className="sp-agent-home__commission px-5 pt-3 sm:pt-4" {...reveal(1)}>
         <AgentArtKeyframes />
         <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)', boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)' }}>
           {/* glow + fine card pattern */}
@@ -281,7 +281,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </motion.div>
 
       {/* Quick Actions — floating white tiles with custom duotone icons */}
-      <motion.div className="px-5 mt-7" {...reveal(5)}>
+      <motion.div className="sp-agent-home__quick-actions px-5 mt-7" {...reveal(5)}>
         <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
         <div className="grid grid-cols-4 gap-3">
           {quickActions.map((action) => (
@@ -299,7 +299,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       </motion.div>
 
       {/* Recent Commissions */}
-      <motion.div className="px-5 mt-7" {...reveal(6)}>
+      <motion.div className="sp-agent-home__commissions px-5 mt-7" {...reveal(6)}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
           <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('View All', 'Semua')}</button>

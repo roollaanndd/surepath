@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs && node scripts/check-dist-clean.mjs && node scripts/check-pwa-build.mjs",
+    "seo:sitemap": "tsx scripts/generate-sitemap.mjs",
+    "build": "npm run seo:sitemap && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs && node scripts/check-dist-clean.mjs && node scripts/check-pwa-build.mjs",
     "start": "node build-server/server.cjs",
     "preview": "vite preview",
     "lint": "node scripts/check-edge-functions.mjs && tsc --noEmit && eslint . && vitest run",

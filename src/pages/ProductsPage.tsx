@@ -34,10 +34,11 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
-                <button
+                <a
+                  href={`/product/${p.slug}`}
                   className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left h-full min-h-[240px] flex flex-col"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow, ['--spx-accent' as string]: p.color }}
-                  onClick={() => navigate(`/product/${p.slug}`)} aria-label={p.name}>
+                  style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow, ['--spx-accent' as string]: p.color, textDecoration: 'none', color: 'inherit' }}
+                  onClick={e => { e.preventDefault(); navigate(`/product/${p.slug}`); }} aria-label={p.name}>
                   {/* Color gradient header */}
                   <div className="flex items-center justify-center flex-shrink-0"
                     style={{ height: 72, background: `linear-gradient(135deg, ${p.color}20 0%, ${p.color}08 100%)` }}>
@@ -63,7 +64,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                       <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                </button>
+                </a>
               </Reveal>
             ))}
 
@@ -119,11 +120,11 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                   </ul>
                 </div>
                 <div className="shrink-0">
-                  <button onClick={() => navigate('/kalkulator')}
+                  <a href="/kalkulator" onClick={e => { e.preventDefault(); navigate('/kalkulator'); }}
                     className="flex items-center gap-2.5 px-8 py-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95"
-                    style={{ background: accent, color: '#ffffff' }}>
+                    style={{ background: accent, color: '#ffffff', textDecoration: 'none' }}>
                     <Shield size={16} /> {t('Hitung Premi Gratis', 'Calculate Free')}
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>

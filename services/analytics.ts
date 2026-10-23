@@ -102,6 +102,30 @@ export function track(event: AnalyticsEvent, params?: Record<string, unknown>): 
  * Set the user ID for all subsequent events. Call once on login/signup.
  * Also sets Sentry user context so errors are attributable.
  */
+/**
+ * Send a GA4 page_view for an SPA route change.
+ *
+ * index.html configures gtag with `send_page_view: true`, which fires exactly
+ * once — on the initial document load. The app is a client-rendered SPA on a
+ * pathname router, so every later navigation changed the URL and the title
+ * without GA4 ever hearing about it: all traffic was attributed to the landing
+ * URL and no marketing page had its own pageviews. Called from App.tsx on the
+ * same route-change effect that applies the document head, so the title it
+ * reports is the one the route actually set.
+ */
+export function trackPageView(path: string): void {
+  try {
+    if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+    window.gtag('event', 'page_view', {
+      page_path: path,
+      page_location: window.location.href,
+      page_title: document.title,
+    });
+  } catch (e) {
+    console.warn('[analytics] trackPageView failed:', e);
+  }
+}
+
 export function setUserId(userId: string, extra?: Record<string, unknown>): void {
   try {
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {

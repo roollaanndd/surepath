@@ -1,5 +1,67 @@
 # SurePath — Changelog
 
+## v2.7.0 — 2026-10-23
+
+**SEO: halaman yang bisa ditemukan, ditautkan, dan diukur.**
+
+- Artikel blog akhirnya memakai URL-nya. `BlogPage` memilih artikel dari state
+  React tanpa `pushState`, jadi membuka artikel dari `/blog` tidak mengubah
+  pathname: router tidak pernah berjalan ulang, `resolveSeo()` tidak pernah
+  melihat path artikel, dan kelima artikel diindeks serta dibagikan memakai
+  judul, deskripsi, dan JSON-LD halaman daftar. Metadata per artikel di
+  `src/seo/seo.ts` sudah ditulis sejak awal tapi tidak pernah terjangkau.
+  Sekarang artikel ditentukan URL, dan kartunya berupa `<a href>`.
+- Footer, menu mobile, kartu produk, dan kartu blog menjadi tautan sebenarnya.
+  Sebelumnya semuanya `<button onClick={navigate})`, sehingga hanya ada 7 tautan
+  yang bisa dirayapi di seluruh situs dan 19 dari 24 URL — termasuk `/kalkulator`
+  dan keenam halaman produk — tidak punya satu pun tautan internal masuk. Mesin
+  pencari hanya menemukannya dari sitemap, tanpa anchor text. Perilaku SPA tidak
+  berubah: `preventDefault()` lalu `navigate()`, sama seperti nav desktop yang
+  sudah memakai pola ini. Ini sekaligus memperbaiki aksesibilitas — tautan bisa
+  dibuka di tab baru dan diumumkan sebagai tautan, bukan tombol.
+- Trailing slash tidak lagi men-`noindex` halaman yang seharusnya diindeks.
+  `App.tsx` mengirim `currentPath` mentah ke `resolveSeo()` sementara normalisasi
+  trailing slash-nya dilakukan terpisah saat render, jadi `/products/` menampilkan
+  halaman yang benar lalu jatuh ke cabang path-tak-dikenal dan menyajikan
+  `noindex`. Normalisasi sekarang ada di dalam `resolveSeo()`, dan
+  `trailingSlash: false` di `vercel.json` membuat `/products/` dialihkan ke
+  `/products` sehingga satu halaman tidak lagi punya dua URL.
+- `hreflang` mengikuti canonical. `upsertLink()` mencocokkan hanya berdasarkan
+  `rel`, sedangkan `index.html` mendeklarasikan dua `rel="alternate"`; akibatnya
+  canonical diperbarui per halaman tapi alternate tetap menunjuk `/` — sinyal
+  yang saling bertentangan di 23 dari 24 halaman.
+- FAQ beranda tidak lagi bocor ke setiap rute. `@graph` statis di `index.html`
+  tidak pernah dibongkar saat navigasi, jadi `/privacy` dan semua halaman produk
+  membawa `FAQPage` beranda bersama schema mereka sendiri. FAQ-nya pindah ke
+  descriptor `HOME` di `seo.ts`, dikelola seperti JSON-LD halaman lain.
+  `index.html` menyimpan empat node yang memang berlaku site-wide.
+- `BreadcrumbList` statis dihapus: item ketiganya menunjuk `/agent`, rute yang
+  tidak ada (yang benar `/agents`), dan isinya bukan hierarki. `breadcrumb()`
+  per halaman sudah menangani ini dengan benar.
+- NAP dibetulkan. `telephone` masih placeholder `+62-800-1234-5678` dan email di
+  schema (`info@`) berbeda dari yang ditampilkan footer (`halo@`). Keduanya kini
+  mengikuti footer, dan `addressLocality` menjadi Jakarta Selatan. `logo` yang
+  dideklarasikan 512×512 sebenarnya 348×400.
+- Schema `Article` mendapat `dateModified` dan `image` — keduanya wajib untuk
+  rich result artikel, dan keduanya tidak ada. Asuransi perjalanan mendapat
+  `Offer` dengan harga yang memang sudah dipublikasikan situs (Rp 45rb/trip);
+  produk lain tidak diberi harga karena tarifnya per kendaraan/nilai
+  pertanggungan.
+- `public/sitemap.xml` di-generate dari `seo.ts` lewat
+  `scripts/generate-sitemap.mjs`, dijalankan di awal `npm run build`. Sebelumnya
+  ditulis tangan dan melar dari daftar rute setiap kali halaman bertambah.
+  `changefreq` dan `priority` dibuang — Google mengabaikan keduanya.
+- `robots.txt` menyatakan sikap eksplisit terhadap crawler AI: diizinkan, karena
+  `llms.txt` memang ada untuk mereka. Daftar `Disallow` diulang penuh di grup itu
+  dengan sengaja — grup user-agent bernama *menggantikan* grup `*`, bukan
+  mewarisinya, jadi grup yang hanya berisi `Allow: /` justru akan membuka portal
+  dan halaman bertoken ke crawler tersebut.
+- GA4 mendapat `page_view` saat rute berubah. `send_page_view` hanya menyala
+  sekali per muat dokumen, jadi di SPA ini seluruh trafik diatribusikan ke URL
+  pendaratan dan tidak ada halaman marketing yang punya pageview sendiri.
+- `tests/seo.spec.ts`: 37 kasus yang mengunci semua hal di atas. Tidak ada satu
+  pun yang terlihat di UI, jadi semuanya mudah rusak kembali tanpa disadari.
+
 ## v2.6.12 — 2026-10-23
 
 **Latar halaman akhirnya ikut tema, dan dark mode tidak berkedip putih lagi.**

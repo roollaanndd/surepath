@@ -82,7 +82,7 @@ export const PortalLoader = ({ lang = Language.ID }: { lang?: Language }) => (
           SUREPATH
         </p>
         <div className="flex items-center gap-2">
-          <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.62rem', fontWeight: 600, color: 'rgba(6,95,70,0.55)' }}>
+          <p style={{ fontFamily: "'Sora', sans-serif", fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(6,95,70,0.55)' }}>
             {COPY[lang].loading}
           </p>
           {[0, 1, 2].map(i => (
@@ -308,24 +308,24 @@ export const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setL
           <h1 style={{ fontSize: '2.3rem', fontWeight: 700, letterSpacing: '-0.05em', color: th.text, lineHeight: 1 }}>
             Sure<span style={{ color: th.accent }}>Path</span>
           </h1>
-          <p style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
+          <p style={{ fontSize: '0.6875rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.5rem' }}>
             {G.tagline}
           </p>
         </div>
         <div className={`flex flex-col items-center gap-3 w-60 transition-all duration-500 ${phase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
           <div className="flex items-center gap-2">
             <div className="sp-anim" style={{ width: 6, height: 6, borderRadius: '50%', background: th.accent, animation: 'sp-dot-ping 1.3s ease-in-out infinite' }} />
-            <span style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: th.textMuted, letterSpacing: '0.02em' }}>{G.steps[msgIdx]}</span>
           </div>
           <div className="w-full rounded-full overflow-hidden" style={{ height: 3, background: `rgba(${th.accentRgb},0.14)` }}>
             <div className="h-full rounded-full transition-all duration-200" style={{ width: `${progress}%`, background: th.accent, boxShadow: `0 0 8px rgba(${th.accentRgb},0.6)` }} />
           </div>
-          <div style={{ fontSize: '0.58rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.12em' }}>
+          <div style={{ fontSize: '0.6875rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.12em' }}>
             {lang === 'ID' ? 'Memuat' : 'Loading'}{'·'.repeat(dotCount)}
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             {G.chips.map(chip => (
-              <span key={chip} style={{ fontSize: '0.6rem', fontWeight: 500, color: th.textMuted, background: th.chipBg, border: `1px solid ${th.chipBorder}`, borderRadius: '99px', padding: '0.18rem 0.55rem' }}>
+              <span key={chip} style={{ fontSize: '0.6875rem', fontWeight: 500, color: th.textMuted, background: th.chipBg, border: `1px solid ${th.chipBorder}`, borderRadius: '99px', padding: '0.18rem 0.55rem' }}>
                 {chip}
               </span>
             ))}
@@ -334,13 +334,13 @@ export const SplashScreen: React.FC<{ onFinish: () => void; lang: Language; setL
         <div className={`flex items-center gap-1 transition-all duration-500 ${phase >= 3 ? 'opacity-100' : 'opacity-0'}`}>
           {(['ID', 'EN'] as const).map(l => (
             <button key={l} onClick={() => { setLang(l as Language); localStorage.setItem('SUREPATH_LANG', l); }}
-              style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.62rem', fontWeight: lang === l ? 600 : 400, color: lang === l ? th.accent : th.textFaint, padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer', background: lang === l ? `rgba(${th.accentRgb},0.10)` : 'transparent', border: `1px solid ${lang === l ? `rgba(${th.accentRgb},0.22)` : 'transparent'}`, transition: 'all 0.2s' }}>
+              style={{ fontFamily: "'Sora',sans-serif", fontSize: '0.6875rem', fontWeight: lang === l ? 600 : 400, color: lang === l ? th.accent : th.textFaint, padding: '0.2rem 0.65rem', borderRadius: '99px', cursor: 'pointer', background: lang === l ? `rgba(${th.accentRgb},0.10)` : 'transparent', border: `1px solid ${lang === l ? `rgba(${th.accentRgb},0.22)` : 'transparent'}`, transition: 'all 0.2s' }}>
               {l}
             </button>
           ))}
         </div>
       </div>
-      <div className="absolute bottom-8" style={{ fontSize: '0.5rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="absolute bottom-8" style={{ fontSize: '0.6875rem', fontWeight: 500, color: th.textFaint, letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={`rgba(${th.accentRgb},0.6)`} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
         </svg>
@@ -436,7 +436,7 @@ export const AppEntryScreen = ({ name, onDone, lang, darkMode }: { name: string;
         </div>
       </div>
 
-      <div className="absolute bottom-8" style={{ fontSize: '0.46rem', fontWeight: 700, color: 'rgba(15,23,42,0.25)', letterSpacing: '0.32em', textTransform: 'uppercase' }}>
+      <div className="absolute bottom-8" style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'rgba(15,23,42,0.25)', letterSpacing: '0.32em', textTransform: 'uppercase' }}>
         SUREPATH
       </div>
     </div>

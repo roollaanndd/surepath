@@ -63,7 +63,7 @@ export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
             <X size={10} />
           </button>
           <p className="text-xs font-bold text-ds-ink">Punya pertanyaan?</p>
-          <p className="text-[0.65rem] text-ds-ink2 mt-0.5 leading-snug">
+          <p className="text-2xs text-ds-ink2 mt-0.5 leading-snug">
             Chat tim SurePath di WhatsApp — respons cepat.
           </p>
         </div>

@@ -1,5 +1,46 @@
 # SurePath — Changelog
 
+## v2.6.15 — 2026-10-23
+
+**Lantai tipografi v2.6.13 ternyata bocor di tiga tempat. Ditutup, plus guardrailnya diperbaiki.**
+
+- Guardrail v2.6.13 hanya menangkap satu bentuk: class Tailwind `text-[Npx]`.
+  Ada **tiga bentuk lain** yang lolos sepenuhnya — `fontSize` inline dalam rem,
+  `fontSize` inline dalam px, dan class `text-[0.XXrem]`. Jadi angka audit
+  "765 simpul sub-11px" terlalu kecil. Hitungan sebenarnya sebelum rilis ini
+  **1.297**: 725 class px, 571 class rem, 1 inline — hampir 70% lebih banyak.
+- Yang terburuk ada di **gerbang login Admin, Operator, dan Insurer**:
+  `SECURE SESSION`, `AUTHORIZED ACCESS ONLY`, `EMAIL`, `PASSWORD` ditulis
+  `fontSize: '0.42rem'` sampai `'0.47rem'` — **6,72px sampai 7,52px**, huruf
+  kapital dengan letter-spacing 0,42em. Itu teks terkecil di seluruh aplikasi,
+  di layar yang dilihat setiap admin dan operator setiap kali masuk. Semua naik
+  ke lantai 11px, dan letter-spacing-nya diturunkan supaya labelnya tidak wrap
+  di 390px — di 11px, tracking 0,42em membuat `AUTHORIZED ACCESS ONLY` pecah
+  dua baris dan garis hias di kiri-kanannya jadi melenceng.
+- Total **80 simpul** dinaikkan: 49 `fontSize` inline (semua yang ada di repo,
+  nol tersisa) dan 31 class rem di direktori yang layarnya bisa saya buka —
+  gerbang login, halaman `/login`, halaman marketing, `components/ui/`.
+- **`text-badge` (8,8px)** ditambahkan di `tailwind.config.cjs`: satu-satunya
+  pengecualian sub-11px yang disahkan, untuk angka di dalam badge hitung
+  berukuran tetap. v2.6.13 mencatat ini butuh primitif sendiri, bukan komentar
+  pengecualian — ini primitifnya, jadi ukurannya hidup di satu tempat.
+- Guardrail ESLint sekarang menangkap ketiga bentuk itu. Direktori yang layarnya
+  belum bisa dilihat (`admin/`, `operator/`, `insurer/` bagian dalam) dapat
+  aturan **inline saja**, di blok terpisah — karena flat config *mengganti*
+  `no-restricted-syntax`, bukan menggabung, kalau dua blok kena berkas yang sama.
+  Keempat selector sudah di-probe non-vacuous, dan aturan hex v2.6.10 dipastikan
+  masih hidup di `components/ui/`.
+- **Koreksi verifikasi v2.6.13.** Sapuan browser waktu itu memakai path
+  `/tentang-kami`, `/produk`, `/cara-kerja` — ketiganya **bukan rute**. Path
+  sebenarnya `/about`, `/products`, `/how-it-works`. Jadi "16/16 di lima
+  halaman" sebetulnya menguji beranda empat kali. Kali ini: 10 halaman publik
+  yang benar-benar berbeda, 9 lolos bersih.
+- **Cacat yang ditemukan, belum diperbaiki:** `/ai` meluber horizontal di ponsel
+  (scrollWidth 470px di viewport 390px). Sudah ada sebelum perubahan ini —
+  diukur 473px pada kode lama — jadi dilaporkan, bukan diklaim beres.
+- Sisa pekerjaan: 1.288 simpul sub-11px di layar yang masih butuh login untuk
+  dilihat. Jumlahnya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
+
 ## v2.6.14 — 2026-10-23
 
 **React Router dihapus dari bundel: −24 kB yang dimuat setiap pengunjung.**

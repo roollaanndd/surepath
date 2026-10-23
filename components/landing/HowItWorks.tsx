@@ -47,7 +47,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ lang = "ID", onAction }) => {
           <div className="space-y-6 max-w-2xl">
             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[0.6rem] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
+              <span className="text-2xs font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
                 {t("How it works", "Cara Kerja")}
               </span>
             </div>
@@ -97,7 +97,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ lang = "ID", onAction }) => {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <span className="font-sora font-black text-[0.55rem] uppercase tracking-[0.3em]"
+                    <span className="font-sora font-black text-2xs uppercase tracking-[0.3em]"
                       style={{ color: step.accent }}>
                       {t(`Step ${i + 1}`, `Langkah ${i + 1}`)}
                     </span>

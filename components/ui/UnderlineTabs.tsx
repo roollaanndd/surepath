@@ -69,7 +69,7 @@ export const UnderlineTabs: React.FC<UnderlineTabsProps> = ({
             {tab.badge !== undefined && tab.badge > 0 && (
               <span
                 className={[
-                  'min-w-[18px] h-[18px] px-1 rounded-full text-[0.55rem] font-black flex items-center justify-center',
+                  'min-w-[18px] h-[18px] px-1 rounded-full text-badge font-black flex items-center justify-center',
                   isActive
                     ? 'bg-ds-green text-white'
                     : 'bg-ds-card2 text-ds-ink2 border border-ds-border',

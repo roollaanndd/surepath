@@ -27,6 +27,12 @@ module.exports = {
         // and raising them overflows the dot. They keep their arbitrary value
         // until the portal passes give them a primitive of their own.
         '2xs': ['0.6875rem', { lineHeight: '1.45' }],
+      // The one sanctioned exception to the 11px floor: a numeral inside a
+      // fixed-size count badge (a `1` inside a 14px dot). It is a glyph in a
+      // shape, not text to read, and 11px overflows the dot. v2.6.13 recorded
+      // these as needing a primitive rather than an exemption comment — this
+      // is that primitive, so the size lives in one place like every other.
+      'badge': ['0.55rem', { lineHeight: '1' }],
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

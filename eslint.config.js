@@ -37,6 +37,33 @@ export default tseslint.config(
     },
   },
   {
+    // ── Guardrail: the design-system primitives stay token-only ──────────────
+    //
+    // The audit on 2026-10-23 counted 1.017 hardcoded hex values across 91
+    // files. They cannot all be removed at once, but `components/ui/` is the
+    // layer every portal is supposed to inherit from, and it is hex-free as of
+    // this commit — so it is locked here before it drifts again. Colours belong
+    // in styles.css as `--ds-*` tokens; a third-party brand colour that cannot
+    // follow the theme (WhatsApp green) is still declared there as a token.
+    //
+    // The rest of the codebase is not covered yet. Widen this `files` list one
+    // directory at a time as each is cleaned, rather than turning it on
+    // everywhere and drowning the warning count.
+    files: ['components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': ['error',
+        {
+          selector: 'Literal[value=/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\\b/]',
+          message: 'Jangan tulis warna hex di components/ui/ — pakai token ds-* dari styles.css. Primitif ini dipakai enam portal, dan hex di sini tidak ikut berganti saat dark mode.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\\b/]',
+          message: 'Jangan tulis warna hex di components/ui/ — pakai token ds-* dari styles.css. Primitif ini dipakai enam portal, dan hex di sini tidak ikut berganti saat dark mode.',
+        },
+      ],
+    },
+  },
+  {
     ignores: [
       // build-server/ berisi bundel CJS hasil esbuild (var/require/process) —
       // keluaran build, bukan sumber. Dipindahkan ke sini dari dist/ di v2.5.5

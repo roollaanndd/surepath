@@ -91,7 +91,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
     <div
       className={`relative overflow-hidden rounded-3xl p-5 ${className}`}
       style={{
-        background: 'linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%)',
+        background: 'var(--ds-surface-hero)',
         boxShadow: '0 8px 32px -8px rgba(0, 59, 47, 0.4)',
       }}
     >
@@ -131,7 +131,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleWhatsAppShare}
-            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-[#25D366] text-white font-bold text-xs active:scale-95 transition-transform"
+            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-ds-whatsapp text-white font-bold text-xs active:scale-95 transition-transform"
           >
             <MessageCircle size={14} fill="white" />
             WhatsApp

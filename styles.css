@@ -52,6 +52,9 @@
   --ds-orange:       #F97316;
   --ds-orange-hover: #EA580C;
   --ds-orange-tint:  #FFF1E6;
+  /* WhatsApp brand green. A third party owns this value, so it does not switch
+     with the theme — but it lives here as a token so no component hardcodes it. */
+  --ds-whatsapp:     #25D366;
   --ds-accent:       var(--ds-orange);
   --ds-accent-tint:  var(--ds-orange-tint);
 

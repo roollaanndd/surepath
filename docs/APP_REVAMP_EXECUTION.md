@@ -72,8 +72,8 @@ Mark an item **DONE** only after implementation and verification—not when it i
 
 ### Shared foundation
 
-- [ ] **S1 — Brand and design tokens:** verify actual logo/icon assets, color tokens, typography, spacing, surfaces, shadows, focus states, dark mode, and reduced motion.
-- [ ] **S2 — Shared UI primitives:** consistent buttons, inputs, badges, cards, skeletons, empty/error states, dialogs/bottom sheets, and status feedback. `components/ui/EmptyState.tsx` exists but is still unused — adopt it or remove it.
+- [ ] **S1 — Brand and design tokens:** verify actual logo/icon assets, color tokens, typography, spacing, surfaces, shadows, focus states, dark mode, and reduced motion. *(Partial, v2.6.10: dark mode now has a single owner, `components/shared/theme.ts`, and `components/ui/**` is hex-free and locked by an ESLint rule. The remaining ~1.008 hardcoded hex values outside that directory, the typography floor and the radius scale are open.)*
+- [ ] **S2 — Shared UI primitives:** consistent buttons, inputs, badges, cards, skeletons, empty/error states, dialogs/bottom sheets, and status feedback. `components/ui/EmptyState.tsx` exists but is still unused — adopt it or remove it. *(Partial, v2.6.10: the duplicate `Button` and the unused `GlassCard` in `components/shared/UI.tsx` are gone, so `components/ui/` is the only primitive layer with a `Button`. Adoption across the 827 raw `<button>` elements has not started.)*
 - [x] **S3a — Scroll position on in-portal navigation:** switching views returns the surface to the top in all six portals, honoring `prefers-reduced-motion`. Shared primitive `components/shared/scrollReset.ts`; 5 unit tests; shipped v2.6.9. *(See execution log 2026-10-23.)*
 - [ ] **S3b — Remaining navigation behavior:** active states, safe-area padding, no content hidden behind fixed navigation, correct browser back/forward behavior, and no scroll reset during polling/realtime re-renders (the Admin sidebar case was fixed in PR #243 — the content area and the other portals still need the same check).
 - [ ] **S4 — Responsive and accessibility pass:** narrow phone (320–380px), standard phone, tablet/desktop; keyboard focus, contrast, touch targets, reduced motion.
@@ -168,6 +168,19 @@ This record intentionally distinguishes incremental work from the full target.
 ## 6. Execution log
 
 Append a new entry after each meaningful implementation/verification milestone.
+
+### 2026-10-23 — Fase 1a: one dark-mode owner, duplicate primitives removed, token guardrail
+
+- **Scope:** `components/shared/theme.ts` (new); `App.tsx`, `components/customer/CustomerPortal.tsx`, `components/admin/AdminPortal.tsx`, `components/operator/OperatorProfile.tsx` rewired to it; `components/shared/UI.tsx` (dead `Button` + `GlassCard` removed, `Badge` moved to tokens); `components/ui/FloatingWhatsApp.tsx`, `components/ui/ReferralCard.tsx` de-hexed; `styles.css` + `tailwind.config.cjs` gained `--ds-whatsapp`; `eslint.config.js` gained a hex guardrail scoped to `components/ui/**`.
+- **Audit that motivated it:** 1.017 hardcoded hex across 91 files; 5.098 raw palette classes vs 3.196 `ds-*` token classes; 827 raw `<button>` against 5 files using the `Button` primitive; `EmptyState` and `IconButton` at zero adoption; 766 text nodes under 11px; 139 ad-hoc `animate-spin`; 21 `window.confirm`. Full plan: the UI/UX revamp plan doc (2026-10-23).
+- **Defect found and fixed:** dark mode had **four independent owners** of the same `sp_dark_mode` key, not two. `App.tsx` themed the marketing site with a wrapper `<div className="dark">` and never touched `documentElement`, so a `dark` class left behind by any portal kept `body` and every token-driven surface dark under a light-mode page. `AdminPortal` additionally seeded `useState(true)`, ignoring a stored light preference and never writing one back, so the CMS could not remember light mode across reloads.
+- **Behavior change, intentional:** the Admin CMS still opens dark when the user has never chosen, but a stored preference now wins and is persisted. Previously the CMS always opened dark.
+- **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (identical to the pre-change baseline), vitest **305 passed / 24 files** (was 299/23 — the 6 new tests are `services/__tests__/theme.test.ts`). `npm run build` → built in 21.5s, `dist/` clean check passed (132 files, unchanged), PWA release check passed.
+- **Functional verification:** the 6 new unit tests cover the fallback path, a stored light preference overriding a dark fallback (the CMS regression), the class landing on `documentElement` rather than a wrapper, the store/read round trip, and a blocked-storage path that must not throw. The ESLint guardrail was verified non-vacuous: a probe constant `'#ff0000'` added to `components/ui/LiveBadge.tsx` produced the expected `no-restricted-syntax` error, and the file was restored. **Not yet done:** browser confirmation of the theme switch across the six portals and the marketing site.
+- **Version:** v2.6.10 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 23, `versionName` 2.6.10); changelog entry added.
+- **Production:** recorded after merge and Vercel verification.
+- **Known gaps:** ~1.008 hardcoded hex values remain outside `components/ui/`; the 827 raw `<button>` elements, the typography floor, the radius scale, `EmptyState`/`Skeleton`/`ConfirmDialog` adoption and every C/A/O/D screen item are untouched.
+- **Checklist:** S1 and S2 moved to PARTIAL with their evidence. No item moved to DONE.
 
 ### 2026-10-23 — scope widened to four portals; shared scroll-reset primitive
 

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
+import { useDarkMode } from '../shared/theme';
 import { useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
@@ -50,12 +51,7 @@ const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
   const toast = useToast();
   const confirm = useConfirmDialog();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
+  const [darkMode, setDarkMode] = useDarkMode();
 
   const handleInstall = async () => {
     const res = await promptInstall();

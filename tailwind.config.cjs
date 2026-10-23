@@ -104,6 +104,7 @@ module.exports = {
         'ds-red':        'var(--ds-red)',
         'ds-purple':     'var(--ds-purple)',
         'ds-purple-lt':  'var(--ds-purple-lt)',
+        'ds-whatsapp':   'var(--ds-whatsapp)',
         // Semantic tints — mode-aware, so status chips stay legible in dark mode
         'ds-blue-lt':    'var(--ds-info-tint)',
         'ds-amber-lt':   'var(--ds-warning-tint)',

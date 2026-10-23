@@ -409,7 +409,7 @@ const AgentWalletView: React.FC = () => {
   }
 
   return (
-    <div className="bg-ds-bg min-h-screen pb-28">
+    <div className="sp-agent-wallet bg-ds-bg min-h-screen pb-28">
       {/* Balance card — premium bank-card look */}
       <div className="mx-5 mt-5 rounded-[2rem] p-5 text-white sp-enter relative overflow-hidden"
         style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>

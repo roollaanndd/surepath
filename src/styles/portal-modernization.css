@@ -394,3 +394,44 @@
     transition: none !important;
   }
 }
+
+
+/* Agent wallet screen: clear financial hierarchy and withdrawal controls. */
+.sp-agent-premium .sp-agent-wallet {
+  --sp-wallet-gutter: clamp(1rem, 4.5vw, 1.5rem);
+}
+.sp-agent-premium .sp-agent-wallet :where(.sp-glass, .rounded-2xl) {
+  border-color: color-mix(in srgb, var(--ds-border, #dce6df) 88%, transparent);
+}
+.sp-agent-premium .sp-agent-wallet :where(button, select, input) {
+  min-height: 44px;
+}
+.sp-agent-premium .sp-agent-wallet :where(button:focus-visible, select:focus-visible, input:focus-visible) {
+  outline: 2px solid var(--ds-green, #00a85b);
+  outline-offset: 2px;
+}
+.sp-agent-premium .sp-agent-wallet :where(.sp-glass) {
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+.sp-agent-premium .sp-agent-wallet :where(.sp-glass):hover {
+  border-color: color-mix(in srgb, var(--ds-green, #00a85b) 22%, var(--ds-border, #dce6df));
+}
+.sp-agent-premium .sp-agent-wallet :where(input, select) {
+  max-width: 100%;
+}
+.sp-agent-premium .sp-agent-wallet :where(button) {
+  touch-action: manipulation;
+}
+@media (max-width: 380px) {
+  .sp-agent-premium .sp-agent-wallet {
+    overflow-wrap: anywhere;
+  }
+  .sp-agent-premium .sp-agent-wallet :where(.mx-5) {
+    margin-inline: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium .sp-agent-wallet :where(.sp-glass, button) {
+    transition: none !important;
+  }
+}

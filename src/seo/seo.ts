@@ -481,7 +481,78 @@ export function resolveSeo(rawPathname: string): SeoDescriptor {
   return noindexDescriptor(pathname);
 }
 
+// ── Head tags, as data ───────────────────────────────────────────────────────
+//
+// What tags a page gets is defined once, here, as a list. Two consumers render
+// that list: applyDocumentHead() below writes it into the live DOM, and
+// scripts/prerender.mjs writes it into static HTML at build time. Keeping it
+// declarative is the whole point — a prerenderer that rebuilt this list in its
+// own code would be a second source of truth, and the two would drift the way
+// the hand-written sitemap drifted from the route list.
+
+export type HeadTag =
+  | { kind: 'title'; text: string }
+  | { kind: 'meta'; attr: 'name' | 'property'; key: string; content: string }
+  | { kind: 'link'; rel: string; href: string; hreflang?: string }
+  | { kind: 'jsonLd'; json: string };
+
+/** The canonical URL for a descriptor. Trailing slashes are already normalised
+ *  by resolveSeo(), but a descriptor can also be built by hand. */
+export function canonicalFor(d: SeoDescriptor): string {
+  return `${SITE.origin}${d.path === '/' ? '/' : d.path.replace(/\/$/, '')}`;
+}
+
+/** Every head tag a page needs, in document order. */
+export function headTags(d: SeoDescriptor): HeadTag[] {
+  const canonical = canonicalFor(d);
+  const ogImage = d.ogImage ?? SITE.defaultOgImage;
+  const indexable = d.index !== false;
+
+  const tags: HeadTag[] = [
+    { kind: 'title', text: d.title },
+    { kind: 'meta', attr: 'name', key: 'description', content: d.description },
+  ];
+
+  if (d.keywords) {
+    tags.push({ kind: 'meta', attr: 'name', key: 'keywords', content: d.keywords });
+  }
+
+  tags.push({
+    kind: 'meta',
+    attr: 'name',
+    key: 'robots',
+    content: indexable
+      ? 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+      : 'noindex, follow',
+  });
+
+  tags.push({ kind: 'link', rel: 'canonical', href: canonical });
+  // The site serves one Indonesian URL set (the EN toggle is client-side, no
+  // /en/ URLs), so each page's only alternate is itself.
+  tags.push({ kind: 'link', rel: 'alternate', href: canonical, hreflang: 'id' });
+  tags.push({ kind: 'link', rel: 'alternate', href: canonical, hreflang: 'x-default' });
+
+  // Open Graph
+  tags.push({ kind: 'meta', attr: 'property', key: 'og:title', content: d.title });
+  tags.push({ kind: 'meta', attr: 'property', key: 'og:description', content: d.description });
+  tags.push({ kind: 'meta', attr: 'property', key: 'og:url', content: canonical });
+  tags.push({ kind: 'meta', attr: 'property', key: 'og:type', content: d.ogType ?? 'website' });
+  tags.push({ kind: 'meta', attr: 'property', key: 'og:image', content: ogImage });
+
+  // Twitter
+  tags.push({ kind: 'meta', attr: 'name', key: 'twitter:title', content: d.title });
+  tags.push({ kind: 'meta', attr: 'name', key: 'twitter:description', content: d.description });
+  tags.push({ kind: 'meta', attr: 'name', key: 'twitter:image', content: ogImage });
+
+  if (d.jsonLd) {
+    tags.push({ kind: 'jsonLd', json: JSON.stringify(d.jsonLd).replace(/</g, '\\u003c') });
+  }
+
+  return tags;
+}
+
 // ── DOM applier ──────────────────────────────────────────────────────────────
+
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string): void {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -512,47 +583,31 @@ const PAGE_JSONLD_ID = 'sp-page-jsonld';
 /** Apply a descriptor to the live document head. Idempotent per route change. */
 export function applyDocumentHead(d: SeoDescriptor): void {
   if (typeof document === 'undefined') return;
-  const canonical = `${SITE.origin}${d.path === '/' ? '/' : d.path.replace(/\/$/, '')}`;
-  const ogImage = d.ogImage ?? SITE.defaultOgImage;
-  const indexable = d.index !== false;
 
-  document.title = d.title;
-  upsertMeta('name', 'description', d.description);
-  if (d.keywords) upsertMeta('name', 'keywords', d.keywords);
-  upsertMeta(
-    'name',
-    'robots',
-    indexable
-      ? 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
-      : 'noindex, follow',
-  );
-  upsertLink('canonical', canonical);
-  // The site serves one Indonesian URL set (the EN toggle is client-side, no /en/
-  // URLs), so each page's only alternate is itself.
-  upsertLink('alternate', canonical, 'id');
-  upsertLink('alternate', canonical, 'x-default');
+  // The page JSON-LD node is replaced wholesale rather than upserted: a route
+  // with no JSON-LD must not inherit the previous route's.
+  document.getElementById(PAGE_JSONLD_ID)?.remove();
 
-  // Open Graph
-  upsertMeta('property', 'og:title', d.title);
-  upsertMeta('property', 'og:description', d.description);
-  upsertMeta('property', 'og:url', canonical);
-  upsertMeta('property', 'og:type', d.ogType ?? 'website');
-  upsertMeta('property', 'og:image', ogImage);
-
-  // Twitter
-  upsertMeta('name', 'twitter:title', d.title);
-  upsertMeta('name', 'twitter:description', d.description);
-  upsertMeta('name', 'twitter:image', ogImage);
-
-  // Page-scoped JSON-LD (replaces the previous page block; the static homepage
-  // @graph in index.html is left untouched under its own unmarked node).
-  const existing = document.getElementById(PAGE_JSONLD_ID);
-  if (existing) existing.remove();
-  if (d.jsonLd) {
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.id = PAGE_JSONLD_ID;
-    script.textContent = JSON.stringify(d.jsonLd).replace(/</g, '\\u003c');
-    document.head.appendChild(script);
+  for (const tag of headTags(d)) {
+    switch (tag.kind) {
+      case 'title':
+        document.title = tag.text;
+        break;
+      case 'meta':
+        upsertMeta(tag.attr, tag.key, tag.content);
+        break;
+      case 'link':
+        upsertLink(tag.rel, tag.href, tag.hreflang);
+        break;
+      case 'jsonLd': {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.id = PAGE_JSONLD_ID;
+        // Already escaped by headTags().
+        script.textContent = tag.json;
+        document.head.appendChild(script);
+        break;
+      }
+    }
   }
 }

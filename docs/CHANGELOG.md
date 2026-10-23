@@ -11,6 +11,37 @@
   judul, deskripsi, dan JSON-LD halaman daftar. Metadata per artikel di
   `src/seo/seo.ts` sudah ditulis sejak awal tapi tidak pernah terjangkau.
   Sekarang artikel ditentukan URL, dan kartunya berupa `<a href>`.
+- Setiap halaman marketing kini punya HTML statis sendiri. Semua metadata
+  per-rute sebelumnya dipasang dari sisi klien, jadi hanya Googlebot yang
+  melihatnya — WhatsApp, Facebook, X, LinkedIn, dan crawler LLM membaca HTML
+  mentah lalu berhenti. Akibatnya setiap URL membawa judul dan OG image
+  homepage: halaman asuransi mobil yang dibagikan ke WhatsApp tampil sebagai
+  homepage. Terukur sebelum perbaikan ini, HTML tanpa JS untuk `/product/car`,
+  `/kalkulator`, dan `/blog/asuransi-all-risk-vs-tlo` mengembalikan `<title>`
+  dan `og:title` yang **identik**. Untuk pasar yang berbagi lewat WhatsApp, ini
+  cacat SEO terbesar di situs ini. `npm run build` sekarang menulis satu berkas
+  per rute indexable ke `dist/` (26 rute); Vercel memeriksa filesystem sebelum
+  menerapkan rewrite SPA, jadi berkas-berkas ini yang dipakai. SPA tetap
+  hydrate dan mengambil alih routing seperti sebelumnya.
+- Daftar tag `<head>` jadi data, bukan kode. `headTags()` di `src/seo/seo.ts`
+  mendefinisikan sekali tag apa saja yang didapat sebuah halaman; dua konsumen
+  hanya tahu cara merendernya — `applyDocumentHead()` ke DOM saat runtime, dan
+  `scripts/prerender.mjs` ke HTML statis saat build. Prerenderer yang menyusun
+  daftarnya sendiri akan jadi sumber kebenaran kedua, dan keduanya akan melenceng
+  persis seperti sitemap tulisan tangan dulu melenceng dari daftar rute.
+- `scripts/check-prerender.mjs` masuk rantai build, bukan cuma test suite:
+  regresi prerender tidak terlihat oleh test apa pun yang jalan di browser —
+  SPA tetap memasang head yang benar begitu JavaScript jalan — jadi hanya
+  crawler yang melihatnya. Rusakkan prerender, `npm run build` exit non-zero.
+- Satu test saya sendiri ternyata tidak menguji apa pun. Test detail kontak
+  memeriksa `/kontak`, padahal rutenya `/contact`. Path yang tidak dirutekan
+  jatuh ke catch-all: HTTP 200, shell generik, `noindex` — jadi semua assertion
+  tentangnya lolos tanpa menguji apa pun. Assertion berupa *ketidakhadiran*
+  paling rentan terhadap ini, karena lolos di halaman yang tidak ada. Blok
+  `Indexable route sweep` sekarang mengunjungi seluruh 26 path dari
+  `indexablePaths()` dan menuntut masing-masing merender konten nyata serta
+  menyajikan `index, follow`. Itu yang menutup kelasnya, bukan satu path yang
+  dikoreksi.
 - Nomor telepon dan alamat kantor dihapus dari seluruh situs. Belum ada kantor
   dan belum ada nomor WhatsApp kantor (keputusan owner, 2026-10-23), sementara
   situs memasang empat kontak palsu yang saling berbeda: `telephone`

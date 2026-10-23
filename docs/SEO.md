@@ -10,9 +10,18 @@ exports three things:
 
 | Export | Used by | Purpose |
 |---|---|---|
-| `resolveSeo(path)` | `App.tsx` route effect | descriptor for a pathname |
-| `applyDocumentHead(d)` | `App.tsx` route effect | writes it into `<head>` |
-| `indexablePaths()` | `scripts/generate-sitemap.mjs` | renders `public/sitemap.xml` |
+| `resolveSeo(path)` | `App.tsx` route effect, both build scripts | descriptor for a pathname |
+| `headTags(d)` | `applyDocumentHead`, `scripts/prerender.mjs` | the tag list a page needs, as data |
+| `applyDocumentHead(d)` | `App.tsx` route effect | writes that list into the live `<head>` |
+| `canonicalFor(d)` | `headTags`, `scripts/check-prerender.mjs` | the canonical URL for a descriptor |
+| `indexablePaths()` | `scripts/generate-sitemap.mjs`, `scripts/prerender.mjs` | the route inventory |
+
+`headTags()` is the part worth understanding. **Which** tags a page gets is
+defined once, there, as a list of plain objects. Two consumers only know how to
+render that list: `applyDocumentHead()` writes it into the DOM at runtime, and
+`scripts/prerender.mjs` writes it into static HTML at build time. A prerenderer
+that rebuilt the list in its own code would be a second source of truth, and the
+two would drift exactly the way the hand-written sitemap drifted from the routes.
 
 Adding a marketing page means adding it here. Because the sitemap is generated
 from `indexablePaths()`, a page cannot have metadata and be missing from the
@@ -77,24 +86,74 @@ The `Disallow` list is repeated in full inside that group. A named user-agent gr
 only `Allow: /` would expose the portals and tokenized pages to precisely those
 crawlers. If you add a path to the `*` group, add it to the AI group too.
 
+## Prerendering
+
+`npm run build` emits one static HTML file per indexable route into `dist/`:
+`/product/car` becomes `dist/product/car/index.html`. Vercel checks the
+filesystem before applying the SPA rewrite in `vercel.json`, so these files win
+for their URLs; everything else still falls through to `index.html`.
+
+Each file is the built shell with its head rewritten — same hashed asset URLs,
+same inline boot scripts, same `#root`. The SPA hydrates and takes over routing
+exactly as before. These files change only what a crawler sees *before* any
+JavaScript runs.
+
+This exists because client-side metadata reaches Googlebot and almost nothing
+else. WhatsApp, Facebook, X, LinkedIn and the LLM crawlers read the raw HTML and
+stop. Before this, the no-JS HTML for `/product/car`, `/kalkulator` and
+`/blog/asuransi-all-risk-vs-tlo` returned an **identical** homepage `<title>` and
+`og:title` — a car-insurance page shared into WhatsApp previewed as the homepage.
+For a market where most sharing happens in WhatsApp, that was the single largest
+SEO defect on the site.
+
+Two pieces, both run by `npm run build`:
+
+| Script | Does |
+|---|---|
+| `scripts/prerender.mjs` | strips the shell's static head tags, inserts `headTags(resolveSeo(path))`, writes one file per route |
+| `scripts/check-prerender.mjs` | asserts the result: exactly one title/description/robots/canonical and two hreflang alternates per file, each route carrying its own title rather than the homepage's, and a bootable shell |
+
+The check is in the build chain, not just the test suite, because the failure it
+guards against is invisible to any test that runs in a browser: the SPA still
+sets the right head once JavaScript runs, so a prerender regression looks fine
+everywhere except to the crawlers it was built for. Break prerendering and
+`npm run build` exits non-zero.
+
+If you add a route, add it to `seo.ts`. The sitemap, the prerendered file and the
+check all follow from `indexablePaths()` — there is nothing else to update.
+
 ## Tests
 
 `tests/seo.spec.ts` covers all of the above: article URLs, crawlable links per
 route, per-route metadata and canonicals, trailing-slash handling, hreflang,
-structured-data scope, robots.txt, sitemap coverage, and the GA4 route pageview.
-None of it is visible in the UI, which is why it is tested rather than reviewed.
+structured-data scope, robots.txt, sitemap coverage, the GA4 route pageview, and
+the contact details. None of it is visible in the UI, which is why it is tested
+rather than reviewed. Run it with `npx playwright test seo.spec.ts`.
 
-Run it with `npx playwright test seo.spec.ts`.
+`services/__tests__/seoHead.test.ts` pins `headTags()` itself — the contract the
+DOM applier and the prerenderer share — plus the invariant that every path in
+`indexablePaths()` resolves to an indexable descriptor with a distinct title and
+canonical.
+
+One case in `seo.spec.ts` deserves its own note, because it is the trap this
+file's assertions kept falling into. The contact-detail test originally asserted
+against `/kontak`, which is **not a route** — the real path is `/contact`. An
+unrouted path falls through to the catch-all, which returns HTTP 200 with the
+generic shell and `noindex`, so every assertion about it passed without testing
+anything. The `Indexable route sweep` block now visits every path in
+`indexablePaths()` and requires it to render real content and serve
+`index, follow`; that is what closes the class, not the one corrected path.
+Assertions of *absence* are especially exposed to this: they pass on a page that
+does not exist.
 
 ## Known gaps
 
-- **No prerendering.** All per-route metadata is applied client-side. Googlebot
-  renders JavaScript and sees it, but WhatsApp, Facebook, X, LinkedIn and the LLM
-  crawlers do not — for them every URL still carries `index.html`'s homepage
-  title and OG image. Given how much Indonesian traffic arrives through WhatsApp
-  shares, this is the largest remaining item. The fix is to emit one static HTML
-  file per marketing route at build time, generated from `resolveSeo()` so no
-  second source of truth appears.
+- **Prerendered HTML is static, not rendered.** The head is per-route, but the
+  `<body>` a crawler sees before JavaScript runs is still the shell plus the
+  `<noscript>` block — there is no server-rendered page content. That is enough
+  for titles, descriptions, canonicals, OG cards and JSON-LD, which is what
+  social and LLM crawlers read. It is not full SSR, and this file should not be
+  read as claiming otherwise.
 - **No motorcycle insurance page.** `services/ojkRates.ts` already carries
   `MOTORCYCLE` rate tables, but there is no `/product/motor` route and the product
   slug whitelist in `App.tsx` does not include it. "Asuransi motor" is high-volume

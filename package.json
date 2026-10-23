@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx server.ts",
     "seo:sitemap": "tsx scripts/generate-sitemap.mjs",
-    "build": "npm run seo:sitemap && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs && node scripts/check-dist-clean.mjs && node scripts/check-pwa-build.mjs",
+    "seo:prerender": "tsx scripts/prerender.mjs",
+    "build": "npm run seo:sitemap && vite build && npm run seo:prerender && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs && npm run check:prerender && node scripts/check-dist-clean.mjs && node scripts/check-pwa-build.mjs",
     "start": "node build-server/server.cjs",
     "preview": "vite preview",
     "lint": "node scripts/check-edge-functions.mjs && tsc --noEmit && eslint . && vitest run",
@@ -18,6 +19,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "check:functions": "node scripts/check-edge-functions.mjs",
+    "check:prerender": "tsx scripts/check-prerender.mjs",
     "check:dist": "node scripts/check-dist-clean.mjs",
     "check:android": "node scripts/sync-android-version.mjs --check",
     "sync:android": "node scripts/sync-android-version.mjs",

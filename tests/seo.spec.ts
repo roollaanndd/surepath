@@ -4,6 +4,7 @@
 // <button> and so invisible to crawlers, or a sitemap that drifts from the routes.
 
 import { test, expect } from '@playwright/test';
+import { indexablePaths, resolveSeo } from '../src/seo/seo';
 
 test.describe('Blog article URLs', () => {
   test('selecting an article pushes its URL and applies its own metadata', async ({ page }) => {
@@ -145,7 +146,7 @@ test.describe('Structured data scope', () => {
   test('the site advertises no phone number and no office address', async ({ request }) => {
     // There is no office line and no office WhatsApp yet (owner, 2026-10-23).
     // Every number and address previously on the site was invented, and the
-    // schema, the footer and /kontak each invented a different one. Asserting
+    // schema, the footer and /contact each invented a different one. Asserting
     // the absence is what keeps a plausible-looking placeholder from being
     // reintroduced and picked up by Google as a business fact.
     const html = await (await request.get('/')).text();
@@ -155,7 +156,10 @@ test.describe('Structured data scope', () => {
 
     // The one WhatsApp number in the product is the live one in constants.ts;
     // nothing may ship a second, different one.
-    const sources = ['/', '/kontak', '/kalkulator'];
+    // '/contact', not '/kontak': the latter is not a route. An earlier version
+    // of this test asserted against '/kontak' and passed against a soft-404,
+    // which is to say it asserted nothing — see the indexable-route sweep below.
+    const sources = ['/', '/contact', '/kalkulator'];
     for (const path of sources) {
       const body = await (await request.get(path)).text();
       for (const placeholder of ['1234-5678', '6281234567890', '5050-1234', '5060-1234']) {
@@ -249,4 +253,33 @@ test.describe('GA4 route tracking', () => {
     expect(privacyView!.page_title).toMatch(/Kebijakan Privasi/);
     expect(privacyView!.page_location).toMatch(/\/privacy$/);
   });
+});
+
+test.describe('Indexable route sweep', () => {
+  // Every path the sitemap advertises, checked against the live page. This is
+  // the guard against a URL that is claimed indexable but is not a route at
+  // all: an unrouted path falls through to the catch-all, which serves
+  // "noindex, follow" and the generic shell title. That failure is invisible
+  // from the outside — the sitemap still lists it and the page still returns
+  // HTTP 200 — and it silently makes any other assertion about that path
+  // vacuous, which is exactly what happened to the contact-detail test above
+  // while it pointed at /kontak.
+  for (const { path } of indexablePaths()) {
+    test(`${path} is a real route, renders, and is indexable`, async ({ page }) => {
+      await page.goto(path);
+      // Wait for the lazy page chunk to mount: before it does, every route
+      // shows the same splash, so asserting earlier proves nothing.
+      await expect
+        .poll(() => page.evaluate(() => document.body.innerText.length), { timeout: 20_000 })
+        .toBeGreaterThan(400);
+
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+        'content', /^index, follow/,
+      );
+      await expect(page).toHaveTitle(resolveSeo(path).title);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href', `https://myinsurepath.com${path === '/' ? '/' : path}`,
+      );
+    });
+  }
 });

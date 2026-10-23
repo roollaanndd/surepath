@@ -70,7 +70,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
   };
 
   const fieldLabel: React.CSSProperties = {
-    fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.18em',
+    fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.18em',
     textTransform: 'uppercase', color: th.textMuted, marginBottom: 12, display: 'block',
   };
   const chip = (active: boolean): React.CSSProperties => ({
@@ -89,7 +89,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
         <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full"
           style={{ background: `${th.accent}14`, border: `1px solid ${th.accent}33` }}>
           <Sparkles size={12} style={{ color: th.accent }} />
-          <span style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: th.accent }}>
+          <span style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: th.accent }}>
             {t('Tarif Resmi OJK', 'Official OJK Rates')}
           </span>
         </div>
@@ -112,7 +112,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
           <input id="vehicle-value-slider" aria-label={t('Vehicle value in millions of rupiah', 'Harga kendaraan dalam juta rupiah')} type="range" min={50} max={2000} step={5} value={hargaJuta}
             onChange={e => setHargaJuta(Number(e.target.value))}
             style={{ width: '100%', accentColor: th.accent, cursor: 'pointer', height: 6 }} />
-          <div className="flex justify-between mt-1.5" style={{ fontSize: '0.65rem', color: th.textSubtle }}>
+          <div className="flex justify-between mt-1.5" style={{ fontSize: '0.6875rem', color: th.textSubtle }}>
             <span>Rp 50jt</span><span>Rp 2 M</span>
           </div>
         </div>
@@ -127,7 +127,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
               </button>
             ))}
           </div>
-          <p className="mt-2" style={{ fontSize: '0.68rem', color: th.textSubtle }}>{regionDesc[wilayah]}</p>
+          <p className="mt-2" style={{ fontSize: '0.6875rem', color: th.textSubtle }}>{regionDesc[wilayah]}</p>
         </div>
 
         {/* Coverage */}
@@ -160,7 +160,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
           background: `radial-gradient(circle, ${th.accent}33, transparent 70%)`, pointerEvents: 'none' }} />
 
         <div className="relative">
-          <p style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: th.textMuted }}>
+          <p style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: th.textMuted }}>
             {t('Estimasi Premi Tahunan (Tarif OJK)', 'Estimated Annual Premium (OJK Rates)')}
           </p>
 
@@ -174,7 +174,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
               <div key={key} className="flex items-center justify-between rounded-xl px-3 py-2.5"
                 style={{ background: muted ? `${th.accent}08` : `${th.accent}18`, border: `1px solid ${muted ? th.cardBorder : th.accent + '44'}` }}>
                 <div>
-                  <div style={{ fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: muted ? th.textSubtle : th.accent }}>{label}</div>
+                  <div style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: muted ? th.textSubtle : th.accent }}>{label}</div>
                   <div style={{ fontSize: '0.72rem', color: th.textMuted }}>{data.rate.toFixed(2)}%</div>
                 </div>
                 <div className="text-right">
@@ -188,7 +188,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
           </div>
 
           <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${th.cardBorder}` }}>
-            <div style={{ fontSize: '0.6rem', color: th.textSubtle, marginBottom: 8 }}>
+            <div style={{ fontSize: '0.6875rem', color: th.textSubtle, marginBottom: 8 }}>
               {t('Perlindungan', 'Coverage')}: <strong style={{ color: th.textMain }}>{coverage === 'allRisk' ? 'All Risk (Komprehensif)' : 'TLO'}</strong>
             </div>
           </div>
@@ -206,7 +206,7 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
             </button>
           </div>
 
-          <p className="mt-4" style={{ fontSize: '0.6rem', lineHeight: 1.6, color: th.textSubtle }}>
+          <p className="mt-4" style={{ fontSize: '0.6875rem', lineHeight: 1.6, color: th.textSubtle }}>
             {t('Tarif resmi OJK SEOJK No.06/SEOJK.05/2017. Premi final ditentukan perusahaan asuransi.',
                'Official OJK rates per SEOJK No.06/SEOJK.05/2017. Final premium set by the insurer.')}
           </p>

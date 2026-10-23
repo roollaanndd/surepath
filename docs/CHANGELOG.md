@@ -77,6 +77,107 @@
   memeriksa node JSON-LD. Sekarang ada tes yang memeriksa seluruh dokumen.
 - `tests/seo.spec.ts`: 38 kasus yang mengunci semua hal di atas. Tidak ada satu
   pun yang terlihat di UI, jadi semuanya mudah rusak kembali tanpa disadari.
+## v2.6.15 — 2026-10-23
+
+**Lantai tipografi v2.6.13 ternyata bocor di tiga tempat. Ditutup, plus guardrailnya diperbaiki.**
+
+- Guardrail v2.6.13 hanya menangkap satu bentuk: class Tailwind `text-[Npx]`.
+  Ada **tiga bentuk lain** yang lolos sepenuhnya — `fontSize` inline dalam rem,
+  `fontSize` inline dalam px, dan class `text-[0.XXrem]`. Jadi angka audit
+  "765 simpul sub-11px" terlalu kecil. Hitungan sebenarnya sebelum rilis ini
+  **1.297**: 725 class px, 571 class rem, 1 inline — hampir 70% lebih banyak.
+- Yang terburuk ada di **gerbang login Admin, Operator, dan Insurer**:
+  `SECURE SESSION`, `AUTHORIZED ACCESS ONLY`, `EMAIL`, `PASSWORD` ditulis
+  `fontSize: '0.42rem'` sampai `'0.47rem'` — **6,72px sampai 7,52px**, huruf
+  kapital dengan letter-spacing 0,42em. Itu teks terkecil di seluruh aplikasi,
+  di layar yang dilihat setiap admin dan operator setiap kali masuk. Semua naik
+  ke lantai 11px, dan letter-spacing-nya diturunkan supaya labelnya tidak wrap
+  di 390px — di 11px, tracking 0,42em membuat `AUTHORIZED ACCESS ONLY` pecah
+  dua baris dan garis hias di kiri-kanannya jadi melenceng.
+- Total **80 simpul** dinaikkan: 49 `fontSize` inline (semua yang ada di repo,
+  nol tersisa) dan 31 class rem di direktori yang layarnya bisa saya buka —
+  gerbang login, halaman `/login`, halaman marketing, `components/ui/`.
+- **`text-badge` (8,8px)** ditambahkan di `tailwind.config.cjs`: satu-satunya
+  pengecualian sub-11px yang disahkan, untuk angka di dalam badge hitung
+  berukuran tetap. v2.6.13 mencatat ini butuh primitif sendiri, bukan komentar
+  pengecualian — ini primitifnya, jadi ukurannya hidup di satu tempat.
+- Guardrail ESLint sekarang menangkap ketiga bentuk itu. Direktori yang layarnya
+  belum bisa dilihat (`admin/`, `operator/`, `insurer/` bagian dalam) dapat
+  aturan **inline saja**, di blok terpisah — karena flat config *mengganti*
+  `no-restricted-syntax`, bukan menggabung, kalau dua blok kena berkas yang sama.
+  Keempat selector sudah di-probe non-vacuous, dan aturan hex v2.6.10 dipastikan
+  masih hidup di `components/ui/`.
+- **Koreksi verifikasi v2.6.13.** Sapuan browser waktu itu memakai path
+  `/tentang-kami`, `/produk`, `/cara-kerja` — ketiganya **bukan rute**. Path
+  sebenarnya `/about`, `/products`, `/how-it-works`. Jadi "16/16 di lima
+  halaman" sebetulnya menguji beranda empat kali. Kali ini: 10 halaman publik
+  yang benar-benar berbeda, 9 lolos bersih.
+- **Cacat yang ditemukan, belum diperbaiki:** `/ai` meluber horizontal di ponsel
+  (scrollWidth 470px di viewport 390px). Sudah ada sebelum perubahan ini —
+  diukur 473px pada kode lama — jadi dilaporkan, bukan diklaim beres.
+- Sisa pekerjaan: 1.288 simpul sub-11px di layar yang masih butuh login untuk
+  dilihat. Jumlahnya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
+
+## v2.6.14 — 2026-10-23
+
+**React Router dihapus dari bundel: −24 kB yang dimuat setiap pengunjung.**
+
+- `index.tsx` membungkus `<App />` dengan `<HashRouter>` dari `react-router-dom`,
+  padahal **tidak ada satu berkas pun** di app ini yang memakai API-nya — tidak
+  ada `Route`, tidak ada `Link`, tidak ada hook. Routing SurePath ditulis tangan
+  di atas History API di `App.tsx` (`currentPath` dari `window.location.pathname`,
+  `navigate()` memanggil `history.pushState`, listener `popstate` menyinkronkan
+  keduanya). Jadi seluruh library itu ikut terkirim ke setiap pengunjung tanpa
+  mengerjakan apa pun. Dihapus, dan paketnya dicabut dari `package.json`.
+- Entry chunk — satu-satunya chunk yang **wajib** dimuat semua orang sebelum apa
+  pun tampil — turun dari 445,6 kB (141,6 kB gzip) ke 421,4 kB (132,8 kB gzip):
+  **−24,2 kB mentah, −8,8 kB gzip**. Di koneksi seluler Indonesia itu yang paling
+  terasa, karena biayanya dibayar di muka sebelum splash screen muncul.
+- Tidak mengubah perilaku URL. Sebelum penghapusan saya cek dulu di browser:
+  HashRouter **tidak** menambahkan `#/` ke URL mana pun, jadi ini murni bobot
+  bundel yang mati, bukan bug routing. Setelah penghapusan, 10/10 asersi:
+  `pathname` utuh di `/`, `/tentang-kami`, `/produk`, `/agapps`, `/admin`,
+  `/custapp`, `/operatorapp`; `pushState` memindahkan URL; tombol Back kembali ke
+  path sebelumnya; nol error halaman.
+- Koreksi temuan audit: "AnalyticsDashboard 395 kB perlu code-splitting"
+  **salah**. Berkas itu sudah `lazy()`-loaded di `AdminPortal.tsx`, recharts
+  hanya diimpor di satu berkas, dan komentar di `vite.config.ts` mencatat bahwa
+  manual chunk untuk recharts/jspdf memang sengaja dihapus (manual chunk menyerap
+  dependensi bersama dan justru memaksa entry mengimpor ~240 kB di setiap
+  halaman). Tidak ada cacat di sana, jadi tidak ada yang "diperbaiki".
+- Juga dikoreksi: `CLAUDE.md` menyatakan `react-router` "tidak diimpor di mana
+  pun". Itu tidak benar — ada satu impor, di `index.tsx`. Sekarang pernyataannya
+  cocok dengan kode.
+
+## v2.6.13 — 2026-10-23
+
+**Lantai tipografi: 11px, didefinisikan sekali, dijaga lint.**
+
+- 765 simpul teks di app ditulis di bawah 11px dengan nilai arbitrer —
+  `text-[10px]` sampai `text-[7px]`. Di bawah ambang nyaman baca di ponsel, dan
+  karena tiap simpul menulis angkanya sendiri, lantainya tidak bisa dinaikkan
+  dari satu tempat. Sekarang ada `text-2xs` (11px) di `tailwind.config.cjs`:
+  satu tempat itu. Skala Tailwind sendiri mulai dari `text-xs` (12px), jadi
+  `2xs` duduk satu langkah di bawahnya, bukan memaksa setiap caption naik 20%.
+- Dimigrasikan: 40 simpul di permukaan yang bisa saya buka dan periksa langsung
+  di browser — halaman marketing, splash screen, halaman e-quotation dan
+  financing. **Enam portal belum**, karena butuh sesi login untuk dilihat;
+  ~725 simpul sisanya menunggu pass per portal dengan mata manusia atau URL
+  preview. Jumlah pastinya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
+- Guardrail ESLint menolak `text-[Npx]` di bawah 11px, tapi hanya di direktori
+  yang sudah dimigrasikan (`src/`, `components/ui/`, `landing/`, `public/`).
+  Ratchet yang sama seperti aturan hex: tambah direktori saat selesai, jangan
+  nyalakan di mana-mana lalu tenggelam di 725 error.
+- Pengecualian yang disengaja: angka di dalam badge hitung berukuran tetap
+  (angka `1` di dalam titik 14px). Itu glyph dalam bentuk, bukan teks untuk
+  dibaca, dan menaikkannya membuat titiknya jebol. Tidak ada satu pun di
+  direktori yang sudah dimigrasikan; saat portal menyusul, mereka butuh
+  primitif sendiri, bukan komentar pengecualian.
+- Dikonfirmasi di browser pada lebar 390px, 16/16 asersi: setiap simpul
+  `text-2xs` benar-benar merender 11px (class Tailwind yang tidak ter-generate
+  diam-diam merender di ukuran warisan — unit test tidak bisa melihat itu),
+  nol class arbitrer di bawah 11px tersisa di DOM, dan tidak ada overflow
+  horizontal di lima halaman.
 
 ## v2.6.12 — 2026-10-23
 

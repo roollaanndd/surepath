@@ -249,7 +249,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
                 <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
                   className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span className="text-[0.55rem] font-black uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.key}</span>
+                  <span className="text-2xs font-black uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.key}</span>
                 </a>
               ))}
             </div>
@@ -258,7 +258,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
           {/* Link columns */}
           {columns.map(col => (
             <div key={col.title}>
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.25em] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>{col.title}</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>{col.title}</p>
               <ul className="space-y-3">
                 {col.links.map(l => (
                   <li key={l.path}>
@@ -272,7 +272,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
 
         {/* Regulatory disclosure */}
         <div className="mt-12 rounded-2xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-[0.62rem] leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+          <p className="text-2xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
             {t(
               'SurePath adalah platform teknologi yang memasarkan produk asuransi dari perusahaan asuransi berizin dan diawasi oleh Otoritas Jasa Keuangan (OJK). Seluruh produk asuransi diterbitkan oleh perusahaan asuransi mitra sesuai ketentuan yang berlaku. SurePath bukan perusahaan asuransi.',
               'SurePath is a technology platform marketing insurance products from licensed insurers supervised by the Indonesian Financial Services Authority (OJK). All insurance products are issued by partner insurers under applicable regulations. SurePath is not an insurance company.'
@@ -281,17 +281,17 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
         </div>
 
         <div className="mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-[0.65rem]" style={{ color: 'rgba(255,255,255,0.18)' }}>© {new Date().getFullYear()} PT Ruang Proteksi Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
+          <p className="text-2xs" style={{ color: 'rgba(255,255,255,0.18)' }}>© {new Date().getFullYear()} PT Ruang Proteksi Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
           <div className="flex items-center gap-6">
             {[
               { label: t('Privasi', 'Privacy'), path: '/privacy' },
               { label: t('Ketentuan', 'Terms'), path: '/terms' },
               { label: t('Cookie', 'Cookie'),   path: '/cookie' },
             ].map(l => (
-              <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-[0.65rem] transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>{l.label}</a>
+              <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>{l.label}</a>
             ))}
             <button onClick={() => navigate('/admin')} aria-label="Admin"
-              className="flex items-center gap-1 text-[0.65rem] transition-colors hover:text-white"
+              className="flex items-center gap-1 text-2xs transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.18)' }}>
               <Lock size={9} /> Admin
             </button>
@@ -353,7 +353,7 @@ const SiteLayout: React.FC<LayoutProps> = (props) => {
           <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
             <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
               Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
             </span>
           </div>

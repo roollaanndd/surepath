@@ -258,7 +258,7 @@ const ProductCard: React.FC<{ p: any; onDetail: () => void }> = ({
           <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white rounded-2xl flex items-center justify-center border border-slate-200 dark:border-white/5 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all duration-500">
             <p.icon size={28} strokeWidth={1.5} />
           </div>
-          <span className="px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5">
+          <span className="px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full text-2xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5">
             {p.tag}
           </span>
         </div>

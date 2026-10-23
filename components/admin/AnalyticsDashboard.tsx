@@ -246,7 +246,7 @@ const AnalyticsDashboard = () => {
                       {productMix.map((_, i) => <Cell key={i} fill={PRODUCT_COLORS[i % PRODUCT_COLORS.length]} />)}
                     </Pie>
                     <Tooltip content={<ChartTip />} formatter={(v: any) => formatIDR(v)} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px', color: '#9ca3af' }} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.6875rem', color: '#9ca3af' }} />
                   </PieChart>
                 </ResponsiveContainer>
               )}

@@ -7,7 +7,6 @@ import './services/appViewport';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
 import * as Sentry from '@sentry/react';
 import App from './App';
@@ -111,9 +110,13 @@ const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <HashRouter>
-        <App />
-      </HashRouter>
+      {/* No router here, deliberately. Routing is hand-rolled on the History
+          API in App.tsx: `currentPath` is seeded from window.location.pathname,
+          navigate() calls history.pushState, and a popstate listener keeps the
+          two in sync. This spot used to hold a <HashRouter> whose API nothing
+          in the app ever used — no Route, no Link, no hook — so it shipped
+          react-router-dom to every visitor on first load for nothing. */}
+      <App />
     </ErrorBoundary>
   </React.StrictMode>
 );

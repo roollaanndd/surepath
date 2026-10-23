@@ -51,7 +51,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className="font-bold text-base leading-tight" style={{ color: textMain }}>{p.name}</h3>
                       {p.comingSoon && (
-                        <span className="shrink-0 text-[0.55rem] font-bold uppercase tracking-[0.15em] px-2 py-1 rounded-full"
+                        <span className="shrink-0 text-2xs font-bold uppercase tracking-[0.15em] px-2 py-1 rounded-full"
                           style={{ background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}35` }}>
                           {t('Segera Hadir', 'Coming Soon')}
                         </span>
@@ -74,7 +74,7 @@ const ProductsPage: React.FC<SitePageProps> = (props) => {
                 style={{ background: accent, ['--spx-accent' as string]: accent }}>
                 <div className="spx-grid-tex" style={{ ['--spx-accent' as string]: '#ffffff' }} />
                 <div className="p-8 flex flex-col flex-1 justify-center">
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
+                  <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
                     {t('KONSULTASI', 'CONSULTATION')}
                   </p>
                   <h3 className="font-bold text-lg mb-2" style={{ color: '#ffffff' }}>

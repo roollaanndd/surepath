@@ -159,7 +159,7 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
       <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 49, display: 'flex', alignItems: 'center', gap: 7, padding: '5px 12px', borderRadius: 10, background: 'rgba(5,8,13,0.82)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' }}>
         <img loading="lazy" src="/surepath-logo-sm.png" alt="SurePath" style={{ height: 13, width: 'auto', objectFit: 'contain' }}
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
+        <span style={{ fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '-0.01em', color: '#fff' }}>
           Sure<span style={{ color: 'hsl(119 99% 46%)' }}>Path</span>
         </span>
       </div>

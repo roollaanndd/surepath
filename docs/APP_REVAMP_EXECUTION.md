@@ -169,6 +169,18 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-23 — Fase 2a: `body` joins the theme, and the dark-mode flash is gone
+
+- **Scope:** `index.html` (an inline pre-paint theme script; `body` and the scrollbar thumb moved onto tokens); `services/__tests__/theme.test.ts` (3 new guards).
+- **Defect fixed, carried over from Fase 1a's known gaps:** `index.html` hardcoded `body { background: #fafaf9; color: #1e293b }` with no dark counterpart. The one surface behind every page was therefore the one surface that never followed the theme — `--ds-*` on `:root` flipped to its dark values while `body` stayed light. `body` now reads `var(--ds-bg)` / `var(--ds-text-primary)`, with the literals kept only as a first-paint fallback for the window before `styles.css` (bundle-imported) defines the tokens. Those fallbacks must stay equal to the token values, and a comment in the file says so.
+- **Second defect fixed:** the `dark` class only landed after React mounted, so every load painted light first — a white flash for anyone using dark mode. A short inline script in `<head>` now reads the stored preference before first paint. It uses the same `sp_dark_mode` key as `components/shared/theme.ts`, which remains the single owner; this is an early read of that state, not a second owner. Only an explicit `'true'` turns it on, so a user who has never chosen still gets light (what five of the six portals open as) and the Admin CMS still applies its dark fallback at mount.
+- **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **316 passed / 25 files** (was 313/25). `npm run build` → `dist/` clean check passed, PWA release check passed.
+- **Functional verification:** browser-confirmed against the local dev server, **8/8** assertions: the light token painted on `body` (`rgb(244,247,251)`), the class reaching `documentElement`, `body`'s background moving to `rgb(26,29,41)` and its text colour to white, the theme read appearing in `<head>` ahead of the module script in the served HTML, and no literal `background: #` left in the `body` rule. The last assertion was verified non-vacuous: restoring `background: #fafaf9` made it fail, and the file was restored. The 3 new unit tests guard `index.html` itself, which is outside the TypeScript build and would otherwise drift unnoticed.
+- **Version:** v2.6.12 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 25, `versionName` 2.6.12); changelog entry added.
+- **Production:** recorded after merge and Vercel verification.
+- **Known gaps:** the typography floor (765 nodes under 11px), the radius scale, 826 raw `<button>`, and 1.003 hardcoded hex outside `components/ui/` remain open, as does every C/A/O/D screen item. Browser confirmation inside the authenticated portals is still outstanding; `myinsurepath.com` and `*.vercel.app` are blocked by this environment's network policy.
+- **Checklist:** S1 gains the `body` surface; no item moved to DONE.
+
 ### 2026-10-23 — Fase 1b: the admin tier screen off native dialogs, prompt support, one empty state
 
 - **Scope:** `components/ui/ConfirmDialog.tsx` (input support + `usePromptDialog`); `components/ui/index.ts`; `components/admin/TierPromoConfigAdmin.tsx` (off `window.confirm`/`alert`/`prompt`); `components/admin/PolicyOrdersAdmin.tsx` (four console-only user messages + a `window.prompt` fallback moved to toasts); `components/ui/EmptyState.tsx` **deleted**; `services/__tests__/promptDialog.test.tsx` (new); `services/__tests__/components.test.tsx` repointed at `AgentEmpty`.
@@ -193,7 +205,7 @@ Append a new entry after each meaningful implementation/verification milestone.
 - **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **313 passed / 25 files** (was 305/24 — 7 new in `promptDialog.test.tsx`, 1 added to `components.test.tsx`). `npm run build` → `dist/` clean check passed (132 files, unchanged), PWA release check passed.
 - **Functional verification:** the 7 new tests cover the value coming back on confirm, `null` on dismissal, an empty answer accepted when the field is optional, a required field blocking both blank and whitespace-only input, the stranded-caller fix, `useConfirmDialog` still resolving to a plain boolean, and no textbox rendered when no input was asked for. **Not yet done:** browser confirmation of the tier screen itself, which needs an authenticated admin session.
 - **Version:** v2.6.11 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 24, `versionName` 2.6.11); changelog entry added.
-- **Production:** recorded after merge and Vercel verification.
+- **Production:** merged as PR #255 (commit `25d57d5`), deployed by Vercel as `dpl_4yvZ5JG6Wonm6SDRtNF2cqtUKfoa`, state READY, aliased to `myinsurepath.com`.
 - **Known gaps:** unchanged from Fase 1a except the dialog items — 1.003 hardcoded hex outside `components/ui/`, 826 raw `<button>`, the typography floor (765 nodes), the radius scale, the unthemed `body` background in `index.html`, and every C/A/O/D screen item remain open.
 - **Checklist:** S2 stays PARTIAL, now with the feedback layer complete and the structural layer named as the remaining work. No item moved to DONE.
 

@@ -56,6 +56,7 @@ import {
 import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { formatIDRCompact } from '../../src/i18n';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
 
@@ -442,7 +443,7 @@ const AdminPortal = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-300">Sistem aktif</p>
+              <p className="text-2xs font-black uppercase tracking-[0.2em] text-emerald-300">Sistem aktif</p>
             </div>
             <h2 className="text-3xl font-black tracking-tight leading-none">
               Halo, {(currentUser?.name ?? formatRole(userRole)).split(' ')[0]} 👋
@@ -467,46 +468,46 @@ const AdminPortal = ({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—',                            icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
-          { label: 'Premi Diterbitkan', value: adminStats ? formatIDR(adminStats.totalPremiumIssued) : '—', icon: TrendingUp, to: 'policy_orders',     color: 'bg-ds-green-tint text-ds-green' },
-          { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: 'bg-ds-blue-lt text-ds-blue' },
-          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: 'bg-ds-amber-lt text-ds-amber' },
+          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—', exact: undefined,                            icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
+          { label: 'Premi Diterbitkan', value: adminStats ? formatIDRCompact(adminStats.totalPremiumIssued) : '—', exact: adminStats ? formatIDR(adminStats.totalPremiumIssued) : undefined, icon: TrendingUp, to: 'policy_orders',     color: 'bg-ds-green-tint text-ds-green' },
+          { label: 'Premi Dibayar',     value: adminStats ? formatIDRCompact(adminStats.totalPremiumPaid) : '—', exact: adminStats ? formatIDR(adminStats.totalPremiumPaid) : undefined,  icon: CheckCircle, to: 'payments',          color: 'bg-ds-blue-lt text-ds-blue' },
+          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—', exact: undefined,                            icon: Users,      to: 'agents',            color: 'bg-ds-amber-lt text-ds-amber' },
         ].map(card => (
           <button key={card.label} type="button" onClick={() => goToTab(card.to)}
-            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
+            className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
               <card.icon size={20} />
             </div>
-            <p className={`text-2xl font-black tracking-tight mb-1 ${'text-ds-ink'}`}>{card.value}</p>
-            <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${'text-ds-ink3'}`}>{card.label}</p>
-            <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+            <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
+            <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
+            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
           </button>
         ))}
       </div>
 
       {/* Transaksi Overview + Online Users */}
       <div>
-        <p className={`text-[0.55rem] font-black uppercase tracking-[0.35em] mb-3 ${'text-ds-ink3'}`}>Transaksi Overview</p>
+        <p className={`text-2xs font-black uppercase tracking-[0.2em] mb-3 ${'text-ds-ink3'}`}>Transaksi Overview</p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—',                              icon: Users,      to: 'users',             color: 'bg-ds-purple-lt text-ds-purple' },
-            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—',                                 icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
-            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: 'bg-ds-green-tint text-ds-green' },
-            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: 'bg-ds-amber-lt text-ds-amber' },
+            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—', exact: undefined,                              icon: Users,      to: 'users',             color: 'bg-ds-purple-lt text-ds-purple' },
+            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—', exact: undefined,                                 icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
+            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDRCompact(transaksiStats.totalPembayaranMasuk) : '—', exact: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : undefined,             icon: CreditCard, to: 'payments',          color: 'bg-ds-green-tint text-ds-green' },
+            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDRCompact(transaksiStats.totalKomisiAgen) : '—', exact: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : undefined,                  icon: Coins,      to: 'commission_ledger', color: 'bg-ds-amber-lt text-ds-amber' },
           ].map(card => (
             <button key={card.label} type="button" onClick={() => goToTab(card.to)}
-              className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
+              className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
                 <card.icon size={20} />
               </div>
-              <p className={`text-2xl font-black tracking-tight mb-1 ${'text-ds-ink'}`}>{card.value}</p>
-              <p className={`text-[0.6rem] font-bold uppercase tracking-widest ${'text-ds-ink3'}`}>{card.label}</p>
-              <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+              <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
+              <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
+              <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
             </button>
           ))}
           {/* Online Users Card */}
           <button type="button" onClick={() => goToTab('security')}
-            className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
+            className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className="flex items-center gap-2 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${'bg-ds-green-tint text-ds-green'}`}>
                 <Users size={20} />
@@ -516,13 +517,13 @@ const AdminPortal = ({
             <p className={`text-2xl font-black tracking-tight mb-0.5 ${'text-ds-ink'}`}>
               {onlineUsers ? onlineUsers.total : '—'}
             </p>
-            <p className={`text-[0.6rem] font-bold uppercase tracking-widest mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
+            <p className={`text-2xs font-bold uppercase tracking-wider mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
             {onlineUsers && onlineUsers.total > 0 && (
-              <p className={`text-[0.55rem] font-bold ${'text-ds-ink3'}`}>
+              <p className={`text-2xs font-bold ${'text-ds-ink3'}`}>
                 {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
               </p>
             )}
-            <p className={`mt-2 text-[0.55rem] font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
           </button>
         </div>
       </div>

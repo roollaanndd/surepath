@@ -11,6 +11,17 @@
   judul, deskripsi, dan JSON-LD halaman daftar. Metadata per artikel di
   `src/seo/seo.ts` sudah ditulis sejak awal tapi tidak pernah terjangkau.
   Sekarang artikel ditentukan URL, dan kartunya berupa `<a href>`.
+- Nomor telepon dan alamat kantor dihapus dari seluruh situs. Belum ada kantor
+  dan belum ada nomor WhatsApp kantor (keputusan owner, 2026-10-23), sementara
+  situs memasang empat kontak palsu yang saling berbeda: `telephone`
+  `+62-21-5060-1234` di dua simpul schema dan di fallback `<noscript>`,
+  `(021) 5050-1234` plus WhatsApp `+62 811-1234-5678` di `/kontak`, dan
+  `wa.me/6281234567890` di tombol "tanya agen" halaman kalkulator — CTA hidup
+  yang mengarah ke nomor yang tidak ada. `addressLocality` ikut dilepas dari
+  schema dan baris alamat dilepas dari footer. Satu-satunya nomor yang tersisa
+  adalah `SUREPATH_WHATSAPP` di `constants.ts`, nomor yang memang sudah dipakai
+  tombol WhatsApp mengambang dan Pathy; `/kontak` dan kalkulator sekarang
+  memakai konstanta itu, bukan nomor karangan sendiri.
 - Footer, menu mobile, kartu produk, dan kartu blog menjadi tautan sebenarnya.
   Sebelumnya semuanya `<button onClick={navigate})`, sehingga hanya ada 7 tautan
   yang bisa dirayapi di seluruh situs dan 19 dari 24 URL — termasuk `/kalkulator`

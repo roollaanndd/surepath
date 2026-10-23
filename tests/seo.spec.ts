@@ -139,8 +139,29 @@ test.describe('Structured data scope', () => {
     // caught on the deploy preview, not by the earlier JSON-LD-only assertion.
     const html = await (await request.get('/')).text();
     expect(html).not.toContain('info@myinsurepath.com');
-    expect(html).not.toContain('+62-800-1234-5678');
     expect(html).toContain('halo@myinsurepath.com');
+  });
+
+  test('the site advertises no phone number and no office address', async ({ request }) => {
+    // There is no office line and no office WhatsApp yet (owner, 2026-10-23).
+    // Every number and address previously on the site was invented, and the
+    // schema, the footer and /kontak each invented a different one. Asserting
+    // the absence is what keeps a plausible-looking placeholder from being
+    // reintroduced and picked up by Google as a business fact.
+    const html = await (await request.get('/')).text();
+    expect(html).not.toMatch(/"telephone"/);
+    expect(html).not.toMatch(/\bhref="tel:/);
+    expect(html).not.toMatch(/addressLocality/);
+
+    // The one WhatsApp number in the product is the live one in constants.ts;
+    // nothing may ship a second, different one.
+    const sources = ['/', '/kontak', '/kalkulator'];
+    for (const path of sources) {
+      const body = await (await request.get(path)).text();
+      for (const placeholder of ['1234-5678', '6281234567890', '5050-1234', '5060-1234']) {
+        expect(body, `${path} still advertises ${placeholder}`).not.toContain(placeholder);
+      }
+    }
   });
 });
 

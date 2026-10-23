@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock, Mail, Download } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
@@ -199,8 +199,6 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
 
   const contacts = [
     { Icon: Mail,  label: 'halo@myinsurepath.com', href: 'mailto:halo@myinsurepath.com' },
-    { Icon: Phone, label: '+62 21 5060 1234',      href: 'tel:+622150601234' },
-    { Icon: MapPin, label: t('Jakarta Selatan, Indonesia', 'South Jakarta, Indonesia'), href: undefined },
   ];
 
   return (

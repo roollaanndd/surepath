@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.13 — 2026-10-23
+## v2.6.15 — 2026-10-23
 
 **Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**
 
@@ -25,9 +25,16 @@
   ditegakkan. Sekarang tingkatnya diturunkan dari baris, bukan dari request;
   UPDATE-nya mengklaim stage secara atomik lewat `.eq('status', …)` sehingga dua
   approver yang berlomba tidak bisa sama-sama maju; dan satu orang tidak bisa
-  menandatangani penarikan yang sama dua kali. Tier 1 tetap bisa diselesaikan
-  operator — portal operator memang mengirim `approveWithdrawalL1` — sementara
-  tier 2 dan 3 kini butuh finance admin.
+  menandatangani penarikan yang sama dua kali.
+
+- Persetujuan penarikan jadi **finance-only di semua tier** (keputusan pemilik,
+  2026-10-23, sementara). `OPERATOR` ada di `ADMIN_ROLES` tapi tidak di
+  `FINANCE_ROLES`, jadi operator tidak lagi bisa menandatangani tier mana pun —
+  termasuk L1 untuk permintaan di bawah 10jt. Tombol "L1" di portal operator
+  dihapus beserta `approveWithdrawalL1` di `services/operatorService.ts`, supaya
+  tidak ada tombol yang pasti membalas 403. Operator tetap melihat antrian dan
+  tetap bisa **menolak**, karena menolak hanya membalikkan deduksi yang sudah
+  dilakukan agen dan tidak bisa mencairkan dana.
 
 - Migration `20261023073000_close_token_table_rls_gaps.sql`: `sp_insurer_auth_tokens`
   dan `sp_review_tokens` terbuka untuk setiap user terautentikasi di produksi
@@ -36,6 +43,7 @@
   mati; `admins_manage_tokens` pada `sp_review_tokens` diganti policy ber-scope
   `is_admin()` karena tombol kirim-link-ulasan di admin masih INSERT langsung ke
   tabel itu. **Migration ini belum diterapkan ke produksi.**
+
 
 ## v2.6.14 — 2026-10-23
 

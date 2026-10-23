@@ -33,7 +33,7 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
       }
 
     case 'admin_approve_withdrawal': {
-        // FIX v2.6.13 (audit 2026-10-23, C2): the approval level is derived from
+        // FIX v2.6.15 (audit 2026-10-23, C2): the approval level is derived from
         // the withdrawal row, never from the request.
         //
         // This used to read `level` out of params and fall through an `else`
@@ -42,14 +42,16 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         // row was even awaiting approval and no check that L1/L2 had happened.
         // The <10jt/>=10jt/>=25jt ladder was effectively not enforced at all.
         //
-        // On roles: OPERATOR is in ADMIN_ROLES but not FINANCE_ROLES, and the
-        // operator portal ships an L1-only approval (services/operatorService.ts
-        // `approveWithdrawalL1`), so operators are *meant* to clear the first
-        // tier. That stays allowed. What was wrong is that a client-chosen level
-        // let them skip straight to APPROVED. With the stage derived from the row
-        // an operator can only ever advance one step, and tiers 2 and 3 are
-        // gated on isFinanceAdmin below.
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        // On roles (owner's call, 2026-10-23): *every* tier is finance-only.
+        // OPERATOR sits in ADMIN_ROLES but not FINANCE_ROLES, so an operator can
+        // no longer sign any tier, not even L1 on a <10jt request. The operator
+        // portal's L1 button was removed in the same change
+        // (components/operator/OperatorWithdrawals.tsx); operators keep read
+        // access to the queue and keep rejecting, which only reverses a
+        // deduction the agent already made.
+        if (!caller.isFinanceAdmin) {
+          return json({ error: 'Forbidden: withdrawal approval requires a finance admin' }, 403);
+        }
         if (!params.withdrawal_id) return json({ error: 'withdrawal_id required' }, 400);
 
         const { data: wd, error: fetchErr } = await db.from('sp_withdrawals')
@@ -64,11 +66,6 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
 
         // Tiers required by amount, mirroring agent_request_withdrawal below.
         const required = (wd.amount ?? 0) >= 25_000_000 ? 3 : (wd.amount ?? 0) >= 10_000_000 ? 2 : 1;
-
-        // Tier 1 is operator-clearable; the escalated tiers are finance-only.
-        if (stage >= 2 && !caller.isFinanceAdmin) {
-          return json({ error: `Forbidden: tier ${stage} approval requires a finance admin` }, 403);
-        }
 
         // Four-eyes: nobody may sign the same withdrawal twice.
         if ([wd.l1_approved_by, wd.l2_approved_by].includes(caller.authId)) {

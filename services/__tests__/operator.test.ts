@@ -25,7 +25,7 @@ vi.mock('../db', () => ({
 
 import {
   getQueueSummary, listOrders, updateOrderStatus, sendInsurerReviewLink,
-  listClaims, updateClaimStatus, listWithdrawals, approveWithdrawalL1, rejectWithdrawal,
+  listClaims, updateClaimStatus, listWithdrawals, rejectWithdrawal,
   listPendingAgents, getAgentDetail, verifyAgent, rejectAgent,
   listNotifications, markNotificationRead, markAllNotificationsRead,
 } from '../operatorService';
@@ -75,10 +75,6 @@ describe('Operator Service', () => {
     const result = await listWithdrawals();
     expect(result[0].agent_name).toBe('Agent');
     expect(result[0].agent_email).toBe('a@t.com');
-  });
-
-  it('approveWithdrawalL1 does not throw', async () => {
-    await expect(approveWithdrawalL1('w1')).resolves.not.toThrow();
   });
 
   it('rejectWithdrawal does not throw', async () => {

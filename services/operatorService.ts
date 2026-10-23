@@ -221,17 +221,6 @@ export async function listWithdrawals(status?: string, limit = 100): Promise<Ope
   }));
 }
 
-export async function approveWithdrawalL1(
-  withdrawalId: string,
-): Promise<OperatorWithdrawal> {
-  // FIX v1.44.0: approverId removed — gateway uses caller.authId from JWT
-  const { data, error } = await callGateway('admin_approve_withdrawal', {
-    withdrawal_id: withdrawalId, level: 1,
-  });
-  if (error) throw new Error(error);
-  return data as OperatorWithdrawal;
-}
-
 export async function rejectWithdrawal(
   withdrawalId: string,
   reason: string,

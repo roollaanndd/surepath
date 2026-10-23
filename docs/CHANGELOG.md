@@ -37,6 +37,66 @@
   `is_admin()` karena tombol kirim-link-ulasan di admin masih INSERT langsung ke
   tabel itu. **Migration ini belum diterapkan ke produksi.**
 
+## v2.6.14 — 2026-10-23
+
+**React Router dihapus dari bundel: −24 kB yang dimuat setiap pengunjung.**
+
+- `index.tsx` membungkus `<App />` dengan `<HashRouter>` dari `react-router-dom`,
+  padahal **tidak ada satu berkas pun** di app ini yang memakai API-nya — tidak
+  ada `Route`, tidak ada `Link`, tidak ada hook. Routing SurePath ditulis tangan
+  di atas History API di `App.tsx` (`currentPath` dari `window.location.pathname`,
+  `navigate()` memanggil `history.pushState`, listener `popstate` menyinkronkan
+  keduanya). Jadi seluruh library itu ikut terkirim ke setiap pengunjung tanpa
+  mengerjakan apa pun. Dihapus, dan paketnya dicabut dari `package.json`.
+- Entry chunk — satu-satunya chunk yang **wajib** dimuat semua orang sebelum apa
+  pun tampil — turun dari 445,6 kB (141,6 kB gzip) ke 421,4 kB (132,8 kB gzip):
+  **−24,2 kB mentah, −8,8 kB gzip**. Di koneksi seluler Indonesia itu yang paling
+  terasa, karena biayanya dibayar di muka sebelum splash screen muncul.
+- Tidak mengubah perilaku URL. Sebelum penghapusan saya cek dulu di browser:
+  HashRouter **tidak** menambahkan `#/` ke URL mana pun, jadi ini murni bobot
+  bundel yang mati, bukan bug routing. Setelah penghapusan, 10/10 asersi:
+  `pathname` utuh di `/`, `/tentang-kami`, `/produk`, `/agapps`, `/admin`,
+  `/custapp`, `/operatorapp`; `pushState` memindahkan URL; tombol Back kembali ke
+  path sebelumnya; nol error halaman.
+- Koreksi temuan audit: "AnalyticsDashboard 395 kB perlu code-splitting"
+  **salah**. Berkas itu sudah `lazy()`-loaded di `AdminPortal.tsx`, recharts
+  hanya diimpor di satu berkas, dan komentar di `vite.config.ts` mencatat bahwa
+  manual chunk untuk recharts/jspdf memang sengaja dihapus (manual chunk menyerap
+  dependensi bersama dan justru memaksa entry mengimpor ~240 kB di setiap
+  halaman). Tidak ada cacat di sana, jadi tidak ada yang "diperbaiki".
+- Juga dikoreksi: `CLAUDE.md` menyatakan `react-router` "tidak diimpor di mana
+  pun". Itu tidak benar — ada satu impor, di `index.tsx`. Sekarang pernyataannya
+  cocok dengan kode.
+
+## v2.6.13 — 2026-10-23
+
+**Lantai tipografi: 11px, didefinisikan sekali, dijaga lint.**
+
+- 765 simpul teks di app ditulis di bawah 11px dengan nilai arbitrer —
+  `text-[10px]` sampai `text-[7px]`. Di bawah ambang nyaman baca di ponsel, dan
+  karena tiap simpul menulis angkanya sendiri, lantainya tidak bisa dinaikkan
+  dari satu tempat. Sekarang ada `text-2xs` (11px) di `tailwind.config.cjs`:
+  satu tempat itu. Skala Tailwind sendiri mulai dari `text-xs` (12px), jadi
+  `2xs` duduk satu langkah di bawahnya, bukan memaksa setiap caption naik 20%.
+- Dimigrasikan: 40 simpul di permukaan yang bisa saya buka dan periksa langsung
+  di browser — halaman marketing, splash screen, halaman e-quotation dan
+  financing. **Enam portal belum**, karena butuh sesi login untuk dilihat;
+  ~725 simpul sisanya menunggu pass per portal dengan mata manusia atau URL
+  preview. Jumlah pastinya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
+- Guardrail ESLint menolak `text-[Npx]` di bawah 11px, tapi hanya di direktori
+  yang sudah dimigrasikan (`src/`, `components/ui/`, `landing/`, `public/`).
+  Ratchet yang sama seperti aturan hex: tambah direktori saat selesai, jangan
+  nyalakan di mana-mana lalu tenggelam di 725 error.
+- Pengecualian yang disengaja: angka di dalam badge hitung berukuran tetap
+  (angka `1` di dalam titik 14px). Itu glyph dalam bentuk, bukan teks untuk
+  dibaca, dan menaikkannya membuat titiknya jebol. Tidak ada satu pun di
+  direktori yang sudah dimigrasikan; saat portal menyusul, mereka butuh
+  primitif sendiri, bukan komentar pengecualian.
+- Dikonfirmasi di browser pada lebar 390px, 16/16 asersi: setiap simpul
+  `text-2xs` benar-benar merender 11px (class Tailwind yang tidak ter-generate
+  diam-diam merender di ukuran warisan — unit test tidak bisa melihat itu),
+  nol class arbitrer di bawah 11px tersisa di DOM, dan tidak ada overflow
+  horizontal di lima halaman.
 
 ## v2.6.12 — 2026-10-23
 

@@ -429,7 +429,7 @@ export const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => voi
             <Download size={16} style={{ color: '#16a34a' }} />
           </div>
           <p className="text-xs font-black text-white leading-tight">Download<br />Mobile App</p>
-          <p className="text-[10px] text-gray-500 mt-1">iOS &amp; Android</p>
+          <p className="text-2xs text-gray-500 mt-1">iOS &amp; Android</p>
         </button>
         <div className="relative overflow-hidden rounded-2xl p-4"
           style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(109,40,217,0.04))', border: '1px solid rgba(124,58,237,0.15)' }}>
@@ -437,7 +437,7 @@ export const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => voi
             <Award size={16} style={{ color: '#7c3aed' }} />
           </div>
           <p className="text-xs font-black text-white leading-tight">Trusted<br />Partner</p>
-          <p className="text-[10px] text-gray-500 mt-1">18+ Insurer</p>
+          <p className="text-2xs text-gray-500 mt-1">18+ Insurer</p>
         </div>
       </div>
     </div>

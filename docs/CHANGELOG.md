@@ -1,5 +1,37 @@
 # SurePath — Changelog
 
+## v2.6.17 — 2026-10-23
+
+**Kartu "Proteksi Saya" di beranda Nasabah pecah di layar ponsel — dan sebabnya bukan yang diduga.**
+
+- Di 390px, nilai premi `Rp 1.850.000` terbelah jadi tiga baris di tengah
+  angka: `Rp 1.8` / `50.0` / `00`. Label `ke perpanjangan` putus jadi
+  `perpanjang` / `an`. Ini layar pertama yang dilihat setiap nasabah.
+- **Dugaan pertama salah dan dibuang.** Ada `overflow-wrap: anywhere` di
+  `src/styles/portal-modernization.css` yang berlaku untuk keenam portal di
+  bawah 640px, dan itu tampak seperti sebabnya. Diubah ke `break-word`, lalu
+  diukur lagi: **angkanya sama persis**. Diuji terpisah dalam kasus flex
+  terkendali — dua mode itu berperilaku identik. Perubahan CSS-nya dibatalkan,
+  karena mengubah perilaku enam portal atas teori yang gagal dibuktikan bukan
+  perbaikan.
+- **Sebab sebenarnya adalah tata letak, bukan pembungkusan kata.**
+  `grid-cols-3` mengunci tiap kolom di 95px; dengan `p-4` tersisa **61px**
+  untuk isi, sementara nilai premi 20px butuh ~140px. Teks itu memang tidak
+  muat, jadi ia harus putus.
+- Perbaikannya: `StatCard` kini `p-3 sm:p-4` dan nilainya `text-base sm:text-xl`
+  dengan `tabular-nums`, dan premi memakai `formatIDRCompact` yang baru
+  (`Rp 1,9 jt`; satuan rb/jt/M/T, K/M/B/T untuk EN) di `src/i18n.ts`.
+- Sub-label kartu "Sisa Hari" berhenti mengulang labelnya sendiri: dulu
+  `ke perpanjangan` (12 huruf di kotak 71px), kini **tanggal perpanjangan**
+  (`23 Okt 2027`) — muat, dan memberi tahu hal yang labelnya tidak.
+- Label dan sub `StatCard` naik ke lantai 11px (`text-2xs`).
+- Hasil di 390px: tiap elemen satu baris, tinggi kartu **181px → 103px**, tidak
+  ada lagi putus di tengah kata. Di 360px dan 320px masih membungkus, tapi
+  **selalu di spasi** — `Rp 1,9` / `jt`, `23 Okt` / `2027` — bukan di tengah
+  angka. Diperiksa sebagai gambar, bukan cuma sebagai hitungan.
+- Sapuan enam portal: tidak ada overflow, tidak ada regresi. `npm run lint`
+  tetap 0 error / 33 warning / 316 tes.
+
 ## v2.6.16 — 2026-10-23
 
 **Dua cacat di header Admin Portal, ditemukan karena interiornya akhirnya bisa dilihat.**

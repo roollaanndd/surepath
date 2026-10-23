@@ -143,6 +143,8 @@ export async function approveWithdrawal(
   level: 1 | 2 | 3,
 ): Promise<{ success: boolean; error?: string }> {
   // FIX v1.44.0: approver_id removed — gateway uses caller.authId from JWT
+  // `level` is kept for the caller's own bookkeeping only: since 2026-10-23 the
+  // gateway derives the tier from the withdrawal row and ignores this field.
   const { data, error } = await callGateway('admin_approve_withdrawal', { withdrawal_id, level });
   if (error) return { success: false, error };
   return { success: true, ...data };

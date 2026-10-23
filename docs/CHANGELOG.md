@@ -121,6 +121,50 @@
   memeriksa node JSON-LD. Sekarang ada tes yang memeriksa seluruh dokumen.
 - `tests/seo.spec.ts`: 38 kasus yang mengunci semua hal di atas. Tidak ada satu
   pun yang terlihat di UI, jadi semuanya mudah rusak kembali tanpa disadari.
+## v2.6.18 — 2026-10-23
+
+**Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**
+
+- `data-gateway`, `quotations-gateway` dan `pathy-agent` menentukan identitas
+  pemanggil dengan menyisipkan email dari JWT ke dalam grammar filter PostgREST:
+  `.or(`id.eq.${authId},email.ilike.${email}`)`. Email itu tidak di-escape, dan
+  `ilike` memperlakukan `*` sebagai wildcard — jadi mendaftar dengan alamat yang
+  dirancang khusus membuat lookup mengembalikan baris user lain. Baris itu *adalah*
+  pemanggil: `role`, `isAdmin`, `isFinanceAdmin` dan `ownerId` semuanya diambil
+  dari situ, sehingga ini eskalasi privilese dari pendaftaran mandiri.
+  `_shared/auth.ts` sudah memakai bentuk `.eq()` terparameterisasi lengkap dengan
+  komentar yang memperingatkan hal ini; ketiga file itu tidak pernah ikut
+  diperbarui. Sekarang ketiganya memakai pola yang sama. Setiap `sp_users.email`
+  di database tersimpan lowercase, jadi `.eq()` setara dengan pencocokan
+  case-insensitive sebelumnya tanpa semantik pattern-matching.
+
+- `admin_approve_withdrawal` mengambil tingkat persetujuan dari parameter klien,
+  dan cabang `else`-nya men-set `status: 'APPROVED'` tanpa syarat — sehingga
+  `level: 3`, `level: 0`, bahkan `level: "x"` menyetujui jumlah berapa pun dalam
+  satu panggilan, tanpa memeriksa apakah baris itu sedang menunggu persetujuan
+  dan tanpa memeriksa L1/L2 sudah lewat. Tangga <10jt/≥10jt/≥25jt efektif tidak
+  ditegakkan. Sekarang tingkatnya diturunkan dari baris, bukan dari request;
+  UPDATE-nya mengklaim stage secara atomik lewat `.eq('status', …)` sehingga dua
+  approver yang berlomba tidak bisa sama-sama maju; dan satu orang tidak bisa
+  menandatangani penarikan yang sama dua kali.
+
+- Persetujuan penarikan jadi **finance-only di semua tier** (keputusan pemilik,
+  2026-10-23, sementara). `OPERATOR` ada di `ADMIN_ROLES` tapi tidak di
+  `FINANCE_ROLES`, jadi operator tidak lagi bisa menandatangani tier mana pun —
+  termasuk L1 untuk permintaan di bawah 10jt. Tombol "L1" di portal operator
+  dihapus beserta `approveWithdrawalL1` di `services/operatorService.ts`, supaya
+  tidak ada tombol yang pasti membalas 403. Operator tetap melihat antrian dan
+  tetap bisa **menolak**, karena menolak hanya membalikkan deduksi yang sudah
+  dilakukan agen dan tidak bisa mencairkan dana.
+
+- Migration `20261023073000_close_token_table_rls_gaps.sql`: `sp_insurer_auth_tokens`
+  dan `sp_review_tokens` terbuka untuk setiap user terautentikasi di produksi
+  (policy SELECT/INSERT/UPDATE `true` untuk role `public`). Policy
+  `sp_insurer_auth_tokens` di-drop tanpa pengganti karena jalur kliennya sudah
+  mati; `admins_manage_tokens` pada `sp_review_tokens` diganti policy ber-scope
+  `is_admin()` karena tombol kirim-link-ulasan di admin masih INSERT langsung ke
+  tabel itu. **Migration ini belum diterapkan ke produksi.**
+
 ## v2.6.17 — 2026-10-23
 
 **Kartu "Proteksi Saya" di beranda Nasabah pecah di layar ponsel — dan sebabnya bukan yang diduga.**

@@ -110,7 +110,14 @@ Deno.serve(async (req) => {
         const { data: userData, error: userErr } = await authClient.auth.getUser();
         if (userErr || !userData?.user) return json({ error: 'Unauthorized: invalid token' }, 401);
         const email = (userData.user.email ?? '').toLowerCase();
-        const { data: spUser } = await db.from('sp_users').select('id').or(`id.eq.${userData.user.id},email.ilike.${email}`).maybeSingle();
+        // FIX v2.6.18 (audit 2026-10-23, C1): parameterized equality instead of
+        // interpolating the JWT email into PostgREST's .or() filter grammar,
+        // where `ilike`'s `*` wildcard let a crafted signup address resolve to
+        // another user's id — the id this gateway then treats as the owner.
+        let { data: spUser } = await db.from('sp_users').select('id').eq('id', userData.user.id).maybeSingle();
+        if (!spUser && email) {
+          ({ data: spUser } = await db.from('sp_users').select('id').eq('email', email).maybeSingle());
+        }
         if (!spUser) return json({ error: 'No profile' }, 403);
 
         const allowed = await checkRateLimit(db, `user:${spUser.id}`, action, 60);

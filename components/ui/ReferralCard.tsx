@@ -108,13 +108,13 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
           </div>
           <div>
             <p className="text-xs font-black text-white uppercase tracking-widest">Ajak Teman</p>
-            <p className="text-[0.55rem] font-medium text-white/60 uppercase tracking-wider">Dapat bonus untuk kamu & teman</p>
+            <p className="text-2xs font-medium text-white/60 uppercase tracking-wider">Dapat bonus untuk kamu & teman</p>
           </div>
         </div>
 
         {/* Referral code display */}
         <div className="bg-white/10 rounded-2xl p-3 mb-3 border border-white/10">
-          <p className="text-[0.5rem] font-black text-white/50 uppercase tracking-widest mb-1">Kode Referral Kamu</p>
+          <p className="text-2xs font-black text-white/50 uppercase tracking-widest mb-1">Kode Referral Kamu</p>
           <div className="flex items-center justify-between">
             <span className="text-lg font-black text-white font-mono tracking-wider">{referralCode}</span>
             <button
@@ -146,7 +146,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
         </div>
 
         {copied && (
-          <p className="text-[0.55rem] font-bold text-emerald-300 text-center mt-2 animate-pop-in">
+          <p className="text-2xs font-bold text-emerald-300 text-center mt-2 animate-pop-in">
             Kode disalin! Bagikan ke teman 🎉
           </p>
         )}

@@ -89,19 +89,19 @@ const TermsModal: React.FC<Props> = ({ onAccept, onDone }) => {
             borderRadius: '14px',
             padding: '16px 20px',
           }}>
-            <p style={{ margin: '0 0 6px', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <p style={{ margin: '0 0 6px', fontSize: '0.6875rem', color: 'rgba(255,255,255,0.35)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Nomor Referensi Konfirmasi
             </p>
             <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'hsl(119,99%,46%)', letterSpacing: '0.04em', fontFamily: 'monospace' }}>
               {refNumber}
             </p>
-            <p style={{ margin: '8px 0 0', fontSize: '0.6rem', color: 'rgba(255,255,255,0.30)', lineHeight: 1.5 }}>
+            <p style={{ margin: '8px 0 0', fontSize: '0.6875rem', color: 'rgba(255,255,255,0.30)', lineHeight: 1.5 }}>
               Catat nomor ini sebagai bukti persetujuan Anda. Nomor ini juga tersimpan di profil akun Anda.
             </p>
           </div>
 
           <div style={{ width: '100%', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px 14px' }}>
-            <p style={{ margin: 0, fontSize: '0.6rem', color: 'rgba(255,255,255,0.30)' }}>
+            <p style={{ margin: 0, fontSize: '0.6875rem', color: 'rgba(255,255,255,0.30)' }}>
               Tanggal: <span style={{ color: 'rgba(255,255,255,0.55)' }}>
                 {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
@@ -161,7 +161,7 @@ const TermsModal: React.FC<Props> = ({ onAccept, onDone }) => {
             <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
               Syarat &amp; Ketentuan
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.02em' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.6875rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.02em' }}>
               Terms &amp; Conditions · SurePath
             </p>
           </div>
@@ -247,7 +247,7 @@ const TermsModal: React.FC<Props> = ({ onAccept, onDone }) => {
             </div>
             <span
               onClick={() => setChecked(c => !c)}
-              style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, userSelect: 'none' }}
+              style={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, userSelect: 'none' }}
             >
               Saya telah membaca dan menyetujui{' '}
               <span style={{ color: 'hsl(119,99%,46%)' }}>Syarat &amp; Ketentuan</span> serta{' '}

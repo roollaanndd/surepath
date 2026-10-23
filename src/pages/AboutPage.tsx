@@ -70,7 +70,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
               style={{ background: `linear-gradient(135deg, ${accent}18 0%, ${accent}05 100%)`, border: `1px solid ${accent}30`, ['--spx-accent' as string]: accent }}>
               <div className="spx-grid-tex" />
               <div style={{ position: 'absolute', top: -30, right: -10, fontSize: '10rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.04, pointerEvents: 'none', userSelect: 'none', fontFamily: 'Georgia, serif' }}>M</div>
-              <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 14 }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 14 }}>
                 {t('MISI KAMI', 'OUR MISSION')}
               </p>
               <p className="text-lg leading-relaxed max-w-2xl mx-auto font-medium relative" style={{ color: textMain }}>
@@ -87,7 +87,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
                   <div style={{ position: 'absolute', top: -8, right: 12, fontSize: '4.5rem', fontWeight: 900, lineHeight: 1, color: accent, opacity: 0.06, pointerEvents: 'none', userSelect: 'none' }}>
                     {String(i + 1).padStart(2, '0')}
                   </div>
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 10 }}>
+                  <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: accent, letterSpacing: '0.3em', marginBottom: 10 }}>
                     {String(i + 1).padStart(2, '0')}
                   </p>
                   <h3 className="font-bold text-base mb-2 relative" style={{ color: textMain }}>{v.title}</h3>
@@ -110,7 +110,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
                     <AnimatedCounter target={stat.target} suffix={stat.suffix} />
                   </div>
                   <div style={{ width: 28, height: 3, background: accent, margin: '10px 0 8px', borderRadius: 99 }} />
-                  <div style={{ fontSize: '0.6rem', fontWeight: 700, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                  <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
                     {stat.label}
                   </div>
                 </div>
@@ -147,7 +147,7 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
                       style={{ background: tm.color }}>{tm.initial}</div>
                     <div>
                       <p className="text-sm font-bold" style={{ color: textMain }}>{tm.name}</p>
-                      <p className="text-[0.65rem]" style={{ color: textMuted }}>{tm.role} · {tm.city}</p>
+                      <p className="text-2xs" style={{ color: textMuted }}>{tm.role} · {tm.city}</p>
                     </div>
                   </div>
                 </div>

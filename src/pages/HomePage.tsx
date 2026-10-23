@@ -123,7 +123,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                     {String(i + 1).padStart(2, '0')}
                   </div>
                   <div className="relative">
-                    <p style={{ fontSize: '0.55rem', fontWeight: 800, color: c.color, letterSpacing: '0.3em', marginBottom: 14 }}>
+                    <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: c.color, letterSpacing: '0.3em', marginBottom: 14 }}>
                       {String(i + 1).padStart(2, '0')}
                     </p>
                     <c.Icon size={26} style={{ color: c.color, marginBottom: 14 }} />
@@ -171,13 +171,13 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className="font-bold text-sm leading-tight" style={{ color: textMain }}>{p.name}</h3>
                       {p.comingSoon && (
-                        <span className="shrink-0 text-[0.5rem] font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full"
+                        <span className="shrink-0 text-2xs font-bold uppercase tracking-[0.15em] px-2 py-0.5 rounded-full"
                           style={{ background: `${p.color}18`, color: p.color, border: `1px solid ${p.color}35` }}>
                           {t('Segera Hadir', 'Coming Soon')}
                         </span>
                       )}
                     </div>
-                    <p className="text-[0.65rem] font-semibold mb-2" style={{ color: p.color }}>{p.sub}</p>
+                    <p className="text-2xs font-semibold mb-2" style={{ color: p.color }}>{p.sub}</p>
                     <p className="text-xs leading-relaxed mb-4 flex-1" style={{ color: textMuted }}>{p.desc}</p>
                     <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: p.color }}>
                       {t('Pelajari', 'Learn more')} <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />

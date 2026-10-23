@@ -19,7 +19,7 @@ export const OjkBadge: React.FC<{ className?: string; compact?: boolean }> = ({ 
     title="Bekerja sama dengan perusahaan asuransi berijin OJK"
   >
     <ShieldCheck size={12} className="text-ds-green" />
-    <span className="text-[0.6rem] font-black uppercase tracking-wider text-ds-green-dk">
+    <span className="text-2xs font-black uppercase tracking-wider text-ds-green-dk">
       {compact ? 'OJK' : 'Mitra Asuransi Berizin OJK'}
     </span>
   </div>
@@ -31,7 +31,7 @@ export const EncryptionBadge: React.FC<{ className?: string }> = ({ className = 
     title="Pembayaran dienkripsi end-to-end. Data kamu tidak dibagikan ke pihak ketiga."
   >
     <Lock size={12} className="text-ds-ink2" />
-    <span className="text-[0.6rem] font-black uppercase tracking-wider text-ds-ink2">
+    <span className="text-2xs font-black uppercase tracking-wider text-ds-ink2">
       PCI-DSS · Enkripsi
     </span>
   </div>
@@ -43,7 +43,7 @@ export const LicensedInsurersBadge: React.FC<{ className?: string }> = ({ classN
     title="Semua perusahaan asuransi mitra SurePath berizin resmi OJK"
   >
     <FileCheck size={12} className="text-ds-ink2" />
-    <span className="text-[0.6rem] font-black uppercase tracking-wider text-ds-ink2">
+    <span className="text-2xs font-black uppercase tracking-wider text-ds-ink2">
       Mitra Berizin OJK
     </span>
   </div>

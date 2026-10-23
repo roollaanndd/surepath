@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, ShieldCheck, Bell, Sun, Moon } from 'lucide-react';
 import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
+import { scrollPortalToTop } from '../shared/scrollReset';
 import {
   getB2BSubmissions,
   getB2BQuotes,
@@ -53,6 +54,11 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   useEffect(() => { loadData(); }, [client?.id]);
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    scrollPortalToTop();
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'home':
@@ -61,7 +67,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             client={client}
             submissions={submissions}
             quotes={quotes}
-            onNavigate={setActiveTab}
+            onNavigate={handleTabChange}
             lang={lang}
           />
         );
@@ -70,7 +76,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           <B2BNewSubmission
             clientId={client?.id ?? ''}
             client={client}
-            onDone={() => { loadData(); setActiveTab('submissions'); }}
+            onDone={() => { loadData(); handleTabChange('submissions'); }}
             lang={lang}
           />
         );
@@ -79,7 +85,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           <B2BSubmissions
             clientId={client?.id ?? ''}
             lang={lang}
-            onNavigate={setActiveTab}
+            onNavigate={handleTabChange}
           />
         );
       case 'quotes':
@@ -149,7 +155,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             </button>
 
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black ring-2 ring-ds-green/25" style={{ background: "linear-gradient(135deg, #00C16A, #047857)" }}
             >
               {companyInitials}
@@ -174,7 +180,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
               <button
                 key={id}
                 type="button"
-                onClick={() => setActiveTab(id)}
+                onClick={() => handleTabChange(id)}
                 aria-label={lang === Language.EN ? labelEn : labelId}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl min-w-[52px] min-h-[48px] justify-center transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green ${active ? "text-ds-green" : "text-ds-ink3 hover:text-ds-ink2"}`}

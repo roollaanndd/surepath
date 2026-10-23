@@ -48,6 +48,7 @@ coordination/
 memory/
 migrated_prompt_history/
 test-results/
+playwright-report/
 
 # Generated quotation slip PDFs (test artifacts)
 QS_SP_*.pdf

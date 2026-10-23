@@ -36,8 +36,13 @@ catatan lama "28 warning" sudah kedaluwarsa) · vitest **299 lolos / 23 berkas**
 ### PR #242 (vite 6.4.5) — jangan di-merge tanpa CI ulang
 `browser-smoke-tests` GAGAL pada run 22 Okt karena base-nya sebelum `904b2b4`
 ("stabilize PDF test"). Branch sudah di-update 23 Okt; tunggu CI segar.
-**Catatan penting:** `npm run test:e2e` jalan terhadap **https://myinsurepath.com LIVE**,
-jadi smoke test bisa gagal karena produksi, bukan karena diff-nya.
+**Koreksi — jangan ulangi kesalahan ini:** `browser-smoke-tests` di CI jalan terhadap
+**server lokal**, bukan produksi (`PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000` di
+`.github/workflows/ci.yml`). `playwright.config.ts` juga default ke `127.0.0.1:3000`
+dengan `webServer` yang menjalankan `npm run dev`; produksi hanya disentuh bila
+seseorang set `UNSAFE_E2E_AGAINST_PROD=1`. Jadi **kegagalan smoke test di CI itu
+NYATA** — jangan dibuang sebagai "flake produksi". CLAUDE.md sempat menyatakan
+sebaliknya dan sudah dikoreksi 23 Okt.
 
 ### Dependabot: #134 JANGAN di-merge selagi revamp jalan
 Bump `tailwindcss` + `postcss-selector-parser` mengubah output CSS. Menggabungkannya

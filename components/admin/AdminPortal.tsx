@@ -46,6 +46,7 @@ const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
 const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { scrollPortalToTop } from '../shared/scrollReset';
+import { useDarkMode } from '../shared/theme';
 import { UserRole } from '../../types';
 import {
   AgentArtKeyframes, AgentHero,
@@ -212,7 +213,9 @@ const AdminPortal = ({
   const [isMobile, setIsMobile]       = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileOpen] = useState(false);
   const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
-  const [darkMode, setDarkMode]       = useState(true);
+  // The CMS opens dark unless the user has chosen otherwise; `useDarkMode`
+  // stores that choice, so unlike before it survives a reload.
+  const [darkMode, setDarkMode]       = useDarkMode(true);
   const [logoUrl, setLogoUrl]         = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
@@ -240,17 +243,6 @@ const AdminPortal = ({
   const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // The CMS used to theme itself with a local `th(darkMode, darkCls, lightCls)`
-  // helper and never touched the document class. That made it the only portal
-  // outside the design system: `ds-*` tokens resolve through CSS variables that
-  // switch on `.dark`, so with the class never set they always rendered their
-  // LIGHT values — which is why nothing here could use them. Every other portal
-  // (customer, agent, operator) already syncs this way; the CMS now does too,
-  // so the whole admin surface themes from the same tokens as the rest of the app.
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-  }, [darkMode]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);

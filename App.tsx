@@ -10,6 +10,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
+import { useDarkMode } from './components/shared/theme';
 import { RevampedSplashScreen as SplashScreen, RevampedAppEntryScreen as AppEntryScreen } from './src/routes/RevampedSplashScreen';
 import { RevampedPortalLoader as PortalLoader } from './src/routes/RevampedPortalLoader';
 import AppUpdateNotification from './components/AppUpdateNotification';
@@ -117,10 +118,7 @@ function cacheTcLocally(userId: string): void {
 const App = () => {
   const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done_v2') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [darkMode, setDarkMode]       = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('sp_dark_mode') === 'true';
-  });
+  const [darkMode, setDarkMode]       = useDarkMode();
   const [appMode, setAppMode]         = useState(() =>
     typeof window !== 'undefined'
       ? window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || false
@@ -147,10 +145,6 @@ const App = () => {
   const [pendingRoleUser, setPendingRoleUser] = useState<{ id: string; name: string; email: string } | null>(null);
   const [showTc, setShowTc] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem('sp_dark_mode', darkMode.toString());
-  }, [darkMode]);
 
   // Prefer the CMS-managed OJK rate set over the compiled-in defaults, if one
   // is active — falls back silently to services/ojkRates.ts's built-in values.
@@ -750,12 +744,15 @@ const App = () => {
 
   if (!appMode) {
     return (
-      <div className={darkMode ? 'dark' : ''}>
+      // The theme lives on documentElement (components/shared/theme.ts), so this
+      // no longer needs a `dark` wrapper of its own — one that left `body` and
+      // every token-driven surface out of the switch.
+      <>
         <Suspense fallback={<PortalLoader />}>
           <HomePage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
         </Suspense>
         <InstallPrompt lang={lang} />
-      </div>
+      </>
     );
   }
 

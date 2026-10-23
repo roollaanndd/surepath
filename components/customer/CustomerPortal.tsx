@@ -10,6 +10,7 @@ import { IcPathy, IcBell, IcBuy, IcClaim, IcHistory } from '../shared/CustomerIc
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import { scrollPortalToTop } from '../shared/scrollReset';
+import { useDarkMode } from '../shared/theme';
 import NotificationDrawer from '../shared/NotificationDrawer';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -69,7 +70,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [activePage, setActivePage] = useState('home');
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
+  const [darkMode, setDarkMode] = useDarkMode();
   const [latestPolicy, setLatestPolicy] = useState<SpPolicyOrder | null>(null);
   const [customerPolicies, setCustomerPolicies] = useState<SpPolicyOrder[]>([]);
   const [customerClaims, setCustomerClaims] = useState<SpClaim[]>([]);
@@ -78,12 +79,6 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
   const [refreshing, setRefreshing] = useState(false);
   const [dataLoadError, setDataLoadError] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SpPolicyOrder | null>(null);
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
 
   const loadCustomerData = useCallback(async () => {
     if (!currentUser?.id) return;

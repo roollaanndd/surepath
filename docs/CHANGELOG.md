@@ -1,5 +1,46 @@
 # SurePath — Changelog
 
+## v2.6.10 — 2026-10-23
+
+**Satu pemilik untuk dark mode, dan primitif UI ganda dimatikan.**
+
+- Dark mode sebelumnya dimiliki empat komponen secara terpisah, dan dua di antaranya
+  tidak sepakat soal di mana class `dark` dipasang: `App.tsx` membungkus situs
+  marketing dengan `<div className="dark">` dan tidak pernah menyentuh
+  `documentElement`, sementara Nasabah, Admin CMS dan Operator memasangnya di
+  `documentElement`. Akibatnya class `dark` yang ditinggalkan satu portal tetap
+  menempel saat pengguna pindah ke situs marketing: token `--ds-*` di `<html>`
+  sudah berbalik ke nilai gelap, sementara wrapper `div` mengira halamannya terang.
+  Wrapper itu hanya menguasai varian `dark:` di subtree-nya dan tidak bisa
+  membatalkan pembalikan token di root, jadi permukaan berbasis token dan turunan
+  `dark:` tampil gelap di halaman yang seharusnya terang.
+- Admin CMS juga tidak bisa mengingat pilihan mode terang: state-nya di-seed dari
+  `useState(true)` dan tidak pernah menulis preferensi balik. Sekarang CMS tetap
+  membuka gelap bila pengguna belum pernah memilih, tapi pilihan pengguna tersimpan
+  dan bertahan setelah reload.
+- Keempatnya kini memakai satu modul, `components/shared/theme.ts`: satu kunci
+  localStorage, satu tempat class dipasang, satu jawaban untuk "apakah app sedang
+  gelap". 6 unit test baru.
+- `components/shared/UI.tsx` mengekspor `Button` kedua di samping primitif
+  `components/ui/Button.tsx` — dua komponen berbeda dengan nama sama, tinggi, radius
+  dan kosakata varian yang berbeda. Keduanya nol pemakaian bersama `GlassCard`, jadi
+  dihapus. `Badge` tetap ada dan sekarang memakai token `ds-*`, bukan class palet mentah.
+- Guardrail baru: ESLint menolak warna hex yang ditulis langsung di
+  `components/ui/**`. Lapis primitif itu dipakai enam portal dan kini bebas hex;
+  aturan ini mengunci keadaannya sebelum drift kembali. Hijau brand WhatsApp
+  dipindah ke token `--ds-whatsapp`, dan gradien hero `ReferralCard` memakai
+  `--ds-surface-hero` yang sudah ada.
+- Diverifikasi di browser (Chromium, server dev lokal): 9/9 asersi lolos — token
+  `--ds-bg` berbalik `#F4F7FB` ↔ `#1A1D29`, permukaan ter-render benar-benar
+  berganti cat, preferensi bertahan setelah reload, dan tidak ada lagi wrapper
+  `div.dark` di bawah `<html>`.
+- Catatan terpisah, belum diperbaiki: `index.html` meng-hardcode
+  `body { background: #fafaf9; color: #1e293b }` tanpa pasangan gelap, jadi `body`
+  sendiri tidak pernah ikut bertema. Tidak termasuk cakupan rilis ini karena
+  mengubah cat setiap halaman; dicatat untuk fase tipografi/permukaan berikutnya.
+- Tidak mengubah logika bisnis, autentikasi, otorisasi, perhitungan premi/komisi,
+  maupun kontrak data-gateway.
+
 ## v2.6.9 — 2026-10-23
 
 **Posisi scroll kembali ke atas saat berpindah menu di semua portal.**

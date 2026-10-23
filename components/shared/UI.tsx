@@ -1,3 +1,17 @@
+// ─── Legacy shared primitives ────────────────────────────────────────────────
+//
+// This file used to export a second `Button` alongside the design-system
+// primitive in `components/ui/Button.tsx`: two different components under one
+// name, with different heights, radii and variant vocabularies, so "use the
+// Button primitive" meant nothing until you knew which import was in scope.
+// It had zero call sites, as did `GlassCard`, so both are gone.
+//
+// `Section` stays — the landing page uses it (Features, ProductModules) — and
+// `Badge` stays for ClaimManager and ContactPage, now drawing from design
+// tokens rather than raw palette classes, like everything else.
+//
+// Nothing new belongs here — add it to `components/ui/` instead.
+
 import React from 'react';
 
 export const Section: React.FC<{ children?: React.ReactNode, id?: string, className?: string }> = ({ children, id, className = "" }) => (
@@ -8,69 +22,20 @@ export const Section: React.FC<{ children?: React.ReactNode, id?: string, classN
   </section>
 );
 
-export const Badge: React.FC<{ children?: React.ReactNode, className?: string, variant?: 'success' | 'info' | 'warning' | 'brand' }> = ({ children, className = "", variant = 'brand' }) => {
+export const Badge: React.FC<{
+  children?: React.ReactNode,
+  className?: string,
+  variant?: 'success' | 'info' | 'warning' | 'brand'
+}> = ({ children, className = "", variant = 'brand' }) => {
   const styles = {
-    brand: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    success: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    info: "bg-blue-50 text-blue-600 border-blue-100",
-    warning: "bg-amber-50 text-amber-600 border-amber-100"
+    brand:   "bg-ds-green-tint text-ds-green border-ds-green/20",
+    success: "bg-ds-green-tint text-ds-green border-ds-green/20",
+    info:    "bg-ds-blue-lt text-ds-blue border-ds-blue/20",
+    warning: "bg-ds-amber-lt text-ds-amber border-ds-amber/20",
   };
   return (
-    <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${styles[variant]} ${className}`}>
+    <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest ${styles[variant]} ${className}`}>
       {children}
     </div>
   );
 };
-
-export const Button: React.FC<{ 
-  children?: React.ReactNode, 
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'brand',
-  size?: 'sm' | 'md' | 'lg' | 'xl',
-  icon?: any,
-  onClick?: () => void,
-  className?: string,
-  disabled?: boolean
-}> = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  icon: Icon, 
-  onClick,
-  className = "",
-  disabled = false
-}) => {
-  const variants = {
-    primary: "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-sm",
-    brand: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
-    secondary: "bg-white dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10",
-    outline: "bg-transparent border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:border-emerald-500 hover:text-emerald-600",
-    ghost: "bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
-  };
-
-  const sizes = {
-    sm: "px-4 py-2 text-xs font-semibold",
-    md: "px-6 py-2.5 text-sm font-semibold",
-    lg: "px-8 py-3.5 text-base font-semibold",
-    xl: "px-10 py-4 text-lg font-semibold"
-  };
-
-  return (
-    <button 
-      disabled={disabled}
-      onClick={onClick}
-      className={`rounded-full transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-      {Icon && <Icon size={18} strokeWidth={2} />}
-    </button>
-  );
-};
-
-export const GlassCard: React.FC<{ children?: React.ReactNode, onClick?: () => void, className?: string }> = ({ children, onClick, className = "" }) => (
-  <div 
-    onClick={onClick}
-    className={`group p-10 bg-white dark:bg-white/[0.02] rounded-[3.5rem] border border-black/5 dark:border-white/5 hover:border-emerald-500 transition-all duration-500 shadow-sm hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden ${onClick ? 'cursor-pointer' : ''} ${className}`}
-  >
-    {children}
-  </div>
-);

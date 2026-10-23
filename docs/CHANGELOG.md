@@ -1,5 +1,25 @@
 # SurePath — Changelog
 
+## v2.6.21 — 2026-10-23
+
+Portal B2B — layar yang selama ini tidak pernah benar-benar terukur.
+
+- Navigasi bawahnya ternyata salinan lama `PortalTabBar` yang sudah menyimpang:
+  tertinggal di 9px, tanpa penanda tab aktif berbentuk batang, dan tanpa cincin
+  fokus keyboard. Sekarang memakai komponen bersamanya.
+- Label navigasinya terpotong di tengah kata — "PENGAJ/UAN", "BERA/NDA".
+  Menaikkan ukurannya saja justru memperparah, karena masalahnya lebar, bukan
+  ukuran. Lima tab teks di satu baris tidak muat kata sembilan huruf, jadi
+  labelnya dipendekkan: "Pengajuan" → "Ajuan", "Penawaran" → "Tawaran",
+  "Kuotasi" → "Buat" (kata yang sama dengan portal Mitra).
+- Headernya juga salinan lama `PortalHeader`, lengkap dengan bug sesak yang
+  sudah diperbaiki di versi bersamanya. "KLIEN B2B" melipat dua baris.
+  Sekarang memakai komponen bersamanya, sekalian mendapat cincin fokus di tiga
+  tombolnya dan nama aksesibilitas untuk tombol avatar yang sebelumnya kosong.
+- Teks di bawah 11px: 11 → 0.
+- `PortalTabBar` memakai padding mendatar lebih rapat supaya label panjang
+  punya ruang; Nasabah dan Mitra diperiksa ulang, tidak ada yang berubah.
+
 ## v2.6.20 — 2026-10-23
 
 Portal Operator dan Mitra, hasil melihat layarnya langsung di lebar 390px.

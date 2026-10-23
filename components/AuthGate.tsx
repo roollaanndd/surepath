@@ -420,7 +420,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
             <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
             <div aria-hidden="true" className="absolute right-12 bottom-[-4.5rem] h-36 w-36 rounded-full bg-lime-300/20 blur-2xl" />
             <div className="relative max-w-xs text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
+              <p className="text-2xs font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
               <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
               <p className="mt-2 text-xs leading-relaxed text-emerald-50/90 sm:text-sm">{t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}</p>
             </div>
@@ -728,7 +728,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
               <div className="space-y-3 mt-4">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-emerald-900/10" />
-                  <span className="text-[0.65rem] font-bold text-slate-500 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
+                  <span className="text-2xs font-bold text-slate-500 uppercase tracking-widest">{mode === 'REGISTER' ? t('Or register with', 'Atau daftar dengan') : t('Or continue with', 'Atau lanjutkan dengan')}</span>
                   <div className="flex-1 h-px bg-emerald-900/10" />
                 </div>
                 <button onClick={handleGoogleSignIn} disabled={loading}
@@ -739,14 +739,14 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-widest">{mode === 'REGISTER' ? t('Sign up with Google', 'Daftar dengan Google') : t('Continue with Google', 'Lanjut dengan Google')}</span>
+                  <span className="text-2xs font-bold uppercase tracking-widest">{mode === 'REGISTER' ? t('Sign up with Google', 'Daftar dengan Google') : t('Continue with Google', 'Lanjut dengan Google')}</span>
                 </button>
                 {mode === 'LOGIN' && (
                   <button onClick={handleSendEmailOtp} disabled={loading}
                     className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2.5 text-emerald-700 transition-all active:scale-[0.98] disabled:opacity-50"
                     style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}>
                     <Mail size={16} />
-                    <span className="text-[0.6rem] font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
+                    <span className="text-2xs font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                   </button>
                 )}
               </div>
@@ -755,7 +755,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         )}
 
-        <p style={{ fontSize: '0.6rem', fontWeight: 600, color: 'rgba(15,23,42,0.50)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <p style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'rgba(15,23,42,0.50)', letterSpacing: '0.3em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Shield size={10} style={{ color: 'rgba(5,150,105,0.55)' }} />
           {t('SurePath · Secure connection', 'SurePath · Koneksi aman')}
         </p>

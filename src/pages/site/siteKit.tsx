@@ -289,7 +289,7 @@ export const HeroVideo: React.FC<{ position?: string; desktopPosition?: string }
 
 // ─── Section label pill ───────────────────────────────────────────────────────
 export const SectionLabel: React.FC<{ children: React.ReactNode; darkMode?: boolean }> = ({ children, darkMode }) => (
-  <span className="inline-block text-[0.6rem] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
+  <span className="inline-block text-2xs font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-5"
     style={
       darkMode
         ? { background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.2)', color: '#86efac' }
@@ -399,7 +399,7 @@ export const PromoBanners: React.FC<{ onSignIn: () => void; onInstall: () => voi
           style={{ background: `radial-gradient(circle, ${b.accent}, transparent)`, filter: 'blur(30px)', transform: 'translate(30%,-30%)' }} />
         <div className="relative flex items-start justify-between gap-4">
           <div className="flex-1">
-            <span className="inline-block text-[0.55rem] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-4"
+            <span className="inline-block text-2xs font-black uppercase tracking-[0.3em] px-3 py-1 rounded-full mb-4"
               style={{ background: b.badgeBg, color: b.badgeColor, border: `1px solid ${b.accent}30` }}>{b.badge}</span>
             <h3 className="text-2xl font-black text-white leading-tight mb-2">
               {b.title[0]}<br /><span style={{ color: b.accent }}>{b.title[1]}</span>

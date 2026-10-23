@@ -19,9 +19,36 @@ const NO_HEX = [
   { selector: 'TemplateElement[value.raw=/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\\b/]', message: HEX_MESSAGE },
 ];
 
+// An inline `style={{ fontSize: '0.44rem' }}` is the same defect as
+// `text-[7px]`, and the class-name selectors above cannot see it. 38 of these
+// were found in 13 files AFTER v2.6.13 shipped — including the three portal
+// login gates at 0.42rem (6.72px) and four public marketing pages that pass
+// had already been claimed as migrated. The floor is 0.6875rem (11px), the
+// same number `text-2xs` resolves to.
+const INLINE_TINY_MESSAGE =
+  'fontSize inline di bawah 11px. Lantai tipografi app adalah 11px — pakai class text-2xs, atau 0.6875rem kalau memang harus inline style.';
+
+const NO_TINY_TEXT_INLINE_ONLY = [
+  {
+    selector: "Property[key.name='fontSize'] > Literal[value=/^(?:0?\\.(?:[0-5][0-9]?|6[0-8]?)rem|(?:[0-9]|10)px)$/]",
+    message: INLINE_TINY_MESSAGE,
+  },
+];
+
 const NO_TINY_TEXT = [
   { selector: 'Literal[value=/text-\\[(?:[0-9]|10)px\\]/]', message: TINY_TEXT_MESSAGE },
   { selector: 'TemplateElement[value.raw=/text-\\[(?:[0-9]|10)px\\]/]', message: TINY_TEXT_MESSAGE },
+  // The same class written in rem. 408 of these were found repo-wide after
+  // v2.6.13 shipped, four of them inside components/ui/ — the directory that
+  // pass had declared clean and locked. `text-badge` is the one sanctioned
+  // sub-11px size, defined in tailwind.config.cjs, so it is not an arbitrary
+  // value and this selector never sees it.
+  { selector: 'Literal[value=/text-\\[0?\\.(?:[0-5][0-9]?|6[0-8]?)rem\\]/]', message: TINY_TEXT_MESSAGE },
+  { selector: 'TemplateElement[value.raw=/text-\\[0?\\.(?:[0-5][0-9]?|6[0-8]?)rem\\]/]', message: TINY_TEXT_MESSAGE },
+  {
+    selector: "Property[key.name='fontSize'] > Literal[value=/^(?:0?\\.(?:[0-5][0-9]?|6[0-8]?)rem|(?:[0-9]|10)px)$/]",
+    message: INLINE_TINY_MESSAGE,
+  },
 ];
 
 export default tseslint.config(
@@ -100,9 +127,32 @@ export default tseslint.config(
       'src/**/*.{ts,tsx}',
       'components/landing/**/*.{ts,tsx}',
       'components/public/**/*.{ts,tsx}',
+      // Added once cleaned, which is how this ratchet is meant to widen.
+      'components/TermsModal.tsx',
+      // The sign-in screen every Customer and Agent passes through.
+      'components/AuthGate.tsx',
     ],
     rules: {
       'no-restricted-syntax': ['error', ...NO_TINY_TEXT],
+    },
+  },
+  {
+    // ─── Admin, Operator, Insurer: the inline rule only, deliberately ───────
+    //
+    // These three are clean of inline sub-11px fontSize as of this commit — the
+    // login gates included, which is where the app's smallest type lived — so
+    // that half is locked. They still hold ~219 `text-[0.XXrem]` classes on
+    // screens that need a real login to see; raising them unseen is how labels
+    // get clipped in production, so they wait for a pass with eyes on them.
+    // This is a block of its own rather than entries in the list above because
+    // flat config REPLACES this rule when two blocks match one file.
+    files: [
+      'components/admin/**/*.{ts,tsx}',
+      'components/operator/**/*.{ts,tsx}',
+      'components/insurer/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': ['error', ...NO_TINY_TEXT_INLINE_ONLY],
     },
   },
   {

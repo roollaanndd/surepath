@@ -222,7 +222,7 @@ const AITechPage: React.FC<SitePageProps> = (props) => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-base leading-tight mb-1" style={{ color: textMain }}>{c.title}</h3>
-                      <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em]" style={{ color: c.color }}>{c.who}</span>
+                      <span className="text-2xs font-bold uppercase tracking-[0.18em]" style={{ color: c.color }}>{c.who}</span>
                     </div>
                   </div>
                   <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{c.desc}</p>
@@ -250,13 +250,13 @@ const AITechPage: React.FC<SitePageProps> = (props) => {
                   style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
                   <p className="font-bold text-sm" style={{ color: textMain }}>{row.step}</p>
                   <div className="flex items-start gap-2.5">
-                    <span className="text-[0.55rem] font-bold uppercase tracking-[0.18em] mt-1 flex-shrink-0" style={{ color: textMuted, opacity: 0.7 }}>
+                    <span className="text-2xs font-bold uppercase tracking-[0.18em] mt-1 flex-shrink-0" style={{ color: textMuted, opacity: 0.7 }}>
                       {t('Dulu', 'Before')}
                     </span>
                     <p className="text-sm leading-relaxed" style={{ color: textMuted }}>{row.before}</p>
                   </div>
                   <div className="flex items-start gap-2.5">
-                    <span className="text-[0.55rem] font-bold uppercase tracking-[0.18em] mt-1 flex-shrink-0" style={{ color: accent }}>
+                    <span className="text-2xs font-bold uppercase tracking-[0.18em] mt-1 flex-shrink-0" style={{ color: accent }}>
                       {t('Kini', 'Now')}
                     </span>
                     <p className="text-sm leading-relaxed font-medium" style={{ color: textMain }}>{row.after}</p>

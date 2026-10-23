@@ -133,7 +133,7 @@ const HowItWorksPage: React.FC<SitePageProps> = (props) => {
               <div className="spx-card spx-grid spx-sheen rounded-2xl h-full flex flex-col overflow-hidden" style={{ minHeight: 300, background: accent, ['--spx-accent' as string]: accent }}>
                 <div className="spx-grid-tex" style={{ ['--spx-accent' as string]: '#ffffff' }} />
                 <div className="p-8 flex flex-col flex-1 justify-center">
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
+                  <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.3em', marginBottom: 14 }}>
                     {t('MULAI SEKARANG', 'START NOW')}
                   </p>
                   <h3 className="text-2xl font-bold leading-tight mb-4" style={{ color: '#ffffff' }}>

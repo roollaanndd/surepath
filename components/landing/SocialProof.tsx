@@ -59,7 +59,7 @@ const SocialProof: React.FC<SocialProofProps> = ({ lang = "ID" }) => {
                 <Counter target={s.target} suffix={s.suffix} />
               </div>
               <div className="h-px w-8 bg-emerald-500/60 hidden lg:block" />
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.22em] text-slate-400">
+              <p className="text-2xs font-bold uppercase tracking-[0.22em] text-slate-400">
                 {t(s.labelEN, s.labelID)}
               </p>
             </div>

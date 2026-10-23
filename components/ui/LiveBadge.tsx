@@ -42,10 +42,10 @@ export const LiveBadge: React.FC<LiveBadgeProps> = ({
           style={{ background: color }}
         />
       </span>
-      <span className="text-[0.6rem] font-black text-ds-ink">
+      <span className="text-2xs font-black text-ds-ink">
         {count.toLocaleString('id-ID')}
       </span>
-      <span className="text-[0.6rem] font-medium text-ds-ink2">
+      <span className="text-2xs font-medium text-ds-ink2">
         {label}
       </span>
     </div>

@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.15 — 2026-10-23
+## v2.6.18 — 2026-10-23
 
 **Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
 
@@ -45,6 +45,76 @@ diapply **lebih dulu**, baru `data-gateway` dideploy; insert dengan kolom yang
 belum ada akan gagal seluruhnya. Migrasinya aditif dan nullable, jadi aman
 berdiri sendiri tanpa kode yang mengisinya. Dua edge function yang berubah
 (`data-gateway`, `xendit-webhook`) **tidak** ikut auto-deploy Vercel.
+## v2.6.16 — 2026-10-23
+
+**Dua cacat di header Admin Portal, ditemukan karena interiornya akhirnya bisa dilihat.**
+
+- Interior portal berautentikasi akhirnya terbuka untuk diperiksa — **tanpa
+  membuat akun produksi**. Gerbang login memanggil `signInWithPassword` lalu
+  `get_my_profile`; dua-duanya panggilan jaringan, jadi dua-duanya dijawab
+  lokal di harness uji. Gerbangnya lewat lewat jalur kodenya sendiri dan yang
+  render setelahnya adalah portal asli. Nol sentuhan ke produksi, nol password
+  yang harus disimpan.
+- **Badge "BACKUP SELESAI" di header pecah jadi satu huruf per baris** di 390px.
+  Flex memerasnya sampai setiap karakter turun baris sendiri — kolom vertikal
+  B/A/C/K/U/P/… yang menjebol header. Sekarang disembunyikan di bawah `sm`
+  (header ponsel sudah penuh: kolom cari plus empat kontrol) dan diberi
+  `whitespace-nowrap shrink-0` supaya tidak pernah pecah di lebar mana pun.
+- **Tiga kontrol di kanan header terpotong di tepi layar** pada 390px. Kolom
+  cari dipatok `w-52` (208px) sementara grup kirinya tidak dibatasi, jadi grup
+  kanan yang terdorong keluar. Sekarang grup kiri `flex-1 min-w-0`, kolom cari
+  ikut menyusut dengan batas `max-w-xs`, dan grup kanan `shrink-0` sehingga
+  bukan dia yang mengalah.
+- Cacat kedua ini **tidak terdeteksi penghitung**: header memotong ke dalam, jadi
+  `scrollWidth` tetap 390 dan sapuan otomatis melaporkan "tidak ada overflow".
+  Hanya ketahuan dengan melihat gambarnya. Dicatat karena itu mengubah cara
+  verifikasi berikutnya harus dilakukan.
+- Chip email admin ikut naik ke lantai 11px, dan inisial avatar di dalam
+  lingkaran berukuran tetap memakai `text-badge` — primitif dari v2.6.15.
+- `components/admin/` **tetap** pada aturan lint inline-saja. Baru dasbornya yang
+  benar-benar dilihat; 135 class `text-[0.XXrem]` sisanya tersebar di layar yang
+  belum dibuka, dan menaikkannya tanpa melihat persis cara label jadi kepotong.
+
+## v2.6.15 — 2026-10-23
+
+**Lantai tipografi v2.6.13 ternyata bocor di tiga tempat. Ditutup, plus guardrailnya diperbaiki.**
+
+- Guardrail v2.6.13 hanya menangkap satu bentuk: class Tailwind `text-[Npx]`.
+  Ada **tiga bentuk lain** yang lolos sepenuhnya — `fontSize` inline dalam rem,
+  `fontSize` inline dalam px, dan class `text-[0.XXrem]`. Jadi angka audit
+  "765 simpul sub-11px" terlalu kecil. Hitungan sebenarnya sebelum rilis ini
+  **1.297**: 725 class px, 571 class rem, 1 inline — hampir 70% lebih banyak.
+- Yang terburuk ada di **gerbang login Admin, Operator, dan Insurer**:
+  `SECURE SESSION`, `AUTHORIZED ACCESS ONLY`, `EMAIL`, `PASSWORD` ditulis
+  `fontSize: '0.42rem'` sampai `'0.47rem'` — **6,72px sampai 7,52px**, huruf
+  kapital dengan letter-spacing 0,42em. Itu teks terkecil di seluruh aplikasi,
+  di layar yang dilihat setiap admin dan operator setiap kali masuk. Semua naik
+  ke lantai 11px, dan letter-spacing-nya diturunkan supaya labelnya tidak wrap
+  di 390px — di 11px, tracking 0,42em membuat `AUTHORIZED ACCESS ONLY` pecah
+  dua baris dan garis hias di kiri-kanannya jadi melenceng.
+- Total **80 simpul** dinaikkan: 49 `fontSize` inline (semua yang ada di repo,
+  nol tersisa) dan 31 class rem di direktori yang layarnya bisa saya buka —
+  gerbang login, halaman `/login`, halaman marketing, `components/ui/`.
+- **`text-badge` (8,8px)** ditambahkan di `tailwind.config.cjs`: satu-satunya
+  pengecualian sub-11px yang disahkan, untuk angka di dalam badge hitung
+  berukuran tetap. v2.6.13 mencatat ini butuh primitif sendiri, bukan komentar
+  pengecualian — ini primitifnya, jadi ukurannya hidup di satu tempat.
+- Guardrail ESLint sekarang menangkap ketiga bentuk itu. Direktori yang layarnya
+  belum bisa dilihat (`admin/`, `operator/`, `insurer/` bagian dalam) dapat
+  aturan **inline saja**, di blok terpisah — karena flat config *mengganti*
+  `no-restricted-syntax`, bukan menggabung, kalau dua blok kena berkas yang sama.
+  Keempat selector sudah di-probe non-vacuous, dan aturan hex v2.6.10 dipastikan
+  masih hidup di `components/ui/`.
+- **Koreksi verifikasi v2.6.13.** Sapuan browser waktu itu memakai path
+  `/tentang-kami`, `/produk`, `/cara-kerja` — ketiganya **bukan rute**. Path
+  sebenarnya `/about`, `/products`, `/how-it-works`. Jadi "16/16 di lima
+  halaman" sebetulnya menguji beranda empat kali. Kali ini: 10 halaman publik
+  yang benar-benar berbeda, 9 lolos bersih.
+- **Cacat yang ditemukan, belum diperbaiki:** `/ai` meluber horizontal di ponsel
+  (scrollWidth 470px di viewport 390px). Sudah ada sebelum perubahan ini —
+  diukur 473px pada kode lama — jadi dilaporkan, bukan diklaim beres.
+- Sisa pekerjaan: 1.288 simpul sub-11px di layar yang masih butuh login untuk
+  dilihat. Jumlahnya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
 
 ## v2.6.14 — 2026-10-23
 

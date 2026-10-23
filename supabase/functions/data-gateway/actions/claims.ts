@@ -6,7 +6,10 @@ import type { GatewayContext, ActionResult } from './types.ts';
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
 export async function handleClaimsAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
-  const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
+  // Narrowed to what this module actually uses — the wider destructure was
+  // boilerplate from the split out of index.ts, and tripped noUnusedLocals once
+  // claimPolicyLink.test.ts pulled this file into the typecheck program.
+  const { db, params, caller } = ctx;
 
   switch (action) {
     case 'get_my_claims': {
@@ -94,12 +97,34 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             }
             insertRow.agent_id = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
+            // Server-derived, like agent_id/client_id — never from the payload.
+            // Without it the insurer has nothing to filter their claims by.
+            if (lo.insurer_id) insertRow.insurer_id = lo.insurer_id;
           }
         } else if (params.policy_number) {
-          const { data: linkedOrder } = await db.from('sp_policy_orders')
-            .select('id, agent_id, client_id, insurer_id')
-            .eq('order_number', String(params.policy_number))
-            .maybeSingle();
+          // Match the real policy number as well as the internal order number.
+          //
+          // What the customer holds is the policy number off the insurer's PDF
+          // (sp_policy_orders.policy_number, written by insurer_upload_policy).
+          // Matching order_number alone meant a claim filed with the genuine
+          // policy number found nothing, so it was stored with no policy_id and
+          // no agent_id — invisible to the agent and impossible to route to the
+          // insurer. `limit(1)` rather than maybeSingle(): the two columns live
+          // in different namespaces, so a value could in principle hit both.
+          //
+          // The reference is stripped to [A-Za-z0-9._/-] before it reaches the
+          // .or() string. An .or() filter is parsed by PostgREST, not bound as
+          // a parameter, so a comma or parenthesis in the value would rewrite
+          // the predicate rather than be matched by it. Real order and policy
+          // numbers only use these characters.
+          const ref = String(params.policy_number).replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 100);
+          const { data: linkedOrders } = ref
+            ? await db.from('sp_policy_orders')
+                .select('id, agent_id, client_id, insurer_id')
+                .or(`order_number.eq.${ref},policy_number.eq.${ref}`)
+                .limit(1)
+            : { data: null };
+          const linkedOrder = (linkedOrders ?? [])[0] ?? null;
           if (linkedOrder) {
             // FIX v1.42.0: verify ownership here too
             const lo = linkedOrder as any;
@@ -110,6 +135,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             insertRow.policy_id = lo.id;
             insertRow.agent_id  = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
+            if (lo.insurer_id) insertRow.insurer_id = lo.insurer_id;
           }
         }
 

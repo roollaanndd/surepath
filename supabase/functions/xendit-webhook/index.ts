@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       // do NOT credit commission — flag for manual review.
       const { data: order } = await supabase
         .from('sp_policy_orders')
-        .select('agent_id, order_number, client_name, client_phone, product_name, total_premium, insurer_name, commission_amount, coin_reward')
+        .select('agent_id, order_number, client_name, client_phone, product_name, product_code, total_premium, insurer_name, commission_amount, commission_rate, coin_reward')
         .eq('id', payment.order_id)
         .single();
 
@@ -264,6 +264,34 @@ Deno.serve(async (req) => {
               p_reference_type: 'ORDER',
               p_description:    `Komisi order ${orderDetails.order_number ?? ''} telah dikreditkan`,
             });
+
+            // 1b. Record the same commission in sp_commissions.
+            //
+            // credit_agent_wallet() moves the money; this row is what people
+            // actually read. The agent's Komisi page, admin_financial_reports,
+            // admin_stats and admin_transaksi_overview all aggregate
+            // sp_commissions — and until now nothing but admin_create_commission
+            // ever wrote to it. The result was two ledgers that could never
+            // agree: wallet balances growing while the P&L reported Rp 0 of
+            // commission expense.
+            //
+            // No extra replay guard is needed. The sp_payments update above
+            // claims the row with `.neq('status','PAID')`, so only one callback
+            // reaches this block per payment.
+            const { error: commErr } = await supabase.from('sp_commissions').insert({
+              agent_id:          order.agent_id,
+              order_id:          payment.order_id,
+              order_number:      orderDetails.order_number ?? null,
+              client_name:       orderDetails.client_name ?? null,
+              product_type:      orderDetails.product_code ?? orderDetails.product_name ?? null,
+              premium_amount:    orderDetails.total_premium ?? null,
+              commission_rate:   orderDetails.commission_rate ?? null,
+              commission_amount: orderDetails.commission_amount,
+              status:            'PAID',
+              paid_at:           new Date().toISOString(),
+              coin_reward:       orderDetails.coin_reward ?? 0,
+            });
+            if (commErr) console.error('Commission ledger insert failed:', commErr.code ?? 'unknown');
 
             // 2. Tier-based coin bonus for selling agent.
             // The base coin reward is awarded by the Admin policy-issuance flow;

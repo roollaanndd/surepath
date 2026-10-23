@@ -92,14 +92,48 @@ Definisi lama setiap objek yang diubah disimpan di tabel `sp_db_object_backup`.
 | `sp_clients` | Klien milik agent | policy `sp_clients_open` masih aktif |
 | `sp_policy_orders` | Order polis | **deny-all** → hanya gateway |
 | `sp_payments` | Pembayaran (Xendit) | **deny-all** → hanya gateway |
-| `sp_claims` | Klaim | **deny-all** → hanya gateway |
-| `sp_commissions` | Komisi agent | policy terbuka masih aktif |
-| `sp_coin_ledger` | Ledger koin reward | policy terbuka masih aktif |
+| `sp_claims` | Klaim (+ `insurer_id` sejak v2.6.15) | ⚠️ **bukan** deny-all — lihat "Keadaan RLS terverifikasi" |
+| `sp_commissions` | Komisi agent | `sp_commissions_own` SELECT utk `authenticated` — lihat "Keadaan RLS terverifikasi" |
+| `sp_coin_ledger` | Ledger koin reward | `sp_coin_ledger_own` SELECT utk `authenticated` |
 | `sp_user_sessions` | Heartbeat sesi | policy "allow all" masih aktif |
 | `sp_page_views` | Analytics halaman | anon insert + auth select (tapi lihat catatan grants!) |
 | `sp_quotes`, `sp_product_configs`, `sp_website_config` | Quote publik, harga, CMS landing | publik/terbuka |
 | `sp_withdrawals`, `sp_wallet_transactions` | Penarikan & wallet agent | via gateway / RPC |
 | `sp_user_documents` | Hasil ekstraksi dokumen yang ditunjukkan ke Pathy (**field saja, tanpa gambar**) | **deny-all** → hanya `pathy-agent` (service_role). Diapply ke production 9 Sep 2026 |
+
+## Keadaan RLS terverifikasi (23 Oktober 2026)
+
+Dibaca langsung dari `pg_policies` produksi, bukan dari migrasi di repo. **Beberapa
+baris di tabel di atas dan di "Status RLS live (per 15 Juni 2026)" ternyata salah** —
+jangan percayai dokumen ini untuk klaim RLS tanpa memverifikasi ulang.
+
+Benar-benar deny-all: `sp_policy_orders`, `sp_payments` (`deny_direct_gateway_only`),
+`sp_quotations` (`sp_quotations_no_direct_access`).
+
+Punya policy baris-sendiri, jadi **boleh** dibaca langsung dari browser:
+
+| Tabel | Policy SELECT | Predikat |
+|---|---|---|
+| `sp_claims` | `sp_claims_owner_select` | `user_id = auth.uid() OR agent_id = auth.uid()` |
+| `sp_commissions` | `sp_commissions_own` | `agent_id = auth.uid() OR is_admin()` |
+| `sp_policies` | `sp_policies_own` | `user_id/agent_id = auth.uid() OR is_admin()` |
+| `sp_clients` | `sp_clients_agent` (ALL) | `agent_id = auth.uid() OR is_admin()` |
+| `sp_agent_wallets` | `wallet_agent_own` | `agent_id = auth.uid()` |
+| `sp_wallet_transactions` | `wtx_agent_own` | `agent_id = auth.uid()` |
+| `sp_withdrawals` | `wd_agent_own` | `agent_id = auth.uid()` |
+| `sp_coin_ledger` | `sp_coin_ledger_own` | `agent_id = auth.uid()` |
+| `sp_notifications` | `sp_notifications_own` | `agent_id = auth.uid() OR is_admin()` |
+
+⚠️ **Semuanya membandingkan `auth.uid()`, sementara aplikasi menulis `sp_users.id`.**
+Untuk dua akun lama yang `sp_users.id ≠ auth id` (lihat "Linkage auth.users ↔ sp_users"),
+setiap baca-langsung dari browser mengembalikan **0 baris** sementara jalur gateway
+bekerja normal — gateway menangani keduanya lewat `ownerIds` (FIX v1.50.0), RLS tidak.
+Gejalanya menyesatkan saat debugging: fiturnya tampak kosong, bukan error.
+
+⚠️ **Dua tabel token terbuka untuk `public` dengan `USING (true)`**, bukan deny-all
+seperti yang ditulis di bagian "Tabel baru" di bawah: `sp_insurer_auth_tokens`
+(SELECT + INSERT + UPDATE) dan `sp_review_tokens` (`admins_manage_tokens`, perintah
+`ALL`, meski namanya menyebut admin). Belum diperbaiki — perlu keputusan tersendiri.
 
 ## Tabel + kolom baru (v1.18.0 → v1.23.0)
 

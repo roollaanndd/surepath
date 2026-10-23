@@ -1,5 +1,51 @@
 # SurePath — Changelog
 
+## v2.6.15 — 2026-10-23
+
+**Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
+
+Dari audit korelasi data antar portal (apps ↔ dashboard ↔ insurer). Ketiganya
+dipilih lebih dulu bukan karena paling besar, tapi karena kerugiannya tidak bisa
+dipulihkan: begitu ada satu pembayaran atau satu klaim sungguhan, datanya sudah
+salah dan harus direkonsiliasi tangan.
+
+- **`xendit-webhook` sekarang menulis `sp_commissions` saat mengkredit dompet.**
+  Sebelumnya `credit_agent_wallet()` memindahkan uangnya, tapi tak ada satu pun
+  baris masuk ke `sp_commissions` — padahal itulah tabel yang dibaca halaman
+  Komisi agen, `admin_financial_reports`, `admin_stats`, dan
+  `admin_transaksi_overview`. Satu-satunya penulisnya adalah
+  `admin_create_commission`, yakni tangan admin. Akibatnya dua buku yang tak
+  mungkin cocok: saldo dompet agen bertambah sementara laporan laba-rugi mencatat
+  beban komisi Rp 0. Di produksi `sp_commissions` berisi 13 baris dan **13-nya
+  `order_id` NULL** — tak satu pun tertaut order nyata. Tidak perlu penjaga replay
+  tambahan: update `sp_payments` di atasnya sudah mengklaim baris dengan
+  `.neq('status','PAID')`, jadi hanya satu callback yang sampai ke blok ini.
+- **`submit_claim` mencocokkan `policy_number`, bukan hanya `order_number`.**
+  Yang dipegang nasabah adalah nomor polis di PDF insurer
+  (`sp_policy_orders.policy_number`, ditulis `insurer_upload_policy`), sementara
+  `order_number` adalah nomor internal. Klaim yang diajukan dengan nomor polis
+  asli tidak menemukan apa pun, lalu tersimpan tanpa `policy_id` dan tanpa
+  `agent_id` — yatim: tak muncul di daftar agen, tak bisa dirutekan ke insurer.
+  Referensinya disaring ke `[A-Za-z0-9._/-]` sebelum masuk string `.or()`, karena
+  filter `.or()` diparse PostgREST dan bukan di-bind sebagai parameter: satu koma
+  di nilainya akan menulis ulang predikatnya, bukan dicocokkan olehnya.
+- **`sp_claims.insurer_id` ditambahkan, dan `submit_claim` mengisinya.** Action
+  itu sudah mengambil `insurer_id` dari order yang ditaut sejak v1.42.0 tapi tak
+  pernah menuliskannya ke mana pun — kolomnya tidak ada. Jadi portal insurer tidak
+  punya apa pun untuk memfilter, yang sebabnya tab "Klaim" di sana sampai sekarang
+  menampilkan daftar **order**, bukan klaim (diakui sendiri di komentar
+  `InsurerClaims.tsx:30`). Nilainya diturunkan server-side dari ordernya, tidak
+  pernah diterima dari klien — aturan yang sama dengan `agent_id`/`client_id`.
+- 6 tes baru di `services/__tests__/claimPolicyLink.test.ts` memaku ketiga
+  perilaku penautan itu, termasuk bahwa referensi tidak bisa menulis ulang filter
+  dan bahwa `insurer_id` tidak pernah diambil dari payload.
+
+**Urutan rilis — penting.** Migrasi `20261023120000_claims_insurer_id.sql` harus
+diapply **lebih dulu**, baru `data-gateway` dideploy; insert dengan kolom yang
+belum ada akan gagal seluruhnya. Migrasinya aditif dan nullable, jadi aman
+berdiri sendiri tanpa kode yang mengisinya. Dua edge function yang berubah
+(`data-gateway`, `xendit-webhook`) **tidak** ikut auto-deploy Vercel.
+
 ## v2.6.14 — 2026-10-23
 
 **React Router dihapus dari bundel: −24 kB yang dimuat setiap pengunjung.**

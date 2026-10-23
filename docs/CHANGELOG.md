@@ -1,5 +1,36 @@
 # SurePath — Changelog
 
+## v2.6.14 — 2026-10-23
+
+**React Router dihapus dari bundel: −24 kB yang dimuat setiap pengunjung.**
+
+- `index.tsx` membungkus `<App />` dengan `<HashRouter>` dari `react-router-dom`,
+  padahal **tidak ada satu berkas pun** di app ini yang memakai API-nya — tidak
+  ada `Route`, tidak ada `Link`, tidak ada hook. Routing SurePath ditulis tangan
+  di atas History API di `App.tsx` (`currentPath` dari `window.location.pathname`,
+  `navigate()` memanggil `history.pushState`, listener `popstate` menyinkronkan
+  keduanya). Jadi seluruh library itu ikut terkirim ke setiap pengunjung tanpa
+  mengerjakan apa pun. Dihapus, dan paketnya dicabut dari `package.json`.
+- Entry chunk — satu-satunya chunk yang **wajib** dimuat semua orang sebelum apa
+  pun tampil — turun dari 445,6 kB (141,6 kB gzip) ke 421,4 kB (132,8 kB gzip):
+  **−24,2 kB mentah, −8,8 kB gzip**. Di koneksi seluler Indonesia itu yang paling
+  terasa, karena biayanya dibayar di muka sebelum splash screen muncul.
+- Tidak mengubah perilaku URL. Sebelum penghapusan saya cek dulu di browser:
+  HashRouter **tidak** menambahkan `#/` ke URL mana pun, jadi ini murni bobot
+  bundel yang mati, bukan bug routing. Setelah penghapusan, 10/10 asersi:
+  `pathname` utuh di `/`, `/tentang-kami`, `/produk`, `/agapps`, `/admin`,
+  `/custapp`, `/operatorapp`; `pushState` memindahkan URL; tombol Back kembali ke
+  path sebelumnya; nol error halaman.
+- Koreksi temuan audit: "AnalyticsDashboard 395 kB perlu code-splitting"
+  **salah**. Berkas itu sudah `lazy()`-loaded di `AdminPortal.tsx`, recharts
+  hanya diimpor di satu berkas, dan komentar di `vite.config.ts` mencatat bahwa
+  manual chunk untuk recharts/jspdf memang sengaja dihapus (manual chunk menyerap
+  dependensi bersama dan justru memaksa entry mengimpor ~240 kB di setiap
+  halaman). Tidak ada cacat di sana, jadi tidak ada yang "diperbaiki".
+- Juga dikoreksi: `CLAUDE.md` menyatakan `react-router` "tidak diimpor di mana
+  pun". Itu tidak benar — ada satu impor, di `index.tsx`. Sekarang pernyataannya
+  cocok dengan kode.
+
 ## v2.6.13 — 2026-10-23
 
 **Lantai tipografi: 11px, didefinisikan sekali, dijaga lint.**

@@ -14,6 +14,7 @@ import { useDarkMode } from '../shared/theme';
 import NotificationDrawer from '../shared/NotificationDrawer';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { formatIDRCompact } from '../../src/i18n';
 // ── Performance: lazy-load heavy wizards + chat so they don't bloat the
 //    initial CustomerPortal chunk. Each is ~50-150 KB; loading all 7 eagerly
 //    adds ~700 KB to the initial bundle. Now they only load when the customer
@@ -183,6 +184,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         const homeDaysLeft = latestPolicy?.end_date
           ? Math.max(0, Math.ceil((new Date(latestPolicy.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
           : 0;
+        // The tile used to read "SISA HARI / 365 / ke perpanjangan", which only
+        // restated its own label — and "perpanjangan" is 12 letters in a tile
+        // 71px wide, so it broke mid-word ("perpanjang / an"). The renewal date
+        // fits, and tells the customer something the label does not.
+        const homeRenewalDate = latestPolicy?.end_date
+          ? new Date(latestPolicy.end_date).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : null;
         return (
           <PageTransition>
             <div className="sp-modern-app space-y-6 pb-32">
@@ -264,9 +272,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <SectionLabel>{t('My Protection', 'Proteksi Saya')}</SectionLabel>
                   <ClayCard padding="md" variant="default">
                     <div className="grid grid-cols-3 gap-3">
-                      <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDR(totalPremium)} sub={t('all policies', 'semua polis')} />
+                      <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDRCompact(totalPremium)} sub={t('all policies', 'semua polis')} />
                       <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
-                      <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={t('to renewal', 'ke perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
+                      <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={homeRenewalDate ?? t('to renewal', 'perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
                     </div>
                   </ClayCard>
                 </div>

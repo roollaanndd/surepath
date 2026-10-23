@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
   // Same canonical-owner resolution as data-gateway (FIX v1.50.0): rows are
   // written with sp_users.id, but legacy accounts have sp_users.id ≠ auth id,
   // so reads must match both.
-  // FIX v2.6.17 (audit 2026-10-23, C1): parameterized equality instead of
+  // FIX v2.6.18 (audit 2026-10-23, C1): parameterized equality instead of
   // interpolating the JWT email into PostgREST's .or() filter grammar, where
   // `ilike`'s `*` wildcard let a crafted signup address match another user's
   // row — and this row decides whose policies and claims Pathy may read.

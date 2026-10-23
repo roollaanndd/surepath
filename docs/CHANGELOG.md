@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.19 — 2026-10-23
+## v2.6.20 — 2026-10-23
 
 **Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
 
@@ -88,7 +88,14 @@ berdiri sendiri tanpa kode yang mengisinya. Dua edge function yang berubah
 
 `android/app/build.gradle` ikut dikoreksi: `versionName` tertinggal di 2.6.17
 saat app sudah 2.6.18, persis masalah yang diperingatkan komentar di berkas itu
-sendiri. Sekarang 2.6.19 dengan `versionCode` 31.
+sendiri. Sekarang 2.6.20 dengan `versionCode` 31.
+
+`zod` dinaikkan ke 4.6.7 (GHSA-mrhx-c7xc-m3w5, high: habisnya memori saat
+memvalidasi koleksi terbatas yang kelewat besar). Bukan temuan dari pekerjaan
+ini: `zod` dependensi transitif `openai`, advisory-nya baru terbit hari ini, dan
+check "Runtime dependency audit" merah juga di main. `npm update zod` dipakai
+alih-alih `npm audit fix` supaya yang berubah hanya `zod`; `package.json` tidak
+disentuh.
 ## v2.6.18 — 2026-10-23
 
 **Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**

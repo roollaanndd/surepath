@@ -1,11 +1,14 @@
-// OperatorWithdrawals.tsx — Tarik tab. L1 approve/reject agent withdrawal requests.
+// OperatorWithdrawals.tsx — Tarik tab. Review/reject agent withdrawal requests.
+// Approval of every tier (L1/L2/L3) is finance-only since 2026-10-23 (owner's
+// call); the gateway rejects `admin_approve_withdrawal` from an operator, so
+// this screen no longer offers it.
 import React, { useEffect, useState, useCallback } from 'react';
-import { CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { XCircle, Eye } from 'lucide-react';
 import { Language } from '../../types';
 import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, AgentHero, SpotWallet, AgentEmpty } from '../agent/AgentArt';
-import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
-import { listWithdrawals, approveWithdrawalL1, rejectWithdrawal, type OperatorWithdrawal } from '../../services/operatorService';
+import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
+import { listWithdrawals, rejectWithdrawal, type OperatorWithdrawal } from '../../services/operatorService';
 
 interface Props {
   operator: any;
@@ -28,7 +31,6 @@ const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID
 const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
   const t = useT(lang);
   const toast = useToast();
-  const confirm = useConfirmDialog();
   const [activeStatus, setActiveStatus] = useState('PENDING_L1');
   const [withdrawals, setWithdrawals] = useState<OperatorWithdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,23 +53,6 @@ const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
   }, [activeStatus, toast]);
 
   useEffect(() => { load(); }, [load, refreshTick]);
-
-  const handleApproveL1 = async (w: OperatorWithdrawal) => {
-    const ok = await confirm({
-      title: 'Setujui Penarikan (L1)',
-      description: `Setujui penarikan ${fmtIdr(w.amount)} oleh ${w.agent_name ?? 'agen'}? Akan diteruskan ke L2 untuk amount ≥ Rp 10jt.`,
-      confirmLabel: 'Setujui L1',
-      variant: 'primary',
-    });
-    if (!ok) return;
-    try {
-      await approveWithdrawalL1(w.id);
-      toast.success('Penarikan disetujui di L1');
-      load();
-    } catch (e: any) {
-      toast.error(`Gagal: ${e.message}`);
-    }
-  };
 
   const handleReject = (w: OperatorWithdrawal) => {
     // FIX v1.42.0: replace native prompt() with in-app modal
@@ -107,7 +92,7 @@ const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
       <AgentArtKeyframes />
       <AgentHero
         title="Antrian Penarikan"
-        subtitle="Approval multi-level L1/L2/L3 — setiap pencairan terjaga."
+        subtitle="Persetujuan L1/L2/L3 ada di tim finance. Di sini kamu meninjau dan menolak."
         art={<SpotWallet size={72} />}
       />
 
@@ -157,20 +142,12 @@ const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
                     <Eye size={12} /> Detail
                   </button>
                   {w.status === 'PENDING_L1' && (
-                    <>
-                      <button
-                        onClick={() => handleApproveL1(w)}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
-                      >
-                        <CheckCircle2 size={12} /> L1
-                      </button>
-                      <button
-                        onClick={() => handleReject(w)}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
-                      >
-                        <XCircle size={12} /> Tolak
-                      </button>
-                    </>
+                    <button
+                      onClick={() => handleReject(w)}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                    >
+                      <XCircle size={12} /> Tolak
+                    </button>
                   )}
                 </div>
               </div>

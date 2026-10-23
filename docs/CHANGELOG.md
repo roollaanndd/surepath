@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.18 — 2026-10-23
+## v2.6.19 — 2026-10-23
 
 **Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
 
@@ -45,6 +45,126 @@ diapply **lebih dulu**, baru `data-gateway` dideploy; insert dengan kolom yang
 belum ada akan gagal seluruhnya. Migrasinya aditif dan nullable, jadi aman
 berdiri sendiri tanpa kode yang mengisinya. Dua edge function yang berubah
 (`data-gateway`, `xendit-webhook`) **tidak** ikut auto-deploy Vercel.
+
+**Gelombang 1: nasabah akhirnya melihat polis yang dibelinya.**
+
+- **`client_id` diisi saat agen membuat order.** Sebelumnya kolom itu hanya
+  terisi kalau nasabah memesan sendiri; order yang dijual agen menyimpan
+  nasabahnya sebagai teks (`client_name`, `client_email`) dan `client_id`-nya
+  NULL selamanya — 5 dari 5 order di produksi. Karena `get_my_orders`,
+  `get_my_payments`, `cancel_my_order` dan pemeriksaan kepemilikan di
+  `submit_claim` semuanya bersandar pada `client_id`, nasabah tidak melihat
+  polisnya di `/custapp`, tidak melihat pembayarannya, dan ditolak 403 saat
+  mengklaim polis yang memang miliknya.
+- **Aturan pencocokannya ada di satu berkas, `clientLink.ts`, beserta
+  alasannya.** `client_id` menentukan siapa yang boleh melihat *dan* mengklaim
+  sebuah polis, jadi satu pencocokan yang salah berarti polis seseorang terbaca
+  oleh orang lain. Aturannya dibuat salah ke arah "tidak menautkan": lewat email
+  saja, harus tepat satu baris yang cocok, email baris itu harus sama persis
+  setelah di-lowercase (bukan sekadar cocok menurut pola), perannya harus
+  CUSTOMER, dan agen tidak pernah ditautkan ke ordernya sendiri. **Nomor telepon
+  sengaja tidak dipakai**: satu nomor sering dipakai bergantian dalam satu
+  keluarga, ditulis dalam tiga format (`08xx`/`+628xx`/`628xx`), dan agen kadang
+  mengisi nomornya sendiri supaya OTP masuk ke dirinya. Wildcard LIKE di-escape
+  sebelum masuk `.ilike()` dan hasilnya dibandingkan ulang sebagai string, karena
+  `client_email` datang dari payload klien: tanpa itu `%@gmail.com` akan
+  mencocokkan nasabah mana pun.
+- **`ensure_profile` menautkan order yang dijual sebelum nasabahnya punya akun.**
+  Emailnya dari sesi terverifikasi, bukan params, dan hanya order yang `client_id`-nya
+  masih NULL yang disentuh. Ini satu-satunya tempat yang menulis `client_id` ke
+  order yang sudah ada — tidak ada backfill massal.
+- **Keputusan insurer dan polis terbit sekarang juga memberi kabar ke nasabah.**
+  `sp_notifications` punya satu kolom pemilik dan selama ini hanya `order.agent_id`
+  yang diisi, jadi nasabah tidak pernah tahu polisnya sudah terbit. Type-nya
+  dirapikan: keputusan order jadi `ORDER_UPDATE` (dulu `CLAIM_UPDATE`, hal yang
+  sama sekali lain) dan penerbitan jadi `POLICY_ISSUED` (dulu `SYSTEM`). Union di
+  `services/dbTypes.ts` dan peta ikon `NotificationDrawer` menyusul: ketiga type
+  itu sudah ditulis server tapi tidak ada di keduanya, sehingga tampil sebagai
+  ikon "info" generik.
+- 20 tes baru di `services/__tests__/clientLink.test.ts`, sebagian besar memaku
+  apa yang **tidak** boleh menghasilkan penautan: nol baris, dua baris yang
+  berbagi alamat, email yang tidak sama persis, peran bukan CUSTOMER, agen atas
+  ordernya sendiri, dan serangan wildcard utuh dari ujung ke ujung.
+
+`android/app/build.gradle` ikut dikoreksi: `versionName` tertinggal di 2.6.17
+saat app sudah 2.6.18, persis masalah yang diperingatkan komentar di berkas itu
+sendiri. Sekarang 2.6.19 dengan `versionCode` 31.
+## v2.6.18 — 2026-10-23
+
+**Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**
+
+- `data-gateway`, `quotations-gateway` dan `pathy-agent` menentukan identitas
+  pemanggil dengan menyisipkan email dari JWT ke dalam grammar filter PostgREST:
+  `.or(`id.eq.${authId},email.ilike.${email}`)`. Email itu tidak di-escape, dan
+  `ilike` memperlakukan `*` sebagai wildcard — jadi mendaftar dengan alamat yang
+  dirancang khusus membuat lookup mengembalikan baris user lain. Baris itu *adalah*
+  pemanggil: `role`, `isAdmin`, `isFinanceAdmin` dan `ownerId` semuanya diambil
+  dari situ, sehingga ini eskalasi privilese dari pendaftaran mandiri.
+  `_shared/auth.ts` sudah memakai bentuk `.eq()` terparameterisasi lengkap dengan
+  komentar yang memperingatkan hal ini; ketiga file itu tidak pernah ikut
+  diperbarui. Sekarang ketiganya memakai pola yang sama. Setiap `sp_users.email`
+  di database tersimpan lowercase, jadi `.eq()` setara dengan pencocokan
+  case-insensitive sebelumnya tanpa semantik pattern-matching.
+
+- `admin_approve_withdrawal` mengambil tingkat persetujuan dari parameter klien,
+  dan cabang `else`-nya men-set `status: 'APPROVED'` tanpa syarat — sehingga
+  `level: 3`, `level: 0`, bahkan `level: "x"` menyetujui jumlah berapa pun dalam
+  satu panggilan, tanpa memeriksa apakah baris itu sedang menunggu persetujuan
+  dan tanpa memeriksa L1/L2 sudah lewat. Tangga <10jt/≥10jt/≥25jt efektif tidak
+  ditegakkan. Sekarang tingkatnya diturunkan dari baris, bukan dari request;
+  UPDATE-nya mengklaim stage secara atomik lewat `.eq('status', …)` sehingga dua
+  approver yang berlomba tidak bisa sama-sama maju; dan satu orang tidak bisa
+  menandatangani penarikan yang sama dua kali.
+
+- Persetujuan penarikan jadi **finance-only di semua tier** (keputusan pemilik,
+  2026-10-23, sementara). `OPERATOR` ada di `ADMIN_ROLES` tapi tidak di
+  `FINANCE_ROLES`, jadi operator tidak lagi bisa menandatangani tier mana pun —
+  termasuk L1 untuk permintaan di bawah 10jt. Tombol "L1" di portal operator
+  dihapus beserta `approveWithdrawalL1` di `services/operatorService.ts`, supaya
+  tidak ada tombol yang pasti membalas 403. Operator tetap melihat antrian dan
+  tetap bisa **menolak**, karena menolak hanya membalikkan deduksi yang sudah
+  dilakukan agen dan tidak bisa mencairkan dana.
+
+- Migration `20261023073000_close_token_table_rls_gaps.sql`: `sp_insurer_auth_tokens`
+  dan `sp_review_tokens` terbuka untuk setiap user terautentikasi di produksi
+  (policy SELECT/INSERT/UPDATE `true` untuk role `public`). Policy
+  `sp_insurer_auth_tokens` di-drop tanpa pengganti karena jalur kliennya sudah
+  mati; `admins_manage_tokens` pada `sp_review_tokens` diganti policy ber-scope
+  `is_admin()` karena tombol kirim-link-ulasan di admin masih INSERT langsung ke
+  tabel itu. **Migration ini belum diterapkan ke produksi.**
+
+## v2.6.17 — 2026-10-23
+
+**Kartu "Proteksi Saya" di beranda Nasabah pecah di layar ponsel — dan sebabnya bukan yang diduga.**
+
+- Di 390px, nilai premi `Rp 1.850.000` terbelah jadi tiga baris di tengah
+  angka: `Rp 1.8` / `50.0` / `00`. Label `ke perpanjangan` putus jadi
+  `perpanjang` / `an`. Ini layar pertama yang dilihat setiap nasabah.
+- **Dugaan pertama salah dan dibuang.** Ada `overflow-wrap: anywhere` di
+  `src/styles/portal-modernization.css` yang berlaku untuk keenam portal di
+  bawah 640px, dan itu tampak seperti sebabnya. Diubah ke `break-word`, lalu
+  diukur lagi: **angkanya sama persis**. Diuji terpisah dalam kasus flex
+  terkendali — dua mode itu berperilaku identik. Perubahan CSS-nya dibatalkan,
+  karena mengubah perilaku enam portal atas teori yang gagal dibuktikan bukan
+  perbaikan.
+- **Sebab sebenarnya adalah tata letak, bukan pembungkusan kata.**
+  `grid-cols-3` mengunci tiap kolom di 95px; dengan `p-4` tersisa **61px**
+  untuk isi, sementara nilai premi 20px butuh ~140px. Teks itu memang tidak
+  muat, jadi ia harus putus.
+- Perbaikannya: `StatCard` kini `p-3 sm:p-4` dan nilainya `text-base sm:text-xl`
+  dengan `tabular-nums`, dan premi memakai `formatIDRCompact` yang baru
+  (`Rp 1,9 jt`; satuan rb/jt/M/T, K/M/B/T untuk EN) di `src/i18n.ts`.
+- Sub-label kartu "Sisa Hari" berhenti mengulang labelnya sendiri: dulu
+  `ke perpanjangan` (12 huruf di kotak 71px), kini **tanggal perpanjangan**
+  (`23 Okt 2027`) — muat, dan memberi tahu hal yang labelnya tidak.
+- Label dan sub `StatCard` naik ke lantai 11px (`text-2xs`).
+- Hasil di 390px: tiap elemen satu baris, tinggi kartu **181px → 103px**, tidak
+  ada lagi putus di tengah kata. Di 360px dan 320px masih membungkus, tapi
+  **selalu di spasi** — `Rp 1,9` / `jt`, `23 Okt` / `2027` — bukan di tengah
+  angka. Diperiksa sebagai gambar, bukan cuma sebagai hitungan.
+- Sapuan enam portal: tidak ada overflow, tidak ada regresi. `npm run lint`
+  tetap 0 error / 33 warning / 316 tes.
+
 ## v2.6.16 — 2026-10-23
 
 **Dua cacat di header Admin Portal, ditemukan karena interiornya akhirnya bisa dilihat.**

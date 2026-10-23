@@ -9,6 +9,7 @@ import { Language } from '../../types';
 import { IcPathy, IcBell, IcBuy, IcClaim, IcHistory } from '../shared/CustomerIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
+import { scrollPortalToTop } from '../shared/scrollReset';
 import NotificationDrawer from '../shared/NotificationDrawer';
 import UserProfile from '../UserProfile';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -139,7 +140,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
   const navigate = (page: string) => {
     setActivePage(page);
-    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollPortalToTop(scrollRef.current);
   };
 
   // The drawer marks notifications read on its own — resync the header badge

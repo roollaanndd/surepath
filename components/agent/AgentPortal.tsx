@@ -5,6 +5,7 @@ import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
 import { IcBell } from './AgentIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
+import { scrollPortalToTop } from '../shared/scrollReset';
 import {
   supabase,
   getAgentCommissions,
@@ -226,6 +227,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const handleTabChange = (tab: string) => {
     setTabKey(k => k + 1);
     setActiveTab(tab);
+    scrollPortalToTop();
   };
 
   const renderTab = () => {

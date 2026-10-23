@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
+import { scrollPortalToTop } from '../shared/scrollReset';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
 import { supabase } from '../../services/supabaseService';
@@ -54,6 +55,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   const handleTabChange = (tab: string) => {
     setTabKey(k => k + 1);
     setActiveTab(tab);
+    scrollPortalToTop();
   };
 
   // ── Realtime: refresh + popup toast on new orders/payments ────────────────

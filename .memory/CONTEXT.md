@@ -1,4 +1,57 @@
 # SurePath Session Context
+**Updated:** 2026-10-23 (v2.6.9 — revamp jadi 4 portal + scroll reset lintas portal)
+
+## Status revamp UI/UX (23 Okt 2026)
+
+Dokumen eksekusi **ganti nama**: `docs/AGENT_APP_REVAMP_EXECUTION.md` →
+`docs/APP_REVAMP_EXECUTION.md`. Scope diperluas dari Customer+Agent menjadi
+**4 portal: Nasabah, Mitra, Operator, Admin CMS** (permintaan pemilik). Insurer
+dan B2B **bukan** target redesign tapi ikut memakai primitif bersama — setiap
+perubahan shared harus diverifikasi ke enam portal.
+
+**Jangan percaya klaim "revamp selesai".** Dari seluruh checklist, yang benar-benar
+DONE hanya **S3a** (scroll reset). PR #248/#249/#250/#251 semuanya **poles kosmetik**,
+bukan redesign — ledger di §5 dokumen itu mencatatnya apa adanya. S1, S2, S3b, S4 dan
+semua item C/A/O/D masih terbuka. Operator & Admin baru punya audit + checklist, nol
+implementasi.
+
+### Temuan audit yang jangan ditelusuri ulang
+- **Hanya CustomerPortal yang me-reset scroll** saat navigasi internal; lima portal
+  lain tidak. Sudah diperbaiki v2.6.9 via `components/shared/scrollReset.ts`.
+- Scroll admin itu **dua bug berbeda**, jangan dicampur: (a) sidebar ter-reset saat
+  polling karena ref callback inline dibuat ulang tiap render → PR #243 `useCallback`;
+  (b) area konten tidak pernah kembali ke atas saat ganti menu → v2.6.9. Keduanya
+  BUKAN efek styling Agent. Konfirmasi browser atas laporan asli pemilik masih kurang.
+- Operator **sepenuhnya card-based (0 `<table>`)** → aman di layar sempit; error
+  handling ada di 7 dari 9 berkas. Yang kurang: hierarki queue, bukan responsif.
+- Admin: 19 `<table>` vs 21 `overflow-x-auto` → tabel umumnya sudah dibungkus.
+- `AnalyticsDashboard` chunk ~395 kB (113 kB gzip) — item performa.
+- CustomerPortal dulu memaksa `behavior: 'smooth'`, mengabaikan `prefers-reduced-motion`.
+
+### Baseline gate (pakai angka ini untuk membandingkan)
+`npm run lint` → tsc 0 error · ESLint **0 error / 33 warning** (semua pre-existing;
+catatan lama "28 warning" sudah kedaluwarsa) · vitest **299 lolos / 23 berkas**.
+`npm run build` → `dist/` bersih 132 berkas, PWA release check lolos.
+
+### PR #242 (vite 6.4.5) — jangan di-merge tanpa CI ulang
+`browser-smoke-tests` GAGAL pada run 22 Okt karena base-nya sebelum `904b2b4`
+("stabilize PDF test"). Branch sudah di-update 23 Okt; tunggu CI segar.
+**Koreksi — jangan ulangi kesalahan ini:** `browser-smoke-tests` di CI jalan terhadap
+**server lokal**, bukan produksi (`PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000` di
+`.github/workflows/ci.yml`). `playwright.config.ts` juga default ke `127.0.0.1:3000`
+dengan `webServer` yang menjalankan `npm run dev`; produksi hanya disentuh bila
+seseorang set `UNSAFE_E2E_AGAINST_PROD=1`. Jadi **kegagalan smoke test di CI itu
+NYATA** — jangan dibuang sebagai "flake produksi". CLAUDE.md sempat menyatakan
+sebaliknya dan sudah dikoreksi 23 Okt.
+
+### Dependabot: #134 JANGAN di-merge selagi revamp jalan
+Bump `tailwindcss` + `postcss-selector-parser` mengubah output CSS. Menggabungkannya
+di tengah revamp visual membuat regresi tidak bisa dibedakan antara dep dan diff kita.
+Tahan sampai S1/S2 selesai dan ada baseline visual.
+
+---
+
+# SurePath Session Context
 **Updated:** 2026-10-21 (v2.5.20 + INSIDEN data-gateway)
 
 ## ⚠️ BACA DULU — data-gateway berjalan di jalur darurat

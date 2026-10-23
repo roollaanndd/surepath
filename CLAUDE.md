@@ -20,7 +20,7 @@ npm run lint:ts      # TypeScript only
 npm run lint:es      # ESLint only
 npm run test:unit    # vitest run (services/__tests__/**/*.test.ts, jsdom)
 npm run test:watch   # vitest watch mode
-npm run test:e2e     # playwright test — runs against LIVE https://myinsurepath.com
+npm run test:e2e     # playwright test — local by default (boots `npm run dev` on 127.0.0.1:3000)
 ```
 
 Run a single unit test: `npx vitest run services/__tests__/wallet.test.ts` or filter by name with `npx vitest run -t "test name"`.

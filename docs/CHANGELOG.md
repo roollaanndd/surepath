@@ -1,5 +1,25 @@
 # SurePath — Changelog
 
+## v2.6.9 — 2026-10-23
+
+**Posisi scroll kembali ke atas saat berpindah menu di semua portal.**
+
+- Setiap portal menyimpan `activeTab` sendiri, jadi berpindah view adalah perubahan
+  state — bukan navigasi dokumen — sehingga browser tidak punya alasan memindahkan
+  posisi scroll. Akibatnya view yang dibuka dari tengah daftar panjang muncul dalam
+  keadaan sudah ter-scroll, dan animasi `sp-page-enter` jalan di luar layar.
+- Sebelumnya hanya portal Nasabah yang menanganinya. Sekarang Nasabah, Mitra,
+  Operator, Insurer, B2B, dan Admin CMS memakai satu primitif bersama
+  (`components/shared/scrollReset.ts`).
+- Admin CMS: area konten adalah container scroll sendiri, jadi reset dilakukan pada
+  container itu — bukan window. Keenam titik navigasi CMS (menu sidebar, kartu KPI
+  dashboard, kartu Transaksi Overview, kartu Online Users, dan dua jalur notifikasi)
+  kini melewati satu handler.
+- Portal Nasabah dulu memaksa `behavior: 'smooth'`; sekarang scroll halus ikut
+  dimatikan bila pengguna memilih `prefers-reduced-motion`.
+- Tidak mengubah logika bisnis, autentikasi, otorisasi, perhitungan premi/komisi,
+  maupun alur pembayaran. Perubahan perilaku navigasi UI saja.
+
 ## v2.6.8 — 2026-10-22
 
 **Responsive UI, smooth motion, and warm orange accents.**

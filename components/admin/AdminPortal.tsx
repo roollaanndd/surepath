@@ -45,6 +45,7 @@ const EndorsementsAdminView = lazy(() => import('./EndorsementsAdminView'));
 const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
 const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
+import { scrollPortalToTop } from '../shared/scrollReset';
 import { UserRole } from '../../types';
 import {
   AgentArtKeyframes, AgentHero,
@@ -221,6 +222,14 @@ const AdminPortal = ({
   const setSidebarNavRef = useCallback((node: HTMLElement | null) => {
     if (node) node.scrollTop = sidebarScrollTop.current;
   }, []);
+  // The CMS content area is its own scroll container, so switching views has to
+  // return it to the top explicitly — otherwise a view opened from halfway down
+  // a long table renders already scrolled.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const goToTab = useCallback((tab: string) => {
+    setActiveTab(tab);
+    scrollPortalToTop(contentRef.current);
+  }, []);
   const [transaksiStats, setTransaksiStats] = useState<{
     totalCustomers: number;
     totalOrders: number;
@@ -386,7 +395,7 @@ const AdminPortal = ({
           return (
             <button
               key={navItem.id}
-              onClick={() => { setActiveTab(navItem.id); setMobileOpen(false); }}
+              onClick={() => { goToTab(navItem.id); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left sp-interactive-surface ${
                 activeTab === navItem.id
                   ? 'bg-ds-green-tint text-ds-green border border-ds-green/20'
@@ -471,7 +480,7 @@ const AdminPortal = ({
           { label: 'Premi Dibayar',     value: adminStats ? formatIDR(adminStats.totalPremiumPaid) : '—',  icon: CheckCircle, to: 'payments',          color: 'bg-ds-blue-lt text-ds-blue' },
           { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—',                            icon: Users,      to: 'agents',            color: 'bg-ds-amber-lt text-ds-amber' },
         ].map(card => (
-          <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
+          <button key={card.label} type="button" onClick={() => goToTab(card.to)}
             className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
               <card.icon size={20} />
@@ -493,7 +502,7 @@ const AdminPortal = ({
             { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : '—',             icon: CreditCard, to: 'payments',          color: 'bg-ds-green-tint text-ds-green' },
             { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : '—',                  icon: Coins,      to: 'commission_ledger', color: 'bg-ds-amber-lt text-ds-amber' },
           ].map(card => (
-            <button key={card.label} type="button" onClick={() => setActiveTab(card.to)}
+            <button key={card.label} type="button" onClick={() => goToTab(card.to)}
               className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
                 <card.icon size={20} />
@@ -504,7 +513,7 @@ const AdminPortal = ({
             </button>
           ))}
           {/* Online Users Card */}
-          <button type="button" onClick={() => setActiveTab('security')}
+          <button type="button" onClick={() => goToTab('security')}
             className={`group p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
             <div className="flex items-center gap-2 mb-4">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${'bg-ds-green-tint text-ds-green'}`}>
@@ -797,8 +806,8 @@ const AdminPortal = ({
                             setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
                           }
                           // Navigate to relevant tab if type matches
-                          if (n.type === 'NEW_AGENT') setActiveTab('agents');
-                          else if (n.type === 'NEW_CUSTOMER') setActiveTab('users');
+                          if (n.type === 'NEW_AGENT') goToTab('agents');
+                          else if (n.type === 'NEW_CUSTOMER') goToTab('users');
                           setShowNotifications(false);
                         }}
                         className={`w-full text-left px-4 py-3 border-b transition-colors ${'border-ds-border hover:bg-ds-card2'} ${!n.read ? 'bg-ds-green-tint' : ''}`}
@@ -833,7 +842,7 @@ const AdminPortal = ({
         </header>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 no-scrollbar ${'bg-ds-card2'}`}>
+        <div ref={contentRef} className={`flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 no-scrollbar ${'bg-ds-card2'}`}>
           <div className="max-w-7xl mx-auto">
             <AgentArtKeyframes />
             {/* Themed hero banner for every view (dashboard has its own) */}

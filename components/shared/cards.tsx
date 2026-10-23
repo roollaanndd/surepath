@@ -153,17 +153,21 @@ export const StatCard: React.FC<{
   progress?: number; // 0-100
   onClick?: () => void;
 }> = ({ label, value, sub, icon: Icon, iconBg = 'bg-ds-green-tint', iconColor = 'text-ds-green', progress, onClick }) => (
-  <SurfaceCard onClick={onClick} className="p-4">
+  // p-3 on phones, where a three-up row leaves each tile ~95px: at p-4 the
+  // content box was 61px, too narrow for its own value. The value steps down
+  // with it, and `tabular-nums` keeps the three tiles' digits on a shared
+  // rhythm instead of each one setting its own.
+  <SurfaceCard onClick={onClick} className="p-3 sm:p-4">
     <div className="flex items-center gap-2 mb-2">
       {Icon && (
         <div className={`w-7 h-7 ${iconBg} rounded-xl flex items-center justify-center`}>
           <Icon size={14} className={iconColor} />
         </div>
       )}
-      <span className="text-[10px] text-ds-ink3 font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-wider">{label}</span>
     </div>
-    <div className="text-xl font-black text-ds-ink leading-tight">{value}</div>
-    {sub && <div className="text-[10px] text-ds-ink3 mt-0.5">{sub}</div>}
+    <div className="text-base sm:text-xl font-black text-ds-ink leading-tight tabular-nums">{value}</div>
+    {sub && <div className="text-2xs text-ds-ink3 mt-0.5 leading-snug">{sub}</div>}
     {typeof progress === 'number' && (
       <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, progress))}%`, background: '#00C16A' }} />

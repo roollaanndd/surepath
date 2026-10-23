@@ -341,3 +341,56 @@
     margin-inline: auto;
   }
 }
+
+
+/* Agent home screen polish: clearer rhythm and touch-first dashboard tiles. */
+.sp-agent-premium .sp-agent-home {
+  --sp-home-gutter: clamp(1rem, 4.5vw, 1.5rem);
+}
+.sp-agent-premium .sp-agent-home__greeting h2 {
+  letter-spacing: -.04em;
+  line-height: 1.08;
+}
+.sp-agent-premium .sp-agent-home__quick-actions > p,
+.sp-agent-premium .sp-agent-home__commissions h3 {
+  letter-spacing: -.015em;
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+  min-width: 0;
+  min-height: 6.5rem;
+  border: 1px solid rgba(8, 122, 88, .10);
+  box-shadow: 0 8px 24px -18px rgba(0, 59, 47, .35);
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), box-shadow 180ms ease, border-color 180ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(8, 122, 88, .28);
+    box-shadow: 0 14px 30px -20px rgba(0, 59, 47, .42);
+  }
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button:active {
+  transform: scale(.98);
+}
+.sp-agent-premium .sp-agent-home__commissions > div > div:first-child button {
+  min-height: 2.75rem;
+  padding-inline: .25rem;
+}
+@media (max-width: 380px) {
+  .sp-agent-premium .sp-agent-home__quick-actions .grid {
+    gap: .5rem;
+  }
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+    padding-inline: .15rem;
+    min-height: 6rem;
+  }
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button > span:first-child {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+    transition: none !important;
+  }
+}

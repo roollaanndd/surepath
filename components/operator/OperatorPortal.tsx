@@ -166,7 +166,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
       {/* Top Header */}
       <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
         <div className="flex items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center overflow-hidden">
               <SurePathLogo className="w-8 h-8 object-contain" />
             </div>
@@ -174,16 +174,16 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
               <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink">
                 Sure<span className="text-ds-green">Path</span>
               </div>
-              <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none mt-0.5">
+              <div className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider leading-none mt-0.5 whitespace-nowrap">
                 Operator <span className="text-ds-green/70 normal-case">v{APP_VERSION}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            <div className="text-right mr-2">
-              <div className="text-xs font-black tracking-tight leading-none text-ds-ink">{operator?.name ?? 'Operator'}</div>
-              <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5">
+          <div className="flex items-center gap-1 min-w-0">
+            <div className="text-right mr-2 min-w-0">
+              <div className="text-xs font-black tracking-tight leading-none text-ds-ink truncate">{operator?.name ?? 'Operator'}</div>
+              <div className="text-2xs font-bold text-ds-green uppercase tracking-wider leading-none mt-0.5 truncate">
                 {operator?.nodeId ?? 'SP-OP'}
               </div>
             </div>

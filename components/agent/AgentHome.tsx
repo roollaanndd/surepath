@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { formatIDRCompact } from '../../src/i18n';
 import RenewalAlerts from './RenewalAlerts';
 import { getAgentOrders } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
@@ -129,7 +130,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div className="flex items-center gap-2">
             {myTierDef && !myTierDef.is_default && (
               <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-bold uppercase tracking-wider"
                 style={{ background: `${myTierDef.color}22`, color: myTierDef.color }}
               >
                 {myTierDef.emoji ? <span>{myTierDef.emoji}</span> : <Star size={11} />}
@@ -164,12 +165,12 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               </span>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 8c2.2 2.2 2.2 5.8 0 8M12.5 5.5c3.6 3.6 3.6 9.4 0 13M17 3c5 5 5 13 0 18" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" /></svg>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white/45">SurePath · Partner Card</span>
+            <span className="text-2xs font-black uppercase tracking-[0.14em] text-white/45 whitespace-nowrap">SurePath · Partner Card</span>
           </div>
 
           <div className="relative z-10 flex items-center gap-5">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] mb-2" style={{ color: 'rgba(253,224,71,0.75)' }}>
+              <p className="text-2xs font-black uppercase tracking-[0.12em] mb-2 whitespace-nowrap" style={{ color: 'rgba(253,224,71,0.75)' }}>
                 {t('Commission this month', 'Komisi Bulan Ini')}
               </p>
               <div className="flex items-baseline gap-1.5">
@@ -199,29 +200,29 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                   <span className="text-lg font-black text-white leading-none">{Math.round(progress)}%</span>
                 </div>
               </div>
-              <p className="text-[8px] text-white/40 font-bold uppercase tracking-wider">{t('of target', 'dr target')}</p>
+              <p className="text-2xs text-white/45 font-bold uppercase tracking-wide whitespace-nowrap">{t('of target', 'dr target')}</p>
             </div>
           </div>
 
           {/* Inline micro-stats — the only place coins/clients/policies live */}
-          <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex">
+          <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex items-stretch">
             {[
-              { label: t('Active quotes', 'Penawaran berjalan'), value: String(activeQuotesCount) },
+              { label: t('Quotes', 'Penawaran'), value: String(activeQuotesCount) },
               { label: t('Clients', 'Klien'), value: String(stats.clientsCount) },
               { label: t('Policies', 'Polis'), value: String(stats.policiesCount) },
             ].map((s, i) => (
-              <div key={s.label} className={`flex-1 ${i > 0 ? 'pl-4 border-l border-white/10' : ''}`}>
-                <p className="text-white/40 text-[9px] font-medium uppercase tracking-wider mb-0.5">{s.label}</p>
-                <p className="text-white text-base font-black font-mono">{s.value}</p>
+              <div key={s.label} className={`flex-1 min-w-0 flex flex-col ${i > 0 ? 'pl-3 border-l border-white/10' : ''}`}>
+                <p className="flex-1 text-white/45 text-2xs font-medium uppercase tracking-wide leading-tight mb-1">{s.label}</p>
+                <p className="text-white text-base font-black font-mono tabular-nums">{s.value}</p>
               </div>
             ))}
           </div>
 
           <div className="relative z-10 mt-4 flex items-center justify-between">
-            <p className="text-white/35 text-[10px] font-medium">
+            <p className="text-white/40 text-2xs font-medium">
               {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
             </p>
-            <p className="text-white/45 text-[11px] font-black tracking-[0.24em] font-mono uppercase">
+            <p className="text-white/50 text-2xs font-black tracking-[0.18em] font-mono uppercase whitespace-nowrap">
               {agent?.agent_code ?? 'SP-AGT'}
             </p>
           </div>
@@ -234,18 +235,21 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           <div className="flex-1 pr-5">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp size={13} className="text-ds-green" />
-              <p className="text-[10px] text-ds-ink3 font-medium uppercase tracking-wider">{t('GWP / Month', 'GWP Bulan Ini')}</p>
+              <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('GWP / Month', 'GWP Bulan Ini')}</p>
             </div>
-            <p className="text-xl font-black text-ds-ink font-mono leading-none">{formatIDR(stats.totalCommissionMonth * 8)}</p>
-            <p className="text-[10px] text-ds-ink3 mt-1">{t('estimated', 'estimasi')}</p>
+            <p className="text-xl font-black text-ds-ink font-mono leading-none tabular-nums whitespace-nowrap"
+              title={formatIDR(stats.totalCommissionMonth * 8)}>
+              {formatIDRCompact(stats.totalCommissionMonth * 8, lang)}
+            </p>
+            <p className="text-2xs text-ds-ink3 mt-1">{t('estimated', 'estimasi')}</p>
           </div>
           <div className="flex-1 pl-5 border-l border-ds-border">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Target size={13} className="text-ds-amber" />
-              <p className="text-[10px] text-ds-ink3 font-medium uppercase tracking-wider">{t('Conversion', 'Konversi')}</p>
+              <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('Conversion', 'Konversi')}</p>
             </div>
             <p className="text-xl font-black text-ds-ink font-mono leading-none">{conversion}%</p>
-            <p className="text-[10px] text-ds-ink3 mt-1">{t('clients to policies', 'klien → polis')}</p>
+            <p className="text-2xs text-ds-ink3 mt-1">{t('clients to policies', 'klien → polis')}</p>
           </div>
         </div>
       </motion.div>
@@ -259,7 +263,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               <PathyMascot size={32} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-ds-green mb-1.5">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
+              <p className="text-2xs font-black uppercase tracking-wider text-ds-green mb-1.5">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
               <p className="text-sm font-bold text-ds-ink leading-snug">{dailyTip}</p>
             </div>
           </div>
@@ -268,7 +272,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               <Target size={20} />
             </div>
             <div>
-              <p className="text-[9px] text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
+              <p className="text-2xs text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
               <p className="text-xs font-black text-ds-ink">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
             </div>
           </div>
@@ -282,7 +286,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
       {/* Quick Actions — floating white tiles with custom duotone icons */}
       <motion.div className="sp-agent-home__quick-actions px-5 mt-7" {...reveal(5)}>
-        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
+        <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
         <div className="grid grid-cols-4 gap-3">
           {quickActions.map((action) => (
             <button
@@ -292,7 +296,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               style={{ boxShadow: '0 10px 30px -12px rgba(11,17,32,0.12)', ['--ic-tint' as string]: action.tint }}
             >
               <span className="w-11 h-11 rounded-xl bg-ds-green-tint/70 flex items-center justify-center"><ManagedPortalIcon id={action.tab} size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<action.Ic size={23} strokeWidth={1.9} className="group-hover:scale-105 transition-transform duration-200" />} /></span>
-              <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
+              <span className="text-2xs font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
             </button>
           ))}
         </div>
@@ -324,11 +328,11 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ds-ink truncate">{productLabel[c.product_type] ?? c.product_type}</p>
-                  <p className="text-[10px] text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                  <p className="text-2xs text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-black text-ds-green">+{formatIDR(c.amount)}</p>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
+                  <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
                 </div>
               </div>
             ))

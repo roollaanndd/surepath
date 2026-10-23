@@ -45,13 +45,36 @@
     </script>
 
 
-    <!-- PRIMARY SEO -->
-    <title>SurePath | Asuransi Mobil, Jiwa & Properti Online — Klaim Cepat</title>
+    <!-- PRIMARY SEO — per-route block.
+         Everything between the markers below is owned by src/seo/seo.ts.
+         scripts/prerender.mjs replaces this whole block at build time with the
+         tags for the route being written, and applyDocumentHead() upserts the
+         same set at runtime. Both get the list from headTags(), so neither
+         decides which tags a page has.
+
+         The values here are the homepage's and serve as the pre-hydration
+         default. Do NOT put a site-wide tag inside the markers: it would be
+         dropped from every prerendered page. Site-wide tags (og:site_name,
+         og:locale, og:image dimensions, twitter:card, twitter:site, geo.*,
+         author, verification) stay outside, below. -->
+    <!-- seo:per-route:start -->
+    <title>SurePath | Asuransi Mobil, Jiwa &amp; Properti Online — Klaim Cepat</title>
     <meta name="description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />
     <meta name="keywords" content="asuransi, asuransi mobil, asuransi jiwa, asuransi perjalanan, asuransi properti, klaim asuransi, agen asuransi, asuransi online, asuransi murah, premi asuransi, asuransi terpercaya, asuransi kendaraan, beli asuransi online, surepath, myinsurepath, asuransi Indonesia, OJK, proteksi kendaraan" />
-    <meta name="author" content="SurePath" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://myinsurepath.com/" />
+    <link rel="alternate" hreflang="id" href="https://myinsurepath.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://myinsurepath.com/" />
+    <meta property="og:title" content="SurePath | Asuransi Mobil, Jiwa &amp; Properti Online — Klaim Cepat" />
+    <meta property="og:description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />
+    <meta property="og:url" content="https://myinsurepath.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://myinsurepath.com/surepath-logo.png" />
+    <meta name="twitter:title" content="SurePath | Asuransi Mobil, Jiwa &amp; Properti Online — Klaim Cepat" />
+    <meta name="twitter:description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />
+    <meta name="twitter:image" content="https://myinsurepath.com/surepath-logo.png" />
+    <!-- seo:per-route:end -->
+    <meta name="author" content="SurePath" />
     <!-- Hero video: do NOT preload — 1+ MB blocks first paint on 3G.
          The video element uses preload="none" and loads on viewport intersection.
          The hero POSTER is the LCP image on the homepage — fetch it at high priority. -->
@@ -64,13 +87,8 @@
     <meta name="google-site-verification" content="%VITE_GSC_VERIFY%" />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://myinsurepath.com/" />
     <meta property="og:site_name" content="SurePath" />
     <meta property="og:locale" content="id_ID" />
-    <meta property="og:title" content="SurePath | Asuransi Mobil, Jiwa & Properti – Klaim Cepat di Indonesia" />
-    <meta property="og:description" content="Platform asuransi digital terpercaya Indonesia. Beli asuransi mobil, jiwa, perjalanan & properti online. Klaim cepat via HP, premi terjangkau. Daftar agen gratis sekarang." />
-    <meta property="og:image" content="https://myinsurepath.com/surepath-logo.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="SurePath – Asuransi Digital Indonesia" />
@@ -79,9 +97,6 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@SurePathID" />
-    <meta name="twitter:title" content="SurePath | Asuransi Mobil & Jiwa Online di Indonesia" />
-    <meta name="twitter:description" content="Platform asuransi digital terpercaya. Beli asuransi mobil, jiwa, properti & perjalanan. Klaim cepat via HP. Daftar agen gratis." />
-    <meta name="twitter:image" content="https://myinsurepath.com/surepath-logo.png" />
 
     <!-- Additional SEO meta tags -->
     <meta name="format-detection" content="telephone=no" />
@@ -89,8 +104,6 @@
     <!-- hreflang: the site serves a single Indonesian URL set (the EN toggle is
          client-side only, no separate /en/ URLs). A phantom hreflang to /en/
          pointed at a soft-404 — removed. Declare id + x-default only. -->
-    <link rel="alternate" hreflang="id" href="https://myinsurepath.com/" />
-    <link rel="alternate" hreflang="x-default" href="https://myinsurepath.com/" />
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">

@@ -19,6 +19,20 @@ const { indexablePaths, resolveSeo, canonicalFor } = await import(
 
 const failures = [];
 
+const HTML_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" };
+
+/** Reverse the escaping scripts/prerender.mjs applies, in a single pass.
+ *
+ *  Chained replaces unescape twice: running /&amp;/ before /&lt;/ turns the
+ *  literal text "&amp;lt;" into "&lt;" and then into "<", so a title containing
+ *  an escaped entity would be compared wrong. One pass over the alternation
+ *  cannot feed its own output back in. (CodeQL js/double-escaping, caught on
+ *  this PR.)
+ */
+function unescapeHtml(value) {
+  return value.replace(/&(amp|lt|gt|quot|#39);/g, (_, name) => HTML_ENTITIES[name]);
+}
+
 function countOf(html, pattern) {
   return (html.match(pattern) ?? []).length;
 }
@@ -62,9 +76,7 @@ for (const { path } of entries) {
 
   // The page's own title, not the homepage's. This is the original defect.
   const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/);
-  const title = titleMatch
-    ? titleMatch[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    : null;
+  const title = titleMatch ? unescapeHtml(titleMatch[1]) : null;
   if (title === null) {
     failures.push(`${path}: no <title> in the prerendered file`);
   } else {

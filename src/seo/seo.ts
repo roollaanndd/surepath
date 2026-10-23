@@ -502,6 +502,25 @@ export function canonicalFor(d: SeoDescriptor): string {
   return `${SITE.origin}${d.path === '/' ? '/' : d.path.replace(/\/$/, '')}`;
 }
 
+/** Escape a JSON string for embedding inside a <script> element.
+ *
+ *  Escaping only `<` closes the obvious hole (`</script>`) and leaves two more.
+ *  `<` and `>` together are what matter for `<!--` and `<script`, which end
+ *  script content in the HTML parser even without a closing tag; U+2028 and
+ *  U+2029 are valid in JSON strings but are line terminators in JavaScript, so
+ *  a parser reading the block as a script sees a broken literal. `&` is escaped
+ *  so the text cannot be reinterpreted through an HTML entity. The result is
+ *  still valid JSON — these are all \\uXXXX escapes, which JSON.parse accepts.
+ */
+function escapeJsonForScript(json: string): string {
+  return json
+    .replace(/&/g, '\\u0026')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 /** Every head tag a page needs, in document order. */
 export function headTags(d: SeoDescriptor): HeadTag[] {
   const canonical = canonicalFor(d);
@@ -545,7 +564,7 @@ export function headTags(d: SeoDescriptor): HeadTag[] {
   tags.push({ kind: 'meta', attr: 'name', key: 'twitter:image', content: ogImage });
 
   if (d.jsonLd) {
-    tags.push({ kind: 'jsonLd', json: JSON.stringify(d.jsonLd).replace(/</g, '\\u003c') });
+    tags.push({ kind: 'jsonLd', json: escapeJsonForScript(JSON.stringify(d.jsonLd)) });
   }
 
   return tags;

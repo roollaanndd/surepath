@@ -1,4 +1,5 @@
-// Emits one static HTML file per indexable marketing route into dist/.
+// Emits one static HTML file per indexable marketing route into dist/, plus the
+// noindex fallback shell.
 //
 // Why this exists: all per-route metadata was applied client-side by
 // applyDocumentHead(). Googlebot renders JavaScript and saw it, but the
@@ -55,51 +56,48 @@ function renderTag(tag) {
         ? `<link rel="${attr(tag.rel)}" hreflang="${attr(tag.hreflang)}" href="${attr(tag.href)}" />`
         : `<link rel="${attr(tag.rel)}" href="${attr(tag.href)}" />`;
     case 'jsonLd':
-      // tag.json is already JSON with < escaped as < by headTags(), so it
-      // cannot close the script element.
+      // tag.json is already escaped by headTags() so it cannot close the script
+      // element or break out of it.
       return `<script type="application/ld+json" id="sp-page-jsonld">${tag.json}</script>`;
     default:
       throw new Error(`prerender: unhandled head tag kind ${JSON.stringify(tag.kind)}`);
   }
 }
 
-// The static tags this script replaces. Anything a route's headTags() emits
-// must be stripped from the shell first, or the page ships two of it and a
-// crawler is free to believe either one. Keyed by the matcher that finds the
-// shell's copy.
-const REPLACED = [
-  /<title>[\s\S]*?<\/title>\s*/,
-  /<meta\s+name="description"[^>]*>\s*/,
-  /<meta\s+name="keywords"[^>]*>\s*/,
-  /<meta\s+name="robots"[^>]*>\s*/,
-  /<link\s+rel="canonical"[^>]*>\s*/,
-  /<link\s+rel="alternate"[^>]*>\s*/g,
-  /<meta\s+property="og:title"[^>]*>\s*/,
-  /<meta\s+property="og:description"[^>]*>\s*/,
-  /<meta\s+property="og:url"[^>]*>\s*/,
-  /<meta\s+property="og:type"[^>]*>\s*/,
-  /<meta\s+property="og:image"[^>]*>\s*/,
-  /<meta\s+name="twitter:title"[^>]*>\s*/,
-  /<meta\s+name="twitter:description"[^>]*>\s*/,
-  /<meta\s+name="twitter:image"[^>]*>\s*/,
-];
+// index.html delimits its per-route head tags with these markers, and
+// everything between them is replaced wholesale.
+//
+// An earlier version of this script instead matched each tag with its own
+// regex — one for <title>, one per meta name, one per property. Hand-rolled
+// tag-shaped patterns are the wrong tool twice over: they are not reliable
+// against real markup, and they left the contract implicit. Add an
+// og:site_name to index.html and those regexes would have silently left it on
+// every prerendered page, which is how a per-route tag turns into a site-wide
+// one by accident. A marked block states which part of the head is per-route
+// and makes the swap exact.
+const START = '<!-- seo:per-route:start -->';
+const END = '<!-- seo:per-route:end -->';
 
-function pageHtml(descriptor) {
-  let html = shell;
+/** Replace the shell's per-route head block with `block`. */
+function spliceHead(block) {
+  const from = shell.indexOf(START);
+  const to = shell.indexOf(END);
 
-  for (const pattern of REPLACED) {
-    html = html.replace(pattern, '');
+  if (from === -1 || to === -1 || to < from) {
+    throw new Error(
+      `prerender: dist/index.html is missing the ${START} / ${END} markers, ` +
+        'so the per-route head block cannot be located.',
+    );
+  }
+  if (shell.indexOf(START, from + START.length) !== -1) {
+    throw new Error(`prerender: dist/index.html has more than one ${START} marker.`);
   }
 
-  const block = headTags(descriptor).map(renderTag).join('\n    ');
+  return `${shell.slice(0, from + START.length)}\n    ${block}\n    ${shell.slice(to)}`;
+}
 
-  // Inserted immediately after <head> so the title and OG tags sit near the
-  // top of the document: some scrapers read only the first few KB.
-  const headOpen = html.indexOf('<head>');
-  if (headOpen === -1) throw new Error('prerender: dist/index.html has no <head>');
-  const at = headOpen + '<head>'.length;
-
-  return `${html.slice(0, at)}\n    <!-- Prerendered by scripts/prerender.mjs from src/seo/seo.ts. -->\n    ${block}${html.slice(at)}`;
+function pageHtml(descriptor) {
+  return spliceHead(headTags(descriptor).map(renderTag).join('\n    '));
 }
 
 // The fallback shell, served by vercel.json's catch-all for every path with no
@@ -118,11 +116,6 @@ function pageHtml(descriptor) {
 // canonical it named would be wrong for all but one of them, and noindex
 // already settles indexing.
 function fallbackHtml() {
-  let html = shell;
-  for (const pattern of REPLACED) {
-    html = html.replace(pattern, '');
-  }
-
   const tags = [
     { kind: 'title', text: 'SurePath — Asuransi Digital Indonesia' },
     {
@@ -133,10 +126,7 @@ function fallbackHtml() {
     },
     { kind: 'meta', attr: 'name', key: 'robots', content: 'noindex, follow' },
   ];
-
-  const block = tags.map(renderTag).join('\n    ');
-  const at = html.indexOf('<head>') + '<head>'.length;
-  return `${html.slice(0, at)}\n    <!-- Prerendered fallback (noindex) by scripts/prerender.mjs. -->\n    ${block}${html.slice(at)}`;
+  return spliceHead(tags.map(renderTag).join('\n    '));
 }
 
 const entries = indexablePaths();
@@ -152,8 +142,6 @@ for (const { path } of entries) {
     );
   }
 
-  const html = pageHtml(descriptor);
-
   // '/' is dist/index.html itself; everything else becomes <path>/index.html so
   // Vercel serves it for the extensionless URL. Vercel checks the filesystem
   // before applying the SPA rewrite in vercel.json, so these win.
@@ -161,7 +149,7 @@ for (const { path } of entries) {
     path === '/' ? join(distDir, 'index.html') : join(distDir, path, 'index.html');
 
   mkdirSync(dirname(outFile), { recursive: true });
-  writeFileSync(outFile, html);
+  writeFileSync(outFile, pageHtml(descriptor));
   written += 1;
 }
 

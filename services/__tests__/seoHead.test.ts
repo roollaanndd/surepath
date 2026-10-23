@@ -82,18 +82,28 @@ describe('headTags', () => {
     expect(tags.some(t => t.kind === 'meta' && t.key === 'keywords')).toBe(false);
   });
 
-  it('escapes < in JSON-LD so it cannot close the script element', () => {
+  it('escapes JSON-LD so it cannot break out of the script element', () => {
     const tags = headTags({
       title: 't',
       description: 'd',
       path: '/x',
-      jsonLd: { '@type': 'Thing', name: '</script><script>alert(1)</script>' },
+      jsonLd: {
+        '@type': 'Thing',
+        // Every way out of a <script> block, not just </script>: <!-- and
+        // <script open a nested parse state, &amp; could be reinterpreted as an
+        // entity, and U+2028/9 are JSON-legal but terminate a JS line.
+        name: '</script><script>alert(1)</script> <!-- &amp; \u2028\u2029',
+      },
     });
     const node = tags.find(t => t.kind === 'jsonLd');
-    expect(node).toBeDefined();
     if (node?.kind !== 'jsonLd') throw new Error('expected a jsonLd tag');
-    expect(node.json).not.toContain('</script>');
-    expect(node.json).toContain('\\u003c');
+
+    for (const forbidden of ['<', '>', '&', '\u2028', '\u2029']) {
+      expect(node.json, `raw ${JSON.stringify(forbidden)} survived`).not.toContain(forbidden);
+    }
+    // And it must still be parseable JSON that round-trips the value.
+    const parsed = JSON.parse(node.json) as { name: string };
+    expect(parsed.name).toBe('</script><script>alert(1)</script> <!-- &amp; \u2028\u2029');
   });
 
   it('emits no JSON-LD node for a page that declares none', () => {

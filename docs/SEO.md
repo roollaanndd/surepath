@@ -119,6 +119,40 @@ sets the right head once JavaScript runs, so a prerender regression looks fine
 everywhere except to the crawlers it was built for. Break prerendering and
 `npm run build` exits non-zero.
 
+### The fallback shell
+
+`vercel.json`'s catch-all points every unmatched path at `/_fallback.html`, not
+at `/index.html`. The two documents differ in one way that matters: the fallback
+is `noindex, follow` in its raw HTML.
+
+It used to point at `/index.html`, which meant an unknown path was served the
+homepage document verbatim — `index, follow`, the homepage title, the homepage
+canonical — and the SPA corrected it client-side. That is precisely the
+correction prerendering exists to stop depending on: a crawler running no
+JavaScript was being invited to index an unbounded number of soft-404s under
+homepage metadata. Splitting the documents lets `/` stay indexable (it is served
+from the filesystem, not through the catch-all) while everything unmatched is
+not.
+
+The authenticated routes come through here too — `/admin`, `/agapps`,
+`/custapp`, `/login`, `/review/:uuid`, `/payment` — and `noindex` is right for
+all of them.
+
+The fallback deliberately carries **no canonical**. One file answers many URLs,
+so any canonical it named would be wrong for all but one of them, and `noindex`
+already settles indexing.
+
+This is the highest blast-radius file in the build: if it is missing, every SPA
+deep link is a blank page. `scripts/check-prerender.mjs` asserts it exists, is
+noindex, has no canonical, and still boots the app.
+
+### Service workers
+
+A returning PWA user does not get these files. The service worker binds
+navigations to the precached `index.html`, so the SPA sets the head as it always
+did. Crawlers never run a service worker, which is why this does not undo the
+fix.
+
 If you add a route, add it to `seo.ts`. The sitemap, the prerendered file and the
 check all follow from `indexablePaths()` — there is nothing else to update.
 
@@ -158,8 +192,10 @@ does not exist.
   `MOTORCYCLE` rate tables, but there is no `/product/motor` route and the product
   slug whitelist in `App.tsx` does not include it. "Asuransi motor" is high-volume
   in Indonesia; this is a product decision, not a technical gap.
-- **Soft 404s.** Unknown paths return HTTP 200 with the SPA shell. `noindex`
-  mitigates it, but there is no real 404 page.
+- **Soft 404s still return HTTP 200.** Unknown paths now serve a `noindex`
+  shell rather than homepage metadata, which keeps them out of the index, but
+  the status code is still 200 and there is no real 404 page. Fixing the status
+  code means a Vercel-level route, not a change here.
 - **Product pricing in schema.** Only travel asserts a price, because it is the
   only product with a published figure. The rest are rated per vehicle or sum
   insured, so no price is claimed rather than inventing one.

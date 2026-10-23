@@ -23,6 +23,19 @@
   per rute indexable ke `dist/` (26 rute); Vercel memeriksa filesystem sebelum
   menerapkan rewrite SPA, jadi berkas-berkas ini yang dipakai. SPA tetap
   hydrate dan mengambil alih routing seperti sebelumnya.
+- Path yang tidak dikenal tidak lagi menawarkan dirinya untuk diindeks. Catch-all
+  di `vercel.json` dulu mengarah ke `/index.html`, jadi path tak dikenal
+  disajikan dokumen homepage apa adanya — `index, follow`, judul homepage,
+  canonical homepage — lalu SPA memperbaikinya dari sisi klien. Itu justru
+  koreksi yang keberadaan prerender ini dimaksudkan untuk tidak lagi
+  diandalkan: crawler tanpa JavaScript sedang diundang mengindeks soft-404
+  dalam jumlah tak terbatas dengan metadata homepage. Sekarang catch-all
+  mengarah ke `_fallback.html` yang `noindex, follow` dan tanpa canonical (satu
+  berkas menjawab banyak URL, jadi tidak boleh mengklaim satu pun). `/` tetap
+  indexable karena disajikan dari filesystem, bukan lewat catch-all. Rute
+  berautentikasi (`/admin`, `/agapps`, `/login`, `/review/:uuid`, `/payment`)
+  juga lewat sini, dan `noindex` memang benar untuk semuanya. Ditemukan saat
+  memverifikasi prerender di preview, bukan dari test.
 - Daftar tag `<head>` jadi data, bukan kode. `headTags()` di `src/seo/seo.ts`
   mendefinisikan sekali tag apa saja yang didapat sebuah halaman; dua konsumen
   hanya tahu cara merendernya — `applyDocumentHead()` ke DOM saat runtime, dan

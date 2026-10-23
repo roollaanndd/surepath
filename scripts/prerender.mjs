@@ -102,6 +102,43 @@ function pageHtml(descriptor) {
   return `${html.slice(0, at)}\n    <!-- Prerendered by scripts/prerender.mjs from src/seo/seo.ts. -->\n    ${block}${html.slice(at)}`;
 }
 
+// The fallback shell, served by vercel.json's catch-all for every path with no
+// file of its own. It must be noindex in the raw HTML.
+//
+// Before this, the catch-all pointed at /index.html, so an unknown path was
+// served the homepage document verbatim: "index, follow" plus the homepage
+// title and canonical. The SPA corrected it client-side, which is exactly the
+// audience prerendering exists to stop relying on — a non-JS crawler was being
+// invited to index an unbounded number of soft-404s under homepage metadata.
+// Splitting the two documents lets / stay indexable while everything unmatched
+// does not. The authenticated routes (/admin, /agapps, /login, /review/...)
+// come through here too, and noindex is correct for all of them.
+//
+// It carries no canonical on purpose: one file answers many URLs, so any
+// canonical it named would be wrong for all but one of them, and noindex
+// already settles indexing.
+function fallbackHtml() {
+  let html = shell;
+  for (const pattern of REPLACED) {
+    html = html.replace(pattern, '');
+  }
+
+  const tags = [
+    { kind: 'title', text: 'SurePath — Asuransi Digital Indonesia' },
+    {
+      kind: 'meta',
+      attr: 'name',
+      key: 'description',
+      content: 'Platform asuransi digital terpercaya di Indonesia.',
+    },
+    { kind: 'meta', attr: 'name', key: 'robots', content: 'noindex, follow' },
+  ];
+
+  const block = tags.map(renderTag).join('\n    ');
+  const at = html.indexOf('<head>') + '<head>'.length;
+  return `${html.slice(0, at)}\n    <!-- Prerendered fallback (noindex) by scripts/prerender.mjs. -->\n    ${block}${html.slice(at)}`;
+}
+
 const entries = indexablePaths();
 let written = 0;
 
@@ -128,4 +165,6 @@ for (const { path } of entries) {
   written += 1;
 }
 
-console.log(`prerender: ${written} routes → dist/`);
+writeFileSync(join(distDir, '_fallback.html'), fallbackHtml());
+
+console.log(`prerender: ${written} routes + _fallback.html → dist/`);

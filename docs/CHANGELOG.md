@@ -1,5 +1,31 @@
 # SurePath — Changelog
 
+## v2.6.19 — 2026-10-23
+
+**Dasbor Admin memecah angka rupiah di tengah digit — dan audit sebelumnya tidak pernah melihatnya.**
+
+- Di 390px, kartu KPI Admin render `Rp 2.418.7` / `50.000` dan
+  `Rp 1.942.3` / `00.000` — dua baris, putus di tengah angka. Ini layar uang
+  yang dipakai operator setiap hari.
+- **Tiga audit sebelumnya melewatkannya karena datanya tidak pernah masuk.**
+  Harness mengirim bentuk `get_dashboard_stats` yang salah, sedangkan layar ini
+  membaca `admin_stats` dan `admin_transaksi_overview`. Jadi tiap kartu render
+  `—`, dan yang dihitung selama ini adalah barisan placeholder, bukan dasbor.
+  Bentuk aslinya kini dibaca dari `services/dbTypes.ts` dan daftar kartunya
+  sendiri.
+- Perbaikan sejalan dengan v2.6.17: nilai kartu pakai `formatIDRCompact`
+  (`Rp 2,4 M`), ukurannya `text-xl sm:text-2xl` dengan `tabular-nums`, dan
+  padding `p-4 sm:p-6` — `p-6` hanya menyisakan 122px isi di 390px.
+- **Ketelitian tidak hilang.** Memendekkan angka di dasbor uang berarti
+  membuang ~18 juta dari `Rp 2.418.750.000`. Karena itu tiap kartu rupiah
+  membawa `title` berisi angka persisnya, jadi nilai penuh tinggal di-hover
+  (atau dibacakan pembaca layar), bukan lenyap.
+- Label kartu, eyebrow "Sistem Aktif"/"Transaksi Overview", dan tautan
+  "Lihat detail →" naik ke lantai 11px, dengan tracking dilonggarkan supaya
+  ukuran baru tidak membuatnya membungkus.
+- Simpul <11px di Admin: **25 → 5**. Sapuan enam portal: tidak ada overflow,
+  tidak ada regresi. `npm run lint` tetap 0 error / 33 warning / 316 tes.
+
 ## v2.6.18 — 2026-10-23
 
 **Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**

@@ -56,7 +56,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
               >
                 <ManagedPortalIcon id={id} size={34} imageClassName="w-[34px] h-[34px] object-contain" fallback={<PathyNavIcon id={id} size={34} active={active} />} />
               </span>
-              <span className={`text-[9px] font-black uppercase tracking-widest leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
+              <span className={`text-2xs font-black uppercase tracking-wide leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                 {label}
               </span>
             </button>
@@ -88,7 +88,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             >
               <ManagedPortalIcon id={id} size={22} imageClassName="w-[22px] h-[22px] object-contain" fallback={modernIcons ? <Icon size={22} strokeWidth={active ? 2.6 : 1.8} /> : <PathyNavIcon id={id} size={28} active={active} />} />
             </span>
-            <span className={`text-[9px] font-black uppercase tracking-widest leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
+            <span className={`text-2xs font-black uppercase tracking-wide leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}
             </span>
           </button>

@@ -1,5 +1,33 @@
 # SurePath — Changelog
 
+## v2.6.20 — 2026-10-23
+
+Portal Operator dan Mitra, hasil melihat layarnya langsung di lebar 390px.
+
+**Operator**
+- Teks sumber `t('Hello', 'Halo')` tampil apa adanya di header dashboard — kurung
+  JSX-nya hilang, jadi yang terbaca pengguna adalah kode, bukan sapaan. Diperbaiki.
+- Header sesak sampai nama operator terdesak; sisi kiri dikunci, sisi kanan
+  dibiarkan menyusut, dan dua label 10px naik ke 11px.
+
+**Mitra**
+- "GWP Bulan Ini" memotong angka di tengah: `Rp 58.800.0 / 00`. Sekarang memakai
+  `formatIDRCompact` (`Rp 58,8 jt`) dengan angka persisnya di `title`.
+- Tiga kolom di kartu partner tidak sejajar: hanya label "Penawaran berjalan"
+  yang melipat, jadi angkanya turun satu baris sendirian. Kolomnya kini
+  memanjang penuh dan labelnya dipendekkan jadi "Penawaran".
+- Label header terbaca "AGENT PORT…" karena "Agent Portal" tidak pernah muat di
+  layar ponsel. Diganti jadi label satu kata yang diterjemahkan, "Mitra" —
+  sama seperti portal Nasabah, dan sama dengan nama di navigasi bawah.
+- 32 teks di bawah 11px menjadi 0.
+
+**Dipakai bersama**
+- Label navigasi bawah naik dari 9px ke 11px (Nasabah, Mitra, Marketing).
+- `StatCard` menyediakan dua baris untuk labelnya, supaya "TOTAL PREMI" yang
+  melipat tidak lagi menjatuhkan angkanya di bawah "AKTIF" dan "SISA HARI".
+- Teks pendukung `StatCard` pakai `break-words`, bukan `anywhere` yang
+  diwarisi dari CSS: "perpanjangan" sempat terpotong jadi "perpanjang/an".
+
 ## v2.6.19 — 2026-10-23
 
 **Dasbor Admin memecah angka rupiah di tengah digit — dan audit sebelumnya tidak pernah melihatnya.**

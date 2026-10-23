@@ -12,10 +12,13 @@
 //   OperatorProfile    toggled `dark` on documentElement
 //
 // Two consequences, both user-visible. The `dark` class left behind by one
-// portal stayed on documentElement after navigating to the marketing site,
-// which themes itself with the wrapper div — so `body` and every token-driven
-// surface rendered dark underneath a light-mode page. And the CMS could not
-// remember a light-mode preference across reloads, because it never stored one.
+// portal stayed on documentElement after navigating to the marketing site: the
+// `--ds-*` tokens on :root had already flipped to their dark values, while the
+// wrapper div still said light. A wrapper only governs `dark:` variants in its
+// own subtree and cannot undo a token flip at the root, so token-driven
+// surfaces and `dark:` descendants rendered dark on a page meant to be light.
+// And the CMS could not remember a light-mode preference across reloads,
+// because it never stored one.
 //
 // Everything now reads and writes through here, so there is one key, one place
 // the class is applied, and one answer to "is the app dark right now".

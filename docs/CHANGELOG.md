@@ -9,8 +9,11 @@
   marketing dengan `<div className="dark">` dan tidak pernah menyentuh
   `documentElement`, sementara Nasabah, Admin CMS dan Operator memasangnya di
   `documentElement`. Akibatnya class `dark` yang ditinggalkan satu portal tetap
-  menempel saat pengguna pindah ke situs marketing, sehingga `body` dan semua
-  permukaan berbasis token tampil gelap di bawah halaman yang mengira dirinya terang.
+  menempel saat pengguna pindah ke situs marketing: token `--ds-*` di `<html>`
+  sudah berbalik ke nilai gelap, sementara wrapper `div` mengira halamannya terang.
+  Wrapper itu hanya menguasai varian `dark:` di subtree-nya dan tidak bisa
+  membatalkan pembalikan token di root, jadi permukaan berbasis token dan turunan
+  `dark:` tampil gelap di halaman yang seharusnya terang.
 - Admin CMS juga tidak bisa mengingat pilihan mode terang: state-nya di-seed dari
   `useState(true)` dan tidak pernah menulis preferensi balik. Sekarang CMS tetap
   membuka gelap bila pengguna belum pernah memilih, tapi pilihan pengguna tersimpan
@@ -27,6 +30,14 @@
   aturan ini mengunci keadaannya sebelum drift kembali. Hijau brand WhatsApp
   dipindah ke token `--ds-whatsapp`, dan gradien hero `ReferralCard` memakai
   `--ds-surface-hero` yang sudah ada.
+- Diverifikasi di browser (Chromium, server dev lokal): 9/9 asersi lolos — token
+  `--ds-bg` berbalik `#F4F7FB` ↔ `#1A1D29`, permukaan ter-render benar-benar
+  berganti cat, preferensi bertahan setelah reload, dan tidak ada lagi wrapper
+  `div.dark` di bawah `<html>`.
+- Catatan terpisah, belum diperbaiki: `index.html` meng-hardcode
+  `body { background: #fafaf9; color: #1e293b }` tanpa pasangan gelap, jadi `body`
+  sendiri tidak pernah ikut bertema. Tidak termasuk cakupan rilis ini karena
+  mengubah cat setiap halaman; dicatat untuk fase tipografi/permukaan berikutnya.
 - Tidak mengubah logika bisnis, autentikasi, otorisasi, perhitungan premi/komisi,
   maupun kontrak data-gateway.
 

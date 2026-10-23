@@ -70,7 +70,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             onClick={() => onSelect(id)}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${active ? 'bg-ds-green-tint' : ''} ${FOCUS_RING}`}
+            className={`relative flex flex-col items-center gap-1 px-1.5 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${active ? 'bg-ds-green-tint' : ''} ${FOCUS_RING}`}
           >
             {/* Penanda tab aktif. Sebelumnya status aktif hanya dibedakan
                 warna hijau pada ikon dan label — terlalu halus untuk dilihat

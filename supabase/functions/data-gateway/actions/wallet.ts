@@ -33,33 +33,70 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
       }
 
     case 'admin_approve_withdrawal': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        // FIX v1.44.0 (pentest M5): use caller.authId instead of client-supplied approver_id.
-        // Prevents audit-trail spoofing (admin framing another admin for the approval).
-        if (!params.withdrawal_id || !params.level) {
-          return json({ error: 'withdrawal_id, level required' }, 400);
+        // FIX v2.6.18 (audit 2026-10-23, C2): the approval level is derived from
+        // the withdrawal row, never from the request.
+        //
+        // This used to read `level` out of params and fall through an `else`
+        // branch that set status: 'APPROVED' unconditionally — so level 3, 0 or
+        // "x" (NaN) all approved any amount in one call, with no check that the
+        // row was even awaiting approval and no check that L1/L2 had happened.
+        // The <10jt/>=10jt/>=25jt ladder was effectively not enforced at all.
+        //
+        // On roles (owner's call, 2026-10-23): *every* tier is finance-only.
+        // OPERATOR sits in ADMIN_ROLES but not FINANCE_ROLES, so an operator can
+        // no longer sign any tier, not even L1 on a <10jt request. The operator
+        // portal's L1 button was removed in the same change
+        // (components/operator/OperatorWithdrawals.tsx); operators keep read
+        // access to the queue and keep rejecting, which only reverses a
+        // deduction the agent already made.
+        if (!caller.isFinanceAdmin) {
+          return json({ error: 'Forbidden: withdrawal approval requires a finance admin' }, 403);
         }
-        const level = Number(params.level);
+        if (!params.withdrawal_id) return json({ error: 'withdrawal_id required' }, 400);
+
+        const { data: wd, error: fetchErr } = await db.from('sp_withdrawals')
+          .select('amount, status, l1_approved_by, l2_approved_by')
+          .eq('id', params.withdrawal_id)
+          .single();
+        if (fetchErr || !wd) return json({ error: 'Withdrawal not found' }, 404);
+
+        const STAGE_OF: Record<string, number> = { PENDING_L1: 1, PENDING_L2: 2, PENDING_L3: 3 };
+        const stage = STAGE_OF[String(wd.status)];
+        if (!stage) return json({ error: 'Withdrawal is not awaiting approval' }, 409);
+
+        // Tiers required by amount, mirroring agent_request_withdrawal below.
+        const required = (wd.amount ?? 0) >= 25_000_000 ? 3 : (wd.amount ?? 0) >= 10_000_000 ? 2 : 1;
+
+        // Four-eyes: nobody may sign the same withdrawal twice.
+        if ([wd.l1_approved_by, wd.l2_approved_by].includes(caller.authId)) {
+          return json({ error: 'Approval requires a different approver' }, 403);
+        }
+
         const ts = new Date().toISOString();
-        const updates: Record<string, unknown> = { updated_at: ts };
-        if (level === 1) {
-          updates.l1_approved_by = caller.authId; updates.l1_approved_at = ts;
-          const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
-          updates.status = (wd?.amount ?? 0) >= 10_000_000 ? 'PENDING_L2' : 'APPROVED';
-        } else if (level === 2) {
-          updates.l2_approved_by = caller.authId; updates.l2_approved_at = ts;
-          const { data: wd } = await db.from('sp_withdrawals').select('amount').eq('id', params.withdrawal_id).single();
-          updates.status = (wd?.amount ?? 0) >= 25_000_000 ? 'PENDING_L3' : 'APPROVED';
-        } else {
-          updates.l3_approved_by = caller.authId; updates.l3_approved_at = ts;
-          updates.status = 'APPROVED';
-        }
-        const { data, error } = await db.from('sp_withdrawals').update(updates).eq('id', params.withdrawal_id).select().maybeSingle();
+        const updates: Record<string, unknown> = {
+          updated_at: ts,
+          [`l${stage}_approved_by`]: caller.authId,
+          [`l${stage}_approved_at`]: ts,
+          status: stage >= required ? 'APPROVED' : `PENDING_L${stage + 1}`,
+        };
+
+        // .eq('status', wd.status) makes this an atomic claim of the stage we
+        // read, so two approvers racing cannot both advance the same step.
+        const { data, error } = await db.from('sp_withdrawals')
+          .update(updates)
+          .eq('id', params.withdrawal_id)
+          .eq('status', wd.status)
+          .select()
+          .maybeSingle();
         if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: 'Withdrawal state changed, please retry' }, 409);
         return json({ data });
       }
 
     case 'admin_reject_withdrawal': {
+        // Left on isAdmin deliberately: rejecting only reverses a deduction the
+        // agent already made, it cannot release funds, and the operator portal
+        // owns this queue (services/operatorService.ts `rejectWithdrawal`).
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         // FIX v1.44.0 (pentest M5): use caller.authId instead of client-supplied rejector_id.
         if (!params.withdrawal_id || !params.reason) {

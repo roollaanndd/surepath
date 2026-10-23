@@ -83,7 +83,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
         <button
           onClick={onBack}
           className="absolute top-6 left-6 flex items-center gap-1.5 transition-colors duration-200"
-          style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#94a3b8' }}
+          style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#94a3b8' }}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           Kembali
@@ -92,7 +92,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
 
       <div className="absolute top-6 right-6 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#059669', boxShadow: '0 0 6px rgba(5,150,105,0.7)', animation: 'ins-ping 2.4s ease-in-out infinite' }} />
-        <span style={{ fontSize: '0.44rem', letterSpacing: '0.42em', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>Insurer Session</span>
+        <span style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', color: '#64748b', fontWeight: 700 }}>Insurer Session</span>
       </div>
 
       <div className="relative z-10 w-full max-w-xs px-5">
@@ -112,7 +112,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
           </h1>
           <div className="flex items-center gap-2.5">
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.4))' }} />
-            <span style={{ fontSize: '0.46rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               Mitra Asuransi
             </span>
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.4), transparent)' }} />
@@ -130,7 +130,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
             )}
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                 Token Akses
               </label>
               <div className="relative">
@@ -166,7 +166,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
             </button>
 
             <div className="pt-3 border-t border-slate-200/60">
-              <div className="flex items-start gap-2 text-[0.6rem] text-slate-500 leading-relaxed">
+              <div className="flex items-start gap-2 text-2xs text-slate-500 leading-relaxed">
                 <LinkIcon size={11} className="shrink-0 mt-0.5 text-emerald-500" />
                 <span>
                   Token didapat dari email undangan SurePath atau hubungi tim SurePath untuk minta link akses baru. Token berlaku 7 hari dan auto-renew setiap login.
@@ -177,7 +177,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
         </div>
 
         <p className="text-center mt-7 flex items-center justify-center gap-2"
-          style={{ fontSize: '0.42rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+          style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(124,58,237,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>

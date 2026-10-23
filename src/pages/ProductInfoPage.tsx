@@ -102,13 +102,13 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
             </div>
             {comingSoon && (
               <div className="mb-4">
-                <span className="inline-block px-4 py-1.5 rounded-full text-[0.6rem] font-black uppercase tracking-[0.25em]"
+                <span className="inline-block px-4 py-1.5 rounded-full text-2xs font-black uppercase tracking-[0.25em]"
                   style={{ background: `${color}18`, border: `1px solid ${color}45`, color }}>
                   {isEN ? 'In development — not yet available for purchase' : 'Dalam pengembangan — belum dapat dibeli'}
                 </span>
               </div>
             )}
-            <span className="block text-[0.6rem] font-black uppercase tracking-[0.35em] mb-3" style={{ color }}>
+            <span className="block text-2xs font-black uppercase tracking-[0.35em] mb-3" style={{ color }}>
               {L(tagline)}
             </span>
             <h1 className="text-4xl font-black tracking-tight mb-5">{L(name)}</h1>
@@ -119,7 +119,7 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
             {/* Highlights */}
             <div className="flex flex-wrap items-center justify-center gap-3 mt-7 mb-8">
               {highlights.map((h, i) => (
-                <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.6rem] font-black uppercase tracking-widest"
+                <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-widest"
                   style={{ background: `${color}12`, border: `1px solid ${color}28`, color }}>
                   <Star size={10} fill={color} /> {L(h)}
                 </span>

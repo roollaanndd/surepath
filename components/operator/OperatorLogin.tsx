@@ -136,7 +136,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
         <button
           onClick={onBack}
           className="absolute top-6 left-6 flex items-center gap-1.5 transition-colors duration-200"
-          style={{ fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#94a3b8' }}
+          style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#94a3b8' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#059669')}
           onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
         >
@@ -147,7 +147,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
 
       <div className="absolute top-6 right-6 flex items-center gap-2">
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#16a34a', boxShadow: '0 0 6px rgba(22,163,74,0.7)', animation: 'op-ping 2.4s ease-in-out infinite' }} />
-        <span style={{ fontSize: '0.44rem', letterSpacing: '0.42em', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>Operator Session</span>
+        <span style={{ fontSize: '0.6875rem', letterSpacing: '0.14em', textTransform: 'uppercase', whiteSpace: 'nowrap', color: '#64748b', fontWeight: 700 }}>Operator Session</span>
       </div>
 
       <div className="relative z-10 w-full max-w-xs px-5">
@@ -168,7 +168,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
           </h1>
           <div className="flex items-center gap-2.5">
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(22,163,74,0.4))' }} />
-            <span style={{ fontSize: '0.46rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               Internal Staff Only
             </span>
             <div className="h-px w-8" style={{ background: 'linear-gradient(90deg, rgba(22,163,74,0.4), transparent)' }} />
@@ -189,7 +189,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
             <form className="space-y-4" onSubmit={handleLogin}>
 
               <div>
-                <label htmlFor="operator-login-email" style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label htmlFor="operator-login-email" style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Email
                 </label>
                 <div className="relative">
@@ -207,7 +207,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
               </div>
 
               <div>
-                <label htmlFor="operator-login-password" style={{ display: 'block', fontSize: '0.47rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                <label htmlFor="operator-login-password" style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                   Password
                 </label>
                 <div className="relative">
@@ -255,7 +255,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
         </div>
 
         <p className="text-center mt-7 flex items-center justify-center gap-2"
-          style={{ fontSize: '0.42rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.34em', textTransform: 'uppercase' }}>
+          style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(22,163,74,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>

@@ -78,14 +78,14 @@ export const CircularActionGrid: React.FC<CircularActionGridProps> = ({
               <Icon size={28} style={{ color: action.color }} strokeWidth={2} />
               {action.badge && action.badge > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-ds-red text-white text-[0.55rem] font-black flex items-center justify-center"
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-ds-red text-white text-badge font-black flex items-center justify-center"
                   style={{ boxShadow: '0 2px 4px rgba(239, 68, 68, 0.4)' }}
                 >
                   {action.badge > 99 ? '99+' : action.badge}
                 </span>
               )}
             </div>
-            <span className="text-[0.65rem] font-bold text-ds-ink2 text-center leading-tight">
+            <span className="text-2xs font-bold text-ds-ink2 text-center leading-tight">
               {action.label}
             </span>
           </button>

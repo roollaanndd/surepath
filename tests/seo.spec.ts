@@ -131,6 +131,17 @@ test.describe('Structured data scope', () => {
     expect(graph).not.toContain('+62-800-1234-5678');  // placeholder
     expect(graph).not.toContain('info@myinsurepath.com');
   });
+
+  test('every contact detail in the served HTML agrees with the footer', async ({ request }) => {
+    // NAP consistency is a whole-document property, not a JSON-LD one. The
+    // noscript fallback is what a crawler that runs no JavaScript actually
+    // reads, and it kept advertising info@ after the schema moved to halo@ —
+    // caught on the deploy preview, not by the earlier JSON-LD-only assertion.
+    const html = await (await request.get('/')).text();
+    expect(html).not.toContain('info@myinsurepath.com');
+    expect(html).not.toContain('+62-800-1234-5678');
+    expect(html).toContain('halo@myinsurepath.com');
+  });
 });
 
 test.describe('Crawl directives', () => {

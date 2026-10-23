@@ -59,7 +59,12 @@
 - GA4 mendapat `page_view` saat rute berubah. `send_page_view` hanya menyala
   sekali per muat dokumen, jadi di SPA ini seluruh trafik diatribusikan ke URL
   pendaratan dan tidak ada halaman marketing yang punya pageview sendiri.
-- `tests/seo.spec.ts`: 37 kasus yang mengunci semua hal di atas. Tidak ada satu
+- Blok `<noscript>` di `index.html` masih memakai `info@myinsurepath.com`
+  padahal schema dan footer sudah `halo@`. Justru blok itulah yang dibaca crawler
+  yang tidak menjalankan JavaScript, jadi inkonsistensi NAP-nya tetap terkirim.
+  Ketahuan saat memeriksa deploy preview, bukan dari tes — tes sebelumnya hanya
+  memeriksa node JSON-LD. Sekarang ada tes yang memeriksa seluruh dokumen.
+- `tests/seo.spec.ts`: 38 kasus yang mengunci semua hal di atas. Tidak ada satu
   pun yang terlihat di UI, jadi semuanya mudah rusak kembali tanpa disadari.
 
 ## v2.6.12 — 2026-10-23

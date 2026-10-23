@@ -140,35 +140,35 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
         <div className="bg-white rounded-2xl shadow-lg shadow-emerald-900/5 border border-emerald-900/10 p-5">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-[10px] font-bold text-gray-400 tracking-wide">DISIAPKAN UNTUK</p>
+              <p className="text-2xs font-bold text-gray-400 tracking-wide">DISIAPKAN UNTUK</p>
               <p className="font-bold text-emerald-950">{q.customer_name ?? '-'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 tracking-wide">PENANGGUNG</p>
+              <p className="text-2xs font-bold text-gray-400 tracking-wide">PENANGGUNG</p>
               <p className="font-bold text-emerald-950">{q.insurer_name ?? p.insurerShort ?? '-'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 tracking-wide">PERIODE</p>
+              <p className="text-2xs font-bold text-gray-400 tracking-wide">PERIODE</p>
               <p className="font-semibold text-emerald-950 text-xs">{p.periodStart ?? '-'} — {p.periodEnd ?? '-'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 tracking-wide">BERLAKU SAMPAI</p>
+              <p className="text-2xs font-bold text-gray-400 tracking-wide">BERLAKU SAMPAI</p>
               <p className="font-semibold text-emerald-950 text-xs">{q.valid_until ?? '30 hari sejak penerbitan'}</p>
               {q.link_expires_at && (
-                <p className="mt-0.5 text-[10px] text-gray-400">
+                <p className="mt-0.5 text-2xs text-gray-400">
                   Tautan aktif s/d {new Date(q.link_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               )}
             </div>
             {p.objectSummary && (
               <div className="col-span-2">
-                <p className="text-[10px] font-bold text-gray-400 tracking-wide">OBJEK PERTANGGUNGAN</p>
+                <p className="text-2xs font-bold text-gray-400 tracking-wide">OBJEK PERTANGGUNGAN</p>
                 <p className="font-semibold text-emerald-950 text-xs">{p.objectSummary}</p>
               </div>
             )}
           </div>
           <div className="mt-4 pt-4 border-t border-dashed border-emerald-900/10 flex items-end justify-between">
-            <p className="text-[10px] font-bold text-gray-400 tracking-wide">TOTAL PREMI</p>
+            <p className="text-2xs font-bold text-gray-400 tracking-wide">TOTAL PREMI</p>
             <p className="text-xl font-extrabold text-emerald-700">
               {p.currency ?? 'IDR'} {p.totalPremium ?? (q.total_premium != null ? new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2 }).format(q.total_premium) : '-')}
             </p>
@@ -224,7 +224,7 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
                 {confirming ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                 Konfirmasi & Lanjutkan Penutupan
               </button>
-              <p className="text-[10px] text-gray-400 text-center">
+              <p className="text-2xs text-gray-400 text-center">
                 Konfirmasi ini adalah pernyataan minat, bukan penerbitan polis. Akseptasi tetap oleh Penanggung.
               </p>
             </div>
@@ -245,7 +245,7 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
                 Berita transfer: <span className="font-mono text-emerald-200">{p.transferMemo}</span>
               </p>
             )}
-            <p className="mt-2 text-[10px] text-emerald-100/50">
+            <p className="mt-2 text-2xs text-emerald-100/50">
               Setelah transfer, kirim bukti pembayaran ke agen Anda atau tim SurePath untuk verifikasi.
             </p>
           </div>
@@ -254,7 +254,7 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
         {/* ── Agent contact ────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-emerald-900/10 p-5 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold text-gray-400 tracking-wide">BUTUH BANTUAN? HUBUNGI</p>
+            <p className="text-2xs font-bold text-gray-400 tracking-wide">BUTUH BANTUAN? HUBUNGI</p>
             <p className="font-bold text-emerald-950">{q.agent_name ?? 'Tim SurePath'}</p>
             <p className="text-xs text-gray-500">{q.agent_name ? 'Agen Resmi SurePath' : 'PT. Ruang Proteksi Indonesia'}{q.agent_phone ? ` · ${q.agent_phone}` : ''}</p>
           </div>
@@ -303,7 +303,7 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
               {Array.isArray(p.klausulList) && p.klausulList.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {p.klausulList.map((k: string, i: number) => (
-                    <span key={i} className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1">{k}</span>
+                    <span key={i} className="text-2xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1">{k}</span>
                   ))}
                 </div>
               )}
@@ -337,7 +337,7 @@ const EQuotationPage: React.FC<Props> = ({ code }) => {
           </p>
         </div>
 
-        <p className="text-center text-[10px] text-gray-400 pt-2">
+        <p className="text-center text-2xs text-gray-400 pt-2">
           SurePath · PT. Ruang Proteksi Indonesia · <a href="https://myinsurepath.com" className="text-emerald-600">myinsurepath.com</a><br />
           Bekerja sama dengan perusahaan asuransi berizin & diawasi OJK
         </p>

@@ -1,5 +1,35 @@
 # SurePath — Changelog
 
+## v2.6.13 — 2026-10-23
+
+**Lantai tipografi: 11px, didefinisikan sekali, dijaga lint.**
+
+- 765 simpul teks di app ditulis di bawah 11px dengan nilai arbitrer —
+  `text-[10px]` sampai `text-[7px]`. Di bawah ambang nyaman baca di ponsel, dan
+  karena tiap simpul menulis angkanya sendiri, lantainya tidak bisa dinaikkan
+  dari satu tempat. Sekarang ada `text-2xs` (11px) di `tailwind.config.cjs`:
+  satu tempat itu. Skala Tailwind sendiri mulai dari `text-xs` (12px), jadi
+  `2xs` duduk satu langkah di bawahnya, bukan memaksa setiap caption naik 20%.
+- Dimigrasikan: 40 simpul di permukaan yang bisa saya buka dan periksa langsung
+  di browser — halaman marketing, splash screen, halaman e-quotation dan
+  financing. **Enam portal belum**, karena butuh sesi login untuk dilihat;
+  ~725 simpul sisanya menunggu pass per portal dengan mata manusia atau URL
+  preview. Jumlah pastinya tercatat di `docs/APP_REVAMP_EXECUTION.md`.
+- Guardrail ESLint menolak `text-[Npx]` di bawah 11px, tapi hanya di direktori
+  yang sudah dimigrasikan (`src/`, `components/ui/`, `landing/`, `public/`).
+  Ratchet yang sama seperti aturan hex: tambah direktori saat selesai, jangan
+  nyalakan di mana-mana lalu tenggelam di 725 error.
+- Pengecualian yang disengaja: angka di dalam badge hitung berukuran tetap
+  (angka `1` di dalam titik 14px). Itu glyph dalam bentuk, bukan teks untuk
+  dibaca, dan menaikkannya membuat titiknya jebol. Tidak ada satu pun di
+  direktori yang sudah dimigrasikan; saat portal menyusul, mereka butuh
+  primitif sendiri, bukan komentar pengecualian.
+- Dikonfirmasi di browser pada lebar 390px, 16/16 asersi: setiap simpul
+  `text-2xs` benar-benar merender 11px (class Tailwind yang tidak ter-generate
+  diam-diam merender di ukuran warisan — unit test tidak bisa melihat itu),
+  nol class arbitrer di bawah 11px tersisa di DOM, dan tidak ada overflow
+  horizontal di lima halaman.
+
 ## v2.6.12 — 2026-10-23
 
 **Latar halaman akhirnya ikut tema, dan dark mode tidak berkedip putih lagi.**

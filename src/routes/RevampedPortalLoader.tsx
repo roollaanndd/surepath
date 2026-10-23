@@ -47,7 +47,7 @@ export const RevampedPortalLoader: React.FC<{ lang?: Language }> = ({ lang = Lan
         </div>
         <div className="mt-10 h-2 w-24 rounded-full" style={{ background:'radial-gradient(ellipse,rgba(6,78,59,.28),transparent 70%)', animation:'surepath-loader-pulse 2.8s ease-in-out infinite' }} />
       </div>
-      <div className="absolute bottom-7 text-[10px] font-bold tracking-[.22em]" style={{ color:'#86a99b' }}>SAFE • SIMPLE • SURE</div>
+      <div className="absolute bottom-7 text-2xs font-bold tracking-[.22em]" style={{ color:'#86a99b' }}>SAFE • SIMPLE • SURE</div>
     </main>
   );
 };

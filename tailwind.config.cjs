@@ -12,6 +12,22 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontSize: {
+        // The typography floor. 765 text nodes were set below 11px with
+        // arbitrary values — text-[10px] down to text-[7px] — which is below
+        // what is comfortably readable on a phone, and arbitrary values mean
+        // the floor cannot be enforced or moved in one place.
+        //
+        // `2xs` is that one place: 11px, the smallest size any text meant to be
+        // READ may use. Tailwind's own scale starts at text-xs (12px), so this
+        // sits one step below it rather than forcing every caption up 20%.
+        //
+        // Not covered by this: the numerals inside fixed-size count badges
+        // (a `1` in a 14px dot). Those are glyphs in a shape, not text to read,
+        // and raising them overflows the dot. They keep their arbitrary value
+        // until the portal passes give them a primitive of their own.
+        '2xs': ['0.6875rem', { lineHeight: '1.45' }],
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],

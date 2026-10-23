@@ -1,6 +1,7 @@
 // orders.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
+import { findClientIdByEmail } from './clientLink.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -360,6 +361,21 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           }
         }
 
+        // ── Siapa nasabah order ini ────────────────────────────────────────
+        //
+        // Sebelumnya client_id hanya terisi kalau nasabah memesan sendiri, jadi
+        // order yang dijual agen menyimpan nasabahnya sebagai teks saja dan
+        // client_id-nya NULL selamanya. Akibatnya nasabah tidak melihat polisnya
+        // di /custapp, dan submit_claim menolaknya dengan 403 atas polis yang
+        // memang miliknya.
+        //
+        // Dicocokkan lewat email saja, dan agen yang mengisi emailnya sendiri
+        // tidak bisa menjadi client atas ordernya sendiri. Aturan lengkapnya —
+        // dan alasan nomor telepon tidak dipakai — ada di clientLink.ts.
+        const resolvedClientId = caller.spUser.role === 'CUSTOMER'
+          ? caller.spUser.id
+          : await findClientIdByEmail(db, p.client_email, caller.ownerIds);
+
         // FIX v1.44.0 (pentest C1+C4): Replace `...rest` spread with strict allowlist.
         // Previously, agents could inject `status:'ISSUED'`, `commission_amount:999999999`,
         // `policy_number`, `policy_document_url`, `client_id`, etc. — bypassing review,
@@ -370,7 +386,7 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           // FIX v1.50.0: customer self-service orders also record client_id so
           // payments/claims ownership checks (client_id = caller) work. Still
           // server-derived — never taken from the request payload.
-          client_id: caller.spUser.role === 'CUSTOMER' ? caller.spUser.id : null,
+          client_id: resolvedClientId,
           status: 'SUBMITTED',                   // force — never trust client status
           client_name:       String(p.client_name ?? '').slice(0, 200),
           client_phone:      p.client_phone      ? String(p.client_phone).slice(0, 30)    : null,

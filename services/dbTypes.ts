@@ -295,7 +295,15 @@ export interface SpClaim {
 export interface SpNotification {
   id: string;
   agent_id: string;
-  type: 'COMMISSION_EARNED' | 'CLAIM_UPDATE' | 'RENEWAL_ALERT' | 'QUOTE_ACCEPTED' | 'SYSTEM';
+  // `agent_id` is the owner column — it carries whoever the notification is
+  // for, customer or agent, not only agents.
+  //
+  // ORDER_UPDATE, POLICY_ISSUED and NEW_CLAIM were already being written by
+  // the gateway while this union listed neither; NotificationDrawer falls back
+  // to the SYSTEM icon for an unknown type, so they rendered as a generic
+  // "info" instead of as what they are.
+  type: 'COMMISSION_EARNED' | 'CLAIM_UPDATE' | 'NEW_CLAIM' | 'ORDER_UPDATE'
+      | 'POLICY_ISSUED' | 'RENEWAL_ALERT' | 'QUOTE_ACCEPTED' | 'SYSTEM';
   title: string;
   body: string;
   read: boolean;

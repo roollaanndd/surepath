@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   X, Wallet, AlertTriangle, FileText, CheckCircle, Info, ChevronRight, BellOff,
+  ShieldCheck, ClipboardList,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -27,6 +28,9 @@ export interface NotificationDrawerProps {
 const TYPE_META: Record<SpNotification['type'], { Icon: any; color: string }> = {
   COMMISSION_EARNED: { Icon: Wallet,        color: 'text-ds-green' },
   CLAIM_UPDATE:      { Icon: FileText,      color: 'text-ds-blue' },
+  NEW_CLAIM:         { Icon: ClipboardList, color: 'text-ds-blue' },
+  ORDER_UPDATE:      { Icon: ClipboardList, color: 'text-ds-blue' },
+  POLICY_ISSUED:     { Icon: ShieldCheck,   color: 'text-ds-green' },
   RENEWAL_ALERT:     { Icon: AlertTriangle, color: 'text-ds-amber' },
   QUOTE_ACCEPTED:    { Icon: CheckCircle,   color: 'text-ds-green' },
   SYSTEM:            { Icon: Info,          color: 'text-ds-ink3' },

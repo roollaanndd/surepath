@@ -94,7 +94,7 @@ describe('InsurerLogin', () => {
 
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { EmptyState } from '../../components/ui/EmptyState';
+import { AgentEmpty } from '../../components/agent/AgentArt';
 
 describe('Button', () => {
   it('renders with text', () => {
@@ -117,10 +117,18 @@ describe('Card', () => {
   });
 });
 
-describe('EmptyState', () => {
+// The app's empty state is AgentEmpty — used by the Agent, Operator and
+// Insurer portals. The generic `ui/EmptyState` that this used to cover had no
+// call sites anywhere and was removed rather than kept as a second option.
+describe('AgentEmpty', () => {
   it('renders title and description', () => {
-    render(<EmptyState title="No data" description="Nothing here" />);
+    render(<AgentEmpty title="No data" desc="Nothing here" />);
     expect(screen.getByText('No data')).toBeTruthy();
     expect(screen.getByText('Nothing here')).toBeTruthy();
+  });
+
+  it('renders without a description', () => {
+    render(<AgentEmpty title="Belum ada polis" />);
+    expect(screen.getByText('Belum ada polis')).toBeTruthy();
   });
 });

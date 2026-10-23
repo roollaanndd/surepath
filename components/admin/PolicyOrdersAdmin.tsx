@@ -15,6 +15,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
+import { useToast } from '../ui';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
@@ -50,6 +51,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   const [insurerMsg, setInsurerMsg] = useState<{ text: string; isError: boolean } | null>(null);
   const [downloadingSlip, setDownloadingSlip] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   const handleDownloadSlip = async () => {
     if (downloadingSlip) return;
@@ -58,6 +60,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       await publishAndDownloadQuotation(fromCustomerOrder(order as any), { sourceApp: 'ADMIN', orderId: (order as any).id, totalPremiumNumeric: (order as any).total_premium ?? undefined });
     } catch (e) {
       console.error('Quotation slip download failed:', e);
+      toast.error('Gagal mengunduh slip penawaran. Coba lagi.');
     } finally {
       setDownloadingSlip(false);
     }
@@ -67,13 +70,19 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     setGeneratingLink(true);
     const token = await createReviewToken(order.id);
     setGeneratingLink(false);
-    if (!token) { console.warn('Gagal membuat link. Coba lagi.'); return; }
+    if (!token) { toast.error('Gagal membuat link ulasan. Coba lagi.'); return; }
     const url = `${window.location.origin}/review/${token}`;
-    await navigator.clipboard.writeText(url).catch(() => {
-      prompt('Salin link berikut:', url);
-    });
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 3000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch {
+      // Clipboard is blocked without a secure context or user gesture. The link
+      // is single-use and 7-day-expiring, so it is shown rather than lost — in a
+      // toast the admin can read and select, not a native prompt() that ignores
+      // the theme and blocks the thread.
+      toast.error(`Clipboard diblokir browser. Link ulasan: ${url}`);
+    }
   };
 
   const v = order.vehicle_details ?? {};
@@ -85,7 +94,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
   };
 
   const handleReject = async () => {
-    if (!notes.trim()) { console.warn('Wajib isi catatan penolakan.'); return; }
+    if (!notes.trim()) { toast.error('Wajib isi catatan penolakan.'); return; }
     setSaving(true);
     await onStatusChange(order.id, 'REJECTED', { reviewer_notes: notes });
     setSaving(false);
@@ -103,7 +112,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     setUploading(true);
 
     const docUrl = await uploadPolicyDocument(file, order.order_number ?? order.id);
-    if (!docUrl) { setUploading(false); console.warn('Upload gagal.'); return; }
+    if (!docUrl) { setUploading(false); toast.error('Upload dokumen polis gagal. Coba lagi.'); return; }
 
     const policyNumber = order.policy_number
       ?? `SP-${(order.product_code ?? 'MRKB').replace(/_/g, '-')}-${Date.now().toString(36).toUpperCase()}`;

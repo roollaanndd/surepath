@@ -1,5 +1,47 @@
 # SurePath — Changelog
 
+## v2.6.11 — 2026-10-23
+
+**Dialog konfirmasi yang bisa meminta alasan, dan satu primitif empty state.**
+
+- Layar tier admin masih memakai `window.confirm`, `window.alert` dan
+  `window.prompt`: kotak dialog milik browser, tidak mengikuti tema, tidak bisa
+  diberi label "Nonaktifkan" atau diwarnai sebagai aksi destruktif, dan memblokir
+  thread utama. Ia juga satu-satunya tempat yang masih begitu — `useConfirmDialog`
+  sudah dipakai di 10 berkas lain dan `useToast` di 23. Sekarang ketiganya memakai
+  primitif dalam app: konfirmasi destruktif lewat `useConfirmDialog`, pesan hasil
+  lewat `useToast`.
+- `ConfirmDialog` sendiri tidak bisa meminta teks, padahal penolakan permintaan
+  tier perlu merekam alasan. Ia kini mendukung satu kolom input (satu baris atau
+  multiline, wajib atau opsional) dan mengekspor `usePromptDialog` yang
+  mengembalikan teks pada konfirmasi dan `null` saat dibatalkan — semantik yang
+  sama dengan `window.prompt` yang digantikannya, jadi pemanggil yang memeriksa
+  `== null` untuk membatalkan tetap benar. Kolom wajib yang masih kosong atau
+  hanya spasi membuat tombol konfirmasi non-aktif.
+- Dialog yang dibuka saat dialog lain masih menunggu dulu meninggalkan promise
+  pemanggil pertama menggantung selamanya. Sekarang promise itu diselesaikan
+  sebagai pembatalan. 7 unit test baru menutup kontrak ini.
+- Layar order polis admin punya masalah terkait: empat pesan untuk pengguna hanya
+  ditulis ke `console` — "Wajib isi catatan penolakan", "Upload gagal", "Gagal
+  membuat link", dan kegagalan unduh slip. Artinya admin yang menekan Tolak tanpa
+  catatan melihat **tidak terjadi apa-apa sama sekali**. Keempatnya kini jadi toast.
+  Fallback `window.prompt('Salin link berikut:')` saat clipboard diblokir juga
+  diganti toast yang menampilkan linknya. Setelah ini tidak ada lagi dialog native
+  di seluruh app, kecuali fallback di dalam `ConfirmDialog` sendiri untuk kasus
+  tanpa provider.
+- `components/ui/EmptyState.tsx` dihapus. Nol pemakaian: empty state yang benar-benar
+  dipakai app adalah `AgentEmpty` (`components/agent/AgentArt.tsx`) di 17 berkas
+  Mitra, Operator dan Insurer, lengkap dengan ilustrasi `SpotEmpty`. Menyimpan dua
+  komponen bernama "empty state" dengan satu yang tidak pernah dipakai hanya membuat
+  "pakai primitif EmptyState" jadi instruksi yang ambigu.
+- Koreksi angka audit: beberapa figur di rencana revamp sebelumnya terlalu tinggi
+  karena pola grep yang salah. Yang benar: `Button` dan `Card` dari `components/ui/`
+  nol pemakaian (bukan 5 dan 21), `window.confirm` hanya di 1 berkas (bukan 21),
+  1.003 hex di kode, 826 `<button>` mentah, 765 teks di bawah 11px, 38% class warna
+  sudah memakai token. Temuan sebenarnya lebih tajam: primitif umpan balik (toast,
+  confirm, skeleton) sudah diadopsi luas, primitif struktural (Button, Card,
+  IconButton, EmptyState) nol.
+
 ## v2.6.10 — 2026-10-23
 
 **Satu pemilik untuk dark mode, dan primitif UI ganda dimatikan.**

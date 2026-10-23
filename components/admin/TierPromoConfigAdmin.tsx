@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Tag, Trash2, ChevronUp, ChevronDown, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { UserRole } from '../../types';
+import { useToast, useConfirmDialog, usePromptDialog } from '../ui';
 import {
   getAdminTiers, createTier, updateTier, deleteTier, reorderTiers,
   getTierChangeRequests, approveTierRequest, rejectTierRequest,
@@ -41,6 +42,8 @@ const emptyDraft = (): TierDraft => ({
 });
 
 const TierConfigTab: React.FC = () => {
+  const toast = useToast();
+  const confirm = useConfirmDialog();
   const [tiers, setTiers] = useState<SpAgentTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCode, setEditingCode] = useState<string | null>(null);
@@ -125,9 +128,15 @@ const TierConfigTab: React.FC = () => {
   };
 
   const handleDelete = async (code: string) => {
-    if (!confirm(`Nonaktifkan tier ${code}? Tier ini tidak bisa dihapus jika masih ada agen yang memakainya.`)) return;
+    const ok = await confirm({
+      title: `Nonaktifkan tier ${code}?`,
+      description: 'Tier ini tidak bisa dihapus jika masih ada agen yang memakainya.',
+      confirmLabel: 'Nonaktifkan',
+      variant: 'danger',
+    });
+    if (!ok) return;
     const result = await deleteTier(code);
-    if (result.success) load(); else alert(result.error ?? 'Gagal menghapus tier.');
+    if (result.success) load(); else toast.error(result.error ?? 'Gagal menghapus tier.');
   };
 
   const handleReorder = async (idx: number, dir: -1 | 1) => {
@@ -469,6 +478,8 @@ const TierEditForm: React.FC<{
 // ─── Tier Approval Requests Tab ────────────────────────────────────────────────
 
 const TierRequestsTab: React.FC = () => {
+  const toast = useToast();
+  const promptDialog = usePromptDialog();
   const [requests, setRequests] = useState<SpTierChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
@@ -484,16 +495,25 @@ const TierRequestsTab: React.FC = () => {
     setActing(id);
     const result = await approveTierRequest(id);
     setActing(null);
-    if (result.success) load(); else alert(result.error ?? 'Gagal menyetujui — mungkin role Anda tidak berwenang untuk tier ini.');
+    if (result.success) load(); else toast.error(result.error ?? 'Gagal menyetujui — mungkin role Anda tidak berwenang untuk tier ini.');
   };
 
   const handleReject = async (id: string) => {
-    const reason = prompt('Alasan penolakan:');
+    // The reason is audit context on a tier decision, so it is collected in a
+    // real dialog rather than window.prompt(), which browsers may suppress.
+    // Still optional, exactly as before — an empty reason is accepted.
+    const reason = await promptDialog({
+      title: 'Tolak permintaan tier?',
+      description: 'Alasan ini tersimpan pada permintaan dan terlihat oleh pemohon.',
+      input: { label: 'Alasan penolakan', placeholder: 'Opsional', multiline: true },
+      confirmLabel: 'Tolak',
+      variant: 'danger',
+    });
     if (reason == null) return;
     setActing(id);
     const result = await rejectTierRequest(id, reason);
     setActing(null);
-    if (result.success) load(); else alert(result.error ?? 'Gagal menolak.');
+    if (result.success) load(); else toast.error(result.error ?? 'Gagal menolak.');
   };
 
   return (

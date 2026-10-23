@@ -16,9 +16,16 @@ export { Button, type ButtonProps } from './Button';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Card, type CardProps } from './Card';
 export { ToastProvider, useToast } from './Toast';
-export { ConfirmDialogProvider, useConfirmDialog } from './ConfirmDialog';
+export { ConfirmDialogProvider, useConfirmDialog, usePromptDialog } from './ConfirmDialog';
 export { Skeleton, SkeletonCard, SkeletonList, SkeletonText } from './Skeleton';
-export { EmptyState, type EmptyStateProps } from './EmptyState';
+// EmptyState lived here with a generic grey icon box and never had a single
+// call site. The app's actual empty state is `AgentEmpty` in
+// components/agent/AgentArt.tsx — already used by the Agent, Operator and
+// Insurer portals, and carrying the branded SurePath spot illustration the
+// execution brief requires instead of a generic icon. Keeping two would mean
+// choosing between them at every call site, so the unused generic one is gone.
+// Follow-up: move AgentEmpty and the illustration set into this layer, which
+// is a file move rather than a design decision.
 export { useHaptic, type HapticPattern } from './useHaptic';
 
 // Trust signals — drop into headers at conversion moments

@@ -27,58 +27,100 @@ interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: Variant;
+  /**
+   * Ask for a line of text alongside the confirmation — the replacement for
+   * `window.prompt()`, which browsers may suppress entirely and which offers
+   * no label, no validation and no styling. Use `usePromptDialog()` to read
+   * the answer; `useConfirmDialog()` still resolves to a plain boolean.
+   */
+  input?: {
+    label: string;
+    placeholder?: string;
+    /** Block confirmation until the field is non-blank. Default: false. */
+    required?: boolean;
+    multiline?: boolean;
+  };
 }
 
 type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
+/** Resolves to the text entered, or null when the dialog was dismissed. */
+type PromptFn = (opts: ConfirmOptions & { input: NonNullable<ConfirmOptions['input']> }) => Promise<string | null>;
 
 interface ConfirmContextValue {
   confirm: ConfirmFn;
+  prompt: PromptFn;
 }
 
 const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
 interface PendingConfirm {
   opts: ConfirmOptions;
-  resolve: (ok: boolean) => void;
+}
+
+/** What the dialog resolves with: the choice, plus any text that was typed. */
+interface ConfirmResult {
+  ok: boolean;
+  value: string;
 }
 
 export const ConfirmDialogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [loading, setLoading] = useState(false);
-  const resolveRef = useRef<((ok: boolean) => void) | null>(null);
+  const [value, setValue] = useState('');
+  const resolveRef = useRef<((result: ConfirmResult) => void) | null>(null);
   const haptic = useHaptic();
 
-  const confirm = useCallback<ConfirmFn>((opts) => {
-    return new Promise<boolean>((resolve) => {
+  const open = useCallback((opts: ConfirmOptions) => {
+    return new Promise<ConfirmResult>((resolve) => {
+      // A second dialog opened while one is pending would otherwise strand the
+      // first caller's promise forever; settle it as a dismissal first.
+      resolveRef.current?.({ ok: false, value: '' });
       resolveRef.current = resolve;
-      setPending({ opts, resolve });
+      setValue('');
+      setPending({ opts });
     });
   }, []);
 
-  const close = useCallback((ok: boolean) => {
+  const confirm = useCallback<ConfirmFn>(
+    (opts) => open(opts).then(r => r.ok),
+    [open],
+  );
+
+  const prompt = useCallback<PromptFn>(
+    (opts) => open(opts).then(r => (r.ok ? r.value : null)),
+    [open],
+  );
+
+  const close = useCallback((ok: boolean, text: string) => {
     if (ok) haptic.success();
     else haptic.tap();
     setLoading(false);
     setPending(null);
+    setValue('');
     if (resolveRef.current) {
-      resolveRef.current(ok);
+      resolveRef.current({ ok, value: text });
       resolveRef.current = null;
     }
   }, [haptic]);
+
+  // A required field that is still blank must block confirmation everywhere:
+  // the button, the Enter key and the form submit all read this one value.
+  const blocked = !!pending?.opts.input?.required && value.trim() === '';
 
   // Close on Escape
   useEffect(() => {
     if (!pending) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close(false);
-      if (e.key === 'Enter') close(true);
+      if (e.key === 'Escape') close(false, '');
+      // Enter inside a multiline field inserts a newline rather than submitting.
+      if (e.key === 'Enter' && !pending.opts.input?.multiline && !blocked) close(true, value);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pending, close]);
+  }, [pending, close, value, blocked]);
 
   return (
-    <ConfirmContext.Provider value={{ confirm }}>
+    <ConfirmContext.Provider value={{ confirm, prompt }}>
       {children}
       {pending && (
         <div
@@ -87,7 +129,7 @@ export const ConfirmDialogProvider: React.FC<{ children: React.ReactNode }> = ({
           aria-labelledby="confirm-title"
           className="fixed inset-0 z-[5100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-6"
           onClick={(e) => {
-            if (e.target === e.currentTarget) close(false);
+            if (e.target === e.currentTarget) close(false, '');
           }}
         >
           <div
@@ -108,11 +150,39 @@ export const ConfirmDialogProvider: React.FC<{ children: React.ReactNode }> = ({
                 )}
               </div>
             </div>
+            {pending.opts.input && (
+              <div className="mb-4">
+                <label htmlFor="confirm-input" className="block text-xs font-bold text-ds-ink2 mb-1.5">
+                  {pending.opts.input.label}
+                </label>
+                {pending.opts.input.multiline ? (
+                  <textarea
+                    id="confirm-input"
+                    autoFocus
+                    rows={3}
+                    value={value}
+                    placeholder={pending.opts.input.placeholder}
+                    onChange={(e) => setValue(e.target.value)}
+                    className="w-full rounded-lg border border-ds-border bg-ds-card2 px-3 py-2 text-sm text-ds-ink placeholder:text-ds-ink3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
+                  />
+                ) : (
+                  <input
+                    id="confirm-input"
+                    autoFocus
+                    type="text"
+                    value={value}
+                    placeholder={pending.opts.input.placeholder}
+                    onChange={(e) => setValue(e.target.value)}
+                    className="w-full min-h-[44px] rounded-lg border border-ds-border bg-ds-card2 px-3 text-sm text-ds-ink placeholder:text-ds-ink3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
+                  />
+                )}
+              </div>
+            )}
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 sm:justify-end">
               <Button
                 variant="secondary"
                 size="md"
-                onClick={() => close(false)}
+                onClick={() => close(false, '')}
                 disabled={loading}
               >
                 {pending.opts.cancelLabel ?? 'Batal'}
@@ -120,8 +190,9 @@ export const ConfirmDialogProvider: React.FC<{ children: React.ReactNode }> = ({
               <Button
                 variant={pending.opts.variant === 'danger' ? 'danger' : 'primary'}
                 size="md"
-                onClick={() => close(true)}
+                onClick={() => close(true, value)}
                 loading={loading}
+                disabled={blocked}
               >
                 {pending.opts.confirmLabel ?? 'Konfirmasi'}
               </Button>
@@ -140,6 +211,18 @@ export function useConfirmDialog(): ConfirmFn {
     return (opts: ConfirmOptions) => Promise.resolve(window.confirm(`${opts.title}\n\n${opts.description ?? ''}`));
   }
   return ctx.confirm;
+}
+
+/**
+ * Ask for a line of text. Resolves to what was typed, or null if dismissed —
+ * the same contract as `window.prompt()`, which this replaces.
+ */
+export function usePromptDialog(): PromptFn {
+  const ctx = useContext(ConfirmContext);
+  if (!ctx) {
+    return (opts) => Promise.resolve(window.prompt(opts.input.label) ?? null);
+  }
+  return ctx.prompt;
 }
 
 export default ConfirmDialogProvider;

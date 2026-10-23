@@ -171,10 +171,22 @@ Deno.serve(async (req) => {
       const email = (userData.user.email ?? '').toLowerCase();
       const userMetadata = (userData.user.user_metadata ?? null) as Record<string, any> | null;
       emailConfirmedAt = (userData.user.email_confirmed_at ?? null) as string | null;
-      // FIX v1.49.2: Use ilike for case-insensitive email match.
-      // Previously used .or() with exact match — Google OAuth emails can have
-      // different casing than the original signup email.
-      const { data: spUser } = await db.from('sp_users').select('*').or(`id.eq.${authId},email.ilike.${email}`).maybeSingle();
+      // FIX v2.6.12 (audit 2026-10-23, C1): resolve identity with parameterized
+      // equality filters. This previously interpolated the JWT email into
+      // PostgREST's .or() filter grammar — and because `ilike` treats `*` as a
+      // wildcard, signing up as `someadmin*@example.com` made this lookup return
+      // the admin's row. The row this returns *is* the caller (role, isAdmin,
+      // isFinanceAdmin, ownerId all come from it), so that was a full privilege
+      // escalation from a self-service signup. Same parameterized shape as
+      // _shared/auth.ts — never concatenate identity data into a filter string.
+      //
+      // Email is already lower-cased above, and every sp_users.email in the
+      // database is stored lower-case, so .eq() is equivalent to the previous
+      // case-insensitive match without the pattern-matching semantics.
+      let { data: spUser } = await db.from('sp_users').select('*').eq('id', authId).maybeSingle();
+      if (!spUser && email) {
+        ({ data: spUser } = await db.from('sp_users').select('*').eq('email', email).maybeSingle());
+      }
       // FIX v1.50.0: canonical owner id. Orders/quotes/notifications are written
       // with sp_users.id, but several reads filtered by auth.users.id — for
       // legacy accounts (sp_users.id ≠ auth id) their own submissions never

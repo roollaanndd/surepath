@@ -227,11 +227,23 @@ Deno.serve(async (req) => {
   // Same canonical-owner resolution as data-gateway (FIX v1.50.0): rows are
   // written with sp_users.id, but legacy accounts have sp_users.id ≠ auth id,
   // so reads must match both.
-  const { data: spUser } = await db
+  // FIX v2.6.12 (audit 2026-10-23, C1): parameterized equality instead of
+  // interpolating the JWT email into PostgREST's .or() filter grammar, where
+  // `ilike`'s `*` wildcard let a crafted signup address match another user's
+  // row — and this row decides whose policies and claims Pathy may read.
+  const COLUMNS = 'id,name,role,phone,agent_code';
+  let { data: spUser } = await db
     .from('sp_users')
-    .select('id,name,role,phone,agent_code')
-    .or(`id.eq.${authId},email.ilike.${email}`)
+    .select(COLUMNS)
+    .eq('id', authId)
     .maybeSingle();
+  if (!spUser && email) {
+    ({ data: spUser } = await db
+      .from('sp_users')
+      .select(COLUMNS)
+      .eq('email', email)
+      .maybeSingle());
+  }
 
   const ownerId = spUser?.id ?? authId;
   const caller: PathyCaller = {

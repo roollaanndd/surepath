@@ -179,7 +179,7 @@ Append a new entry after each meaningful implementation/verification milestone.
 - **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **316 passed / 25 files**. `npm run build` → `dist/` clean check passed (132 files), PWA release check passed.
 - **Functional verification:** browser-confirmed against the local dev server, **10/10**: `pathname` preserved with no hash added on `/`, `/tentang-kami`, `/produk`, `/agapps`, `/admin`, `/custapp`, `/operatorapp`; `pushState` moving the URL; Back returning to the previous path; no uncaught page errors across the sweep. **What this does not prove:** unauthenticated, all six portal paths render the same loader, so the sweep shows the app mounts and the path survives — not that each portal's own screen is correct. That still needs a login or a reachable preview URL.
 - **Version:** v2.6.14 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 27, `versionName` 2.6.14); changelog entry added.
-- **Production:** recorded after merge and Vercel verification.
+- **Production:** merged as PR #261 (squash commit `f091c58`); production deployment `dpl_FXS83wcs9keTGcrxVTPU2GTz9iRn` observed READY with the `myinsurepath.com` alias.
 - **Known gaps:** unchanged from Fase 2b — ~725 sub-11px nodes in the six portals, the radius scale, 826 raw `<button>`, 1.003 hardcoded hex outside `components/ui/`, and every C/A/O/D screen item. `myinsurepath.com` and `*.vercel.app` remain blocked by this environment's network policy.
 - **Checklist:** no item moved to DONE; this is a performance and accuracy pass, not a surface pass.
 

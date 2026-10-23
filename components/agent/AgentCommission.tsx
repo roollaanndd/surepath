@@ -119,7 +119,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
   ];
 
   return (
-    <div className="bg-ds-bg min-h-screen pb-28">
+    <div className="sp-agent-commission bg-ds-bg min-h-screen pb-28">
 
       {/* Balance Hero Card — bank-card look */}
       <AgentArtKeyframes />

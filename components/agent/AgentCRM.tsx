@@ -149,7 +149,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
   const avatarColor = (name: string) => avatarColors[name.charCodeAt(0) % avatarColors.length];
 
   return (
-    <div className="bg-ds-bg min-h-screen pb-28">
+    <div className="sp-agent-crm bg-ds-bg min-h-screen pb-28">
 
       {/* Hero banner */}
       <div className="px-5 pt-5">

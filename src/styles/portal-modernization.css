@@ -435,3 +435,41 @@
     transition: none !important;
   }
 }
+
+
+/* Agent CRM and commission: focused financial-workspace refinement. */
+.sp-agent-premium .sp-agent-crm,
+.sp-agent-premium .sp-agent-commission {
+  --sp-agent-section-gap: clamp(.75rem, 2.8vw, 1.25rem);
+}
+.sp-agent-premium .sp-agent-crm :where(button, input, select, textarea),
+.sp-agent-premium .sp-agent-commission :where(button, input, select, textarea) {
+  touch-action: manipulation;
+}
+.sp-agent-premium .sp-agent-crm :where(button, input, select, textarea):focus-visible,
+.sp-agent-premium .sp-agent-commission :where(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ds-green, #00a85b);
+  outline-offset: 2px;
+}
+.sp-agent-premium .sp-agent-crm :where(.sp-glass, .rounded-2xl),
+.sp-agent-premium .sp-agent-commission :where(.sp-glass, .rounded-2xl) {
+  border-color: color-mix(in srgb, var(--ds-border, #dce6df) 90%, transparent);
+}
+.sp-agent-premium .sp-agent-crm :where(input, select, textarea),
+.sp-agent-premium .sp-agent-commission :where(input, select, textarea) {
+  max-width: 100%;
+}
+.sp-agent-premium .sp-agent-crm :where(button),
+.sp-agent-premium .sp-agent-commission :where(button) {
+  min-height: 44px;
+}
+@media (max-width: 380px) {
+  .sp-agent-premium .sp-agent-crm,
+  .sp-agent-premium .sp-agent-commission { overflow-wrap: anywhere; }
+  .sp-agent-premium .sp-agent-crm :where(.px-5),
+  .sp-agent-premium .sp-agent-commission :where(.px-5) { padding-inline: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium .sp-agent-crm *,
+  .sp-agent-premium .sp-agent-commission * { transition: none !important; }
+}

@@ -198,7 +198,7 @@ Append a new entry after each meaningful implementation/verification milestone.
 - **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **316 passed / 25 files**. `npm run build` → `dist/` clean (132 files), PWA release check passed.
 - **Functional verification:** the three login gates and `/login` rendered at 390px and inspected as images — 0 sub-11px nodes each (from 7, 6, 6 and 5), no overflow, no clipped labels. 10 public paths swept, 9 clean.
 - **Version:** v2.6.15 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 28, `versionName` 2.6.15); changelog entry added.
-- **Production:** merged as PR #262 (squash commit `2c616dd`).
+- **Production:** merged as PR #262 (squash commit `2c616dd`); production deployment `dpl_2SiNVYm4EsPGwLBTzpKHtB9kw3dd` observed READY. Confirmed live on `myinsurepath.com` at 390px: the Admin, Operator and Insurer gates and `/login` each report **0 sub-11px nodes**, against the real app (page title and content checked, after an earlier sweep turned out to have been measuring Vercel's login page).
 - **Known gaps:** 1.288 sub-11px nodes remain, all on screens that need a login — 724 px classes and 564 rem classes. Also open: the radius scale, 826 raw `<button>`, 1.003 hardcoded hex outside `components/ui/`, the `/ai` overflow, and the Customer portal's own audit (27 sub-11px nodes, 18 raw buttons, 7 distinct radii, and a clipped label in the "SISA HARI" card).
 - **Checklist:** S4 (typography) stays PARTIAL, now with an accurate denominator and a guardrail that can actually hold it.
 

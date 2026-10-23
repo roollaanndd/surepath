@@ -77,6 +77,36 @@
   memeriksa node JSON-LD. Sekarang ada tes yang memeriksa seluruh dokumen.
 - `tests/seo.spec.ts`: 38 kasus yang mengunci semua hal di atas. Tidak ada satu
   pun yang terlihat di UI, jadi semuanya mudah rusak kembali tanpa disadari.
+## v2.6.16 — 2026-10-23
+
+**Dua cacat di header Admin Portal, ditemukan karena interiornya akhirnya bisa dilihat.**
+
+- Interior portal berautentikasi akhirnya terbuka untuk diperiksa — **tanpa
+  membuat akun produksi**. Gerbang login memanggil `signInWithPassword` lalu
+  `get_my_profile`; dua-duanya panggilan jaringan, jadi dua-duanya dijawab
+  lokal di harness uji. Gerbangnya lewat lewat jalur kodenya sendiri dan yang
+  render setelahnya adalah portal asli. Nol sentuhan ke produksi, nol password
+  yang harus disimpan.
+- **Badge "BACKUP SELESAI" di header pecah jadi satu huruf per baris** di 390px.
+  Flex memerasnya sampai setiap karakter turun baris sendiri — kolom vertikal
+  B/A/C/K/U/P/… yang menjebol header. Sekarang disembunyikan di bawah `sm`
+  (header ponsel sudah penuh: kolom cari plus empat kontrol) dan diberi
+  `whitespace-nowrap shrink-0` supaya tidak pernah pecah di lebar mana pun.
+- **Tiga kontrol di kanan header terpotong di tepi layar** pada 390px. Kolom
+  cari dipatok `w-52` (208px) sementara grup kirinya tidak dibatasi, jadi grup
+  kanan yang terdorong keluar. Sekarang grup kiri `flex-1 min-w-0`, kolom cari
+  ikut menyusut dengan batas `max-w-xs`, dan grup kanan `shrink-0` sehingga
+  bukan dia yang mengalah.
+- Cacat kedua ini **tidak terdeteksi penghitung**: header memotong ke dalam, jadi
+  `scrollWidth` tetap 390 dan sapuan otomatis melaporkan "tidak ada overflow".
+  Hanya ketahuan dengan melihat gambarnya. Dicatat karena itu mengubah cara
+  verifikasi berikutnya harus dilakukan.
+- Chip email admin ikut naik ke lantai 11px, dan inisial avatar di dalam
+  lingkaran berukuran tetap memakai `text-badge` — primitif dari v2.6.15.
+- `components/admin/` **tetap** pada aturan lint inline-saja. Baru dasbornya yang
+  benar-benar dilihat; 135 class `text-[0.XXrem]` sisanya tersebar di layar yang
+  belum dibuka, dan menaikkannya tanpa melihat persis cara label jadi kepotong.
+
 ## v2.6.15 — 2026-10-23
 
 **Lantai tipografi v2.6.13 ternyata bocor di tiga tempat. Ditutup, plus guardrailnya diperbaiki.**

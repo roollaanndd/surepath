@@ -169,6 +169,22 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-23 — Fase 3b: the portal interiors open, and the first two defects behind them
+
+- **Scope:** `components/admin/AdminPortal.tsx` (the header).
+- **How the interiors opened, and why no account was created.** The owner offered to have demo accounts created. They were not needed and were deliberately not made. The gates call `supabase.auth.signInWithPassword()` and then the gateway's `get_my_profile`; both are network calls, so both are answered locally in the harness — the token endpoint returns a well-formed session, `get_my_profile` returns the role the gate checks for. The gate then admits you through its own code path and the screen that renders is the real portal. The alternative was worse on every axis: the only Supabase project is production, it also carries another app's `handle_new_user` trigger, a real ADMIN account can see customer PII and the money paths, and the password would have to live somewhere. Admin and Operator both render this way now.
+- **Defect 1 — the backup badge shattered.** At 390px the header's "BACKUP SELESAI" badge rendered **one letter per line**: flex squeezed it until every character wrapped, producing a vertical column that broke the header and pushed the control beside it off the edge. Now `hidden sm:flex` (the phone header already carries a search field and four controls) with `whitespace-nowrap shrink-0` so it cannot shatter at any width where it does show.
+- **Defect 2 — the right-hand controls were clipped.** The search input was pinned at `w-52` (208px) while the left group was unconstrained, so the right group was pushed past the edge and cut off. Left group is now `flex-1 min-w-0`, the search shrinks with it under a `max-w-xs` cap, and the right group is `shrink-0` so it is never what gives way.
+- **The second defect is the one worth remembering about method.** The header clips internally, so `document.documentElement.scrollWidth` stayed at 390 and the automated sweep reported "no overflow". Only looking at the rendered image caught it. A counter can confirm a number; it cannot tell you the screen is broken.
+- **Scope held deliberately:** `components/admin/` stays on the inline-only lint rule. Only the dashboard has actually been looked at; the remaining 135 `text-[0.XXrem]` classes are spread across screens still unopened, and raising those unseen is precisely how labels get clipped.
+- **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **316 passed / 25 files**. `npm run build` → `dist/` clean (132 files), PWA release check passed.
+- **Functional verification:** Admin Portal rendered at **390px and 768px** and inspected as images — badge hidden and header intact at 390, badge on a single line at 768, all controls visible at both. Operator Portal also rendered (741 chars, 22 sub-11px nodes, 20 raw buttons) and recorded for the next pass.
+- **A result retracted:** a sweep run against the Vercel preview URL reported "6/6 PASS". It was measuring **Vercel's own login page** — the preview sits behind Deployment Protection, which is not the same thing as the network policy that was opened. Discarded; verification here is the local dev server plus production.
+- **Version:** v2.6.16 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 29, `versionName` 2.6.16); changelog entry added.
+- **Production:** recorded after merge and Vercel verification.
+- **Known gaps:** the Admin interior's own audit (13 sub-11px nodes, 14 raw buttons, 7 distinct radii on the dashboard alone), the Operator interior (22 / 20), the Customer portal (27 / 18 / 7 plus a label clipped mid-word in the "SISA HARI" card), the `/ai` horizontal overflow, the radius scale, 826 raw `<button>`, and 1.003 hardcoded hex outside `components/ui/`.
+- **Checklist:** Admin CMS moves from NOT STARTED to IN PROGRESS — two real defects fixed and the screen is now inspectable, which is the precondition for the rest.
+
 ### 2026-10-23 — Fase 3a: the typography floor leaked in three places, and the audit figure was wrong
 
 - **Scope:** `components/admin/AdminLogin.tsx`, `components/operator/OperatorLogin.tsx`, `components/insurer/InsurerLogin.tsx`, `components/AuthGate.tsx`, `components/TermsModal.tsx`, `components/admin/AnalyticsDashboard.tsx`, `components/ui/{UnderlineTabs,CircularActionGrid,ReferralCard,FloatingWhatsApp}.tsx`, `components/landing/HowItWorks.tsx`, `src/pages/*` and `src/routes/splash.tsx` (80 nodes); `tailwind.config.cjs` (a `badge` size); `eslint.config.js` (two new selectors and a block split).
@@ -182,7 +198,7 @@ Append a new entry after each meaningful implementation/verification milestone.
 - **Checks:** `npm run lint` → tsc 0 errors, ESLint **0 errors / 33 warnings** (unchanged baseline), vitest **316 passed / 25 files**. `npm run build` → `dist/` clean (132 files), PWA release check passed.
 - **Functional verification:** the three login gates and `/login` rendered at 390px and inspected as images — 0 sub-11px nodes each (from 7, 6, 6 and 5), no overflow, no clipped labels. 10 public paths swept, 9 clean.
 - **Version:** v2.6.15 across `src/version.ts`, `package.json`, `package-lock.json` and Android (`versionCode` 28, `versionName` 2.6.15); changelog entry added.
-- **Production:** recorded after merge and Vercel verification.
+- **Production:** merged as PR #262 (squash commit `2c616dd`).
 - **Known gaps:** 1.288 sub-11px nodes remain, all on screens that need a login — 724 px classes and 564 rem classes. Also open: the radius scale, 826 raw `<button>`, 1.003 hardcoded hex outside `components/ui/`, the `/ai` overflow, and the Customer portal's own audit (27 sub-11px nodes, 18 raw buttons, 7 distinct radii, and a clipped label in the "SISA HARI" card).
 - **Checklist:** S4 (typography) stays PARTIAL, now with an accurate denominator and a guardrail that can actually hold it.
 

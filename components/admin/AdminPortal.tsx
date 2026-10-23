@@ -709,25 +709,25 @@ const AdminPortal = ({
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header */}
         <header className={`min-h-16 border-b flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 flex-shrink-0 ${headerBg}`} style={{ paddingTop: "env(safe-area-inset-top, 0px)", minHeight: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
             {isMobile && (
               <button onClick={() => setMobileOpen(true)} className={`p-2 rounded-xl ${'bg-ds-card2 text-ds-ink3'}`}>
                 <Menu size={20} />
               </button>
             )}
-            <div className="relative">
+            <div className="relative flex-1 min-w-0 max-w-xs">
               <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${'text-ds-ink3'}`} />
               <input
-                className={`rounded-xl py-2 pl-9 pr-4 text-xs font-medium outline-none w-52 lg:w-80 border ${inputBg}`}
+                className={`rounded-xl py-2 pl-9 pr-4 text-xs font-medium outline-none w-full border ${inputBg}`}
                 placeholder="Cari data..."
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {currentUser?.email && (
-              <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-[0.55rem] font-bold uppercase tracking-widest border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
-                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-[0.5rem]`}>
+              <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-2xs font-bold uppercase tracking-wider border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
+                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-badge`}>
                   {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
                 </span>
                 {currentUser.email}
@@ -741,9 +741,15 @@ const AdminPortal = ({
             >
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
-            {/* Auto-backup status indicator */}
+            {/* Auto-backup status indicator.
+                Hidden below `sm` on purpose: the header already carries the
+                search field and four controls, and at 390px this badge was the
+                thing that broke — flex squeezed it until every letter wrapped
+                onto its own line ("B/A/C/K/U/P/...") and the control next to it
+                was pushed off the edge. `whitespace-nowrap shrink-0` stops it
+                shattering at any width where it does show. */}
             {backupStatus !== 'idle' && (
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.55rem] font-black uppercase tracking-widest border ${
+              <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-wider border whitespace-nowrap shrink-0 ${
                 backupStatus === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
                 backupStatus === 'ok'      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                                              'bg-rose-500/10 border-rose-500/20 text-rose-400'

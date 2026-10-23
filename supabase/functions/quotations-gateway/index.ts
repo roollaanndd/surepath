@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
         const { data: userData, error: userErr } = await authClient.auth.getUser();
         if (userErr || !userData?.user) return json({ error: 'Unauthorized: invalid token' }, 401);
         const email = (userData.user.email ?? '').toLowerCase();
-        // FIX v2.6.12 (audit 2026-10-23, C1): parameterized equality instead of
+        // FIX v2.6.13 (audit 2026-10-23, C1): parameterized equality instead of
         // interpolating the JWT email into PostgREST's .or() filter grammar,
         // where `ilike`'s `*` wildcard let a crafted signup address resolve to
         // another user's id — the id this gateway then treats as the owner.

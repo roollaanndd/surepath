@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.12 — 2026-10-23
+## v2.6.13 — 2026-10-23
 
 **Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**
 
@@ -36,6 +36,31 @@
   mati; `admins_manage_tokens` pada `sp_review_tokens` diganti policy ber-scope
   `is_admin()` karena tombol kirim-link-ulasan di admin masih INSERT langsung ke
   tabel itu. **Migration ini belum diterapkan ke produksi.**
+
+
+## v2.6.12 — 2026-10-23
+
+**Latar halaman akhirnya ikut tema, dan dark mode tidak berkedip putih lagi.**
+
+- `index.html` menulis `body { background: #fafaf9; color: #1e293b }` langsung,
+  tanpa pasangan gelap. Jadi satu permukaan yang ada di belakang setiap halaman
+  adalah satu-satunya permukaan yang tidak pernah ikut tema: token `--ds-*` di
+  `:root` sudah berbalik gelap, `body` tetap terang. Ini yang membuat dark mode
+  terasa setengah jadi walau token dan portalnya sudah benar sejak v2.6.10.
+  Sekarang `body` membaca `var(--ds-bg)` dan `var(--ds-text-primary)` seperti
+  komponen lain, dengan nilai literal hanya sebagai cadangan untuk paint pertama
+  sebelum `styles.css` termuat.
+- Class `dark` dulu baru dipasang setelah React mount, jadi pengguna dark mode
+  melihat kilat putih di setiap kali buka. Sekarang ada script kecil di `<head>`
+  yang membaca preferensi tersimpan sebelum paint pertama. Kuncinya sama persis
+  dengan `components/shared/theme.ts` — ini cuma pembacaan awal dari state yang
+  sama, bukan pemilik kedua.
+- Thumb scrollbar ikut token `--ds-border-strong`, tidak lagi abu-abu mati yang
+  nyaris tidak terlihat di latar gelap.
+- Dikonfirmasi di browser: 8/8 asersi, termasuk `body` berpindah dari
+  `rgb(244,247,251)` ke `rgb(26,29,41)` dan warna teksnya ikut. 3 unit test baru
+  menjaga `index.html` dari drift, karena berkas itu di luar build TypeScript dan
+  tidak ada yang akan menyadarinya kalau berubah.
 
 ## v2.6.11 — 2026-10-23
 

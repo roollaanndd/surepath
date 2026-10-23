@@ -1,7 +1,7 @@
 {
   "name": "surepath---neural-insurtech",
   "private": true,
-  "version": "2.6.11",
+  "version": "2.6.12",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -82,7 +82,7 @@
     "ts-morph": "^28.0.0",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.63.0",
-    "vite": "^6.2.0",
+    "vite": "^6.4.5",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.11"
   }

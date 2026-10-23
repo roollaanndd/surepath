@@ -33,7 +33,7 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
       }
 
     case 'admin_approve_withdrawal': {
-        // FIX v2.6.12 (audit 2026-10-23, C2): the approval level is derived from
+        // FIX v2.6.13 (audit 2026-10-23, C2): the approval level is derived from
         // the withdrawal row, never from the request.
         //
         // This used to read `level` out of params and fall through an `else`

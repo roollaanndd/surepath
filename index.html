@@ -271,11 +271,45 @@
     <noscript>
       <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     </noscript>
+    <script>
+      // Put the stored theme on <html> before first paint. Without this the page
+      // paints light, React mounts, and only then does the `dark` class land —
+      // a white flash on every load for anyone using dark mode.
+      //
+      // Only an explicitly stored 'true' turns it on here. A user who has never
+      // chosen gets light, which is what five of the six portals open as; the
+      // Admin CMS opens dark from its own fallback once it mounts. The single
+      // owner of this state is components/shared/theme.ts — this is just the
+      // early read of the same key.
+      try {
+        if (localStorage.getItem('sp_dark_mode') === 'true') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {
+        // Private mode / blocked storage: no preference to honour, carry on light.
+      }
+    </script>
     <style>
       html { scroll-behavior: smooth; }
-      body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: #fafaf9; color: #1e293b; }
+
+      /* `body` reads the design tokens, like everything else. It used to hardcode
+         `background: #fafaf9; color: #1e293b` with no dark counterpart, so the one
+         surface behind every page was the one surface that never followed the
+         theme: tokens on :root flipped, `body` stayed light.
+
+         The literals below are fallbacks for the first paint only, before
+         styles.css (imported by the bundle) defines the tokens — so they must
+         stay equal to the token values there, light and dark. */
+      body {
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+        background: var(--ds-bg, #F4F7FB);
+        color: var(--ds-text-primary, #0F172A);
+      }
+      html.dark body { background: var(--ds-bg, #1A1D29); color: var(--ds-text-primary, #FFFFFF); }
+
       ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: var(--ds-border-strong, #CBD5E1); border-radius: 10px; }
       .tap-feedback:active { transform: scale(0.96); transition: transform 0.1s; }
     </style>
 

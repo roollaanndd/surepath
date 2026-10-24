@@ -4,12 +4,11 @@
 // Realtime subscriptions on sp_policy_orders + sp_payments fire popup toasts.
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
+import { Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
-import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { scrollPortalToTop } from '../shared/scrollReset';
-import { SurePathLogo } from '../Navbar';
-import { APP_VERSION } from '../../src/version';
+import PortalHeader from '../shared/PortalHeader';
+import PortalTabBar from '../shared/PortalTabBar';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
@@ -117,55 +116,20 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       `}</style>
 
       {/* Top Header */}
-      <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
-        <div className="flex items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center overflow-hidden">
-              <SurePathLogo className="w-8 h-8 object-contain" />
-            </div>
-            <div>
-              <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink">
-                Sure<span className="text-emerald-500">Path</span>
-              </div>
-              <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none mt-0.5">
-                Insurer · <span className="text-emerald-500/70 normal-case">{insurerName}</span> <span className="text-ds-ink3/70">v{APP_VERSION}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setShowNotifications(true)}
-              className="relative w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center active:scale-90 hover:bg-ds-card transition-all"
-              aria-label="Notifikasi"
-            >
-              <Bell size={15} className="text-ds-ink2" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-emerald-500 text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card animate-pulse">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center active:scale-90 hover:bg-ds-card transition-all"
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun size={15} className="text-ds-amber" /> : <Moon size={15} className="text-ds-ink2" />}
-            </button>
-
-            <button
-              onClick={() => handleTabChange('profile')}
-              className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all ring-2 ring-emerald-500/25"
-              style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}
-              aria-label="Profil"
-            >
-              {(insurerName ?? 'I')[0].toUpperCase()}
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Was a hand-copied PortalHeader whose subtitle crammed portal, insurer
+          name and version onto one line — at 390px it wrapped to three. The
+          shared header gives each its own slot. */}
+      <PortalHeader
+        portalLabel="Insurer"
+        userName={insurerName}
+        unreadCount={unreadCount}
+        onBellClick={() => setShowNotifications(true)}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode(!darkMode)}
+        onAvatarClick={() => handleTabChange('profile')}
+        BellIcon={Bell}
+        labels={{ notifications: 'Notifikasi', theme: 'Ganti tema', profile: 'Profil' }}
+      />
 
       {/* Main Content */}
       <main className="relative z-10 pb-32 min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
@@ -175,34 +139,12 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       </main>
 
       {/* Floating bottom tab nav — bank-style pills (emerald identity) */}
-      <nav className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] inset-x-4 z-50 sp-glass-strong rounded-[2rem]" style={{ boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)' }}>
-        <div className="flex items-center justify-around px-1 py-2">
-          {TABS.map(({ id, labelId, Icon }) => {
-            const active = activeTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => handleTabChange(id)}
-                type="button"
-                aria-label={labelId}
-                aria-current={active ? "page" : undefined}
-                className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 min-w-[46px] min-h-[48px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
-              >
-                <span className="w-9 h-8 rounded-xl flex items-center justify-center transition-colors"
-                  style={active ? { background: 'var(--ds-green-tint, rgba(0,193,106,0.12))', color: 'var(--ds-green, #059669)' } : { color: 'var(--ds-ink3)' }}>
-                  <ManagedPortalIcon id={id} size={20} imageClassName="w-5 h-5 object-contain" fallback={<Icon size={20} strokeWidth={active ? 2.6 : 2} />} />
-                </span>
-                <span
-                  className="text-[9px] font-black uppercase tracking-widest leading-none transition-colors"
-                  style={{ color: active ? '#059669' : 'var(--ds-ink3)', opacity: active ? 1 : 0.8 }}
-                >
-                  {labelId}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <PortalTabBar
+        tabs={TABS.map(({ id, labelId, Icon }) => ({ id, label: labelId, Icon }))}
+        activeId={activeTab}
+        onSelect={handleTabChange}
+        modernIcons
+      />
 
       {/* Notification drawer */}
       {showNotifications && (

@@ -389,7 +389,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
            {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <Card>
               <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                  {policies.map((p, i) => (
                     <div key={i} className="p-4 bg-ds-card2 rounded-2xl flex items-center justify-between border border-ds-border">
                        <div className="flex items-center gap-4">

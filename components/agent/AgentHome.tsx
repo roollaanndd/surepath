@@ -144,6 +144,25 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
       </motion.div>
 
+      {/* Primary action — make the agent's highest-value job obvious immediately. */}
+      <motion.div className="sp-agent-home__primary-cta px-5 pt-3" {...reveal(1)}>
+        <button
+          type="button"
+          onClick={() => onNavigate('quotes')}
+          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2"
+          aria-label={t('Create a new insurance quote', 'Buat penawaran asuransi baru')}
+        >
+          <span className="sp-agent-home__primary-cta-icon flex items-center justify-center rounded-xl shrink-0">
+            <FilePlus2 size={21} strokeWidth={2.1} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold leading-snug">{t('Create a new quote', 'Buat penawaran baru')}</span>
+            <span className="block text-xs mt-0.5 opacity-75">{t('Get started with your next client', 'Mulai penawaran untuk klien berikutnya')}</span>
+          </span>
+          <ChevronRight size={19} className="shrink-0" aria-hidden="true" />
+        </button>
+      </motion.div>
+
       {/* Commission Hero — premium bank-card look, the focal point of the screen */}
       <motion.div className="sp-agent-home__commission px-5 pt-3 sm:pt-4" {...reveal(1)}>
         <AgentArtKeyframes />

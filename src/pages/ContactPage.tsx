@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, Phone, MapPin, MessageSquare, Clock } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquare, Clock } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
+import { SUREPATH_WHATSAPP } from '../../constants';
 import { SitePageProps, useT, useSiteTheme, Reveal, SectionLabel, useWebsiteConfig } from './site/siteKit';
 
 const ContactPage: React.FC<SitePageProps> = (props) => {
@@ -22,10 +23,8 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
   };
 
   const CHANNELS = [
-    { icon: MessageSquare, color: '#25d366', label: 'WhatsApp',      value: '+62 811-1234-5678', href: 'https://wa.me/628111234567' },
-    { icon: Mail,          color: accent,    label: 'Email',          value: 'halo@myinsurepath.com', href: 'mailto:halo@myinsurepath.com' },
-    { icon: Phone,         color: '#2563eb', label: t('Telepon', 'Phone'), value: '(021) 5050-1234', href: 'tel:+622150501234' },
-    { icon: MapPin,        color: '#7c3aed', label: t('Kantor', 'Office'), value: 'Jakarta Selatan, Indonesia', href: '#' },
+    { icon: MessageSquare, color: '#25d366', label: 'WhatsApp', value: `+${SUREPATH_WHATSAPP}`, href: `https://wa.me/${SUREPATH_WHATSAPP}` },
+    { icon: Mail,          color: accent,    label: 'Email',    value: 'halo@myinsurepath.com', href: 'mailto:halo@myinsurepath.com' },
   ];
 
   const HOURS = [

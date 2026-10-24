@@ -5,6 +5,7 @@ import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
+import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
 import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
@@ -427,6 +428,9 @@ const App = () => {
   // homepage metadata from index.html (duplicate-content signal). See src/seo/seo.ts.
   useEffect(() => {
     applyDocumentHead(resolveSeo(currentPath));
+    // GA4's own page_view fires once per document load, so SPA navigations were
+    // invisible to it — report them here, after the head (and so the title) is set.
+    trackPageView(currentPath.replace(/\/+$/, '') || '/');
   }, [currentPath]);
 
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -589,7 +593,7 @@ const App = () => {
 
   const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
   if (pathname === '/blog' || blogSlugMatch) {
-    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
+    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} navigate={navigate} /></Suspense>;
   }
 
   const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];

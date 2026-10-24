@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Shield, Car, CheckCircle } from 'lucide-react';
 import { Language } from '../../types';
+import { SUREPATH_WHATSAPP } from '../../constants';
 
 // Rate batas bawah OJK per SE OJK No.06/SEOJK.05/2017
 // [allRisk%, tlo%]
@@ -141,7 +142,7 @@ export default function PremiumCalculatorPage({ lang, onSignIn, onBack }: Props)
     const text = encodeURIComponent(
       `Halo SurePath, saya ${leadName} ingin tanya asuransi mobil ${coverageLabel} harga Rp${hargaJuta}juta di ${wilayahLabel}`
     );
-    window.open(`https://wa.me/6281234567890?text=${text}`, '_blank');
+    window.open(`https://wa.me/${SUREPATH_WHATSAPP}?text=${text}`, '_blank');
     setStep('success');
   }
 

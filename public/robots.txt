@@ -22,4 +22,38 @@ Disallow: /payment
 Disallow: /api/
 Disallow: /.supabase/
 
+# ── AI / LLM crawlers ───────────────────────────────────────────────────────
+# Allowed deliberately, not by omission: being quotable in AI answers is a
+# distribution channel for an insurtech, and public/llms.txt exists to give these
+# crawlers a clean summary. To reverse the decision, swap the Allow below for a
+# Disallow — deleting this group does NOT block them, it restores the implicit
+# allow under User-agent: *.
+#
+# The Disallow list is repeated in full on purpose. A named user-agent group
+# REPLACES the `User-agent: *` group rather than extending it, so a group holding
+# only `Allow: /` would have opened the portals and tokenized pages to exactly
+# these crawlers. One group with many User-agent lines keeps them in step.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /login
+Disallow: /custapp
+Disallow: /agapps
+Disallow: /operatorapp
+Disallow: /insurerapp
+Disallow: /insurer-portal
+Disallow: /admin
+Disallow: /select-app
+Disallow: /review/
+Disallow: /q/
+Disallow: /payment
+Disallow: /api/
+Disallow: /.supabase/
+
 Sitemap: https://myinsurepath.com/sitemap.xml

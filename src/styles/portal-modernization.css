@@ -263,6 +263,8 @@
 .sp-modern-app:has(aside) main :where(th) {
   white-space: nowrap;
 }
+/* Keep each admin page's own responsive grid definition. Do not collapse every
+   grid in the admin workspace into one column; this breaks dashboard/menu layouts. */
 @media (max-width: 1023px) {
   .sp-modern-app:has(aside),
   .sp-modern-app:has(aside) {
@@ -272,10 +274,6 @@
   .sp-modern-app:has(aside) main {
     width: 100%;
     max-width: 100vw;
-  }
-  .sp-modern-app:has(aside) main :where(.grid),
-  .sp-modern-app:has(aside) main :where(.grid) {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: reduce) {

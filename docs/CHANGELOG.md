@@ -38,12 +38,25 @@ Kontras warna: hijau brand dipakai sebagai teks, dan itu tidak terbaca.
   utilitas `dark:` tidak bisa menang, jadi sekarang ada kelas `sp-keep-white`
   sebagai jalan keluar yang diberi nama.
 
-**Hasil terukur (mode terang, enam portal)**
-- Total kegagalan kontras 70 → 13. Admin 11 → 0, Operator 8 → 1,
-  Insurer 10 → 1, Mitra 12 → 2, B2B 11 → 2, Nasabah 18 → 7.
-- Sisanya hampir seluruhnya satu sebab: teks putih di atas isian hijau terang
-  (2,38:1) — avatar bundar dan tombol utama. Menggelapkan hijau utama adalah
-  keputusan brand, jadi itu ditanyakan ke pemilik, bukan diputuskan di sini.
+**Permukaan yang gelap di kedua tema butuh tokennya sendiri**
+- Kartu Pathy latarnya `linear-gradient(135deg, #003B2F, #00512E)` — gelap di
+  mode terang maupun gelap. Saat teks hijaunya saya pindahkan ke token teks
+  (yang digelapkan untuk latar terang), hasilnya **1,73:1**, lebih buruk dari
+  sebelumnya. Pengukuran ulang langsung menangkapnya. Permukaan seperti ini
+  tidak ikut berganti tema, jadi sekarang ada `--ds-primary-on-dark`
+  (`#00E07A`, 5,39:1 di sisi tergelap kartu itu).
+- Tiga `style={{ color: '#00C16A' }}` inline di `cards.tsx` melewati token
+  sepenuhnya dan tertinggal di 3,99:1; sekarang memakai kelas. Hex yang tersisa
+  di berkas itu adalah fill untuk gambar SVG, dan memang seharusnya begitu.
+- Gradien `FeaturedCard` dimulai dari `#4D7CFE`, di mana teks putih hanya
+  3,73:1. Digelapkan ke `#3B62D9` (5,34:1), hue-nya tetap biru.
+
+**Hasil terukur (enam portal)**
+- Mode terang: 70 → **8**. Mode gelap: 25 → **8**. Admin 11 → **0**.
+- Dan kedelapan sisanya adalah satu sebab yang sama persis: teks putih di atas
+  isian hijau terang (2,38:1) — avatar bundar dan tombol utama. Menggelapkan
+  hijau utama adalah keputusan brand, jadi itu ditanyakan ke pemilik, bukan
+  diputuskan di sini.
 
 **Catatan: dua item backlog ternyata bukan cacat**
 - "826 `<button>` mentah" adalah hitungan grep, bukan masalah yang dirasakan

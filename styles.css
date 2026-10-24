@@ -49,6 +49,11 @@
      darkened to 5.1:1 and is used only by `text-ds-green`; every background,
      border, ring and shadow still uses --ds-primary unchanged. */
   --ds-primary-text:   #047857;
+  /* Green text on a surface that is dark in BOTH themes (the Pathy card, hero
+     cards). It does not flip with the theme, so it cannot use the token above:
+     putting #047857 on #00512E measured 1.73:1. This is the same value the
+     dark theme uses, and gives 5.39:1 on the darkest of those surfaces. */
+  --ds-primary-on-dark: #00E07A;
 
   /* ── Semantic ────────────────────────────────────────────────────────── */
   --ds-success:      #00C16A;  --ds-success-tint: #E6FAF0;
@@ -75,6 +80,7 @@
   --ds-green-dk:     var(--ds-primary-hover);
   --ds-green-tint:   var(--ds-primary-tint);
   --ds-green-text:   var(--ds-primary-text);
+  --ds-green-on-dark: var(--ds-primary-on-dark);
   --ds-ink:          var(--ds-text-primary);
   --ds-ink2:         var(--ds-text-secondary);
   --ds-ink3:         var(--ds-text-muted);
@@ -112,7 +118,8 @@
   /* ── Text — brighter for readability ─────────────────────────────────── */
   --ds-text-primary:   #FFFFFF;
   --ds-text-secondary: #B8BFD0;
-  --ds-text-muted:     #8E95A8;
+  --ds-text-muted:     #99A0B2;   /* #8E95A8 passed on the base dark surfaces but
+                                     measured 4.32 on a tinted card; one step up */
   --ds-text-inverse:   #0F172A;
 
   /* ── Brand (brighter in dark for contrast) ──────────────────────────── */

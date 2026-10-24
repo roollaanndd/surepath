@@ -45,6 +45,8 @@ module.exports = {
       textColor: {
         'ds-green': 'var(--ds-green-text)',
         'ds-amber': 'var(--ds-amber-text)',
+        // For green text on an always-dark surface, which never flips theme.
+        'ds-green-on-dark': 'var(--ds-green-on-dark)',
       },
       colors: {
         'hero-bg':      'hsl(0 0% 8%)',

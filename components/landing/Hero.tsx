@@ -138,7 +138,7 @@ const Hero = ({ onAction, onAdminAction, lang = "ID" }: HeroProps) => {
               </div>
             </div>
             <div className="absolute bottom-8 left-7 right-7 rounded-2xl border border-white/10 bg-slate-950/65 p-5 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-300">SurePath</p>
+              <p className="text-2xs font-bold uppercase tracking-[0.24em] text-emerald-300">SurePath</p>
               <p className="mt-2 text-2xl font-semibold leading-tight text-white">{lang === "EN" ? "Protection that moves with you." : "Perlindungan yang selalu bersama Anda."}</p>
             </div>
           </div>

@@ -357,12 +357,12 @@ const AdminPortal = ({
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className={`font-black text-lg tracking-tight leading-none ${'text-ds-ink'}`}>
+            <h1 className="font-black text-lg tracking-tight leading-none text-white">
               Sure<span className="text-ds-green">Path</span>
             </h1>
             <button
               onClick={() => logoInputRef.current?.click()}
-              className={`text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors ${'text-ds-ink3 hover:text-ds-green'}`}
+              className="text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors text-emerald-100/70 hover:text-white"
             >
               {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
             </button>
@@ -380,7 +380,7 @@ const AdminPortal = ({
           if (item.isSeparator) {
             return (
               <div key={item.id} className="mt-4 mb-1 px-2">
-                <p className={`text-[0.45rem] font-black uppercase tracking-[0.35em] ${'text-ds-ink3'}`}>{(item as any).groupLabel}</p>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-emerald-100/55">{(item as any).groupLabel}</p>
               </div>
             );
           }
@@ -391,8 +391,8 @@ const AdminPortal = ({
               onClick={() => { goToTab(navItem.id); setMobileOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left sp-interactive-surface ${
                 activeTab === navItem.id
-                  ? 'bg-ds-green-tint text-ds-green border border-ds-green/20'
-                  : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
+                  ? 'bg-emerald-300/15 text-white border border-emerald-200/20 shadow-sm shadow-emerald-950/10'
+                  : 'text-emerald-50/70 border border-transparent hover:text-white hover:bg-white/10'
               }`}
             >
               <PathyNavIcon id={navItem.id} size={30} active={activeTab === navItem.id} className="flex-shrink-0 drop-shadow-sm" />
@@ -403,20 +403,20 @@ const AdminPortal = ({
       </nav>
 
       {/* User footer — always visible */}
-      <div className={`mt-4 flex-shrink-0 p-4 rounded-2xl border space-y-3 ${'bg-ds-card2 border-ds-border'}`}>
+      <div className="mt-4 flex-shrink-0 p-4 rounded-2xl border border-white/10 bg-white/[0.06] space-y-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 ring-2 ring-emerald-500/25"
             style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}>
             {(currentUser?.name ?? userRole)[0].toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-xs font-black truncate ${'text-ds-ink'}`}>{formatRole(userRole)}</p>
-            <p className={`text-[0.5rem] font-medium truncate ${'text-ds-ink3'}`}>{currentUser?.email ?? 'Admin'}</p>
+            <p className="text-xs font-black truncate text-white">{formatRole(userRole)}</p>
+            <p className="text-[0.65rem] font-medium truncate text-emerald-100/60">{currentUser?.email ?? 'Admin'}</p>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className={`w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 ${'bg-ds-red-lt text-ds-red hover:bg-ds-red hover:text-white'}`}
+          className="w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 border border-white/10 bg-white/[0.06] text-emerald-50/75 hover:bg-orange-500 hover:text-white hover:border-orange-400/40"
         >
           <LogOut size={13} /> Keluar
         </button>
@@ -425,14 +425,14 @@ const AdminPortal = ({
   );
 
   // ── Sidebar widths ─────────────────────────────────────────────────────────
-  const sidebarBg = 'bg-ds-card/80 backdrop-blur-xl border-ds-border shadow-ds-sm';
+  const sidebarBg = 'bg-gradient-to-b from-[#073F37] via-[#06483D] to-[#052F2A] border-white/10 shadow-[8px_0_32px_-20px_rgba(3,30,25,0.7)]';
 
   // ── Dashboard content ──────────────────────────────────────────────────────
   const DashboardView = () => (
     <div className="space-y-8">
       {/* Command banner — bank-grade hero, same theme as Agent/Operator apps */}
       <div className="relative overflow-hidden rounded-[1.75rem] px-6 py-6 text-white"
-        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+        style={{ background: 'linear-gradient(120deg, #073F37 0%, #08775A 58%, #10A875 100%)', boxShadow: '0 16px 44px -14px rgba(5,75,54,0.28)' }}>
         <div aria-hidden className="absolute -top-14 -right-12 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
           <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />

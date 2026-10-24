@@ -10,6 +10,11 @@
 // These tests pin three things: both columns are searched, the insurer is
 // carried over from the order, and the reference cannot rewrite the PostgREST
 // filter it is interpolated into.
+//
+// The insurer link is written by a separate UPDATE after the insert, not as a
+// column on the insert, so that deploying this function before migration
+// 20261023120000 costs the link rather than the whole claim. The tests assert
+// that split directly — an insert naming insurer_id is the regression.
 import { describe, it, expect } from 'vitest';
 import { handleClaimsAction } from '../../supabase/functions/data-gateway/actions/claims.ts';
 
@@ -23,11 +28,13 @@ type Row = Record<string, unknown>;
 function makeDb(opts: { order?: Row | null } = {}) {
   const orFilters: string[] = [];
   const inserted: Array<{ table: string; row: Row }> = [];
+  const updated: Array<{ table: string; row: Row; id: unknown }> = [];
   const thenable = { then: (res: () => void) => { res(); return thenable; } };
 
   const db = {
     orFilters,
     inserted,
+    updated,
     from(table: string) {
       return {
         select: () => ({
@@ -46,7 +53,9 @@ function makeDb(opts: { order?: Row | null } = {}) {
             then: thenable.then,
           };
         },
-        update: () => ({ eq: () => thenable }),
+        update: (row: Row) => ({
+          eq: (_col: string, id: unknown) => { updated.push({ table, row, id }); return thenable; },
+        }),
       };
     },
   };
@@ -108,15 +117,22 @@ describe('submit_claim — policy linkage', () => {
       policy_id: 'ord-1',
       agent_id: 'agent-1',
       client_id: 'cust-1',
-      insurer_id: 'ins-9',
     });
+    // Carried, but by the follow-up update rather than the insert.
+    expect(claim).not.toHaveProperty('insurer_id');
+    expect(db.updated).toEqual([
+      { table: 'sp_claims', row: { insurer_id: 'ins-9' }, id: 'clm-1' },
+    ]);
   });
 
   it('carries the insurer over on the policy_id path too', async () => {
     const db = makeDb({ order: ORDER });
     await handleClaimsAction('submit_claim', makeCtx(db, { ...BASE_CLAIM, policy_id: 'ord-1' }));
 
-    expect(db.inserted.find(r => r.table === 'sp_claims')?.row).toMatchObject({ insurer_id: 'ins-9' });
+    expect(db.inserted.find(r => r.table === 'sp_claims')?.row).not.toHaveProperty('insurer_id');
+    expect(db.updated).toEqual([
+      { table: 'sp_claims', row: { insurer_id: 'ins-9' }, id: 'clm-1' },
+    ]);
   });
 
   it('never takes insurer_id from the payload', async () => {
@@ -130,6 +146,28 @@ describe('submit_claim — policy linkage', () => {
     }));
 
     expect(db.inserted.find(r => r.table === 'sp_claims')?.row.insurer_id).toBeUndefined();
+    expect(db.updated).toHaveLength(0);
+  });
+
+  it('files the claim even when the insurer column does not exist yet', async () => {
+    // The reason the link is a separate statement. If the update fails — which
+    // is what a missing column looks like — the claim must still be created and
+    // the caller must still get a success. Nothing here awaits that update.
+    const db = makeDb({ order: ORDER });
+    const broken = {
+      ...db,
+      from(table: string) {
+        const real = db.from(table);
+        return {
+          ...real,
+          update: () => ({ eq: () => ({ then: (_r: () => void, rej?: () => void) => { rej?.(); } }) }),
+        };
+      },
+    };
+    const res = await handleClaimsAction('submit_claim', makeCtx(broken as never, { ...BASE_CLAIM, policy_id: 'ord-1' }));
+
+    expect(res.status).toBe(200);
+    expect(db.inserted.find(r => r.table === 'sp_claims')).toBeDefined();
   });
 
   it('strips characters that would rewrite the .or() filter', async () => {

@@ -31,6 +31,22 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
         // Now accepts the full claim payload and derives agent_id from the linked policy order.
         const claimType = String(params.claim_type ?? params.product_type ?? 'VEHICLE').toUpperCase();
         const description = String(params.description ?? params.chronology ?? '').slice(0, 5000);
+
+        // Carried beside insertRow, not inside it, and written in a separate
+        // best-effort statement after the claim exists.
+        //
+        // sp_claims.insurer_id arrives in migration 20261023120000. If this
+        // function were deployed before that migration ran, an insert naming
+        // the column would fail *entirely* — every claim submission rejected,
+        // not just the insurer link. Deploy order between a migration and a
+        // function is a human step, and it has already slipped once here.
+        // Written separately, the worst case if the column is missing is that
+        // the link is absent: the claim itself is still filed correctly, and
+        // the link starts working the moment the migration runs, with no
+        // redeploy. Server-derived from the order, like agent_id/client_id —
+        // never from the payload.
+        let linkedInsurerId: string | null = null;
+
         const insertRow: Record<string, unknown> = {
           user_id: caller.ownerId,
           claim_type: claimType,
@@ -97,9 +113,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             }
             insertRow.agent_id = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
-            // Server-derived, like agent_id/client_id — never from the payload.
-            // Without it the insurer has nothing to filter their claims by.
-            if (lo.insurer_id) insertRow.insurer_id = lo.insurer_id;
+            linkedInsurerId = lo.insurer_id ?? null;
           }
         } else if (params.policy_number) {
           // Match the real policy number as well as the internal order number.
@@ -135,7 +149,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             insertRow.policy_id = lo.id;
             insertRow.agent_id  = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
-            if (lo.insurer_id) insertRow.insurer_id = lo.insurer_id;
+            linkedInsurerId = lo.insurer_id ?? null;
           }
         }
 
@@ -145,6 +159,18 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           .select()
           .single();
         if (error) return json({ error: error.message }, 400);
+
+        // Link the claim to its insurer. Deliberately after the insert and
+        // deliberately not awaited for success: see linkedInsurerId above. A
+        // failure here means the insurer portal cannot filter this claim yet,
+        // which is recoverable; a failure inside the insert would have meant no
+        // claim at all.
+        if (linkedInsurerId) {
+          db.from('sp_claims')
+            .update({ insurer_id: linkedInsurerId })
+            .eq('id', (data as any).id)
+            .then(() => {}, () => {});
+        }
 
         // ── Consume the staged photo analysis (prevents reuse across multiple
         // claims) and record the perceptual hashes for future duplicate checks

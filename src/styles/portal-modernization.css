@@ -890,3 +890,81 @@
     transition: none !important;
   }
 }
+
+
+/* Pass 2 — customer + agent product-level polish.
+   White-first canvas, emerald as the trust color, orange reserved for action cues.
+   Intentionally CSS-only: no changes to pricing, policy, claims, auth or data flows. */
+.sp-agent-premium {
+  --sp-ui-canvas: #f8fbf9;
+  --sp-ui-orange: #f97316;
+  background:
+    radial-gradient(ellipse at 92% 4%, rgba(249, 115, 22, .055), transparent 27rem),
+    linear-gradient(180deg, #ffffff 0%, #f7faf8 46%, #f8fbf9 100%);
+}
+.sp-agent-premium .sp-ambient {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 8% 10%, rgba(0, 193, 106, .075), transparent 26rem),
+    radial-gradient(ellipse at 94% 34%, rgba(249, 115, 22, .045), transparent 22rem);
+}
+.sp-modern-app :where(.bg-ds-bg) { background-color: #f8fbf9; }
+.sp-modern-app :where(.bg-ds-card, .bg-white) {
+  border-color: color-mix(in srgb, var(--ds-border, #dce7e0) 82%, white);
+}
+.sp-modern-app :where(.sp-accent-orange, [data-accent="orange"]) {
+  --sp-accent: #f97316;
+  --sp-accent-tint: #fff3e9;
+}
+.sp-modern-app :where(.sp-accent-orange, [data-accent="orange"]) :where(svg) {
+  color: var(--sp-accent);
+}
+.sp-modern-app :where(.sp-primary-action, [data-sp-primary="true"]) {
+  background: linear-gradient(135deg, #00bd68 0%, #008c59 100%);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(0, 140, 89, .7);
+}
+.sp-modern-app :where(.sp-primary-action, [data-sp-primary="true"]):hover {
+  box-shadow: 0 12px 24px -12px rgba(0, 140, 89, .68);
+}
+.sp-modern-app :where(.sp-secondary-action, [data-sp-secondary="orange"]) {
+  background: #fff3e9;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+.sp-modern-app :where(.sp-kpi, [data-sp-kpi]) {
+  border: 1px solid #e4eee8;
+  background: linear-gradient(145deg, #fff 0%, #fbfefc 100%);
+  box-shadow: 0 10px 26px -22px rgba(8, 65, 43, .34);
+}
+.sp-modern-app :where(.sp-section-eyebrow) {
+  color: #64766d;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sp-modern-app :where(.sp-status-pending, [data-status="pending"]) {
+  background: #fff3e9;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+.sp-modern-app :where(.sp-status-success, [data-status="success"]) {
+  background: #eafaf1;
+  color: #087443;
+  border-color: #b8ebcd;
+}
+@media (max-width: 640px) {
+  .sp-agent-premium {
+    background:
+      radial-gradient(ellipse at 100% 0%, rgba(249, 115, 22, .045), transparent 18rem),
+      #f8fbf9;
+  }
+  .sp-agent-premium .sp-ambient {
+    position: absolute;
+    height: 30rem;
+  }
+}

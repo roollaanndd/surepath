@@ -215,7 +215,7 @@ const PrimaryBtn: React.FC<{
     type={type}
     onClick={onClick}
     disabled={disabled}
-    className="bg-ds-green hover:bg-ds-green-dk disabled:opacity-40 text-white rounded-2xl font-black uppercase tracking-widest px-6 py-3 transition text-sm"
+    className="bg-ds-green hover:bg-ds-green-dk disabled:opacity-40 text-ds-on-green rounded-2xl font-black uppercase tracking-widest px-6 py-3 transition text-sm"
   >
     {children}
   </button>
@@ -768,7 +768,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           onClick={() => setUseManualClient(false)}
           className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition ${
             !useManualClient
-              ? 'bg-ds-green text-white'
+              ? 'bg-ds-green text-ds-on-green'
               : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
         >
@@ -779,7 +779,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           onClick={() => setUseManualClient(true)}
           className={`flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition ${
             useManualClient
-              ? 'bg-ds-green text-white'
+              ? 'bg-ds-green text-ds-on-green'
               : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
           }`}
         >
@@ -1850,7 +1850,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               onClick={() => setDeliveryMethod('DIGITAL')}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'DIGITAL' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'DIGITAL' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'DIGITAL' ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Smartphone size={18} />
               </div>
               <div className="flex-1">
@@ -1866,7 +1866,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               onClick={() => setDeliveryMethod('POS_STANDARD')}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_STANDARD' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_STANDARD' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_STANDARD' ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Mail size={18} />
               </div>
               <div className="flex-1">
@@ -1884,7 +1884,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               onClick={() => setDeliveryMethod('POS_OVERNIGHT')}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${deliveryMethod === 'POS_OVERNIGHT' ? 'border-ds-green bg-ds-green/5' : 'border-slate-200 dark:border-white/10'}`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_OVERNIGHT' ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${deliveryMethod === 'POS_OVERNIGHT' ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
                 <Package size={18} />
               </div>
               <div className="flex-1">

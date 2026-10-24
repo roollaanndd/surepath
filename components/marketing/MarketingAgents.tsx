@@ -166,7 +166,7 @@ const FormAktivitas: React.FC<{ agen: MarketingAgentRow; onClose: () => void; on
         {err && <p className="text-[11px] font-bold text-red-600">{err}</p>}
 
         <button type="button" onClick={kirim} disabled={simpan}
-          className="w-full py-3 rounded-xl bg-ds-green text-white font-black text-sm disabled:opacity-60">
+          className="w-full py-3 rounded-xl bg-ds-green text-ds-on-green font-black text-sm disabled:opacity-60">
           {simpan ? 'Menyimpan…' : 'Simpan'}
         </button>
       </div>

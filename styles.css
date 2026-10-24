@@ -54,6 +54,11 @@
      putting #047857 on #00512E measured 1.73:1. This is the same value the
      dark theme uses, and gives 5.39:1 on the darkest of those surfaces. */
   --ds-primary-on-dark: #00E07A;
+  /* Text ON the primary fill. #00C16A has a relative luminance of 0.392 — it is
+     a LIGHT colour, so white on it was always the wrong pairing (2.38:1). The
+     brand's own dark emerald gives 5.30:1 here and 7.17:1 against the brighter
+     dark-mode fill, and leaves the brand green itself completely untouched. */
+  --ds-on-primary:     #003B2F;
 
   /* ── Semantic ────────────────────────────────────────────────────────── */
   --ds-success:      #00C16A;  --ds-success-tint: #E6FAF0;
@@ -81,6 +86,7 @@
   --ds-green-tint:   var(--ds-primary-tint);
   --ds-green-text:   var(--ds-primary-text);
   --ds-green-on-dark: var(--ds-primary-on-dark);
+  --ds-on-green:      var(--ds-on-primary);
   --ds-ink:          var(--ds-text-primary);
   --ds-ink2:         var(--ds-text-secondary);
   --ds-ink3:         var(--ds-text-muted);

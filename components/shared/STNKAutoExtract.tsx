@@ -208,7 +208,7 @@ const STNKAutoExtract: React.FC<Props> = ({ onExtracted, compact = false }) => {
             </button>
             <button
               onClick={() => onExtracted?.(result)}
-              className="flex-1 py-2 rounded-xl bg-ds-green text-white text-xs font-bold active:scale-95 transition-transform flex items-center justify-center gap-1"
+              className="flex-1 py-2 rounded-xl bg-ds-green text-ds-on-green text-xs font-bold active:scale-95 transition-transform flex items-center justify-center gap-1"
             >
               Lanjut <ArrowRight size={12} />
             </button>

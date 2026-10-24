@@ -51,12 +51,29 @@ Kontras warna: hijau brand dipakai sebagai teks, dan itu tidak terbaca.
 - Gradien `FeaturedCard` dimulai dari `#4D7CFE`, di mana teks putih hanya
   3,73:1. Digelapkan ke `#3B62D9` (5,34:1), hue-nya tetap biru.
 
-**Hasil terukur (enam portal)**
-- Mode terang: 70 → **8**. Mode gelap: 25 → **8**. Admin 11 → **0**.
-- Dan kedelapan sisanya adalah satu sebab yang sama persis: teks putih di atas
-  isian hijau terang (2,38:1) — avatar bundar dan tombol utama. Menggelapkan
-  hijau utama adalah keputusan brand, jadi itu ditanyakan ke pemilik, bukan
-  diputuskan di sini.
+**Teks putih di atas hijau: pasangan yang memang salah sejak awal**
+- Sisa kegagalan terakhir semuanya satu sebab: teks putih di atas isian hijau
+  (2,38:1). Pilihan yang jelas tampak cuma dua — gelapkan hijau brand, atau
+  biarkan. Ternyata ada jalan ketiga yang lebih baik: **luminansi relatif
+  `#00C16A` adalah 0,392**, artinya hijau itu sebenarnya warna *terang*. Teks
+  putih di atasnya memang tidak pernah cocok. Emerald gelap milik brand sendiri
+  (`#003B2F`) di atasnya memberi **5,30:1**, dan 7,17:1 di atas hijau mode
+  gelap yang lebih terang.
+- Jadi token `--ds-on-primary` dipakai untuk label yang duduk di atas isian
+  hijau: varian `primary` pada primitif `Button`, 60 pasangan
+  `bg-ds-green` + `text-white`, dan CTA B2B yang meng-hardcode keduanya.
+  **Warna hijau brand sama sekali tidak berubah** — hanya labelnya.
+- Avatar di header tidak bisa ikut cara itu: gradiennya `#00C16A → #047857`,
+  dan tidak ada satu warna teks yang lolos di kedua ujungnya. Gradiennya
+  dipindah ke pasangan emerald brand (`#047857 → #003B2F`) dengan teks putih.
+
+**Hasil terukur (enam portal, dua tema)**
+- Mode terang **70 → 0**. Mode gelap **25 → 0**.
+
+**Catatan untuk berikutnya**
+- B2B adalah satu-satunya portal yang **tidak punya mode gelap sama sekali**:
+  latarnya tetap `#F4F7FB` walau tema gelap aktif. Konsisten dengan sisa
+  penyimpangannya (belum pernah ditokenisasi, chrome-nya hasil salin tangan).
 
 **Catatan: dua item backlog ternyata bukan cacat**
 - "826 `<button>` mentah" adalah hitungan grep, bukan masalah yang dirasakan

@@ -175,7 +175,7 @@ const RenewalManager: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(b.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === b.id
-                ? 'bg-ds-green text-white shadow-md shadow-ds-green/25'
+                ? 'bg-ds-green text-ds-on-green shadow-md shadow-ds-green/25'
                 : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-500 dark:text-slate-400'
             }`}
           >

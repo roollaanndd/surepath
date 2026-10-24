@@ -82,7 +82,7 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
             <Bell size={18} className="text-ds-green" />
             <h3 className="text-base font-black text-ds-ink">Notifikasi</h3>
             {items.filter(i => !i.read).length > 0 && (
-              <span className="bg-ds-green text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+              <span className="bg-ds-green text-ds-on-green text-[10px] font-black px-1.5 py-0.5 rounded-full">
                 {items.filter(i => !i.read).length}
               </span>
             )}

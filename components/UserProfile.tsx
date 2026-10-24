@@ -76,7 +76,7 @@ const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: 
             </div>
             <button 
               onClick={handleRequestReset}
-              className="w-full py-5 bg-ds-green text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-ds-green active:scale-95 transition-all flex items-center justify-center gap-3"
+              className="w-full py-5 bg-ds-green text-ds-on-green rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-ds-green active:scale-95 transition-all flex items-center justify-center gap-3"
             >
               <Send size={18} /> {t('Send Reset Link', 'Kirim Link Reset')}
             </button>
@@ -131,7 +131,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
        <div className="bg-white dark:bg-[#0f172a] w-full max-w-3xl max-h-[90vh] rounded-[3.5rem] shadow-2xl flex flex-col relative overflow-hidden border border-white/10">
           <div className="p-8 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-ds-green rounded-2xl flex items-center justify-center text-white shadow-ds-green">
+                <div className="w-14 h-14 bg-ds-green rounded-2xl flex items-center justify-center text-ds-on-green shadow-ds-green">
                    {policy.type === 'CAR' ? <Car size={28}/> : <Plane size={28}/>}
                 </div>
                 <div>
@@ -266,7 +266,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
              <button className="flex-1 py-5 bg-white dark:bg-white/10 border border-black/5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:shadow-lg transition-all">
                 <FileCheck size={18}/> E-Policy PDF
              </button>
-             <button className="flex-1 py-5 bg-ds-green text-white rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-ds-green hover:scale-[1.02] active:scale-95 transition-all">
+             <button className="flex-1 py-5 bg-ds-green text-ds-on-green rounded-2xl text-[0.65rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-ds-green hover:scale-[1.02] active:scale-95 transition-all">
                 <ShieldAlert size={18}/> START CLAIM AI
              </button>
           </div>
@@ -529,7 +529,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
       <div className="px-4 pt-4 pb-4 space-y-4">
         {/* Avatar + Name */}
         <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm p-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-xl shadow-ds-green flex-shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-ds-green flex items-center justify-center text-ds-on-green font-black text-xl shadow-ds-green flex-shrink-0">
             {currentUser?.name?.[0] || 'M'}
           </div>
           <div className="flex-1 min-w-0">

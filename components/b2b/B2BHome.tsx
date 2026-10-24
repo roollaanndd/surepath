@@ -80,8 +80,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
       {/* CTA */}
       <button
         onClick={() => onNavigate('new')}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl text-white py-4 font-black text-sm active:scale-95 transition-transform shadow-ds-green"
-        style={{ background: '#00C16A' }}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-ds-green text-ds-on-green py-4 font-black text-sm active:scale-95 transition-transform shadow-ds-green"
       >
         <FilePlus size={18} />
         {t('New Submission', 'Pengajuan Baru')}

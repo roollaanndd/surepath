@@ -206,7 +206,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                   <>
                     <button
                       onClick={() => handleVerify(a)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 size={12} /> Verifikasi
                     </button>

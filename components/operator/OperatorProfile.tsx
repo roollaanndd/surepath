@@ -98,7 +98,7 @@ const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
               <span className="bg-white/15 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold">
                 {operator?.nodeId ?? 'SP-OP'}
               </span>
-              <span className="bg-ds-green text-white px-2 py-0.5 rounded-full text-[10px] font-bold">Active</span>
+              <span className="bg-ds-green text-ds-on-green px-2 py-0.5 rounded-full text-[10px] font-bold">Active</span>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
                 <button
                   onClick={handleInstall}
                   disabled={!canInstall}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform disabled:opacity-60"
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform disabled:opacity-60"
                 >
                   <Download size={13} />
                   {canInstall ? 'Pasang Sekarang' : 'Tambahkan ke Layar Utama'}

@@ -20,7 +20,7 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 const VARIANT_CLASSES: Record<NonNullable<IconButtonProps['variant']>, string> = {
   default: 'bg-ds-card text-ds-ink2 border border-ds-border hover:border-ds-border-strong hover:text-ds-ink',
   ghost:   'bg-transparent text-ds-ink2 hover:bg-ds-card2 hover:text-ds-ink',
-  primary: 'bg-ds-green text-white hover:bg-ds-green-dk',
+  primary: 'bg-ds-green text-ds-on-green hover:bg-ds-green-dk',
 };
 
 const SIZE_CLASSES: Record<NonNullable<IconButtonProps['size']>, string> = {

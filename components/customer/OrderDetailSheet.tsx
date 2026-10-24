@@ -277,7 +277,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
             <button
               onClick={handleDownloadQuote}
               disabled={downloadingQuote}
-              className="w-full py-3 rounded-2xl bg-ds-green text-white font-black text-sm shadow-ds-green active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl bg-ds-green text-ds-on-green font-black text-sm shadow-ds-green active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {downloadingQuote ? (
                 <>
@@ -304,7 +304,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
                 <button
                   onClick={handleResubmit}
                   disabled={cancelling}
-                  className="w-full py-3 rounded-2xl bg-ds-green text-white font-black text-sm shadow-ds-green active:scale-95 transition-transform disabled:opacity-50"
+                  className="w-full py-3 rounded-2xl bg-ds-green text-ds-on-green font-black text-sm shadow-ds-green active:scale-95 transition-transform disabled:opacity-50"
                 >
                   {t('Modify & Resubmit', 'Ubah & Ajukan Ulang')}
                 </button>
@@ -313,7 +313,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
             {isTerminal && (
               <button
                 onClick={() => onResubmit(resubmitPage)}
-                className="w-full py-3 rounded-2xl bg-ds-green text-white font-black text-sm shadow-ds-green active:scale-95 transition-transform"
+                className="w-full py-3 rounded-2xl bg-ds-green text-ds-on-green font-black text-sm shadow-ds-green active:scale-95 transition-transform"
               >
                 {t('Resubmit', 'Ajukan Ulang')}
               </button>

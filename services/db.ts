@@ -15,10 +15,23 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Calls the data-gateway edge function with the current Supabase Auth session JWT.
 // All sensitive table reads/writes should go through here instead of direct DB calls.
 
+// Badan respons gerbang dikembalikan utuh (`{ ...body, status }` di bawah), jadi
+// bentuknya terbuka: beberapa aksi membawa kunci tambahan di samping `data` —
+// `temp_password` dan `recovery_link` dari actions/mitraAccounts.ts misalnya.
+// Mendaftar hanya empat kunci membuat tsc menolak pembacaan kunci yang memang
+// dikirim server.
+export interface GatewayResponse {
+  data?: any;
+  error?: string;
+  status?: number;
+  existed?: boolean;
+  [key: string]: unknown;
+}
+
 export async function callGateway(
   action: string,
   params?: Record<string, unknown>,
-): Promise<{ data?: any; error?: string; status?: number; existed?: boolean }> {
+): Promise<GatewayResponse> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) return { error: 'Not authenticated' };

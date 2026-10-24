@@ -115,6 +115,23 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // ── Resolve and login — deduplicated via ref ──────────────────────────────
   const resolveAndLogin = async (user: any) => {
     if (resolvedRef.current) return;
+    // ── Kata sandi sementara yang disetel admin ────────────────────────────
+    //
+    // MASTER_ADMIN bisa menyetel kata sandi sementara untuk mitra yang
+    // terkunci (data-gateway: admin_set_mitra_temp_password). Sandi itu
+    // diketahui orang lain, jadi akunnya belum boleh masuk aplikasi sebelum
+    // penggunanya mengganti sendiri. Dipasang di sini, bukan di satu jalur
+    // login saja: signInWithPassword, OTP, dan sesi yang dipulihkan semuanya
+    // melewati titik ini.
+    if (user?.user_metadata?.must_change_password === true) {
+      setMode('RESET_PASSWORD');
+      setLoading(false);
+      setError(t(
+        'Your password was set by an administrator. Choose a new one to continue.',
+        'Kata sandimu disetel oleh admin. Buat kata sandi baru untuk melanjutkan.',
+      ));
+      return;
+    }
     resolvedRef.current = true; // claim immediately — JS is single-threaded
     try {
       const outcome = await buildUserObj(user);
@@ -375,13 +392,23 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // ── Reset password (after email link) ────────────────────────────────────
   const handleResetPassword = async (ev: React.FormEvent) => {
     ev.preventDefault(); setLoading(true); setError(null);
-    const { error: e } = await supabase.auth.updateUser({ password: newPassword });
+    // Bendera must_change_password dibersihkan dalam panggilan yang sama.
+    // Kalau dipisah, kegagalan di antaranya meninggalkan akun yang sandinya
+    // sudah baru tapi tetap terkunci di formulir ini.
+    const { data: updated, error: e } = await supabase.auth.updateUser({
+      password: newPassword,
+      data: { must_change_password: false },
+    });
     if (e) { setError(e.message); setLoading(false); return; }
     // Leave recovery mode before resolving the authenticated user, otherwise
     // the reset route would keep rendering this form after the password saves.
     window.history.replaceState({}, '', window.location.pathname);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) await resolveAndLogin(session.user);
+    setError(null);
+    // Pengguna dari updateUser dipakai lebih dulu: metadatanya sudah yang
+    // terbaru, sementara sesi yang di-cache masih bisa membawa bendera lama
+    // dan langsung memantulkan login kembali ke formulir ini.
+    const refreshed = updated?.user ?? (await supabase.auth.getSession()).data.session?.user;
+    if (refreshed) await resolveAndLogin(refreshed);
     setLoading(false);
   };
 

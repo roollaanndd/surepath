@@ -132,6 +132,57 @@ export async function registerAgent(data: {
   return result as SpUser;
 }
 
+// ─── Kelola akun mitra dari CMS admin (v2.7.6) ───────────────────────────────
+//
+// Semua pekerjaan istimewanya ada di supabase/functions/data-gateway/actions/
+// mitraAccounts.ts; fungsi-fungsi di sini cuma pembungkus bertipe. Yang penting
+// untuk diingat pemanggilnya: `temp_password` HANYA ada di respons, tidak
+// pernah di basis data, jadi kalau layar itu ditutup kata sandinya hilang dan
+// harus disetel ulang.
+
+export interface CreateMitraInput {
+  name: string;
+  email: string;
+  phone: string;
+  ktp?: string | null;
+  address?: string | null;
+  upline_code?: string | null;
+  /** 'invite' mengirim email undangan; 'temp' mengembalikan kata sandi sementara (MASTER_ADMIN). */
+  mode?: 'invite' | 'temp';
+}
+
+export async function createMitra(
+  input: CreateMitraInput,
+): Promise<{ agent?: SpUser; tempPassword?: string | null; mode?: string; error?: string }> {
+  const res = await callGateway('admin_create_mitra', input as unknown as Record<string, unknown>);
+  if (res.error) return { error: res.error };
+  return {
+    agent: res.data as SpUser,
+    tempPassword: (res.temp_password as string | null) ?? null,
+    mode: res.mode as string | undefined,
+  };
+}
+
+export async function sendMitraPasswordReset(
+  userId: string,
+): Promise<{ email?: string; recoveryLink?: string | null; error?: string }> {
+  const res = await callGateway('admin_send_mitra_reset', { user_id: userId });
+  if (res.error) return { error: res.error };
+  return { email: res.data?.email, recoveryLink: (res.recovery_link as string | null) ?? null };
+}
+
+export async function setMitraTempPassword(
+  userId: string,
+  requireChange = true,
+): Promise<{ tempPassword?: string; email?: string; error?: string }> {
+  const res = await callGateway('admin_set_mitra_temp_password', {
+    user_id: userId,
+    require_change: requireChange,
+  });
+  if (res.error) return { error: res.error };
+  return { tempPassword: res.temp_password as string, email: res.data?.email };
+}
+
 export async function createCustomerProfile(data: {
   id: string;
   name: string;

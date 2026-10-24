@@ -22,14 +22,14 @@
 
 :root {
   /* ── Backgrounds ─────────────────────────────────────────────────────── */
-  --ds-bg:           #F4F7FB;   /* app background — was --ds-bg */
+  --ds-bg:           #FFFFFF;   /* clean white canvas; brand green carries the visual warmth */
   --ds-surface:      #FFFFFF;   /* cards, sheets — was --ds-card */
-  --ds-surface-2:    #F8FAFC;   /* inset cards, code blocks — was --ds-card2 */
+  --ds-surface-2:    #F3FAF6;   /* subtle mint inset surface, not blue-gray */
   --ds-surface-hero: linear-gradient(135deg, #003B2F 0%, #005240 60%, #003B2F 100%);
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
-  --ds-border:        #E2E8F0;   /* default — was --ds-border */
-  --ds-border-strong: #CBD5E1;   /* focused inputs, dividers */
+  --ds-border:        #E0EEE5;   /* soft green-neutral border */
+  --ds-border-strong: #B9D9C5;   /* focused inputs, dividers */
 
   /* ── Text ────────────────────────────────────────────────────────────── */
   --ds-text-primary:   #0F172A;   /* headings, body — was --ds-ink (#111827) */
@@ -605,6 +605,17 @@ body {
 .dark .text-slate-600 { color: #94A3B8 !important; }
 
 .dark .text-black { color: #F1F5F9 !important; }
+
+/* Light-mode neutral utility surfaces: remove the cold gray-card look while
+   preserving semantic colors and all dark-mode overrides. */
+:root:not(.dark) .bg-gray-50,
+:root:not(.dark) .bg-slate-50 { background-color: #F8FCF9; }
+:root:not(.dark) .bg-gray-100,
+:root:not(.dark) .bg-slate-100 { background-color: #F0F8F3; }
+:root:not(.dark) .border-gray-100,
+:root:not(.dark) .border-slate-100,
+:root:not(.dark) .border-gray-200,
+:root:not(.dark) .border-slate-200 { border-color: #E0EEE5; }
 
 /* Dark mode backgrounds for hardcoded bg-white */
 .dark .bg-white { background-color: #0F1829 !important; }

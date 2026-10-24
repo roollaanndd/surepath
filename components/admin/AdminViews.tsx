@@ -109,7 +109,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             {/* Photos */}
             <div className="grid grid-cols-2 gap-4">
               {/* Profile photo */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
                 <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Foto Profil</p>
                 {user.profile_photo_url && !imgError['profile'] ? (
                   <img
@@ -1657,7 +1657,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
   const errorCount   = rows.filter(r => r.status === 'error').length;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={importing ? undefined : onClose} />
       <div className="relative z-10 w-full max-w-2xl mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
@@ -1863,7 +1863,7 @@ const AddMitraModal: React.FC<{
   const labelCls = 'block text-[0.62rem] font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
       <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-3xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
         <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg mb-4 flex items-center gap-3">
@@ -1872,7 +1872,7 @@ const AddMitraModal: React.FC<{
         {error && (
           <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
         )}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <label className={labelCls}>Nama Lengkap</label>
             <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
@@ -1904,7 +1904,7 @@ const AddMitraModal: React.FC<{
 
           <div>
             <label className={labelCls}>Cara Mitra Masuk Pertama Kali</label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setMode('invite')}

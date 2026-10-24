@@ -808,3 +808,57 @@ html.sp-app-locked body {
     transform: none !important;
   }
 }
+
+
+/* ─── SurePath Master UI system (v1) ────────────────────────────────────────
+   Shared semantic tokens and reusable surfaces. Additive by design: existing
+   legacy tokens/classes remain unchanged to avoid regressions across portals.
+   See docs/SUREPATH_MASTER_UI_SYSTEM.md.
+*/
+:root {
+  --sp-brand-forest: #064E3B;
+  --sp-brand-emerald: #059669;
+  --sp-brand-bright: #10B981;
+  --sp-brand-mint: #ECFDF5;
+  --sp-brand-orange: #F97316;
+  --sp-brand-orange-soft: #FFF7ED;
+  --sp-text-primary: #102A23;
+  --sp-text-secondary: #64748B;
+  --sp-border: #DDEAE4;
+  --sp-radius-card: 28px;
+  --sp-radius-control: 14px;
+  --sp-shadow-card: 0 12px 32px -22px rgba(6, 78, 59, 0.30);
+  --sp-shadow-card-hover: 0 16px 36px -20px rgba(6, 78, 59, 0.36);
+  --sp-motion-fast: 150ms ease-out;
+  --sp-motion-base: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sp-master-card {
+  background: var(--ds-surface, #fff);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius-card);
+  box-shadow: var(--sp-shadow-card);
+}
+.sp-master-action {
+  min-height: 44px;
+  border-radius: var(--sp-radius-control);
+  transition: transform var(--sp-motion-fast), box-shadow var(--sp-motion-base), background-color var(--sp-motion-fast);
+}
+.sp-master-action:active { transform: scale(0.985); }
+.sp-master-action:focus-visible {
+  outline: 2px solid var(--sp-brand-emerald);
+  outline-offset: 3px;
+}
+.sp-master-accent {
+  color: var(--sp-brand-orange);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-master-card { transition: box-shadow var(--sp-motion-base), border-color var(--sp-motion-base); }
+  .sp-master-card:hover {
+    border-color: color-mix(in srgb, var(--sp-brand-emerald) 30%, var(--sp-border));
+    box-shadow: var(--sp-shadow-card-hover);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-master-action, .sp-master-card { transition: none !important; }
+  .sp-master-action:active { transform: none; }
+}

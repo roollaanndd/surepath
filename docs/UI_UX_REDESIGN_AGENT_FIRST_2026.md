@@ -6,10 +6,10 @@ Deliver a visibly fresh, premium, mobile-first experience across every SurePath 
 
 ## Design direction
 
-- **Brand:** deep emerald and forest green as the anchor, crisp white and soft sage surfaces, restrained lime for progress, and a small orange accent only for attention states.
-- **Personality:** confident, calm, precise, modern financial product; avoid excessive glass effects, decorative gradients, oversized mascots, and crowded dashboard cards.
+- **Brand:** white-first surfaces across the product (target roughly 70–80% white/light neutral space), anchored by deep emerald and forest green. Use soft sage sparingly, lime for progress, and a fresh warm orange accent (e.g. #F28C28) in small doses for secondary highlights, selected chips, tiny icon details, or promotional emphasis. Orange must not compete with green primary actions or signal destructive/error states.
+- **Personality:** fresh, bright, trustworthy, confident, and modern-financial; white space creates clarity, green builds trust, orange adds energy. Avoid excessive glass effects, decorative gradients, oversized mascots, orange-heavy blocks, and crowded dashboard cards.
 - **Typography:** clear hierarchy, readable body copy, tabular numerals for money, avoid all-caps microcopy for important data.
-- **Surfaces:** consistent spacing, subtle borders, modest shadows, 16–22px card radii, clear separation between primary and secondary actions.
+- **Surfaces:** white backgrounds should dominate app canvases, cards, forms, and content areas; use pale neutral/sage only to group secondary sections. Keep consistent spacing, subtle borders, modest shadows, 16–22px card radii, and clear separation between primary and secondary actions. Avoid large dark/green panels except for a deliberate hero or a small high-value summary.
 - **Motion:** short, purposeful transitions; no motion that delays quotes, payments, approvals, or claim submission. Respect `prefers-reduced-motion`.
 - **Accessibility:** WCAG AA contrast, visible keyboard focus, labelled controls, 44px minimum touch targets, safe-area support, 16px minimum mobile form text, meaningful empty/loading/error states.
 - **Assets:** use the approved SurePath logo and managed portal icon assets exactly as provided. Never redraw, approximate, or substitute the brand mark.

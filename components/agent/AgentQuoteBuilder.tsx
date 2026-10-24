@@ -588,7 +588,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
+    <div className="sp-agent-quote bg-gray-50 dark:bg-ds-dk-bg min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto space-y-5 font-sora">
       {draftSavedAt && (
         <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800" role="status">
           <CheckCircle2 size={14} />

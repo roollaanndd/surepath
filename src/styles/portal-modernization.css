@@ -890,3 +890,76 @@
     transition: none !important;
   }
 }
+
+
+/* Operator app redesign: white-first command center, emerald structure, restrained orange attention cues. */
+.sp-operator-premium {
+  --sp-operator-orange: #f97316;
+  --sp-operator-green: #08794e;
+  --sp-operator-surface: #ffffff;
+}
+.sp-operator-premium .sp-operator-hero {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(249, 115, 22, .10), transparent 32%),
+    linear-gradient(135deg, #ffffff 0%, #fbfefc 72%, #f1faf5 100%);
+  border-color: #e0ebe4;
+}
+.sp-operator-premium .sp-operator-hero > div:first-child {
+  background: radial-gradient(circle, rgba(0, 193, 106, .13) 0%, rgba(0, 193, 106, 0) 72%) !important;
+}
+.sp-operator-premium .sp-operator-hero .text-white,
+.sp-operator-premium .sp-operator-hero .text-white\/55,
+.sp-operator-premium .sp-operator-hero .text-white\/75 {
+  color: #17382b !important;
+}
+.sp-operator-premium .sp-operator-hero .bg-white\/10 {
+  background: #f2f8f4 !important;
+  border: 1px solid #e3eee7;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.sp-operator-premium .sp-operator-hero .border-white\/10 {
+  border-color: #e2ece5 !important;
+}
+.sp-operator-premium .sp-operator-hero .text-ds-green {
+  color: #08794e !important;
+}
+.sp-operator-premium .sp-operator-hero .text-amber-300 {
+  color: #c65d12 !important;
+}
+.sp-operator-premium .sp-operator-queue-card {
+  min-height: 132px;
+  background: #fff;
+  border-color: #e1ebe5;
+  box-shadow: 0 8px 24px -20px rgba(7, 79, 52, .35);
+}
+.sp-operator-premium .sp-operator-queue-card:hover {
+  border-color: #b9d9c7;
+  box-shadow: 0 14px 30px -22px rgba(7, 79, 52, .38);
+}
+.sp-operator-premium .sp-operator-dashboard .bg-blue-50 { background: #f4f8ff; }
+.sp-operator-premium .sp-operator-dashboard .bg-emerald-50 { background: #f0faf4; }
+.sp-operator-premium .sp-operator-dashboard .bg-orange-50 { background: #fff5ed; }
+.dark .sp-operator-premium .sp-operator-hero {
+  background: radial-gradient(circle at 100% 0%, rgba(249, 115, 22, .12), transparent 32%), #10251d;
+  border-color: #254638;
+}
+.dark .sp-operator-premium .sp-operator-hero .text-white,
+.dark .sp-operator-premium .sp-operator-hero .text-white\/55,
+.dark .sp-operator-premium .sp-operator-hero .text-white\/75 {
+  color: #edf8f1 !important;
+}
+.dark .sp-operator-premium .sp-operator-hero .bg-white\/10 {
+  background: #18372a !important;
+  border-color: #2b4d3c;
+}
+.dark .sp-operator-premium .sp-operator-hero .border-white\/10 { border-color: #294b3a !important; }
+.dark .sp-operator-premium .sp-operator-queue-card {
+  background: #13251d;
+  border-color: #294638;
+}
+.dark .sp-operator-premium .sp-operator-dashboard .bg-orange-50 { background: rgba(124, 45, 18, .25); }
+@media (max-width: 420px) {
+  .sp-operator-premium .sp-operator-hero { padding: 1.1rem; }
+  .sp-operator-premium .sp-operator-queue-card { min-height: 120px; padding: .85rem; }
+}

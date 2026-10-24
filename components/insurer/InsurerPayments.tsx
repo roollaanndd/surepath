@@ -22,6 +22,19 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
+// The gateway returns payment_method as a raw enum (VIRTUAL_ACCOUNT, EWALLET).
+// Printed verbatim it is both shouty and long enough to wrap the meta line.
+const humanMethod = (m: string | null) =>
+  m ? m.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '-';
+
+// dd/mm/yyyy HH.mm — the seconds in toLocaleString() cost a line and settle
+// nothing an insurer reconciles against.
+const shortStamp = (iso: string) => {
+  const d = new Date(iso);
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()} ${p2(d.getHours())}.${p2(d.getMinutes())}`;
+};
+
 const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
   const t = useT(lang);
   void t; // i18n helper — strings will be translated incrementally
@@ -111,7 +124,7 @@ const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
       >
         <button
           onClick={handleExportCSV}
-          className="mt-3 inline-flex items-center px-3.5 py-2 rounded-full bg-white/10 border border-white/15 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+          className="mt-3 inline-flex items-center px-3.5 py-2 rounded-full bg-white/10 border border-white/15 text-white text-2xs font-black uppercase tracking-wider active:scale-95 transition-transform"
         >
           Export CSV
         </button>
@@ -124,24 +137,24 @@ const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
               <CheckCircle2 size={18} className="text-emerald-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
+            <span className="text-2xs font-black uppercase tracking-wider text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
               {allPayments.filter(p => p.status === 'PAID').length}
             </span>
           </div>
-          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-2">Total Lunas</p>
-          <p className="text-xl font-black text-emerald-500 mt-0.5">{fmtIdr(totalPaid)}</p>
+          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-2">Total Lunas</p>
+          <p className="text-base font-black text-emerald-500 mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPaid)}</p>
         </div>
         <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
           <div className="flex items-center justify-between">
             <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
               <Clock size={18} className="text-amber-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
+            <span className="text-2xs font-black uppercase tracking-wider text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
               {allPayments.filter(p => p.status === 'PENDING').length}
             </span>
           </div>
-          <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-2">Total Pending</p>
-          <p className="text-xl font-black text-amber-500 mt-0.5">{fmtIdr(totalPending)}</p>
+          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-2">Total Pending</p>
+          <p className="text-base font-black text-amber-500 mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPending)}</p>
         </div>
       </div>
 
@@ -166,12 +179,12 @@ const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   <p className="text-sm font-bold text-ds-ink mt-0.5 truncate">{p.client_name ?? '-'}</p>
                   <p className="text-xs text-ds-ink2 mt-0.5">{p.product_name ?? '-'}</p>
                   <p className="text-sm font-black text-emerald-500 mt-1">{fmtIdr(p.paid_amount ?? p.amount)}</p>
-                  <div className="flex items-center gap-2 mt-2 text-[10px] text-ds-ink3">
-                    <span>{p.payment_method ?? '-'} {p.payment_channel ?? ''}</span>
-                    {p.paid_at && <span>· {new Date(p.paid_at).toLocaleString('id-ID')}</span>}
+                  <div className="flex items-center gap-1.5 mt-2 text-2xs text-ds-ink3 min-w-0">
+                    <span className="truncate">{humanMethod(p.payment_method)}{p.payment_channel ? ` · ${p.payment_channel}` : ''}</span>
+                    {p.paid_at && <span className="shrink-0 tabular-nums">· {shortStamp(p.paid_at)}</span>}
                   </div>
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${
                   p.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                   : p.status === 'PENDING' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
                   : 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'

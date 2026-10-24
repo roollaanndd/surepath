@@ -39,6 +39,37 @@ Ikon navigasi kembar, dan sisa terakhir teks di bawah 11px.
   tetap utuh. Sekarang memakai `[overflow-wrap:normal]`, dan teks cadangannya
   dipendekkan jadi "belum ada" supaya muat.
 
+**Layar interior Insurer — pertama kali benar-benar diukur**
+- Lima layar di balik nav Insurer (Polis, Klaim, Bayar, Profil, Notifikasi)
+  tidak pernah muncul di satu pun sapuan audit: harness-nya selalu berhenti di
+  Beranda, jadi 31 kelas di bawah 11px di sana tidak pernah terlihat. Harness
+  baru menekan tiap tab dan lonceng notifikasi, lalu mengukur yang benar-benar
+  tergambar. Hasilnya sekarang **0 di keenam layar**.
+- Menaikkan ukuran teks selalu berisiko membuat baris yang tadinya muat jadi
+  terpotong, jadi pengukurannya memakai kotak baris teks itu sendiri (lewat
+  `Range.getClientRects()`), bukan tinggi elemen: tinggi elemen ikut menghitung
+  padding, dan itu melaporkan pil satu baris ("Baru") sebagai dua baris.
+
+**Tiga cacat yang ketahuan karena layarnya akhirnya terlihat**
+- Total di kartu Bayar patah setelah "Rp", angkanya turun ke baris kedua —
+  persis kelas bug yang diperbaiki untuk dasbor Admin di #269. Sekarang
+  `text-base` + `whitespace-nowrap`: angka penuh sembilan digit muat satu
+  baris. Sempat saya pendekkan jadi "Rp 4,9 jt", lalu saya batalkan — ini layar
+  rekonsiliasi, angkanya harus persis.
+- Baris meta di daftar pembayaran jadi dua baris setelah naik ke 11px, dan
+  timestamp-nya terbelah setelah koma. Kendalanya lebar, bukan ukuran, jadi
+  isinya yang dipendekkan: enum `VIRTUAL_ACCOUNT` jadi "Virtual Account", dan
+  detik yang tidak direkonsiliasi siapa pun dibuang.
+- Di Klaim, "Coverage: … · Sum Insured: …" memecah labelnya sendiri jadi
+  "Sum / Insured:". Sekarang dua kolom berlabel, Indonesia, di bawah barisnya
+  (percobaan pertama menaruhnya sebaris dengan pil status, dan di lebar ~105px
+  kata "PERTANGGUNGAN" sendiri ikut terpotong).
+
+**Penomoran**
+- Cabang ini duduk di 2.6.23 sementara main sudah terbit v2.7.0 dari #258,
+  jadi merge apa adanya akan **menurunkan** `APP_VERSION`. PR #267 sudah
+  memegang 2.7.1 di cabangnya, maka rilis ini mengambil 2.7.2.
+
 ## v2.7.0 — 2026-10-23
 
 **SEO: halaman yang bisa ditemukan, ditautkan, dan diukur.**

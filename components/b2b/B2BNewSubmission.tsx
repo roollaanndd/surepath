@@ -238,14 +238,14 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{label}</div>
               {uploadedDocs[key] && (
-                <div className="flex items-center gap-1 mt-1 text-emerald-500 text-[11px] font-bold">
+                <div className="flex items-center gap-1 mt-1 text-ds-green text-[11px] font-bold">
                   <CheckCircle2 size={12} /> {t('Uploaded', 'Terunggah')}
                 </div>
               )}
             </div>
             <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
               uploadedDocs[key]
-                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-ds-green dark:text-emerald-400'
                 : 'bg-emerald-500 text-white'
             }`}>
               {uploadingKey === key
@@ -302,7 +302,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
         {STEPS.map((label, i) => (
           <React.Fragment key={label}>
             <div className={`flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-xs font-black transition-colors ${
-              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'
+              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-ds-ink3'
             }`}>
               {i < step ? '✓' : i + 1}
             </div>

@@ -66,13 +66,13 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
       {/* Stat pills */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: t('Pending', 'Pending'), value: pendingCount,  color: 'text-amber-500' },
-          { label: t('Quotes',  'Penawaran'), value: receivedCount, color: 'text-green-500' },
-          { label: t('Accepted','Diterima'),  value: acceptedCount, color: 'text-emerald-500' },
+          { label: t('Pending', 'Pending'), value: pendingCount,  color: 'text-ds-amber' },
+          { label: t('Quotes',  'Penawaran'), value: receivedCount, color: 'text-ds-green' },
+          { label: t('Accepted','Diterima'),  value: acceptedCount, color: 'text-ds-green' },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 text-center shadow-sm">
             <div className={`text-2xl font-black ${color}`}>{value}</div>
-            <div className="text-2xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 leading-tight">{label}</div>
+            <div className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
       </div>
@@ -110,7 +110,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-xs font-black text-slate-800 dark:text-white">{sub.company_name}</div>
-                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <div className="text-[11px] text-ds-ink3 mt-0.5">
                       {PRODUCT_LABEL[sub.product_type] ?? sub.product_type} · {fmtDate(sub.created_at)}
                     </div>
                   </div>

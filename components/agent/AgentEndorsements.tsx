@@ -30,8 +30,8 @@ const TYPE_LABELS: Record<SpEndorsement['type'], string> = {
 };
 
 const STATUS_STYLE: Record<SpEndorsement['status'], string> = {
-  PENDING:  'bg-amber-500/10 text-amber-600 border-amber-500/30',
-  APPROVED: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
+  PENDING:  'bg-amber-500/10 text-ds-amber border-amber-500/30',
+  APPROVED: 'bg-emerald-500/10 text-ds-green border-emerald-500/30',
   REJECTED: 'bg-rose-500/10 text-rose-600 border-rose-500/30',
 };
 
@@ -176,7 +176,7 @@ const AgentEndorsements: React.FC<Props> = ({ agentId, lang }) => {
                     </span>
                   )}
                   {e.new_value && (
-                    <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                    <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-ds-green dark:text-emerald-400 rounded-lg">
                       {t('New:', 'Baru:')} {e.new_value}
                     </span>
                   )}

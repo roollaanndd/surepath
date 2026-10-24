@@ -63,7 +63,7 @@ import { PathyNavIcon } from '../shared/PathyNavIcon';
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
-    <Loader2 size={32} className="animate-spin text-emerald-500" />
+    <Loader2 size={32} className="animate-spin text-ds-green" />
   </div>
 );
 
@@ -358,7 +358,7 @@ const AdminPortal = ({
           </div>
           <div className="min-w-0 flex-1">
             <h1 className={`font-black text-lg tracking-tight leading-none ${'text-ds-ink'}`}>
-              Sure<span className="text-emerald-500">Path</span>
+              Sure<span className="text-ds-green">Path</span>
             </h1>
             <button
               onClick={() => logoInputRef.current?.click()}
@@ -480,7 +480,7 @@ const AdminPortal = ({
             </div>
             <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
             <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
-            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
           </button>
         ))}
       </div>
@@ -502,7 +502,7 @@ const AdminPortal = ({
               </div>
               <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
               <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
-              <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+              <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
             </button>
           ))}
           {/* Online Users Card */}
@@ -523,7 +523,7 @@ const AdminPortal = ({
                 {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
               </p>
             )}
-            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500`}>Lihat detail →</p>
+            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
           </button>
         </div>
       </div>
@@ -573,7 +573,7 @@ const AdminPortal = ({
                       <p className={`text-xs font-bold truncate ${'text-ds-ink'}`}>{a.name}</p>
                       <p className={`text-[9px] ${'text-ds-ink3'}`}>{a.orders} pesanan</p>
                     </div>
-                    <span className="text-[10px] font-black text-emerald-500">{formatIDR(a.premium)}</span>
+                    <span className="text-[10px] font-black text-ds-green">{formatIDR(a.premium)}</span>
                   </div>
                 ))
             : <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
@@ -581,7 +581,7 @@ const AdminPortal = ({
           {adminStats && adminStats.pendingCommissions > 0 && (
             <div className={`mt-4 pt-4 border-t flex justify-between text-xs ${'border-ds-border'}`}>
               <span className={'text-ds-ink3'}>Komisi tertunda</span>
-              <span className="font-black text-amber-500">{formatIDR(adminStats.pendingCommissions)}</span>
+              <span className="font-black text-ds-amber">{formatIDR(adminStats.pendingCommissions)}</span>
             </div>
           )}
         </div>
@@ -728,7 +728,7 @@ const AdminPortal = ({
           <div className="flex items-center gap-2 shrink-0">
             {currentUser?.email && (
               <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-2xs font-bold uppercase tracking-wider border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
-                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black text-badge`}>
+                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-ds-green flex items-center justify-center font-black text-badge`}>
                   {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
                 </span>
                 {currentUser.email}
@@ -786,7 +786,7 @@ const AdminPortal = ({
                           await Promise.all(notifications.filter(n => !n.read).map(n => markAdminNotificationRead(n.id)));
                           setNotifications(prev => prev.map(n => ({ ...n, read: true })));
                         }}
-                        className="text-[0.55rem] font-bold text-emerald-500 hover:text-emerald-400"
+                        className="text-[0.55rem] font-bold text-ds-green hover:text-emerald-400"
                       >
                         Tandai semua dibaca
                       </button>

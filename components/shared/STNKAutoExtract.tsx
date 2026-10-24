@@ -136,7 +136,7 @@ const STNKAutoExtract: React.FC<Props> = ({ onExtracted, compact = false }) => {
 
           {/* Recommendation */}
           <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-ds-green">
               <Car size={10} /> Rekomendasi AI
             </div>
             <div className="space-y-1">
@@ -154,7 +154,7 @@ const STNKAutoExtract: React.FC<Props> = ({ onExtracted, compact = false }) => {
               </p>
               <div className="flex justify-between items-center pt-1 border-t border-emerald-200 dark:border-emerald-800">
                 <span className="text-xs text-ds-ink3">Estimasi Premi:</span>
-                <span className="font-mono font-black text-emerald-600">{fmtIDR(result.recommendation.estimatedPremium)}</span>
+                <span className="font-mono font-black text-ds-green">{fmtIDR(result.recommendation.estimatedPremium)}</span>
               </div>
               <p className="text-[10px] text-ds-ink3 text-right">
                 Range: {fmtIDR(result.recommendation.premiumRange.min)} - {fmtIDR(result.recommendation.premiumRange.max)}
@@ -191,7 +191,7 @@ const STNKAutoExtract: React.FC<Props> = ({ onExtracted, compact = false }) => {
           {/* Next steps */}
           {result.recommendation.nextSteps.length > 0 && (
             <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">Next Steps</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-amber mb-1">Next Steps</p>
               {result.recommendation.nextSteps.map((step, i) => (
                 <p key={i} className="text-[11px] text-amber-800 dark:text-amber-300">{i + 1}. {step}</p>
               ))}

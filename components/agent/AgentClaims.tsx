@@ -252,7 +252,7 @@ const ClaimDetail: React.FC<{ claim: SpClaim; lang: Language; onClose: () => voi
           {claim.amount_approved !== undefined && claim.amount_approved !== null && (
             <div className="flex justify-between items-start py-2.5 border-b border-slate-50 dark:border-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Approved', 'Disetujui')}</span>
-              <span className="text-sm font-bold text-emerald-500">{formatIDR(claim.amount_approved)}</span>
+              <span className="text-sm font-bold text-ds-green">{formatIDR(claim.amount_approved)}</span>
             </div>
           )}
         </div>

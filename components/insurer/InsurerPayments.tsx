@@ -135,26 +135,26 @@ const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
         <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
           <div className="flex items-center justify-between">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
-              <CheckCircle2 size={18} className="text-emerald-500" />
+              <CheckCircle2 size={18} className="text-ds-green" />
             </div>
             <span className="text-2xs font-black uppercase tracking-wider text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
               {allPayments.filter(p => p.status === 'PAID').length}
             </span>
           </div>
           <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-2">Total Lunas</p>
-          <p className="text-base font-black text-emerald-500 mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPaid)}</p>
+          <p className="text-base font-black text-ds-green mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPaid)}</p>
         </div>
         <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
           <div className="flex items-center justify-between">
             <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center">
-              <Clock size={18} className="text-amber-500" />
+              <Clock size={18} className="text-ds-amber" />
             </div>
             <span className="text-2xs font-black uppercase tracking-wider text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
               {allPayments.filter(p => p.status === 'PENDING').length}
             </span>
           </div>
           <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-2">Total Pending</p>
-          <p className="text-base font-black text-amber-500 mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPending)}</p>
+          <p className="text-base font-black text-ds-amber mt-1 tabular-nums leading-none whitespace-nowrap">{fmtIdr(totalPending)}</p>
         </div>
       </div>
 
@@ -178,15 +178,15 @@ const InsurerPayments: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   <p className="text-xs font-mono text-ds-ink3">{p.order_number ?? p.order_id.slice(0, 8)}</p>
                   <p className="text-sm font-bold text-ds-ink mt-0.5 truncate">{p.client_name ?? '-'}</p>
                   <p className="text-xs text-ds-ink2 mt-0.5">{p.product_name ?? '-'}</p>
-                  <p className="text-sm font-black text-emerald-500 mt-1">{fmtIdr(p.paid_amount ?? p.amount)}</p>
+                  <p className="text-sm font-black text-ds-green mt-1">{fmtIdr(p.paid_amount ?? p.amount)}</p>
                   <div className="flex items-center gap-1.5 mt-2 text-2xs text-ds-ink3 min-w-0">
                     <span className="truncate">{humanMethod(p.payment_method)}{p.payment_channel ? ` · ${p.payment_channel}` : ''}</span>
                     {p.paid_at && <span className="shrink-0 tabular-nums">· {shortStamp(p.paid_at)}</span>}
                   </div>
                 </div>
                 <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${
-                  p.status === 'PAID' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
-                  : p.status === 'PENDING' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                  p.status === 'PAID' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
+                  : p.status === 'PENDING' ? 'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400'
                   : 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
                 }`}>
                   {p.status}

@@ -53,8 +53,8 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
   if (!data) return null;
 
   const kpiCards = [
-    { label: 'Menunggu Review', value: data.kpi.pending,      icon: Clock,         color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30',     tab: 'orders' },
-    { label: 'Disetujui',        value: data.kpi.approved,     icon: CheckCircle2,  color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'orders' },
+    { label: 'Menunggu Review', value: data.kpi.pending,      icon: Clock,         color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',     tab: 'orders' },
+    { label: 'Disetujui',        value: data.kpi.approved,     icon: CheckCircle2,  color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'orders' },
     { label: 'Perlu Info',       value: data.kpi.request_info, icon: AlertTriangle, color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',      tab: 'orders' },
     { label: 'Ditolak',          value: data.kpi.declined,     icon: XCircle,       color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-950/30',      tab: 'orders' },
   ];
@@ -119,7 +119,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
       {/* Total premium */}
       <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
         <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider">Total Premi (semua order)</p>
-        <p className="text-2xl font-black text-emerald-500 mt-1">{fmtIdr(totalPremium)}</p>
+        <p className="text-2xl font-black text-ds-green mt-1">{fmtIdr(totalPremium)}</p>
       </div>
 
       {/* Recent orders */}
@@ -135,7 +135,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
                 onClick={() => onNavigate('orders')}
                 className="w-full p-3 rounded-2xl border border-ds-border bg-ds-card flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
               >
-                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center font-black text-emerald-500 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center font-black text-ds-green shrink-0">
                   <FileText size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -144,9 +144,9 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                       o.status === 'SUBMITTED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
-                      : o.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
-                      : o.status === 'UNDER_REVIEW' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
-                      : o.status === 'ISSUED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
+                      : o.status === 'APPROVED' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
+                      : o.status === 'UNDER_REVIEW' ? 'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400'
+                      : o.status === 'ISSUED' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
                       : o.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
                       : 'bg-ds-card2 text-ds-ink3'
                     }`}>

@@ -70,7 +70,7 @@ const PRODUCTS = [
 const PRODUCT_COLOR_MAP: Record<string, string> = {
   blue:   'border-blue-400   bg-blue-50   dark:bg-blue-900/20   text-blue-600   dark:text-blue-400',
   purple: 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-  amber:  'border-amber-400  bg-amber-50  dark:bg-amber-900/20  text-amber-600  dark:text-amber-400',
+  amber:  'border-amber-400  bg-amber-50  dark:bg-amber-900/20  text-ds-amber  dark:text-amber-400',
   green:  'border-green-400  bg-green-50  dark:bg-green-900/20  text-green-600  dark:text-green-400',
 };
 
@@ -607,7 +607,7 @@ const StepHealth: React.FC<{
       )}
       {hasYesHealth && (
         <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex items-start gap-2">
-          <AlertTriangle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <AlertTriangle size={14} className="text-ds-amber mt-0.5 flex-shrink-0" />
           <p className="text-xs text-amber-700 dark:text-amber-400">Informasi ini akan dikonfirmasi saat underwriting Prudential. Premi akhir mungkin disesuaikan.</p>
         </div>
       )}
@@ -640,7 +640,7 @@ const StepBeneficiary: React.FC<{
       <Field label={t('Percentage (%)', 'Persentase (%)')}>
         <input type="number" value={benefPct} onChange={e => setBenefPct(Math.min(100, Math.max(0, Number(e.target.value))))}
           min={1} max={100} className={INPUT_CLS} />
-        {benefPct !== 100 && <p className="text-xs text-amber-500 mt-1">{t('Split beneficiary: remaining must be assigned separately.', 'Penerima manfaat dibagi, sisanya ditambahkan terpisah.')}</p>}
+        {benefPct !== 100 && <p className="text-xs text-ds-amber mt-1">{t('Split beneficiary: remaining must be assigned separately.', 'Penerima manfaat dibagi, sisanya ditambahkan terpisah.')}</p>}
       </Field>
     </div>
   </div>

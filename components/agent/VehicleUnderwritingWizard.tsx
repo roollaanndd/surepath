@@ -1000,13 +1000,13 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 allowCustom
               />
               {autoValue && autoValue > 0 && (
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                <p className="text-[10px] text-ds-green dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   Nilai pasar: Rp {autoValue.toLocaleString('id-ID')} (auto-isi UP)
                 </p>
               )}
               {vehicleDetails.model && !modelOptions.includes(vehicleDetails.model) && (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+                <p className="text-[10px] text-ds-amber dark:text-amber-400 font-bold mt-1">
                   ✎ Model diinput manual
                 </p>
               )}
@@ -1081,7 +1081,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <p className="text-[10px] text-slate-400 font-bold mt-1">
                   {PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.region}
                   {' · '}
-                  <span className="text-emerald-500">OJK Zone {getZone(PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.province ?? '')}</span>
+                  <span className="text-ds-green">OJK Zone {getZone(PLATE_CODES.find(p => p.code === vehicleDetails.plateCode)?.province ?? '')}</span>
                 </p>
               )}
               {vehicleDetails.plate && (
@@ -1193,7 +1193,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => { setSumInsured(dbVal); setSumInsuredDisplay(dbVal.toLocaleString('id-ID')); }}
-                    className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hover:underline"
+                    className="text-[10px] font-black text-ds-green dark:text-emerald-400 uppercase tracking-wider hover:underline"
                   >
                     Pakai nilai pasar (Rp {(dbVal / 1_000_000).toFixed(0)}jt)
                   </button>
@@ -1380,7 +1380,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             Pilih Perusahaan Asuransi
           </h3>
           {!loadingProducts && excludedByAgeCount > 0 && (
-            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mb-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-3 py-2">
+            <p className="text-[11px] text-ds-amber dark:text-amber-400 font-semibold mb-3 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-3 py-2">
               {excludedByAgeCount} mitra asuransi tidak ditampilkan karena melebihi batas maksimal usia kendaraan mereka.
             </p>
           )}
@@ -1455,7 +1455,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         : score >= 60
         ? { label: 'PERLU REVIEW', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' }
         : { label: 'TIDAK MEMENUHI SYARAT', cls: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' };
-    const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-rose-500';
+    const scoreColor = score >= 80 ? 'text-ds-green' : score >= 60 ? 'text-ds-amber' : 'text-rose-500';
 
     return (
       <div className="flex flex-col gap-6">
@@ -1467,7 +1467,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           <ul className="flex flex-col gap-1.5">
             {PHOTO_GUIDELINES.map((g, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <CheckCircle className="w-3.5 h-3.5 text-ds-green flex-shrink-0 mt-0.5" />
                 {g}
               </li>
             ))}
@@ -1538,7 +1538,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                   ) : (
                     <label className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 cursor-pointer">
                       <Upload className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-emerald-400 transition-colors" />
-                      <span className="text-[0.6rem] font-black uppercase text-slate-400 group-hover:text-emerald-500 transition-colors">{slot.label}</span>
+                      <span className="text-[0.6rem] font-black uppercase text-slate-400 group-hover:text-ds-green transition-colors">{slot.label}</span>
                       <span className="text-[0.5rem] text-slate-300 dark:text-slate-600">{slot.desc}</span>
                       <input
                         type="file"
@@ -1562,7 +1562,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <div className="mt-4">
               {aiScoring ? (
                 <div className="flex flex-col items-center gap-2 py-4">
-                  <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-ds-green animate-spin" />
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Menganalisis foto kendaraan…</p>
                 </div>
               ) : (
@@ -1599,7 +1599,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
             {aiResult.underwritingReport && (
               <div className="mb-4 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10">
-                <p className="text-[0.55rem] font-black uppercase text-emerald-500 tracking-widest mb-1">Laporan Surveyor AI</p>
+                <p className="text-[0.55rem] font-black uppercase text-ds-green tracking-widest mb-1">Laporan Surveyor AI</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{aiResult.underwritingReport}</p>
               </div>
             )}
@@ -1616,7 +1616,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                       'bg-slate-50 dark:bg-white/5'
                     }`}
                   >
-                    <AlertTriangle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${issue.severity === 'Severe' ? 'text-rose-500' : issue.severity === 'Moderate' ? 'text-amber-500' : 'text-slate-400'}`} />
+                    <AlertTriangle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${issue.severity === 'Severe' ? 'text-rose-500' : issue.severity === 'Moderate' ? 'text-ds-amber' : 'text-slate-400'}`} />
                     <div>
                       <span className="font-semibold text-slate-700 dark:text-slate-200">{issue.part}</span>
                       <span className="text-slate-500 dark:text-slate-400 ml-1">— {issue.description}</span>
@@ -1690,7 +1690,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               {code} — {name}
             </span>
             {selectedInsurerProduct && (
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-ds-green dark:text-emerald-400 font-bold text-xs px-3 py-1 rounded-full">
                 {selectedInsurerProduct.insurer_name ?? selectedInsurerProduct.insurer_code}
               </span>
             )}
@@ -1822,13 +1822,13 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               {/* Agent earnings preview */}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl p-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Komisi Anda</p>
-                  <p className="text-base font-black text-emerald-600 dark:text-emerald-400">{formatIDR(commAmt)}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-ds-green mb-1">Komisi Anda</p>
+                  <p className="text-base font-black text-ds-green dark:text-emerald-400">{formatIDR(commAmt)}</p>
                   <p className="text-[9px] text-slate-400">{(effectiveComm*100).toFixed(1)}% dari premi</p>
                 </div>
                 <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl p-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mb-1">Reward Koin</p>
-                  <p className="text-base font-black text-amber-600 dark:text-amber-400">{coins.toLocaleString('id-ID')}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-ds-amber mb-1">Reward Koin</p>
+                  <p className="text-base font-black text-ds-amber dark:text-amber-400">{coins.toLocaleString('id-ID')}</p>
                   <p className="text-[9px] text-slate-400">= {formatIDR(coins * 1000)}</p>
                 </div>
               </div>
@@ -1857,7 +1857,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 <p className="text-sm font-black text-slate-800 dark:text-white">Polis Digital</p>
                 <p className="text-[10px] text-slate-400">Email & Aplikasi</p>
               </div>
-              <span className="text-xs font-black text-emerald-500">GRATIS</span>
+              <span className="text-xs font-black text-ds-green">GRATIS</span>
             </button>
 
             {/* Pos Standard */}
@@ -1978,7 +1978,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
       {!submitting && orderNumber && (
         <SectionCard className="w-full max-w-md text-center">
           <div className="flex justify-center mb-4">
-            <CheckCircle className="w-16 h-16 text-emerald-500" />
+            <CheckCircle className="w-16 h-16 text-ds-green" />
           </div>
           <h3 className="text-xl font-black text-slate-800 dark:text-white mb-1">Order Berhasil Diajukan!</h3>
           <p className="text-slate-400 text-sm mb-4">
@@ -2015,7 +2015,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </div>
           ) : (
             <div className="w-full mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl text-center">
-              <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+              <CheckCircle className="w-8 h-8 text-ds-green mx-auto mb-2" />
               <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 mb-1">Invoice Berhasil Dibuat</p>
               <p className="text-xs text-slate-400 mb-3">Halaman pembayaran telah dibuka di tab baru.</p>
               <button

@@ -91,7 +91,7 @@ const OrderSheet: React.FC<{
           <div className={`p-4 rounded-2xl mb-4 text-center ${
             order.ai_score >= 80 ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-amber-50 dark:bg-amber-500/10'
           }`}>
-            <p className={`text-3xl font-black ${order.ai_score >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
+            <p className={`text-3xl font-black ${order.ai_score >= 80 ? 'text-ds-green' : 'text-ds-amber'}`}>
               {order.ai_score}
             </p>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">AI Survey Score</p>
@@ -118,13 +118,13 @@ const OrderSheet: React.FC<{
               <CreditCard size={10} /> {t('Payment', 'Pembayaran')}
             </p>
             {payment?.status === 'PAID' ? (
-              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+              <p className="text-sm font-bold text-ds-green dark:text-emerald-400">
                 ✓ {t('Premium Paid', 'Premi Telah Dibayar')}
                 {payment.paid_at && ` · ${new Date(payment.paid_at).toLocaleDateString('id-ID')}`}
               </p>
             ) : payment?.status === 'PENDING' && payment.invoice_url ? (
               <div className="flex flex-col gap-2">
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                <p className="text-xs text-ds-amber dark:text-amber-400 font-semibold">
                   {t('Awaiting payment', 'Menunggu pembayaran')}
                 </p>
                 <a
@@ -313,12 +313,12 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                     {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (() => {
                       const pmt = payments[order.id];
                       if (pmt?.status === 'PAID') return (
-                        <span className="text-[9px] font-bold text-emerald-500 flex items-center gap-0.5">
+                        <span className="text-[9px] font-bold text-ds-green flex items-center gap-0.5">
                           <CheckCircle size={9} /> {t('Paid', 'Lunas')}
                         </span>
                       );
                       if (pmt?.status === 'PENDING') return (
-                        <span className="text-[9px] font-bold text-amber-500 flex items-center gap-0.5">
+                        <span className="text-[9px] font-bold text-ds-amber flex items-center gap-0.5">
                           <CreditCard size={9} /> {t('Pending', 'Bayar')}
                         </span>
                       );
@@ -329,7 +329,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                       );
                     })()}
                     {order.policy_document_url && (
-                      <span className="text-[9px] font-bold text-emerald-500 flex items-center gap-0.5">
+                      <span className="text-[9px] font-bold text-ds-green flex items-center gap-0.5">
                         <Download size={9} /> {t('Download', 'Unduh')}
                       </span>
                     )}

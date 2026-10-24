@@ -24,9 +24,9 @@ const ICON_MAP: Record<string, any> = {
 const COLOR_MAP: Record<string, string> = {
   NEW_ORDER:        'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
   NEW_CLAIM:        'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
-  NEW_WITHDRAWAL:   'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-  NEW_AGENT:        'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-  NEW_CUSTOMER:     'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+  NEW_WITHDRAWAL:   'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
+  NEW_AGENT:        'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
+  NEW_CUSTOMER:     'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
   NEW_PAYMENT:      'bg-ds-green-tint text-ds-green',
 };
 

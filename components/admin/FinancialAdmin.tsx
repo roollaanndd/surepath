@@ -182,7 +182,7 @@ const FinancialAdmin: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black uppercase tracking-tighter">
-            Laporan <span className="text-emerald-500">Keuangan</span>
+            Laporan <span className="text-ds-green">Keuangan</span>
           </h2>
           <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
             Data real-time dari Supabase

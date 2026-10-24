@@ -39,6 +39,13 @@ module.exports = {
         mono: ['JetBrains Mono', 'monospace'],
         sora: ['Sora', 'sans-serif'],
       },
+      // `text-ds-green` resolves to the darkened text token while every other
+      // ds-green utility (bg-, border-, ring-, from-) keeps the fill colour.
+      // Tailwind merges this over `colors` for the text-* utilities only.
+      textColor: {
+        'ds-green': 'var(--ds-green-text)',
+        'ds-amber': 'var(--ds-amber-text)',
+      },
       colors: {
         'hero-bg':      'hsl(0 0% 8%)',
         'nav-button':   'hsl(0 0% 18%)',
@@ -109,6 +116,7 @@ module.exports = {
         'ds-card2':      'var(--ds-card2)',
         'ds-border':     'var(--ds-border)',
         // Primary — vibrant emerald (same in light/dark)
+        // NOTE: `text-ds-green` does NOT resolve to this; see textColor below.
         'ds-green':      'var(--ds-green)',
         'ds-green-dk':   'var(--ds-green-dk)',
         'ds-green-tint': 'var(--ds-green-tint)',

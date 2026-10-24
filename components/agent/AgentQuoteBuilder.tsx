@@ -61,9 +61,9 @@ interface MPARInputs { category: 'ELECTRONIC' | 'GADGET'; itemName: string; pric
 const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgColor: string; enLabel: string; idLabel: string; enDesc: string; idDesc: string; ojk?: boolean }[] = [
   { type: 'CAR',        icon: Car,        color: 'text-blue-500',    bgColor: 'bg-blue-500/10',    enLabel: 'Auto (Roda 4)',       idLabel: 'Kendaraan Roda 4',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
   { type: 'MOTORCYCLE', icon: Bike,       color: 'text-cyan-500',    bgColor: 'bg-cyan-500/10',    enLabel: 'Motorcycle (Roda 2)', idLabel: 'Kendaraan Roda 2',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
-  { type: 'TRAVEL',     icon: Plane,      color: 'text-emerald-500', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance',    idLabel: 'Asuransi Perjalanan',  enDesc: 'Domestic & International',        idDesc: 'Domestik & Internasional' },
+  { type: 'TRAVEL',     icon: Plane,      color: 'text-ds-green', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance',    idLabel: 'Asuransi Perjalanan',  enDesc: 'Domestic & International',        idDesc: 'Domestik & Internasional' },
   { type: 'PA',         icon: Shield,     color: 'text-violet-500',  bgColor: 'bg-violet-500/10',  enLabel: 'Personal Accident',   idLabel: 'Kecelakaan Diri',      enDesc: 'General & Student Plans',         idDesc: 'Umum & Pelajar' },
-  { type: 'MPAR',       icon: Smartphone, color: 'text-amber-500',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
+  { type: 'MPAR',       icon: Smartphone, color: 'text-ds-amber',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
 ];
 
 const calcPremium = (product: ProductType, inputs: any, addonState?: AddonState): number => {
@@ -541,7 +541,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
     return (
       <div className="bg-gray-50 min-h-screen pb-28 px-4 py-6 max-w-lg mx-auto flex flex-col items-center text-center gap-6 min-h-[70vh] justify-center font-sora">
         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
-          <FileCheck size={40} className="text-emerald-500" />
+          <FileCheck size={40} className="text-ds-green" />
         </div>
         <div>
           <h2 className="font-black text-2xl tracking-tight">{t('Policy Created!', 'Polis Berhasil Dibuat!')}</h2>
@@ -551,8 +551,8 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
         </div>
         <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-[2rem] p-5 w-full border border-emerald-200 dark:border-emerald-500/20">
           <p className="text-emerald-700 dark:text-emerald-400 font-bold text-sm">{clientName} — {product}</p>
-          <p className="font-black text-2xl text-emerald-600 dark:text-emerald-400 mt-1">{formatIDR(premium)}</p>
-          <p className="text-xs text-emerald-500 font-bold mt-1">{t('Annual Premium', 'Premi Tahunan')}</p>
+          <p className="font-black text-2xl text-ds-green dark:text-emerald-400 mt-1">{formatIDR(premium)}</p>
+          <p className="text-xs text-ds-green font-bold mt-1">{t('Annual Premium', 'Premi Tahunan')}</p>
         </div>
         <button
           onClick={() => {
@@ -697,7 +697,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   <p className="text-slate-400 text-sm font-medium">{t('No clients yet.', 'Belum ada klien.')}</p>
                   <button
                     onClick={() => setClientMode('new')}
-                    className="inline-flex items-center gap-1.5 text-emerald-600 text-sm font-bold"
+                    className="inline-flex items-center gap-1.5 text-ds-green text-sm font-bold"
                   >
                     <UserPlus size={14} /> {t('Add a new client here', 'Tambah klien baru di sini')}
                   </button>
@@ -720,7 +720,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                     <p className="font-semibold text-sm text-gray-900">{c.name}</p>
                     <p className="text-xs text-gray-400">{c.phone}</p>
                   </div>
-                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-emerald-500 ml-auto" />}
+                  {selectedClientId === c.id && <CheckCircle2 size={16} className="text-ds-green ml-auto" />}
                 </button>
               ))}
             </div>
@@ -748,7 +748,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   className={inputClass}
                 />
               </div>
-              <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5">
+              <p className="text-[11px] text-ds-green font-medium flex items-center gap-1.5">
                 <CheckCircle2 size={12} />
                 {t('Saved automatically to your client list.', 'Otomatis tersimpan ke daftar Klien Anda.')}
               </p>
@@ -821,7 +821,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               }`}
             >
               <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3">
-                <Heart size={22} className="text-emerald-500" />
+                <Heart size={22} className="text-ds-green" />
               </div>
               <p className="font-black text-sm leading-tight">
                 {lang === Language.EN ? 'Life Insurance' : 'Asuransi Jiwa'}
@@ -829,7 +829,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
                 {lang === Language.EN ? 'Term, Whole Life & Unit Link' : 'Jiwa, Seumur Hidup & Unit Link'}
               </p>
-              {activeProduct === 'life' && <CheckCircle2 size={14} className="text-emerald-500 mt-2" />}
+              {activeProduct === 'life' && <CheckCircle2 size={14} className="text-ds-green mt-2" />}
             </button>
           </div>
           {/* Mode chooser for CAR/MOTORCYCLE */}

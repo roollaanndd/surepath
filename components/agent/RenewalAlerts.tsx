@@ -75,7 +75,7 @@ const RenewalAlerts: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-amber-400/20 rounded-2xl flex items-center justify-center">
-            <AlertTriangle size={16} className="text-amber-500" />
+            <AlertTriangle size={16} className="text-ds-amber" />
           </div>
           <div>
             <p className="font-black text-sm tracking-tight">

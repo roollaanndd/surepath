@@ -1,5 +1,59 @@
 # SurePath — Changelog
 
+## v2.7.3 — 2026-10-24
+
+Kontras warna: hijau brand dipakai sebagai teks, dan itu tidak terbaca.
+
+**Temuan**
+- Saya ukur rasio kontras setiap simpul teks di keenam portal, mode terang dan
+  gelap, terhadap latar belakangnya sendiri. Mode gelap pada dasarnya bersih.
+  Mode terang tidak: hijau brand `#00C16A` sebagai **teks** hanya 2,18:1 di
+  latar halaman dan 2,38:1 di kartu, jauh di bawah minimum WCAG AA 4,5.
+  Itu muncul di label nav aktif, "Lihat semua", kata "Path" pada logo, dan
+  kode pengguna (SP-AGT, SP-OP, Klien B2B) — di semua portal.
+- Berkas ini sudah pernah menaikkan `--ds-text-muted` "for WCAG AA", jadi
+  standarnya memang sudah dipakai; hijau brand-nya saja yang terlewat.
+
+**Pemisahan warna isian dan warna teks**
+- `--ds-primary-text` baru (`#047857` terang, `#00E07A` gelap) hanya dipakai
+  oleh utilitas `text-ds-green`, lewat `textColor` di konfigurasi Tailwind.
+  Semua `bg-`, `border-`, `ring-`, `from-` tetap memakai `--ds-primary` yang
+  lama, jadi **warna brand tidak berubah sedikit pun**.
+- Amber mendapat perlakuan yang sama (`--ds-warning-text`, `#B45309`): pil
+  "PAID" tadinya 1,93:1.
+- Token saja tidak cukup — hanya 206 tempat memakainya, sementara 170 tempat
+  di portal memakai `text-emerald-500/600` mentah yang sama sekali tidak lewat
+  token (plus 55 amber dan 9 slate/green di B2B, yang memang belum pernah
+  ditokenisasi). Semuanya dipindahkan. Varian `dark:` dibiarkan utuh.
+- `--ds-text-muted` dinaikkan dari `#6B7280` ke `#616875`. Yang lama tepat
+  4,50 di latar halaman, artinya **gagal** begitu kartunya bertint (rose-50,
+  amber-50) — "Klaim Pending" terukur 4,4.
+
+**Satu bug mode gelap yang hanya terlihat setelah diukur**
+- `.dark .bg-white { background-color: #0F1829 !important }` adalah aturan
+  selimut untuk kartu yang latarnya di-hardcode. Tapi tombol CTA di
+  `FeaturedCard` memang sengaja pil putih di atas gradien warna: di mode gelap
+  pil-nya berubah gelap sementara labelnya tetap `#003B2F`. Hasilnya 1,41:1 —
+  tombol yang benar-benar tidak terbaca. Karena aturannya `!important`,
+  utilitas `dark:` tidak bisa menang, jadi sekarang ada kelas `sp-keep-white`
+  sebagai jalan keluar yang diberi nama.
+
+**Hasil terukur (mode terang, enam portal)**
+- Total kegagalan kontras 70 → 13. Admin 11 → 0, Operator 8 → 1,
+  Insurer 10 → 1, Mitra 12 → 2, B2B 11 → 2, Nasabah 18 → 7.
+- Sisanya hampir seluruhnya satu sebab: teks putih di atas isian hijau terang
+  (2,38:1) — avatar bundar dan tombol utama. Menggelapkan hijau utama adalah
+  keputusan brand, jadi itu ditanyakan ke pemilik, bukan diputuskan di sini.
+
+**Catatan: dua item backlog ternyata bukan cacat**
+- "826 `<button>` mentah" adalah hitungan grep, bukan masalah yang dirasakan
+  pengguna: diukur di enam portal plus kelima layar interior Insurer, **tidak
+  ada satu pun kontrol di bawah 44px** dan tidak ada tombol ikon tanpa
+  `aria-label`. Mengonversinya ke primitif `Button` tidak akan memperbaiki apa
+  pun yang bisa dilihat pengguna.
+- Overflow horizontal di `/ai` (dulu 470px pada viewport 390px) sudah tidak
+  terjadi lagi; kesembilan halaman publik bersih.
+
 ## v2.7.2 — 2026-10-24
 
 Ikon navigasi kembar, dan sisa terakhir teks di bawah 11px.

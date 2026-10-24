@@ -118,8 +118,8 @@ const OperatorClaims: React.FC<Props> = ({ lang, refreshTick }) => {
           {claims.map(c => {
             const statusColor = {
               SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-              UNDER_REVIEW:  'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-              APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+              UNDER_REVIEW:  'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
+              APPROVED:      'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
               REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
               PAID:          'bg-ds-green-tint text-ds-green',
             }[c.status] ?? 'bg-ds-card2 text-ds-ink3';

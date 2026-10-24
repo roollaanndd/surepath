@@ -68,7 +68,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-black text-sm">{quote.insurer_name ?? t('Insurer', 'Penanggung')}</div>
-          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
+          <div className="text-[11px] text-ds-ink3 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
         </div>
         <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
           {STATUS_LABEL[quote.status] ?? quote.status}
@@ -77,8 +77,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
 
       {/* Premium */}
       <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
-        <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
-        <div className="text-xl font-black text-emerald-500 mt-0.5">{formatIDR(quote.premium_amount)}</div>
+        <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
+        <div className="text-xl font-black text-ds-green mt-0.5">{formatIDR(quote.premium_amount)}</div>
       </div>
 
       {/* Coverage details */}
@@ -123,7 +123,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
       <button
         disabled={downloading}
         onClick={handleDownload}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-widest disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-ds-green dark:text-emerald-400 text-xs font-black uppercase tracking-widest disabled:opacity-60"
       >
         {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
         {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Quotation (PDF)')}
@@ -202,10 +202,10 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-emerald-500" />
+          <Loader2 size={28} className="animate-spin text-ds-green" />
         </div>
       ) : sorted.length === 0 ? (
-        <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="text-center py-16 text-ds-ink3 text-sm">
           {t('No quotes yet.', 'Belum ada penawaran.')}
         </div>
       ) : (

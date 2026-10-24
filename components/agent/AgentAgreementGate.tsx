@@ -122,10 +122,10 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
       {/* Header */}
       <div className="px-6 pt-8 pb-4 text-center flex-shrink-0" style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))' }}>
         <div className="w-14 h-14 mx-auto rounded-2xl bg-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/20 flex items-center justify-center mb-3">
-          <ShieldCheck size={28} className="text-emerald-600" />
+          <ShieldCheck size={28} className="text-ds-green" />
         </div>
         <h1 className="text-lg font-black text-slate-900 tracking-tight">{AGREEMENT_META.title}</h1>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 mt-1">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-ds-green mt-1">
           {AGREEMENT_META.version} · {t('Mandatory', 'Wajib Disetujui')}
         </p>
       </div>
@@ -135,7 +135,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
         className="flex-1 overflow-y-auto no-scrollbar px-5 pb-4">
         <div className="max-w-xl mx-auto sp-glass rounded-2xl p-5 space-y-4">
           <div className="flex items-start gap-2 pb-3 border-b border-emerald-900/10">
-            <FileText size={15} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+            <FileText size={15} className="text-ds-green mt-0.5 flex-shrink-0" />
             <p className="text-[11px] text-slate-500 leading-relaxed">
               {t(
                 `Between ${AGREEMENT_META.company.name} ("Company") and you as Mitra (Partner). Read fully before accepting.`,
@@ -152,7 +152,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
             </div>
           ))}
           <div className="pt-2 text-center">
-            <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-ds-green bg-emerald-500/10 px-3 py-1 rounded-full">
               — {t('End of Document', 'Akhir Dokumen')} —
             </span>
           </div>
@@ -163,7 +163,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
       <div className="flex-shrink-0 px-5 pt-3 pb-5 sp-glass-strong border-t border-emerald-900/10" style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
         <div className="max-w-xl mx-auto space-y-3">
           {!scrolledEnd && (
-            <p className="text-center text-[11px] font-bold text-amber-600 flex items-center justify-center gap-1.5">
+            <p className="text-center text-[11px] font-bold text-ds-amber flex items-center justify-center gap-1.5">
               <AlertCircle size={13} /> {t('Scroll to the end to continue', 'Gulir sampai akhir untuk melanjutkan')}
             </p>
           )}

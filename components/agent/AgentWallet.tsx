@@ -26,7 +26,7 @@ const IDR = (n: number) => 'Rp ' + Math.abs(n).toLocaleString('id-ID');
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
-    PENDING_L1:  'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    PENDING_L1:  'bg-amber-500/10 text-ds-amber border-amber-500/20',
     PENDING_L2:  'bg-orange-500/10 text-orange-500 border-orange-500/20',
     PENDING_L3:  'bg-red-500/10 text-red-400 border-red-500/20',
     APPROVED:    'bg-blue-500/10 text-blue-500 border-blue-500/20',

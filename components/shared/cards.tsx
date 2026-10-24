@@ -244,7 +244,7 @@ export const FeaturedCard: React.FC<{
       {subtitle && <p className="text-[11px] text-white/70 leading-snug mb-3">{subtitle}</p>}
       <button
         onClick={cta.onClick}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black bg-white text-[#003B2F] active:scale-95 transition-transform shadow-lg"
+        className="sp-keep-white inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black text-[#003B2F] active:scale-95 transition-transform shadow-lg"
       >
         {cta.label} →
       </button>

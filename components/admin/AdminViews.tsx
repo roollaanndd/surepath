@@ -118,7 +118,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
                   />
                 ) : (
                   <div className="w-full h-36 rounded-2xl border border-ds-border bg-ds-card2 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-2xl">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-ds-green flex items-center justify-center font-black text-2xl">
                       {user.name?.charAt(0)?.toUpperCase() ?? '?'}
                     </div>
                   </div>
@@ -302,11 +302,11 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
 export const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
-    primary: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    primary: "bg-emerald-500/10 text-ds-green border-emerald-500/20",
     blue: "bg-blue-500/10 text-blue-500 border-blue-500/20",
     rose: "bg-rose-500/10 text-rose-500 border-rose-500/20",
     yellow: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    emerald: "bg-emerald-500/10 text-ds-green border-emerald-500/20",
     indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
   };
   return (
@@ -323,7 +323,7 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
         <Icon size={24} />
       </div>
       {trend && (
-        <div className={`flex items-center gap-1 text-[0.65rem] font-black ${trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
+        <div className={`flex items-center gap-1 text-[0.65rem] font-black ${trend.startsWith('+') ? 'text-ds-green' : 'text-rose-500'}`}>
           {trend} <ArrowUpRight size={14} className={trend.startsWith('-') ? 'rotate-90' : ''} />
         </div>
       )}
@@ -391,7 +391,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                  {policies.map((p, i) => (
                     <div key={i} className="p-4 bg-ds-card2 rounded-2xl flex items-center justify-between border border-ds-border">
                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-ds-green' : 'bg-amber-500/10 text-ds-amber'}`}>
                              <ShieldCheck size={20}/>
                           </div>
                           <div>
@@ -399,7 +399,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                              <p className="text-[0.5rem] text-ds-ink3 uppercase tracking-widest">{p.type} • {p.providerId}</p>
                           </div>
                        </div>
-                       <p className="text-sm font-black tracking-tighter text-emerald-500">{formatIDR(p.premium)}</p>
+                       <p className="text-sm font-black tracking-tighter text-ds-green">{formatIDR(p.premium)}</p>
                     </div>
                  ))}
               </div>
@@ -415,9 +415,9 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
     {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
     {isDashboard && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-emerald-500" />
+        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-ds-green" />
         <StatCard label="Partner Nodes" value={users.length} trend="+12" icon={Users} color="bg-blue-500/10 text-blue-500" />
-        <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-emerald-500" />
+        <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-ds-green" />
       </div>
     )}
     
@@ -463,8 +463,8 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
                       </div>
                     </td>
                     <td className="py-4 font-mono text-[0.6rem] text-ds-ink3">{u.phone}</td>
-                    <td className="py-4 font-black text-emerald-500">{formatIDR(u.totalSales || 0)}</td>
-                    <td className="py-4 font-black text-amber-500">{formatIDR(u.totalCommission || 0)}</td>
+                    <td className="py-4 font-black text-ds-green">{formatIDR(u.totalSales || 0)}</td>
+                    <td className="py-4 font-black text-ds-amber">{formatIDR(u.totalCommission || 0)}</td>
                     <td className="py-4 text-right pr-4">
                        <Badge color={u.totalSales > 0 ? "emerald" : "gray"}>{u.totalSales > 0 ? 'Active Seller' : 'Registered'}</Badge>
                     </td>
@@ -529,7 +529,7 @@ export const SecurityView = () => {
             label="Login Gagal (24 jam)"
             value={loading ? '…' : (secStats?.failedLogins24h ?? 0).toString()}
             icon={ShieldAlert}
-            color="bg-emerald-500/10 text-emerald-500"
+            color="bg-emerald-500/10 text-ds-green"
           />
           <StatCard
             label="Sesi Aktif (5 mnt)"
@@ -541,13 +541,13 @@ export const SecurityView = () => {
             label="Latensi Server"
             value="N/A"
             icon={Zap}
-            color="bg-emerald-500/10 text-emerald-500"
+            color="bg-emerald-500/10 text-ds-green"
           />
           <StatCard
             label="Uptime Server"
             value="N/A"
             icon={Globe}
-            color="bg-emerald-500/10 text-emerald-500"
+            color="bg-emerald-500/10 text-ds-green"
           />
        </div>
 
@@ -555,7 +555,7 @@ export const SecurityView = () => {
           <Card className="lg:col-span-2">
              <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><Terminal size={20}/></div>
+                   <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Terminal size={20}/></div>
                    <div>
                       <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
                       <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
@@ -615,7 +615,7 @@ export const SecurityView = () => {
                          {entry.attempts} percobaan · {entry.until > Date.now() ? `Diblokir ${Math.ceil((entry.until - Date.now()) / 60000)} mnt` : 'Kadaluarsa'}
                        </p>
                      </div>
-                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-ds-green'}`}>
                        <Check size={16} strokeWidth={3} />
                      </div>
                    </div>
@@ -723,7 +723,7 @@ export const LedgerView = () => {
            {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat buku besar: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
               <div>
-                 <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-emerald-500">Besar</span></h2>
+                 <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-ds-green">Besar</span></h2>
                  <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Sistem Pencatatan Transaksi Real-time</p>
               </div>
               <div className="flex gap-4">
@@ -755,9 +755,9 @@ export const LedgerView = () => {
                        {!loading && txs.slice(0, 100).map((t, i) => (
                           <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
                              <td className="py-4 pl-4 text-ds-ink3">{new Date(t.date).toLocaleString('id-ID')}</td>
-                             <td className="py-4 text-emerald-500 font-mono">{t.type}</td>
+                             <td className="py-4 text-ds-green font-mono">{t.type}</td>
                              <td className="py-4 text-white max-w-xs truncate" title={t.description}>{t.description}</td>
-                             <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-emerald-500">+{convert(t.amount)}</span>}</td>
+                             <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-ds-green">+{convert(t.amount)}</span>}</td>
                              <td className="py-4 text-right pr-4">
                                 <Badge color={t.status === 'SUCCESS' ? 'emerald' : t.status === 'PENDING' ? 'yellow' : 'rose'}>{t.status}</Badge>
                              </td>
@@ -842,7 +842,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
            {!compact && (
               <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
                  <div>
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-emerald-500">Keuangan</span></h2>
+                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-ds-green">Keuangan</span></h2>
                     <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
                  </div>
                  <div className="flex gap-4">
@@ -906,13 +906,13 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                              {aggregatedData.map((row, i) => (
                                 <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors group">
                                    <td className="py-4 pl-4 uppercase text-white font-black">{row.period}</td>
-                                   <td className="py-4 text-emerald-500 font-mono">{convert(row.gwp)}</td>
+                                   <td className="py-4 text-ds-green font-mono">{convert(row.gwp)}</td>
                                    <td className="py-4 text-blue-400 font-mono">{convert(row.commissions)}</td>
                                    <td className="py-4 text-emerald-400 font-mono">{convert(row.promo)}</td>
                                    <td className="py-4 text-indigo-400 font-mono">{convert(row.others)}</td>
                                    <td className="py-4 text-rose-500 font-mono">{convert(row.claims)}</td>
                                    <td className="py-4 text-right pr-4">
-                                      <div className="flex items-center justify-end gap-2 text-emerald-500">
+                                      <div className="flex items-center justify-end gap-2 text-ds-green">
                                          <CheckCircle2 size={12}/>
                                       </div>
                                    </td>
@@ -937,7 +937,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
                        </div>
                        <div className="p-4 bg-black/20 rounded-2xl border border-ds-border">
                           <p className="text-[0.5rem] font-black text-ds-ink3 uppercase tracking-widest">Rasio Gabungan (Combined Ratio)</p>
-                          <p className={`text-2xl font-black ${Number(combinedRatio) > 100 ? 'text-rose-500' : 'text-emerald-500'}`}>~{combinedRatio}%</p>
+                          <p className={`text-2xl font-black ${Number(combinedRatio) > 100 ? 'text-rose-500' : 'text-ds-green'}`}>~{combinedRatio}%</p>
                        </div>
                     </div>
                  </Card>
@@ -956,7 +956,7 @@ export const AuditLogView = ({ compact }: { compact?: boolean }) => {
               <div key={log.id} className="flex gap-4 items-start p-4 bg-ds-card2 rounded-2xl border border-ds-border hover:bg-ds-card2 transition-all">
                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#00C16A]'}`}></div>
                  <div className="min-w-0">
-                    <p className="text-[0.65rem] font-bold text-ds-ink2 leading-tight"><span className="text-emerald-500 uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
+                    <p className="text-[0.65rem] font-bold text-ds-ink2 leading-tight"><span className="text-ds-green uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
                     <div className="flex items-center gap-3 mt-1.5">
                        <Badge color={log.domain === 'SECURITY' ? 'rose' : 'blue'}>{log.domain}</Badge>
                        <span className="text-[0.5rem] font-mono text-ds-ink2 uppercase tracking-widest">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</span>
@@ -999,7 +999,7 @@ export const ApprovalsView = () => {
             <Card>
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500"><ClipboardCheck size={22}/></div>
+                <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-ds-amber"><ClipboardCheck size={22}/></div>
                 <div>
                     <h3 className="font-black uppercase tracking-widest text-sm">Antrean Persetujuan Polis</h3>
                     <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Pesanan menunggu review · untuk terbitkan polis buka menu Pesanan Polis</p>
@@ -1063,7 +1063,7 @@ export const InventoryView = () => (
     <Card>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><HardDrive size={22}/></div>
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><HardDrive size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Active Matrix Inventory</h3>
         </div>
         <button className="p-2 text-ds-ink3 hover:text-white transition-all"><RefreshCw size={18}/></button>
@@ -1446,7 +1446,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   return (
     <div className="space-y-8 animate-fade-in text-white pb-32">
        <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"><Settings size={22}/></div>
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Settings size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Sistem</h3>
        </div>
 
@@ -1533,7 +1533,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
             {customProducts.map(p => (
               <Card key={p.id} className="flex items-center justify-between py-6">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-500`}><FileText size={24}/></div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-ds-green`}><FileText size={24}/></div>
                   <div>
                     <p className="font-black uppercase text-sm">{p.name}</p>
                     <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
@@ -1904,7 +1904,7 @@ export const AgentManagementView = () => {
             onClick={() => setSelectedAgentId(a.id)}
             className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-ds-green flex items-center justify-center font-black text-sm flex-shrink-0 overflow-hidden">
               {a.profile_photo_url ? (
                 <img loading="lazy" src={a.profile_photo_url} alt={a.name} className="w-full h-full object-cover" />
               ) : (
@@ -1917,10 +1917,10 @@ export const AgentManagementView = () => {
                 <TierBadge tier={agentTier} />
               </div>
               <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
-              <p className="text-[0.6rem] font-bold text-emerald-500 uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-emerald-500/70">Lihat detail →</span></p>
+              <p className="text-[0.6rem] font-bold text-ds-green uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-ds-green/70">Lihat detail →</span></p>
               {(a as any).agreement_no ? (
                 <p className="mt-1 text-[0.62rem] font-semibold text-ds-ink2">
-                  <span className="text-ds-ink3">No. Perjanjian:</span> <span className="font-mono text-emerald-500">{(a as any).agreement_no}</span>
+                  <span className="text-ds-ink3">No. Perjanjian:</span> <span className="font-mono text-ds-green">{(a as any).agreement_no}</span>
                   {(a as any).agreement_accepted_at && <span className="ml-2 text-ds-ink3">{new Date((a as any).agreement_accepted_at).toLocaleDateString('id-ID')}</span>}
                 </p>
               ) : (
@@ -2166,7 +2166,7 @@ export const ClaimsAdminView = () => {
                     <p className="text-xs text-ds-ink3 mt-1 truncate">{claim.location}</p>
                   )}
                   {claim.amount_estimated && (
-                    <p className="text-xs font-bold text-emerald-500 mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
+                    <p className="text-xs font-bold text-ds-green mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
                   )}
                 </div>
                 {/* Quick status actions */}
@@ -2357,7 +2357,7 @@ export const UserManagementView = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-emerald-500">User</span></h2>
+          <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-ds-green">User</span></h2>
           <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
         </div>
         <div className="flex gap-3">
@@ -2568,7 +2568,7 @@ export const UserManagementView = () => {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
           <div className="relative z-10 w-full max-w-md mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl">
             <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
-              <UserPlus size={18} className="text-emerald-500" /> Tambah Admin Baru
+              <UserPlus size={18} className="text-ds-green" /> Tambah Admin Baru
             </h3>
             {addError && (
               <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{addError}</div>
@@ -2668,7 +2668,7 @@ export const PaymentsAdminView = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-emerald-500">Xendit</span></h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-ds-green">Xendit</span></h2>
                     <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
                 </div>
                 <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-[9px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-colors">
@@ -2679,12 +2679,12 @@ export const PaymentsAdminView = () => {
             {/* KPI Cards */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Total Terbayar</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-green">Total Terbayar</p>
                     <p className="text-2xl font-black">{formatIDR(totalPaid)}</p>
                     <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">Invoice Pending</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-amber">Invoice Pending</p>
                     <p className="text-2xl font-black">{formatIDR(totalPending)}</p>
                     <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
                 </div>
@@ -2852,7 +2852,7 @@ export const WithdrawalsAdminView: React.FC = () => {
 
   const statusBadge = (status: string) => {
     const map: Record<string, { cls: string; label: string }> = {
-      PENDING_L1:  { cls: 'bg-amber-500/10 text-amber-500 border-amber-500/20',  label: 'Menunggu L1' },
+      PENDING_L1:  { cls: 'bg-amber-500/10 text-ds-amber border-amber-500/20',  label: 'Menunggu L1' },
       PENDING_L2:  { cls: 'bg-orange-500/10 text-orange-500 border-orange-500/20', label: 'Menunggu L2' },
       PENDING_L3:  { cls: 'bg-red-500/10 text-red-400 border-red-500/20',        label: 'Menunggu L3' },
       APPROVED:    { cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20',      label: 'Disetujui' },

@@ -55,8 +55,8 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
   const queueCards = [
     { label: 'Polis Pending',   value: summary?.pendingOrders ?? 0,        icon: FileText,    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',     tab: 'orders' },
     { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        icon: ShieldAlert, color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-950/30',     tab: 'claims' },
-    { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, icon: Wallet,      color: 'text-amber-500',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
-    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
+    { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, icon: Wallet,      color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
+    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
   ];
 
   return (

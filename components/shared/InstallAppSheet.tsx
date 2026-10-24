@@ -153,7 +153,7 @@ const InstallAppSheet: React.FC<Props> = ({ lang, onClose, onInstalled }) => {
           <div className="w-16 h-16 mx-auto rounded-[1.4rem] bg-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/20 flex items-center justify-center mb-3">
             <img loading="lazy" src="/logo-sm.png" alt="SurePath" className="w-11 h-12 object-contain" />
           </div>
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-600 mb-1">SurePath</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-ds-green mb-1">SurePath</p>
           <h3 className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
             {method === 'native' ? t('Pasang Aplikasinya', 'Install the App') : heading}
           </h3>
@@ -198,7 +198,7 @@ const InstallAppSheet: React.FC<Props> = ({ lang, onClose, onInstalled }) => {
                   <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 text-[0.6rem] font-black">
                     {i + 1}
                   </span>
-                  <span className="text-emerald-600 dark:text-emerald-400 flex-shrink-0">{s.icon}</span>
+                  <span className="text-ds-green dark:text-emerald-400 flex-shrink-0">{s.icon}</span>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-snug">{s.text}</p>
                 </div>
               ))}

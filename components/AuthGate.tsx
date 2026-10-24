@@ -529,7 +529,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Forgot password — sent */}
         {mode === 'FORGOT_SENT' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 text-center space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 text-center space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.30)' }}><CheckCircle2 size={32} className="text-emerald-600" /></div>
             <div>
               <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
@@ -541,7 +541,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Email OTP — verify */}
         {mode === 'EMAIL_OTP_VERIFY' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <div className="w-14 h-14 rounded-[1.2rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.30)' }}>
               <Mail size={26} className="text-emerald-600" />
             </div>

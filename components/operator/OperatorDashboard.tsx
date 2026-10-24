@@ -54,17 +54,17 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
 
   const queueCards = [
     { label: 'Polis Pending',   value: summary?.pendingOrders ?? 0,        icon: FileText,    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',     tab: 'orders' },
-    { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        icon: ShieldAlert, color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-950/30',     tab: 'claims' },
+    { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        icon: ShieldAlert, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/30',     tab: 'claims' },
     { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, icon: Wallet,      color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
     { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
   ];
 
   return (
-    <div className="px-5 pt-5 space-y-6 pb-4">
+    <div className="sp-operator-dashboard px-5 pt-5 space-y-6 pb-4">
       {/* Hero greeting — bank-grade command card */}
       <AgentArtKeyframes />
-      <div className="relative overflow-hidden rounded-[1.75rem] p-5 text-white"
-        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
+      <div className="sp-operator-hero relative overflow-hidden rounded-[1.75rem] border border-ds-border bg-white p-5 text-ds-ink dark:bg-ds-dk-card dark:text-ds-dk-ink"
+        style={{ boxShadow: '0 12px 32px -24px rgba(6, 95, 70, .3)' }}>
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.28) 0%, transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
           <circle cx="175" cy="18" r="72" stroke="#fff" strokeWidth="1.2" />
@@ -103,7 +103,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
             <button
               key={c.label}
               onClick={() => onNavigate(c.tab)}
-              className={`text-left p-4 rounded-2xl border border-ds-border bg-ds-card hover:shadow-ds-md active:scale-[0.98] transition-all duration-200 ${c.bg}`}
+              className={`sp-operator-queue-card text-left p-4 rounded-2xl border border-ds-border bg-white hover:shadow-ds-md active:scale-[0.98] transition-all duration-200 dark:bg-ds-dk-card ${c.bg}`}
             >
               <c.icon size={20} className={c.color} />
               <p className="text-2xl font-black tracking-tight mt-2 text-ds-ink tabular-nums">{c.value}</p>

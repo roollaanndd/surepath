@@ -87,7 +87,13 @@
     <meta name="google-site-verification" content="%VITE_GSC_VERIFY%" />
 
     <!-- Google Preferred Sources publisher library; the opt-in control is rendered in the public-site footer. -->
-    <script async src="https://news.google.com/swg/js/v1/publisher.js"></script>
+    <script>
+      // Keep the SDK instance available to the SPA footer, which mounts after this document head.
+      (self.PREFERRED_SOURCE = self.PREFERRED_SOURCE || []).push(function (preferredSource) {
+        self.__spPreferredSource = preferredSource;
+      });
+    </script>
+    <script async preferred-sources-control="manual" src="https://news.google.com/swg/js/v1/publisher.js"></script>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:site_name" content="SurePath" />

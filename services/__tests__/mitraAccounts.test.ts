@@ -235,3 +235,19 @@ describe('aksi di luar modul ini', () => {
     expect(await handleMitraAccountsAction('admin_list_users', ctx)).toBeNull();
   });
 });
+
+describe('pembangkit acak', () => {
+  it('kode mitra berbentuk SP-AGT-#### dan tidak memakai Math.random', async () => {
+    // CodeQL menandai Math.random() di berkas ini sebagai insecure randomness,
+    // dan benar: kode mitra dipakai sebagai kode rujukan upline, bukan cuma
+    // label tampilan. Tes ini memaku bentuknya sekaligus menahan Math.random()
+    // agar tidak kembali masuk lewat perubahan berikutnya.
+    const spy = vi.spyOn(Math, 'random');
+    const { db, ctx } = makeCtx('ADMIN', { name: 'Budi', email: 'budi@email.com', phone: '0811' });
+    await handleMitraAccountsAction('admin_create_mitra', ctx);
+    const code = db.inserted.find(i => i.table === 'sp_users')?.row.agent_code as string;
+    expect(code).toMatch(/^SP-AGT-\d{4}$/);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+});

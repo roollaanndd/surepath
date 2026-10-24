@@ -1239,3 +1239,58 @@
     transition: none !important;
   }
 }
+
+
+/* Admin CMS legibility and surface pass — keep the existing navigation and component order. */
+:root:not(.dark) .sp-modern-app:has(> aside) {
+  --sp-admin-page: #F7FAF8;
+  --sp-admin-surface: #FFFFFF;
+  --sp-admin-surface-soft: #F8FBF9;
+  --sp-admin-ink: #153B2E;
+  --sp-admin-muted: #64786D;
+  --sp-admin-line: #E2EBE5;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main {
+  color: var(--sp-admin-ink) !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) {
+  background-color: var(--sp-admin-surface) !important;
+  border-color: var(--sp-admin-line) !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-ds-card2, .bg-slate-50, .bg-gray-50) {
+  background-color: var(--sp-admin-surface-soft) !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) :where(p, h1, h2, h3, h4, label, th, td).text-white {
+  color: var(--sp-admin-ink) !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.text-ds-ink3, .text-gray-400, .text-slate-400) {
+  color: var(--sp-admin-muted);
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main table thead {
+  background: #F1F6F2;
+  border-bottom: 1px solid var(--sp-admin-line);
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main table tbody tr {
+  border-color: #EAF0EC;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main table tbody tr:hover {
+  background-color: #F5F9F6;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(input, select, textarea) {
+  color: var(--sp-admin-ink) !important;
+  background-color: #FFFFFF !important;
+  border-color: #D8E5DC !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(button, a).text-white,
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(button, a) .text-white {
+  color: inherit;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(button.bg-emerald-500, button.bg-emerald-600, button.bg-green-600, button.bg-blue-500, button.bg-rose-500, button.bg-amber-500, a.bg-emerald-500, a.bg-emerald-600) {
+  color: #FFFFFF !important;
+}
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-emerald-500, .bg-emerald-600, .bg-green-600, .bg-blue-500, .bg-rose-500, .bg-amber-500, .bg-gradient-to-br, .bg-gradient-to-r) :where(p, h1, h2, h3, h4, label, span).text-white {
+  color: #FFFFFF !important;
+}
+.dark .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) {
+  border-color: var(--ds-border, #3A3F52);
+}

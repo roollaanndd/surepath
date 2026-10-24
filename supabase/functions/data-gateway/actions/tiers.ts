@@ -34,7 +34,9 @@ async function applyOrQueueTier(
   const isDowngrade = currentTierCode
     ? (await db.from('sp_agent_tiers').select('rank').eq('code', currentTierCode).maybeSingle()).data?.rank > targetTier.rank
     : false;
-  const needsApproval = isDowngrade || (targetTier.requires_approval && !(targetTier.approval_roles ?? []).includes(callerRole));
+  // MASTER_ADMIN is the final approver and must be able to apply a requested
+  // tier immediately, including a downgrade. Other roles retain the approval gate.
+  const needsApproval = callerRole !== 'MASTER_ADMIN' && (isDowngrade || (targetTier.requires_approval && !(targetTier.approval_roles ?? []).includes(callerRole)));
 
   if (needsApproval) {
     const { data, error } = await db.from('sp_tier_change_requests').insert({
@@ -60,6 +62,9 @@ async function applyOrQueueTier(
 
 export async function handleTiersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
   const { db, params, caller } = ctx;
+  // Foreign keys in sp_users reference the canonical sp_users.id, which can differ
+  // from auth.users.id for legacy accounts. Always record the profile ID for actor fields.
+  const actorId = caller.spUser?.id ?? caller.authId;
 
   switch (action) {
     case 'get_tier_definitions': {
@@ -107,7 +112,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
           requires_approval: Boolean(params.requires_approval),
           approval_roles: params.approval_roles ?? ['MASTER_ADMIN'],
           is_active: params.is_active !== false,
-          updated_by: caller.authId || null,
+          updated_by: actorId || null,
         };
         const { data, error } = await db.from('sp_agent_tiers').insert(insertRow).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
@@ -118,7 +123,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (!TIER_STRUCTURE_ADMINS.includes(caller.role ?? '')) return json({ error: 'Forbidden: only MASTER_ADMIN/ADMIN can edit tiers' }, 403);
         if (!params.code) return json({ error: 'code required' }, 400);
         const ALLOWED = ['name', 'rank', 'color', 'emoji', 'min_policies_count', 'min_premium_amount', 'coin_bonus_rate', 'l1_override_rate', 'l2_override_rate', 'benefits', 'requires_approval', 'approval_roles', 'is_active', 'is_default'];
-        const updates: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: caller.authId || null };
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString(), updated_by: actorId || null };
         for (const k of ALLOWED) { if (k in params) updates[k] = params[k]; }
         if (Object.keys(updates).length === 2) return json({ error: 'No valid fields to update' }, 400);
 
@@ -160,7 +165,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         ]);
         if (!targetTier) return json({ error: 'Tier tidak ditemukan atau nonaktif' }, 404);
         try {
-          const result = await applyOrQueueTier(db, String(params.agent_id), targetTier, agentRow?.tier ?? null, caller.authId, caller.role ?? '', 'MANUAL', params.reason ? String(params.reason) : undefined);
+          const result = await applyOrQueueTier(db, String(params.agent_id), targetTier, agentRow?.tier ?? null, actorId, caller.role ?? '', 'MANUAL', params.reason ? String(params.reason) : undefined);
           return json({ data: result.data, pending: result.pending });
         } catch (e) {
           return json({ error: (e as Error).message }, 400);
@@ -189,12 +194,12 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         }
 
         const ts = new Date().toISOString();
-        await db.from('sp_users').update({ tier: targetTier.code, tier_assigned_by: caller.authId, tier_assigned_at: ts }).eq('id', reqRow.agent_id);
+        await db.from('sp_users').update({ tier: targetTier.code, tier_assigned_by: actorId, tier_assigned_at: ts }).eq('id', reqRow.agent_id);
         await db.from('sp_agent_tier_history').insert({
           agent_id: reqRow.agent_id, tier_code: targetTier.code, previous_tier_code: reqRow.current_tier_code,
-          source: reqRow.source === 'AUTO_ELIGIBLE' ? 'AUTO' : 'MANUAL', assigned_by: caller.authId, note: 'Disetujui via antrean persetujuan',
+          source: reqRow.source === 'AUTO_ELIGIBLE' ? 'AUTO' : 'MANUAL', assigned_by: actorId, note: 'Disetujui via antrean persetujuan',
         });
-        const { data, error } = await db.from('sp_tier_change_requests').update({ status: 'APPROVED', approved_by: caller.authId, approved_at: ts, updated_at: ts }).eq('id', params.request_id).select().maybeSingle();
+        const { data, error } = await db.from('sp_tier_change_requests').update({ status: 'APPROVED', approved_by: actorId, approved_at: ts, updated_at: ts }).eq('id', params.request_id).select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
         return json({ data });
       }
@@ -204,7 +209,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (!params.request_id) return json({ error: 'request_id required' }, 400);
         const ts = new Date().toISOString();
         const { data, error } = await db.from('sp_tier_change_requests').update({
-          status: 'REJECTED', rejected_by: caller.authId, rejected_at: ts,
+          status: 'REJECTED', rejected_by: actorId, rejected_at: ts,
           rejection_reason: params.reason ? String(params.reason) : null, updated_at: ts,
         }).eq('id', params.request_id).eq('status', 'PENDING').select().maybeSingle();
         if (error) return json({ error: error.message }, 400);
@@ -225,7 +230,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (suggested.code === agentRow?.tier) return json({ data: { changed: false, tier: suggested.code, metrics } });
         if (!params.apply) return json({ data: { changed: true, suggested_tier: suggested.code, current_tier: agentRow?.tier ?? null, metrics } });
         try {
-          const result = await applyOrQueueTier(db, String(params.agent_id), suggested, agentRow?.tier ?? null, caller.authId, caller.role ?? '', 'AUTO');
+          const result = await applyOrQueueTier(db, String(params.agent_id), suggested, agentRow?.tier ?? null, actorId, caller.role ?? '', 'AUTO');
           return json({ data: { ...result.data, metrics }, pending: result.pending });
         } catch (e) {
           return json({ error: (e as Error).message }, 400);
@@ -244,7 +249,7 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
           const suggested = resolveEligibleTier(tiers ?? [], metrics.policiesCount, metrics.totalPremium);
           if (!suggested || suggested.code === agent.tier) { unchanged++; continue; }
           try {
-            const result = await applyOrQueueTier(db, agent.id, suggested, agent.tier ?? null, caller.authId, caller.role ?? '', 'AUTO');
+            const result = await applyOrQueueTier(db, agent.id, suggested, agent.tier ?? null, actorId, caller.role ?? '', 'AUTO');
             if (result.pending) queued++; else applied++;
           } catch { /* skip agent on error, continue batch */ }
         }

@@ -1829,26 +1829,34 @@ const AddMitraModal: React.FC<{
       return;
     }
     setBusy(true);
-    const res = await createMitra({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      phone: form.phone.trim(),
-      ktp: form.ktp.trim() || null,
-      address: form.address.trim() || null,
-      upline_code: form.upline_code.trim() || null,
-      mode,
-    });
-    setBusy(false);
-    if (res.error || !res.agent) { setError(res.error ?? 'Gagal menambahkan mitra.'); return; }
-    onCreated(
-      res.agent,
-      res.tempPassword
-        ? {
-            name: res.agent.name, email: res.agent.email, password: res.tempPassword,
-            note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Mitra wajib menggantinya saat login pertama.',
-          }
-        : null,
-    );
+    try {
+      const res = await createMitra({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        ktp: form.ktp.trim() || null,
+        address: form.address.trim() || null,
+        upline_code: form.upline_code.trim() || null,
+        mode,
+      });
+      if (res.error || !res.agent) {
+        setError(res.error ?? 'Backend tidak mengembalikan profil mitra. Periksa email dan coba lagi.');
+        return;
+      }
+      onCreated(
+        res.agent,
+        res.tempPassword
+          ? {
+              name: res.agent.name, email: res.agent.email, password: res.tempPassword,
+              note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Mitra wajib menggantinya saat login pertama.',
+            }
+          : null,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menghubungi server. Coba lagi.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const inputCls = 'w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all';

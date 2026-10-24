@@ -36,6 +36,7 @@ import { handleTiersAction } from './actions/tiers.ts';
 // attack surface.
 import { handleQuotationsAction } from './actions/quotations.ts';
 import { handleMarketingAction } from './actions/marketing.ts';
+import { handleMitraAccountsAction } from './actions/mitraAccounts.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
@@ -244,6 +245,7 @@ Deno.serve(async (req) => {
       await handleTiersAction(action, ctx) ??
       await handleQuotationsAction(action, ctx) ??
       await handleMarketingAction(action, ctx) ??
+      await handleMitraAccountsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
     if (result) {

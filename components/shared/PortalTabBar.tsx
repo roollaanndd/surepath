@@ -27,7 +27,7 @@ const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visibl
 const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false }) => (
   <nav
     aria-label="Navigasi utama"
-    className="fixed inset-x-4 z-50 sp-glass-strong rounded-[2rem]"
+    className="fixed inset-x-4 z-50 sp-glass-strong sp-bottom-nav rounded-[2rem]"
     style={{
       bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
       boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)',

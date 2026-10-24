@@ -1294,3 +1294,105 @@
 .dark .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) {
   border-color: var(--ds-border, #3A3F52);
 }
+
+
+/* SurePath illustrated portal atmosphere + floating navigation.
+   Scoped to authenticated customer, agent and operator shells only. */
+.sp-modern-app {
+  background:
+    radial-gradient(ellipse at 8% 4%, rgba(249, 115, 22, .15) 0%, transparent 32%),
+    radial-gradient(ellipse at 92% 12%, rgba(16, 185, 129, .18) 0%, transparent 36%),
+    linear-gradient(155deg, #F4FBF7 0%, #FFFFFF 44%, #F0FAF5 100%);
+  background-attachment: fixed;
+}
+.sp-modern-app.dark {
+  background:
+    radial-gradient(ellipse at 8% 4%, rgba(249, 115, 22, .12) 0%, transparent 32%),
+    radial-gradient(ellipse at 92% 12%, rgba(16, 185, 129, .13) 0%, transparent 36%),
+    linear-gradient(155deg, #171F23 0%, #1A1D29 52%, #14251F 100%);
+}
+.sp-modern-app > .sp-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: .7;
+  background:
+    radial-gradient(ellipse at 78% 8%, rgba(16,185,129,.13) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 12% 35%, rgba(249,115,22,.11) 0 1px, transparent 2px);
+  background-size: 28px 28px, 36px 36px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 42%, transparent 78%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.55) 42%, transparent 78%);
+}
+.sp-modern-app > .sp-ambient::before,
+.sp-modern-app > .sp-ambient::after {
+  content: "";
+  position: absolute;
+  width: min(72vw, 620px);
+  height: min(72vw, 620px);
+  border-radius: 43% 57% 65% 35% / 38% 40% 60% 62%;
+  border: 1px solid rgba(5,150,105,.12);
+  background: linear-gradient(145deg, rgba(16,185,129,.08), rgba(255,255,255,0) 62%, rgba(249,115,22,.07));
+  transform: rotate(-18deg);
+}
+.sp-modern-app > .sp-ambient::before { top: -28%; right: -22%; }
+.sp-modern-app > .sp-ambient::after {
+  width: min(56vw, 470px);
+  height: min(56vw, 470px);
+  left: -28%;
+  top: 28%;
+  transform: rotate(24deg);
+  opacity: .65;
+}
+.sp-modern-app.sp-agent-premium,
+.sp-modern-app.sp-operator-premium {
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(249,115,22,.14), transparent 30%),
+    radial-gradient(ellipse at 92% 12%, rgba(16,185,129,.2), transparent 35%),
+    linear-gradient(160deg, #F0FAF5, #FFFFFF 48%, #EAF8F1);
+  background-attachment: fixed;
+}
+.sp-modern-app .sp-bottom-nav {
+  isolation: isolate;
+  overflow: visible;
+  background: rgba(255,255,255,.88) !important;
+  border: 1px solid rgba(255,255,255,.92);
+  box-shadow: 0 18px 48px -20px rgba(6,78,59,.30), 0 5px 18px -10px rgba(15,23,42,.20) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.35) !important;
+  backdrop-filter: blur(24px) saturate(1.35) !important;
+}
+.sp-modern-app .sp-bottom-nav > div { padding: 9px 8px calc(9px + env(safe-area-inset-bottom, 0px)); }
+.sp-modern-app .sp-bottom-nav button[aria-current="page"] {
+  background: linear-gradient(180deg, rgba(16,185,129,.12), rgba(16,185,129,.045));
+}
+.sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:last-child {
+  color: #047857;
+}
+.sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:nth-last-child(2) {
+  color: #047857;
+}
+.sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:first-child:not(:only-child) {
+  background: linear-gradient(90deg, #F97316, #FDBA74);
+}
+.sp-modern-app .sp-bottom-nav button:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 3px;
+}
+.sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:first-child {
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, #059669, #064E3B) !important;
+  box-shadow: 0 12px 28px -8px rgba(5,150,105,.55), 0 0 0 5px rgba(255,255,255,.92), inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+.sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child {
+  color: #64748B;
+}
+@media (max-width: 420px) {
+  .sp-modern-app .sp-bottom-nav { left: 10px; right: 10px; }
+  .sp-modern-app .sp-bottom-nav > div { padding-left: 4px; padding-right: 4px; }
+  .sp-modern-app .sp-bottom-nav button:not([class*="-mt-8"]) { min-width: 44px; padding-left: 3px; padding-right: 3px; }
+  .sp-modern-app .sp-bottom-nav button > span:last-child { font-size: 9px; letter-spacing: .025em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app .sp-bottom-nav, .sp-modern-app .sp-bottom-nav * { transition: none !important; }
+}

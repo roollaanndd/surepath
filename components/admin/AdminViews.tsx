@@ -12,6 +12,7 @@ import {
   Globe, FileDown, Upload, Plus,
   UserPlus, ChevronDown, Pencil, Shield,
   X, Clock, AlertCircle, Send, Sparkles,
+  KeyRound, Copy, MailCheck,
 } from 'lucide-react';
 import { db, AuditLog, CustomProduct, User } from '../../db';
 import {
@@ -23,6 +24,7 @@ import {
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
   registerAgent,
+  createMitra, sendMitraPasswordReset, setMitraTempPassword,
   getSecurityStats, getSessionActivityByHour,
   getAdminPayments, getAdminFinancialReports,
 } from '../../services/supabaseService';
@@ -1796,6 +1798,218 @@ const STATUS_COLOR: Record<string, string> = {
   CLOSED: 'bg-ds-card2 text-ds-ink3',
 };
 
+// ── Tambah mitra manual ──────────────────────────────────────────────────────
+//
+// `registerAgent`/`admin_register_agent` yang lama hanya menulis baris
+// sp_users tanpa pengguna auth, jadi mitranya tampil di daftar tapi tidak
+// pernah bisa masuk. Modal ini memakai admin_create_mitra, yang membuat
+// keduanya sekaligus.
+const AddMitraModal: React.FC<{
+  canSetTempPassword: boolean;
+  onClose: () => void;
+  onCreated: (
+    agent: SpUser,
+    credential: { name: string; email: string; password?: string | null; note: string } | null,
+  ) => void;
+}> = ({ canSetTempPassword, onClose, onCreated }) => {
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', ktp: '', address: '', upline_code: '',
+  });
+  const [mode, setMode] = useState<'invite' | 'temp'>('invite');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(prev => ({ ...prev, [k]: e.target.value }));
+
+  const submit = async () => {
+    setError(null);
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
+      setError('Nama, email, dan nomor HP wajib diisi.');
+      return;
+    }
+    setBusy(true);
+    const res = await createMitra({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      ktp: form.ktp.trim() || null,
+      address: form.address.trim() || null,
+      upline_code: form.upline_code.trim() || null,
+      mode,
+    });
+    setBusy(false);
+    if (res.error || !res.agent) { setError(res.error ?? 'Gagal menambahkan mitra.'); return; }
+    onCreated(
+      res.agent,
+      res.tempPassword
+        ? {
+            name: res.agent.name, email: res.agent.email, password: res.tempPassword,
+            note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Mitra wajib menggantinya saat login pertama.',
+          }
+        : null,
+    );
+  };
+
+  const inputCls = 'w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all';
+  const labelCls = 'block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5';
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto no-scrollbar bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl">
+        <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
+          <UserPlus size={18} className="text-ds-green" /> Tambah Mitra Baru
+        </h3>
+        {error && (
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
+        )}
+        <div className="space-y-4">
+          <div>
+            <label className={labelCls}>Nama Lengkap</label>
+            <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Email</label>
+              <input type="email" value={form.email} onChange={set('email')} placeholder="budi@email.com" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Nomor HP</label>
+              <input type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxxxx" className={inputCls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>NIK KTP (opsional)</label>
+              <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Kode Upline (opsional)</label>
+              <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>Alamat (opsional)</label>
+            <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
+          </div>
+
+          <div>
+            <label className={labelCls}>Cara Mitra Masuk Pertama Kali</label>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setMode('invite')}
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                  mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2'
+                }`}
+              >
+                <p className="text-xs font-black uppercase tracking-widest text-white">Email Undangan</p>
+                <p className="text-[0.62rem] text-ds-ink3 mt-1">Mitra menerima email dan menyetel kata sandinya sendiri. Pilihan yang disarankan.</p>
+              </button>
+              {canSetTempPassword && (
+                <button
+                  type="button"
+                  onClick={() => setMode('temp')}
+                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                    mode === 'temp' ? 'border-amber-500 bg-amber-500/10' : 'border-ds-border bg-ds-card2'
+                  }`}
+                >
+                  <p className="text-xs font-black uppercase tracking-widest text-white">Kata Sandi Sementara</p>
+                  <p className="text-[0.62rem] text-ds-ink3 mt-1">Ditampilkan sekali di layar ini untuk diteruskan sendiri. Mitra wajib menggantinya saat login pertama.</p>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-[0.62rem] text-ds-ink3 leading-relaxed">
+            Mitra dibuat dengan status <span className="font-black text-amber-400">belum terverifikasi</span>, komisi
+            10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
+            barisnya setelah dokumennya diperiksa.
+          </p>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all"
+          >
+            Batal
+          </button>
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50"
+          >
+            {busy ? 'Menyimpan...' : mode === 'temp' ? 'Buat & Tampilkan Sandi' : 'Buat & Kirim Undangan'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Kartu kredensial sekali-tampil ───────────────────────────────────────────
+//
+// Satu-satunya tempat kata sandi sementara pernah terlihat. Nilainya hanya ada
+// di state React pemanggilnya: tidak ditulis ke sp_users, tidak ke
+// sp_activity_log (dispatcher hanya menyimpan NAMA kunci parameter), dan tidak
+// ke localStorage. Menutup kartu ini berarti kata sandinya hilang.
+const CredentialModal: React.FC<{
+  name: string;
+  email: string;
+  password?: string | null;
+  link?: string | null;
+  note: string;
+  onClose: () => void;
+}> = ({ name, email, password, link, note, onClose }) => {
+  const [copied, setCopied] = useState(false);
+  const value = password ?? link ?? '';
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* klipboard ditolak browser — nilainya tetap terlihat di layar */ }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[210] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-md mx-4 bg-ds-card border border-amber-500/30 rounded-[2.5rem] p-8 shadow-2xl">
+        <h3 className="font-black uppercase tracking-widest text-sm mb-2 flex items-center gap-3">
+          <KeyRound size={18} className="text-amber-400" />
+          {password ? 'Kata Sandi Sementara' : 'Tautan Setel Ulang'}
+        </h3>
+        <p className="text-xs font-bold text-ds-ink2">{name}</p>
+        <p className="text-[0.62rem] font-mono text-ds-ink3 mb-5">{email}</p>
+
+        <div className="p-4 bg-ds-card2 border border-ds-border rounded-2xl">
+          <p className="font-mono text-sm text-white break-all select-all">{value}</p>
+        </div>
+        <button
+          onClick={copy}
+          className="mt-3 w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 text-amber-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-amber-500 hover:text-white transition-all"
+        >
+          <Copy size={13} /> {copied ? 'Tersalin' : 'Salin'}
+        </button>
+
+        <div className="mt-5 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+          <p className="text-[0.62rem] text-rose-300 font-semibold leading-relaxed">{note}</p>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-5 w-full py-3 bg-ds-card2 text-ds-ink2 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:text-white transition-all"
+        >
+          Sudah Dicatat, Tutup
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const AgentManagementView = () => {
   const [agents, setAgents] = useState<SpUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1803,16 +2017,36 @@ export const AgentManagementView = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [showAddMitra, setShowAddMitra] = useState(false);
+  // Kata sandi sementara hidup HANYA di state ini. Tidak ada di basis data dan
+  // tidak ada di log, jadi menutup kartunya berarti harus disetel ulang —
+  // itulah yang membuat fitur ini bukan "lihat kata sandi".
+  const [credential, setCredential] = useState<
+    { name: string; email: string; password?: string | null; link?: string | null; note: string } | null
+  >(null);
+  const [pwBusy, setPwBusy] = useState<string | null>(null);
   const [pendingTierAgentIds, setPendingTierAgentIds] = useState<Set<string>>(new Set());
   const { tiers } = useTierDefinitions();
   const toast = useToast();
 
+  // App.tsx menulis sesi ke localStorage (baris 221) dan hanya MEMBACA
+  // sessionStorage sebagai cadangan. Pembacaan di sini dulu sessionStorage
+  // saja, jadi perannya selalu string kosong dan pemilih tier di bawah tidak
+  // pernah muncul untuk siapa pun — kegagalan yang diam, karena UI-nya cuma
+  // tidak ada. Urutannya sekarang sama dengan App.tsx.
   const adminRole: string = (() => {
-    try { return JSON.parse(sessionStorage.getItem('SUREPATH_SESSION') ?? '{}')?.role ?? ''; }
-    catch { return ''; }
+    try {
+      const raw = localStorage.getItem('SUREPATH_SESSION') ?? sessionStorage.getItem('SUREPATH_SESSION');
+      return JSON.parse(raw ?? '{}')?.role ?? '';
+    } catch { return ''; }
   })();
 
   const canAssignTier = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER].includes(adminRole as UserRole);
+  // Sejalan dengan CAN_MANAGE_MITRA_ACCOUNT / CAN_SET_MITRA_PASSWORD di
+  // data-gateway/actions/mitraAccounts.ts. Gerbang di sini hanya kerapian
+  // tampilan; yang menolak sungguhan adalah gerbang di server.
+  const canManageMitraAccount = [UserRole.MASTER_ADMIN, UserRole.ADMIN].includes(adminRole as UserRole);
+  const canSetMitraPassword = adminRole === UserRole.MASTER_ADMIN;
 
   useEffect(() => {
     getAllAgents().then(data => { setAgents(data); setLoading(false); });
@@ -1864,6 +2098,38 @@ export const AgentManagementView = () => {
     } else {
       toast.success('Tier agen sudah sesuai hasil evaluasi');
     }
+  };
+
+  const handleSendReset = async (a: SpUser) => {
+    setPwBusy(a.id + '_reset');
+    const res = await sendMitraPasswordReset(a.id);
+    setPwBusy(null);
+    if (res.error) { toast.error(res.error); return; }
+    if (res.recoveryLink) {
+      setCredential({
+        name: a.name, email: a.email, link: res.recoveryLink,
+        note: 'Email setel ulang sudah dikirim. Tautan di bawah adalah cadangan bila emailnya tidak sampai — tautan ini memberi akses penuh ke akun itu, jadi kirim lewat kanal pribadi dan jangan dibagikan ulang.',
+      });
+    } else {
+      toast.success(`Email setel ulang kata sandi dikirim ke ${a.email}`);
+    }
+  };
+
+  const handleTempPassword = async (a: SpUser) => {
+    const ok = window.confirm(
+      `Setel kata sandi sementara untuk ${a.name}?\n\n` +
+      `Kata sandi lamanya langsung tidak berlaku, dan ${a.name} wajib membuat ` +
+      `kata sandi baru saat login berikutnya. Tindakan ini tercatat di jejak aktivitas.`,
+    );
+    if (!ok) return;
+    setPwBusy(a.id + '_temp');
+    const res = await setMitraTempPassword(a.id, true);
+    setPwBusy(null);
+    if (res.error) { toast.error(res.error); return; }
+    setCredential({
+      name: a.name, email: a.email, password: res.tempPassword,
+      note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Mitra wajib menggantinya saat login berikutnya.',
+    });
   };
 
   const pending = agents.filter(a => !(a as any).verified);
@@ -1996,6 +2262,32 @@ export const AgentManagementView = () => {
             )}
           </div>
 
+          {/* Akun & kata sandi */}
+          {canManageMitraAccount && (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={() => handleSendReset(a)}
+                disabled={pwBusy === a.id + '_reset'}
+                title="Kirim email setel ulang kata sandi ke mitra"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:text-white transition-colors disabled:opacity-40"
+              >
+                <MailCheck size={12} />
+                {pwBusy === a.id + '_reset' ? '…' : 'Reset'}
+              </button>
+              {canSetMitraPassword && (
+                <button
+                  onClick={() => handleTempPassword(a)}
+                  disabled={pwBusy === a.id + '_temp'}
+                  title="Setel kata sandi sementara — ditampilkan sekali, wajib diganti mitra saat login"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-colors disabled:opacity-40"
+                >
+                  <KeyRound size={12} />
+                  {pwBusy === a.id + '_temp' ? '…' : 'Sandi'}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Verify/Reject button */}
           <button
             disabled={saving === a.id}
@@ -2021,9 +2313,21 @@ export const AgentManagementView = () => {
     <div className="space-y-8 animate-fade-in">
       {selectedAgentId && <UserDetailModal userId={selectedAgentId} onClose={() => setSelectedAgentId(null)} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
+      {showAddMitra && (
+        <AddMitraModal
+          canSetTempPassword={canSetMitraPassword}
+          onClose={() => setShowAddMitra(false)}
+          onCreated={(agent, cred) => {
+            setAgents(prev => [agent, ...prev]);
+            setShowAddMitra(false);
+            if (cred) setCredential(cred); else toast.success(`Undangan dikirim ke ${agent.email}`);
+          }}
+        />
+      )}
+      {credential && <CredentialModal {...credential} onClose={() => setCredential(null)} />}
 
       {/* Header actions */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
         <button
           onClick={() => setShowBulkImport(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
@@ -2031,6 +2335,15 @@ export const AgentManagementView = () => {
           <Upload size={14} />
           Bulk Import
         </button>
+        {canManageMitraAccount && (
+          <button
+            onClick={() => setShowAddMitra(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95"
+          >
+            <UserPlus size={14} />
+            Tambah Mitra
+          </button>
+        )}
       </div>
 
       {/* Summary cards */}

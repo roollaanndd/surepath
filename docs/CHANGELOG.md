@@ -1,5 +1,73 @@
 # SurePath — Changelog
 
+## v2.7.7 — 2026-10-24
+
+Kelola akun mitra dari CMS admin: tambah manual, dorong setel ulang kata sandi,
+dan kata sandi sementara untuk mitra yang terkunci.
+
+**Tambah mitra manual**
+- `admin_register_agent` yang lama HANYA menulis baris `sp_users`, tanpa
+  pengguna auth. Mitranya muncul di daftar CMS dan tidak pernah bisa masuk —
+  tidak ada kredensial untuk dipakai. `admin_create_mitra` membuat keduanya
+  dalam urutan yang sama dengan pendaftaran sendiri: pengguna auth dulu, lalu
+  profil dengan id yang sama. Kalau penulisan profil gagal, pengguna auth-nya
+  dihapus kembali; tanpa itu mitranya bisa masuk tanpa baris `sp_users` dan
+  `ensure_profile` akan membuatkannya sebagai CUSTOMER.
+- Nilai bawaannya persis cabang AGENT di `ensure_profile` (komisi 10%, target
+  Rp 50 juta, trust 80, `verified: false`), jadi mitra buatan admin tidak
+  berbeda dari mitra yang mendaftar sendiri. Kode upline opsional dicocokkan ke
+  `agent_code`/`referral_code` dengan nilai yang dibersihkan lebih dulu.
+
+**Dorong setel ulang kata sandi**
+- `admin_send_mitra_reset` memanggil `POST /auth/v1/recover` dengan
+  `redirect_to=…?reset=1`, parameter yang sudah dibaca `AuthGate` untuk tetap
+  di formulir setel ulang. MASTER_ADMIN juga menerima tautannya sebagai
+  cadangan bila email tidak sampai.
+
+**"Lihat kata sandi" → "setel kata sandi sementara"**
+- Permintaan aslinya adalah melihat kata sandi mitra. Itu tidak bisa dipenuhi:
+  Supabase Auth menyimpan bcrypt hash, dan tidak ada jalan dari hash ke teks
+  aslinya. Satu-satunya cara adalah menyimpan salinan teks terang setiap kata
+  sandi, yang menjadikan satu kebocoran basis data sebagai kebocoran seluruh
+  kredensial mitra — tepat kebiasaan yang audit 2026-10-23 habis dibersihkan.
+- `admin_set_mitra_temp_password` (MASTER_ADMIN) menyetel kata sandi sementara
+  yang ditampilkan **sekali** lalu hilang, dan secara bawaan memaksa mitra
+  menggantinya saat login berikutnya lewat `user_metadata.must_change_password`.
+  Secara operasional setara dengan permintaan aslinya, tanpa menyimpan satu pun
+  kata sandi yang bisa dibaca.
+- `AuthGate` memasang paksaan ganti itu di `resolveAndLogin`, satu titik yang
+  dilewati login kata sandi, OTP, dan sesi yang dipulihkan. Benderanya
+  dibersihkan dalam panggilan `updateUser` yang sama dengan penyimpanan sandi
+  baru; kalau dipisah, kegagalan di antaranya meninggalkan akun yang sandinya
+  sudah baru tapi tetap terkunci di formulir itu.
+
+**Otorisasi**
+- Ketiganya digerbang per-kapabilitas (`CAN_MANAGE_MITRA_ACCOUNT`,
+  `CAN_SET_MITRA_PASSWORD`), BUKAN `caller.isAdmin`. `ADMIN_ROLES` memuat
+  `OPERATOR`, `FINANCE*`, dan `INSURANCE_ADMIN`; audit 2026-10-23 menemukan
+  empat aksi uang yang bocor justru karena digerbang `isAdmin`, dan kredensial
+  mitra tidak boleh jadi yang kelima. Dua aksi kata sandi juga menolak target
+  yang bukan `AGENT` — tanpa itu layar Manajemen Mitra menjadi alat
+  pengambilalihan akun admin lain. `services/__tests__/mitraAccounts.test.ts`
+  memaku ketiganya, termasuk bahwa tidak ada baris yang ditulis memuat kata
+  sandinya.
+
+**Perbaikan yang ikut ketemu**
+- Peran admin di `AgentManagementView` dibaca dari `sessionStorage` saja,
+  padahal `App.tsx` menulis sesi ke `localStorage` dan hanya MEMBACA
+  `sessionStorage` sebagai cadangan. Perannya karena itu selalu string kosong,
+  sehingga pemilih tier di layar Manajemen Mitra tidak pernah muncul untuk
+  siapa pun — kegagalan yang diam, karena UI-nya cuma tidak ada. Urutan
+  pembacaannya sekarang sama dengan `App.tsx`.
+- Tipe balikan `callGateway` dibuat terbuka (`GatewayResponse`). Ia
+  mengembalikan badan respons utuh, jadi mendaftar empat kunci saja membuat
+  `tsc` menolak pembacaan kunci yang memang dikirim server.
+
+**Deploy**
+- `data-gateway` **harus di-deploy** agar ketiga aksi ini hidup; kode di `main`
+  saja tidak mengubah produksi.
+
+
 ## v2.7.5 — 2026-10-24
 
 Kontras warna: hijau brand dipakai sebagai teks, dan itu tidak terbaca.

@@ -28,6 +28,7 @@ import { handleInsurersAction } from './actions/insurers.ts';
 import { handleAgentsAction } from './actions/agents.ts';
 import { handleNotificationsAction } from './actions/notifications.ts';
 import { handleAdminAction } from './actions/admin.ts';
+import { handleMitraAccountsAction } from './actions/mitraAccounts.ts';
 import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
 import { handleTiersAction } from './actions/tiers.ts';
@@ -241,6 +242,7 @@ Deno.serve(async (req) => {
       await handleAgentsAction(action, ctx) ??
       await handleNotificationsAction(action, ctx) ??
       await handleAdminAction(action, ctx) ??
+      await handleMitraAccountsAction(action, ctx) ??
       await handleTiersAction(action, ctx) ??
       await handleQuotationsAction(action, ctx) ??
       await handleMarketingAction(action, ctx) ??

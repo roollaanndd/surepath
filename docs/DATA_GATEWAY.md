@@ -60,6 +60,40 @@ Origin yang diizinkan:
 `admin_update_commission`, `admin_list_notifications`, `admin_mark_notification_read`,
 `admin_create_notification`, `admin_security_stats`, `admin_traffic_stats`.
 
+### Akun mitra (v2.7.7 — `actions/mitraAccounts.ts`)
+
+Otorisasi **per-kapabilitas**, sengaja BUKAN `caller.isAdmin`. `ADMIN_ROLES`
+memuat `OPERATOR`, `FINANCE*`, dan `INSURANCE_ADMIN`; membuat akun mitra dan
+menyentuh kredensialnya bukan pekerjaan mereka.
+
+- `CAN_MANAGE_MITRA_ACCOUNT` = `MASTER_ADMIN`, `ADMIN`
+- `CAN_SET_MITRA_PASSWORD` = `MASTER_ADMIN`
+
+| Action | Peran | Keterangan |
+|---|---|---|
+| `admin_create_mitra` | ADMIN, MASTER_ADMIN | Buat pengguna auth **dan** profil `sp_users` dengan id yang sama. `mode: 'invite'` (bawaan) mengirim email undangan; `mode: 'temp'` (MASTER_ADMIN saja) mengembalikan kata sandi sementara. Role dipaksa `AGENT`; nilai bawaan sama dengan cabang AGENT di `ensure_profile`. Gagal menulis profil → pengguna auth dihapus kembali. |
+| `admin_send_mitra_reset` | ADMIN, MASTER_ADMIN | Dorong email setel ulang kata sandi lewat `POST /auth/v1/recover` (`redirect_to=…?reset=1`, dibaca `AuthGate`). MASTER_ADMIN juga menerima `recovery_link` sebagai cadangan bila email tidak sampai. Target harus `role = 'AGENT'`. |
+| `admin_set_mitra_temp_password` | MASTER_ADMIN | Setel kata sandi sementara, dikembalikan **sekali** di respons. Menyetel `user_metadata.must_change_password`, yang memaksa layar ganti sandi di login berikutnya. Target harus `role = 'AGENT'`. |
+
+**Tidak ada aksi "lihat kata sandi", dan tidak akan ada.** Supabase Auth
+menyimpan bcrypt hash; tidak ada jalan dari hash ke teks aslinya. Satu-satunya
+cara memenuhinya adalah menyimpan salinan teks terang setiap kata sandi mitra,
+yang menjadikan satu kebocoran basis data sebagai kebocoran seluruh kredensial.
+`admin_set_mitra_temp_password` adalah penggantinya: secara operasional setara
+("saya bisa menolong mitra yang terkunci") tanpa menyimpan apa pun yang bisa
+dibaca. Kata sandinya tidak pernah masuk tabel mana pun — `sp_activity_log`
+sendiri hanya menyimpan **nama** kunci parameter, bukan nilainya
+(`recordActivity` di `index.ts`).
+
+Ketiganya tercatat otomatis di `sp_activity_log` lewat dispatcher; dua aksi
+kata sandi juga menulis `sp_admin_notifications` supaya terlihat di lonceng
+admin tanpa harus menggali log.
+
+`admin_register_agent` yang lama **hanya** menulis baris `sp_users` tanpa
+pengguna auth, jadi mitranya tampil di CMS tapi tidak pernah bisa masuk. Ia
+dibiarkan apa adanya untuk pemanggil lama; untuk mitra baru pakai
+`admin_create_mitra`.
+
 ### Marketing/Sales CRM (v2.6.0 — role `MARKETING`)
 
 Otorisasi di `actions/marketing.ts`. Seorang `MARKETING` hanya melihat agen di

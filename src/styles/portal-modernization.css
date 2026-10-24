@@ -288,6 +288,26 @@
 }
 
 
+
+/* SurePath admin visual system override: green is primary, orange is a restrained accent. */
+.sp-modern-app:has(aside) aside nav a:hover,
+.sp-modern-app:has(aside) aside nav button:hover {
+  background: rgba(255,255,255,.10);
+  color: #fff;
+}
+.sp-modern-app:has(aside) aside nav [aria-current="page"],
+.sp-modern-app:has(aside) aside nav [data-active="true"] {
+  border-color: rgba(167,243,208,.25);
+  background: rgba(16,185,129,.22);
+  color: #fff;
+}
+.sp-modern-app:has(aside) main :where(table thead) {
+  background: color-mix(in srgb, var(--ds-surface, white) 94%, #059669);
+}
+.sp-modern-app:has(aside) main :where(button[data-accent="orange"], .sp-accent-orange) {
+  --sp-accent: var(--ds-orange, #F97316);
+}
+
 /* Agent app premium refresh — scoped to the authenticated agent portal. */
 .sp-agent-premium {
   --sp-agent-emerald: #087a58;

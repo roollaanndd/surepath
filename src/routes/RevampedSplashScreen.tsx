@@ -82,15 +82,15 @@ export const RevampedSplashScreen: React.FC<Props> = ({ lang, setLang, darkMode,
           <div className="h-1.5 overflow-hidden rounded-full" style={{ background:darkMode?'#17392c':'#edf4ef' }}>
             <div className="h-full rounded-full transition-[width] duration-100" style={{ width:`${progress}%`, background:'linear-gradient(90deg,#08784E,#00A85B,#B7D84B,#F28C28)' }} />
           </div>
-          <div className="mt-3 flex justify-between text-[10px] font-semibold tracking-[.16em]" style={{ color:muted }}>
+          <div className="mt-3 flex justify-between text-2xs font-semibold tracking-[.16em]" style={{ color:muted }}>
             <span>SUREPATH</span><span>{progress}%</span>
           </div>
         </div>
       </div>
       <div className="absolute bottom-7 flex items-center gap-3">
-        <span className="text-[10px] font-semibold tracking-[.12em]" style={{ color:muted }}>{copy.ready}</span>
+        <span className="text-2xs font-semibold tracking-[.12em]" style={{ color:muted }}>{copy.ready}</span>
         <span style={{ color:muted }}>·</span>
-        {(['ID', 'EN'] as const).map(l => <button key={l} onClick={() => setLang(l as Language)} className="rounded-full px-2 py-1 text-[10px] font-bold" style={{ color:lang===l?'#064e3b':muted, background:lang===l?'#e8f5ec':'transparent', borderBottom:lang===l?'2px solid #F28C28':'2px solid transparent' }}>{l}</button>)}
+        {(['ID', 'EN'] as const).map(l => <button key={l} onClick={() => setLang(l as Language)} className="rounded-full px-2 py-1 text-2xs font-bold" style={{ color:lang===l?'#064e3b':muted, background:lang===l?'#e8f5ec':'transparent', borderBottom:lang===l?'2px solid #F28C28':'2px solid transparent' }}>{l}</button>)}
       </div>
     </main>
   );

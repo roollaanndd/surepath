@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, AlertTriangle } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
-import { useDarkMode } from '../shared/theme';
 import { useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
@@ -12,6 +11,8 @@ interface Props {
   operator: any;
   lang: Language;
   onLogout: () => void;
+  darkMode: boolean;
+  onToggleDark: () => void;
 }
 
 // ── Tiny PWA install hook (re-implemented here to keep operator app self-contained) ──
@@ -46,12 +47,11 @@ function usePwaInstall() {
   return { canInstall: !!installEvent, isStandalone, promptInstall };
 }
 
-const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
+const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout, darkMode, onToggleDark }) => {
   const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
-  const [darkMode, setDarkMode] = useDarkMode();
 
   const handleInstall = async () => {
     const res = await promptInstall();
@@ -109,7 +109,7 @@ const OperatorProfile: React.FC<Props> = ({ operator, lang, onLogout }) => {
         <SectionLabel>Pengaturan</SectionLabel>
         <div className="bg-ds-card border border-ds-border rounded-2xl divide-y divide-ds-border overflow-hidden">
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={onToggleDark}
             className="w-full flex items-center gap-3 p-4 hover:bg-ds-card2 active:scale-[0.99] transition-all"
           >
             <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center">

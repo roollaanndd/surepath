@@ -18,6 +18,7 @@ import InsurerClaims from './InsurerClaims';
 import InsurerPayments from './InsurerPayments';
 import InsurerProfile from './InsurerProfile';
 import InsurerNotifications from './InsurerNotifications';
+import { useDarkMode } from '../shared/theme';
 
 interface Props {
   authToken: string;
@@ -38,18 +39,12 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('INSURER'));
   const [tabKey, setTabKey] = useState(0);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
+  const [darkMode, setDarkMode] = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
   const [insurerName, setInsurerName] = useState(() => sessionStorage.getItem('SUREPATH_INSURER_NAME') ?? 'Insurer');
   void setInsurerName; // kept for future profile-name updates
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
 
   const handleTabChange = (tab: string) => {
     setTabKey(k => k + 1);
@@ -98,7 +93,8 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
       case 'payments':
         return <InsurerPayments authToken={authToken} lang={lang} refreshTick={refreshTick} />;
       case 'profile':
-        return <InsurerProfile authToken={authToken} lang={lang} onLogout={onLogout} insurerName={insurerName} />;
+        return <InsurerProfile authToken={authToken} lang={lang} onLogout={onLogout} insurerName={insurerName}
+                 darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
       default:
         return null;
     }

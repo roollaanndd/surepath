@@ -15,6 +15,7 @@ import B2BNewSubmission from './B2BNewSubmission';
 import B2BSubmissions from './B2BSubmissions';
 import B2BQuotes from './B2BQuotes';
 import B2BProfile from './B2BProfile';
+import { useDarkMode } from '../shared/theme';
 
 interface Props {
   client: any;
@@ -38,14 +39,9 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [activeTab, setActiveTab] = useState('home');
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useDarkMode();
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [darkMode]);
 
   const loadData = async () => {
     if (!client?.id) return;

@@ -23,6 +23,7 @@ import OperatorWithdrawals from './OperatorWithdrawals';
 import OperatorAgents from './OperatorAgents';
 import OperatorProfile from './OperatorProfile';
 import OperatorNotifications from './OperatorNotifications';
+import { useDarkMode } from '../shared/theme';
 
 interface Props {
   operator: any;
@@ -44,18 +45,12 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('OPERATOR'));
   const [tabKey, setTabKey] = useState(0);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
+  const [darkMode, setDarkMode] = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   // bump on every realtime event so child components can refetch
   const [refreshTick, setRefreshTick] = useState(0);
   const lastNotifIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
 
   const handleTabChange = (tab: string) => {
     setTabKey(k => k + 1);
@@ -140,7 +135,8 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
       case 'agents':
         return <OperatorAgents operator={operator} lang={lang} refreshTick={refreshTick} />;
       case 'profile':
-        return <OperatorProfile operator={operator} lang={lang} onLogout={onLogout} />;
+        return <OperatorProfile operator={operator} lang={lang} onLogout={onLogout}
+                 darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
       default:
         return null;
     }

@@ -473,3 +473,110 @@
   .sp-agent-premium .sp-agent-crm *,
   .sp-agent-premium .sp-agent-commission * { transition: none !important; }
 }
+
+
+/* ── 2026 Agent-first visual refresh ────────────────────────────────────────
+   Scoped visual-only pass. No data, navigation, auth, or business logic changes.
+   Shared tokens create one visual language; agent home gets the strongest polish.
+*/
+.sp-modern-app {
+  --sp-ui-radius-card: 1.25rem;
+  --sp-ui-radius-control: .8rem;
+  --sp-ui-shadow-card: 0 8px 28px -22px rgba(0, 59, 47, .24);
+  --sp-ui-shadow-hover: 0 14px 34px -22px rgba(0, 59, 47, .3);
+}
+.sp-modern-app .sp-glass,
+.sp-modern-app .sp-glass-strong {
+  border-color: color-mix(in srgb, var(--ds-border, #dce6df) 82%, transparent);
+}
+.sp-modern-app .sp-glass {
+  box-shadow: 0 8px 24px -20px rgba(0, 59, 47, .22);
+}
+.sp-modern-app :where(button, a, input, select, textarea):focus-visible {
+  outline-color: var(--ds-primary-text, #047857);
+}
+.sp-modern-app :where(button, a, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.sp-modern-app :where(.text-2xs) {
+  line-height: 1.35;
+}
+
+/* Agent home: calmer canvas, stronger financial card, clearer action tiles. */
+.sp-agent-premium {
+  --sp-agent-emerald: #087a58;
+  --sp-agent-emerald-deep: #003b2f;
+  --sp-agent-lime: #b8e986;
+  --sp-agent-orange: #f28b3c;
+  background-color: var(--ds-bg, #f4f7f5);
+  background-image:
+    radial-gradient(ellipse at 12% 0%, rgba(184, 233, 134, .18), transparent 27rem),
+    radial-gradient(ellipse at 100% 15%, rgba(8, 122, 88, .06), transparent 25rem);
+}
+.sp-agent-premium .sp-agent-home__greeting {
+  padding-top: clamp(1.25rem, 5vw, 2rem);
+  padding-bottom: .5rem;
+}
+.sp-agent-premium .sp-agent-home__greeting h2 {
+  font-size: clamp(1.65rem, 6vw, 2rem);
+  letter-spacing: -.045em;
+}
+.sp-agent-premium .sp-agent-home__commission > div[style*="linear-gradient(120deg"] {
+  background: linear-gradient(125deg, #062f28 0%, #07563f 56%, #087a58 100%) !important;
+  border: 1px solid rgba(184, 233, 134, .2);
+  border-radius: 1.5rem !important;
+  box-shadow: 0 18px 42px -24px rgba(0, 59, 47, .55) !important;
+}
+.sp-agent-premium .sp-agent-home__commission .text-3xl,
+.sp-agent-premium .sp-agent-home__commission .text-4xl {
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--ds-card, #fff) 94%, #e8f4ec);
+  box-shadow: 0 6px 22px -18px rgba(0, 59, 47, .32);
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button > span:first-child {
+  border-radius: .9rem;
+  background: color-mix(in srgb, var(--ds-green-tint, #e3f7ed) 78%, white);
+}
+.sp-agent-premium .sp-agent-home__commissions .overflow-hidden {
+  border-radius: 1.15rem;
+}
+.sp-agent-premium .sp-agent-home__commissions [class*="border-b"] {
+  min-height: 4.5rem;
+}
+.sp-agent-premium .sp-agent-home__greeting + .sp-agent-home__commission {
+  padding-top: .5rem;
+}
+.sp-agent-premium .sp-glass-strong {
+  border-color: rgba(8, 122, 88, .12);
+  box-shadow: 0 10px 32px -24px rgba(0, 59, 47, .34);
+}
+.sp-agent-premium .sp-glass-strong nav,
+.sp-agent-premium nav.sp-glass-strong {
+  border: 1px solid rgba(8, 122, 88, .12);
+}
+
+/* Shared mobile safety: do not let long money values or labels force overflow. */
+.sp-modern-app :where(.font-mono, [data-money]) {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 380px) {
+  .sp-agent-premium .sp-agent-home__commission {
+    padding-inline: 1rem;
+  }
+  .sp-agent-premium .sp-agent-home__commission > div[style*="linear-gradient(120deg"] {
+    padding: 1.15rem !important;
+  }
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+    min-height: 5.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button,
+  .sp-agent-premium .sp-agent-home__commission > div {
+    transition: none !important;
+  }
+}

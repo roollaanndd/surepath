@@ -427,21 +427,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(135deg, #f7fbf8 0%, #edf7f1 48%, #ffffff 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(180deg, #ffffff 0%, #fbfefc 58%, #f4fbf6 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
 
       {/* Ambient emerald wash — same language as the apps */}
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'radial-gradient(480px 360px at 15% -5%, rgba(16,185,129,0.13), transparent 65%), radial-gradient(560px 420px at 110% 30%, rgba(16,185,129,0.09), transparent 70%), radial-gradient(520px 460px at 50% 115%, rgba(5,150,105,0.10), transparent 70%)' }} />
       {/* Fine dot-matrix overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(5,150,105,0.08) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(5,150,105,0.035) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
       }} />
 
       <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
 
         {/* Responsive login hero; preserves existing authentication actions and official logo component */}
-        <div className="w-full overflow-hidden rounded-3xl border border-emerald-900/10 bg-white/75 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.45)] sm:rounded-[2rem]">
+        <div className="w-full overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-[0_12px_34px_-24px_rgba(6,95,70,0.24)] sm:rounded-[2rem]">
           <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
             <div aria-hidden="true" className="absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/15" />
             <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
@@ -458,7 +458,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
             <div className="absolute -inset-6 rounded-full blur-3xl opacity-20" style={{ background: GRAD }} />
-            <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center sp-glass">
+            <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center bg-white border border-emerald-100 shadow-[0_8px_28px_-16px_rgba(6,95,70,0.22)]">
               <SurePathLogo className="w-[3.6rem] h-[3.6rem] object-contain" />
             </div>
           </div>
@@ -476,7 +476,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Check-email screen */}
         {mode === 'CHECK_EMAIL' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 text-center space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 text-center space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.30)' }}>
               <CheckCircle2 size={32} className="text-emerald-600" />
             </div>
@@ -508,7 +508,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Forgot password — enter email */}
         {mode === 'FORGOT_PASSWORD' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <h3 className="text-2xl font-black text-slate-900 mb-1 text-center">{t('Reset Password', 'Atur Ulang Password')}</h3>
             <p className="text-sm text-slate-500 mb-6 text-center">{t('Enter your email and we will send a reset link.', 'Masukkan email kamu, kami kirim link reset.')}</p>
             <form onSubmit={handleForgotPassword} className="space-y-3">
@@ -529,7 +529,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Forgot password — sent */}
         {mode === 'FORGOT_SENT' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 text-center space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 text-center space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.30)' }}><CheckCircle2 size={32} className="text-emerald-600" /></div>
             <div>
               <h3 className="text-2xl font-black text-slate-900 mb-1">{t('Check Your Email', 'Cek Email Kamu')}</h3>
@@ -541,7 +541,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
 
         {/* Email OTP — verify */}
         {mode === 'EMAIL_OTP_VERIFY' && (
-          <div className="w-full sp-glass rounded-[2.25rem] p-8 space-y-5">
+          <div className="w-full rounded-[2rem] border border-emerald-100 bg-white p-8 space-y-5 shadow-[0_16px_44px_-30px_rgba(6,95,70,0.22)]">
             <div className="w-14 h-14 rounded-[1.2rem] flex items-center justify-center mx-auto" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.30)' }}>
               <Mail size={26} className="text-emerald-600" />
             </div>
@@ -597,11 +597,11 @@ const AuthGate: React.FC<AuthGateProps> = ({
         {/* Main form */}
         {(mode === 'LOGIN' || mode === 'REGISTER') && (
           /* Gradient-border card wrapper */
-          <div className="w-full sp-glass rounded-[1.75rem] sm:rounded-[2rem] p-5 sm:p-7 md:p-8 space-y-6 shadow-[0_24px_70px_-30px_rgba(6,95,70,0.28)]">
+          <div className="w-full rounded-[1.75rem] sm:rounded-[2rem] border border-emerald-100 bg-white p-5 sm:p-7 md:p-8 space-y-6 shadow-[0_18px_50px_-32px_rgba(6,95,70,0.24)]">
           <div className="w-full space-y-6">
 
             {/* Sliding-pill tab switcher */}
-            <div role="tablist" aria-label={t('Sign in or register', 'Masuk atau daftar')} className="relative flex bg-[#F3FAF6] p-1 rounded-2xl border border-emerald-100">
+            <div role="tablist" aria-label={t('Sign in or register', 'Masuk atau daftar')} className="relative flex bg-white p-1 rounded-2xl border border-emerald-100">
               {/* Sliding pill */}
               <div className="absolute top-1 bottom-1 rounded-xl transition-all duration-300 ease-out pointer-events-none"
                 style={{

@@ -15,6 +15,7 @@ import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 import { getTncRecord, type TncRecord } from '../services/supabaseService';
 import AccessibilitySettings from './customer/AccessibilitySettings';
+import ChangePasswordModal from './shared/ChangePasswordModal';
 
 interface UserProfileProps {
   currentUser: any;
@@ -523,7 +524,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
       {selectedPolicy && <PolicyDetailModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />}
-      {isResetModalOpen && <PasswordResetModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
+      {isResetModalOpen && <ChangePasswordModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
 
       {/* Profile Header */}
       <div className="px-4 pt-4 pb-4 space-y-4">

@@ -195,6 +195,7 @@ export interface SpCommission {
   client_name: string;
   product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   premium_amount: number;
+  commission_rate?: number;
   commission_amount: number;
   discount_rate?: number;
   coin_reward?: number;
@@ -262,6 +263,7 @@ export interface ClaimPhotoForensicReport {
 export interface SpClaim {
   id: string;
   policy_id?: string;
+  insurer_id?: string;
   user_id?: string;
   agent_id?: string;
   client_id?: string;

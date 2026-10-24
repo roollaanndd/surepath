@@ -1,5 +1,98 @@
 # SurePath — Changelog
 
+## v2.7.4 — 2026-10-24
+
+**Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
+
+Dari audit korelasi data antar portal (apps ↔ dashboard ↔ insurer). Ketiganya
+dipilih lebih dulu bukan karena paling besar, tapi karena kerugiannya tidak bisa
+dipulihkan: begitu ada satu pembayaran atau satu klaim sungguhan, datanya sudah
+salah dan harus direkonsiliasi tangan.
+
+- **`xendit-webhook` sekarang menulis `sp_commissions` saat mengkredit dompet.**
+  Sebelumnya `credit_agent_wallet()` memindahkan uangnya, tapi tak ada satu pun
+  baris masuk ke `sp_commissions` — padahal itulah tabel yang dibaca halaman
+  Komisi agen, `admin_financial_reports`, `admin_stats`, dan
+  `admin_transaksi_overview`. Satu-satunya penulisnya adalah
+  `admin_create_commission`, yakni tangan admin. Akibatnya dua buku yang tak
+  mungkin cocok: saldo dompet agen bertambah sementara laporan laba-rugi mencatat
+  beban komisi Rp 0. Di produksi `sp_commissions` berisi 13 baris dan **13-nya
+  `order_id` NULL** — tak satu pun tertaut order nyata. Tidak perlu penjaga replay
+  tambahan: update `sp_payments` di atasnya sudah mengklaim baris dengan
+  `.neq('status','PAID')`, jadi hanya satu callback yang sampai ke blok ini.
+- **`submit_claim` mencocokkan `policy_number`, bukan hanya `order_number`.**
+  Yang dipegang nasabah adalah nomor polis di PDF insurer
+  (`sp_policy_orders.policy_number`, ditulis `insurer_upload_policy`), sementara
+  `order_number` adalah nomor internal. Klaim yang diajukan dengan nomor polis
+  asli tidak menemukan apa pun, lalu tersimpan tanpa `policy_id` dan tanpa
+  `agent_id` — yatim: tak muncul di daftar agen, tak bisa dirutekan ke insurer.
+  Referensinya disaring ke `[A-Za-z0-9._/-]` sebelum masuk string `.or()`, karena
+  filter `.or()` diparse PostgREST dan bukan di-bind sebagai parameter: satu koma
+  di nilainya akan menulis ulang predikatnya, bukan dicocokkan olehnya.
+- **`sp_claims.insurer_id` ditambahkan, dan `submit_claim` mengisinya.** Action
+  itu sudah mengambil `insurer_id` dari order yang ditaut sejak v1.42.0 tapi tak
+  pernah menuliskannya ke mana pun — kolomnya tidak ada. Jadi portal insurer tidak
+  punya apa pun untuk memfilter, yang sebabnya tab "Klaim" di sana sampai sekarang
+  menampilkan daftar **order**, bukan klaim (diakui sendiri di komentar
+  `InsurerClaims.tsx:30`). Nilainya diturunkan server-side dari ordernya, tidak
+  pernah diterima dari klien — aturan yang sama dengan `agent_id`/`client_id`.
+- 6 tes baru di `services/__tests__/claimPolicyLink.test.ts` memaku ketiga
+  perilaku penautan itu, termasuk bahwa referensi tidak bisa menulis ulang filter
+  dan bahwa `insurer_id` tidak pernah diambil dari payload.
+
+**Urutan rilis — penting.** Migrasi `20261023120000_claims_insurer_id.sql` bersifat aditif dan nullable. Kode menulis `insurer_id` melalui update terpisah setelah klaim tersimpan, sehingga kegagalan update tidak menggagalkan pengajuan klaim. Apply migrasi dan deploy `data-gateway`/`xendit-webhook` sebagai langkah backend tersendiri; keduanya **tidak** ikut auto-deploy Vercel.
+
+**Gelombang 1: nasabah akhirnya melihat polis yang dibelinya.**
+
+- **`client_id` diisi saat agen membuat order.** Sebelumnya kolom itu hanya
+  terisi kalau nasabah memesan sendiri; order yang dijual agen menyimpan
+  nasabahnya sebagai teks (`client_name`, `client_email`) dan `client_id`-nya
+  NULL selamanya — 5 dari 5 order di produksi. Karena `get_my_orders`,
+  `get_my_payments`, `cancel_my_order` dan pemeriksaan kepemilikan di
+  `submit_claim` semuanya bersandar pada `client_id`, nasabah tidak melihat
+  polisnya di `/custapp`, tidak melihat pembayarannya, dan ditolak 403 saat
+  mengklaim polis yang memang miliknya.
+- **Aturan pencocokannya ada di satu berkas, `clientLink.ts`, beserta
+  alasannya.** `client_id` menentukan siapa yang boleh melihat *dan* mengklaim
+  sebuah polis, jadi satu pencocokan yang salah berarti polis seseorang terbaca
+  oleh orang lain. Aturannya dibuat salah ke arah "tidak menautkan": lewat email
+  saja, harus tepat satu baris yang cocok, email baris itu harus sama persis
+  setelah di-lowercase (bukan sekadar cocok menurut pola), perannya harus
+  CUSTOMER, dan agen tidak pernah ditautkan ke ordernya sendiri. **Nomor telepon
+  sengaja tidak dipakai**: satu nomor sering dipakai bergantian dalam satu
+  keluarga, ditulis dalam tiga format (`08xx`/`+628xx`/`628xx`), dan agen kadang
+  mengisi nomornya sendiri supaya OTP masuk ke dirinya. Wildcard LIKE di-escape
+  sebelum masuk `.ilike()` dan hasilnya dibandingkan ulang sebagai string, karena
+  `client_email` datang dari payload klien: tanpa itu `%@gmail.com` akan
+  mencocokkan nasabah mana pun.
+- **`ensure_profile` menautkan order yang dijual sebelum nasabahnya punya akun.**
+  Emailnya dari sesi terverifikasi, bukan params, dan hanya order yang `client_id`-nya
+  masih NULL yang disentuh. Ini satu-satunya tempat yang menulis `client_id` ke
+  order yang sudah ada — tidak ada backfill massal.
+- **Keputusan insurer dan polis terbit sekarang juga memberi kabar ke nasabah.**
+  `sp_notifications` punya satu kolom pemilik dan selama ini hanya `order.agent_id`
+  yang diisi, jadi nasabah tidak pernah tahu polisnya sudah terbit. Type-nya
+  dirapikan: keputusan order jadi `ORDER_UPDATE` (dulu `CLAIM_UPDATE`, hal yang
+  sama sekali lain) dan penerbitan jadi `POLICY_ISSUED` (dulu `SYSTEM`). Union di
+  `services/dbTypes.ts` dan peta ikon `NotificationDrawer` menyusul: ketiga type
+  itu sudah ditulis server tapi tidak ada di keduanya, sehingga tampil sebagai
+  ikon "info" generik.
+- 20 tes baru di `services/__tests__/clientLink.test.ts`, sebagian besar memaku
+  apa yang **tidak** boleh menghasilkan penautan: nol baris, dua baris yang
+  berbagi alamat, email yang tidak sama persis, peran bukan CUSTOMER, agen atas
+  ordernya sendiri, dan serangan wildcard utuh dari ujung ke ujung.
+
+`android/app/build.gradle` ikut dikoreksi: `versionName` tertinggal di 2.6.17
+saat app sudah 2.6.18, persis masalah yang diperingatkan komentar di berkas itu
+sendiri. Sekarang 2.7.1 dengan `versionCode` 35.
+
+`zod` dinaikkan ke 4.6.7 (GHSA-mrhx-c7xc-m3w5, high: habisnya memori saat
+memvalidasi koleksi terbatas yang kelewat besar). Bukan temuan dari pekerjaan
+ini: `zod` dependensi transitif `openai`, advisory-nya baru terbit hari ini, dan
+check "Runtime dependency audit" merah juga di main. `npm update zod` dipakai
+alih-alih `npm audit fix` supaya yang berubah hanya `zod`; `package.json` tidak
+disentuh.
+
 ## v2.7.2 — 2026-10-24
 
 Ikon navigasi kembar, dan sisa terakhir teks di bawah 11px.

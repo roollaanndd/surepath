@@ -473,3 +473,272 @@
   .sp-agent-premium .sp-agent-crm *,
   .sp-agent-premium .sp-agent-commission * { transition: none !important; }
 }
+
+
+/* ── 2026 Agent-first visual refresh ────────────────────────────────────────
+   Scoped visual-only pass. No data, navigation, auth, or business logic changes.
+   Shared tokens create one visual language; agent home gets the strongest polish.
+*/
+.sp-modern-app {
+  --sp-ui-radius-card: 1.25rem;
+  --sp-ui-radius-control: .8rem;
+  --sp-ui-shadow-card: 0 8px 28px -22px rgba(0, 59, 47, .24);
+  --sp-ui-shadow-hover: 0 14px 34px -22px rgba(0, 59, 47, .3);
+}
+.sp-modern-app .sp-glass,
+.sp-modern-app .sp-glass-strong {
+  border-color: color-mix(in srgb, var(--ds-border, #dce6df) 82%, transparent);
+}
+.sp-modern-app .sp-glass {
+  box-shadow: 0 8px 24px -20px rgba(0, 59, 47, .22);
+}
+.sp-modern-app :where(button, a, input, select, textarea):focus-visible {
+  outline-color: var(--ds-primary-text, #047857);
+}
+.sp-modern-app :where(button, a, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.sp-modern-app :where(.text-2xs) {
+  line-height: 1.35;
+}
+
+/* Agent home: calmer canvas, stronger financial card, clearer action tiles. */
+.sp-agent-premium {
+  --sp-agent-emerald: #087a58;
+  --sp-agent-emerald-deep: #003b2f;
+  --sp-agent-lime: #b8e986;
+  --sp-agent-orange: #f28b3c;
+  background-color: var(--ds-bg, #f4f7f5);
+  background-image:
+    radial-gradient(ellipse at 12% 0%, rgba(184, 233, 134, .18), transparent 27rem),
+    radial-gradient(ellipse at 100% 15%, rgba(8, 122, 88, .06), transparent 25rem);
+}
+.sp-agent-premium .sp-agent-home__greeting {
+  padding-top: clamp(1.25rem, 5vw, 2rem);
+  padding-bottom: .5rem;
+}
+.sp-agent-premium .sp-agent-home__greeting h2 {
+  font-size: clamp(1.65rem, 6vw, 2rem);
+  letter-spacing: -.045em;
+}
+.sp-agent-premium .sp-agent-home__commission > div[style*="linear-gradient(120deg"] {
+  background: linear-gradient(125deg, #062f28 0%, #07563f 56%, #087a58 100%) !important;
+  border: 1px solid rgba(184, 233, 134, .2);
+  border-radius: 1.5rem !important;
+  box-shadow: 0 18px 42px -24px rgba(0, 59, 47, .55) !important;
+}
+.sp-agent-premium .sp-agent-home__commission .text-3xl,
+.sp-agent-premium .sp-agent-home__commission .text-4xl {
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--ds-card, #fff) 94%, #e8f4ec);
+  box-shadow: 0 6px 22px -18px rgba(0, 59, 47, .32);
+}
+.sp-agent-premium .sp-agent-home__quick-actions .grid > button > span:first-child {
+  border-radius: .9rem;
+  background: color-mix(in srgb, var(--ds-green-tint, #e3f7ed) 78%, white);
+}
+.sp-agent-premium .sp-agent-home__commissions .overflow-hidden {
+  border-radius: 1.15rem;
+}
+.sp-agent-premium .sp-agent-home__commissions [class*="border-b"] {
+  min-height: 4.5rem;
+}
+.sp-agent-premium .sp-agent-home__greeting + .sp-agent-home__commission {
+  padding-top: .5rem;
+}
+.sp-agent-premium .sp-glass-strong {
+  border-color: rgba(8, 122, 88, .12);
+  box-shadow: 0 10px 32px -24px rgba(0, 59, 47, .34);
+}
+.sp-agent-premium .sp-glass-strong nav,
+.sp-agent-premium nav.sp-glass-strong {
+  border: 1px solid rgba(8, 122, 88, .12);
+}
+
+/* Shared mobile safety: do not let long money values or labels force overflow. */
+.sp-modern-app :where(.font-mono, [data-money]) {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 380px) {
+  .sp-agent-premium .sp-agent-home__commission {
+    padding-inline: 1rem;
+  }
+  .sp-agent-premium .sp-agent-home__commission > div[style*="linear-gradient(120deg"] {
+    padding: 1.15rem !important;
+  }
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+    min-height: 5.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium .sp-agent-home__quick-actions .grid > button,
+  .sp-agent-premium .sp-agent-home__commission > div {
+    transition: none !important;
+  }
+}
+
+
+.sp-agent-premium .sp-agent-home__primary-cta button {
+  color: #063d2d;
+  background: linear-gradient(110deg, #e5f7ed 0%, #f8fcf8 68%, #fff 100%);
+  border: 1px solid rgba(8, 122, 88, .17);
+  box-shadow: 0 8px 24px -18px rgba(0, 59, 47, .42);
+  min-height: 4.25rem;
+}
+.sp-agent-premium .sp-agent-home__primary-cta button:hover {
+  border-color: rgba(8, 122, 88, .34);
+  box-shadow: 0 12px 28px -18px rgba(0, 59, 47, .38);
+}
+.sp-agent-premium .sp-agent-home__primary-cta-icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, #087a58, #003b2f);
+  box-shadow: 0 5px 14px -8px rgba(0, 59, 47, .65);
+}
+.sp-agent-premium .sp-agent-home__primary-cta button > span:nth-child(2) > span:first-child {
+  color: #063d2d;
+}
+.sp-agent-premium .sp-agent-home__primary-cta button > svg {
+  color: #087a58;
+}
+.dark .sp-agent-premium .sp-agent-home__primary-cta button {
+  color: #ecfdf5;
+  background: linear-gradient(110deg, rgba(0, 59, 47, .72), rgba(17, 34, 29, .94));
+  border-color: rgba(184, 233, 134, .18);
+}
+.dark .sp-agent-premium .sp-agent-home__primary-cta button > span:nth-child(2) > span:first-child,
+.dark .sp-agent-premium .sp-agent-home__primary-cta button > svg {
+  color: #b8e986;
+}
+.dark .sp-agent-premium .sp-agent-home__primary-cta-icon {
+  background: linear-gradient(135deg, #087a58, #003b2f);
+}
+
+
+/* ── Agent quote builder and wallet: complete the approved first-pass visual system ── */
+.sp-agent-quote {
+  --sp-quote-ink: #12372c;
+  --sp-quote-border: rgba(15, 94, 67, .14);
+  color: var(--ds-text-primary, #172b24);
+}
+.sp-agent-quote > div:first-child {
+  border-radius: 1.1rem;
+}
+.sp-agent-quote .flex.gap-2.bg-white,
+.sp-agent-quote .flex.gap-2.bg-white.border {
+  border-color: var(--sp-quote-border);
+  box-shadow: 0 8px 26px -22px rgba(0, 59, 47, .35);
+}
+.sp-agent-quote button {
+  min-height: 2.75rem;
+}
+.sp-agent-quote input:not([type="checkbox"]):not([type="radio"]),
+.sp-agent-quote select,
+.sp-agent-quote textarea {
+  min-height: 2.75rem;
+  border-color: var(--sp-quote-border);
+  font-size: max(1rem, 16px);
+}
+.sp-agent-quote .grid.grid-cols-2 > button,
+.sp-agent-quote .grid.grid-cols-3 > button {
+  border-radius: 1rem;
+  border-color: var(--sp-quote-border);
+  box-shadow: 0 7px 20px -19px rgba(0, 59, 47, .4);
+}
+.sp-agent-quote .grid.grid-cols-2 > button:focus-visible,
+.sp-agent-quote .grid.grid-cols-3 > button:focus-visible {
+  outline: 2px solid #07835d;
+  outline-offset: 2px;
+}
+.sp-agent-quote [class*="text-[10px]"],
+.sp-agent-quote [class*="text-\[10px\]"] {
+  line-height: 1.4;
+}
+.sp-agent-quote .text-3xl,
+.sp-agent-quote .text-2xl {
+  font-variant-numeric: tabular-nums;
+}
+.dark .sp-agent-quote {
+  color: var(--ds-dk-ink, #f1f5f9);
+}
+.dark .sp-agent-quote .bg-white:not(.text-white) {
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .16);
+}
+.dark .sp-agent-quote .bg-gray-50 {
+  background-color: var(--ds-dk-bg, #101713);
+}
+.dark .sp-agent-quote .text-gray-700,
+.dark .sp-agent-quote .text-gray-900,
+.dark .sp-agent-quote .text-slate-900 {
+  color: var(--ds-dk-ink, #f1f5f9);
+}
+.dark .sp-agent-quote input,
+.dark .sp-agent-quote select,
+.dark .sp-agent-quote textarea {
+  color: var(--ds-dk-ink, #f1f5f9);
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .2);
+}
+
+/* The wallet is a financial surface: never let supporting labels collapse to 7–8px. */
+.sp-agent-wallet [class*="text-[0.45rem]"],
+.sp-agent-wallet [class*="text-[0.5rem]"],
+.sp-agent-wallet [class*="text-[0.55rem]"] {
+  font-size: max(.625rem, .6875rem);
+  line-height: 1.4;
+}
+.sp-agent-wallet input,
+.sp-agent-wallet select {
+  min-height: 2.75rem;
+  font-size: max(1rem, 16px);
+}
+.sp-agent-wallet .font-black,
+.sp-agent-wallet [class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 380px) {
+  .sp-agent-quote { padding-inline: .75rem; }
+  .sp-agent-quote .grid.grid-cols-2 { gap: .5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-quote *,
+  .sp-agent-wallet * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* CRM: make client management readable and touch-friendly without changing its data flows. */
+.sp-agent-crm input,
+.sp-agent-crm select,
+.sp-agent-crm textarea {
+  min-height: 2.75rem;
+  font-size: max(1rem, 16px);
+}
+.sp-agent-crm .sp-glass,
+.sp-agent-crm .bg-ds-card {
+  border-color: var(--ds-border, #dce6df);
+}
+.sp-agent-crm .text-\[10px\] {
+  line-height: 1.4;
+}
+.sp-agent-crm [class*="rounded-2xl"][class*="border"] {
+  border-color: var(--ds-border, #dce6df);
+}
+.dark .sp-agent-crm input,
+.dark .sp-agent-crm select,
+.dark .sp-agent-crm textarea {
+  color: var(--ds-dk-ink, #f1f5f9);
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .2);
+}
+@media (max-width: 380px) {
+  .sp-agent-crm .grid.grid-cols-2 { gap: .5rem; }
+}

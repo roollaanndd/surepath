@@ -5,6 +5,46 @@ import cors from 'cors';
 import crypto from 'crypto';
 import { runAIAdminTick } from './services/aiAdminEngine';
 
+// --- Security headers middleware (production/self-host) ---
+//
+// This server is used both by `npm run dev` (plain http://localhost, with a
+// Vite HMR websocket) and by `npm start` (built production bundle). Transport
+// headers must therefore only apply in production:
+//   * HSTS on localhost would make the browser force https:// for every future
+//     local visit, breaking `npm run dev` permanently for that developer.
+//   * `upgrade-insecure-requests` + a strict CSP would rewrite the HMR socket to
+//     wss://localhost and block it. Vercel serves its own headers from
+//     vercel.json, so production parity is preserved there.
+const isProduction = process.env.NODE_ENV === 'production';
+
+const PRODUCTION_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://www.googletagmanager.com https://prod.spline.design",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://openrouter.ai https://*.supabase.co wss://*.supabase.co https://esm.sh https://prod.spline.design https://www.google-analytics.com https://region1.google-analytics.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "upgrade-insecure-requests",
+].join('; ');
+
+const securityHeaders = (_req: any, res: any, next: any) => {
+  if (isProduction) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('Content-Security-Policy', PRODUCTION_CSP);
+  }
+  // Safe on both http://localhost and https production.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Keep the camera available: agent document capture flows rely on it.
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self), payment=()');
+  next();
+};
+
 // ════════════════════════════════════════════════════════════════════════════
 // AI GATEWAY — 6-LAYER CONSISTENCY & ANTI-LEAK SYSTEM
 // ════════════════════════════════════════════════════════════════════════════
@@ -329,6 +369,7 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(securityHeaders);
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
 

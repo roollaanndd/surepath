@@ -87,10 +87,11 @@ export const Button: React.FC<ButtonProps> = ({
       }}
       className={[
         'inline-flex items-center justify-center gap-2',
-        'font-bold rounded-2xl tracking-tight',
+        'font-bold rounded-xl tracking-tight',
         'transition-all duration-150',
-        'active:scale-[0.97]',
-        'disabled:opacity-40 disabled:pointer-events-none',
+        'active:scale-[0.98]',
+        'hover:shadow-ds-sm',
+        'disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         fullWidth ? 'w-full' : '',

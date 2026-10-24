@@ -105,11 +105,11 @@
   --ds-purple-lt:    var(--ds-accent-tint);
 
   /* ── Radii ───────────────────────────────────────────────────────────── */
-  --ds-radius-sm:    6px;
+  --ds-radius-xs: 4px; --ds-radius-sm: 8px;
   --ds-radius-md:    12px;
   --ds-radius-lg:    16px;
-  --ds-radius-xl:    24px;
-  --ds-radius-2xl:   32px;
+  --ds-radius-xl: 20px;
+  --ds-radius-2xl: 24px; --ds-radius-3xl: 32px;
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --ds-motion-fast:   150ms ease-out;

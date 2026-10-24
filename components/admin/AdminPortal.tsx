@@ -1,7 +1,16 @@
 
 import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
+import { getAdminWorkspace } from '../../src/admin/roleConfig';
+import CommandDashboard from './workspaces/command/CommandDashboard';
+import FinanceDashboard from './workspaces/finance/FinanceDashboard';
+import InsurerLiaisonDashboard from './workspaces/insurer/InsurerLiaisonDashboard';
+import CollectionsDashboard from './workspaces/collections/CollectionsDashboard';
+import BusinessSupportDashboard from './workspaces/support/BusinessSupportDashboard';
+import AgentOnboardingDashboard from './workspaces/onboarding/AgentOnboardingDashboard';
+import MarketingDashboard from './workspaces/marketing/MarketingDashboard';
 import {
+
   LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
   Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
   TrendingUp, BarChart3, Bell, CheckCircle,
@@ -633,6 +642,32 @@ const AdminPortal = ({
 
   // ── Content router ─────────────────────────────────────────────────────────
   const renderContent = () => {
+    // Role-based workspace routing - use dedicated workspaces for specific roles
+    const ws = getAdminWorkspace(userRole);
+    if (activeTab === 'dashboard') {
+      if (ws === 'command') {
+        return <CommandDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'finance') {
+        return <FinanceDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'insurer') {
+        return <InsurerLiaisonDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'collections') {
+        return <CollectionsDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'support') {
+        return <BusinessSupportDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'onboarding') {
+        return <AgentOnboardingDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+      if (ws === 'marketing') {
+        return <MarketingDashboard userRole={userRole} currentUser={currentUser} onLogout={onLogout} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />;
+      }
+    }
+
     switch (activeTab) {
       case 'dashboard':        return <DashboardView />;
       case 'reports':          return <ReportsView />;

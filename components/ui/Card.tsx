@@ -11,7 +11,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const VARIANT_CLASSES: Record<NonNullable<CardProps['variant']>, string> = {
-  default: 'bg-ds-card border border-ds-border shadow-ds-sm',
+  default: 'bg-ds-card border border-ds-border shadow-ds-card',
   inset:   'bg-ds-card2 border border-ds-border',
   hero:    'border border-ds-border shadow-ds-lg', // hero cards use --ds-surface-hero via inline style
 };
@@ -36,7 +36,7 @@ export const Card: React.FC<CardProps> = ({
       {...rest}
       style={style}
       className={[
-        'rounded-2xl',
+        'rounded-2xl transition-shadow duration-200',
         VARIANT_CLASSES[variant],
         PADDING_CLASSES[padding],
         className,

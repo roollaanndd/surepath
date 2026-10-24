@@ -31,6 +31,7 @@ export interface GatewayResponse {
 export async function callGateway(
   action: string,
   params?: Record<string, unknown>,
+  options?: { idempotencyKey?: string },
 ): Promise<GatewayResponse> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
@@ -38,16 +39,20 @@ export async function callGateway(
 
   try {
     // FIX v1.49.1: Add 15-second timeout to prevent infinite loading
-    // Edge functions can cold-start slowly, but 15s is more than enough
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+    if (options?.idempotencyKey) {
+      headers['Idempotency-Key'] = options.idempotencyKey;
+    }
+
     const res = await fetch(`${SUPABASE_URL}/functions/v1/data-gateway`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify({ action, params }),
       signal: controller.signal,
     });

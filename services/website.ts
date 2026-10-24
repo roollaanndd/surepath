@@ -523,7 +523,8 @@ async function pathyChatInner(
   const timeoutId = setTimeout(() => controller.abort(), PATHY_TIMEOUT_MS);
   let res: Response;
   try {
-    res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent`, {
+    // Try OpenCode proxy first, fallback to pathy-agent
+    res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent-proxy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -535,8 +536,25 @@ async function pathyChatInner(
     });
   } catch (e: any) {
     clearTimeout(timeoutId);
-    console.error('pathyChat: pathy-agent unreachable:', e);
-    return await pathyKnowledgeFallback(message, conversationHistory);
+    console.error('pathyChat: pathy-agent-proxy unreachable:', e);
+    try {
+      const controller2 = new AbortController();
+      const timeoutId2 = setTimeout(() => controller2.abort(), PATHY_TIMEOUT_MS);
+      res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          message,
+          history: conversationHistory ?? [],
+          documents: documents ?? [],
+        }),
+        signal: controller2.signal,
+      });
+      clearTimeout(timeoutId2);
+    } catch (e2: any) {
+      console.error('pathyChat: pathy-agent unreachable:', e2);
+      return await pathyKnowledgeFallback(message, conversationHistory);
+    }
   }
   clearTimeout(timeoutId);
 
@@ -560,8 +578,6 @@ async function pathyChatInner(
 
   if (res.status === 401) throw new PathyError('AUTH', detail || 'Sesi kamu sudah berakhir. Silakan login ulang.');
   if (res.status === 429) throw new PathyError('RATE_LIMIT', detail || 'Terlalu banyak pesan. Coba lagi dalam satu jam ya.');
-  // 404 = function not deployed yet in this environment; 5xx = transient.
-  // Both are worth a knowledge-base answer rather than a dead end.
   if (res.status === 404 || res.status >= 500) {
     return await pathyKnowledgeFallback(message, conversationHistory);
   }

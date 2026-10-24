@@ -484,7 +484,17 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           .maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
         if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
-        if (order.insurer_decision) return json({ error: 'Order already has a decision', existing_action: order.insurer_decision }, 409);
+        // A decision can only be made while the application is live. Issued,
+        // rejected and cancelled orders are terminal.
+        if (order.status !== 'SUBMITTED' && order.status !== 'UNDER_REVIEW') {
+          return json({ error: `Order tidak dapat diputuskan pada status ${order.status}.` }, 409);
+        }
+        // REQUEST_INFO is not terminal: once the customer/agent answers, the
+        // insurer must be able to approve or decline the same order. Only an
+        // APPROVED/DECLINED decision is final.
+        if (order.insurer_decision && order.insurer_decision !== 'REQUEST_INFO') {
+          return json({ error: 'Order already has a decision', existing_action: order.insurer_decision }, 409);
+        }
         // Map action → order status
         const orderStatus = action === 'APPROVED' ? 'APPROVED'
           : action === 'REQUEST_INFO' ? 'UNDER_REVIEW' : 'REJECTED';
@@ -593,6 +603,25 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           .maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
         if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
+        // The UI only offers issuance once an order is approved, but the gateway
+        // must enforce it: without this, an insurer could issue a policy for an
+        // unpaid (SUBMITTED), still-reviewing, or rejected order. ISSUED is
+        // allowed so a wrong document can be replaced.
+        if (order.status !== 'APPROVED' && order.status !== 'ISSUED') {
+          return json({ error: `Order belum disetujui (status: ${order.status}). Polis hanya dapat diterbitkan untuk order APPROVED.` }, 409);
+        }
+        // The document URL is used directly in customer/agent document viewers.
+        // Reject non-https schemes (javascript:, data:) and anything that is not
+        // a policy-documents object URL.
+        let docUrl: URL;
+        try {
+          docUrl = new URL(policyDocumentUrl);
+        } catch {
+          return json({ error: 'policy_document_url must be a valid URL' }, 400);
+        }
+        if (docUrl.protocol !== 'https:' || !docUrl.pathname.includes('/policy-documents/') || policyDocumentUrl.length > 2048) {
+          return json({ error: 'policy_document_url must be an https URL inside the policy-documents bucket' }, 400);
+        }
         // Update order
         const ts = new Date().toISOString();
         const { data: updated, error: updErr } = await db.from('sp_policy_orders').update({

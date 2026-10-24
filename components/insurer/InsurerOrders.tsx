@@ -29,6 +29,23 @@ const STATUS_TABS = [
 
 const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
+/**
+ * Whether this order can still be accepted / declined / queried.
+ *
+ * A paid order moves SUBMITTED -> UNDER_REVIEW in the payment webhook, so
+ * UNDER_REVIEW must be decidable too — otherwise every paid order silently
+ * loses its action buttons. REQUEST_INFO is deliberately treated as "still
+ * decidable": the insurer asked a question, and once the customer/agent has
+ * answered, the same insurer must be able to approve. Previously the stored
+ * insurer_decision was never cleared, which left those orders permanently
+ * stuck on "waiting for customer info".
+ */
+const canDecideOrder = (o: { status: string; insurer_decision?: string | null }) =>
+  (o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW') &&
+  (!o.insurer_decision || o.insurer_decision === 'REQUEST_INFO');
+
+
+
 // Explicit dark mode (matches operator app pattern)
 const SHEET_BG = 'bg-white dark:bg-[#0F1829]';
 const SHEET_TEXT = 'text-gray-900 dark:text-white';
@@ -224,7 +241,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   >
                     <Eye size={12} /> Detail
                   </button>
-                  {o.status === 'SUBMITTED' && !o.insurer_decision && (
+                  {canDecideOrder(o) && (
                     <button
                       onClick={() => { setSelectedOrder(o); setDecisionMode('APPROVED'); }}
                       className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
@@ -232,7 +249,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                       <CheckCircle2 size={12} /> Review
                     </button>
                   )}
-                  {o.status === 'APPROVED' && o.insurer_decision === 'APPROVED' && !o.policy_document_url && (
+                  {o.status === 'APPROVED' && !o.policy_document_url && (
                     <button
                       onClick={() => { setSelectedOrder(o); setUploadMode(true); }}
                       className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
@@ -525,7 +542,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
             {!uploadMode && !decisionMode && (
               <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
                 <div className="flex items-center gap-2">
-                  {selectedOrder.status === 'SUBMITTED' && !selectedOrder.insurer_decision && (
+                  {canDecideOrder(selectedOrder) && (
                     <>
                       <button
                         onClick={() => setDecisionMode('APPROVED')}
@@ -547,7 +564,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                       </button>
                     </>
                   )}
-                  {selectedOrder.status === 'APPROVED' && selectedOrder.insurer_decision === 'APPROVED' && !selectedOrder.policy_document_url && (
+                  {selectedOrder.status === 'APPROVED' && !selectedOrder.policy_document_url && (
                     <button
                       onClick={() => setUploadMode(true)}
                       className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30"
@@ -560,7 +577,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                       <CheckCircle size={14} /> Polis Diterbitkan
                     </div>
                   )}
-                  {selectedOrder.insurer_decision && selectedOrder.insurer_decision !== 'APPROVED' && (
+                  {selectedOrder.insurer_decision && selectedOrder.insurer_decision !== 'APPROVED' && !canDecideOrder(selectedOrder) && (
                     <div className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 ${
                       selectedOrder.insurer_decision === 'REQUEST_INFO' ? 'bg-amber-50 dark:bg-amber-950/30 text-ds-amber dark:text-amber-400'
                       : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'

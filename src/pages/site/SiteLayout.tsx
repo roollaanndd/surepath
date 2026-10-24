@@ -240,6 +240,17 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
               })}
             </div>
 
+            <div className="mt-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-xs font-semibold text-white mb-1">{t('Ikuti SurePath di Google', 'Follow SurePath on Google')}</p>
+              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('Pilih SurePath sebagai sumber pilihan agar artikel kami lebih mudah ditemukan di Google.', 'Choose SurePath as a preferred source to find our articles more easily on Google.')}</p>
+              <div google-add-preferred-source-btn data-theme="dark" data-lang={lang === Language.EN ? 'en' : 'id'}></div>
+              <a href="https://www.google.com/preferences/source?q=myinsurepath.com" target="_blank" rel="noopener noreferrer"
+                className="inline-block mt-2 text-xs font-semibold transition-opacity hover:opacity-80"
+                style={{ color: ACCENT }}>
+                {t('Tambahkan sebagai sumber pilihan', 'Add as preferred source')} →
+              </a>
+            </div>
+
             <div className="flex gap-3 mt-1">
               {[
                 { key: 'ig', label: 'Instagram',  href: 'https://instagram.com/myinsurepath' },

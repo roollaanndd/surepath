@@ -212,7 +212,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     <p className="text-xs text-ds-ink2 mt-0.5">{o.product_name}</p>
                     <p className="text-xs text-ds-ink3 mt-1">{o.coverage_type} · {fmtIdr(o.total_premium)}</p>
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
+                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${statusColor}`}>
                     {o.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -274,12 +274,12 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
               {uploadMode ? (
                 <div className="space-y-4">
                   <div className={`rounded-2xl p-4 ${SHEET_INSET}`}>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED}`}>Order</p>
+                    <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>Order</p>
                     <p className={`text-sm font-mono font-bold ${SHEET_TEXT} mt-0.5`}>{selectedOrder.order_number}</p>
                     <p className={`text-xs ${SHEET_TEXT_MUTED} mt-0.5`}>{selectedOrder.client_name} · {selectedOrder.product_name}</p>
                   </div>
                   <div>
-                    <label className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED} block mb-2`}>Nomor Polis (dari insurer)</label>
+                    <label className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED} block mb-2`}>Nomor Polis (dari insurer)</label>
                     <input
                       type="text"
                       value={policyNumber}
@@ -289,7 +289,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     />
                   </div>
                   <div>
-                    <label className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED} block mb-2`}>File PDF Polis (maks 10MB)</label>
+                    <label className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED} block mb-2`}>File PDF Polis (maks 10MB)</label>
                     <input
                       type="file"
                       accept="application/pdf"
@@ -297,7 +297,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                       className={`w-full px-3 py-2.5 rounded-xl border ${SHEET_BORDER} ${SHEET_BG} ${SHEET_TEXT} text-xs outline-none`}
                     />
                     {file && (
-                      <p className={`text-[10px] ${SHEET_TEXT_MUTED} mt-1`}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</p>
+                      <p className={`text-2xs ${SHEET_TEXT_MUTED} mt-1`}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</p>
                     )}
                   </div>
                   <button
@@ -312,12 +312,12 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                 /* Decision mode */
                 <div className="space-y-4">
                   <div className={`rounded-2xl p-4 ${SHEET_INSET}`}>
-                    <p className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED}`}>Order</p>
+                    <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>Order</p>
                     <p className={`text-sm font-mono font-bold ${SHEET_TEXT} mt-0.5`}>{selectedOrder.order_number}</p>
                     <p className={`text-xs ${SHEET_TEXT_MUTED} mt-0.5`}>{selectedOrder.client_name} · {selectedOrder.product_name}</p>
                   </div>
                   <div>
-                    <label className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED} block mb-2`}>
+                    <label className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED} block mb-2`}>
                       Catatan {(decisionMode === 'REQUEST_INFO' || decisionMode === 'DECLINED') ? '(wajib — min 5 karakter)' : '(opsional)'}
                     </label>
                     <textarea
@@ -351,10 +351,10 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   <div className={`rounded-2xl p-4 ${SHEET_INSET}`}>
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED}`}>No. Order</p>
+                        <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>No. Order</p>
                         <p className={`text-sm font-mono font-bold ${SHEET_TEXT} mt-0.5`}>{selectedOrder.order_number ?? selectedOrder.id.slice(0, 8)}</p>
                       </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                      <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${
                         selectedOrder.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                         : selectedOrder.status === 'ISSUED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                         : selectedOrder.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
@@ -365,11 +365,11 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED}`}>Dibuat</p>
+                        <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>Dibuat</p>
                         <p className={`font-medium ${SHEET_TEXT}`}>{new Date(selectedOrder.created_at).toLocaleString('id-ID')}</p>
                       </div>
                       <div>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest ${SHEET_TEXT_MUTED}`}>Produk</p>
+                        <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>Produk</p>
                         <p className={`font-medium ${SHEET_TEXT}`}>{selectedOrder.product_name}</p>
                       </div>
                     </div>
@@ -438,7 +438,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-bold ${SHEET_TEXT}`}>Polis PDF</p>
-                          <p className={`text-[10px] ${SHEET_TEXT_MUTED}`}>{selectedOrder.policy_number ?? 'No. polis belum diisi'}</p>
+                          <p className={`text-2xs ${SHEET_TEXT_MUTED}`}>{selectedOrder.policy_number ?? 'No. polis belum diisi'}</p>
                         </div>
                         <ExternalLink size={14} className={SHEET_TEXT_MUTED} />
                       </a>
@@ -466,7 +466,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <p className={`text-sm font-bold ${SHEET_TEXT}`}>{downloadingSlip ? 'Menyiapkan PDF…' : 'Unduh Quotation Slip (PDF)'}</p>
-                      <p className={`text-[10px] ${SHEET_TEXT_MUTED}`}>Ringkasan penawaran 4 halaman</p>
+                      <p className={`text-2xs ${SHEET_TEXT_MUTED}`}>Ringkasan penawaran 4 halaman</p>
                     </div>
                     <ExternalLink size={14} className={SHEET_TEXT_MUTED} />
                   </button>
@@ -488,7 +488,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                           <p className={`text-xs ${SHEET_TEXT_MUTED} mt-1`}>{selectedOrder.insurer_decision_notes}</p>
                         )}
                         {selectedOrder.insurer_decision_at && (
-                          <p className={`text-[10px] ${SHEET_TEXT_MUTED} mt-1`}>{new Date(selectedOrder.insurer_decision_at).toLocaleString('id-ID')}</p>
+                          <p className={`text-2xs ${SHEET_TEXT_MUTED} mt-1`}>{new Date(selectedOrder.insurer_decision_at).toLocaleString('id-ID')}</p>
                         )}
                       </div>
                     </Section>
@@ -620,7 +620,7 @@ const DetailRow: React.FC<{
   sheetMuted: string;
 }> = ({ label, value, icon, sheetText, sheetMuted }) => (
   <div className="flex justify-between items-center gap-3 px-3 py-2.5 bg-white dark:bg-[#0F1829]">
-    <span className={`text-[10px] font-bold uppercase tracking-widest ${sheetMuted} flex items-center gap-1.5`}>
+    <span className={`text-2xs font-bold uppercase tracking-wider ${sheetMuted} flex items-center gap-1.5`}>
       {icon}{label}
     </span>
     <span className={`text-xs font-medium text-right break-all ${sheetText} max-w-[60%]`}>{value}</span>

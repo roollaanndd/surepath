@@ -8,7 +8,7 @@ import { Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import PortalHeader from '../shared/PortalHeader';
-import PortalTabBar from '../shared/PortalTabBar';
+import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
@@ -25,12 +25,12 @@ interface Props {
   lang: Language;
 }
 
-const TABS = [
-  { id: 'home',       labelId: 'Beranda', Icon: Home },
-  { id: 'orders',     labelId: 'Polis',   Icon: FileText },
-  { id: 'claims',     labelId: 'Klaim',   Icon: ShieldAlert },
-  { id: 'payments',   labelId: 'Bayar',   Icon: Wallet },
-  { id: 'profile',    labelId: 'Profil',  Icon: User },
+const TABS: { id: string; labelId: string; Icon: PortalTab['Icon']; glyph: PortalTab['glyph'] }[] = [
+  { id: 'home',       labelId: 'Beranda', Icon: Home,        glyph: 'home' },
+  { id: 'orders',     labelId: 'Polis',   Icon: FileText,    glyph: 'document' },
+  { id: 'claims',     labelId: 'Klaim',   Icon: ShieldAlert, glyph: 'shield' },
+  { id: 'payments',   labelId: 'Bayar',   Icon: Wallet,      glyph: 'payment' },
+  { id: 'profile',    labelId: 'Profil',  Icon: User,        glyph: 'people' },
 ];
 
 const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
@@ -140,7 +140,7 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
 
       {/* Floating bottom tab nav — bank-style pills (emerald identity) */}
       <PortalTabBar
-        tabs={TABS.map(({ id, labelId, Icon }) => ({ id, label: labelId, Icon }))}
+        tabs={TABS.map(({ id, labelId, Icon, glyph }) => ({ id, label: labelId, Icon, glyph }))}
         activeId={activeTab}
         onSelect={handleTabChange}
         modernIcons

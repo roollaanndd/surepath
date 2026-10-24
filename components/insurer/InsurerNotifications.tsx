@@ -99,10 +99,10 @@ const InsurerNotifications: React.FC<Props> = ({ authToken, onClose, onNavigate 
                         <p className="text-sm font-bold text-ds-ink truncate">{o.client_name}</p>
                         <p className="text-xs text-ds-ink2 mt-0.5 truncate">{o.order_number} · {o.product_name}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${color}`}>
+                          <span className={`text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${color}`}>
                             {o.status.replace('_', ' ')}
                           </span>
-                          <span className="text-[10px] text-ds-ink3">{new Date(o.created_at).toLocaleString('id-ID')}</span>
+                          <span className="text-2xs text-ds-ink3">{new Date(o.created_at).toLocaleString('id-ID')}</span>
                         </div>
                       </div>
                     </div>

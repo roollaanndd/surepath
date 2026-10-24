@@ -104,19 +104,26 @@ const InsurerClaims: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   <p className="text-xs font-mono text-ds-ink3">{o.order_number ?? o.id.slice(0, 8)}</p>
                   <p className="text-sm font-bold text-ds-ink mt-0.5 truncate">{o.client_name}</p>
                   <p className="text-xs text-ds-ink2 mt-0.5">{o.product_name}</p>
-                  <p className="text-xs text-ds-ink3 mt-1">
-                    Coverage: {o.coverage_type} · Sum Insured: {fmtIdr(o.sum_insured)}
-                  </p>
                   {o.policy_number && (
-                    <p className="text-[10px] font-mono text-ds-green mt-1">Polis: {o.policy_number}</p>
+                    <p className="text-2xs font-mono text-ds-green mt-1">Polis: {o.policy_number}</p>
                   )}
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full shrink-0 ${
                   o.status === 'ISSUED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                   : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                 }`}>
                   {o.status}
                 </span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 mt-3 pt-3 border-t border-ds-border">
+                <div className="min-w-0">
+                  <p className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Pertanggungan</p>
+                  <p className="text-xs text-ds-ink2 truncate mt-0.5">{o.coverage_type}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Nilai TSI</p>
+                  <p className="text-xs text-ds-ink2 tabular-nums whitespace-nowrap mt-0.5">{fmtIdr(o.sum_insured)}</p>
+                </div>
               </div>
             </div>
           ))}

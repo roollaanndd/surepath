@@ -93,17 +93,17 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
             <Building2 size={28} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Mitra Asuransi</p>
+            <p className="text-2xs font-bold uppercase tracking-wider text-white/70">Mitra Asuransi</p>
             <p className="text-lg font-black tracking-tight truncate">{profile?.name ?? insurerName}</p>
             {profile?.pic_name && (
               <p className="text-xs text-white/80 truncate mt-0.5">PIC: {profile.pic_name}</p>
             )}
             <div className="flex items-center gap-2 mt-2">
-              <span className="bg-white/15 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold">
+              <span className="bg-white/15 backdrop-blur px-2 py-0.5 rounded-full text-2xs font-bold">
                 Active
               </span>
               {tokenExpiry && (
-                <span className="bg-white/15 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold">
+                <span className="bg-white/15 backdrop-blur px-2 py-0.5 rounded-full text-2xs font-bold">
                   Token: {new Date(tokenExpiry).toLocaleDateString('id-ID')}
                 </span>
               )}
@@ -180,7 +180,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
               )}
               {!canInstall && !isStandalone && (
                 <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                  <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed flex items-start gap-1.5">
+                  <p className="text-2xs text-amber-700 dark:text-amber-400 leading-relaxed flex items-start gap-1.5">
                     <AlertTriangle size={10} className="shrink-0 mt-0.5" />
                     <span>iOS Safari: tap Share → Add to Home Screen. Chrome Android: menu ⋮ → Add to Home screen.</span>
                   </p>
@@ -220,7 +220,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
         <LogOut size={16} /> Keluar
       </button>
 
-      <p className="text-center text-[10px] text-ds-ink3 font-bold uppercase tracking-widest pt-2">
+      <p className="text-center text-2xs text-ds-ink3 font-bold uppercase tracking-wider pt-2">
         SurePath Insurer Portal · v{APP_VERSION}
       </p>
     </div>

@@ -1,5 +1,7 @@
 # SurePath — Changelog
 
+## v2.7.7 — 2026-10-24
+
 ## v2.7.6 — 2026-10-24
 
 Mode gelap: lima portal masih mengurusnya sendiri, dan B2B justru mematikannya.

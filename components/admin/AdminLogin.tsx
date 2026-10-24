@@ -181,13 +181,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
 
       {/* Dot-matrix background */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(5,150,105,0.09) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(5,150,105,0.045) 1px, transparent 1px)',
         backgroundSize: '26px 26px',
       }} />
 
       {/* Blobs */}
-      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.13) 0%, transparent 65%)' }} />
-      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(16,185,129,0.09) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(34,197,94,0.16) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(249,115,22,0.13) 0%, transparent 65%)' }} />
 
       {/* Slow scanline sweep */}
       <div className="absolute inset-x-0 h-px pointer-events-none" style={{
@@ -273,7 +273,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     type="email" required autoComplete="username"
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="admin@surepath.ai"
-                    className="block w-full pl-10 pr-4 py-3 rounded-xl text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
+                    className="block w-full pl-10 pr-4 py-3 rounded-full text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
                     onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
                     onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
@@ -292,7 +292,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     type={showPass ? 'text' : 'password'} required autoComplete="current-password"
                     value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="block w-full pl-10 pr-11 py-3 rounded-xl text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
+                    className="block w-full pl-10 pr-11 py-3 rounded-full text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
                     style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
                     onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
                     onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
@@ -313,7 +313,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                 type="submit" disabled={loading}
                 className="w-full flex justify-center items-center gap-2.5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-40 hover:brightness-[1.08]"
                 style={{
-                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  background: 'linear-gradient(115deg, #15803d 0%, #059669 62%, #f97316 145%)',
                   color: '#f0fdf4',
                   boxShadow: loading ? 'none' : '0 8px 28px -10px rgba(22,163,74,0.55)',
                 }}

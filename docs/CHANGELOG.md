@@ -1,5 +1,24 @@
 # SurePath — Changelog
 
+## v2.6.22 — 2026-10-24
+
+Portal Operator dan Insurer — dua salinan terakhir dari komponen bersama.
+
+- Keduanya juga punya header dan navigasi bawah hasil salin-tempel, persis
+  seperti B2B di v2.6.21. Keduanya tertinggal di 9px dan kehilangan penanda tab
+  aktif berbentuk batang, jadi tab aktif hanya dibedakan warna. Sekarang
+  memakai `PortalHeader` dan `PortalTabBar`.
+- Header Insurer menjejalkan nama portal, nama perusahaan, dan nomor versi ke
+  satu baris — di layar 390px melipat jadi tiga baris. Sekarang masing-masing
+  punya tempatnya sendiri.
+- Kartu KPI di kedua dashboard menampilkan **angka yang sama dua kali**: satu
+  pil kecil di kanan atas dan satu angka besar di bawahnya. Pilnya dihapus.
+- Teks di bawah 11px: Operator 14 → 2, Insurer 25 → 5.
+- Catatan: angka Insurer sebelumnya selalu terbaca "0" karena yang terukur
+  adalah halaman login, bukan portalnya. Portal Insurer memakai token bearer
+  di `sessionStorage`, bukan Supabase Auth, jadi alat ujinya perlu jalur
+  sendiri. Ini pertama kalinya layar itu benar-benar diukur.
+
 ## v2.6.21 — 2026-10-23
 
 Portal B2B — layar yang selama ini tidak pernah benar-benar terukur.

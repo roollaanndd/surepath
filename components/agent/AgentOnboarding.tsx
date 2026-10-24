@@ -39,7 +39,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   const [agreed, setAgreed] = useState(false);
 
   const inputClass =
-    'w-full h-12 pl-12 pr-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all';
+    'w-full h-12 pl-12 pr-4 rounded-full border border-white bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all';
 
   const canProceedStep1 =
     name.trim() && email.trim() && phone.trim() && password.length >= 6 && password === confirmPassword;
@@ -144,7 +144,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col px-6 py-12 overflow-y-auto">
+    <div className="min-h-screen flex flex-col px-6 py-12 overflow-y-auto" style={{ background: "linear-gradient(135deg,#fff8dc 0%,#f2fff6 55%,#fff0e5 100%)" }}>
       <div className="w-full max-w-md flex flex-col gap-6">
 
         {/* Header */}
@@ -192,7 +192,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
         )}
 
         {/* Card */}
-        <div className="bg-white/5 rounded-2xl border border-white/10 p-8">
+        <div className="bg-white rounded-[2rem] border border-white/80 p-8 shadow-[0_24px_70px_-30px_rgba(6,95,70,0.32)]">
 
           {/* ─── Email confirmation required ─── */}
           {checkEmail && (
@@ -210,7 +210,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               </p>
               <button
                 onClick={onBack}
-                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm"
+                className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold text-sm"
               >
                 {t('Back to Login', 'Kembali ke Login')}
               </button>
@@ -326,7 +326,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canProceedStep1}
-                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {t('Next', 'Lanjut')} <ChevronRight size={16} />
               </button>
@@ -366,7 +366,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
                   placeholder={t('Address (optional)', 'Alamat (opsional)')}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all resize-none"
+                  className="w-full pl-12 pr-4 py-3 rounded-full border border-white bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/60 transition-all resize-none"
                 />
               </div>
 
@@ -395,7 +395,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
-                className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold text-sm active:bg-emerald-600 transition-all disabled:opacity-40 mt-2 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <RefreshCw size={18} className="animate-spin motion-reduce:animate-none text-ds-green" />

@@ -157,9 +157,9 @@ const HomePage: React.FC<SitePageProps> = (props) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.name} delay={i * 60}>
-                <button className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left flex flex-col h-full"
-                  style={{ background: cardBg, ['--spx-accent' as string]: p.color }}
-                  onClick={() => navigate(`/product/${p.slug}`)} aria-label={p.name}>
+                <a href={`/product/${p.slug}`} className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left flex flex-col h-full"
+                  style={{ background: cardBg, ['--spx-accent' as string]: p.color, textDecoration: 'none', color: 'inherit' }}
+                  onClick={e => { e.preventDefault(); navigate(`/product/${p.slug}`); }} aria-label={p.name}>
                   {/* Coloured header */}
                   <div className="flex items-center justify-center" style={{ height: 72, background: `linear-gradient(135deg, ${p.color}20 0%, ${p.color}08 100%)` }}>
                     <p.Icon color={p.color} size={34} className="transition-transform duration-300 group-hover:scale-110" />
@@ -183,7 +183,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
                       {t('Pelajari', 'Learn more')} <ArrowRight size={11} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                </button>
+                </a>
               </Reveal>
             ))}
           </div>

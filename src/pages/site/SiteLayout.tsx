@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Menu, X, Globe, Lock, Mail, Phone, MapPin, Download } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock, Mail, Download } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
@@ -137,11 +137,11 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
         <div className="md:hidden absolute top-full left-4 right-4 mt-2 rounded-2xl border p-4 shadow-lg"
           style={{ background: th.mobilMenuBg, borderColor: th.mobileMenuBorder, backdropFilter: 'blur(24px)' }}>
           {NAV_LINKS.map(l => (
-            <button key={l.id} onClick={() => go(l.path)}
+            <a key={l.id} href={l.path} onClick={e => { e.preventDefault(); go(l.path); }}
               className="flex items-center justify-between w-full py-3 border-b text-sm font-medium"
-              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? th.accent : th.textMuted }}>
+              style={{ borderColor: th.mobileMenuBorder, color: isActive(l.id) ? th.accent : th.textMuted, textDecoration: 'none' }}>
               <span>{t(l.label[0], l.label[1])}</span><ChevronRight size={14} />
-            </button>
+            </a>
           ))}
           {!installed && (
             <button onClick={() => { setMenuOpen(false); onInstall(); }}
@@ -199,8 +199,6 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
 
   const contacts = [
     { Icon: Mail,  label: 'halo@myinsurepath.com', href: 'mailto:halo@myinsurepath.com' },
-    { Icon: Phone, label: '+62 21 5060 1234',      href: 'tel:+622150601234' },
-    { Icon: MapPin, label: t('Jakarta Selatan, Indonesia', 'South Jakarta, Indonesia'), href: undefined },
   ];
 
   return (
@@ -264,7 +262,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
               <ul className="space-y-3">
                 {col.links.map(l => (
                   <li key={l.path}>
-                    <button onClick={() => navigate(l.path)} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.4)' }}>{l.label}</button>
+                    <a href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>{l.label}</a>
                   </li>
                 ))}
               </ul>
@@ -290,7 +288,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
               { label: t('Ketentuan', 'Terms'), path: '/terms' },
               { label: t('Cookie', 'Cookie'),   path: '/cookie' },
             ].map(l => (
-              <button key={l.path} onClick={() => navigate(l.path)} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)' }}>{l.label}</button>
+              <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>{l.label}</a>
             ))}
             <button onClick={() => navigate('/admin')} aria-label="Admin"
               className="flex items-center gap-1 text-2xs transition-colors hover:text-white"

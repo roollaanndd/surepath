@@ -389,7 +389,7 @@ export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, 
            {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <Card>
               <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                  {policies.map((p, i) => (
                     <div key={i} className="p-4 bg-ds-card2 rounded-2xl flex items-center justify-between border border-ds-border">
                        <div className="flex items-center gap-4">
@@ -1859,20 +1859,20 @@ const AddMitraModal: React.FC<{
     }
   };
 
-  const inputCls = 'w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all';
-  const labelCls = 'block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5';
+  const inputCls = 'w-full min-w-0 bg-white dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 transition-all';
+  const labelCls = 'block text-[0.62rem] font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto no-scrollbar bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl">
-        <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
+      <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-3xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
+        <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg mb-4 flex items-center gap-3">
           <UserPlus size={18} className="text-ds-green" /> Tambah Mitra Baru
         </h3>
         {error && (
           <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
         )}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <label className={labelCls}>Nama Lengkap</label>
             <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
@@ -1904,16 +1904,16 @@ const AddMitraModal: React.FC<{
 
           <div>
             <label className={labelCls}>Cara Mitra Masuk Pertama Kali</label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setMode('invite')}
-                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                className={`w-full text-left px-3.5 py-3 rounded-xl border transition-all ${
                   mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2'
                 }`}
               >
-                <p className="text-xs font-black uppercase tracking-widest text-white">Email Undangan</p>
-                <p className="text-[0.62rem] text-ds-ink3 mt-1">Mitra menerima email dan menyetel kata sandinya sendiri. Pilihan yang disarankan.</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Email Undangan</p>
+                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Mitra menerima email dan menyetel kata sandinya sendiri. Disarankan.</p>
               </button>
               {canSetTempPassword && (
                 <button
@@ -1923,31 +1923,31 @@ const AddMitraModal: React.FC<{
                     mode === 'temp' ? 'border-amber-500 bg-amber-500/10' : 'border-ds-border bg-ds-card2'
                   }`}
                 >
-                  <p className="text-xs font-black uppercase tracking-widest text-white">Kata Sandi Sementara</p>
-                  <p className="text-[0.62rem] text-ds-ink3 mt-1">Ditampilkan sekali di layar ini untuk diteruskan sendiri. Mitra wajib menggantinya saat login pertama.</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Sementara</p>
+                  <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Ditampilkan sekali dan wajib diganti saat login pertama.</p>
                 </button>
               )}
             </div>
           </div>
 
-          <p className="text-[0.62rem] text-ds-ink3 leading-relaxed">
-            Mitra dibuat dengan status <span className="font-black text-amber-400">belum terverifikasi</span>, komisi
+          <p className="mt-3 rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
+            Mitra dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span>, komisi
             10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
             barisnya setelah dokumennya diperiksa.
           </p>
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-4 sticky bottom-0 bg-white dark:bg-ds-card pt-3 pb-1 border-t border-slate-100 dark:border-ds-border">
           <button
             onClick={onClose}
-            className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all"
+            className="flex-1 py-2.5 border border-slate-200 dark:border-ds-border text-slate-700 dark:text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-slate-50 dark:hover:bg-ds-card2"
           >
             Batal
           </button>
           <button
             onClick={submit}
             disabled={busy}
-            className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-all disabled:opacity-50"
           >
             {busy ? 'Menyimpan...' : mode === 'temp' ? 'Buat & Tampilkan Sandi' : 'Buat & Kirim Undangan'}
           </button>

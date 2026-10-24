@@ -2,6 +2,7 @@
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail } from '../../_shared/trust.ts';
+import { linkOrdersToNewCustomer } from './clientLink.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -203,6 +204,22 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         }
         const { data, error } = await db.from('sp_users').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
+
+        // ── Polis yang sudah dijual sebelum nasabahnya punya akun ──────────
+        //
+        // Agen menjual, nasabah mendaftar belakangan. Tanpa langkah ini
+        // ordernya tetap tidak bertuan dan /custapp-nya kosong meski polisnya
+        // ada. Emailnya dari sesi yang sudah diverifikasi, bukan dari params,
+        // dan hanya order yang belum bertuan yang disentuh — aturan lengkapnya
+        // di clientLink.ts.
+        let linkedOrders = 0;
+        if (role === 'CUSTOMER') {
+          linkedOrders = await linkOrdersToNewCustomer(db, String((data as any).id), caller.email);
+          if (linkedOrders > 0) {
+            console.log(`[ensure_profile] ${linkedOrders} order ditautkan ke nasabah baru ${(data as any).id}`);
+          }
+        }
+
         // Auto-notify admins of new registration (non-blocking, best-effort)
         const roleLabel = role === 'AGENT' ? 'Agen' : 'Customer';
         db.from('sp_admin_notifications').insert({
@@ -222,7 +239,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           `Waktu: ${tgTime} WIB\n\n` +
           `Buka Admin Panel: https://myinsurepath.com/admin`
         );
-        return json({ data, existed: false });
+        return json({ data, existed: false, linked_orders: linkedOrders });
       }
 
     case 'apply_referral': {

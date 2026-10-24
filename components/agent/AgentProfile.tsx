@@ -178,6 +178,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28 font-sora">
+      {showChangePassword && <ChangePasswordModal email={profile?.email ?? agent?.email ?? ""} lang={lang} onClose={() => setShowChangePassword(false)} />}
 
       {/* Avatar + Name hero — bank-style gradient banner */}
       <div className="relative overflow-hidden px-5 pt-12 pb-7 text-center text-white"

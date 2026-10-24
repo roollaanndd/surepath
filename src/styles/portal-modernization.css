@@ -713,3 +713,32 @@
     transition-duration: .01ms !important;
   }
 }
+
+
+/* CRM: make client management readable and touch-friendly without changing its data flows. */
+.sp-agent-crm input,
+.sp-agent-crm select,
+.sp-agent-crm textarea {
+  min-height: 2.75rem;
+  font-size: max(1rem, 16px);
+}
+.sp-agent-crm .sp-glass,
+.sp-agent-crm .bg-ds-card {
+  border-color: var(--ds-border, #dce6df);
+}
+.sp-agent-crm .text-\[10px\] {
+  line-height: 1.4;
+}
+.sp-agent-crm [class*="rounded-2xl"][class*="border"] {
+  border-color: var(--ds-border, #dce6df);
+}
+.dark .sp-agent-crm input,
+.dark .sp-agent-crm select,
+.dark .sp-agent-crm textarea {
+  color: var(--ds-dk-ink, #f1f5f9);
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .2);
+}
+@media (max-width: 380px) {
+  .sp-agent-crm .grid.grid-cols-2 { gap: .5rem; }
+}

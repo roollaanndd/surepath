@@ -51,13 +51,45 @@ try {
   console.warn('SW registration failed (non-blocking):', e);
 }
 
-// Auto-reload when a lazy-loaded chunk fails (happens when SW serves stale assets after deploy)
-window.addEventListener('vite:preloadError', () => {
-  const last = Number(sessionStorage.getItem('sp_reload_ts') ?? 0);
-  if (Date.now() - last > 10_000) {
-    sessionStorage.setItem('sp_reload_ts', String(Date.now()));
-    window.location.reload();
+// Recover from stale HTML / service-worker caches after a deployment.
+// A lazy chunk URL is content-hashed; if an old app shell points at a chunk no
+// longer present in the active deployment, clear only our asset cache, remove
+// the stale worker, and reload once. This avoids leaving the Admin portal blank.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+
+  let last = 0;
+  try {
+    last = Number(sessionStorage.getItem('sp_chunk_reload_ts') ?? 0);
+  } catch {
+    // Storage can be blocked in private browsing; still attempt one recovery.
   }
+
+  if (Date.now() - last < 30_000) {
+    // Prevent a reload loop if the deployment is still inconsistent.
+    console.error('SurePath could not load a required app module after recovery.');
+    return;
+  }
+
+  try {
+    sessionStorage.setItem('sp_chunk_reload_ts', String(Date.now()));
+  } catch {
+    // Continue recovery even when session storage is unavailable.
+  }
+
+  void (async () => {
+    try {
+      if ('caches' in window) await caches.delete('sp-assets');
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+    } catch (error) {
+      console.warn('Stale app cache cleanup was incomplete:', error);
+    } finally {
+      window.location.reload();
+    }
+  })();
 });
 
 // ─── Error Boundary — catch any React crash and show error to user ───────────

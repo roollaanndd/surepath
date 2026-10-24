@@ -142,7 +142,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
                   <p className="text-sm font-bold text-ds-ink truncate">{o.client_name}</p>
                   <p className="text-xs text-ds-ink3 truncate">{o.order_number} · {o.product_name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                    <span className={`text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                       o.status === 'SUBMITTED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
                       : o.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
                       : o.status === 'UNDER_REVIEW' ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
@@ -153,7 +153,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
                       {o.status.replace('_', ' ')}
                     </span>
                     {o.insurer_decision && (
-                      <span className="text-[9px] font-bold text-ds-ink3">
+                      <span className="text-2xs font-bold text-ds-ink3">
                         · {o.insurer_decision === 'APPROVED' ? '✓ Anda setujui' : o.insurer_decision === 'REQUEST_INFO' ? '? Anda minta info' : '✗ Anda tolak'}
                       </span>
                     )}

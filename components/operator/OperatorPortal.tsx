@@ -12,7 +12,7 @@ import { Bell, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'luci
 import { Language } from '../../types';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import PortalHeader from '../shared/PortalHeader';
-import PortalTabBar from '../shared/PortalTabBar';
+import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import { supabase } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
@@ -30,13 +30,13 @@ interface Props {
   lang: Language;
 }
 
-const TABS = [
-  { id: 'home',         labelId: 'Beranda', Icon: Home },
-  { id: 'orders',       labelId: 'Polis',   Icon: FileText },
-  { id: 'claims',       labelId: 'Klaim',   Icon: ShieldAlert },
-  { id: 'withdrawals',  labelId: 'Tarik',   Icon: Wallet },
-  { id: 'agents',       labelId: 'Agen',    Icon: UserCheck },
-  { id: 'profile',      labelId: 'Profil',  Icon: User },
+const TABS: { id: string; labelId: string; Icon: PortalTab['Icon']; glyph: PortalTab['glyph'] }[] = [
+  { id: 'home',         labelId: 'Beranda', Icon: Home,        glyph: 'home' },
+  { id: 'orders',       labelId: 'Polis',   Icon: FileText,    glyph: 'document' },
+  { id: 'claims',       labelId: 'Klaim',   Icon: ShieldAlert, glyph: 'shield' },
+  { id: 'withdrawals',  labelId: 'Tarik',   Icon: Wallet,      glyph: 'withdraw' },
+  { id: 'agents',       labelId: 'Agen',    Icon: UserCheck,   glyph: 'network' },
+  { id: 'profile',      labelId: 'Profil',  Icon: User,        glyph: 'people' },
 ];
 
 const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
@@ -187,7 +187,7 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
 
       {/* Floating bottom tab nav — bank-style pills */}
       <PortalTabBar
-        tabs={TABS.map(({ id, labelId, Icon }) => ({ id, label: labelId, Icon }))}
+        tabs={TABS.map(({ id, labelId, Icon, glyph }) => ({ id, label: labelId, Icon, glyph }))}
         activeId={activeTab}
         onSelect={handleTabChange}
         modernIcons

@@ -458,7 +458,7 @@ const AdminPortal = ({
               getAdminStats().then(setAdminStats).catch(() => {});
               callGateway('admin_transaksi_overview', {}).then(({ data }) => { if (data) setTransaksiStats(data as any); }).catch(() => {});
             }}
-            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all bg-white/10 border border-white/15 text-white/85 hover:bg-white/20 self-start"
+            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-2xl text-2xs font-black uppercase tracking-wider transition-all bg-white/10 border border-white/15 text-white/85 hover:bg-white/20 self-start"
             title="Refresh data"
           >
             <RefreshCw size={13} /> Refresh
@@ -531,7 +531,7 @@ const AdminPortal = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order funnel */}
         <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Status Pesanan</p>
+          <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Status Pesanan</p>
           {adminStats
             ? (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
                 const count = adminStats.ordersByStatus[st] ?? 0;
@@ -562,7 +562,7 @@ const AdminPortal = ({
 
         {/* Top agents */}
         <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Mitra Teratas</p>
+          <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Mitra Teratas</p>
           {adminStats
             ? adminStats.topAgents.length === 0
               ? <p className={`text-xs ${'text-ds-ink3'}`}>Belum ada data.</p>
@@ -589,7 +589,7 @@ const AdminPortal = ({
 
       {/* Traffic 7 Hari */}
       <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-        <p className={`text-[10px] font-black uppercase tracking-widest mb-5 ${'text-ds-ink3'}`}>Traffic Website — 7 Hari Terakhir</p>
+        <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Traffic Website — 7 Hari Terakhir</p>
         {trafficStats ? (
           <div className="space-y-4">
             {/* Bar chart */}

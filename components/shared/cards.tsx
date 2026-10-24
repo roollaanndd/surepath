@@ -17,7 +17,7 @@ export const SectionLabel: React.FC<{
   className?: string;
 }> = ({ children, action, className = '' }) => (
   <div className={`flex items-center justify-between mb-3 ${className}`}>
-    <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{children}</p>
+    <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider">{children}</p>
     {action && (
       <button type="button" onClick={action.onClick} className="text-xs font-bold text-ds-green active:scale-95 transition-transform">
         {action.label}
@@ -121,7 +121,7 @@ export const AICard: React.FC<{
         <PathyMascot size={40} />
       </div>
       <div className="space-y-1.5 flex-1 min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#00C16A' }}>{label}</p>
+        <p className="text-2xs font-black uppercase tracking-wider" style={{ color: '#00C16A' }}>{label}</p>
         <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{message}</p>
         {suggestion && (
           <button
@@ -133,7 +133,7 @@ export const AICard: React.FC<{
           </button>
         )}
         {cta && (
-          <button onClick={cta.onClick} className="block text-[10px] font-black uppercase tracking-widest pt-1" style={{ color: '#00C16A' }}>
+          <button onClick={cta.onClick} className="block text-2xs font-black uppercase tracking-wider pt-1" style={{ color: '#00C16A' }}>
             {cta.label} →
           </button>
         )}
@@ -170,9 +170,12 @@ export const StatCard: React.FC<{
       <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-wider leading-tight">{label}</span>
     </div>
     <div className="text-base sm:text-xl font-black text-ds-ink leading-tight tabular-nums">{value}</div>
-    {/* break-words, not the inherited `anywhere`: a tile this narrow was
-        splitting "perpanjangan" into "perpanjang/an". */}
-    {sub && <div className="text-2xs text-ds-ink3 mt-0.5 leading-snug break-words">{sub}</div>}
+    {/* overflow-wrap:normal, not break-word. Measured: in a 71px box at 11px,
+        `anywhere` and `break-word` behave identically — both split
+        "perpanjangan" into "perpanjang/an". Only `normal` keeps a word whole,
+        which is what this needs; the inherited `anywhere` comes from
+        portal-modernization.css. Callers keep subs short enough to fit. */}
+    {sub && <div className="text-2xs text-ds-ink3 mt-0.5 leading-snug [overflow-wrap:normal]">{sub}</div>}
     {typeof progress === 'number' && (
       <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, progress))}%`, background: '#00C16A' }} />
@@ -203,7 +206,7 @@ export const ActionGrid: React.FC<{ actions: QuickAction[]; cols?: number }> = (
         <div className={`w-14 h-14 ${a.bg ?? 'bg-ds-green-tint'} ${a.color ?? 'text-ds-green'} rounded-2xl flex items-center justify-center shadow-ds-sm group-hover:scale-105 transition-transform duration-200`}>
           <a.icon size={24} strokeWidth={2} />
         </div>
-        <span className="text-[10px] font-bold text-ds-ink2 text-center leading-tight">{a.label}</span>
+        <span className="text-2xs font-bold text-ds-ink2 text-center leading-tight [overflow-wrap:normal]">{a.label}</span>
       </button>
     ))}
   </div>
@@ -236,7 +239,7 @@ export const FeaturedCard: React.FC<{
   <div className="rounded-3xl p-5 relative overflow-hidden text-white" style={{ background: gradient, minHeight: 132 }}>
     <div className="absolute -bottom-6 -right-4 opacity-90 pointer-events-none">{illustration}</div>
     <div className="relative z-10 max-w-[62%]">
-      {eyebrow && <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mb-1">{eyebrow}</p>}
+      {eyebrow && <p className="text-2xs font-black uppercase tracking-wider text-white/70 mb-1">{eyebrow}</p>}
       <h4 className="text-lg font-black leading-tight mb-1">{title}</h4>
       {subtitle && <p className="text-[11px] text-white/70 leading-snug mb-3">{subtitle}</p>}
       <button
@@ -253,6 +256,6 @@ export const FeaturedCard: React.FC<{
 export const PipelineStat: React.FC<{ label: string; value: React.ReactNode; accent?: string }> = ({ label, value, accent = '#00C16A' }) => (
   <div className="flex-1 text-center">
     <p className="text-2xl font-black text-ds-ink leading-none" style={{ color: accent }}>{value}</p>
-    <p className="text-[9px] font-bold text-ds-ink3 uppercase tracking-wider mt-1">{label}</p>
+    <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-1">{label}</p>
   </div>
 );

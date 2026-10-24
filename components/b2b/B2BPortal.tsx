@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Bell } from 'lucide-react';
 import { Language } from '../../types';
-import PortalTabBar from '../shared/PortalTabBar';
+import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import PortalHeader from '../shared/PortalHeader';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import {
@@ -26,12 +26,12 @@ interface Props {
 // slot on a narrow centre button. "Pengajuan" and "Penawaran" never had the
 // width, and were rendering as "PENGAJ/UAN". The short forms carry the same
 // meaning and match the verb the Agent portal already uses for "create".
-const TABS = [
-  { id: 'home',        labelEn: 'Home',     labelId: 'Beranda', Icon: Home },
-  { id: 'new',         labelEn: 'New',      labelId: 'Buat',    Icon: FilePlus },
-  { id: 'submissions', labelEn: 'Requests', labelId: 'Ajuan',   Icon: ClipboardList },
-  { id: 'quotes',      labelEn: 'Quotes',   labelId: 'Tawaran', Icon: FileCheck },
-  { id: 'profile',     labelEn: 'Profile',  labelId: 'Profil',  Icon: UserCircle },
+const TABS: { id: string; labelEn: string; labelId: string; Icon: PortalTab['Icon']; glyph: PortalTab['glyph'] }[] = [
+  { id: 'home',        labelEn: 'Home',     labelId: 'Beranda', Icon: Home,          glyph: 'home' },
+  { id: 'new',         labelEn: 'New',      labelId: 'Buat',    Icon: FilePlus,      glyph: 'quote' },
+  { id: 'submissions', labelEn: 'Requests', labelId: 'Ajuan',   Icon: ClipboardList, glyph: 'document' },
+  { id: 'quotes',      labelEn: 'Quotes',   labelId: 'Tawaran', Icon: FileCheck,     glyph: 'wallet' },
+  { id: 'profile',     labelEn: 'Profile',  labelId: 'Profil',  Icon: UserCircle,    glyph: 'people' },
 ];
 
 const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
@@ -145,7 +145,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
       {/* Bottom Tab Navigation */}
       <PortalTabBar
-        tabs={TABS.map(({ id, labelEn, labelId, Icon }) => ({ id, label: lang === Language.EN ? labelEn : labelId, Icon }))}
+        tabs={TABS.map(({ id, labelEn, labelId, Icon, glyph }) => ({ id, label: lang === Language.EN ? labelEn : labelId, Icon, glyph }))}
         activeId={activeTab}
         onSelect={handleTabChange}
         modernIcons

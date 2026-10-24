@@ -1,5 +1,44 @@
 # SurePath — Changelog
 
+## v2.6.23 — 2026-10-24
+
+Ikon navigasi kembar, dan sisa terakhir teks di bawah 11px.
+
+**Ikon kembar — keputusan yang diserahkan ke saya**
+- Tiga tab B2B ("Buat", "Ajuan", "Tawaran") menggambar ikon yang sama persis,
+  begitu juga "Agen" dan "Profil" di Operator. Penyebabnya `fallback` di
+  `ManagedPortalIcon` hanya dipakai saat `id` kosong, padahal semua pemanggil
+  mengirim `id` — jadi ikon yang dideklarasikan tiap tab tidak pernah terpakai,
+  dan `SurePathIcon` menebak lewat regex yang memetakan `new`, `submissions`,
+  dan `quotes` ke satu gambar.
+- Membetulkan `!id` jadi `!src` memang "bug"-nya, tapi itu akan mengganti
+  seluruh ikon ilustrasi SurePath dengan ikon garis biasa di keenam portal —
+  penurunan kualitas visual, bukan perbaikan. Regex-nya juga tidak bisa
+  dirapikan begitu saja, karena `id` yang sama berarti hal berbeda di tiap
+  portal: `quotes` berarti "buat" di nav Mitra, tapi "penawaran masuk" di B2B.
+- Jadi sekarang tiap portal menyebut sendiri ikon yang dimaksudnya, lewat
+  prop `glyph` baru. `id` tidak berubah, jadi ikon kustom yang diunggah admin
+  tetap aman, dan gaya ikon portal lain tidak tersentuh.
+- Nilainya diketik (`SurePathGlyph`). Sempat terjadi: saya mengirim `'money'`,
+  yang merupakan nama kunci internal, bukan kata yang dicocokkan regex — ikon
+  "Tawaran" diam-diam jadi bintang. Hitungannya tetap "0 masalah"; ketahuan
+  karena layarnya dilihat. Tipe itu sekarang mencegahnya.
+
+**Teks di bawah 11px — tuntas**
+- Nasabah 14 → 0, Admin 5 → 1, Insurer 3 → 0.
+- Satu sisa di Admin adalah huruf awal pada avatar berukuran tetap, yaitu
+  pengecualian `text-badge` yang memang disepakati.
+- Primitif kartu bersama (`SectionLabel`, `ActionGrid`, eyebrow) ikut naik,
+  jadi keenam portal diperiksa ulang setelahnya.
+
+**Koreksi**
+- Di v2.6.20 saya menulis bahwa `break-words` memperbaiki "perpanjangan" yang
+  terpotong jadi "perpanjang/an". **Itu tidak benar.** Diukur di browser:
+  dalam kotak 71px pada 11px, `anywhere` dan `break-word` berperilaku sama
+  persis — keduanya memotong di tengah kata. Hanya `normal` yang menjaga kata
+  tetap utuh. Sekarang memakai `[overflow-wrap:normal]`, dan teks cadangannya
+  dipendekkan jadi "belum ada" supaya muat.
+
 ## v2.6.22 — 2026-10-24
 
 Portal Operator dan Insurer — dua salinan terakhir dari komponen bersama.

@@ -203,7 +203,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       {currentUser?.name?.split(' ')[0]}
                     </h3>
 {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black text-white" style={{ background: '#00C896' }}>
+                    <span className="px-2 py-0.5 rounded-full text-2xs font-black text-white" style={{ background: '#00C896' }}>
                       {Math.max(0, Math.min(100, currentUser.trustScore))}
                     </span>
                     )}
@@ -230,7 +230,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="min-w-0">
                     <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-white/[0.08] px-2.5 py-1">
                       <ShieldCheck size={13} className="text-emerald-300" />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-50/85">{t('Your protection score','Skor proteksi kamu')}</span>
+                      <span className="text-2xs font-bold uppercase tracking-[0.11em] text-emerald-50/85">{t('Your protection score','Skor proteksi kamu')}</span>
                     </div>
                     <h4 className="text-xl font-extrabold tracking-tight">{t('Protection, at a glance','Proteksi dalam satu ringkasan')}</h4>
                     <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-white/65">{t('A quick view of your SurePath account score and coverage.','Ringkasan skor akun dan perlindungan SurePath kamu.')}</p>
@@ -248,14 +248,14 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? <>
                         <span className="text-[1.7rem] font-black leading-none tracking-tight animate-pop-in motion-reduce:animate-none">{Math.round(Math.max(0,Math.min(100,currentUser.trustScore)))}</span>
-                        <span className="mt-1 text-[9px] font-semibold text-white/50">/ 100</span>
-                      </> : <span className="px-2 text-center text-[10px] font-bold leading-tight text-white/70">{t('Not available','Belum tersedia')}</span>}
+                        <span className="mt-1 text-2xs font-semibold text-white/50">/ 100</span>
+                      </> : <span className="px-2 text-center text-2xs font-bold leading-tight text-white/70">{t('Not available','Belum tersedia')}</span>}
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? (currentUser.trustScore >= 80 ? t('Strong account score','Skor akun kuat') : currentUser.trustScore >= 50 ? t('Room to improve','Masih bisa ditingkatkan') : t('Build your protection profile','Lengkapi profil proteksi')) : t('Your coverage','Perlindungan kamu')}</p>
                     <p className="mt-1 text-xs leading-relaxed text-white/60">{latestPolicy ? t('Your policy details are available in your protection history.','Detail polis tersedia di riwayat proteksi.') : t('Explore available plans to start building your protection.','Lihat pilihan produk untuk mulai membangun proteksi.')}</p>
-                    {latestPolicy && <div className="mt-3 flex flex-wrap gap-1.5">{coverageLabels.map(label => <span key={label} className="rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold text-white/85">{label}</span>)}</div>}
+                    {latestPolicy && <div className="mt-3 flex flex-wrap gap-1.5">{coverageLabels.map(label => <span key={label} className="rounded-full border border-white/10 bg-white/[0.08] px-2.5 py-1 text-2xs font-semibold text-white/85">{label}</span>)}</div>}
                   </div>
                 </div>
                 <div className="relative z-10 mt-5 flex items-center justify-between border-t border-white/10 pt-3">
@@ -274,7 +274,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <div className="grid grid-cols-3 gap-3">
                       <StatCard label={t('Total Premium', 'Total Premi')} value={formatIDRCompact(totalPremium)} sub={t('all policies', 'semua polis')} />
                       <StatCard label={t('Active', 'Aktif')} value={customerPolicies.length} sub={t('policies', 'polis')} />
-                      <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={homeRenewalDate ?? t('to renewal', 'perpanjangan')} progress={(homeDaysLeft / 365) * 100} />
+                      <StatCard label={t('Days Left', 'Sisa Hari')} value={homeDaysLeft} sub={homeRenewalDate ?? t('no date yet', 'belum ada')} progress={(homeDaysLeft / 365) * 100} />
                     </div>
                   </ClayCard>
                 </div>
@@ -332,7 +332,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               {(customerPolicies.length > 0 || customerClaims.length > 0) && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Recent Activity', 'Aktivitas Terbaru')}</p>
+                    <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">{t('Recent Activity', 'Aktivitas Terbaru')}</p>
                     <button onClick={() => navigate('history')} className="text-xs font-bold text-ds-green">{t('All', 'Semua')}</button>
                   </div>
                   <div className="sp-glass rounded-2xl overflow-hidden">
@@ -343,9 +343,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-ds-ink truncate">{p.product_name}</p>
-                          <p className="text-[10px] text-ds-ink3">{new Date(p.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-2xs text-ds-ink3">{new Date(p.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-ds-green-tint text-ds-green' : 'bg-ds-amber-lt text-ds-amber'}`}>
+                        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${p.status === 'ISSUED' ? 'bg-ds-green-tint text-ds-green' : 'bg-ds-amber-lt text-ds-amber'}`}>
                           {p.status}
                         </span>
                       </div>
@@ -357,9 +357,9 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-ds-ink truncate">{t('Claim', 'Klaim')} #{c.claim_number ?? c.id.slice(0, 8)}</p>
-                          <p className="text-[10px] text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-2xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ds-red-lt text-ds-red">{c.status}</span>
+                        <span className="text-2xs font-bold px-2 py-0.5 rounded-full bg-ds-red-lt text-ds-red">{c.status}</span>
                       </div>
                     ))}
                   </div>
@@ -376,7 +376,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
             <div className="space-y-5 pb-32 pt-2">
               {/* Header */}
               <div>
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Protection Centre', 'Pusat Proteksi')}</p>
+                <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mb-1">{t('Protection Centre', 'Pusat Proteksi')}</p>
                 <h2 className="text-2xl font-black tracking-tight text-ds-ink">
                   {t('Choose Your', 'Pilih')} <span className="text-ds-green">{t('Protection', 'Proteksi')}</span>
                 </h2>
@@ -439,7 +439,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
             <div className="pb-32">
               {/* Pre-claim hero */}
               <HeroCard variant="navy" className="mb-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">{t('Claim Assistant', 'Asisten Klaim')}</p>
+                <p className="text-2xs font-black uppercase tracking-wider text-white/60 mb-1">{t('Claim Assistant', 'Asisten Klaim')}</p>
                 <h3 className="text-lg font-black text-white mb-1">{t('File a Claim', 'Lapor Klaim')}</h3>
                 <p className="text-[12px] text-white/70 leading-snug">{t('Photo + AI = instant processing. Most claims settled in 24h.', 'Foto + AI = proses instan. Sebagian besar klaim selesai dalam 24 jam.')}</p>
               </HeroCard>
@@ -472,20 +472,20 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
             <div className="space-y-5 pb-32 pt-2">
               {/* Summary hero */}
               <HeroCard>
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-3">{t('My Protection Wallet', 'Dompet Proteksi Saya')}</p>
+                <p className="text-2xs font-black uppercase tracking-wider text-white/50 mb-3">{t('My Protection Wallet', 'Dompet Proteksi Saya')}</p>
                 <div className="flex gap-6">
                   <div>
-                    <p className="text-[10px] text-white/40">{t('Total Premium', 'Total Premi')}</p>
+                    <p className="text-2xs text-white/40">{t('Total Premium', 'Total Premi')}</p>
                     <p className="text-xl font-black text-white">{formatIDR(totalValue)}</p>
                   </div>
                   <div className="w-px bg-white/10" />
                   <div>
-                    <p className="text-[10px] text-white/40">{t('Active', 'Aktif')}</p>
+                    <p className="text-2xs text-white/40">{t('Active', 'Aktif')}</p>
                     <p className="text-xl font-black text-ds-green">{activePolicies.length}</p>
                   </div>
                   <div className="w-px bg-white/10" />
                   <div>
-                    <p className="text-[10px] text-white/40">{t('Pending', 'Proses')}</p>
+                    <p className="text-2xs text-white/40">{t('Pending', 'Proses')}</p>
                     <p className="text-xl font-black" style={{ color: '#F5B942' }}>{pendingClaims.length}</p>
                   </div>
                 </div>
@@ -498,13 +498,13 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <ShieldCheck size={24} className="text-emerald-200" strokeWidth={1.8} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-emerald-100/70">{t('Protection score','Skor proteksi')}</p>
+                    <p className="text-2xs font-bold uppercase tracking-[0.11em] text-emerald-100/70">{t('Protection score','Skor proteksi')}</p>
                     <p className="mt-0.5 text-sm font-extrabold">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? (currentUser.trustScore >= 80 ? t('Strong account score','Skor akun kuat') : currentUser.trustScore >= 50 ? t('Room to improve','Masih bisa ditingkatkan') : t('Build your protection profile','Lengkapi profil proteksi')) : t('Score not available','Skor belum tersedia')}</p>
                     <p className="mt-0.5 text-[11px] text-white/60">{t('Account score · not a measure of policy benefits','Skor akun · bukan ukuran manfaat polis')}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black leading-none">{typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) ? Math.round(Math.max(0,Math.min(100,currentUser.trustScore))) : '—'}</p>
-                    <p className="mt-1 text-[9px] font-bold text-white/50">/ 100</p>
+                    <p className="mt-1 text-2xs font-bold text-white/50">/ 100</p>
                   </div>
                 </div>
                 {typeof currentUser?.trustScore === 'number' && Number.isFinite(currentUser.trustScore) && <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-emerald-300 transition-[width] duration-1000 ease-out motion-reduce:transition-none" style={{width:`${Math.max(0,Math.min(100,currentUser.trustScore))}%`}} /></div>}
@@ -513,7 +513,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               {/* Policies */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                  <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
                     <FileText size={11} className="text-ds-green" />
                     {t('My Policies', 'Polis Saya')}
                   </p>
@@ -529,7 +529,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
                     <EmptyStateSearch size={100} />
                     <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet.', 'Belum ada polis.')}</p>
-                    <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-[10px] tracking-widest shadow-ds-green active:scale-95 transition-transform">
+                    <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-2xs tracking-wider shadow-ds-green active:scale-95 transition-transform">
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
                   </div>
@@ -549,12 +549,12 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                         <div>
                           <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
                           <p className="text-xs text-ds-ink3">{p.product_code}{p.end_date ? ` · ${t('Exp','Exp')} ${new Date(p.end_date).toLocaleDateString('id-ID')}` : ''}</p>
-                          {pDesc[p.status] && <p className="text-[10px] text-ds-ink3 mt-0.5">{pDesc[p.status]}</p>}
+                          {pDesc[p.status] && <p className="text-2xs text-ds-ink3 mt-0.5">{pDesc[p.status]}</p>}
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-sm font-black text-ds-green">{formatIDR(p.total_premium)}</p>
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>
+                        <span className={`text-2xs font-black px-2 py-0.5 rounded-full mt-1 inline-block ${meta.cls}`}>{meta.label}</span>
                       </div>
                     </div>
                   );
@@ -563,7 +563,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* Claims */}
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
+                <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
                   <AlertCircle size={11} className="text-ds-red" />
                   {t('My Claims', 'Klaim Saya')}
                 </p>
@@ -589,7 +589,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1 inline-block ${cmeta.cls}`}>{cmeta.label}</span>
+                        <span className={`text-2xs font-black px-2 py-0.5 rounded-full mt-1 inline-block ${cmeta.cls}`}>{cmeta.label}</span>
                       </div>
                     </div>
                   );

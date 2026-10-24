@@ -69,11 +69,11 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
       `}</style>
 
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(124,58,237,0.09) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(249,115,22,0.13) 1px, transparent 1px)',
         backgroundSize: '26px 26px',
       }} />
-      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.13) 0%, transparent 65%)' }} />
-      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(124,58,237,0.09) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ top: '-15%', left: '-8%', width: '65%', height: '65%', background: 'radial-gradient(ellipse, rgba(34,197,94,0.16) 0%, transparent 65%)' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-15%', right: '-8%', width: '55%', height: '55%', background: 'radial-gradient(ellipse, rgba(249,115,22,0.13) 0%, transparent 65%)' }} />
       <div className="absolute inset-x-0 h-px pointer-events-none" style={{
         background: 'linear-gradient(90deg, transparent 10%, rgba(124,58,237,0.18) 50%, transparent 90%)',
         animation: 'ins-scan 12s linear infinite',
@@ -99,7 +99,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-6">
             <div className="absolute rounded-full" style={{
-              inset: -20, background: 'radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 72%)',
+              inset: -20, background: 'radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 72%)',
               animation: 'ins-ping 3s ease-in-out infinite',
             }} />
             <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
@@ -140,10 +140,10 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
                   value={token}
                   onChange={e => setToken(e.target.value)}
                   placeholder="Paste token dari email…"
-                  className="block w-full pl-10 pr-4 py-3 rounded-xl text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
-                  style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(124,58,237,0.12)', fontFamily: 'monospace', fontSize: '0.72rem' }}
+                  className="block w-full pl-10 pr-4 py-3 rounded-full text-slate-900 placeholder-slate-400 outline-none transition-all duration-200"
+                  style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(249,115,22,0.12)', fontFamily: 'monospace', fontSize: '0.72rem' }}
                   onFocus={e => { e.target.style.borderColor = 'rgba(124,58,237,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; }}
-                  onBlur={e  => { e.target.style.borderColor = 'rgba(124,58,237,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(249,115,22,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; }}
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
               disabled={loading || !token.trim()}
               className="w-full flex justify-center items-center gap-2.5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-40 hover:brightness-[1.08]"
               style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                background: 'linear-gradient(115deg, #15803d 0%, #059669 62%, #f97316 145%)',
                 color: '#fff',
                 boxShadow: loading ? 'none' : '0 8px 28px -10px rgba(124,58,237,0.55)',
               }}

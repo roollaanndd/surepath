@@ -14,6 +14,8 @@ interface Props {
   lang: Language;
   onLogout: () => void;
   insurerName: string;
+  darkMode: boolean;
+  onToggleDark: () => void;
 }
 
 function usePwaInstall() {
@@ -38,19 +40,13 @@ function usePwaInstall() {
   return { canInstall: !!installEvent, isStandalone, promptInstall };
 }
 
-const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerName }) => {
+const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerName, darkMode, onToggleDark }) => {
   const t = useT(lang);
   const toast = useToast();
   const confirm = useConfirmDialog();
   const { canInstall, isStandalone, promptInstall } = usePwaInstall();
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
   const [profile, setProfile] = useState<InsurerProfileData | null>(null);
   const [tokenExpiry, setTokenExpiry] = useState<string | null>(null);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
 
   useEffect(() => {
     getInsurerDashboard(authToken)
@@ -146,7 +142,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
       <div>
         <SectionLabel>Pengaturan</SectionLabel>
         <div className="bg-ds-card border border-ds-border rounded-2xl divide-y divide-ds-border overflow-hidden">
-          <button onClick={() => setDarkMode(!darkMode)} className="w-full flex items-center gap-3 p-4 hover:bg-ds-card2 active:scale-[0.99] transition-all">
+          <button onClick={onToggleDark} className="w-full flex items-center gap-3 p-4 hover:bg-ds-card2 active:scale-[0.99] transition-all">
             <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center">
               {darkMode ? <Sun size={16} className="text-ds-amber" /> : <Moon size={16} className="text-ds-ink2" />}
             </div>

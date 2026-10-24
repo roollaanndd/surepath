@@ -26,6 +26,41 @@ const STATUS_LABEL: Record<string, string> = {
 
 type FilterTab = 'ALL' | 'PENDING' | 'ACCEPTED';
 
+// `coverage_details` is free-form JSON an operator fills in, so the screen used
+// to print its keys title-cased and its values with String(). In an Indonesian
+// UI that rendered "Coverage Type / Deductible / Unit Count", and a deductible
+// of 1_500_000 came out as the bare digits "1500000" on a corporate quote.
+// Known keys get a proper label; anything else still falls back to the key.
+const COVERAGE_LABEL: Record<string, [en: string, id: string]> = {
+  coverage_type:   ['Coverage type', 'Jenis pertanggungan'],
+  deductible:      ['Deductible', 'Risiko sendiri'],
+  unit_count:      ['Units', 'Jumlah unit'],
+  sum_insured:     ['Sum insured', 'Nilai pertanggungan'],
+  period_months:   ['Period', 'Periode'],
+  territory:       ['Territory', 'Wilayah'],
+};
+
+const COVERAGE_TYPE_LABEL: Record<string, string> = {
+  COMPREHENSIVE: 'Komprehensif',
+  TLO:           'Total Loss Only',
+};
+
+// Rupiah-bearing keys, so a number is read as money rather than a count.
+const MONEY_KEYS = new Set(['deductible', 'sum_insured', 'premium', 'premium_amount']);
+
+const coverageLabel = (key: string, lang: Language) => {
+  const pair = COVERAGE_LABEL[key];
+  if (!pair) return key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  return lang === Language.EN ? pair[0] : pair[1];
+};
+
+const coverageValue = (key: string, value: unknown) => {
+  if (typeof value === 'number' && MONEY_KEYS.has(key)) return formatIDR(value);
+  if (typeof value === 'number') return value.toLocaleString('id-ID');
+  if (typeof value === 'string') return COVERAGE_TYPE_LABEL[value] ?? value;
+  return String(value);
+};
+
 interface QuoteCardProps {
   quote: SpB2BQuote;
   lang: Language;
@@ -63,31 +98,31 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
   };
 
   return (
-    <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm space-y-3">
+    <div className="rounded-2xl bg-ds-card border border-ds-border p-4 shadow-sm space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-black text-sm">{quote.insurer_name ?? t('Insurer', 'Penanggung')}</div>
           <div className="text-[11px] text-ds-ink3 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
         </div>
-        <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
+        <span className={`text-2xs font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
           {STATUS_LABEL[quote.status] ?? quote.status}
         </span>
       </div>
 
       {/* Premium */}
       <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
-        <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
+        <div className="text-2xs font-bold text-ds-green uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
         <div className="text-xl font-black text-ds-green mt-0.5">{formatIDR(quote.premium_amount)}</div>
       </div>
 
       {/* Coverage details */}
       {Object.keys(quote.coverage_details ?? {}).length > 0 && (
-        <div className="rounded-xl bg-slate-50 dark:bg-white/5 p-3 space-y-1.5">
+        <div className="rounded-xl bg-ds-card2 p-3 space-y-1.5">
           {Object.entries(quote.coverage_details).map(([k, v]) => (
             <div key={k} className="flex justify-between text-xs gap-2">
-              <span className="text-slate-500 dark:text-slate-400 capitalize">{k.replace(/_/g, ' ')}</span>
-              <span className="font-bold text-slate-700 dark:text-slate-200 text-right">{String(v)}</span>
+              <span className="text-ds-ink3">{coverageLabel(k, lang)}</span>
+              <span className="font-bold text-ds-ink2 text-right">{coverageValue(k, v)}</span>
             </div>
           ))}
         </div>
@@ -96,8 +131,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
       {/* Valid until */}
       {quote.valid_until && (
         <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-500 dark:text-slate-400">{t('Valid until', 'Berlaku s.d.')}</span>
-          <span className="font-bold text-slate-700 dark:text-slate-200">{fmtDate(quote.valid_until)}</span>
+          <span className="text-ds-ink3">{t('Valid until', 'Berlaku s.d.')}</span>
+          <span className="font-bold text-ds-ink2">{fmtDate(quote.valid_until)}</span>
         </div>
       )}
 
@@ -106,13 +141,13 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
         <div>
           <button
             onClick={() => setTermsOpen(!termsOpen)}
-            className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400"
+            className="flex items-center gap-1 text-xs font-bold text-ds-ink3"
           >
             {termsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
             {t('Terms & Conditions', 'Syarat & Ketentuan')}
           </button>
           {termsOpen && (
-            <div className="mt-2 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <div className="mt-2 rounded-xl border border-ds-border bg-ds-card2 p-3 text-xs text-ds-ink2 leading-relaxed">
               {quote.terms}
             </div>
           )}
@@ -126,7 +161,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-ds-green dark:text-emerald-400 text-xs font-black uppercase tracking-widest disabled:opacity-60"
       >
         {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
-        {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Quotation (PDF)')}
+        {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Penawaran (PDF)')}
       </button>
 
       {/* Actions */}
@@ -135,7 +170,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
           <button
             disabled={acting}
             onClick={() => handle('ACCEPTED')}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-emerald-500 text-white text-xs font-black disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-ds-green text-ds-on-green text-xs font-black disabled:opacity-60"
           >
             {acting ? <Loader2 size={12} className="animate-spin" /> : null}
             {t('Accept', 'Terima')}
@@ -189,13 +224,13 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${
               filter === f
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                ? 'bg-ds-green text-ds-on-green'
+                : 'bg-ds-card2 text-ds-ink3'
             }`}
           >
-            {f === 'ALL' ? t('All', 'Semua') : f}
+            {f === 'ALL' ? t('All', 'Semua') : (STATUS_LABEL[f] ?? f)}
           </button>
         ))}
       </div>

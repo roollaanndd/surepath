@@ -52,14 +52,14 @@ const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigat
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${PRODUCT_COLOR[sub.product_type] ?? ''}`}>
+            <span className={`text-2xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${PRODUCT_COLOR[sub.product_type] ?? ''}`}>
               {PRODUCT_LABEL[sub.product_type] ?? sub.product_type}
             </span>
           </div>
           <div className="font-black text-sm mt-1 truncate">{sub.company_name}</div>
           <div className="text-[11px] text-ds-ink3 mt-0.5">{fmtDate(sub.created_at)}</div>
         </div>
-        <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
+        <span className={`text-2xs font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
           {STATUS_LABEL[sub.status] ?? sub.status}
         </span>
       </div>
@@ -143,13 +143,13 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${
               filter === f
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                ? 'bg-ds-green text-ds-on-green'
+                : 'bg-ds-card2 text-ds-ink3'
             }`}
           >
-            {f === 'ALL' ? t('All', 'Semua') : f}
+            {f === 'ALL' ? t('All', 'Semua') : (STATUS_LABEL[f] ?? f)}
           </button>
         ))}
       </div>

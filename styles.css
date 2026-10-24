@@ -66,6 +66,12 @@
   /* Amber TEXT on light: #F59E0B measures 2.0:1 on the page and 1.93:1 on
      its own tint. Same hue darkened to 4.67:1; fills keep --ds-warning. */
   --ds-warning-text: #B45309;
+  /* Amber text on a surface that is dark in BOTH themes — the Mitra commission
+     card, whose green gradient computes lighter than its source (#087A58 at the
+     light end). Full-strength #FDE047 measures 4.09:1 there, so the gold the
+     big figure uses cannot also carry the 11px label above it. Yellow-200 gives
+     4.64:1 on that same stop. Mirrors --ds-primary-on-dark. */
+  --ds-warning-on-dark: #FEF08A;
   --ds-danger:       #EF4444;  --ds-danger-tint:  #FEE2E2;
   --ds-info:         #3B82F6;  --ds-info-tint:    #DBEAFE;
   /* Warm secondary accent: use sparingly for highlights, selected states and visual rhythm. */
@@ -93,6 +99,7 @@
   --ds-blue:         var(--ds-info);
   --ds-amber:        var(--ds-warning);
   --ds-amber-text:   var(--ds-warning-text);
+  --ds-amber-on-dark: var(--ds-warning-on-dark);
   --ds-red:          var(--ds-danger);
   --ds-purple:       var(--ds-accent);
   --ds-purple-lt:    var(--ds-accent-tint);

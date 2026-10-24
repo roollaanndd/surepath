@@ -1,5 +1,77 @@
 # SurePath — Changelog
 
+## v2.7.6 — 2026-10-24
+
+Mode gelap: lima portal masih mengurusnya sendiri, dan B2B justru mematikannya.
+
+**Temuan**
+
+v2.6.10 memindahkan mode gelap ke satu modul, `components/shared/theme.ts`, dengan
+aturan: jangan pernah baca/tulis `sp_dark_mode` langsung — pakai `useDarkMode`.
+Lima pemilik terlewat: `OperatorPortal`, `AgentPortal`, `InsurerPortal`,
+`InsurerProfile`, dan `B2BPortal`.
+
+B2B yang terburuk. Ia memakai `useState(false)`, jadi membuka portal Mitra bukan
+hanya mengabaikan preferensi yang tersimpan — efeknya **menghapus** class `dark`
+dari dokumen, sehingga mode gelap yang dipilih di portal lain ikut mati.
+
+**Perbaikan**
+
+- Kelima portal kini memakai `useDarkMode()` dari `shared/theme.ts`; effect
+  buatan sendiri dihapus.
+- `InsurerProfile` dan `OperatorProfile` menerima `darkMode` + `onToggleDark`
+  sebagai prop dari portalnya, bukan memanggil `useDarkMode()` sendiri. Dua
+  instance `useDarkMode()` dalam satu pohon menyimpan state React terpisah di
+  atas storage yang sama, jadi ikon bulan di header berbohong setelah tombol di
+  Profil ditekan.
+
+**Label emas di kartu komisi Mitra**
+
+Label `KOMISI BULAN INI` memakai kuning 75% buram lewat inline style. Gradien
+kartunya ternyata dihitung lebih terang daripada sumbernya (`#087A58` di ujung
+terang), jadi kuning penuh pun hanya 4,09:1. Token baru `--ds-amber-on-dark`
+(`#FEF08A`, 4,64:1) melengkapi tiga serangkai amber, sejajar dengan
+`--ds-primary-on-dark` untuk hijau.
+
+**Catatan alat ukur**
+
+Harness kontras sempat melaporkan empat kegagalan palsu di tile beranda Mitra.
+Chrome kini menyajikan sebagian latar sebagai `color(srgb 0.99 0.99 0.99)` —
+komponen 0..1, bukan 0..255 — sehingga tombol yang nyaris putih terbaca nyaris
+hitam. Harness kini menskalakan sintaks itu, dan setiap kegagalan yang
+dilaporkan ikut menyebut elemen mana yang memberi latarnya.
+
+**Layar interior B2B, diukur untuk pertama kalinya**
+
+Setiap sweep sebelumnya berhenti di tab Beranda, persis jebakan yang sama
+seperti portal Insurer. Begitu Ajuan, Tawaran, Buat dan Profil benar-benar
+dirender, isinya:
+
+- **24 label di bawah lantai 11px** (Ajuan 15, Tawaran 9) — tab filter dan
+  semua badge status. Kini `text-2xs`.
+- **Tab filter menampilkan enum mentah berbahasa Inggris** (`SUBMITTED`,
+  `REVIEWING`, `QUOTED`, `PENDING`) padahal badge di kartunya sudah memakai
+  label Indonesia dari tabel yang sama. Kini keduanya memakai `STATUS_LABEL`.
+- **Putih di atas hijau** pada tab aktif, tombol Terima, pemilih produk dan
+  avatar Profil — luput dari seluruh sweep kontras, yang tidak pernah membuka
+  layar ini. Kini `text-ds-on-green`.
+- **`Deductible 1500000`** — `coverage_details` adalah JSON bebas, dan layar
+  ini mencetak kuncinya apa adanya dan nilainya lewat `String()`. Kunci yang
+  dikenal kini punya label Indonesia, dan nilai rupiah diformat:
+  "Risiko sendiri — Rp 1.500.000".
+- **Avatar Profil kosong.** `profile?.company_name ?? client?.company_name ??
+  'B2B'` — `??` tidak jatuh ke cadangan untuk string kosong, dan klien yang
+  belum mengisi nama perusahaan menyimpan `''`. Jadi cadangan `'B2B'` tidak
+  pernah terpakai dan kotak hijaunya kosong.
+- Sisa class slate mentah tanpa varian gelap dipindah ke token.
+
+**Verifikasi**
+
+Diukur ulang di keenam portal, dua tema: B2B kini benar-benar gelap
+(`bodyBg` gelap), dan kontras **0 kegagalan** di keenamnya. Kelima layar
+interior B2B: sub-11px **0**, slate mentah **0**, di terang maupun gelap.
+
+
 ## v2.7.5 — 2026-10-24
 
 Kontras warna: hijau brand dipakai sebagai teks, dan itu tidak terbaca.

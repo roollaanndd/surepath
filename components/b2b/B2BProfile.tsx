@@ -57,8 +57,15 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
     if (ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
   };
 
-  const initials = (profile?.company_name ?? client?.company_name ?? 'B2B')
-    .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
+  // `??` falls through on null/undefined but NOT on '', and a client whose
+  // company_name has not been filled in yet carries the empty string — so the
+  // 'B2B' fallback never fired and the avatar rendered as a blank green tile.
+  // Pick the first non-blank name, and keep the fallback if it yields nothing.
+  const companyName = [profile?.company_name, client?.company_name]
+    .find((n): n is string => typeof n === 'string' && n.trim().length > 0);
+  const initials = (companyName ?? 'B2B')
+    .trim().split(/\s+/).slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase()
+    || 'B2B';
 
   if (loading) {
     return (
@@ -72,17 +79,17 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
     <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3 py-2">
-        <div className="w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-emerald-500/25">
+        <div className="w-20 h-20 rounded-3xl bg-ds-green flex items-center justify-center text-ds-on-green text-2xl font-black shadow-xl shadow-emerald-500/25">
           {initials}
         </div>
         <div className="text-center">
-          <div className="font-black text-base">{profile?.company_name ?? '—'}</div>
+          <div className="font-black text-base">{companyName ?? '—'}</div>
           <div className="text-xs text-ds-ink3 mt-0.5">{profile?.email}</div>
         </div>
       </div>
 
       {/* Fields */}
-      <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 space-y-4">
+      <div className="rounded-2xl bg-ds-card border border-ds-border p-4 space-y-4">
         <div>
           <label className={LABEL}>{t('Company Name', 'Nama Perusahaan')}</label>
           <input

@@ -35,6 +35,7 @@ import PathyChat from '../shared/PathyChat';
 import { SectionLabel } from '../shared/cards';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import { useDarkMode } from '../shared/theme';
 
 interface Props {
   agent: any;
@@ -89,7 +90,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   // Legal agreement gate — null = checking, false = must accept, true = signed
   const [agreementOk, setAgreementOk] = useState<boolean | null>(null);
   const [tabKey, setTabKey] = useState(0);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('sp_dark_mode') === 'true');
+  const [darkMode, setDarkMode] = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationPopup, setNotificationPopup] = useState<SpNotification | null>(null);
@@ -109,15 +110,6 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [clients, setClients] = useState<SpClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState(false);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('sp_dark_mode', String(darkMode));
-  }, [darkMode]);
 
   // Check whether this agent has signed the current agreement version.
   // FIX v1.42.0: fail-closed — if the fetch errors, treat as NOT signed.

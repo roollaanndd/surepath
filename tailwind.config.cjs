@@ -49,6 +49,8 @@ module.exports = {
         'ds-green-on-dark': 'var(--ds-green-on-dark)',
         // Label sitting ON a primary-green fill.
         'ds-on-green': 'var(--ds-on-green)',
+        // Amber text on an always-dark surface, same reason as ds-green-on-dark.
+        'ds-amber-on-dark': 'var(--ds-amber-on-dark)',
       },
       colors: {
         'hero-bg':      'hsl(0 0% 8%)',

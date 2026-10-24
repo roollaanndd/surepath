@@ -189,7 +189,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
           <div className="relative z-10 flex items-center gap-5">
             <div className="flex-1 min-w-0">
-              <p className="text-2xs font-black uppercase tracking-[0.12em] mb-2 whitespace-nowrap" style={{ color: 'rgba(253,224,71,0.75)' }}>
+              <p className="text-2xs font-black uppercase tracking-[0.12em] mb-2 whitespace-nowrap text-ds-amber-on-dark">
                 {t('Commission this month', 'Komisi Bulan Ini')}
               </p>
               <div className="flex items-baseline gap-1.5">

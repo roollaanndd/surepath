@@ -601,7 +601,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           <div className="w-full space-y-6">
 
             {/* Sliding-pill tab switcher */}
-            <div role="tablist" aria-label={t('Sign in or register', 'Masuk atau daftar')} className="relative flex bg-emerald-900/[0.05] p-1 rounded-2xl border border-emerald-900/10">
+            <div role="tablist" aria-label={t('Sign in or register', 'Masuk atau daftar')} className="relative flex bg-[#F3FAF6] p-1 rounded-2xl border border-emerald-100">
               {/* Sliding pill */}
               <div className="absolute top-1 bottom-1 rounded-xl transition-all duration-300 ease-out pointer-events-none"
                 style={{
@@ -647,7 +647,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       type="button"
                       onClick={() => setRegRole(UserRole.CUSTOMER)}
                       aria-pressed={regRole === UserRole.CUSTOMER}
-                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-600/40 hover:text-emerald-700'}`}
+                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.CUSTOMER ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-emerald-100 bg-white text-slate-600 hover:border-emerald-500/50 hover:bg-emerald-50/50 hover:text-emerald-700'}`}
                     >
                       <Smartphone size={14} /> {t('Customer', 'Nasabah')}
                     </button>
@@ -655,7 +655,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
                       type="button"
                       onClick={() => setRegRole(UserRole.AGENT)}
                       aria-pressed={regRole === UserRole.AGENT}
-                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-600/40 hover:text-emerald-700'}`}
+                      className={`py-3 rounded-2xl text-xs font-bold uppercase border transition-all flex items-center justify-center gap-2 ${regRole === UserRole.AGENT ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700' : 'border-emerald-100 bg-white text-slate-600 hover:border-emerald-500/50 hover:bg-emerald-50/50 hover:text-emerald-700'}`}
                     >
                       <Briefcase size={14} /> {t('Partner', 'Mitra')}
                     </button>

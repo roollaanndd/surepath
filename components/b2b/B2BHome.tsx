@@ -54,7 +54,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
             {initials}
           </div>
           <div>
-            <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">{t('B2B Portal', 'Portal B2B')}</p>
+            <p className="text-2xs font-black text-white/55 uppercase tracking-wider">{t('B2B Portal', 'Portal B2B')}</p>
             <p className="font-black text-base leading-tight text-white">{companyName}</p>
           </div>
         </div>
@@ -72,7 +72,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 text-center shadow-sm">
             <div className={`text-2xl font-black ${color}`}>{value}</div>
-            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">{label}</div>
+            <div className="text-2xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
       </div>
@@ -114,7 +114,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
                       {PRODUCT_LABEL[sub.product_type] ?? sub.product_type} · {fmtDate(sub.created_at)}
                     </div>
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${STATUS_BADGE[sub.status] ?? ''}`}>
+                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${STATUS_BADGE[sub.status] ?? ''}`}>
                     {sub.status}
                   </span>
                 </div>

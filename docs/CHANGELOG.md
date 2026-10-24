@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.6.20 — 2026-10-23
+## v2.6.23 — 2026-10-24
 
 **Gelombang 0 integrasi: tiga titik di mana data hilang permanen begitu transaksi nyata pertama terjadi.**
 
@@ -88,7 +88,7 @@ berdiri sendiri tanpa kode yang mengisinya. Dua edge function yang berubah
 
 `android/app/build.gradle` ikut dikoreksi: `versionName` tertinggal di 2.6.17
 saat app sudah 2.6.18, persis masalah yang diperingatkan komentar di berkas itu
-sendiri. Sekarang 2.6.20 dengan `versionCode` 31.
+sendiri. Sekarang 2.6.23 dengan `versionCode` 35.
 
 `zod` dinaikkan ke 4.6.7 (GHSA-mrhx-c7xc-m3w5, high: habisnya memori saat
 memvalidasi koleksi terbatas yang kelewat besar). Bukan temuan dari pekerjaan
@@ -96,6 +96,99 @@ ini: `zod` dependensi transitif `openai`, advisory-nya baru terbit hari ini, dan
 check "Runtime dependency audit" merah juga di main. `npm update zod` dipakai
 alih-alih `npm audit fix` supaya yang berubah hanya `zod`; `package.json` tidak
 disentuh.
+## v2.6.22 — 2026-10-24
+
+Portal Operator dan Insurer — dua salinan terakhir dari komponen bersama.
+
+- Keduanya juga punya header dan navigasi bawah hasil salin-tempel, persis
+  seperti B2B di v2.6.21. Keduanya tertinggal di 9px dan kehilangan penanda tab
+  aktif berbentuk batang, jadi tab aktif hanya dibedakan warna. Sekarang
+  memakai `PortalHeader` dan `PortalTabBar`.
+- Header Insurer menjejalkan nama portal, nama perusahaan, dan nomor versi ke
+  satu baris — di layar 390px melipat jadi tiga baris. Sekarang masing-masing
+  punya tempatnya sendiri.
+- Kartu KPI di kedua dashboard menampilkan **angka yang sama dua kali**: satu
+  pil kecil di kanan atas dan satu angka besar di bawahnya. Pilnya dihapus.
+- Teks di bawah 11px: Operator 14 → 2, Insurer 25 → 5.
+- Catatan: angka Insurer sebelumnya selalu terbaca "0" karena yang terukur
+  adalah halaman login, bukan portalnya. Portal Insurer memakai token bearer
+  di `sessionStorage`, bukan Supabase Auth, jadi alat ujinya perlu jalur
+  sendiri. Ini pertama kalinya layar itu benar-benar diukur.
+
+## v2.6.21 — 2026-10-23
+
+Portal B2B — layar yang selama ini tidak pernah benar-benar terukur.
+
+- Navigasi bawahnya ternyata salinan lama `PortalTabBar` yang sudah menyimpang:
+  tertinggal di 9px, tanpa penanda tab aktif berbentuk batang, dan tanpa cincin
+  fokus keyboard. Sekarang memakai komponen bersamanya.
+- Label navigasinya terpotong di tengah kata — "PENGAJ/UAN", "BERA/NDA".
+  Menaikkan ukurannya saja justru memperparah, karena masalahnya lebar, bukan
+  ukuran. Lima tab teks di satu baris tidak muat kata sembilan huruf, jadi
+  labelnya dipendekkan: "Pengajuan" → "Ajuan", "Penawaran" → "Tawaran",
+  "Kuotasi" → "Buat" (kata yang sama dengan portal Mitra).
+- Headernya juga salinan lama `PortalHeader`, lengkap dengan bug sesak yang
+  sudah diperbaiki di versi bersamanya. "KLIEN B2B" melipat dua baris.
+  Sekarang memakai komponen bersamanya, sekalian mendapat cincin fokus di tiga
+  tombolnya dan nama aksesibilitas untuk tombol avatar yang sebelumnya kosong.
+- Teks di bawah 11px: 11 → 0.
+- `PortalTabBar` memakai padding mendatar lebih rapat supaya label panjang
+  punya ruang; Nasabah dan Mitra diperiksa ulang, tidak ada yang berubah.
+
+## v2.6.20 — 2026-10-23
+
+Portal Operator dan Mitra, hasil melihat layarnya langsung di lebar 390px.
+
+**Operator**
+- Teks sumber `t('Hello', 'Halo')` tampil apa adanya di header dashboard — kurung
+  JSX-nya hilang, jadi yang terbaca pengguna adalah kode, bukan sapaan. Diperbaiki.
+- Header sesak sampai nama operator terdesak; sisi kiri dikunci, sisi kanan
+  dibiarkan menyusut, dan dua label 10px naik ke 11px.
+
+**Mitra**
+- "GWP Bulan Ini" memotong angka di tengah: `Rp 58.800.0 / 00`. Sekarang memakai
+  `formatIDRCompact` (`Rp 58,8 jt`) dengan angka persisnya di `title`.
+- Tiga kolom di kartu partner tidak sejajar: hanya label "Penawaran berjalan"
+  yang melipat, jadi angkanya turun satu baris sendirian. Kolomnya kini
+  memanjang penuh dan labelnya dipendekkan jadi "Penawaran".
+- Label header terbaca "AGENT PORT…" karena "Agent Portal" tidak pernah muat di
+  layar ponsel. Diganti jadi label satu kata yang diterjemahkan, "Mitra" —
+  sama seperti portal Nasabah, dan sama dengan nama di navigasi bawah.
+- 32 teks di bawah 11px menjadi 0.
+
+**Dipakai bersama**
+- Label navigasi bawah naik dari 9px ke 11px (Nasabah, Mitra, Marketing).
+- `StatCard` menyediakan dua baris untuk labelnya, supaya "TOTAL PREMI" yang
+  melipat tidak lagi menjatuhkan angkanya di bawah "AKTIF" dan "SISA HARI".
+- Teks pendukung `StatCard` pakai `break-words`, bukan `anywhere` yang
+  diwarisi dari CSS: "perpanjangan" sempat terpotong jadi "perpanjang/an".
+
+## v2.6.19 — 2026-10-23
+
+**Dasbor Admin memecah angka rupiah di tengah digit — dan audit sebelumnya tidak pernah melihatnya.**
+
+- Di 390px, kartu KPI Admin render `Rp 2.418.7` / `50.000` dan
+  `Rp 1.942.3` / `00.000` — dua baris, putus di tengah angka. Ini layar uang
+  yang dipakai operator setiap hari.
+- **Tiga audit sebelumnya melewatkannya karena datanya tidak pernah masuk.**
+  Harness mengirim bentuk `get_dashboard_stats` yang salah, sedangkan layar ini
+  membaca `admin_stats` dan `admin_transaksi_overview`. Jadi tiap kartu render
+  `—`, dan yang dihitung selama ini adalah barisan placeholder, bukan dasbor.
+  Bentuk aslinya kini dibaca dari `services/dbTypes.ts` dan daftar kartunya
+  sendiri.
+- Perbaikan sejalan dengan v2.6.17: nilai kartu pakai `formatIDRCompact`
+  (`Rp 2,4 M`), ukurannya `text-xl sm:text-2xl` dengan `tabular-nums`, dan
+  padding `p-4 sm:p-6` — `p-6` hanya menyisakan 122px isi di 390px.
+- **Ketelitian tidak hilang.** Memendekkan angka di dasbor uang berarti
+  membuang ~18 juta dari `Rp 2.418.750.000`. Karena itu tiap kartu rupiah
+  membawa `title` berisi angka persisnya, jadi nilai penuh tinggal di-hover
+  (atau dibacakan pembaca layar), bukan lenyap.
+- Label kartu, eyebrow "Sistem Aktif"/"Transaksi Overview", dan tautan
+  "Lihat detail →" naik ke lantai 11px, dengan tracking dilonggarkan supaya
+  ukuran baru tidak membuatnya membungkus.
+- Simpul <11px di Admin: **25 → 5**. Sapuan enam portal: tidak ada overflow,
+  tidak ada regresi. `npm run lint` tetap 0 error / 33 warning / 316 tes.
+
 ## v2.6.18 — 2026-10-23
 
 **Audit keamanan: tutup injeksi filter pada lookup identitas dan tegakkan tangga persetujuan penarikan.**

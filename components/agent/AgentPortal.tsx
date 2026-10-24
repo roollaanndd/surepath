@@ -338,7 +338,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       `}</style>
 
       <PortalHeader
-        portalLabel="Agent Portal"
+        portalLabel={t('Agent', 'Mitra')}
         userName={agent?.name ?? 'Agent'}
         userCode={agent?.agent_code ?? 'SP-AGT'}
         userMeta={myTierDef && !myTierDef.is_default ? (

@@ -1,7 +1,7 @@
 {
   "name": "surepath---neural-insurtech",
   "private": true,
-  "version": "2.6.17",
+  "version": "2.6.23",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -52,7 +52,7 @@
     "picomatch": "^4.0.4",
     "brace-expansion": "^2.0.3",
     "fast-uri": "^3.1.1",
-    "body-parser": "^2.3.0",
+    "body-parser": "^2.4.0",
     "serialize-javascript": "^7.0.3",
     "qs": "^6.16.0"
   },

@@ -73,8 +73,8 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
         </svg>
         <div className="relative z-10 flex items-center gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">Operator Command Center</p>
-            <h1 className="text-2xl font-black tracking-tight mt-1">t('Hello', 'Halo'), {operator?.name?.split(' ')[0] ?? 'Operator'} 👋</h1>
+            <p className="text-2xs font-bold uppercase tracking-wider text-white/55 whitespace-nowrap">Operator Command Center</p>
+            <h1 className="text-2xl font-black tracking-tight mt-1">{t('Hello', 'Halo')}, {operator?.name?.split(' ')[0] ?? 'Operator'} 👋</h1>
             <p className="text-xs text-white/75 mt-1.5 leading-relaxed">
               {summary && summary.pendingOrders + summary.pendingClaims + summary.pendingWithdrawals + summary.pendingAgents > 0
                 ? `Ada ${summary.pendingOrders + summary.pendingClaims + summary.pendingWithdrawals + summary.pendingAgents} pengajuan menunggu konfirmasi Anda.`
@@ -86,11 +86,11 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
         <div className="relative z-10 flex items-center gap-3 mt-4 pt-3.5 border-t border-white/10">
           <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
             <TrendingUp size={11} className="text-ds-green" />
-            <span className="text-[10px] font-bold">{summary?.paidPayments ?? 0} pembayaran</span>
+            <span className="text-2xs font-bold">{summary?.paidPayments ?? 0} pembayaran</span>
           </div>
           <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
             <Clock size={11} className="text-amber-300" />
-            <span className="text-[10px] font-bold">{summary?.pendingPayments ?? 0} pending</span>
+            <span className="text-2xs font-bold">{summary?.pendingPayments ?? 0} pending</span>
           </div>
         </div>
       </div>
@@ -105,16 +105,9 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
               onClick={() => onNavigate(c.tab)}
               className={`text-left p-4 rounded-2xl border border-ds-border bg-ds-card hover:shadow-ds-md active:scale-[0.98] transition-all duration-200 ${c.bg}`}
             >
-              <div className="flex items-center justify-between">
-                <c.icon size={20} className={c.color} />
-                {c.value > 0 && (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-2 py-0.5 rounded-full">
-                    {c.value}
-                  </span>
-                )}
-              </div>
-              <p className="text-2xl font-black tracking-tight mt-2 text-ds-ink">{c.value}</p>
-              <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">{c.label}</p>
+              <c.icon size={20} className={c.color} />
+              <p className="text-2xl font-black tracking-tight mt-2 text-ds-ink tabular-nums">{c.value}</p>
+              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5 leading-tight">{c.label}</p>
             </button>
           ))}
         </div>
@@ -159,7 +152,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ds-ink truncate">{a.name}</p>
                   <p className="text-xs text-ds-ink3 truncate">{a.email} · {a.phone ?? '-'}</p>
-                  <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">{a.agent_code ?? 'SP-AGT-???'}</p>
+                  <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5">{a.agent_code ?? 'SP-AGT-???'}</p>
                 </div>
                 <Eye size={14} className="text-ds-ink3 shrink-0" />
               </button>

@@ -713,6 +713,10 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
       </div>
 
+      <button type="button" onClick={() => setShowChangePassword(true)} className="mx-5 mt-4 w-full h-12 rounded-xl border border-ds-border bg-ds-card text-ds-ink font-semibold text-sm flex items-center justify-center gap-2">
+        <LockKeyhole className="w-4 h-4" /> {t("Change Password", "Ubah Kata Sandi")}
+      </button>
+
       {/* Logout */}
       <button
         onClick={onLogout}

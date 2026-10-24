@@ -6,7 +6,10 @@ import type { GatewayContext, ActionResult } from './types.ts';
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
 export async function handleClaimsAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
-  const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
+  // Narrowed to what this module actually uses — the wider destructure was
+  // boilerplate from the split out of index.ts, and tripped noUnusedLocals once
+  // claimPolicyLink.test.ts pulled this file into the typecheck program.
+  const { db, params, caller } = ctx;
 
   switch (action) {
     case 'get_my_claims': {
@@ -28,6 +31,22 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
         // Now accepts the full claim payload and derives agent_id from the linked policy order.
         const claimType = String(params.claim_type ?? params.product_type ?? 'VEHICLE').toUpperCase();
         const description = String(params.description ?? params.chronology ?? '').slice(0, 5000);
+
+        // Carried beside insertRow, not inside it, and written in a separate
+        // best-effort statement after the claim exists.
+        //
+        // sp_claims.insurer_id arrives in migration 20261023120000. If this
+        // function were deployed before that migration ran, an insert naming
+        // the column would fail *entirely* — every claim submission rejected,
+        // not just the insurer link. Deploy order between a migration and a
+        // function is a human step, and it has already slipped once here.
+        // Written separately, the worst case if the column is missing is that
+        // the link is absent: the claim itself is still filed correctly, and
+        // the link starts working the moment the migration runs, with no
+        // redeploy. Server-derived from the order, like agent_id/client_id —
+        // never from the payload.
+        let linkedInsurerId: string | null = null;
+
         const insertRow: Record<string, unknown> = {
           user_id: caller.ownerId,
           claim_type: claimType,
@@ -94,12 +113,32 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             }
             insertRow.agent_id = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
+            linkedInsurerId = lo.insurer_id ?? null;
           }
         } else if (params.policy_number) {
-          const { data: linkedOrder } = await db.from('sp_policy_orders')
-            .select('id, agent_id, client_id, insurer_id')
-            .eq('order_number', String(params.policy_number))
-            .maybeSingle();
+          // Match the real policy number as well as the internal order number.
+          //
+          // What the customer holds is the policy number off the insurer's PDF
+          // (sp_policy_orders.policy_number, written by insurer_upload_policy).
+          // Matching order_number alone meant a claim filed with the genuine
+          // policy number found nothing, so it was stored with no policy_id and
+          // no agent_id — invisible to the agent and impossible to route to the
+          // insurer. `limit(1)` rather than maybeSingle(): the two columns live
+          // in different namespaces, so a value could in principle hit both.
+          //
+          // The reference is stripped to [A-Za-z0-9._/-] before it reaches the
+          // .or() string. An .or() filter is parsed by PostgREST, not bound as
+          // a parameter, so a comma or parenthesis in the value would rewrite
+          // the predicate rather than be matched by it. Real order and policy
+          // numbers only use these characters.
+          const ref = String(params.policy_number).replace(/[^A-Za-z0-9._/-]/g, '').slice(0, 100);
+          const { data: linkedOrders } = ref
+            ? await db.from('sp_policy_orders')
+                .select('id, agent_id, client_id, insurer_id')
+                .or(`order_number.eq.${ref},policy_number.eq.${ref}`)
+                .limit(1)
+            : { data: null };
+          const linkedOrder = (linkedOrders ?? [])[0] ?? null;
           if (linkedOrder) {
             // FIX v1.42.0: verify ownership here too
             const lo = linkedOrder as any;
@@ -110,6 +149,7 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
             insertRow.policy_id = lo.id;
             insertRow.agent_id  = lo.agent_id;
             if (lo.client_id) insertRow.client_id = lo.client_id;
+            linkedInsurerId = lo.insurer_id ?? null;
           }
         }
 
@@ -119,6 +159,18 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
           .select()
           .single();
         if (error) return json({ error: error.message }, 400);
+
+        // Link the claim to its insurer. Deliberately after the insert and
+        // deliberately not awaited for success: see linkedInsurerId above. A
+        // failure here means the insurer portal cannot filter this claim yet,
+        // which is recoverable; a failure inside the insert would have meant no
+        // claim at all.
+        if (linkedInsurerId) {
+          db.from('sp_claims')
+            .update({ insurer_id: linkedInsurerId })
+            .eq('id', (data as any).id)
+            .then(() => {}, () => {});
+        }
 
         // ── Consume the staged photo analysis (prevents reuse across multiple
         // claims) and record the perceptual hashes for future duplicate checks

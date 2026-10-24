@@ -356,7 +356,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           reviewer_notes: `Insurer ${action}: ${notes}`,
           reviewed_at: ts,
           updated_at: ts,
-        }).eq('id', rt.order_id).select('id, order_number, client_name, agent_id, product_name, insurer_id').maybeSingle();
+        }).eq('id', rt.order_id).select('id, order_number, client_name, agent_id, client_id, product_name, insurer_id').maybeSingle();
         if (ordErr) return json({ error: ordErr.message }, 400);
         // Insert admin notification
         const decisionLabel = action === 'APPROVED' ? 'menyetujui' : action === 'REQUEST_INFO' ? 'meminta info tambahan untuk' : 'menolak';
@@ -368,20 +368,31 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           read: false,
           metadata: { order_id: rt.order_id, action, notes, insurer_id: order?.insurer_id },
         }).then(() => {}, () => {});
-        // Insert user/agent notification
-        if (order?.agent_id) {
+        // Insert notification for the agent AND the customer.
+        //
+        // sp_notifications has one owner column, agent_id, and every order
+        // notification was written only for order.agent_id — so the customer
+        // was never told what happened to their own application. One row per
+        // recipient; agent_id here means "whose feed", not "an agent".
+        //
+        // Type was CLAIM_UPDATE, which is a different thing entirely. An order
+        // decision is ORDER_UPDATE.
+        {
           const userTitle = action === 'APPROVED' ? 'Pengajuan polis disetujui insurer'
             : action === 'REQUEST_INFO' ? 'Insurer meminta info tambahan'
             : 'Pengajuan polis ditolak insurer';
           const userBody = `${order?.order_number ?? ''}: ${notes || 'Mohon lengkapi persyaratan dari insurer.'}`;
-          db.from('sp_notifications').insert({
-            agent_id: order.agent_id,
-            type: 'CLAIM_UPDATE',
-            title: userTitle,
-            body: userBody,
-            read: false,
-            metadata: { order_id: rt.order_id, action, notes },
-          }).then(() => {}, () => {});
+          const recipients = [...new Set([order?.agent_id, order?.client_id].filter(Boolean))];
+          for (const recipient of recipients) {
+            db.from('sp_notifications').insert({
+              agent_id: recipient,
+              type: 'ORDER_UPDATE',
+              title: userTitle,
+              body: userBody,
+              read: false,
+              metadata: { order_id: rt.order_id, action, notes },
+            }).then(() => {}, () => {});
+          }
         }
         // Send Telegram alert to admin team
         const tgTime = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
@@ -467,7 +478,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
         // Verify order belongs to this insurer
         const { data: order, error: ordErr } = await db.from('sp_policy_orders')
-          .select('id, order_number, client_name, agent_id, product_name, insurer_id, status, insurer_decision')
+          .select('id, order_number, client_name, agent_id, client_id, product_name, insurer_id, status, insurer_decision')
           .eq('id', orderId)
           .eq('insurer_id', authToken.insurer_id)
           .maybeSingle();
@@ -498,18 +509,23 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           read: false,
           metadata: { order_id: orderId, action, notes, insurer_id: authToken.insurer_id },
         }).then(() => {}, () => {});
-        if (order.agent_id) {
+        // Agent and customer both, for the reasons given on the review-token
+        // path above.
+        {
           const userTitle = action === 'APPROVED' ? 'Pengajuan polis disetujui insurer'
             : action === 'REQUEST_INFO' ? 'Insurer meminta info tambahan'
             : 'Pengajuan polis ditolak insurer';
-          db.from('sp_notifications').insert({
-            agent_id: order.agent_id,
-            type: 'CLAIM_UPDATE',
-            title: userTitle,
-            body: `${order.order_number}: ${notes || 'Mohon lengkapi persyaratan dari insurer.'}`,
-            read: false,
-            metadata: { order_id: orderId, action, notes },
-          }).then(() => {}, () => {});
+          const recipients = [...new Set([order.agent_id, order.client_id].filter(Boolean))];
+          for (const recipient of recipients) {
+            db.from('sp_notifications').insert({
+              agent_id: recipient,
+              type: 'ORDER_UPDATE',
+              title: userTitle,
+              body: `${order.order_number}: ${notes || 'Mohon lengkapi persyaratan dari insurer.'}`,
+              read: false,
+              metadata: { order_id: orderId, action, notes },
+            }).then(() => {}, () => {});
+          }
         }
         sendTelegram(
           `Insurer Decision (Dashboard) - SurePath\n\nOrder: ${order.order_number}\nNasabah: ${order.client_name}\nDecision: ${action}\nNotes: ${notes || '-'}`
@@ -571,7 +587,7 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
         // Verify order belongs to this insurer
         const { data: order, error: ordErr } = await db.from('sp_policy_orders')
-          .select('id, order_number, insurer_id, status, client_name, agent_id')
+          .select('id, order_number, insurer_id, status, client_name, agent_id, client_id')
           .eq('id', orderId)
           .eq('insurer_id', authToken.insurer_id)
           .maybeSingle();
@@ -596,15 +612,21 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           read: false,
           metadata: { order_id: orderId, policy_number: policyNumber, insurer_id: authToken.insurer_id },
         }).then(() => {}, () => {});
-        if (order.agent_id) {
-          db.from('sp_notifications').insert({
-            agent_id: order.agent_id,
-            type: 'SYSTEM',
-            title: 'Polis Diterbitkan!',
-            body: `${order.order_number}: polis ${policyNumber || ''} sudah diterbitkan oleh insurer.`,
-            read: false,
-            metadata: { order_id: orderId, policy_number: policyNumber },
-          }).then(() => {}, () => {});
+        // The customer is the one who most needs this one: their policy
+        // document is now downloadable from /custapp. Previously only the
+        // agent was told.
+        {
+          const recipients = [...new Set([order.agent_id, order.client_id].filter(Boolean))];
+          for (const recipient of recipients) {
+            db.from('sp_notifications').insert({
+              agent_id: recipient,
+              type: 'POLICY_ISSUED',
+              title: 'Polis Diterbitkan!',
+              body: `${order.order_number}: polis ${policyNumber || ''} sudah diterbitkan oleh insurer.`,
+              read: false,
+              metadata: { order_id: orderId, policy_number: policyNumber },
+            }).then(() => {}, () => {});
+          }
         }
         // ── Log activity ────────────────────────────────────────────────────
         logActivity(authToken.insurer_id, orderId, 'POLICY_UPLOADED', { policy_number: policyNumber, document_url: policyDocumentUrl });

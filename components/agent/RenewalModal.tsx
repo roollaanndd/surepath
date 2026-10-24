@@ -133,7 +133,7 @@ const RenewalModal: React.FC<RenewalModalProps> = ({ order, agentId, lang, onClo
 
         <div className="px-6 pb-6 pt-2">
           {done ? (
-            <div className="flex items-center gap-2 justify-center py-3 text-emerald-600 font-black text-sm">
+            <div className="flex items-center gap-2 justify-center py-3 text-ds-green font-black text-sm">
               <CheckCircle size={18} />
               {t('Renewal order created!', 'Order renewal berhasil dibuat!')}
             </div>

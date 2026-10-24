@@ -164,7 +164,7 @@ type Indication = 'LIKELY_COVERED' | 'LIKELY_NOT_COVERED' | 'NEEDS_REVIEW';
 const INDICATION_TONE: Record<Indication, { bg: string; text: string; icon: string; glyph: string }> = {
   LIKELY_COVERED: {
     bg: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300',
-    icon: 'text-emerald-600', glyph: '≈',
+    icon: 'text-ds-green', glyph: '≈',
   },
   LIKELY_NOT_COVERED: {
     bg: 'bg-rose-500/10', text: 'text-rose-700 dark:text-rose-300',
@@ -172,7 +172,7 @@ const INDICATION_TONE: Record<Indication, { bg: string; text: string; icon: stri
   },
   NEEDS_REVIEW: {
     bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300',
-    icon: 'text-amber-600', glyph: '?',
+    icon: 'text-ds-amber', glyph: '?',
   },
 };
 
@@ -249,7 +249,7 @@ const QuotationCard: React.FC<{ data: any; en: boolean; sourceApp: 'AGENT' | 'CU
       <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
         <Row
           label={<span className="font-black">{t('Total premi', 'Total premium')}</span>}
-          value={<span className="text-emerald-600 dark:text-emerald-400">{rp(data.totalPremium)}</span>}
+          value={<span className="text-ds-green dark:text-emerald-400">{rp(data.totalPremium)}</span>}
         />
       </div>
       <button
@@ -419,7 +419,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           {Number(d.addonPremium) > 0 && <Row label={t('Perluasan', 'Add-ons')} value={rp(d.addonPremium)} />}
           <Row label={t('Biaya admin + materai', 'Admin + stamp')} value={rp(Number(d.adminFee) + Number(d.stampDuty))} />
           <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
-            <Row label={<span className="font-black">{t('Total estimasi', 'Estimated total')}</span>} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.total)}</span>} />
+            <Row label={<span className="font-black">{t('Total estimasi', 'Estimated total')}</span>} value={<span className="text-ds-green dark:text-emerald-400">{rp(d.total)}</span>} />
           </div>
           <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
             {t(
@@ -435,7 +435,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           <Row label={t('Untuk', 'For')} value={d.client_name} />
           <Row label={t('Produk', 'Product')} value={`${d.product_type} · ${d.coverage_type}`} />
           {d.vehicle_description && <Row label={t('Kendaraan', 'Vehicle')} value={d.vehicle_description} />}
-          <Row label={t('Estimasi premi', 'Estimated premium')} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.premium_estimate)}</span>} />
+          <Row label={t('Estimasi premi', 'Estimated premium')} value={<span className="text-ds-green dark:text-emerald-400">{rp(d.premium_estimate)}</span>} />
           <Row label={t('Berlaku s/d', 'Valid until')} value={shortDate(d.expires_at)} />
           <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
             {t('Status DRAFT — ini penawaran indikatif, belum penerbitan polis.', 'DRAFT status — an indicative quote, not a policy issuance.')}
@@ -451,7 +451,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           <Row label={t('Komisi (terbayar)', 'Commission (paid)')} value={rp(d.commission_earned_on_paid)} />
           {d.wallet && (
             <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
-              <Row label={t('Saldo dompet', 'Wallet balance')} value={<span className="text-emerald-600 dark:text-emerald-400">{rp(d.wallet.balance)}</span>} />
+              <Row label={t('Saldo dompet', 'Wallet balance')} value={<span className="text-ds-green dark:text-emerald-400">{rp(d.wallet.balance)}</span>} />
             </div>
           )}
         </CardShell>
@@ -515,7 +515,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
             <div key={o.id ?? i} className="rounded-xl border border-slate-100 dark:border-white/10 px-2.5 py-2">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-black text-[0.7rem] text-slate-800 dark:text-slate-100">{o.label}</span>
-                <span className="font-black text-[0.78rem] text-emerald-600 dark:text-emerald-400 tabular-nums">{rp(o.total)}</span>
+                <span className="font-black text-[0.78rem] text-ds-green dark:text-emerald-400 tabular-nums">{rp(o.total)}</span>
               </div>
               <p className="text-[0.6rem] text-slate-500 dark:text-slate-400 leading-snug mt-0.5">{o.blurb}</p>
               <p className="text-[0.55rem] text-slate-400 mt-1">{t('Tarif', 'Rate')} {o.ratePercent}%</p>
@@ -607,7 +607,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
             {tone.glyph} {indicationLabel(ind, en)}
           </p>
           {(d.period_warning || (ind !== 'LIKELY_COVERED' && d.coverage_reason)) && (
-            <p className="text-[0.66rem] text-amber-600 dark:text-amber-400 leading-snug">
+            <p className="text-[0.66rem] text-ds-amber dark:text-amber-400 leading-snug">
               {d.period_warning || d.coverage_reason}
             </p>
           )}
@@ -618,7 +618,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
             <ul className="space-y-0.5">
               {((d.documents ?? []) as string[]).map((doc, i) => (
                 <li key={i} className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug flex gap-1.5">
-                  <span className="text-emerald-500">•</span><span>{doc}</span>
+                  <span className="text-ds-green">•</span><span>{doc}</span>
                 </li>
               ))}
             </ul>
@@ -654,7 +654,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
               <p className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug">{c.stage}</p>
               <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 leading-snug">{c.next_step}</p>
               {((c.missing ?? []) as string[]).map((m, j) => (
-                <p key={j} className="text-[0.6rem] text-amber-600 dark:text-amber-400 leading-snug">⚠ {m}</p>
+                <p key={j} className="text-[0.6rem] text-ds-amber dark:text-amber-400 leading-snug">⚠ {m}</p>
               ))}
             </div>
           ))}
@@ -673,7 +673,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
             <div key={r.order_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100 truncate">{r.client_name || r.product}</span>
-                <span className={`text-[0.6rem] font-black ${Number(r.days_left) <= 14 ? 'text-rose-600' : 'text-amber-600'}`}>
+                <span className={`text-[0.6rem] font-black ${Number(r.days_left) <= 14 ? 'text-rose-600' : 'text-ds-amber'}`}>
                   {r.days_left} {t('hari', 'days')}
                 </span>
               </div>
@@ -697,7 +697,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           <Row label={t('Jenis', 'Type')} value={d.policy?.coverage_type} />
           <Row label={t('Berlaku sampai', 'Valid until')} value={shortDate(d.policy?.end_date)} />
           <div className="pt-0.5">
-            <p className="text-[0.6rem] font-black uppercase tracking-wider text-emerald-600 mb-0.5">{t('Ditanggung', 'Covered')}</p>
+            <p className="text-[0.6rem] font-black uppercase tracking-wider text-ds-green mb-0.5">{t('Ditanggung', 'Covered')}</p>
             {covered.map((c, i) => <p key={i} className="text-[0.63rem] text-slate-600 dark:text-slate-300 leading-snug">✓ {c}</p>)}
           </div>
           <div className="pt-0.5">
@@ -730,7 +730,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
                   {t('Bayar sekarang', 'Pay now')}
                 </a>
               ) : (
-                <p className="text-[0.6rem] text-amber-600 dark:text-amber-400 leading-snug">{o.hint}</p>
+                <p className="text-[0.6rem] text-ds-amber dark:text-amber-400 leading-snug">{o.hint}</p>
               )}
             </div>
           ))}
@@ -748,7 +748,7 @@ const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }
           )}
           {quotes.length > 0 && (
             <div>
-              <p className="text-[0.6rem] font-black uppercase tracking-wider text-amber-600 mb-0.5">{t('Penawaran hampir kedaluwarsa', 'Quotes expiring')}</p>
+              <p className="text-[0.6rem] font-black uppercase tracking-wider text-ds-amber mb-0.5">{t('Penawaran hampir kedaluwarsa', 'Quotes expiring')}</p>
               {quotes.map((q, i) => (
                 <div key={q.id ?? i} className="flex items-center justify-between gap-2 text-[0.65rem]">
                   <span className="text-slate-700 dark:text-slate-200 truncate">{q.client_name}</span>
@@ -1204,7 +1204,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                     </p>
                   )}
                   {m.degraded && (
-                    <p className="mt-1 px-1 text-[0.55rem] text-amber-600 dark:text-amber-400 leading-snug">
+                    <p className="mt-1 px-1 text-[0.55rem] text-ds-amber dark:text-amber-400 leading-snug">
                       {t(
                         'Jawaban umum — aku belum bisa membaca data akunmu saat ini.',
                         'General answer — I could not read your account data just now.',
@@ -1281,7 +1281,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                     {t(`Membaca ${scanning}…`, `Reading ${scanning}…`)}
                   </span>
                 )}
-                {scanError && <span className="text-[0.6rem] font-medium text-amber-600 dark:text-amber-400">{scanError}</span>}
+                {scanError && <span className="text-[0.6rem] font-medium text-ds-amber dark:text-amber-400">{scanError}</span>}
               </div>
             )}
 

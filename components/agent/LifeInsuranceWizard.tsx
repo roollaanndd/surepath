@@ -70,7 +70,7 @@ const PRODUCTS = [
 const PRODUCT_COLOR_MAP: Record<string, string> = {
   blue:   'border-blue-400   bg-blue-50   dark:bg-blue-900/20   text-blue-600   dark:text-blue-400',
   purple: 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-  amber:  'border-amber-400  bg-amber-50  dark:bg-amber-900/20  text-amber-600  dark:text-amber-400',
+  amber:  'border-amber-400  bg-amber-50  dark:bg-amber-900/20  text-ds-amber  dark:text-amber-400',
   green:  'border-green-400  bg-green-50  dark:bg-green-900/20  text-green-600  dark:text-green-400',
 };
 
@@ -229,7 +229,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
         </p>
         <button
           onClick={() => { setSuccessApp(null); setStep(1); setProductCode(''); setClientName(''); setClientDob(''); setClientPhone(''); setClientEmail(''); setSmoker(false); setSumAssured(500_000_000); setRiders([]); setHealthDecl({}); setBenefName(''); setHealthIdx(0); }}
-          className="px-6 py-2 bg-ds-green text-white rounded-xl font-semibold text-sm"
+          className="px-6 py-2 bg-ds-green text-ds-on-green rounded-xl font-semibold text-sm"
         >
           {t('New Application', 'Aplikasi Baru')}
         </button>
@@ -258,7 +258,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <div key={s} className="flex items-center gap-1.5">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
               s < step ? 'bg-green-500 text-white' :
-              s === step ? 'bg-ds-green text-white' :
+              s === step ? 'bg-ds-green text-ds-on-green' :
               'bg-slate-100 dark:bg-white/5 text-slate-400'
             }`}>{s < step ? <CheckCircle2 size={14} /> : s}</div>
             {s < 7 && <div className={`w-4 h-0.5 rounded ${s < step ? 'bg-green-400' : 'bg-slate-200 dark:bg-white/10'}`} />}
@@ -333,7 +333,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <button
             disabled={!canNext()}
             onClick={() => setStep(s => s + 1)}
-            className="flex-1 py-3 rounded-xl bg-ds-green text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-ds-green text-ds-on-green font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>
@@ -341,7 +341,7 @@ const LifeInsuranceWizard: React.FC<Props> = ({ agentId, lang, onBack }) => {
           <button
             disabled={submitting}
             onClick={handleSubmit}
-            className="flex-1 py-3 rounded-xl bg-ds-green text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-ds-green text-ds-on-green font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {submitting ? <RefreshCw size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             {t('Submit Application', 'Submit Aplikasi')}
@@ -447,7 +447,7 @@ const StepPersonal: React.FC<{
           <div className="flex gap-2">
             {(['M', 'F'] as const).map(g => (
               <button key={g} onClick={() => setClientGender(g)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${clientGender === g ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${clientGender === g ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {g === 'M' ? t('Male', 'Pria') : t('Female', 'Wanita')}
               </button>
             ))}
@@ -463,7 +463,7 @@ const StepPersonal: React.FC<{
           <div className="flex gap-2">
             {([true, false] as const).map(v => (
               <button key={String(v)} onClick={() => setSmoker(v)}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${smoker === v ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${smoker === v ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {v ? t('Yes', 'Ya') : t('No', 'Tidak')}
               </button>
             ))}
@@ -501,7 +501,7 @@ const StepCoverage: React.FC<{
           <div className="flex gap-2 flex-wrap">
             {terms.map(y => (
               <button key={y} onClick={() => setPolicyTermYears(y)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${policyTermYears === y ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${policyTermYears === y ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300'}`}>
                 {y === 99 ? t('Lifetime', 'Seumur Hidup') : `${y} ${t('yr', 'thn')}`}
               </button>
             ))}
@@ -511,7 +511,7 @@ const StepCoverage: React.FC<{
           <div className="flex gap-2 flex-wrap">
             {FREQS.map(f => (
               <button key={f.value} onClick={() => setPaymentFreq(f.value)}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${paymentFreq === f.value ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
+                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${paymentFreq === f.value ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
                 {f.label}
               </button>
             ))}
@@ -552,7 +552,7 @@ const StepRiders: React.FC<{
                 <p className="font-semibold text-sm text-slate-900 dark:text-white">{label}</p>
                 <p className="text-xs text-slate-400">{desc}</p>
               </div>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selected ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>{loading}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selected ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>{loading}</span>
             </button>
           );
         })}
@@ -607,7 +607,7 @@ const StepHealth: React.FC<{
       )}
       {hasYesHealth && (
         <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex items-start gap-2">
-          <AlertTriangle size={14} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <AlertTriangle size={14} className="text-ds-amber mt-0.5 flex-shrink-0" />
           <p className="text-xs text-amber-700 dark:text-amber-400">Informasi ini akan dikonfirmasi saat underwriting Prudential. Premi akhir mungkin disesuaikan.</p>
         </div>
       )}
@@ -631,7 +631,7 @@ const StepBeneficiary: React.FC<{
         <div className="flex flex-wrap gap-2">
           {RELATIONS.map(r => (
             <button key={r} onClick={() => setBenefRelation(r)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${benefRelation === r ? 'bg-ds-green text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${benefRelation === r ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
               {r}
             </button>
           ))}
@@ -640,7 +640,7 @@ const StepBeneficiary: React.FC<{
       <Field label={t('Percentage (%)', 'Persentase (%)')}>
         <input type="number" value={benefPct} onChange={e => setBenefPct(Math.min(100, Math.max(0, Number(e.target.value))))}
           min={1} max={100} className={INPUT_CLS} />
-        {benefPct !== 100 && <p className="text-xs text-amber-500 mt-1">{t('Split beneficiary: remaining must be assigned separately.', 'Penerima manfaat dibagi, sisanya ditambahkan terpisah.')}</p>}
+        {benefPct !== 100 && <p className="text-xs text-ds-amber mt-1">{t('Split beneficiary: remaining must be assigned separately.', 'Penerima manfaat dibagi, sisanya ditambahkan terpisah.')}</p>}
       </Field>
     </div>
   </div>

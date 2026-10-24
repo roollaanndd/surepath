@@ -63,7 +63,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
         >
           <BellIcon size={18} className="text-ds-ink2" />
           {unreadCount > 0 && (
-            <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-ds-green text-white rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card">
+            <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-ds-green text-ds-on-green rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -77,7 +77,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
           onClick={onAvatarClick}
           aria-label={labels.profile}
           className="w-9 h-9 rounded-full flex items-center justify-center ml-1 text-white text-xs font-black active:scale-90 transition-all motion-reduce:transition-none motion-reduce:active:scale-100 ring-2 ring-ds-green/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-card"
-          style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
+          style={{ background: 'linear-gradient(135deg, #047857, #003B2F)' }}
         >
           {(avatarInitial ?? userName?.[0] ?? 'S').toUpperCase()}
         </button>

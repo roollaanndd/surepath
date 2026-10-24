@@ -57,7 +57,7 @@ export default function SketchPngLibrary() {
       {ITEMS.map(item => <article key={item.id} className="rounded-2xl border border-ds-border bg-white/90 p-3 text-center dark:bg-ds-card">
         <div className="mx-auto h-16 w-16 rounded-xl bg-white" style={{ backgroundImage: `url(${SPRITE})`, backgroundSize: '256px 192px', backgroundPosition: `-${item.col * 64}px -${item.row * 64}px`, backgroundRepeat: 'no-repeat' }} aria-hidden="true"/>
         <p className="mt-1 text-xs font-extrabold text-ds-ink">{item.name}</p><p className="mb-2 text-[9px] text-ds-ink3">{item.target}</p>
-        <button type="button" disabled={busy!==null} onClick={() => void apply(item)} className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-ds-ink px-2 py-2 text-[10px] font-bold text-white transition hover:bg-ds-green disabled:opacity-50">{busy===item.target?<Loader2 size={12} className="animate-spin"/>:'Terapkan PNG'}</button>
+        <button type="button" disabled={busy!==null} onClick={() => void apply(item)} className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-ds-ink px-2 py-2 text-[10px] font-bold text-ds-on-green transition hover:bg-ds-green disabled:opacity-50">{busy===item.target?<Loader2 size={12} className="animate-spin"/>:'Terapkan PNG'}</button>
       </article>)}
     </div>
   </section>;

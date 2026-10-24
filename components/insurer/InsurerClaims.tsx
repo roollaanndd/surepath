@@ -109,8 +109,8 @@ const InsurerClaims: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   )}
                 </div>
                 <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full shrink-0 ${
-                  o.status === 'ISSUED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
-                  : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
+                  o.status === 'ISSUED' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
+                  : 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
                 }`}>
                   {o.status}
                 </span>

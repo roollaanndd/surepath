@@ -111,10 +111,10 @@ const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
         <div className="space-y-3">
           {withdrawals.map(w => {
             const statusColor = {
-              PENDING_L1:    'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
+              PENDING_L1:    'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
               PENDING_L2:    'bg-orange-50 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400',
               PENDING_L3:    'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
-              APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+              APPROVED:      'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
               DISBURSED:     'bg-ds-green-tint text-ds-green',
               REJECTED:      'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
               CANCELLED:     'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',

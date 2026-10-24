@@ -21,7 +21,7 @@ const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: strin
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
   UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-400',     Icon: Eye },
   APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-emerald-500', Icon: FileText },
+  ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-ds-green', Icon: FileText },
   REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400',     Icon: XCircle },
   CANCELLED:    { label: 'Cancelled',    color: 'bg-slate-500/10 text-ds-ink3',   Icon: XCircle },
 };
@@ -310,7 +310,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               ))}
               <div className="border-t border-ds-border pt-2 flex justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-ds-ink2">Total Premi</span>
-                <span className="font-black text-emerald-500">{formatIDR(order.total_premium)}</span>
+                <span className="font-black text-ds-green">{formatIDR(order.total_premium)}</span>
               </div>
             </div>
           </div>
@@ -666,7 +666,7 @@ const PolicyOrdersAdmin: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-[10px] font-bold text-emerald-500">{formatIDR(order.total_premium)}/tahun</span>
+                      <span className="text-[10px] font-bold text-ds-green">{formatIDR(order.total_premium)}/tahun</span>
                       {order.ai_score !== undefined && order.ai_score !== null && (
                         <span className={`text-[9px] font-black uppercase tracking-widest ${AI_SCORE_COLOR(order.ai_score)}`}>
                           AI Score: {order.ai_score}

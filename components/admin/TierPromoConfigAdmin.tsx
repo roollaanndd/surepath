@@ -801,7 +801,7 @@ const PromoCodesTab: React.FC = () => {
                 }`}
                 style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
               >
-                <Tag size={14} className="text-emerald-500 flex-shrink-0" />
+                <Tag size={14} className="text-ds-green flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-black text-sm text-white font-mono">{c.code}</p>

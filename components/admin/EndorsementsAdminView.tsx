@@ -84,7 +84,7 @@ const EndorsementsAdminView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-white">
-            Endorsemen <span className="text-emerald-500">Polis</span>
+            Endorsemen <span className="text-ds-green">Polis</span>
           </h2>
           <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
             Persetujuan perubahan polis dari agen
@@ -188,7 +188,7 @@ const EndorsementsAdminView: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs font-black text-white">
-                      Mitra: {agentName} <span className="text-emerald-500">{agentCode}</span>
+                      Mitra: {agentName} <span className="text-ds-green">{agentCode}</span>
                     </p>
                     <p className="text-[10px] text-ds-ink3">
                       Order: <span className="text-ds-ink2">{orderNum}</span> — {clientName}

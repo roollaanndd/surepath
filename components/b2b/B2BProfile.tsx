@@ -63,7 +63,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 size={28} className="animate-spin text-emerald-500" />
+        <Loader2 size={28} className="animate-spin text-ds-green" />
       </div>
     );
   }
@@ -77,7 +77,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
         </div>
         <div className="text-center">
           <div className="font-black text-base">{profile?.company_name ?? '—'}</div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{profile?.email}</div>
+          <div className="text-xs text-ds-ink3 mt-0.5">{profile?.email}</div>
         </div>
       </div>
 

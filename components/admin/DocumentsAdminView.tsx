@@ -286,8 +286,8 @@ const DocumentsAdminView: React.FC = () => {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <FileImage size={14} className="text-emerald-500" />
-          <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-emerald-500">Galeri Dokumen</p>
+          <FileImage size={14} className="text-ds-green" />
+          <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-ds-green">Galeri Dokumen</p>
         </div>
         <h2 className="text-3xl font-black tracking-tight leading-none text-white">
           Document Gallery
@@ -358,7 +358,7 @@ const DocumentsAdminView: React.FC = () => {
           {(search || filter !== 'all') && (
             <button
               onClick={() => { setSearch(''); setFilter('all'); }}
-              className="text-[0.6rem] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-400"
+              className="text-[0.6rem] font-black uppercase tracking-widest text-ds-green hover:text-emerald-400"
             >
               Reset filter
             </button>

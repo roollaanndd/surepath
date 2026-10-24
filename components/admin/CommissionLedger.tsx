@@ -170,7 +170,7 @@ const CommissionLedger: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ds-ink">
-            Komisi <span className="text-emerald-600">Ledger</span>
+            Komisi <span className="text-ds-green">Ledger</span>
           </h2>
           <p className="text-xs uppercase tracking-wide text-ds-ink3 font-semibold mt-1">
             Manajemen komisi agen
@@ -233,7 +233,7 @@ const CommissionLedger: React.FC = () => {
         </p>
         <p className="text-xs text-ds-ink3 font-semibold uppercase tracking-wide">
           Total:{' '}
-          <span className="text-emerald-600 font-bold font-mono">{formatIDR(totalAmount)}</span>
+          <span className="text-ds-green font-bold font-mono">{formatIDR(totalAmount)}</span>
         </p>
       </div>
 
@@ -278,7 +278,7 @@ const CommissionLedger: React.FC = () => {
                         <span className="ml-2 text-rose-500/60">Diskon {(row.discount_rate * 100).toFixed(0)}%</span>
                       )}
                       {row.paid_at && (
-                        <span className="ml-2 text-emerald-500/60">Dibayar {fmtDate(row.paid_at)}</span>
+                        <span className="ml-2 text-ds-green/60">Dibayar {fmtDate(row.paid_at)}</span>
                       )}
                       {!row.paid_at && row.created_at && (
                         <span className="ml-2 text-ds-ink2">{fmtDate(row.created_at)}</span>

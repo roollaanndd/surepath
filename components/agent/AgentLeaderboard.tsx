@@ -284,7 +284,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang, agentTier }) => {
 
                     {/* Avatar */}
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                      rank === 1 ? 'bg-ds-green text-white' : 'bg-ds-green-tint text-ds-green'
+                      rank === 1 ? 'bg-ds-green text-ds-on-green' : 'bg-ds-green-tint text-ds-green'
                     }`}>
                       {initials(entry.agent_name)}
                     </div>

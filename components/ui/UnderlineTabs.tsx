@@ -71,7 +71,7 @@ export const UnderlineTabs: React.FC<UnderlineTabsProps> = ({
                 className={[
                   'min-w-[18px] h-[18px] px-1 rounded-full text-badge font-black flex items-center justify-center',
                   isActive
-                    ? 'bg-ds-green text-white'
+                    ? 'bg-ds-green text-ds-on-green'
                     : 'bg-ds-card2 text-ds-ink2 border border-ds-border',
                 ].join(' ')}
               >

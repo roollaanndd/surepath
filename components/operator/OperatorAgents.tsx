@@ -176,8 +176,8 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
                       a.verified
-                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400'
-                        : 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                        ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
+                        : 'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400'
                     }`}>
                       {a.verified ? 'Diverifikasi' : 'Pending'}
                     </span>
@@ -206,7 +206,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                   <>
                     <button
                       onClick={() => handleVerify(a)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 size={12} /> Verifikasi
                     </button>
@@ -259,7 +259,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                       {detail.agent.profile_photo_url ? (
                         <img loading="lazy" src={detail.agent.profile_photo_url} alt={detail.agent.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                        <span className="text-xl font-black text-ds-green dark:text-emerald-400">
                           {(detail.agent.name?.charAt(0) ?? '?').toUpperCase()}
                         </span>
                       )}
@@ -388,7 +388,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                 )}
                 {detail.agent.verified && (
                   <div className={`shrink-0 border-t ${SHEET_BORDER} ${SHEET_BG} px-5 pt-3 pb-28 safe-area-pb`}>
-                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-ds-green dark:text-emerald-400 flex items-center justify-center gap-1.5">
                       <CheckCircle2 size={14} /> Agen Sudah Diverifikasi
                     </div>
                   </div>
@@ -424,7 +424,7 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
           {icon}
         </div>
         <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

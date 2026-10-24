@@ -57,7 +57,7 @@ const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigat
             </span>
           </div>
           <div className="font-black text-sm mt-1 truncate">{sub.company_name}</div>
-          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{fmtDate(sub.created_at)}</div>
+          <div className="text-[11px] text-ds-ink3 mt-0.5">{fmtDate(sub.created_at)}</div>
         </div>
         <span className={`text-[10px] font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
           {STATUS_LABEL[sub.status] ?? sub.status}
@@ -156,11 +156,11 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-emerald-500" />
+          <Loader2 size={28} className="animate-spin text-ds-green" />
         </div>
       ) : loadError ? (
         <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 p-5 text-center space-y-3">
-          <AlertTriangle size={24} className="mx-auto text-amber-600 dark:text-amber-300" />
+          <AlertTriangle size={24} className="mx-auto text-ds-amber dark:text-amber-300" />
           <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{t('Could not load submissions.', 'Pengajuan belum dapat dimuat.')}</p>
           <p className="text-xs text-amber-700 dark:text-amber-200/80">{t('Check your connection and try again. Your submissions have not been changed.', 'Periksa koneksi lalu coba lagi. Data pengajuan tidak diubah.')}</p>
           <button type="button" onClick={() => setReloadKey(key => key + 1)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
@@ -168,7 +168,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
           </button>
         </div>
       ) : sorted.length === 0 ? (
-        <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="text-center py-16 text-ds-ink3 text-sm">
           {t('No submissions found.', 'Belum ada pengajuan.')}
         </div>
       ) : (

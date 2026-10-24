@@ -167,7 +167,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
 
             <div className="pt-3 border-t border-slate-200/60">
               <div className="flex items-start gap-2 text-2xs text-slate-500 leading-relaxed">
-                <LinkIcon size={11} className="shrink-0 mt-0.5 text-emerald-500" />
+                <LinkIcon size={11} className="shrink-0 mt-0.5 text-ds-green" />
                 <span>
                   Token didapat dari email undangan SurePath atau hubungi tim SurePath untuk minta link akses baru. Token berlaku 7 hari dan auto-renew setiap login.
                 </span>

@@ -139,7 +139,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ submissionId, clientId, onSaved, 
       <div>
         <div className="flex items-center justify-between mb-1">
           <label className="text-xs font-semibold text-ds-ink3">Coverage Details</label>
-          <button onClick={addRow} className="text-xs text-emerald-500 font-semibold flex items-center gap-1"><Plus size={12} />Add Row</button>
+          <button onClick={addRow} className="text-xs text-ds-green font-semibold flex items-center gap-1"><Plus size={12} />Add Row</button>
         </div>
         <div className="space-y-2">
           {rows.map((row, i) => (
@@ -250,7 +250,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
       {/* Add Quote Button */}
       <button
         onClick={() => setShowQuoteForm(v => !v)}
-        className="flex items-center gap-2 text-xs font-semibold text-emerald-500 hover:underline"
+        className="flex items-center gap-2 text-xs font-semibold text-ds-green hover:underline"
       >
         {showQuoteForm ? <ChevronUp size={14} /> : <Plus size={14} />}
         {showQuoteForm ? 'Close Quote Form' : 'Add Quote'}
@@ -322,7 +322,7 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
       {/* Health — Yes answers highlighted */}
       {yesAnswers.length > 0 && (
         <div className="p-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
-          <p className="text-[10px] font-semibold text-amber-600 uppercase mb-1 flex items-center gap-1"><AlertTriangle size={10} />Health Flags</p>
+          <p className="text-[10px] font-semibold text-ds-amber uppercase mb-1 flex items-center gap-1"><AlertTriangle size={10} />Health Flags</p>
           {yesAnswers.map(qi => (
             <p key={qi} className="text-xs text-amber-700 dark:text-amber-400">Q{qi + 1}: Yes</p>
           ))}

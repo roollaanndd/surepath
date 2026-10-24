@@ -49,8 +49,8 @@ const ClaimSensePanel: React.FC<Props> = ({ claimData, onAnalysisComplete }) => 
 
   const fraudColor = analysis
     ? analysis.fraudRiskScore > 70 ? 'text-rose-600'
-      : analysis.fraudRiskScore > 40 ? 'text-amber-600'
-      : 'text-emerald-600'
+      : analysis.fraudRiskScore > 40 ? 'text-ds-amber'
+      : 'text-ds-green'
     : '';
 
   return (
@@ -162,7 +162,7 @@ const ClaimSensePanel: React.FC<Props> = ({ claimData, onAnalysisComplete }) => 
 
           {/* Recommendation */}
           <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-ds-green mb-1">
               <TrendingDown size={10} /> Rekomendasi AI
             </div>
             <p className="text-xs text-emerald-800 dark:text-emerald-300">{analysis.recommendation}</p>

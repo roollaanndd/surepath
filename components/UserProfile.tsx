@@ -4,11 +4,11 @@ import { APP_VERSION } from '../src/version';
 import { 
   User, ShieldCheck, ChevronRight, Landmark,
   Bell, FileCheck, Zap, LogOut,
-  CheckCircle2, Lock, Package, Car, Plane,
+  Lock, Package, Car, Plane,
   X, History,
   Fingerprint, ShieldAlert, BadgeCheck,
   CreditCard, LayoutGrid, 
-  Microscope, Eye, Send, Loader2
+  Microscope, Eye
 } from 'lucide-react';
 import { db, Policy, Claim, Transaction } from '../db';
 import { Language } from '../types';

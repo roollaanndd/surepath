@@ -252,7 +252,7 @@ const ClaimDetail: React.FC<{ claim: SpClaim; lang: Language; onClose: () => voi
           {claim.amount_approved !== undefined && claim.amount_approved !== null && (
             <div className="flex justify-between items-start py-2.5 border-b border-slate-50 dark:border-white/5">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Approved', 'Disetujui')}</span>
-              <span className="text-sm font-bold text-emerald-500">{formatIDR(claim.amount_approved)}</span>
+              <span className="text-sm font-bold text-ds-green">{formatIDR(claim.amount_approved)}</span>
             </div>
           )}
         </div>
@@ -349,7 +349,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
             onClick={() => setFilter(f.id)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
               filter === f.id
-                ? 'bg-ds-green text-white shadow-md shadow-ds-green/25'
+                ? 'bg-ds-green text-ds-on-green shadow-md shadow-ds-green/25'
                 : 'bg-white dark:bg-white/5 text-slate-400 border border-slate-100 dark:border-white/10'
             }`}
           >

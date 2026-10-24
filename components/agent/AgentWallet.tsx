@@ -26,7 +26,7 @@ const IDR = (n: number) => 'Rp ' + Math.abs(n).toLocaleString('id-ID');
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
-    PENDING_L1:  'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    PENDING_L1:  'bg-amber-500/10 text-ds-amber border-amber-500/20',
     PENDING_L2:  'bg-orange-500/10 text-orange-500 border-orange-500/20',
     PENDING_L3:  'bg-red-500/10 text-red-400 border-red-500/20',
     APPROVED:    'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -82,7 +82,7 @@ const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () =
           <button
             onClick={onAccept}
             disabled={!agreed}
-            className="flex-1 py-3.5 bg-ds-green hover:bg-ds-green-dk text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-40 active:scale-[0.97] transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="flex-1 py-3.5 bg-ds-green hover:bg-ds-green-dk text-ds-on-green rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-40 active:scale-[0.97] transition-all motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             Lanjut
           </button>
@@ -223,7 +223,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
                   onSaveAccount({ bank_code: bankCode, account_number: accNum.trim(), account_holder_name: accName.trim(), label: accLabel.trim() || undefined });
                   setBankCode(''); setAccNum(''); setAccName(''); setAccLabel(''); setAddingNew(false);
                 }}
-                className="w-full h-12 mt-4 rounded-xl bg-ds-green hover:bg-ds-green-dk text-white font-semibold text-sm active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                className="w-full h-12 mt-4 rounded-xl bg-ds-green hover:bg-ds-green-dk text-ds-on-green font-semibold text-sm active:scale-[0.97] transition-all flex items-center justify-center gap-2"
               >
                 <CheckCircle2 size={14} />
                 Simpan Rekening
@@ -275,7 +275,7 @@ const WithdrawForm: React.FC<WithdrawFormProps> = ({
           <button
             onClick={handleSubmitClick}
             disabled={loading || amt < 10000 || !bankCode || !accNum || !accName}
-            className="flex-2 flex-grow h-12 bg-ds-green hover:bg-ds-green-dk text-white rounded-xl font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-2 flex-grow h-12 bg-ds-green hover:bg-ds-green-dk text-ds-on-green rounded-xl font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {loading ? <RefreshCw size={16} className="animate-spin motion-reduce:animate-none" /> : <ArrowUpRight size={16} />}
             {loading ? 'Memproses...' : 'Tarik Dana'}
@@ -380,7 +380,7 @@ const AgentWalletView: React.FC = () => {
       <div role="alert" className="mx-4 my-8 rounded-2xl border border-ds-red/25 bg-ds-red/5 p-5">
         <h2 className="text-sm font-black text-ds-ink">Data dompet belum dapat dimuat</h2>
         <p className="mt-2 text-xs leading-relaxed text-ds-ink3">Saldo dan riwayat belum bisa diverifikasi. Demi keamanan, penarikan dana dinonaktifkan sampai data berhasil dimuat.</p>
-        <button type="button" onClick={() => void load()} className="mt-4 min-h-11 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-white">Coba lagi</button>
+        <button type="button" onClick={() => void load()} className="mt-4 min-h-11 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-ds-on-green">Coba lagi</button>
       </div>
     );
   }
@@ -459,7 +459,7 @@ const AgentWalletView: React.FC = () => {
           <button
             onClick={() => setShowWithdrawForm(true)}
             disabled={(wallet?.balance ?? 0) < 10000}
-            className="w-full h-12 mt-4 rounded-xl bg-ds-green hover:bg-ds-green-dk text-white font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-ds-green"
+            className="w-full h-12 mt-4 rounded-xl bg-ds-green hover:bg-ds-green-dk text-ds-on-green font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-ds-green"
           >
             <ArrowUpRight size={18} />
             TARIK DANA
@@ -494,7 +494,7 @@ const AgentWalletView: React.FC = () => {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-ds-green text-white shadow-ds-green' : 'text-ds-ink3'}`}
+            className={`flex-1 py-3 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-ds-green text-ds-on-green shadow-ds-green' : 'text-ds-ink3'}`}
           >
             {t === 'ledger' ? 'Riwayat' : t === 'withdrawals' ? 'Penarikan' : 'Rekening'}
           </button>
@@ -617,7 +617,7 @@ const AgentWalletView: React.FC = () => {
                   handleSaveAccount({ bank_code: newBankCode, account_number: newAccNum.trim(), account_holder_name: newAccName.trim() });
                   setNewBankCode(''); setNewAccNum(''); setNewAccName('');
                 }}
-                className="w-full h-12 rounded-xl bg-ds-green text-white font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-xl bg-ds-green text-ds-on-green font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
               >
                 <CheckCircle2 size={16} /> Simpan Rekening
               </button>

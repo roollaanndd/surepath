@@ -198,9 +198,9 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
           {filtered.map(o => {
             const statusColor = {
               SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-              UNDER_REVIEW:  'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-              APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-              ISSUED:        'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+              UNDER_REVIEW:  'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
+              APPROVED:      'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
+              ISSUED:        'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
               REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
             }[o.status] ?? 'bg-ds-card2 text-ds-ink3';
             return (
@@ -434,7 +434,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         className={`mt-2 flex items-center gap-3 p-3 rounded-xl border ${SHEET_BORDER} ${SHEET_INSET} active:scale-[0.98] transition-transform`}
                       >
                         <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
-                          <FileText size={16} className="text-emerald-600 dark:text-emerald-400" />
+                          <FileText size={16} className="text-ds-green dark:text-emerald-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-bold ${SHEET_TEXT}`}>Polis PDF</p>
@@ -451,7 +451,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     <DetailRow label="Sum Insured" value={fmtIdr(selectedOrder.sum_insured)} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                     <div className={`flex justify-between gap-3 py-2 mt-1 pt-3 border-t-2 ${SHEET_BORDER}`}>
                       <span className={`text-xs font-black uppercase tracking-widest ${SHEET_TEXT}`}>Total Premi</span>
-                      <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{fmtIdr(selectedOrder.total_premium)}</span>
+                      <span className="text-sm font-black text-ds-green dark:text-emerald-400">{fmtIdr(selectedOrder.total_premium)}</span>
                     </div>
                   </Section>
 
@@ -556,13 +556,13 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     </button>
                   )}
                   {selectedOrder.status === 'ISSUED' && (
-                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                    <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-ds-green dark:text-emerald-400 flex items-center justify-center gap-1.5">
                       <CheckCircle size={14} /> Polis Diterbitkan
                     </div>
                   )}
                   {selectedOrder.insurer_decision && selectedOrder.insurer_decision !== 'APPROVED' && (
                     <div className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 ${
-                      selectedOrder.insurer_decision === 'REQUEST_INFO' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400'
+                      selectedOrder.insurer_decision === 'REQUEST_INFO' ? 'bg-amber-50 dark:bg-amber-950/30 text-ds-amber dark:text-amber-400'
                       : 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'
                     }`}>
                       {selectedOrder.insurer_decision === 'REQUEST_INFO' ? <AlertTriangle size={14} /> : <XCircle size={14} />}
@@ -600,7 +600,7 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
           {icon}
         </div>
         <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

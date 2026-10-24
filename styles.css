@@ -34,7 +34,8 @@
   /* ── Text ────────────────────────────────────────────────────────────── */
   --ds-text-primary:   #0F172A;   /* headings, body — was --ds-ink (#111827) */
   --ds-text-secondary: #4B5563;   /* secondary labels — was --ds-ink2 */
-  --ds-text-muted:     #6B7280;   /* captions — bumped from #9CA3AF for WCAG AA */
+  --ds-text-muted:     #616875;   /* captions — #9CA3AF → #6B7280 → here; #6B7280 was
+                                     exactly 4.5 on the page and so failed on tinted cards */
   --ds-text-inverse:   #FFFFFF;   /* text on dark/hero surfaces */
 
   /* ── Brand ───────────────────────────────────────────────────────────── */
@@ -42,10 +43,29 @@
   --ds-primary-hover:  #009E52;   /* hover state — was --ds-green-dk */
   --ds-primary-tint:   #E6FAF0;   /* tinted bg — was --ds-green-tint */
   --ds-primary-hero:   #003B2F;   /* dark emerald for hero cards */
+  /* Green TEXT on a light surface. #00C16A is a fill colour: as text it measures
+     2.18:1 against the page and 2.38:1 against a card, well under the 4.5 WCAG
+     AA minimum this file already holds --ds-text-muted to. This is the same hue
+     darkened to 5.1:1 and is used only by `text-ds-green`; every background,
+     border, ring and shadow still uses --ds-primary unchanged. */
+  --ds-primary-text:   #047857;
+  /* Green text on a surface that is dark in BOTH themes (the Pathy card, hero
+     cards). It does not flip with the theme, so it cannot use the token above:
+     putting #047857 on #00512E measured 1.73:1. This is the same value the
+     dark theme uses, and gives 5.39:1 on the darkest of those surfaces. */
+  --ds-primary-on-dark: #00E07A;
+  /* Text ON the primary fill. #00C16A has a relative luminance of 0.392 — it is
+     a LIGHT colour, so white on it was always the wrong pairing (2.38:1). The
+     brand's own dark emerald gives 5.30:1 here and 7.17:1 against the brighter
+     dark-mode fill, and leaves the brand green itself completely untouched. */
+  --ds-on-primary:     #003B2F;
 
   /* ── Semantic ────────────────────────────────────────────────────────── */
   --ds-success:      #00C16A;  --ds-success-tint: #E6FAF0;
   --ds-warning:      #F59E0B;  --ds-warning-tint: #FEF3C7;
+  /* Amber TEXT on light: #F59E0B measures 2.0:1 on the page and 1.93:1 on
+     its own tint. Same hue darkened to 4.67:1; fills keep --ds-warning. */
+  --ds-warning-text: #B45309;
   --ds-danger:       #EF4444;  --ds-danger-tint:  #FEE2E2;
   --ds-info:         #3B82F6;  --ds-info-tint:    #DBEAFE;
   /* Warm secondary accent: use sparingly for highlights, selected states and visual rhythm. */
@@ -64,11 +84,15 @@
   --ds-green:        var(--ds-primary);
   --ds-green-dk:     var(--ds-primary-hover);
   --ds-green-tint:   var(--ds-primary-tint);
+  --ds-green-text:   var(--ds-primary-text);
+  --ds-green-on-dark: var(--ds-primary-on-dark);
+  --ds-on-green:      var(--ds-on-primary);
   --ds-ink:          var(--ds-text-primary);
   --ds-ink2:         var(--ds-text-secondary);
   --ds-ink3:         var(--ds-text-muted);
   --ds-blue:         var(--ds-info);
   --ds-amber:        var(--ds-warning);
+  --ds-amber-text:   var(--ds-warning-text);
   --ds-red:          var(--ds-danger);
   --ds-purple:       var(--ds-accent);
   --ds-purple-lt:    var(--ds-accent-tint);
@@ -100,18 +124,22 @@
   /* ── Text — brighter for readability ─────────────────────────────────── */
   --ds-text-primary:   #FFFFFF;
   --ds-text-secondary: #B8BFD0;
-  --ds-text-muted:     #8E95A8;
+  --ds-text-muted:     #99A0B2;   /* #8E95A8 passed on the base dark surfaces but
+                                     measured 4.32 on a tinted card; one step up */
   --ds-text-inverse:   #0F172A;
 
   /* ── Brand (brighter in dark for contrast) ──────────────────────────── */
   --ds-primary:        #00E07A;
   --ds-primary-hover:  #00C06A;
+  /* On dark, the bright value IS the legible one — no darkening here. */
+  --ds-primary-text:   #00E07A;
   --ds-primary-tint:   #0D3328;
   --ds-primary-hero:   #003B2F;
 
   /* ── Semantic tints — softer, less harsh ────────────────────────────── */
   --ds-success-tint:   #0D3328;
   --ds-warning-tint:   #3D2E0A;
+  --ds-warning-text:   #FBBF24;
   --ds-danger-tint:    #3D0A1A;
   --ds-info-tint:      #0A1E3D;
   --ds-orange:         #FF9B54;
@@ -573,6 +601,13 @@ body {
 
 /* Dark mode backgrounds for hardcoded bg-white */
 .dark .bg-white { background-color: #0F1829 !important; }
+/* …except where white is the point: a white pill sitting on a coloured or
+   gradient surface is already "dark mode", and the blanket rule above turned
+   FeaturedCard's CTA into #0F1829 while its label stayed #003B2F — 1.41:1, an
+   unreadable button. The rule above uses !important, so a dark: utility cannot
+   win; this is the escape hatch. */
+.sp-keep-white,
+.dark .sp-keep-white { background-color: #FFFFFF !important; }
 
 /* Dark mode borders for hardcoded border-black */
 .dark .border-black\/5 { border-color: rgba(255,255,255,0.08) !important; }

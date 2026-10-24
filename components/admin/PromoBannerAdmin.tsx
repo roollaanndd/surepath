@@ -126,7 +126,7 @@ const PromoBannerAdmin: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-emerald-500 text-xs">
+        <div className="flex items-center gap-2 text-ds-green text-xs">
           <Loader2 size={14} className="animate-spin" /> Memuat...
         </div>
       ) : (

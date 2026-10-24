@@ -118,8 +118,8 @@ const OperatorClaims: React.FC<Props> = ({ lang, refreshTick }) => {
           {claims.map(c => {
             const statusColor = {
               SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-              UNDER_REVIEW:  'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-              APPROVED:      'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+              UNDER_REVIEW:  'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
+              APPROVED:      'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
               REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
               PAID:          'bg-ds-green-tint text-ds-green',
             }[c.status] ?? 'bg-ds-card2 text-ds-ink3';
@@ -149,7 +149,7 @@ const OperatorClaims: React.FC<Props> = ({ lang, refreshTick }) => {
                     <>
                       <button
                         onClick={() => handleApprove(c)}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                       >
                         <CheckCircle2 size={12} /> Setujui
                       </button>

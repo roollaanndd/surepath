@@ -451,7 +451,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ds-green text-white text-xs font-bold shadow-ds-green disabled:opacity-50 hover:bg-ds-green-dk transition active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ds-green text-ds-on-green text-xs font-bold shadow-ds-green disabled:opacity-50 hover:bg-ds-green-dk transition active:scale-95"
               >
                 {saving
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -690,7 +690,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <button
               onClick={saveBankAccount}
               disabled={!bankForm.bank_code || !bankForm.account_number || !bankForm.account_holder_name}
-              className="w-full py-3.5 rounded-xl bg-ds-green text-white font-black text-xs uppercase tracking-widest shadow-ds-green disabled:opacity-40 hover:bg-ds-green-dk transition active:scale-95"
+              className="w-full py-3.5 rounded-xl bg-ds-green text-ds-on-green font-black text-xs uppercase tracking-widest shadow-ds-green disabled:opacity-40 hover:bg-ds-green-dk transition active:scale-95"
             >
               Simpan Rekening
             </button>

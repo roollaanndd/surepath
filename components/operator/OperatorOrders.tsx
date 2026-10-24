@@ -220,7 +220,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                     <>
                       <button
                         onClick={() => handleApprove(o)}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                       >
                         <CheckCircle2 size={12} /> Setujui
                       </button>
@@ -235,7 +235,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                   {o.status === 'UNDER_REVIEW' && (
                     <button
                       onClick={() => handleApprove(o)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 size={12} /> Setujui
                     </button>
@@ -243,7 +243,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                   {o.status === 'APPROVED' && (
                     <button
                       onClick={() => handleIssue(o)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-white active:scale-95 transition-transform flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-ds-green text-ds-on-green active:scale-95 transition-transform flex items-center justify-center gap-1"
                     >
                       <Clock size={12} /> Terbitkan
                     </button>
@@ -387,7 +387,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                 {selectedOrder.discount_amount ? <DetailRow label="Diskon" value={`- ${fmtIdr(selectedOrder.discount_amount)}`} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} /> : null}
                 <div className={`flex justify-between gap-3 py-2 mt-1 pt-3 border-t-2 ${SHEET_BORDER}`}>
                   <span className={`text-xs font-black uppercase tracking-widest ${SHEET_TEXT}`}>Total Premi</span>
-                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">{fmtIdr(selectedOrder.total_premium)}</span>
+                  <span className="text-sm font-black text-ds-green dark:text-emerald-400">{fmtIdr(selectedOrder.total_premium)}</span>
                 </div>
                 {selectedOrder.promo_code && <DetailRow label="Promo Code" value={selectedOrder.promo_code} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />}
               </Section>
@@ -414,8 +414,8 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                     }`}>
                       <AlertTriangle size={14} className={
                         selectedOrder.ai_admin_risk_level === 'HIGH' ? 'text-rose-600 dark:text-rose-400' :
-                        selectedOrder.ai_admin_risk_level === 'MEDIUM' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-emerald-600 dark:text-emerald-400'
+                        selectedOrder.ai_admin_risk_level === 'MEDIUM' ? 'text-ds-amber dark:text-amber-400' :
+                        'text-ds-green dark:text-emerald-400'
                       } />
                       <span className={`text-xs font-bold ${SHEET_TEXT}`}>
                         Risk Level: {selectedOrder.ai_admin_risk_level}
@@ -469,7 +469,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                 )}
                 {selectedOrder.status === 'APPROVED' && (
                   <div className="flex-1 space-y-2">
-                    <div className="py-2.5 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                    <div className="py-2.5 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-ds-green dark:text-emerald-400 flex items-center justify-center gap-1.5">
                       <CheckCircle2 size={14} /> Disetujui — Link review terkirim ke insurer
                     </div>
                     <button
@@ -481,7 +481,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                   </div>
                 )}
                 {selectedOrder.status === 'ISSUED' && (
-                  <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
+                  <div className="flex-1 py-3 rounded-xl text-sm font-bold bg-emerald-50 dark:bg-emerald-950/30 text-ds-green dark:text-emerald-400 flex items-center justify-center gap-1.5">
                     <CheckCircle2 size={14} /> Polis Diterbitkan
                   </div>
                 )}
@@ -560,7 +560,7 @@ const Section: React.FC<{
   return (
   <div>
     <div className="flex items-center gap-2 mb-2">
-      <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+      <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
         {icon}
       </div>
       <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

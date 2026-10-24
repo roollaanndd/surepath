@@ -121,7 +121,7 @@ export const AICard: React.FC<{
         <PathyMascot size={40} />
       </div>
       <div className="space-y-1.5 flex-1 min-w-0">
-        <p className="text-2xs font-black uppercase tracking-wider" style={{ color: '#00C16A' }}>{label}</p>
+        <p className="text-2xs font-black uppercase tracking-wider text-ds-green-on-dark">{label}</p>
         <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{message}</p>
         {suggestion && (
           <button
@@ -133,7 +133,7 @@ export const AICard: React.FC<{
           </button>
         )}
         {cta && (
-          <button onClick={cta.onClick} className="block text-2xs font-black uppercase tracking-wider pt-1" style={{ color: '#00C16A' }}>
+          <button onClick={cta.onClick} className="block text-2xs font-black uppercase tracking-wider pt-1 text-ds-green-on-dark">
             {cta.label} →
           </button>
         )}
@@ -235,7 +235,7 @@ export const FeaturedCard: React.FC<{
   cta: { label: string; onClick: () => void };
   illustration?: React.ReactNode;
   gradient?: string;
-}> = ({ eyebrow, title, subtitle, cta, illustration, gradient = 'linear-gradient(135deg, #4D7CFE 0%, #003B2F 120%)' }) => (
+}> = ({ eyebrow, title, subtitle, cta, illustration, gradient = 'linear-gradient(135deg, #3B62D9 0%, #003B2F 120%)' }) => (
   <div className="rounded-3xl p-5 relative overflow-hidden text-white" style={{ background: gradient, minHeight: 132 }}>
     <div className="absolute -bottom-6 -right-4 opacity-90 pointer-events-none">{illustration}</div>
     <div className="relative z-10 max-w-[62%]">
@@ -244,7 +244,7 @@ export const FeaturedCard: React.FC<{
       {subtitle && <p className="text-[11px] text-white/70 leading-snug mb-3">{subtitle}</p>}
       <button
         onClick={cta.onClick}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black bg-white text-[#003B2F] active:scale-95 transition-transform shadow-lg"
+        className="sp-keep-white inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black text-[#003B2F] active:scale-95 transition-transform shadow-lg"
       >
         {cta.label} →
       </button>
@@ -253,9 +253,11 @@ export const FeaturedCard: React.FC<{
 );
 
 // ── Pipeline stat (agent) — compact column metric ─────────────────────────────
-export const PipelineStat: React.FC<{ label: string; value: React.ReactNode; accent?: string }> = ({ label, value, accent = '#00C16A' }) => (
+// `accent` is applied as a text colour, so it defaults to the text token rather
+// than the fill green; a caller passing its own hex is on its own for contrast.
+export const PipelineStat: React.FC<{ label: string; value: React.ReactNode; accent?: string }> = ({ label, value, accent }) => (
   <div className="flex-1 text-center">
-    <p className="text-2xl font-black text-ds-ink leading-none" style={{ color: accent }}>{value}</p>
+    <p className="text-2xl font-black text-ds-green leading-none" style={accent ? { color: accent } : undefined}>{value}</p>
     <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-1">{label}</p>
   </div>
 );

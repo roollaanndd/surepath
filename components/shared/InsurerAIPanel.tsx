@@ -47,15 +47,15 @@ const InsurerAIPanel: React.FC<Props> = ({ orderData, onRecommendation }) => {
   };
 
   const decisionConfig = {
-    APPROVE: { icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/20', label: 'APPROVE' },
+    APPROVE: { icon: CheckCircle, color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/20', label: 'APPROVE' },
     DECLINE: { icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-950/20', label: 'DECLINE' },
-    REQUEST_INFO: { icon: HelpCircle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/20', label: 'REQUEST INFO' },
+    REQUEST_INFO: { icon: HelpCircle, color: 'text-ds-amber', bg: 'bg-amber-50 dark:bg-amber-950/20', label: 'REQUEST INFO' },
   };
 
   const riskColor = rec
     ? rec.riskScore > 70 ? 'text-rose-600'
-      : rec.riskScore > 40 ? 'text-amber-600'
-      : 'text-emerald-600'
+      : rec.riskScore > 40 ? 'text-ds-amber'
+      : 'text-ds-green'
     : '';
 
   return (
@@ -140,7 +140,7 @@ const InsurerAIPanel: React.FC<Props> = ({ orderData, onRecommendation }) => {
           {/* Suggested terms */}
           {rec.suggestedTerms && (
             <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Suggested Terms</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ds-green">Suggested Terms</p>
               {rec.suggestedTerms.deductible && (
                 <p className="text-xs text-emerald-800 dark:text-emerald-300">Deductible: {rec.suggestedTerms.deductible}</p>
               )}

@@ -162,7 +162,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
         <div className="bg-ds-card border border-ds-border rounded-2xl p-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center shrink-0">
-              <Smartphone size={18} className="text-emerald-500" />
+              <Smartphone size={18} className="text-ds-green" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-ds-ink">{isStandalone ? 'Aplikasi sudah terpasang' : 'Pasang Insurer Portal di perangkat'}</p>
@@ -196,7 +196,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
         <SectionLabel>Keamanan & Info</SectionLabel>
         <div className="bg-ds-card border border-ds-border rounded-2xl divide-y divide-ds-border overflow-hidden">
           <div className="flex items-center gap-3 p-4">
-            <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center"><Shield size={16} className="text-emerald-500" /></div>
+            <div className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center"><Shield size={16} className="text-ds-green" /></div>
             <div className="flex-1">
               <p className="text-sm font-bold text-ds-ink">Sesi Aman</p>
               <p className="text-xs text-ds-ink3">Token-based auth · rolling 7-day</p>

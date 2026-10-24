@@ -199,7 +199,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                 <p className="text-[10px] text-ds-ink2">Terakhir disimpan: {savedAt}</p>
               )}
               {loading && (
-                <p className="text-[10px] text-emerald-500 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
+                <p className="text-[10px] text-ds-green flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
               )}
             </div>
           </div>
@@ -491,9 +491,9 @@ const WebsiteEditorAdmin: React.FC = () => {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2 px-4 py-2 bg-ds-card2 border border-ds-border rounded-xl">
-            <Layout size={12} className="text-emerald-600" />
-            <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
-            <Image size={12} className="text-emerald-600" />
+            <Layout size={12} className="text-ds-green" />
+            <span className="text-[10px] text-ds-green font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
+            <Image size={12} className="text-ds-green" />
           </div>
         </div>
 

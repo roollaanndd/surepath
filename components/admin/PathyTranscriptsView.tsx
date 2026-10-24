@@ -104,7 +104,7 @@ const PathyTranscriptsView: React.FC = () => {
                 onClick={() => { setHours(r.hours); setSelected(null); }}
                 className={`px-3 py-1.5 text-ds-sm transition-colors ${
                   hours === r.hours
-                    ? 'bg-ds-green text-white'
+                    ? 'bg-ds-green text-ds-on-green'
                     : 'bg-ds-card2 text-ds-ink3 hover:text-ds-ink'
                 }`}
               >

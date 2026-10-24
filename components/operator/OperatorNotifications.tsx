@@ -24,9 +24,9 @@ const ICON_MAP: Record<string, any> = {
 const COLOR_MAP: Record<string, string> = {
   NEW_ORDER:        'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
   NEW_CLAIM:        'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
-  NEW_WITHDRAWAL:   'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
-  NEW_AGENT:        'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
-  NEW_CUSTOMER:     'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400',
+  NEW_WITHDRAWAL:   'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
+  NEW_AGENT:        'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
+  NEW_CUSTOMER:     'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
   NEW_PAYMENT:      'bg-ds-green-tint text-ds-green',
 };
 
@@ -82,7 +82,7 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
             <Bell size={18} className="text-ds-green" />
             <h3 className="text-base font-black text-ds-ink">Notifikasi</h3>
             {items.filter(i => !i.read).length > 0 && (
-              <span className="bg-ds-green text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+              <span className="bg-ds-green text-ds-on-green text-[10px] font-black px-1.5 py-0.5 rounded-full">
                 {items.filter(i => !i.read).length}
               </span>
             )}

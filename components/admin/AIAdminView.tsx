@@ -10,8 +10,8 @@ import {
 import { formatIDR } from '../car-wizard/WizardUI';
 
 const RISK_COLOR: Record<string, string> = {
-  LOW:    'text-emerald-600',
-  MEDIUM: 'text-amber-600',
+  LOW:    'text-ds-green',
+  MEDIUM: 'text-ds-amber',
   HIGH:   'text-red-600',
 };
 
@@ -113,7 +113,7 @@ const AIAdminView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-7 h-7 bg-emerald-50 rounded-xl flex items-center justify-center">
-              <Bot size={14} className="text-emerald-600" />
+              <Bot size={14} className="text-ds-green" />
             </div>
             <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3">AI Admin Agent</p>
           </div>
@@ -164,7 +164,7 @@ const AIAdminView: React.FC = () => {
         {[
           { label: 'Antrean', value: orders.length, color: 'text-ds-ink' },
           { label: 'Teranalisis', value: analyzedCount, color: 'text-blue-600' },
-          { label: 'Siap Diproses', value: orders.filter(o => o._aiReview && (o._aiReview.confidence ?? 0) >= 80).length, color: 'text-emerald-600' },
+          { label: 'Siap Diproses', value: orders.filter(o => o._aiReview && (o._aiReview.confidence ?? 0) >= 80).length, color: 'text-ds-green' },
         ].map(s => (
           <div key={s.label} className="rounded-2xl bg-white border border-ds-border shadow-sm p-4 text-center">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -180,7 +180,7 @@ const AIAdminView: React.FC = () => {
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20">
-          <CheckCircle size={36} className="mx-auto text-emerald-500 mb-3" />
+          <CheckCircle size={36} className="mx-auto text-ds-green mb-3" />
           <p className="text-ds-ink font-semibold">Antrean kosong</p>
           <p className="text-sm text-ds-ink3 mt-1">Semua order telah diproses</p>
         </div>
@@ -197,9 +197,9 @@ const AIAdminView: React.FC = () => {
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     {order._analyzing
-                      ? <RefreshCw size={16} className="text-emerald-600 animate-spin" />
+                      ? <RefreshCw size={16} className="text-ds-green animate-spin" />
                       : ai
-                        ? <Bot size={16} className="text-emerald-600" />
+                        ? <Bot size={16} className="text-ds-green" />
                         : <Clock size={16} className="text-ds-ink3" />
                     }
                   </div>
@@ -270,7 +270,7 @@ const AIAdminView: React.FC = () => {
             <div className="p-6 space-y-5">
               {selected._analyzing && (
                 <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl">
-                  <RefreshCw size={16} className="text-emerald-600 animate-spin" />
+                  <RefreshCw size={16} className="text-ds-green animate-spin" />
                   <p className="text-sm text-emerald-700 font-semibold">Menganalisis dengan AI…</p>
                 </div>
               )}
@@ -286,7 +286,7 @@ const AIAdminView: React.FC = () => {
                     </div>
                     <div className="p-4 rounded-2xl bg-ds-card2 border border-ds-border text-center">
                       <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mb-1">Confidence</p>
-                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-emerald-600' : selected._aiReview.confidence >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-ds-green' : selected._aiReview.confidence >= 60 ? 'text-ds-amber' : 'text-red-600'}`}>
                         {selected._aiReview.confidence}%
                       </p>
                     </div>
@@ -311,7 +311,7 @@ const AIAdminView: React.FC = () => {
                       <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mb-2">Temuan</p>
                       <ul className="space-y-1.5">
                         {selected._aiReview.flags.map((f, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-amber-600">
+                          <li key={i} className="flex items-start gap-2 text-xs text-ds-amber">
                             <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                             {f}
                           </li>

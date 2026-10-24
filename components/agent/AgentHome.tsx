@@ -137,7 +137,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
                 {myTierDef.name}
               </span>
             )}
-            <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-white font-black text-sm shadow-ds-green">
+            <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-ds-on-green font-black text-sm shadow-ds-green">
               {(agent?.name ?? 'A')[0].toUpperCase()}
             </div>
           </div>

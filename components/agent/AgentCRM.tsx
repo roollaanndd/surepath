@@ -261,7 +261,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
       {/* FAB */}
       <button
         onClick={openAdd}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-ds-green text-white flex items-center justify-center shadow-ds-md active:brightness-90 transition-all z-30"
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-ds-green text-ds-on-green flex items-center justify-center shadow-ds-md active:brightness-90 transition-all z-30"
       >
         <Plus size={24} className="text-white" strokeWidth={3} />
       </button>
@@ -442,7 +442,7 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                         className={`py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
                           form.status === s
                             ? s === 'ACTIVE'
-                              ? 'bg-ds-green text-white shadow-ds-sm'
+                              ? 'bg-ds-green text-ds-on-green shadow-ds-sm'
                               : 'bg-ds-blue text-white shadow-ds-sm'
                             : 'bg-ds-card2 border border-ds-border text-ds-ink3'
                         }`}

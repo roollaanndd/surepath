@@ -215,7 +215,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   aria-label={t('Open profile', 'Buka profil')}
                   className="relative cursor-pointer active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-bg"
                 >
-                  <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-white font-black text-base shadow-ds-green ring-4 ring-ds-green/10">
+                  <div className="w-11 h-11 bg-ds-green rounded-2xl flex items-center justify-center text-ds-on-green font-black text-base shadow-ds-green ring-4 ring-ds-green/10">
                     {currentUser?.name?.[0]}
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-ds-bg" style={{ background: '#00C896' }} />
@@ -422,7 +422,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                       <p className="text-xs text-ds-ink2 leading-relaxed line-clamp-2">{p.desc}</p>
                     </div>
                     {p.active && (
-                      <div className="relative z-10 w-9 h-9 rounded-full bg-ds-green text-white flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 group-hover:translate-x-0.5 transition-all duration-200">
+                      <div className="relative z-10 w-9 h-9 rounded-full bg-ds-green text-ds-on-green flex items-center justify-center flex-shrink-0 shadow-ds-green group-hover:scale-110 group-hover:translate-x-0.5 transition-all duration-200">
                         <ArrowRight size={15} />
                       </div>
                     )}
@@ -529,7 +529,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="p-8 bg-ds-card rounded-2xl border border-dashed border-ds-border flex flex-col items-center text-center gap-3">
                     <EmptyStateSearch size={100} />
                     <p className="text-ds-ink2 text-sm font-bold">{t('No policies yet.', 'Belum ada polis.')}</p>
-                    <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-white rounded-xl font-black text-2xs tracking-wider shadow-ds-green active:scale-95 transition-transform">
+                    <button onClick={() => navigate('products')} className="px-5 py-2 bg-ds-green text-ds-on-green rounded-xl font-black text-2xs tracking-wider shadow-ds-green active:scale-95 transition-transform">
                       {t('Browse Plans', 'Lihat Paket')}
                     </button>
                   </div>
@@ -673,7 +673,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           <div role="alert" aria-live="polite" className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4">
             <p className="text-sm font-bold text-ds-ink">{t('Some information could not be refreshed.', 'Sebagian informasi belum berhasil dimuat.')}</p>
             <p className="mt-1 text-xs text-ds-ink3">{t('Your available information remains visible. Try refreshing to check again.', 'Informasi yang tersedia tetap ditampilkan. Coba muat ulang untuk memeriksa kembali.')}</p>
-            <button type="button" onClick={() => void loadCustomerData()} disabled={refreshing} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-white disabled:opacity-50">
+            <button type="button" onClick={() => void loadCustomerData()} disabled={refreshing} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-ds-on-green disabled:opacity-50">
               {refreshing ? t('Refreshing…', 'Memuat ulang…') : t('Refresh data', 'Muat ulang data')}
             </button>
           </div>

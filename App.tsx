@@ -280,6 +280,16 @@ const App = () => {
                   const refreshedUser = { ...user, allowed_apps: (data as any).allowed_apps ?? null, role: (data as any).role ?? user.role, verified: (data as any).verified ?? user.verified };
                   setCurrentUser(refreshedUser);
                   localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedUser));
+                  // A cached session can leave a user on the wrong portal after
+                  // their server-side role/app access changes. Reconcile portal
+                  // routes with the freshly verified profile instead of rendering
+                  // CustomerPortal as the catch-all for a stale /custapp path.
+                  const activePath = window.location.pathname.replace(/\\/+$/, '') || '/';
+                  const desiredPath = rolePath(refreshedUser);
+                  if (['/custapp', '/agapps', '/agentapp', '/select-app'].includes(activePath) && activePath !== desiredPath) {
+                    window.history.replaceState({}, '', desiredPath);
+                    setCurrentPath(desiredPath);
+                  }
                 }
               })
               .catch(() => {});

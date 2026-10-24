@@ -168,8 +168,45 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
 };
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
+type GooglePreferredSourceApi = {
+  init: (options: { theme: 'dark' | 'light'; lang: string }) => void;
+  addPreferredSource: () => void;
+};
+type PreferredSourceWindow = Window & {
+  __spPreferredSource?: GooglePreferredSourceApi;
+  PREFERRED_SOURCE?: Array<(api: GooglePreferredSourceApi) => void>;
+};
+
 const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
   const t = useT(lang);
+
+  // The public site is an SPA: the footer mounts after the head script may have
+  // already loaded. Initialize the Google SDK explicitly instead of relying on
+  // its one-time scan for static HTML placeholders.
+  useEffect(() => {
+    let active = true;
+    const host = window as PreferredSourceWindow;
+    const initialize = (api: GooglePreferredSourceApi) => {
+      if (!active) return;
+      host.__spPreferredSource = api;
+      api.init({ theme: 'dark', lang: lang === Language.EN ? 'en' : 'id' });
+      const button = document.getElementById('sp-preferred-source-btn');
+      if (button) button.onclick = () => api.addPreferredSource();
+    };
+
+    if (host.__spPreferredSource) {
+      initialize(host.__spPreferredSource);
+    } else {
+      host.PREFERRED_SOURCE = host.PREFERRED_SOURCE || [];
+      host.PREFERRED_SOURCE.push(initialize);
+    }
+
+    return () => {
+      active = false;
+      const button = document.getElementById('sp-preferred-source-btn');
+      if (button) button.onclick = null;
+    };
+  }, [lang]);
   const columns = [
     { title: t('Produk', 'Products'), links: [
       { label: t('Asuransi Kendaraan', 'Car Insurance'),    path: '/product/car' },
@@ -243,7 +280,19 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
             <div className="mt-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-xs font-semibold text-white mb-1">{t('Ikuti SurePath di Google', 'Follow SurePath on Google')}</p>
               <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('Pilih SurePath sebagai sumber pilihan agar artikel kami lebih mudah ditemukan di Google.', 'Choose SurePath as a preferred source to find our articles more easily on Google.')}</p>
-              <div google-add-preferred-source-btn data-theme="dark" data-lang={lang === Language.EN ? 'en' : 'id'}></div>
+              <button
+                id="sp-preferred-source-btn"
+                type="button"
+                className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-white/15 bg-white px-3 py-2 text-xs font-semibold text-slate-900 transition-opacity hover:opacity-90"
+                aria-label={t('Tambahkan SurePath ke sumber pilihan Google', 'Add SurePath as a Google preferred source')}
+                onClick={() => {
+                  const api = (window as PreferredSourceWindow).__spPreferredSource;
+                  if (api) api.addPreferredSource();
+                  else window.open('https://www.google.com/preferences/source?q=myinsurepath.com', '_blank', 'noopener,noreferrer');
+                }}
+              >
+                {t('☆ Tambahkan SurePath di Google', '☆ Add SurePath on Google')}
+              </button>
               <a href="https://www.google.com/preferences/source?q=myinsurepath.com" target="_blank" rel="noopener noreferrer"
                 className="inline-block mt-2 text-xs font-semibold transition-opacity hover:opacity-80"
                 style={{ color: ACCENT }}>

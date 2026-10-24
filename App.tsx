@@ -284,7 +284,7 @@ const App = () => {
                   // their server-side role/app access changes. Reconcile portal
                   // routes with the freshly verified profile instead of rendering
                   // CustomerPortal as the catch-all for a stale /custapp path.
-                  const activePath = window.location.pathname.replace(/\\/+$/, '') || '/';
+                  const activePath = window.location.pathname.replace(/\/+$/, '') || '/';
                   const desiredPath = rolePath(refreshedUser);
                   if (['/custapp', '/agapps', '/agentapp', '/select-app'].includes(activePath) && activePath !== desiredPath) {
                     window.history.replaceState({}, '', desiredPath);

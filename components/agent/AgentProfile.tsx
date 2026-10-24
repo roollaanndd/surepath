@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, 
-  Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet,
+  Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet, LockKeyhole,
   AlertCircle, Camera, Building2, ChevronRight, FileCheck2, Download,
 } from 'lucide-react';
 import { Language } from '../../types';
@@ -18,6 +18,7 @@ import AgentHandlerCard from './AgentHandlerCard';
 import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements';
 import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import ChangePasswordModal from '../shared/ChangePasswordModal';
 
 interface Props {
   agent: any;
@@ -46,6 +47,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [copied, setCopied] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [ktpUploading, setKtpUploading] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const { tiers } = useTierDefinitions();
@@ -176,6 +178,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
 
   return (
     <div className="bg-ds-bg min-h-screen pb-28 font-sora">
+      {showChangePassword && <ChangePasswordModal email={profile?.email ?? agent?.email ?? ""} lang={lang} onClose={() => setShowChangePassword(false)} />}
 
       {/* Avatar + Name hero — bank-style gradient banner */}
       <div className="relative overflow-hidden px-5 pt-12 pb-7 text-center text-white"
@@ -709,6 +712,10 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
           </div>
         </div>
       </div>
+
+      <button type="button" onClick={() => setShowChangePassword(true)} className="mx-5 mt-4 w-full h-12 rounded-xl border border-ds-border bg-ds-card text-ds-ink font-semibold text-sm flex items-center justify-center gap-2">
+        <LockKeyhole className="w-4 h-4" /> {t("Change Password", "Ubah Kata Sandi")}
+      </button>
 
       {/* Logout */}
       <button

@@ -15,6 +15,7 @@ import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 import { getTncRecord, type TncRecord } from '../services/supabaseService';
 import AccessibilitySettings from './customer/AccessibilitySettings';
+import ChangePasswordModal from './shared/ChangePasswordModal';
 
 interface UserProfileProps {
   currentUser: any;
@@ -37,88 +38,6 @@ const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, co
     <span className={`px-3 py-1 rounded-full text-[0.55rem] font-black uppercase tracking-widest border ${styles[color] || styles.primary}`}>
       {children}
     </span>
-  );
-};
-
-const PasswordResetModal = ({ email, onClose, lang }: { email: string, onClose: () => void, lang: Language }) => {
-  const [step, setStep] = useState<'confirm' | 'loading' | 'success'>('confirm');
-  const t = (en: string, idn: string) => lang === Language.EN ? en : idn;
-
-  const handleRequestReset = () => {
-    setStep('loading');
-    setTimeout(() => {
-      setStep('success');
-    }, 2000);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[2500] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fade-in">
-      <div className="bg-white dark:bg-[#0f172a] w-full max-w-md rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden relative p-8 text-center space-y-8">
-        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-white transition-colors">
-          <X size={24} />
-        </button>
-
-        {step === 'confirm' && (
-          <div className="space-y-6 animate-pop-in">
-            <div className="w-20 h-20 bg-ds-green-tint rounded-[2rem] flex items-center justify-center text-ds-green mx-auto shadow-inner">
-              <Lock size={40} />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-                {t('Reset Password', 'Reset Kata Sandi')}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                {t('We will send a secure link reset to your registered email address:', 'Kami akan mengirimkan tautan link reset aman ke alamat email terdaftar Anda:')}
-              </p>
-              <p className="text-sm font-black text-ds-green bg-ds-green-tint py-2 rounded-xl border border-green-100 mt-2">
-                {email}
-              </p>
-            </div>
-            <button 
-              onClick={handleRequestReset}
-              className="w-full py-5 bg-ds-green text-ds-on-green rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-ds-green active:scale-95 transition-all flex items-center justify-center gap-3"
-            >
-              <Send size={18} /> {t('Send Reset Link', 'Kirim Link Reset')}
-            </button>
-          </div>
-        )}
-
-        {step === 'loading' && (
-          <div className="py-12 space-y-6 animate-pulse">
-            <div className="relative w-20 h-20 mx-auto">
-               <div className="absolute inset-0 bg-ds-green-tint rounded-full blur-xl"></div>
-               <Loader2 size={80} className="text-ds-green animate-spin relative z-10" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.4em] text-ds-green">{t('Proses Sinkronisasi Link', 'Proses Sinkronisasi Link')}</p>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Encrypting protocols...', 'Mengenkripsi protokol...')}</p>
-            </div>
-          </div>
-        )}
-
-        {step === 'success' && (
-          <div className="space-y-6 animate-pop-in">
-            <div className="w-20 h-20 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white mx-auto shadow-2xl animate-draw-check">
-              <CheckCircle2 size={40} strokeWidth={3} />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-                {t('Link Sent!', 'Link Terkirim!')}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                {t('Check your inbox (and spam folder) for instructions to reset your password. The link is valid for 15 minutes.', 'Cek kotak masuk (dan folder spam) Anda untuk instruksi reset kata sandi. Tautan berlaku selama 15 menit.')}
-              </p>
-            </div>
-            <button 
-              onClick={onClose}
-              className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl active:scale-95 transition-all"
-            >
-              {t('Back to Profile', 'Kembali ke Profil')}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 };
 
@@ -523,7 +442,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
   return (
     <div className="bg-ds-bg min-h-screen pb-28">
       {selectedPolicy && <PolicyDetailModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />}
-      {isResetModalOpen && <PasswordResetModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
+      {isResetModalOpen && <ChangePasswordModal email={currentUser?.email || ''} onClose={() => setIsResetModalOpen(false)} lang={lang} />}
 
       {/* Profile Header */}
       <div className="px-4 pt-4 pb-4 space-y-4">

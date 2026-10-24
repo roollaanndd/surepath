@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
   Edit2, Save, X, LogOut, Copy, CheckCircle, 
-  Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet,
+  Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet, LockKeyhole,
   AlertCircle, Camera, Building2, ChevronRight, FileCheck2, Download,
 } from 'lucide-react';
 import { Language } from '../../types';
@@ -18,6 +18,7 @@ import AgentHandlerCard from './AgentHandlerCard';
 import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements';
 import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import ChangePasswordModal from '../shared/ChangePasswordModal';
 
 interface Props {
   agent: any;

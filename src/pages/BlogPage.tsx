@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, Clock, Calendar } from 'lucide-react';
 
-interface Props { slug?: string; onBack: () => void; onSignIn: () => void; }
+interface Props { slug?: string; onBack: () => void; onSignIn: () => void; navigate: (path: string) => void; }
 
 type IlloKey = 'shieldCar' | 'claim' | 'tariff' | 'agent' | 'travel';
 
@@ -235,8 +235,8 @@ function ArticleView({ a, onBack, onSignIn }: { a: Article; onBack: () => void; 
 /* ── Blog Listing ─────────────────────────────────────────────────────────── */
 function FeaturedCard({ a, onSelect }: { a: Article; onSelect: () => void }) {
   return (
-    <div onClick={onSelect} className="blog-card blog-featured"
-      style={{ cursor: 'pointer', background: '#101511', border: '1px solid #1f2937', borderRadius: 20, overflow: 'hidden' }}>
+    <a href={`/blog/${a.slug}`} onClick={e => { e.preventDefault(); onSelect(); }} className="blog-card blog-featured"
+      style={{ cursor: 'pointer', background: '#101511', border: '1px solid #1f2937', borderRadius: 20, overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
       <div className="blog-featured-illo" style={{ position: 'relative', minHeight: 240, overflow: 'hidden' }}>
         <div className="blog-illo" style={{ position: 'absolute', inset: 0 }}><Illo kind={a.illo} tint={a.tint} /></div>
       </div>
@@ -255,14 +255,14 @@ function FeaturedCard({ a, onSelect }: { a: Article; onSelect: () => void }) {
           </span>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
 function ArticleCard({ a, onSelect }: { a: Article; onSelect: () => void }) {
   return (
-    <div onClick={onSelect} className="blog-card"
-      style={{ cursor: 'pointer', background: '#101511', border: '1px solid #1f2937', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <a href={`/blog/${a.slug}`} onClick={e => { e.preventDefault(); onSelect(); }} className="blog-card"
+      style={{ cursor: 'pointer', background: '#101511', border: '1px solid #1f2937', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit' }}>
       <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
         <div className="blog-illo" style={{ position: 'absolute', inset: 0 }}><Illo kind={a.illo} tint={a.tint} /></div>
         <div style={{ position: 'absolute', top: 12, left: 12 }}><CategoryBadge cat={a.category} /></div>
@@ -277,7 +277,7 @@ function ArticleCard({ a, onSelect }: { a: Article; onSelect: () => void }) {
           </span>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -325,14 +325,18 @@ function BlogListing({ onBack, onSelect }: { onBack: () => void; onSelect: (slug
 }
 
 /* ── Main Export ──────────────────────────────────────────────────────────── */
-const BlogPage: React.FC<Props> = ({ slug, onBack, onSignIn }) => {
-  const [currentSlug, setCurrentSlug] = React.useState<string | undefined>(slug);
-  const article = currentSlug ? ARTICLES.find(a => a.slug === currentSlug) : undefined;
+// Which article is shown is driven by the URL, never by local state. Selecting an
+// article used to call setCurrentSlug, which left the pathname at /blog — so the
+// router never re-ran, resolveSeo() never saw the article path, and every article
+// was indexed and shared under the listing's title, description and JSON-LD. The
+// per-article metadata in src/seo/seo.ts (BLOG_POSTS) was written but unreachable.
+const BlogPage: React.FC<Props> = ({ slug, onBack, onSignIn, navigate }) => {
+  const article = slug ? ARTICLES.find(a => a.slug === slug) : undefined;
 
   if (article) {
-    return <ArticleView a={article} onBack={() => setCurrentSlug(undefined)} onSignIn={onSignIn} />;
+    return <ArticleView a={article} onBack={() => navigate('/blog')} onSignIn={onSignIn} />;
   }
-  return <BlogListing onBack={onBack} onSelect={setCurrentSlug} />;
+  return <BlogListing onBack={onBack} onSelect={s => navigate(`/blog/${s}`)} />;
 };
 
 export default BlogPage;

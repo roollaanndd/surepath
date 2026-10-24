@@ -66,6 +66,7 @@ export interface SpPolicy {
   id: string;
   agent_id: string;
   client_id?: string;
+  client_email?: string | null;
   client_name: string;
   type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
   status: 'ACTIVE' | 'PENDING' | 'EXPIRED' | 'CANCELLED';

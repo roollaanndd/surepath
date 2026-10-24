@@ -55,6 +55,15 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
+      - name: Configure Cloudflare Pages SPA fallback
+        if: steps.check-secrets.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          test -f dist/_fallback.html
+          # Keep prerendered SEO pages intact; only unknown routes use the noindex SPA shell.
+          printf '/* /_fallback.html 200\\n' > dist/_redirects
+          test -s dist/_redirects
+
       - name: Ensure Cloudflare Pages project exists
         if: steps.check-secrets.outputs.ready == 'true'
         env:

@@ -618,3 +618,98 @@
 .dark .sp-agent-premium .sp-agent-home__primary-cta-icon {
   background: linear-gradient(135deg, #087a58, #003b2f);
 }
+
+
+/* ── Agent quote builder and wallet: complete the approved first-pass visual system ── */
+.sp-agent-quote {
+  --sp-quote-ink: #12372c;
+  --sp-quote-border: rgba(15, 94, 67, .14);
+  color: var(--ds-text-primary, #172b24);
+}
+.sp-agent-quote > div:first-child {
+  border-radius: 1.1rem;
+}
+.sp-agent-quote .flex.gap-2.bg-white,
+.sp-agent-quote .flex.gap-2.bg-white.border {
+  border-color: var(--sp-quote-border);
+  box-shadow: 0 8px 26px -22px rgba(0, 59, 47, .35);
+}
+.sp-agent-quote button {
+  min-height: 2.75rem;
+}
+.sp-agent-quote input:not([type="checkbox"]):not([type="radio"]),
+.sp-agent-quote select,
+.sp-agent-quote textarea {
+  min-height: 2.75rem;
+  border-color: var(--sp-quote-border);
+  font-size: max(1rem, 16px);
+}
+.sp-agent-quote .grid.grid-cols-2 > button,
+.sp-agent-quote .grid.grid-cols-3 > button {
+  border-radius: 1rem;
+  border-color: var(--sp-quote-border);
+  box-shadow: 0 7px 20px -19px rgba(0, 59, 47, .4);
+}
+.sp-agent-quote .grid.grid-cols-2 > button:focus-visible,
+.sp-agent-quote .grid.grid-cols-3 > button:focus-visible {
+  outline: 2px solid #07835d;
+  outline-offset: 2px;
+}
+.sp-agent-quote [class*="text-[10px]"],
+.sp-agent-quote [class*="text-\[10px\]"] {
+  line-height: 1.4;
+}
+.sp-agent-quote .text-3xl,
+.sp-agent-quote .text-2xl {
+  font-variant-numeric: tabular-nums;
+}
+.dark .sp-agent-quote {
+  color: var(--ds-dk-ink, #f1f5f9);
+}
+.dark .sp-agent-quote .bg-white:not(.text-white) {
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .16);
+}
+.dark .sp-agent-quote .bg-gray-50 {
+  background-color: var(--ds-dk-bg, #101713);
+}
+.dark .sp-agent-quote .text-gray-700,
+.dark .sp-agent-quote .text-gray-900,
+.dark .sp-agent-quote .text-slate-900 {
+  color: var(--ds-dk-ink, #f1f5f9);
+}
+.dark .sp-agent-quote input,
+.dark .sp-agent-quote select,
+.dark .sp-agent-quote textarea {
+  color: var(--ds-dk-ink, #f1f5f9);
+  background-color: var(--ds-dk-card, #161d25);
+  border-color: rgba(184, 233, 134, .2);
+}
+
+/* The wallet is a financial surface: never let supporting labels collapse to 7–8px. */
+.sp-agent-wallet [class*="text-[0.45rem]"],
+.sp-agent-wallet [class*="text-[0.5rem]"],
+.sp-agent-wallet [class*="text-[0.55rem]"] {
+  font-size: max(.625rem, .6875rem);
+  line-height: 1.4;
+}
+.sp-agent-wallet input,
+.sp-agent-wallet select {
+  min-height: 2.75rem;
+  font-size: max(1rem, 16px);
+}
+.sp-agent-wallet .font-black,
+.sp-agent-wallet [class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 380px) {
+  .sp-agent-quote { padding-inline: .75rem; }
+  .sp-agent-quote .grid.grid-cols-2 { gap: .5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-quote *,
+  .sp-agent-wallet * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

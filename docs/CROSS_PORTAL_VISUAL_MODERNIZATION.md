@@ -31,3 +31,12 @@ No changes to backend APIs, Supabase access, authentication, role permissions, i
 3. Confirm the public landing page visuals are unchanged.
 4. Capture screenshots from the actual authenticated portals and inspect the production PWA on a device.
 5. Confirm preview/production build and all checks pass after the latest CSS commit.
+
+
+## Pass 2 — customer and agent app visual priorities (2026-10-24)
+- Prioritize the authenticated Customer Portal and Agent Portal before internal portals.
+- Design direction: white-first backgrounds, emerald green for trust and primary actions, small orange accents for freshness and secondary emphasis; preserve SurePath logo assets and existing iconography.
+- Refine customer purchase, policy, claim and history surfaces; refine agent home, quote creation, policy tracking, commission/wallet and profile surfaces.
+- Maintain existing navigation, onboarding, authentication, API/data access, insurance calculations, commissions, and claim/payment behavior. Visual changes only unless separately approved.
+- Keep controls at least 44px, clear keyboard focus, safe-area spacing, reduced-motion support, and responsive mobile layouts.
+- Validation gate: run CI/build and review authenticated customer and agent screenshots at mobile and desktop sizes. Do not call the redesign complete or production-live until checks pass and a deployment containing this commit is verified.

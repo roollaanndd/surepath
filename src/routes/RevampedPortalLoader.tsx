@@ -42,7 +42,7 @@ export const RevampedPortalLoader: React.FC<{ lang?: Language }> = ({ lang = Lan
           </span>
         </div>
       </div>
-      <div className="absolute bottom-7 text-[10px] font-semibold tracking-[.18em]" style={{color:'#8ba79a'}}>SAFE • SIMPLE • SURE</div>
+      <div className="absolute bottom-7 text-2xs font-semibold tracking-[.18em]" style={{color:'#8ba79a'}}>SAFE • SIMPLE • SURE</div>
     </main>
   );
 };

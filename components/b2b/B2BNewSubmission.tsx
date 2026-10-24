@@ -17,7 +17,15 @@ interface Props {
 type ProductType = 'FLEET_MV' | 'BONDING' | 'GROUP_HEALTH';
 
 const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
-const LABEL = 'block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider';
+const LABEL = 'block text-xs font-bold text-ds-ink3 mb-1 uppercase tracking-wider';
+
+// The picker names each product properly; the review step below it printed the
+// raw enum ("FLEET_MV") next to those names. Same source for both.
+const PRODUCT_LABEL: Record<string, string> = {
+  FLEET_MV:     'Armada Kendaraan',
+  BONDING:      'Surety Bond',
+  GROUP_HEALTH: 'Kesehatan Kumpulan',
+};
 
 const DOC_REQS: Record<ProductType, Array<{ key: string; label: string }>> = {
   FLEET_MV: [
@@ -160,12 +168,12 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
               : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5'
           }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}>
             <Icon size={20} />
           </div>
           <div>
             <div className="font-black text-sm">{title}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{desc}</div>
+            <div className="text-xs text-ds-ink3 mt-0.5">{desc}</div>
           </div>
         </button>
       ))}
@@ -232,7 +240,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
     return (
       <div className="space-y-4">
         <h2 className="font-black text-lg">{t('Document Upload', 'Unggah Dokumen')}</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{t('Upload required documents. You can skip and upload later.', 'Unggah dokumen yang diperlukan. Bisa dilengkapi nanti.')}</p>
+        <p className="text-xs text-ds-ink3">{t('Upload required documents. You can skip and upload later.', 'Unggah dokumen yang diperlukan. Bisa dilengkapi nanti.')}</p>
         {docs.map(({ key, label }) => (
           <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -246,7 +254,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
             <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
               uploadedDocs[key]
                 ? 'bg-emerald-100 dark:bg-emerald-500/20 text-ds-green dark:text-emerald-400'
-                : 'bg-emerald-500 text-white'
+                : 'bg-ds-green text-ds-on-green'
             }`}>
               {uploadingKey === key
                 ? <Loader2 size={13} className="animate-spin" />
@@ -269,15 +277,15 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
     <div className="space-y-4">
       <h2 className="font-black text-lg">{t('Review & Confirm', 'Periksa & Konfirmasi')}</h2>
       <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 space-y-2">
-        <div className="flex justify-between text-sm"><span className="text-slate-500">{t('Product', 'Produk')}</span><span className="font-bold">{productType}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-slate-500">{t('Company', 'Perusahaan')}</span><span className="font-bold">{company.company_name}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-slate-500">PIC</span><span className="font-bold">{company.pic_name}</span></div>
-        <div className="flex justify-between text-sm"><span className="text-slate-500">Email</span><span className="font-bold truncate ml-2">{company.pic_email}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-ds-ink3">{t('Product', 'Produk')}</span><span className="font-bold">{PRODUCT_LABEL[productType] ?? productType}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-ds-ink3">{t('Company', 'Perusahaan')}</span><span className="font-bold">{company.company_name}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-ds-ink3">PIC</span><span className="font-bold">{company.pic_name}</span></div>
+        <div className="flex justify-between text-sm"><span className="text-ds-ink3">Email</span><span className="font-bold truncate ml-2">{company.pic_email}</span></div>
         {Object.entries(details).map(([k, v]) => (
-          v ? <div key={k} className="flex justify-between text-sm"><span className="text-slate-500 capitalize">{k.replace(/_/g, ' ')}</span><span className="font-bold truncate ml-2">{String(v)}</span></div> : null
+          v ? <div key={k} className="flex justify-between text-sm"><span className="text-ds-ink3 capitalize">{k.replace(/_/g, ' ')}</span><span className="font-bold truncate ml-2">{String(v)}</span></div> : null
         ))}
         <div className="flex justify-between text-sm">
-          <span className="text-slate-500">{t('Docs uploaded', 'Dok. terunggah')}</span>
+          <span className="text-ds-ink3">{t('Docs uploaded', 'Dok. terunggah')}</span>
           <span className="font-bold">{Object.keys(uploadedDocs).length}</span>
         </div>
       </div>
@@ -302,7 +310,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
         {STEPS.map((label, i) => (
           <React.Fragment key={label}>
             <div className={`flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-xs font-black transition-colors ${
-              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-ds-ink3'
+              i < step ? 'bg-ds-green text-ds-on-green' : i === step ? 'bg-ds-green text-ds-on-green' : 'bg-slate-100 dark:bg-white/10 text-ds-ink3'
             }`}>
               {i < step ? '✓' : i + 1}
             </div>

@@ -41,10 +41,35 @@ komponen 0..1, bukan 0..255 — sehingga tombol yang nyaris putih terbaca nyaris
 hitam. Harness kini menskalakan sintaks itu, dan setiap kegagalan yang
 dilaporkan ikut menyebut elemen mana yang memberi latarnya.
 
+**Layar interior B2B, diukur untuk pertama kalinya**
+
+Setiap sweep sebelumnya berhenti di tab Beranda, persis jebakan yang sama
+seperti portal Insurer. Begitu Ajuan, Tawaran, Buat dan Profil benar-benar
+dirender, isinya:
+
+- **24 label di bawah lantai 11px** (Ajuan 15, Tawaran 9) — tab filter dan
+  semua badge status. Kini `text-2xs`.
+- **Tab filter menampilkan enum mentah berbahasa Inggris** (`SUBMITTED`,
+  `REVIEWING`, `QUOTED`, `PENDING`) padahal badge di kartunya sudah memakai
+  label Indonesia dari tabel yang sama. Kini keduanya memakai `STATUS_LABEL`.
+- **Putih di atas hijau** pada tab aktif, tombol Terima, pemilih produk dan
+  avatar Profil — luput dari seluruh sweep kontras, yang tidak pernah membuka
+  layar ini. Kini `text-ds-on-green`.
+- **`Deductible 1500000`** — `coverage_details` adalah JSON bebas, dan layar
+  ini mencetak kuncinya apa adanya dan nilainya lewat `String()`. Kunci yang
+  dikenal kini punya label Indonesia, dan nilai rupiah diformat:
+  "Risiko sendiri — Rp 1.500.000".
+- **Avatar Profil kosong.** `profile?.company_name ?? client?.company_name ??
+  'B2B'` — `??` tidak jatuh ke cadangan untuk string kosong, dan klien yang
+  belum mengisi nama perusahaan menyimpan `''`. Jadi cadangan `'B2B'` tidak
+  pernah terpakai dan kotak hijaunya kosong.
+- Sisa class slate mentah tanpa varian gelap dipindah ke token.
+
 **Verifikasi**
 
 Diukur ulang di keenam portal, dua tema: B2B kini benar-benar gelap
-(`bodyBg` gelap), dan kontras **0 kegagalan** di keenamnya.
+(`bodyBg` gelap), dan kontras **0 kegagalan** di keenamnya. Kelima layar
+interior B2B: sub-11px **0**, slate mentah **0**, di terang maupun gelap.
 
 
 ## v2.7.5 — 2026-10-24

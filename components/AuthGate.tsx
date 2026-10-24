@@ -423,29 +423,29 @@ const AuthGate: React.FC<AuthGateProps> = ({
   }
 
   // ── Design tokens (emerald brand) ──────────────────────────────────────
-  const GRAD = 'linear-gradient(135deg, #16a34a 0%, #059669 100%)';
-  const inputCls = 'w-full h-12 pl-11 pr-4 rounded-xl sm:rounded-2xl border border-slate-200 bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
+  const GRAD = 'linear-gradient(135deg, #15803d 0%, #059669 58%, #f59e0b 140%)';
+  const inputCls = 'w-full h-12 pl-11 pr-4 rounded-full border border-white bg-white text-slate-900 text-sm placeholder:text-slate-400 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.35)] focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(180deg, #ffffff 0%, #fbfefc 58%, #f4fbf6 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(135deg, #fff8dc 0%, #f4fff7 52%, #fff3e8 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
 
       {/* Ambient emerald wash — same language as the apps */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(480px 360px at 15% -5%, rgba(16,185,129,0.13), transparent 65%), radial-gradient(560px 420px at 110% 30%, rgba(16,185,129,0.09), transparent 70%), radial-gradient(520px 460px at 50% 115%, rgba(5,150,105,0.10), transparent 70%)' }} />
+        background: 'radial-gradient(440px 360px at 5% 0%, rgba(34,197,94,0.18), transparent 68%), radial-gradient(520px 440px at 100% 18%, rgba(249,115,22,0.18), transparent 70%), radial-gradient(520px 460px at 50% 115%, rgba(5,150,105,0.12), transparent 70%)' }} />
       {/* Fine dot-matrix overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(5,150,105,0.035) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(5,150,105,0.045) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
       }} />
 
       <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
 
         {/* Responsive login hero; preserves existing authentication actions and official logo component */}
-        <div className="w-full overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-[0_12px_34px_-24px_rgba(6,95,70,0.24)] sm:rounded-[2rem]">
-          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 48%, #34d399 100%)' }}>
-            <div aria-hidden="true" className="absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/15" />
-            <div aria-hidden="true" className="absolute right-8 -top-10 h-40 w-40 rounded-full border border-white/20" />
-            <div aria-hidden="true" className="absolute right-12 bottom-[-4.5rem] h-36 w-36 rounded-full bg-lime-300/20 blur-2xl" />
+        <div className="w-full overflow-hidden rounded-[2rem] border border-white/80 bg-white shadow-[0_24px_70px_-30px_rgba(6,95,70,0.32)] sm:rounded-[2.25rem]">
+          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 55%, #16a34a 100%)' }}>
+            <div aria-hidden="true" className="absolute -right-10 -top-20 h-64 w-64 rounded-[42%] rotate-12 opacity-95" style={{ background: "linear-gradient(135deg, rgba(251,146,60,0.98), rgba(245,158,11,0.9) 58%, rgba(253,186,116,0.7))", filter: "blur(0.2px)" }} />
+            <div aria-hidden="true" className="absolute right-10 -top-12 h-44 w-44 rounded-full border border-white/35" />
+            <div aria-hidden="true" className="absolute right-6 bottom-[-4.5rem] h-36 w-36 rounded-full bg-orange-300/35 blur-2xl" />
             <div className="relative max-w-xs text-white">
               <p className="text-2xs font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
               <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
@@ -464,7 +464,7 @@ const AuthGate: React.FC<AuthGateProps> = ({
           </div>
           <div className="text-center">
             <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: '#0f172a' }}>
-              Sure<span style={{ background: 'linear-gradient(135deg,#059669,#16a34a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
+              Sure<span style={{ background: 'linear-gradient(135deg,#15803d,#059669 65%,#f97316 140%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
             </h1>
             <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(15,23,42,0.55)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
               {mode === 'REGISTER'

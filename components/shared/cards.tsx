@@ -158,16 +158,21 @@ export const StatCard: React.FC<{
   // with it, and `tabular-nums` keeps the three tiles' digits on a shared
   // rhythm instead of each one setting its own.
   <SurfaceCard onClick={onClick} className="p-3 sm:p-4">
-    <div className="flex items-center gap-2 mb-2">
+    {/* Reserve two lines for the label. A three-up row mixes "AKTIF" with
+        "TOTAL PREMI"; when only the long one wrapped, its value dropped a line
+        and the row's numbers stopped sharing a baseline. */}
+    <div className="flex items-start gap-2 mb-2 min-h-[1.75rem]">
       {Icon && (
-        <div className={`w-7 h-7 ${iconBg} rounded-xl flex items-center justify-center`}>
+        <div className={`w-7 h-7 ${iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
           <Icon size={14} className={iconColor} />
         </div>
       )}
-      <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-wider leading-tight">{label}</span>
     </div>
     <div className="text-base sm:text-xl font-black text-ds-ink leading-tight tabular-nums">{value}</div>
-    {sub && <div className="text-2xs text-ds-ink3 mt-0.5 leading-snug">{sub}</div>}
+    {/* break-words, not the inherited `anywhere`: a tile this narrow was
+        splitting "perpanjangan" into "perpanjang/an". */}
+    {sub && <div className="text-2xs text-ds-ink3 mt-0.5 leading-snug break-words">{sub}</div>}
     {typeof progress === 'number' && (
       <div className="mt-2 h-1 bg-ds-border rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, progress))}%`, background: '#00C16A' }} />

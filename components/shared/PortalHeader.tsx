@@ -39,7 +39,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
           <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink">
             Sure<span className="text-ds-green">Path</span>
           </div>
-          <div className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest leading-none mt-0.5 truncate">
+          <div className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider leading-none mt-0.5 truncate">
             {portalLabel} <span className="text-ds-green/70 normal-case hidden min-[420px]:inline">v{APP_VERSION}</span>
           </div>
         </div>
@@ -49,7 +49,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
         <div className="text-right mr-2 min-w-0 max-w-[6.5rem] sm:max-w-[11rem]">
           <div className="text-xs font-black tracking-tight leading-none text-ds-ink truncate">{userName}</div>
           {userCode && (
-            <div className="text-[10px] font-bold text-ds-green uppercase tracking-widest leading-none mt-0.5 truncate">
+            <div className="text-2xs font-bold text-ds-green uppercase tracking-wider leading-none mt-0.5 truncate">
               {userCode}
             </div>
           )}

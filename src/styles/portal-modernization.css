@@ -1416,3 +1416,107 @@
 @media (prefers-reduced-motion: reduce) {
   .sp-modern-app .sp-bottom-nav, .sp-modern-app .sp-bottom-nav * { transition: none !important; }
 }
+
+
+/* Admin dashboard visible redesign v2 — intentional, high-contrast changes to the
+   actual workspace, metric cards, sections, tables and controls (not just sidebar). */
+.sp-modern-app:has(aside) > main > header {
+  background: rgba(255,255,255,.92) !important;
+  border-bottom: 1px solid #dce9e2 !important;
+  box-shadow: 0 4px 22px -18px rgba(5,55,39,.35) !important;
+  backdrop-filter: blur(18px);
+}
+.sp-modern-app:has(aside) > main > header input {
+  background: #f3f8f5 !important;
+  border: 1px solid #d7e7de !important;
+  border-radius: 14px !important;
+  min-height: 44px;
+}
+.sp-modern-app:has(aside) > main > div:last-child {
+  background: linear-gradient(180deg,#f3f8f5 0%,#f8fbf9 260px,#f7faf8 100%) !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child > div {
+  max-width: 1440px !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child h2 {
+  letter-spacing: -.045em;
+}
+.sp-modern-app:has(aside) > main > div:last-child .grid > button {
+  position: relative;
+  min-height: 150px;
+  border: 1px solid #dce9e2 !important;
+  border-radius: 22px !important;
+  background: linear-gradient(145deg,#fff 0%,#f8fcf9 100%) !important;
+  box-shadow: 0 5px 18px -14px rgba(4,72,48,.42),0 1px 2px rgba(16,65,46,.04) !important;
+  padding: 22px !important;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child .grid > button::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 18px; bottom: 18px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg,#00a86b,#a3d94c);
+  opacity: .85;
+}
+.sp-modern-app:has(aside) > main > div:last-child .grid > button:hover {
+  transform: translateY(-3px) !important;
+  border-color: #86cbb0 !important;
+  box-shadow: 0 16px 34px -22px rgba(0,104,67,.42) !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child .grid > button > div:first-child {
+  border-radius: 14px !important;
+  box-shadow: inset 0 0 0 1px rgba(0,120,75,.06);
+}
+.sp-modern-app:has(aside) > main > div:last-child > div > p {
+  color: #557267 !important;
+  letter-spacing: .16em !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child .rounded-3xl.border,
+.sp-modern-app:has(aside) > main > div:last-child .rounded-\[1\.75rem\] {
+  border-color: #dce9e2;
+}
+.sp-modern-app:has(aside) > main > div:last-child .p-6.rounded-3xl.border {
+  background: #fff !important;
+  border: 1px solid #dce9e2 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 6px 22px -18px rgba(5,65,43,.34) !important;
+  padding: 24px !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child table thead {
+  background: #edf7f1 !important;
+}
+.sp-modern-app:has(aside) > main > div:last-child table th {
+  color: #416658;
+  letter-spacing: .08em;
+}
+.sp-modern-app:has(aside) > main > div:last-child :where(input,select,textarea) {
+  border-color: #cfe2d7;
+  border-radius: 12px;
+}
+.sp-modern-app:has(aside) aside {
+  background: linear-gradient(165deg,#063c32 0%,#075341 52%,#07372f 100%) !important;
+  border-right: 1px solid rgba(255,255,255,.1) !important;
+}
+.sp-modern-app:has(aside) aside nav button {
+  min-height: 44px;
+  border-radius: 12px !important;
+}
+.sp-modern-app:has(aside) aside nav button[aria-current="page"],
+.sp-modern-app:has(aside) aside nav button[data-active="true"] {
+  background: linear-gradient(100deg,rgba(16,185,129,.28),rgba(16,185,129,.10)) !important;
+  border-color: rgba(167,243,208,.26) !important;
+  box-shadow: inset 3px 0 #6ee7b7,0 4px 12px -10px rgba(0,0,0,.4);
+}
+@media (max-width: 640px) {
+  .sp-modern-app:has(aside) > main > div:last-child { padding: 16px !important; }
+  .sp-modern-app:has(aside) > main > div:last-child .grid > button {
+    min-height: 128px;
+    padding: 16px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app:has(aside) > main > div:last-child .grid > button { transition: none !important; }
+}

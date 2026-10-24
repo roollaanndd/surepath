@@ -2,6 +2,7 @@
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail } from '../../_shared/trust.ts';
+import { newAgentCode, newCustomerCode, newTncRefNumber } from '../../_shared/codes.ts';
 import { linkOrdersToNewCustomer } from './clientLink.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
@@ -172,9 +173,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           role,
           trust_score: role === 'AGENT' ? 80 : 85,
           verified: role !== 'AGENT',
-          agent_code: role === 'AGENT'
-            ? 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000))
-            : 'SP-' + String(Math.floor(Math.random() * 99999)).padStart(5, '0'),
+          agent_code: role === 'AGENT' ? newAgentCode() : newCustomerCode(),
         };
         if (role === 'AGENT') {
           insertRow.commission_rate = 0.1;
@@ -309,7 +308,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
 
     case 'record_tc_acceptance': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
-        const refNumber = `TC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+        const refNumber = newTncRefNumber();
         const { error: tcErr } = await db.from('sp_tnc_records').insert({
           user_id: caller.spUser.id,
           reference_number: refNumber,

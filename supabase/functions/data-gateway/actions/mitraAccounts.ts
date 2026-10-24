@@ -19,6 +19,7 @@
 // sandi yang bisa dibaca.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail } from '../../_shared/trust.ts';
+import { newAgentCode } from '../../_shared/codes.ts';
 
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
@@ -55,19 +56,6 @@ function generateTempPassword(length = 14): string {
   // Satu simbol di posisi tetap supaya tetap lolos kebijakan "harus ada
   // karakter khusus" tanpa membuat panjangnya acak.
   return out.slice(0, 4) + '-' + out.slice(4, 9) + '-' + out.slice(9);
-}
-
-// Dibangkitkan dengan crypto, bukan Math.random(). Bentuknya memang sama
-// dengan ensure_profile ('SP-AGT-' + 4 digit), tapi kode mitra dipakai sebagai
-// kode rujukan upline yang dicocokkan di admin_create_mitra dan apply_referral,
-// jadi ia lebih dari sekadar label tampilan. CodeQL menandainya sebagai
-// "insecure randomness" di PR ini, dan memang benar: Math.random() tidak punya
-// jaminan apa pun soal keterdugaan, dan di berkas ini ia duduk persis di
-// sebelah pembangkit kata sandi.
-function agentCode(): string {
-  const n = new Uint32Array(1);
-  crypto.getRandomValues(n);
-  return 'SP-AGT-' + String(1000 + (n[0] % 9000));
 }
 
 export async function handleMitraAccountsAction(
@@ -159,7 +147,7 @@ export async function handleMitraAccountsAction(
         ktp: params.ktp ?? null,
         address: params.address ?? null,
         role: 'AGENT',
-        agent_code: agentCode(),
+        agent_code: newAgentCode(),
         commission_rate: 0.1,
         monthly_target: 50000000,
         trust_score: 80,

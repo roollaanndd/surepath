@@ -63,6 +63,19 @@ dan kata sandi sementara untuk mitra yang terkunci.
   mengembalikan badan respons utuh, jadi mendaftar empat kunci saja membuat
   `tsc` menolak pembacaan kunci yang memang dikirim server.
 
+**Keacakan kode identitas (CodeQL js/insecure-randomness)**
+- Kode mitra (`SP-AGT-####`), kode pelanggan (`SP-#####`), dan nomor rujukan
+  T&C dibangkitkan dengan `Math.random()` di tiga tempat terpisah. Itu bukan
+  label tampilan: kode mitra dipakai sebagai **kode rujukan upline**, dicocokkan
+  ke `agent_code`/`referral_code` di `admin_create_mitra` dan `apply_referral`,
+  jadi siapa pun yang bisa menduga kode mitra orang lain bisa menautkan dirinya
+  ke upline itu. `Math.random()` di V8 adalah xorshift128+ dengan state yang
+  bisa direkonstruksi dari beberapa keluaran.
+- Ketiganya dipindahkan ke satu `_shared/codes.ts` yang memakai
+  `crypto.getRandomValues`. Bentuk kodenya tidak berubah, jadi data yang sudah
+  ada tetap cocok. `send-otp` sudah memakai crypto untuk alasan yang sama; ini
+  menyusulkan sisanya.
+
 **Deploy**
 - `data-gateway` **harus di-deploy** agar ketiga aksi ini hidup; kode di `main`
   saja tidak mengubah produksi.

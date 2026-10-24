@@ -1,6 +1,7 @@
 // admin.ts — 13 actions
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
+import { newAgentCode } from '../../_shared/codes.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -114,7 +115,7 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
     case 'admin_register_agent': {
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.name || !params.email || !params.phone) return json({ error: 'name, email, phone required' }, 400);
-        const agentCode = 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000));
+        const agentCode = newAgentCode();
         const { data, error } = await db.from('sp_users').insert({
           name: params.name, email: params.email, phone: params.phone,
           ktp: params.ktp ?? null, address: params.address ?? null,

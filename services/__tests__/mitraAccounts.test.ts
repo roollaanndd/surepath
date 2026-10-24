@@ -238,10 +238,10 @@ describe('aksi di luar modul ini', () => {
 
 describe('pembangkit acak', () => {
   it('kode mitra berbentuk SP-AGT-#### dan tidak memakai Math.random', async () => {
-    // CodeQL menandai Math.random() di berkas ini sebagai insecure randomness,
-    // dan benar: kode mitra dipakai sebagai kode rujukan upline, bukan cuma
-    // label tampilan. Tes ini memaku bentuknya sekaligus menahan Math.random()
-    // agar tidak kembali masuk lewat perubahan berikutnya.
+    // Kode mitra dipakai sebagai kode rujukan upline, bukan cuma label
+    // tampilan, jadi keterdugaannya berarti — CodeQL menandainya di PR #291.
+    // Pembangkitnya sekarang satu, di _shared/codes.ts. Tes ini memaku
+    // bentuknya sekaligus menahan Math.random() agar tidak kembali masuk.
     const spy = vi.spyOn(Math, 'random');
     const { db, ctx } = makeCtx('ADMIN', { name: 'Budi', email: 'budi@email.com', phone: '0811' });
     await handleMitraAccountsAction('admin_create_mitra', ctx);

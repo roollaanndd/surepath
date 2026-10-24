@@ -161,11 +161,15 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (!params.agent_id || !params.tier_code) return json({ error: 'agent_id and tier_code required' }, 400);
         const [{ data: targetTier }, { data: agentRow }] = await Promise.all([
           db.from('sp_agent_tiers').select('*').eq('code', String(params.tier_code)).eq('is_active', true).maybeSingle(),
-          db.from('sp_users').select('tier').eq('id', String(params.agent_id)).maybeSingle(),
+          db.from('sp_users').select('id, role, tier').eq('id', String(params.agent_id)).maybeSingle(),
         ]);
         if (!targetTier) return json({ error: 'Tier tidak ditemukan atau nonaktif' }, 404);
+        // STRICT BOUNDARY: tiers belong only to AGENT accounts. Never let a
+        // valid tier assignment act as an implicit account-role conversion.
+        if (!agentRow) return json({ error: 'Akun target tidak ditemukan' }, 404);
+        if (agentRow.role !== 'AGENT') return json({ error: 'Tier hanya dapat diterapkan ke akun mitra (AGENT); role akun tidak diubah.', code: 'TARGET_NOT_AGENT' }, 400);
         try {
-          const result = await applyOrQueueTier(db, String(params.agent_id), targetTier, agentRow?.tier ?? null, actorId, caller.role ?? '', 'MANUAL', params.reason ? String(params.reason) : undefined);
+          const result = await applyOrQueueTier(db, String(params.agent_id), targetTier, agentRow.tier ?? null, actorId, caller.role ?? '', 'MANUAL', params.reason ? String(params.reason) : undefined);
           return json({ data: result.data, pending: result.pending });
         } catch (e) {
           return json({ error: (e as Error).message }, 400);
@@ -189,6 +193,9 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (reqRow.status !== 'PENDING') return json({ error: 'Request sudah diproses' }, 400);
         const { data: targetTier } = await db.from('sp_agent_tiers').select('*').eq('code', reqRow.requested_tier_code).maybeSingle();
         if (!targetTier) return json({ error: 'Tier target tidak ditemukan' }, 404);
+        const { data: targetAgent } = await db.from('sp_users').select('id, role').eq('id', reqRow.agent_id).maybeSingle();
+        if (!targetAgent) return json({ error: 'Akun target tidak ditemukan' }, 404);
+        if (targetAgent.role !== 'AGENT') return json({ error: 'Permintaan ditolak: tier hanya berlaku untuk akun mitra (AGENT).', code: 'TARGET_NOT_AGENT' }, 400);
         if (targetTier.requires_approval && !(targetTier.approval_roles ?? []).includes(caller.role ?? '')) {
           return json({ error: 'Role Anda tidak berwenang menyetujui tier ini' }, 403);
         }
@@ -223,8 +230,10 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         const [{ data: tiers }, metrics, { data: agentRow }] = await Promise.all([
           db.from('sp_agent_tiers').select('*'),
           computeAgentMetrics(db, String(params.agent_id)),
-          db.from('sp_users').select('tier').eq('id', String(params.agent_id)).maybeSingle(),
+          db.from('sp_users').select('id, role, tier').eq('id', String(params.agent_id)).maybeSingle(),
         ]);
+        if (!agentRow) return json({ error: 'Akun target tidak ditemukan' }, 404);
+        if (agentRow.role !== 'AGENT') return json({ error: 'Evaluasi tier hanya berlaku untuk akun mitra (AGENT).', code: 'TARGET_NOT_AGENT' }, 400);
         const suggested = resolveEligibleTier(tiers ?? [], metrics.policiesCount, metrics.totalPremium);
         if (!suggested) return json({ error: 'Tidak ada tier aktif untuk dievaluasi' }, 400);
         if (suggested.code === agentRow?.tier) return json({ data: { changed: false, tier: suggested.code, metrics } });

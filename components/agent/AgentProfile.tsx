@@ -47,6 +47,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [copied, setCopied] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [ktpUploading, setKtpUploading] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const { tiers } = useTierDefinitions();

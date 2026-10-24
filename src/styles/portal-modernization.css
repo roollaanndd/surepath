@@ -1040,3 +1040,202 @@
   .sp-operator-premium .sp-operator-hero { padding: 1.1rem; }
   .sp-operator-premium .sp-operator-queue-card { min-height: 120px; padding: .85rem; }
 }
+
+
+/* Dark-mode correction — keep the white-first refresh strictly light-only.
+   Several later polish rules used fixed white/green-tinted surfaces outside the
+   light-theme scope, which made cards and form controls glow white in dark mode.
+   These overrides are intentionally portal-scoped and leave always-dark hero
+   cards and explicit white-on-brand actions alone. */
+.dark .sp-modern-app {
+  color: var(--ds-text-primary, #F8FAFC);
+  background-color: var(--ds-bg, #1A1D29);
+  color-scheme: dark;
+}
+.dark .sp-modern-app :where(.bg-ds-bg) {
+  background-color: var(--ds-bg, #1A1D29) !important;
+}
+.dark .sp-modern-app :where(.bg-ds-card) {
+  background-color: var(--ds-card, #242836) !important;
+}
+.dark .sp-modern-app :where(.bg-ds-card2) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(.bg-white:not(.text-white):not([data-sp-preserve-light])) {
+  background-color: var(--ds-card, #242836) !important;
+}
+.dark .sp-modern-app :where(.bg-slate-50, .bg-gray-50, .bg-neutral-50, .bg-zinc-50, .bg-ds-surface) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(.border-slate-100, .border-gray-100, .border-slate-200, .border-gray-200, .border-white\/60) {
+  border-color: var(--ds-border, #3A3F52) !important;
+}
+.dark .sp-modern-app :where(.text-slate-950, .text-slate-900, .text-gray-950, .text-gray-900, .text-neutral-900, .text-zinc-900, .text-slate-800, .text-gray-800) {
+  color: var(--ds-text-primary, #F8FAFC) !important;
+}
+.dark .sp-modern-app :where(.text-slate-700, .text-gray-700, .text-neutral-700, .text-zinc-700, .text-slate-600, .text-gray-600) {
+  color: var(--ds-text-secondary, #B8BFD0) !important;
+}
+.dark .sp-modern-app :where(.text-slate-500, .text-gray-500, .text-neutral-500, .text-zinc-500, .text-slate-400, .text-gray-400) {
+  color: var(--ds-text-muted, #99A0B2) !important;
+}
+.dark .sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  color: var(--ds-text-primary, #F8FAFC);
+  background-color: var(--ds-card2, #2C3142) !important;
+  border-color: var(--ds-border-strong, #4A5066) !important;
+}
+.dark .sp-modern-app :where(input, select, textarea)::placeholder {
+  color: var(--ds-text-muted, #99A0B2) !important;
+  opacity: 1;
+}
+.dark .sp-modern-app :where(table thead, .divide-y > :not([hidden]) ~ :not([hidden])) {
+  border-color: var(--ds-border, #3A3F52);
+}
+.dark .sp-modern-app :where(table thead) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(tr:hover, .hover\:bg-gray-50:hover, .hover\:bg-slate-50:hover) {
+  background-color: color-mix(in srgb, var(--ds-card2, #2C3142) 84%, var(--ds-primary, #00E07A) 16%);
+}
+.dark .sp-modern-app :where(.sp-status-pending, [data-status="pending"]) {
+  background: #3B2418 !important;
+  color: #FFB47D !important;
+  border-color: #754323 !important;
+}
+.dark .sp-modern-app :where(.sp-status-success, [data-status="success"]) {
+  background: #0D3328 !important;
+  color: #86EFAC !important;
+  border-color: #176044 !important;
+}
+.dark .sp-modern-app :where(.sp-secondary-action, [data-sp-secondary="orange"]) {
+  background: #3B2418 !important;
+  border-color: #754323 !important;
+  color: #FFB47D !important;
+}
+.dark .sp-modern-app :where(.sp-kpi, [data-sp-kpi]) {
+  background: linear-gradient(145deg, #242836 0%, #202735 100%) !important;
+  border-color: var(--ds-border, #3A3F52) !important;
+  box-shadow: 0 10px 26px -22px rgba(0, 0, 0, .72);
+}
+
+/* Agent portal: remove the hard-coded white canvas and glass panels in dark mode. */
+.dark .sp-agent-premium {
+  --sp-ui-canvas: #1A1D29;
+  --sp-ui-orange: #FF9B54;
+  background-color: var(--ds-bg, #1A1D29) !important;
+  background-image:
+    radial-gradient(ellipse at 92% 4%, rgba(255, 155, 84, .07), transparent 27rem),
+    linear-gradient(180deg, #1A1D29 0%, #202735 46%, #1A1D29 100%) !important;
+}
+.dark .sp-agent-premium .sp-ambient {
+  background:
+    radial-gradient(ellipse at 8% 10%, rgba(0, 224, 122, .08), transparent 26rem),
+    radial-gradient(ellipse at 94% 34%, rgba(255, 155, 84, .06), transparent 22rem) !important;
+}
+.dark .sp-agent-premium .sp-glass-strong {
+  background-color: color-mix(in srgb, var(--ds-card, #242836) 90%, transparent) !important;
+  border-color: var(--ds-border, #3A3F52) !important;
+  box-shadow: 0 12px 34px -24px rgba(0, 0, 0, .7) !important;
+}
+.dark .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+  background: var(--ds-card, #242836);
+  color: var(--ds-text-primary, #F8FAFC);
+  border-color: var(--ds-border, #3A3F52);
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, .7);
+}
+.dark .sp-agent-premium .sp-agent-home__quick-actions .grid > button:hover {
+  border-color: color-mix(in srgb, var(--ds-primary, #00E07A) 42%, var(--ds-border, #3A3F52));
+}
+
+/* Admin CMS: the premium refresh used literal light colors, overriding DS tokens. */
+.dark .sp-modern-app:has(> aside),
+.dark .sp-modern-app:has(> div > aside) {
+  --sp-admin-green: #00E07A;
+  --sp-admin-green-soft: #0D3328;
+  --sp-admin-orange: #FF9B54;
+  --sp-admin-border: #3A3F52;
+  --sp-admin-ink: #F8FAFC;
+  --sp-admin-muted: #B8BFD0;
+  background: var(--ds-bg, #1A1D29) !important;
+  color: var(--ds-text-primary, #F8FAFC) !important;
+}
+.dark .sp-modern-app:has(> aside) > aside,
+.dark .sp-modern-app:has(> div > aside) > aside {
+  background: rgba(26, 29, 41, .96) !important;
+  border-color: var(--ds-border, #3A3F52) !important;
+  box-shadow: 8px 0 32px -30px rgba(0, 0, 0, .8);
+}
+.dark .sp-modern-app:has(> aside) main,
+.dark .sp-modern-app:has(> div > aside) main {
+  background: var(--ds-bg, #1A1D29) !important;
+  color: var(--ds-text-primary, #F8FAFC);
+}
+.dark .sp-modern-app:has(> aside) aside nav a,
+.dark .sp-modern-app:has(> aside) aside nav button,
+.dark .sp-modern-app:has(> div > aside) aside nav a,
+.dark .sp-modern-app:has(> div > aside) aside nav button {
+  color: var(--ds-text-secondary, #B8BFD0) !important;
+}
+.dark .sp-modern-app:has(> aside) aside nav a:hover,
+.dark .sp-modern-app:has(> aside) aside nav button:hover,
+.dark .sp-modern-app:has(> div > aside) aside nav a:hover,
+.dark .sp-modern-app:has(> div > aside) aside nav button:hover {
+  color: var(--ds-text-primary, #F8FAFC) !important;
+  background: #2C3142 !important;
+  border-color: #3A3F52 !important;
+}
+.dark .sp-modern-app:has(> aside) aside nav a[aria-current="page"],
+.dark .sp-modern-app:has(> aside) aside nav button[aria-current="page"],
+.dark .sp-modern-app:has(> aside) aside nav a[data-active="true"],
+.dark .sp-modern-app:has(> div > aside) aside nav a[aria-current="page"],
+.dark .sp-modern-app:has(> div > aside) aside nav button[aria-current="page"],
+.dark .sp-modern-app:has(> div > aside) aside nav a[data-active="true"] {
+  color: #86EFAC !important;
+  background: linear-gradient(105deg, #0D3328, #3B2418) !important;
+  border-color: #365847 !important;
+  box-shadow: inset 3px 0 0 #FF9B54;
+}
+.dark .sp-modern-app:has(> aside) main :where(input, select, textarea),
+.dark .sp-modern-app:has(> div > aside) main :where(input, select, textarea) {
+  color: var(--ds-text-primary, #F8FAFC) !important;
+  background-color: var(--ds-card2, #2C3142) !important;
+  border-color: var(--ds-border-strong, #4A5066) !important;
+}
+.dark .sp-modern-app:has(> aside) main :where(table thead),
+.dark .sp-modern-app:has(> div > aside) main :where(table thead) {
+  background: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app:has(> aside) main :where(th),
+.dark .sp-modern-app:has(> div > aside) main :where(th) {
+  color: var(--ds-text-secondary, #B8BFD0) !important;
+}
+
+/* Operator dashboard: restore dark hero semantics after the light-mode redesign. */
+.dark .sp-operator-premium .sp-operator-hero {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 155, 84, .10), transparent 32%),
+    linear-gradient(135deg, #10251D 0%, #142C23 72%, #10251D 100%) !important;
+  border-color: #294638 !important;
+}
+.dark .sp-operator-premium .sp-operator-queue-card {
+  background: #13251D !important;
+  color: #F8FAFC;
+  border-color: #294638 !important;
+}
+.dark .sp-operator-premium .sp-operator-dashboard .bg-blue-50 {
+  background: #0A1E3D !important;
+}
+.dark .sp-operator-premium .sp-operator-dashboard .bg-emerald-50 {
+  background: #0D3328 !important;
+}
+.dark .sp-operator-premium .sp-operator-dashboard .bg-orange-50 {
+  background: #3B2418 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dark .sp-agent-premium *,
+  .dark .sp-modern-app:has(> aside) aside *,
+  .dark .sp-operator-premium * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -194,7 +194,10 @@ export interface SpCommission {
   order_id?: string;
   order_number?: string;
   client_name: string;
-  product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR';
+  // The DB column is free text (xendit-webhook stores product_code into it),
+  // and the admin ISSUED flow can now persist the order's real product incl.
+  // life policies — previously hardcoded 'CAR'.
+  product_type: 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR' | 'LIFE';
   premium_amount: number;
   commission_rate?: number;
   commission_amount: number;
@@ -278,7 +281,13 @@ export interface SpClaim {
   incident_date?: string;
   location?: string;
   chronology?: string;
-  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'CLOSED';
+  // FIX 2026-10-26 (cross-app audit #1): the gateway allowlist (claims.ts
+  // admin_update_claim) accepts SUBMITTED|UNDER_REVIEW|APPROVED|REJECTED|PAID —
+  // CLOSED was never accepted, so an admin sending CLOSED got a silent gateway
+  // rejection while a PAID claim vanished from every admin filter. PAID is the
+  // terminal 'claim settled' state end to end; CLOSED is kept solely so
+  // historical rows (if any) still render.
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PAID' | 'CLOSED';
   amount_estimated?: number;
   amount_approved?: number;
   photos?: string[];
@@ -305,8 +314,12 @@ export interface SpNotification {
   // the gateway while this union listed neither; NotificationDrawer falls back
   // to the SYSTEM icon for an unknown type, so they rendered as a generic
   // "info" instead of as what they are.
+  // FIX 2026-10-26: POLICY_REJECTED (orders.ts), AGENT_VERIFIED / AGENT_REJECTED
+  // (agents.ts verify flow) are written by the gateway but were missing here,
+  // so NotificationDrawer rendered them as generic SYSTEM info.
   type: 'COMMISSION_EARNED' | 'CLAIM_UPDATE' | 'NEW_CLAIM' | 'ORDER_UPDATE'
-      | 'POLICY_ISSUED' | 'RENEWAL_ALERT' | 'QUOTE_ACCEPTED' | 'SYSTEM';
+      | 'POLICY_ISSUED' | 'POLICY_REJECTED' | 'AGENT_VERIFIED' | 'AGENT_REJECTED'
+      | 'RENEWAL_ALERT' | 'QUOTE_ACCEPTED' | 'SYSTEM';
   title: string;
   body: string;
   read: boolean;

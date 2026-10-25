@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   X, Wallet, AlertTriangle, FileText, CheckCircle, Info, ChevronRight, BellOff,
-  ShieldCheck, ClipboardList,
+  ShieldCheck, ClipboardList, XCircle, BadgeCheck, UserX,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -31,6 +31,9 @@ const TYPE_META: Record<SpNotification['type'], { Icon: any; color: string }> = 
   NEW_CLAIM:         { Icon: ClipboardList, color: 'text-ds-blue' },
   ORDER_UPDATE:      { Icon: ClipboardList, color: 'text-ds-blue' },
   POLICY_ISSUED:     { Icon: ShieldCheck,   color: 'text-ds-green' },
+  POLICY_REJECTED:   { Icon: XCircle,       color: 'text-rose-500' },
+  AGENT_VERIFIED:    { Icon: BadgeCheck,    color: 'text-ds-green' },
+  AGENT_REJECTED:    { Icon: UserX,         color: 'text-rose-500' },
   RENEWAL_ALERT:     { Icon: AlertTriangle, color: 'text-ds-amber' },
   QUOTE_ACCEPTED:    { Icon: CheckCircle,   color: 'text-ds-green' },
   SYSTEM:            { Icon: Info,          color: 'text-ds-ink3' },

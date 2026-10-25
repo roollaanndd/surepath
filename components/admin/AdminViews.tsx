@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  TrendingUp, Users, Zap, ShieldCheck,
-  ArrowUpRight, Activity,
-  CheckCircle2, Search,
+  Users, ShieldCheck, ArrowUpRight,
+  Search,
   FileText,
   ClipboardCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
-  HardDrive, Cpu, RefreshCw,
+  Cpu, RefreshCw,
 
   Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
@@ -14,48 +13,27 @@ import {
   X, Clock, AlertCircle, Send, Sparkles,
   KeyRound, Copy, MailCheck,
 } from 'lucide-react';
-import { db, AuditLog, CustomProduct, User } from '../../db';
+import { db, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   updateAgentTier, getTierChangeRequests, evaluateAgentTier,
   callGateway,
-  getAllOrders, updateOrderStatus, type SpPolicyOrder,
+  getAllOrders, updateOrderStatus, updateClaimStatus, type SpPolicyOrder,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
   registerAgent,
   createMitra, sendMitraPasswordReset, setMitraTempPassword,
   getSecurityStats, getSessionActivityByHour,
-  getAdminPayments, getAdminFinancialReports,
+  getAdminPayments,
 } from '../../services/supabaseService';
 import { useToast } from '../ui';
+import { AdminEmptyState, AdminErrorBanner } from './adminUI';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import type { BackupRecord } from '../../services/backupService';
 import { listBackups, performBackup, downloadBackup, getLastBackupTime } from '../../services/backupService';
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-
-const downloadCSV = (data: any[], filename: string) => {
-  if (data.length === 0) return;
-  const headers = Object.keys(data[0]).join(',');
-  const rows = data.map(obj => 
-    Object.values(obj).map(val => 
-      typeof val === 'string' ? `"${val.replace(/"/g, '""')}"` : val
-    ).join(',')
-  );
-  const csvContent = [headers, ...rows].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}_${new Date().getTime()}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 const Card: React.FC<{ children?: React.ReactNode, className?: string, onClick?: () => void }> = ({ children, className = "", onClick }) => (
   <div onClick={onClick} className={`p-8 bg-ds-card2 border border-ds-border rounded-[3rem] relative overflow-hidden backdrop-blur-sm group hover:border-emerald-500/30 transition-all duration-500 shadow-xl ${className}`}>
@@ -335,155 +313,156 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
   </Card>
 );
 
-export const BizAdminView = ({ isDashboard, section }: { isDashboard?: boolean, section?: string }) => {
-  const [users, setUsers] = useState<any[]>([]);
-  const [policies, setPolicies] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+// ── Partner Directory (merged from the former BizAdminView "users" menu) ────
+//
+// Menu cleanup 2026-10-26: the standalone "Pengguna" menu item duplicated
+// "Kelola Akun" (both listing admin_list_users). This component preserves the
+// one thing that view uniquely offered — the real GWP/commission leaderboard
+// aggregated from sp_commissions — as a tab inside UserManagementView, so the
+// canonical user screen is the single destination. Same data source
+// (admin_list_users + admin_list_commissions via the data-gateway), restyled
+// on ds tokens, with proper loading/empty/error states and no fabricated
+// stats (the old isDashboard block claimed "Conversion Rate 18.4%" — dead
+// code, deleted with it).
+export const PartnerDirectorySection: React.FC = () => {
+  const [rows, setRows] = useState<Array<{
+    id: string; name?: string; email?: string; phone?: string; role?: string;
+    totalSales: number; totalCommission: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-        setLoading(true);
-        setLoadError(null);
-        // Real data from Supabase via data-gateway (was reading empty local IndexedDB)
-        const [usersRes, polRes, commRes] = await Promise.all([
-          callGateway('admin_list_users', { limit: 500 }),
-          callGateway('admin_list_policies', { limit: 500 }),
-          callGateway('admin_list_commissions', { limit: 500 }),
-        ]);
-        const allUsers: any[] = (usersRes as any)?.data ?? [];
-        const allPolicies: any[] = (polRes as any)?.data ?? [];
-        setPolicies(allPolicies);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const [usersRes, commRes] = await Promise.all([
+        callGateway('admin_list_users', { limit: 500 }),
+        callGateway('admin_list_commissions', { limit: 500 }),
+      ]);
+      const allUsers: any[] = (usersRes as any)?.data ?? [];
+      const commissions: any[] = (commRes as any)?.data ?? [];
 
-        if (section === 'users') {
-           const commissions: any[] = (commRes as any)?.data ?? [];
-           const stats: Record<string, { sales: number; commission: number }> = {};
+      const stats: Record<string, { sales: number; commission: number }> = {};
+      commissions.forEach(c => {
+        const aid = c.agent_id;
+        if (!aid) return;
+        if (!stats[aid]) stats[aid] = { sales: 0, commission: 0 };
+        stats[aid].sales += c.premium_amount ?? 0;
+        stats[aid].commission += c.commission_amount ?? 0;
+      });
 
-           // Aggregate real GWP + commission per agent
-           commissions.forEach(c => {
-               const aid = c.agent_id;
-               if (!aid) return;
-               if (!stats[aid]) stats[aid] = { sales: 0, commission: 0 };
-               stats[aid].sales += c.premium_amount ?? 0;
-               stats[aid].commission += c.commission_amount ?? 0;
-           });
+      setRows(allUsers
+        .map(u => ({ ...u, totalSales: stats[u.id]?.sales || 0, totalCommission: stats[u.id]?.commission || 0 }))
+        .sort((a, b) => b.totalSales - a.totalSales));
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Gagal memuat data partner.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-           const mappedUsers = allUsers.map(u => ({
-              ...u,
-              totalSales: stats[u.id]?.sales || 0,
-              totalCommission: stats[u.id]?.commission || 0,
-           })).sort((a, b) => b.totalSales - a.totalSales);
+  useEffect(() => { load(); }, [load]);
 
-           setUsers(mappedUsers);
-        } else {
-           setUsers(allUsers);
-        }
-    };
-    fetchData().catch((error) => setLoadError(error instanceof Error ? error.message : 'Gagal memuat data operasional.')).finally(() => setLoading(false));
-  }, [section]);
-
-  if (section === 'transactions') {
-     return (
-        <div className="space-y-8 animate-fade-in">
-           {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
-           <Card>
-              <h3 className="font-black uppercase tracking-widest text-sm mb-6">Live Policy Deployment Traffic</h3>
-              <div className="space-y-4">
-                 {policies.map((p, i) => (
-                    <div key={i} className="p-4 bg-ds-card2 rounded-2xl flex items-center justify-between border border-ds-border">
-                       <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${p.status === 'ACTIVE' ? 'bg-emerald-500/10 text-ds-green' : 'bg-amber-500/10 text-ds-amber'}`}>
-                             <ShieldCheck size={20}/>
-                          </div>
-                          <div>
-                             <p className="text-xs font-black uppercase">{p.policyNumber}</p>
-                             <p className="text-[0.5rem] text-ds-ink3 uppercase tracking-widest">{p.type} • {p.providerId}</p>
-                          </div>
-                       </div>
-                       <p className="text-sm font-black tracking-tighter text-ds-green">{formatIDR(p.premium)}</p>
-                    </div>
-                 ))}
-              </div>
-           </Card>
-        </div>
-     )
-  }
-
-  const filteredUsers = searchTerm ? users.filter(u => (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) || (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())) : users;
+  const filtered = searchTerm
+    ? rows.filter(u =>
+        (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
+    : rows;
+  const activeSellers = rows.filter(u => u.totalSales > 0).length;
 
   return (
-  <div className="space-y-8 animate-fade-in">
-    {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat data operasional: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
-    {isDashboard && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Active Policies" value={policies.length} trend={`+${policies.length}`} icon={FileText} color="bg-emerald-500/10 text-ds-green" />
-        <StatCard label="Partner Nodes" value={users.length} trend="+12" icon={Users} color="bg-blue-500/10 text-blue-500" />
-        <StatCard label="Conversion Rate" value="18.4%" trend="+2.1%" icon={TrendingUp} color="bg-emerald-500/10 text-ds-green" />
+    <div className="rounded-2xl border bg-ds-card border-ds-border shadow-ds-sm overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 p-5 border-b border-ds-border">
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-widest text-ds-ink">Direktori Partner (Top Aktif)</h3>
+          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-1">
+            {rows.length} terdaftar · {activeSellers} pernah menjual · GWP & komisi nyata dari sp_commissions
+          </p>
+        </div>
+        <div className="relative">
+          <Search size={14} className="text-ds-ink3 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Cari nama atau email…"
+            className="pl-9 pr-4 py-2 bg-ds-card2 border border-ds-border rounded-xl text-xs text-ds-ink focus:outline-none focus:border-ds-green transition-all font-mono"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
-    )}
-    
-    {!isDashboard && (section === 'users') && (
-      <Card>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="font-black uppercase tracking-widest text-sm">Direktori Partner (Top Aktif)</h3>
-          <div className="flex items-center gap-3">
-             <span className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{users.length} Total Terdaftar</span>
-             <div className="relative">
-                <Search size={14} className="text-ds-ink3 absolute left-3 top-1/2 -translate-y-1/2"/>
-                <input 
-                  type="text" 
-                  placeholder="Cari user..." 
-                  className="pl-9 pr-4 py-2 bg-ds-card2 border border-ds-border rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-             </div>
-          </div>
+
+      {loadError && (
+        <div className="px-5 pt-4">
+          <AdminErrorBanner message={loadError} onRetry={load} retrying={loading} />
         </div>
+      )}
+
+      {loading && rows.length === 0 ? (
+        <div className="flex justify-center py-14">
+          <div className="w-8 h-8 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <AdminEmptyState
+          icon={Users}
+          title="Tidak ada partner"
+          hint="Belum ada pengguna yang cocok dengan pencarian Anda."
+        />
+      ) : (
         <div className="overflow-x-auto no-scrollbar">
-           <table className="w-full text-left whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
-                  <th className="pb-4 pl-4">Partner Info</th>
-                  <th className="pb-4">No. HP</th>
-                  <th className="pb-4">Sales (GWP)</th>
-                  <th className="pb-4">Komisi (25%)</th>
-                  <th className="pb-4 text-right pr-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="text-xs">
-                {filteredUsers.slice(0, 200).map((u, i) => (
-                  <tr key={i} className="border-b border-white/[0.02] hover:bg-white/[0.01]">
-                    <td className="py-4 pl-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500 flex items-center justify-center font-black text-xs text-white shadow-lg">{(u.name ?? '?')[0]}</div>
-                        <div>
-                          <p className="text-xs font-black uppercase text-white">{u.name ?? '—'}</p>
-                          <p className="text-[0.5rem] text-ds-ink3 tracking-widest">{u.email}</p>
-                        </div>
+          <table className="w-full text-left whitespace-nowrap">
+            <thead>
+              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+                <th className="py-3.5 pl-5">Partner</th>
+                <th className="py-3.5">Role</th>
+                <th className="py-3.5">No. HP</th>
+                <th className="py-3.5">Sales (GWP)</th>
+                <th className="py-3.5">Komisi</th>
+                <th className="py-3.5 text-right pr-5">Status</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs">
+              {filtered.slice(0, 200).map((u, i) => (
+                <tr key={u.id ?? i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
+                  <td className="py-3 pl-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-ds-green-tint text-ds-green flex items-center justify-center font-black text-xs flex-shrink-0">
+                        {(u.name ?? '?')[0].toUpperCase()}
                       </div>
-                    </td>
-                    <td className="py-4 font-mono text-[0.6rem] text-ds-ink3">{u.phone}</td>
-                    <td className="py-4 font-black text-ds-green">{formatIDR(u.totalSales || 0)}</td>
-                    <td className="py-4 font-black text-ds-amber">{formatIDR(u.totalCommission || 0)}</td>
-                    <td className="py-4 text-right pr-4">
-                       <Badge color={u.totalSales > 0 ? "emerald" : "gray"}>{u.totalSales > 0 ? 'Active Seller' : 'Registered'}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-           </table>
-           {filteredUsers.length > 200 && (
-             <div className="p-4 text-center text-xs text-ds-ink3 font-bold uppercase tracking-widest">
-               Menampilkan Top 200 dari {filteredUsers.length} Partner. Gunakan pencarian untuk User lainnya.
-             </div>
-           )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-ds-ink truncate max-w-[160px]">{u.name ?? '—'}</p>
+                        <p className="text-[0.55rem] text-ds-ink3 truncate max-w-[160px]">{u.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 text-[0.6rem] font-bold uppercase tracking-wide text-ds-ink2">{u.role?.replace('_', ' ') ?? '—'}</td>
+                  <td className="py-3 font-mono text-[0.6rem] text-ds-ink3">{u.phone || '—'}</td>
+                  <td className="py-3 font-black text-ds-green">{formatIDR(u.totalSales || 0)}</td>
+                  <td className="py-3 font-black text-ds-amber">{formatIDR(u.totalCommission || 0)}</td>
+                  <td className="py-3 text-right pr-5">
+                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest border ${
+                      u.totalSales > 0
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-gray-100 text-gray-500 border-gray-200'
+                    }`}>
+                      {u.totalSales > 0 ? 'Active Seller' : 'Terdaftar'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length > 200 && (
+            <div className="p-4 text-center text-xs text-ds-ink3 font-bold uppercase tracking-widest border-t border-ds-border">
+              Menampilkan Top 200 dari {filtered.length} partner. Gunakan pencarian untuk lainnya.
+            </div>
+          )}
         </div>
-      </Card>
-    )}
-  </div>
-)};
+      )}
+    </div>
+  );
+};
 
 export const SecurityView = () => {
   const [sessionActivity, setSessionActivity] = useState<Array<{ hour: number; count: number }>>([]);
@@ -526,7 +505,11 @@ export const SecurityView = () => {
            </button>
          </div>
        )}
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+       {/* FIX 2026-10-26 (audit: fabricated data): the "Latensi Server" and
+           "Uptime Server" cards rendered hardcoded "N/A" forever — dead
+           metrics kept for layout. Removed instead of faking values; the grid
+           now shows only what getSecurityStats actually measures. */}
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <StatCard
             label="Login Gagal (24 jam)"
             value={loading ? '…' : (secStats?.failedLogins24h ?? 0).toString()}
@@ -538,18 +521,6 @@ export const SecurityView = () => {
             value={loading ? '…' : (secStats?.activeSessionsCount ?? 0).toString()}
             icon={Cpu}
             color="bg-blue-500/10 text-blue-500"
-          />
-          <StatCard
-            label="Latensi Server"
-            value="N/A"
-            icon={Zap}
-            color="bg-emerald-500/10 text-ds-green"
-          />
-          <StatCard
-            label="Uptime Server"
-            value="N/A"
-            icon={Globe}
-            color="bg-emerald-500/10 text-ds-green"
           />
        </div>
 
@@ -639,361 +610,46 @@ export const SecurityView = () => {
   );
 };
 
-interface LedgerTx { id: string; date: string; type: string; amount: number; status: string; referenceId?: string; description: string; }
-
-export const LedgerView = () => {
-    const [txs, setTxs] = useState<LedgerTx[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            setLoadError(null);
-            // Real ledger from Supabase (payments in, commissions + withdrawals out) — was empty local IndexedDB
-            const [payments, withdrawals, commRes] = await Promise.all([
-                getAdminPayments(200),
-                getAdminWithdrawals(200),
-                callGateway('admin_list_commissions', { limit: 200 }),
-            ]);
-            const commissions: any[] = (commRes as any)?.data ?? [];
-            const list: LedgerTx[] = [];
-
-            payments.forEach((p: any) => {
-                const amt = p.paid_amount ?? p.amount ?? 0;
-                if (!amt) return;
-                list.push({
-                    id: `pay-${p.id}`,
-                    date: p.paid_at ?? p.created_at ?? new Date().toISOString(),
-                    type: 'PAYMENT',
-                    amount: amt,
-                    status: p.status === 'PAID' ? 'SUCCESS' : p.status === 'PENDING' ? 'PENDING' : 'FAILED',
-                    referenceId: p.order_number ?? p.external_id,
-                    description: `Premi${p.client_name ? ' — ' + p.client_name : ''}${p.product_name ? ' (' + p.product_name + ')' : ''}`,
-                });
-            });
-
-            commissions.forEach((c: any) => {
-                list.push({
-                    id: `comm-${c.id}`,
-                    date: c.created_at ?? new Date().toISOString(),
-                    type: 'COMMISSION',
-                    amount: c.commission_amount ?? 0,
-                    status: (c.status === 'PAID' || c.status === 'APPROVED') ? 'SUCCESS' : c.status === 'REJECTED' ? 'FAILED' : 'PENDING',
-                    referenceId: c.order_number,
-                    description: `Komisi Mitra${c.client_name ? ' — ' + c.client_name : ''}`,
-                });
-            });
-
-            withdrawals.forEach((w: any) => {
-                list.push({
-                    id: `wd-${w.id}`,
-                    date: w.created_at ?? new Date().toISOString(),
-                    type: 'WITHDRAWAL',
-                    amount: w.amount ?? 0,
-                    status: w.status === 'DISBURSED' ? 'SUCCESS' : (w.status === 'REJECTED' || w.status === 'FAILED') ? 'FAILED' : 'PENDING',
-                    referenceId: w.id,
-                    description: `Penarikan Dana${w.agent_name ? ' — ' + w.agent_name : ''}`,
-                });
-            });
-
-            list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setTxs(list);
-        };
-        load().catch((error) => setLoadError(error instanceof Error ? error.message : 'Gagal memuat buku besar.')).finally(() => setLoading(false));
-    }, []);
-
-    const convert = (val: number) => {
-        return `Rp ${(val).toLocaleString('id-ID')}`;
-    };
-
-    const handleExport = () => {
-        const data = txs.map(t => ({
-            ID: t.id,
-            Tanggal: t.date,
-            Tipe: t.type,
-            Jumlah: t.amount,
-            Status: t.status,
-            Ref: t.referenceId,
-            Deskripsi: t.description
-        }));
-        downloadCSV(data, `Buku_Besar_Transaksi`);
-    };
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-           {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat buku besar: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
-           <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
-              <div>
-                 <h2 className="text-3xl font-black uppercase tracking-tighter">Buku <span className="text-ds-green">Besar</span></h2>
-                 <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Sistem Pencatatan Transaksi Real-time</p>
-              </div>
-              <div className="flex gap-4">
-                 <button onClick={handleExport} className="flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl shadow-emerald-500/10 active:scale-95 transition-all">
-                    <FileDown size={18}/> Unduh Excel
-                 </button>
-              </div>
-           </div>
-
-           <Card>
-              <div className="overflow-x-auto no-scrollbar">
-                 <table className="w-full text-left min-w-[600px]">
-                    <thead>
-                       <tr className="text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest border-b border-ds-border">
-                          <th className="pb-4 pl-4">Tanggal</th>
-                          <th className="pb-4">Tipe Transaksi</th>
-                          <th className="pb-4">Deskripsi</th>
-                          <th className="pb-4">Jumlah (Rp)</th>
-                          <th className="pb-4 text-right pr-4">Status</th>
-                       </tr>
-                    </thead>
-                    <tbody className="text-[0.7rem] font-bold">
-                       {loading && (
-                          <tr><td colSpan={5} className="py-12 text-center text-ds-ink3">Memuat transaksi…</td></tr>
-                       )}
-                       {!loading && txs.length === 0 && (
-                          <tr><td colSpan={5} className="py-12 text-center text-ds-ink3 font-bold">Belum ada transaksi tercatat.</td></tr>
-                       )}
-                       {!loading && txs.slice(0, 100).map((t, i) => (
-                          <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
-                             <td className="py-4 pl-4 text-ds-ink3">{new Date(t.date).toLocaleString('id-ID')}</td>
-                             <td className="py-4 text-ds-green font-mono">{t.type}</td>
-                             <td className="py-4 text-white max-w-xs truncate" title={t.description}>{t.description}</td>
-                             <td className="py-4 font-mono">{t.type === 'COMMISSION' || t.type === 'CLAIM_PAYOUT' || t.type === 'WITHDRAWAL' ? <span className="text-rose-500">-{convert(t.amount)}</span> : <span className="text-ds-green">+{convert(t.amount)}</span>}</td>
-                             <td className="py-4 text-right pr-4">
-                                <Badge color={t.status === 'SUCCESS' ? 'emerald' : t.status === 'PENDING' ? 'yellow' : 'rose'}>{t.status}</Badge>
-                             </td>
-                          </tr>
-                       ))}
-                    </tbody>
-                 </table>
-              </div>
-           </Card>
-        </div>
-    );
-};
-
-export const ReportsView = ({ compact }: { compact?: boolean }) => {
-    const [orderData, setOrderData] = useState<Array<{total_premium: number; created_at: string}>>([]);
-    const [commissionData, setCommissionData] = useState<Array<{commission_amount: number; created_at: string}>>([]);
-    const [claimsData, setClaimsData] = useState<Array<{amount_approved: number; created_at: string}>>([]);
-    const [loading, setLoading] = useState(false);
-    const [viewType, setViewType] = useState<'daily'|'monthly'|'yearly'>('monthly');
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            const { orders, commissions, claims } = await getAdminFinancialReports(selectedYear);
-            setOrderData(orders);
-            setCommissionData(commissions);
-            setClaimsData(claims);
-            setLoading(false);
-        };
-        load();
-    }, [selectedYear]);
-
-    const convert = (val: number) => {
-        if(val === 0) return '-';
-        return `Rp ${(val / 1000000).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 1})}Jt`;
-    };
-
-    const getAggregatedData = () => {
-        const result: any[] = [];
-        const today = new Date();
-
-        if (viewType === 'monthly') {
-            for(let i=0; i<12; i++) {
-                const gwp = orderData.filter(o => { const d = new Date(o.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
-                const commissions = commissionData.filter(c => { const d = new Date(c.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
-                const claims = claimsData.filter(c => { const d = new Date(c.created_at); return d.getFullYear() === selectedYear && d.getMonth() === i; }).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
-                result.push({ period: `${MONTHS[i]} ${selectedYear}`, gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
-            }
-        } else if (viewType === 'yearly') {
-            [selectedYear - 1, selectedYear].forEach(y => {
-                const gwp = orderData.filter(o => new Date(o.created_at).getFullYear() === y).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
-                const commissions = commissionData.filter(c => new Date(c.created_at).getFullYear() === y).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
-                const claims = claimsData.filter(c => new Date(c.created_at).getFullYear() === y).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
-                result.push({ period: `Tahun ${y}`, gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
-            });
-        } else if (viewType === 'daily') {
-            for(let i=6; i>=0; i--) {
-                const d = new Date(today);
-                d.setDate(today.getDate() - i);
-                const gwp = orderData.filter(o => new Date(o.created_at).toDateString() === d.toDateString()).reduce((acc, o) => acc + (o.total_premium ?? 0), 0);
-                const commissions = commissionData.filter(c => new Date(c.created_at).toDateString() === d.toDateString()).reduce((acc, c) => acc + (c.commission_amount ?? 0), 0);
-                const claims = claimsData.filter(c => new Date(c.created_at).toDateString() === d.toDateString()).reduce((acc, c) => acc + (c.amount_approved ?? 0), 0);
-                result.push({ period: d.toLocaleDateString('id-ID', { day:'numeric', month:'short' }), gwp, commissions, promo: gwp * 0.05, others: gwp * 0.02, claims });
-            }
-        }
-        return result;
-    };
-
-    const aggregatedData = getAggregatedData();
-    const totalGwp = aggregatedData.reduce((acc, r) => acc + r.gwp, 0);
-    const totalClaim = aggregatedData.reduce((acc, r) => acc + r.claims, 0);
-    const expenses = aggregatedData.reduce((acc, r) => acc + r.commissions + r.promo + r.others, 0);
-    const combinedRatio = totalGwp > 0 ? (((totalClaim + expenses) / totalGwp) * 100).toFixed(1) : "0.0";
-
-    const handleExport = () => {
-        downloadCSV(aggregatedData, `Laporan_Keuangan_${viewType}_${selectedYear}`);
-    };
-
-    return (
-        <div className={`space-y-8 ${compact ? '' : 'animate-fade-in'}`}>
-           {!compact && (
-              <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
-                 <div>
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Laporan <span className="text-ds-green">Keuangan</span></h2>
-                    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Data Transaksi dan Performa Bisnis</p>
-                 </div>
-                 <div className="flex gap-4">
-                    <div className="flex bg-ds-card2 p-1 rounded-2xl border border-ds-border">
-                       {[2023, 2024, 2025, 2026].map(y => (
-                          <button 
-                            key={y} 
-                            onClick={() => setSelectedYear(y)}
-                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${selectedYear === y ? 'bg-ds-card2 text-white shadow-lg' : 'text-ds-ink3 hover:text-white'}`}
-                          >
-                             {y}
-                          </button>
-                       ))}
-                    </div>
-                    <div className="flex bg-ds-card2 p-1 rounded-2xl border border-ds-border">
-                       {(['daily', 'monthly', 'yearly'] as const).map(v => (
-                          <button 
-                            key={v} 
-                            onClick={() => setViewType(v)}
-                            className={`px-4 py-3 rounded-xl text-[0.65rem] font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-lg' : 'text-ds-ink3 hover:text-white'}`}
-                          >
-                             {v === 'daily' ? 'Harian' : v === 'monthly' ? 'Bulanan' : 'Tahunan'}
-                          </button>
-                       ))}
-                    </div>
-                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all">
-                       <FileDown size={18}/> Unduh Excel
-                    </button>
-                 </div>
-              </div>
-           )}
-
-           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-              <div className="lg:col-span-3 space-y-6">
-                 <Card className="p-0">
-                    <div className="p-8 border-b border-ds-border flex justify-between items-center">
-                       <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-ds-card2 rounded-2xl flex items-center justify-center text-white"><FileText size={24}/></div>
-                          <div>
-                             <h3 className="font-black uppercase tracking-widest text-lg text-white">Ringkasan {viewType === 'daily' ? 'Harian' : viewType === 'monthly' ? 'Bulanan' : 'Tahunan'}</h3>
-                             <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan Total Transaksi Masuk</p>
-                          </div>
-                       </div>
-                    </div>
-                    
-                    <div className="w-full overflow-x-auto">
-                       {loading && <div className="flex justify-center py-8"><div className="w-7 h-7 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" /></div>}
-                       <table className="w-full text-left min-w-[700px]">
-                          <thead className="bg-black/20 text-[0.6rem] uppercase tracking-widest text-ds-ink3 font-black">
-                             <tr>
-                                <th className="py-4 pl-4 font-bold border-b border-ds-border">Periode</th>
-                                <th className="py-4 font-bold border-b border-ds-border">Premi Masuk</th>
-                                <th className="py-4 font-bold border-b border-ds-border">Komisi</th>
-                                <th className="py-4 font-bold border-b border-ds-border">Promo/Marketing</th>
-                                <th className="py-4 font-bold border-b border-ds-border">Operasional</th>
-                                <th className="py-4 font-bold border-b border-ds-border">Klaim Dibayar</th>
-                                <th className="py-4 border-b border-ds-border text-right pr-4">Status</th>
-                             </tr>
-                          </thead>
-                          <tbody className="text-[0.7rem] font-bold">
-                             {aggregatedData.map((row, i) => (
-                                <tr key={i} className="border-b border-ds-border hover:bg-ds-card2 transition-colors group">
-                                   <td className="py-4 pl-4 uppercase text-white font-black">{row.period}</td>
-                                   <td className="py-4 text-ds-green font-mono">{convert(row.gwp)}</td>
-                                   <td className="py-4 text-blue-400 font-mono">{convert(row.commissions)}</td>
-                                   <td className="py-4 text-emerald-400 font-mono">{convert(row.promo)}</td>
-                                   <td className="py-4 text-indigo-400 font-mono">{convert(row.others)}</td>
-                                   <td className="py-4 text-rose-500 font-mono">{convert(row.claims)}</td>
-                                   <td className="py-4 text-right pr-4">
-                                      <div className="flex items-center justify-end gap-2 text-ds-green">
-                                         <CheckCircle2 size={12}/>
-                                      </div>
-                                   </td>
-                                </tr>
-                             ))}
-                          </tbody>
-                       </table>
-                    </div>
-                 </Card>
-              </div>
-
-              <div className="space-y-6">
-                 <Card className="bg-emerald-500/5 border-emerald-500/10">
-                    <div className="flex items-center gap-4 mb-6">
-                       <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg"><Activity size={20}/></div>
-                       <h3 className="text-sm font-black uppercase tracking-tight">Performa Bisnis</h3>
-                    </div>
-                    <div className="space-y-4">
-                       <div className="p-4 bg-black/20 rounded-2xl border border-ds-border">
-                          <p className="text-[0.5rem] font-black text-ds-ink3 uppercase tracking-widest">Total GWP</p>
-                          <p className="text-2xl font-black text-white">{convert(totalGwp)}</p>
-                       </div>
-                       <div className="p-4 bg-black/20 rounded-2xl border border-ds-border">
-                          <p className="text-[0.5rem] font-black text-ds-ink3 uppercase tracking-widest">Rasio Gabungan (Combined Ratio)</p>
-                          <p className={`text-2xl font-black ${Number(combinedRatio) > 100 ? 'text-rose-500' : 'text-ds-green'}`}>~{combinedRatio}%</p>
-                       </div>
-                    </div>
-                 </Card>
-              </div>
-           </div>
-        </div>
-    );
-};
-
-export const AuditLogView = ({ compact }: { compact?: boolean }) => {
-    const [logs, setLogs] = useState<AuditLog[]>([]);
-    useEffect(() => { db.auditLogs.toArray().then(res => setLogs(res.sort((a,b) => (b.id||0) - (a.id||0)).slice(0, compact ? 10 : 50))); }, [compact]);
-    return (
-        <div className="space-y-4">
-           {logs.map(log => (
-              <div key={log.id} className="flex gap-4 items-start p-4 bg-ds-card2 rounded-2xl border border-ds-border hover:bg-ds-card2 transition-all">
-                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 animate-pulse ${log.domain === 'SECURITY' ? 'bg-rose-500 shadow-[0_0_8px_#f43f5e]' : 'bg-emerald-500 shadow-[0_0_8px_#00C16A]'}`}></div>
-                 <div className="min-w-0">
-                    <p className="text-[0.65rem] font-bold text-ds-ink2 leading-tight"><span className="text-ds-green uppercase font-black">{log.actor.split('@')[0]}</span> {log.action}</p>
-                    <div className="flex items-center gap-3 mt-1.5">
-                       <Badge color={log.domain === 'SECURITY' ? 'rose' : 'blue'}>{log.domain}</Badge>
-                       <span className="text-[0.5rem] font-mono text-ds-ink2 uppercase tracking-widest">{new Date(log.timestamp).toLocaleTimeString('id-ID')}</span>
-                    </div>
-                 </div>
-              </div>
-           ))}
-        </div>
-    );
-};
-
 export const ApprovalsView = () => {
     const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [acting, setActing] = useState<string | null>(null);
     const [notes, setNotes] = useState<Record<string, string>>({});
+    const toast = useToast();
 
     const load = async () => {
         setLoading(true);
         // Real pending queue from Supabase (was empty local IndexedDB)
-        const all = await getAllOrders();
-        setOrders(all.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW'));
-        setLoading(false);
+        try {
+            const all = await getAllOrders();
+            setOrders(all.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW'));
+        } catch (e: any) {
+            toast.error(`Gagal memuat antrean: ${e?.message ?? e}`);
+        } finally {
+            setLoading(false);
+        }
     };
     useEffect(() => { load(); }, []);
 
+    // FIX 2026-10-26 (audit): rejection notes were "enforced" with
+    // console.warn only — an admin could reject a policy with no notes and
+    // never learn why the action silently no-op'd. Now enforced via toast,
+    // and gateway failures surface instead of leaving the row stuck on "…".
     const act = async (id: string, status: SpPolicyOrder['status']) => {
         if (status === 'REJECTED' && !(notes[id] ?? '').trim()) {
-            console.warn('Wajib isi catatan penolakan.');
+            toast.error('Wajib isi catatan reviewer sebelum menolak pesanan.');
             return;
         }
         setActing(id);
-        await updateOrderStatus(id, status, { reviewer_notes: notes[id] });
-        setOrders(prev => prev.filter(o => o.id !== id));
-        setActing(null);
+        try {
+            await updateOrderStatus(id, status, { reviewer_notes: notes[id] });
+            toast.success(status === 'APPROVED' ? 'Pesanan disetujui.' : 'Pesanan ditolak.');
+            setOrders(prev => prev.filter(o => o.id !== id));
+        } catch (e: any) {
+            toast.error(`Gagal memperbarui pesanan: ${e?.message ?? e}`);
+        } finally {
+            setActing(null);
+        }
     };
 
     return (
@@ -1059,35 +715,6 @@ export const ApprovalsView = () => {
         </div>
     );
 }
-
-// FIX 2026-10-25 (audit 6-b CRITICAL #2): this view previously rendered five
-// HARDCODED rows ("Unit-A01..A05 (Matrix)") with a dead refresh button and a
-// dead eye action — fabricated data in a financial CMS. An admin could read
-// it as real inventory. Until a real asset-inventory data source exists, the
-// view now states honestly that the module is not connected.
-export const InventoryView = () => (
-  <div className="space-y-8 animate-fade-in">
-    <Card>
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><HardDrive size={22}/></div>
-          <h3 className="font-black uppercase tracking-widest text-sm text-ds-ink">Active Matrix Inventory</h3>
-        </div>
-      </div>
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-ds-card2 flex items-center justify-center text-ds-ink3 mb-4">
-          <HardDrive size={26}/>
-        </div>
-        <p className="font-black text-sm text-ds-ink uppercase tracking-widest">Modul belum terhubung</p>
-        <p className="mt-2 max-w-md text-xs leading-relaxed text-ds-ink3">
-          Inventaris aset belum memiliki sumber data. Tampilan sebelumnya menampilkan
-          data contoh yang tidak nyata dan telah dihapus agar tidak keliru dibaca
-          sebagai data produksi.
-        </p>
-      </div>
-    </Card>
-  </div>
-);
 
 // ── Backup View ──────────────────────────────────────────────────────────────
 
@@ -1774,15 +1401,21 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
 
 // ── Agent Management View ────────────────────────────────────────────────────
 
+// FIX 2026-10-26 (cross-app audit #1): the gateway allowlist
+// (admin_update_claim) is SUBMITTED|UNDER_REVIEW|APPROVED|REJECTED|PAID —
+// CLOSED was never accepted, so the old "Close" action failed silently at the
+// gateway and PAID claims vanished from every filter chip. PAID is now a
+// first-class status here; CLOSED stays only to render historical rows.
 const STATUS_LABEL: Record<string, string> = {
   SUBMITTED: 'Submitted', UNDER_REVIEW: 'Under Review',
-  APPROVED: 'Approved', REJECTED: 'Rejected', CLOSED: 'Closed',
+  APPROVED: 'Approved', REJECTED: 'Rejected', PAID: 'Dibayarkan', CLOSED: 'Closed',
 };
 const STATUS_COLOR: Record<string, string> = {
-  SUBMITTED: 'bg-amber-500/10 text-amber-400',
-  UNDER_REVIEW: 'bg-blue-500/10 text-blue-400',
-  APPROVED: 'bg-emerald-500/10 text-emerald-400',
-  REJECTED: 'bg-rose-500/10 text-rose-400',
+  SUBMITTED: 'bg-amber-500/10 text-amber-600',
+  UNDER_REVIEW: 'bg-blue-500/10 text-blue-600',
+  APPROVED: 'bg-emerald-500/10 text-emerald-600',
+  REJECTED: 'bg-rose-500/10 text-rose-600',
+  PAID: 'bg-emerald-500/10 text-emerald-600',
   CLOSED: 'bg-ds-card2 text-ds-ink3',
 };
 
@@ -2397,18 +2030,49 @@ export const AgentManagementView = () => {
 // ── Claims Admin View ────────────────────────────────────────────────────────
 
 export const ClaimsAdminView = () => {
+  const toast = useToast();
   const [claims, setClaims] = useState<SpClaim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('ALL');
   const [selectedClaim, setSelectedClaim] = useState<SpClaim | null>(null);
 
-  useEffect(() => {
-    getAllClaims().then(data => { setClaims(data); setLoading(false); });
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await getAllClaims();
+      setClaims(data);
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Gagal memuat klaim.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleStatus = async (id: string, status: SpClaim['status']) => {
-    await import('../../services/supabaseService').then(m => m.updateClaimStatus(id, status));
+  useEffect(() => { load(); }, []);
+
+  // FIX 2026-10-26: handleStatus previously sent 'CLOSED' — a status the
+  // gateway rejects — with no error handling at all, so an admin clicking
+  // "Close" saw nothing happen. The terminal action is now PAID (claim
+  // settled), with busy state + error toasts + optimistic-rollback.
+  const handleStatus = async (id: string, status: 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PAID') => {
+    setBusyId(id);
+    const prevClaims = claims;
     setClaims(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+    try {
+      await updateClaimStatus(id, status);
+      toast.success(`Klaim → ${STATUS_LABEL[status] ?? status}`);
+      if (status === 'PAID') {
+        setClaims(prev => prev.map(c => c.id === id ? { ...c, amount_approved: c.amount_approved ?? c.amount_estimated } : c));
+      }
+    } catch (e: any) {
+      setClaims(prevClaims); // rollback
+      toast.error(`Gagal memperbarui klaim: ${e?.message ?? e}`);
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const needsReview = (c: SpClaim) => (c as any).ai_fraud_verdict === 'REVIEW_REQUIRED' || (c as any).ai_fraud_verdict === 'REJECTED';
@@ -2425,9 +2089,10 @@ export const ClaimsAdminView = () => {
           onSelectClaim={c => setSelectedClaim(c)}
         />
       )}
-      {/* Filter */}
+      {loadError && <AdminErrorBanner message={loadError} onRetry={load} retrying={loading} />}
+      {/* Filter — PAID chip added so a settled claim is no longer invisible. */}
       <div className="flex gap-2 flex-wrap">
-        {['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'].map(f => (
+        {['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'PAID', 'REJECTED'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -2487,38 +2152,44 @@ export const ClaimsAdminView = () => {
                     <p className="text-xs font-bold text-ds-green mt-1">Est: {formatIDR(claim.amount_estimated)}</p>
                   )}
                 </div>
-                {/* Quick status actions */}
+                {/* Quick status actions — busy state + gateway-legal transitions only */}
                 <div className="flex gap-2 flex-wrap flex-shrink-0" onClick={e => e.stopPropagation()}>
                   {claim.status === 'SUBMITTED' && (
                     <button
+                      disabled={busyId === claim.id}
                       onClick={() => handleStatus(claim.id, 'UNDER_REVIEW')}
-                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-40"
                     >
-                      Review
+                      {busyId === claim.id ? '…' : 'Review'}
                     </button>
                   )}
                   {(claim.status === 'SUBMITTED' || claim.status === 'UNDER_REVIEW') && (
                     <>
                       <button
+                        disabled={busyId === claim.id}
                         onClick={() => handleStatus(claim.id, 'APPROVED')}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-40"
                       >
-                        Approve
+                        {busyId === claim.id ? '…' : 'Approve'}
                       </button>
                       <button
+                        disabled={busyId === claim.id}
                         onClick={() => handleStatus(claim.id, 'REJECTED')}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white transition-colors disabled:opacity-40"
                       >
-                        Reject
+                        {busyId === claim.id ? '…' : 'Reject'}
                       </button>
                     </>
                   )}
+                  {/* FIX 2026-10-26: was "Close" → CLOSED, a status the gateway
+                      rejects; the real terminal transition is PAID (settled). */}
                   {claim.status === 'APPROVED' && (
                     <button
-                      onClick={() => handleStatus(claim.id, 'CLOSED')}
-                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:bg-ds-card2 transition-colors"
+                      disabled={busyId === claim.id}
+                      onClick={() => handleStatus(claim.id, 'PAID')}
+                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-colors disabled:opacity-40"
                     >
-                      Close
+                      {busyId === claim.id ? '…' : 'Tandai Dibayar'}
                     </button>
                   )}
                 </div>
@@ -2561,6 +2232,9 @@ export const UserManagementView = () => {
   const [addLoading, setAddLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  // Menu cleanup 2026-10-26: the former standalone "Pengguna" menu (BizAdminView)
+  // merged in here as the "Partner Aktif" tab — one canonical user screen.
+  const [dirTab, setDirTab] = useState<'accounts' | 'partners'>('accounts');
 
   const load = async () => {
     setLoadError(null);
@@ -2672,6 +2346,24 @@ export const UserManagementView = () => {
       {loadError && (
         <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 font-bold">{loadError}</div>
       )}
+      {/* Tab switcher — Kelola Akun (canonical CRUD) vs Partner Aktif (the
+          merged GWP/commission leaderboard from the removed "Pengguna" menu) */}
+      <div className="flex gap-1 bg-ds-card2 p-1 rounded-2xl border border-ds-border w-fit">
+        {([
+          { id: 'accounts', label: 'Kelola Akun' },
+          { id: 'partners', label: 'Partner Aktif' },
+        ] as const).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setDirTab(t.id)}
+            className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+              dirTab === t.id ? 'bg-emerald-500 text-white shadow-md' : 'text-ds-ink3 hover:text-ds-ink'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -2694,6 +2386,9 @@ export const UserManagementView = () => {
         </div>
       </div>
 
+      {/* Tab body: canonical account CRUD, or the merged partner leaderboard */}
+      {dirTab === 'accounts' ? (
+        <>
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -2879,6 +2574,10 @@ export const UserManagementView = () => {
           )}
         </div>
       </Card>
+        </>
+      ) : (
+        <PartnerDirectorySection />
+      )}
 
       {/* Add Admin Modal */}
       {showAddModal && (
@@ -3095,6 +2794,7 @@ export const PaymentsAdminView = () => {
 };
 
 export const WithdrawalsAdminView: React.FC = () => {
+  const toast = useToast();
   const [withdrawals, setWithdrawals] = useState<Array<Withdrawal & { agent_name?: string; agent_email?: string }>>([]);
   const [filter, setFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
@@ -3152,7 +2852,8 @@ export const WithdrawalsAdminView: React.FC = () => {
     const res = await approveWithdrawal(wd.id, level);
     if (!res.success) {
       // Surface the failure — silent failures here hid stuck withdrawals.
-      alert(res.error ?? 'Gagal menyetujui penarikan.');
+      // FIX 2026-10-26: was alert() — inconsistent with the toast system.
+      toast.error(res.error ?? 'Gagal menyetujui penarikan.');
     }
     if (res.success) {
       const nextStatus = level === 1 && wd.amount < 10_000_000 ? 'APPROVED'
@@ -3162,8 +2863,12 @@ export const WithdrawalsAdminView: React.FC = () => {
       if (nextStatus === 'APPROVED' && !wd.scheduled_disburse_at) {
         const disb = await triggerDisbursement(wd.id);
         if (disb && (disb as any).error) {
-          alert(`Disetujui, namun pencairan gagal: ${(disb as any).error}`);
+          toast.error(`Disetujui, namun pencairan gagal: ${(disb as any).error}`);
+        } else if (nextStatus === 'APPROVED') {
+          toast.success('Penarikan disetujui.');
         }
+      } else if (nextStatus === 'APPROVED') {
+        toast.success('Penarikan disetujui — menunggu pencairan terjadwal.');
       }
       await load();
     }
@@ -3173,18 +2878,30 @@ export const WithdrawalsAdminView: React.FC = () => {
   const handleReject = async () => {
     if (!rejectModal || !rejectReason.trim()) return;
     setActionLoading(rejectModal.id);
-    await rejectWithdrawal(rejectModal.id, rejectReason.trim());
-    setRejectModal(null);
-    setRejectReason('');
-    setActionLoading(null);
-    await load();
+    try {
+      await rejectWithdrawal(rejectModal.id, rejectReason.trim());
+      toast.success('Penarikan ditolak — saldo dikembalikan ke mitra.');
+      setRejectModal(null);
+      setRejectReason('');
+      await load();
+    } catch (e: any) {
+      toast.error(`Gagal menolak penarikan: ${e?.message ?? e}`);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleDisburse = async (id: string) => {
     setActionLoading(id);
-    await triggerDisbursement(id);
-    await load();
-    setActionLoading(null);
+    try {
+      await triggerDisbursement(id);
+      await load();
+    } catch (e: any) {
+      toast.error(`Pencairan gagal: ${e?.message ?? e}`);
+      await load();
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const statusBadge = (status: string) => {

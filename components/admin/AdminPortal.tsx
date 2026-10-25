@@ -2,33 +2,28 @@
 import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
 import {
-  LayoutDashboard, Users, Wallet, Settings, LogOut, Search,
-  Activity, Menu, ShieldAlert, ClipboardCheck, HardDrive,
-  TrendingUp, BarChart3, Bell, CheckCircle,
+  LayoutDashboard, Users, Settings, LogOut, Search,
+  Activity, Menu, ShieldAlert, ClipboardCheck,
+  TrendingUp, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
+  Monitor, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
   PanelLeftClose, PanelLeftOpen, UserPlus, CornerDownLeft,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
 // 50-200 KB; loading all 17 eagerly bloated the initial bundle. Now they
 // only load when the admin navigates to them.
-const BizAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.BizAdminView })));
 const ApprovalsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ApprovalsView })));
 const SettingsView = lazy(() => import('./AdminViews').then(m => ({ default: m.SettingsView })));
-const InventoryView = lazy(() => import('./AdminViews').then(m => ({ default: m.InventoryView })));
 const SecurityView = lazy(() => import('./AdminViews').then(m => ({ default: m.SecurityView })));
 const OpsConsoleView = lazy(() => import('./OpsConsoleView'));
 const PathyTranscriptsView = lazy(() => import('./PathyTranscriptsView'));
 const ActivityLogView = lazy(() => import('./ActivityLogView'));
-const LedgerView = lazy(() => import('./AdminViews').then(m => ({ default: m.LedgerView })));
-const ReportsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ReportsView })));
 const AgentManagementView = lazy(() => import('./AdminViews').then(m => ({ default: m.AgentManagementView })));
 const ClaimsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.ClaimsAdminView })));
 const UserManagementView = lazy(() => import('./AdminViews').then(m => ({ default: m.UserManagementView })));
 const PaymentsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.PaymentsAdminView })));
 const WithdrawalsAdminView = lazy(() => import('./AdminViews').then(m => ({ default: m.WithdrawalsAdminView })));
-const RolePermissionsView = lazy(() => import('./AdminViews').then(m => ({ default: m.RolePermissionsView })));
 const PolicyOrdersAdmin = lazy(() => import('./PolicyOrdersAdmin'));
 const ProductConfigAdmin = lazy(() => import('./ProductConfigAdmin'));
 const FinancialAdmin = lazy(() => import('./FinancialAdmin'));
@@ -47,19 +42,20 @@ const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
 const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { scrollPortalToTop } from '../shared/scrollReset';
-import { useDarkMode } from '../shared/theme';
+import { applyDarkMode, readDarkMode, storeDarkMode } from '../shared/theme';
 import { UserRole } from '../../types';
 import {
   AgentArtKeyframes, AgentHero,
   SpotOrders, SpotClients, SpotClaims, SpotWallet, SpotNetwork,
   SpotMarket, SpotProfile, SpotEndorse, SpotTrophy, SpotRenewal, SpotBell,
 } from '../agent/AgentArt';
-import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification, getAllClaims, getAdminWithdrawals, type SpClaim, type Withdrawal } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
+import { AdminKpiCard } from './adminUI';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -78,28 +74,32 @@ type MenuItem =
 const MENU_ITEMS: MenuItem[] = [
   // OVERVIEW
   { id: '_sep1', isSeparator: true, groupLabel: 'Overview',           roles: ALL_ROLES },
-  { id: 'ops_console',      label: 'Konsol Operasi',      icon: Gauge,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
-  { id: 'reports',          label: 'Laporan',             icon: BarChart3,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
-  { id: 'analytics',        label: 'Analytics',           icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
+  { id: 'ops_console',      label: 'Konsol Operasi',     icon: Gauge,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
+  { id: 'analytics',        label: 'Analytics',          icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
   // NASABAH & TRANSAKSI
+  // Menu cleanup 2026-10-26 (before→after map in the redesign report):
+  //  - 'users' (BizAdminView) removed — duplicate directory; its partner
+  //    leaderboard now lives as the "Partner Aktif" tab of Kelola Akun.
+  //  - 'transactions' (LedgerView) removed — a third read-only aggregation of
+  //    data already managed in Pembayaran, Komisi and Penarikan.
+  //  - 'reports' merged into 'financial' as its "Laporan Periode" tab.
   { id: '_sep2', isSeparator: true, groupLabel: 'Nasabah & Transaksi', roles: ALL_ROLES },
-  { id: 'users',            label: 'Pengguna',            icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'user_mgmt',        label: 'Kelola Akun',         icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'transactions',     label: 'Transaksi',           icon: Wallet,          roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-  { id: 'payments',         label: 'Pembayaran Xendit',   icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-  { id: 'withdrawals',      label: 'Penarikan Mitra',     icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
+  { id: 'user_mgmt',        label: 'Pengguna & Akses',   icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'payments',         label: 'Pembayaran Xendit',  icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  { id: 'withdrawals',      label: 'Penarikan Mitra',    icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
   // POLIS & KLAIM
+  //  - 'inventory' (honest "module not connected" stub) removed from nav — a
+  //    dead-end menu item; the component stays for future re-wiring.
   { id: '_sep3', isSeparator: true, groupLabel: 'Polis & Klaim',      roles: ALL_ROLES },
   { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'approvals',        label: 'Antrean Polis',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'inventory',        label: 'Data Polis',          icon: HardDrive,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'approvals',        label: 'Antrean Review',      icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
+  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   { id: 'documents',        label: 'Dokumen',             icon: FileImage,       roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
   // MITRA & KOMISI
   { id: '_sep4', isSeparator: true, groupLabel: 'Mitra & Komisi',     roles: ALL_ROLES },
-  { id: 'agents',           label: 'Manajemen Mitra',     icon: Bell,            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  { id: 'agents',           label: 'Manajemen Mitra',     icon: UserPlus,        roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'agent_agreements', label: 'Perjanjian Mitra',    icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
@@ -109,7 +109,9 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'tier_promo',       label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
   { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'ojk_rates',        label: 'Rate OJK',            icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'financial',        label: 'Keuangan',            icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
+  // 'financial' absorbs the former 'reports' menu; ADMIN gains access to match
+  // the reports audience it replaces.
+  { id: 'financial',        label: 'Keuangan & Laporan',  icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
   // PLATFORM
   { id: '_sep6', isSeparator: true, groupLabel: 'Platform',           roles: ALL_ROLES },
   { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
@@ -128,11 +130,11 @@ const formatRole = (role: string) =>
 
 // ── Per-tab hero art + subtitle (visual only) ────────────────────────────────
 const TAB_ART: Record<string, React.ComponentType<{ size?: number }>> = {
-  reports: SpotTrophy, analytics: SpotNetwork,
-  users: SpotClients, user_mgmt: SpotProfile,
-  transactions: SpotWallet, payments: SpotWallet, withdrawals: SpotWallet,
+  analytics: SpotNetwork,
+  user_mgmt: SpotClients,
+  payments: SpotWallet, withdrawals: SpotWallet,
   policy_orders: SpotOrders, approvals: SpotOrders, claims_admin: SpotClaims,
-  inventory: SpotOrders, endorsements: SpotEndorse, documents: SpotOrders,
+  endorsements: SpotEndorse, documents: SpotOrders,
   agents: SpotProfile, agent_agreements: SpotEndorse, commission_ledger: SpotWallet,
   b2b: SpotMarket, product_config: SpotMarket, tier_promo: SpotTrophy,
   insurers: SpotMarket, ojk_rates: SpotClaims, financial: SpotWallet,
@@ -141,17 +143,13 @@ const TAB_ART: Record<string, React.ComponentType<{ size?: number }>> = {
 };
 
 const TAB_SUBTITLE: Record<string, string> = {
-  reports: 'Ringkasan performa bisnis dan operasional.',
   analytics: 'Analitik traffic, funnel, dan pertumbuhan.',
-  users: 'Data nasabah terdaftar di platform.',
-  user_mgmt: 'Kelola akun, peran, dan akses pengguna.',
-  transactions: 'Buku besar seluruh transaksi platform.',
+  user_mgmt: 'Kelola akun, peran, akses, dan pantau partner teraktif.',
   payments: 'Pembayaran premi via Xendit.',
   withdrawals: 'Pencairan komisi mitra — approval berlapis.',
   policy_orders: 'Semua pesanan polis lintas produk.',
   approvals: 'Antrean pengajuan yang menunggu keputusan.',
   claims_admin: 'Antrean klaim yang perlu ditinjau.',
-  inventory: 'Arsip polis yang telah diterbitkan.',
   endorsements: 'Permintaan perubahan polis dari mitra.',
   documents: 'Dokumen nasabah dan polis.',
   agents: 'Kelola jaringan mitra SurePath.',
@@ -162,7 +160,7 @@ const TAB_SUBTITLE: Record<string, string> = {
   tier_promo: 'Pengaturan tier mitra dan kode promo.',
   insurers: 'Perusahaan asuransi rekanan.',
   ojk_rates: 'Tarif acuan resmi OJK (SEOJK).',
-  financial: 'Kesehatan keuangan platform.',
+  financial: 'Kesehatan keuangan dan laporan periode platform.',
   vehicle_pricelist: 'Database harga kendaraan.',
   website_editor: 'Kelola konten website publik.',
   ai_admin: 'Asisten AI untuk tugas administratif.',
@@ -215,13 +213,23 @@ const AdminPortal = ({
   const [isMobile, setIsMobile]       = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileOpen] = useState(false);
   const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
-  // The CMS opens dark unless the user has chosen otherwise; `useDarkMode`
-  // stores that choice, so unlike before it survives a reload.
-  const [darkMode, setDarkMode]       = useDarkMode(true);
   const [logoUrl, setLogoUrl]         = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
+  // Light-only admin (design directive 2026-10-26): the CMS renders exclusively
+  // in light mode — no theme switcher. The visitor's prior preference is
+  // remembered and restored when they leave the admin portal, so the marketing
+  // site / customer app keeps whatever theme the user had chosen there.
+  const priorTheme = useRef(readDarkMode(false));
+  useEffect(() => {
+    applyDarkMode(false);
+    storeDarkMode(false);
+    return () => {
+      applyDarkMode(priorTheme.current);
+      storeDarkMode(priorTheme.current);
+    };
+  }, []);
   // Preserve sidebar position without resetting scroll on every parent render.
   const sidebarScrollTop = useRef(0);
   const setSidebarNavRef = useCallback((node: HTMLElement | null) => {
@@ -245,6 +253,12 @@ const AdminPortal = ({
   const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  // Live operational queues feeding both the dashboard KPIs and the nav badges:
+  // claims awaiting review + withdrawals stuck in the L1–L3 approval ladder.
+  // Both are read via the existing admin gateway actions their views already
+  // use — no new backend surface, no fake numbers.
+  const [claimsQueue, setClaimsQueue] = useState<SpClaim[] | null>(null);
+  const [withdrawalQueue, setWithdrawalQueue] = useState<Withdrawal[] | null>(null);
   // ── Revamp 2026-10-25: interactive shell upgrades ────────────────────────
   // (a) Collapsible desktop sidebar — icon rail for power users, persisted.
   const [rail, setRail] = useState(() => localStorage.getItem('SP_ADMIN_RAIL') === '1');
@@ -273,6 +287,11 @@ const AdminPortal = ({
       callGateway('admin_transaksi_overview', {}).then(({ data }) => {
         if (data) setTransaksiStats(data as any);
       }).catch(() => {});
+      // Queue summaries (dashboard KPIs + nav badges). Failures stay silent
+      // here on purpose — a failed poll must not blank out KPIs that were
+      // already rendered; the views themselves surface their own errors.
+      getAllClaims().then(setClaimsQueue).catch(() => {});
+      getAdminWithdrawals(200).then(setWithdrawalQueue).catch(() => {});
     };
     refreshStats();
     const statsInterval = setInterval(refreshStats, 120000);
@@ -359,12 +378,27 @@ const AdminPortal = ({
     if (!q) return items.slice(0, 8);
     return items.filter(m => m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
   })();
-  // Live work-queue badges: order approval queue + tier approval queue.
+  // Live work-queue badges: order approval queue, tier approval queue,
+  // claim review queue and pending withdrawals — discovered from the same
+  // polls that power the dashboard, so the nav never invents a count.
   const approvalQueueCount = adminStats
     ? (adminStats.ordersByStatus?.SUBMITTED ?? 0) + (adminStats.ordersByStatus?.UNDER_REVIEW ?? 0)
     : 0;
-  const navBadgeFor = (id: string): number =>
-    id === 'approvals' ? approvalQueueCount : id === 'tier_promo' ? tierPending : 0;
+  const claimsPendingCount = (claimsQueue ?? []).filter(
+    c => c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW',
+  ).length;
+  const withdrawalsPendingCount = (withdrawalQueue ?? []).filter(
+    w => typeof w.status === 'string' && w.status.startsWith('PENDING'),
+  ).length;
+  const navBadgeFor = (id: string): number => {
+    switch (id) {
+      case 'approvals':    return approvalQueueCount;
+      case 'tier_promo':   return tierPending;
+      case 'claims_admin': return claimsPendingCount;
+      case 'withdrawals':  return withdrawalsPendingCount;
+      default:             return 0;
+    }
+  };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -597,66 +631,92 @@ const AdminPortal = ({
           ))}
       </div>
 
+      {/* Primary KPIs — every card names its source screen and jumps there. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Pesanan',     value: adminStats?.totalOrders ?? '—', exact: undefined,                            icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
-          { label: 'Premi Diterbitkan', value: adminStats ? formatIDRCompact(adminStats.totalPremiumIssued) : '—', exact: adminStats ? formatIDR(adminStats.totalPremiumIssued) : undefined, icon: TrendingUp, to: 'policy_orders',     color: 'bg-ds-green-tint text-ds-green' },
-          { label: 'Premi Dibayar',     value: adminStats ? formatIDRCompact(adminStats.totalPremiumPaid) : '—', exact: adminStats ? formatIDR(adminStats.totalPremiumPaid) : undefined,  icon: CheckCircle, to: 'payments',          color: 'bg-ds-blue-lt text-ds-blue' },
-          { label: 'Mitra Aktif',       value: adminStats?.activeAgents ?? '—', exact: undefined,                            icon: Users,      to: 'agents',            color: 'bg-ds-amber-lt text-ds-amber' },
-        ].map(card => (
-          <button key={card.label} type="button" onClick={() => goToTab(card.to)}
-            className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
-              <card.icon size={20} />
-            </div>
-            <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
-            <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
-            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
-          </button>
-        ))}
+        <AdminKpiCard
+          label="Total Pesanan" loading={!adminStats} icon={Activity} tone="amber"
+          value={adminStats?.totalOrders ?? '—'}
+          sub={`${(adminStats?.ordersByStatus?.SUBMITTED ?? 0) + (adminStats?.ordersByStatus?.UNDER_REVIEW ?? 0)} menunggu review`}
+          onClick={() => goToTab('policy_orders')}
+        />
+        <AdminKpiCard
+          label="Premi Diterbitkan" loading={!adminStats} icon={TrendingUp} tone="green"
+          value={adminStats ? formatIDRCompact(adminStats.totalPremiumIssued) : '—'}
+          exact={adminStats ? formatIDR(adminStats.totalPremiumIssued) : undefined}
+          sub="GWP polis berstatus ISSUED"
+          onClick={() => goToTab('financial')}
+        />
+        <AdminKpiCard
+          label="Premi Dibayar" loading={!adminStats} icon={CheckCircle} tone="blue"
+          value={adminStats ? formatIDRCompact(adminStats.totalPremiumPaid) : '—'}
+          exact={adminStats ? formatIDR(adminStats.totalPremiumPaid) : undefined}
+          sub="Pembayaran Xendit terkonfirmasi"
+          onClick={() => goToTab('payments')}
+        />
+        <AdminKpiCard
+          label="Mitra Aktif" loading={!adminStats} icon={Users} tone="violet"
+          value={adminStats?.activeAgents ?? '—'}
+          sub="Mitra terverifikasi"
+          onClick={() => goToTab('agents')}
+        />
       </div>
 
-      {/* Transaksi Overview + Online Users */}
+      {/* Operational exceptions — the two queues an admin must not miss. */}
       <div>
-        <p className={`text-2xs font-black uppercase tracking-[0.2em] mb-3 ${'text-ds-ink3'}`}>Transaksi Overview</p>
+        <p className={`text-2xs font-black uppercase tracking-[0.2em] mb-3 ${'text-ds-ink3'}`}>Perlu Perhatian</p>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {[
-            { label: 'Total Pelanggan',       value: transaksiStats ? transaksiStats.totalCustomers : '—', exact: undefined,                              icon: Users,      to: 'users',             color: 'bg-ds-purple-lt text-ds-purple' },
-            { label: 'Total Pesanan',          value: transaksiStats ? transaksiStats.totalOrders : '—', exact: undefined,                                 icon: Activity,   to: 'policy_orders',     color: 'bg-ds-amber-lt text-ds-amber' },
-            { label: 'Pembayaran Masuk',       value: transaksiStats ? formatIDRCompact(transaksiStats.totalPembayaranMasuk) : '—', exact: transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : undefined,             icon: CreditCard, to: 'payments',          color: 'bg-ds-green-tint text-ds-green' },
-            { label: 'Total Komisi Mitra',     value: transaksiStats ? formatIDRCompact(transaksiStats.totalKomisiAgen) : '—', exact: transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : undefined,                  icon: Coins,      to: 'commission_ledger', color: 'bg-ds-amber-lt text-ds-amber' },
-          ].map(card => (
-            <button key={card.label} type="button" onClick={() => goToTab(card.to)}
-              className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border rounded-3xl shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${card.color}`}>
-                <card.icon size={20} />
-              </div>
-              <p className={`text-xl sm:text-2xl font-black tracking-tight mb-1 tabular-nums ${'text-ds-ink'}`} title={card.exact}>{card.value}</p>
-              <p className={`text-2xs font-bold uppercase tracking-wider ${'text-ds-ink3'}`}>{card.label}</p>
-              <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
-            </button>
-          ))}
-          {/* Online Users Card */}
-          <button type="button" onClick={() => goToTab('security')}
-            className={`group p-4 sm:p-6 rounded-3xl border text-left transition-all cursor-pointer active:scale-[0.98] ${'bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40'}`}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${'bg-ds-green-tint text-ds-green'}`}>
-                <Users size={20} />
-              </div>
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            </div>
-            <p className={`text-2xl font-black tracking-tight mb-0.5 ${'text-ds-ink'}`}>
-              {onlineUsers ? onlineUsers.total : '—'}
-            </p>
-            <p className={`text-2xs font-bold uppercase tracking-wider mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
-            {onlineUsers && onlineUsers.total > 0 && (
-              <p className={`text-2xs font-bold ${'text-ds-ink3'}`}>
-                {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
-              </p>
-            )}
-            <p className={`mt-2 text-2xs font-bold opacity-0 group-hover:opacity-100 transition-opacity text-ds-green`}>Lihat detail →</p>
-          </button>
+          <AdminKpiCard
+            label="Klaim Menunggu Review" loading={claimsQueue === null} icon={ShieldAlert} tone="rose"
+            value={claimsPendingCount}
+            sub={`${(claimsQueue ?? []).length} klaim total`}
+            onClick={() => goToTab('claims_admin')}
+          />
+          <AdminKpiCard
+            label="Penarikan Pending" loading={withdrawalQueue === null} icon={Banknote} tone="amber"
+            value={withdrawalsPendingCount}
+            sub="Antrean approval L1–L3"
+            onClick={() => goToTab('withdrawals')}
+          />
+          <AdminKpiCard
+            label="Total Pelanggan" loading={!transaksiStats} icon={Users} tone="violet"
+            value={transaksiStats ? transaksiStats.totalCustomers : '—'}
+            onClick={() => goToTab('user_mgmt')}
+          />
+          <AdminKpiCard
+            label="Pembayaran Masuk" loading={!transaksiStats} icon={CreditCard} tone="green"
+            value={transaksiStats ? formatIDRCompact(transaksiStats.totalPembayaranMasuk) : '—'}
+            exact={transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : undefined}
+            onClick={() => goToTab('payments')}
+          />
+          <AdminKpiCard
+            label="Total Komisi Mitra" loading={!transaksiStats} icon={Coins} tone="lime"
+            value={transaksiStats ? formatIDRCompact(transaksiStats.totalKomisiAgen) : '—'}
+            exact={transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : undefined}
+            onClick={() => goToTab('commission_ledger')}
+          />
         </div>
+      </div>
+
+      {/* Online Users Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <button type="button" onClick={() => goToTab('security')}
+          className={`group p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer active:scale-[0.98] bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40`}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-ds-green-tint text-ds-green`}>
+              <Users size={17} />
+            </div>
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          </div>
+          <p className={`text-2xl font-black tracking-tight mb-0.5 ${'text-ds-ink'}`}>
+            {onlineUsers ? onlineUsers.total : '—'}
+          </p>
+          <p className={`text-2xs font-bold uppercase tracking-wider mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
+          {onlineUsers && onlineUsers.total > 0 && (
+            <p className={`text-2xs font-bold ${'text-ds-ink3'}`}>
+              {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
+            </p>
+          )}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -766,12 +826,8 @@ const AdminPortal = ({
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':        return <DashboardView />;
-      case 'reports':          return <ReportsView />;
       case 'analytics':        return <AnalyticsDashboard />;
-      case 'inventory':        return <InventoryView />;
-      case 'transactions':     return <LedgerView />;
       case 'approvals':        return <ApprovalsView />;
-      case 'users':            return <BizAdminView section="users" />;
       case 'user_mgmt':        return <UserManagementView />;
       case 'policy_orders':    return <PolicyOrdersAdmin />;
       case 'agents':           return <AgentManagementView />;
@@ -798,7 +854,6 @@ const AdminPortal = ({
       case 'activity_log':     return <ActivityLogView />;
       case 'security':         return <SecurityView />;
       case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} currentUserRole={userRole} /></SettingsErrorBoundary>;
-      case 'role_permissions': return <RolePermissionsView currentUserRole={userRole} />;
       default:                 return null;
     }
   };
@@ -921,14 +976,9 @@ const AdminPortal = ({
                 {currentUser.email}
               </span>
             )}
-            {/* Day / Night toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-xl border transition-all ${'bg-ds-card2 border-ds-border text-ds-amber hover:bg-ds-card'}`}
-              title={darkMode ? 'Mode Terang' : 'Mode Gelap'}
-            >
-              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
+            {/* Theme toggle removed 2026-10-26 — the admin portal is light-only
+                by design directive; the visitor's customer-app preference is
+                restored automatically when they leave this portal. */}
             {/* Auto-backup status indicator.
                 Hidden below `sm` on purpose: the header already carries the
                 search field and four controls, and at 390px this badge was the
@@ -993,7 +1043,7 @@ const AdminPortal = ({
                           }
                           // Navigate to relevant tab if type matches
                           if (n.type === 'NEW_AGENT') goToTab('agents');
-                          else if (n.type === 'NEW_CUSTOMER') goToTab('users');
+                          else if (n.type === 'NEW_CUSTOMER') goToTab('user_mgmt');
                           setShowNotifications(false);
                         }}
                         className={`w-full text-left px-4 py-3 border-b transition-colors ${'border-ds-border hover:bg-ds-card2'} ${!n.read ? 'bg-ds-green-tint' : ''}`}

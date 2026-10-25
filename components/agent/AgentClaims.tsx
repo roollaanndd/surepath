@@ -23,6 +23,9 @@ const STATUS_META: Record<SpClaim['status'], { label: string; labelId: string; c
   UNDER_REVIEW: { label: 'Under Review', labelId: 'Ditinjau',      color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',        Icon: AlertCircle },
   APPROVED:     { label: 'Approved',     labelId: 'Disetujui',     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
   REJECTED:     { label: 'Rejected',     labelId: 'Ditolak',       color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',          Icon: XCircle },
+  // FIX 2026-10-26: PAID is the real terminal "claim settled" state the gateway
+  // allows (admin_update_claim allowlist); CLOSED was never accepted upstream.
+  PAID:         { label: 'Paid',         labelId: 'Dibayarkan',    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
   CLOSED:       { label: 'Closed',       labelId: 'Ditutup',       color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',      Icon: FileText },
 };
 

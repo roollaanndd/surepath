@@ -8,7 +8,7 @@ import {
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
   createReviewToken, getAdminNotifications, markAdminNotificationRead,
   getPaymentsByOrderIds,
-  type SpPolicyOrder, type SpAdminNotification, type SpPayment,
+  type SpPolicyOrder, type SpAdminNotification, type SpPayment, type SpCommission,
 } from '../../services/supabaseService';
 import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -140,10 +140,22 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       ? order.coin_reward
       : Math.floor(order.total_premium * coinRate / 1000);
 
+    // FIX 2026-10-26 (cross-app audit #4): this used to hardcode
+    // product_type: 'CAR' regardless of the order's real product, corrupting
+    // sp_commissions.product_type for every TRAVEL/PA/MPAR/LIFE issuance and
+    // breaking AgentCommission's per-product breakdown. Derive it from the
+    // order: non-vehicle coverage types map directly, else the vehicle type.
+    const commissionProductType: SpCommission['product_type'] =
+      order.coverage_type === 'TRAVEL' ? 'TRAVEL'
+      : order.coverage_type === 'PA' ? 'PA'
+      : order.coverage_type === 'MPAR' ? 'MPAR'
+      : order.coverage_type === 'LIFE' ? 'LIFE'
+      : (order.vehicle_type ?? 'CAR');
+
     await addCommission({
       agent_id: order.agent_id,
       client_name: order.client_name,
-      product_type: 'CAR',
+      product_type: commissionProductType,
       premium_amount: order.total_premium,
       commission_amount: commissionAmount,
       discount_rate: discountRate,

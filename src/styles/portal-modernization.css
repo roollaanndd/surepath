@@ -1898,3 +1898,192 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ── SurePath Admin Portal visual-only redesign v2 ──────────────────────────
+   Scoped to the AdminPortal shell. Styling only: no routes, handlers, APIs,
+   permissions, data contracts, or business workflows are changed.
+*/
+.sp-modern-app:has(> main > header) {
+  color-scheme: light !important;
+  --ds-bg: #f2f6f8;
+  --ds-card: #ffffff;
+  --ds-card2: #f8fbfc;
+  --ds-surface: #ffffff;
+  --ds-border: #dce6ec;
+  --ds-ink: #172b3a;
+  --ds-ink2: #526779;
+  --ds-ink3: #788b99;
+  --ds-green: #087a58;
+  --ds-primary-text: #066747;
+  --ds-green-tint: #e6f5ee;
+  --sp-admin-canvas: #f1f6f8;
+  --sp-admin-line: #dfe8ed;
+  --sp-admin-shadow: 0 2px 8px rgba(26, 54, 74, .035), 0 12px 28px -22px rgba(26, 54, 74, .2);
+  background: var(--sp-admin-canvas) !important;
+  color: var(--ds-ink) !important;
+  isolation: isolate;
+}
+.sp-modern-app:has(> main > header) > main {
+  background: var(--sp-admin-canvas) !important;
+  min-width: 0;
+}
+.sp-modern-app:has(> main > header) > main > header {
+  background: rgba(255,255,255,.94) !important;
+  color: var(--ds-ink) !important;
+  border-color: var(--sp-admin-line) !important;
+  box-shadow: 0 1px 0 rgba(24, 51, 67, .025);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.sp-modern-app:has(> main > header) > main > header input {
+  background: #f5f8fa !important;
+  border: 1px solid #e0e8ed !important;
+  color: #203747 !important;
+  border-radius: 999px !important;
+  min-height: 40px;
+}
+.sp-modern-app:has(> main > header) > main > header input::placeholder {
+  color: #8494a0 !important;
+}
+.sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Terang"],
+.sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Gelap"] {
+  display: none !important;
+}
+.sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto {
+  background: var(--sp-admin-canvas) !important;
+  padding: clamp(1rem, 2vw, 2rem) !important;
+  overscroll-behavior: contain;
+}
+.sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto > div {
+  max-width: 1600px;
+}
+.sp-modern-app:has(> main > header) > main .sp-page-enter {
+  animation: sp-admin-view-enter .22s cubic-bezier(.2,.7,.25,1) both;
+}
+@keyframes sp-admin-view-enter {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Make dark-theme utility classes render as light surfaces inside admin content. */
+.sp-modern-app:has(> main > header) > main .bg-ds-bg,
+.sp-modern-app:has(> main > header) > main .bg-ds-card2,
+.sp-modern-app:has(> main > header) > main .bg-ds-card,
+.sp-modern-app:has(> main > header) > main .bg-ds-surface {
+  background-color: #fff !important;
+}
+.sp-modern-app:has(> main > header) > main .text-ds-ink,
+.sp-modern-app:has(> main > header) > main .text-white {
+  color: #1b3040 !important;
+}
+.sp-modern-app:has(> main > header) > main .text-ds-ink2 {
+  color: #526779 !important;
+}
+.sp-modern-app:has(> main > header) > main .text-ds-ink3 {
+  color: #748896 !important;
+}
+.sp-modern-app:has(> main > header) > main :where(.border-ds-border, .border-white\/10, .border-white\/\[0\.06\]) {
+  border-color: #e0e8ed !important;
+}
+.sp-modern-app:has(> main > header) > main :where(.rounded-xl, .rounded-2xl, .rounded-3xl):where([class*="bg-ds-"], [class*="bg-white"], [class*="bg-slate-"], [class*="bg-gray-"]) {
+  box-shadow: var(--sp-admin-shadow);
+}
+.sp-modern-app:has(> main > header) > main :where(input, select, textarea) {
+  color: #243b4b;
+  background-color: #fff;
+  border-color: #d5e0e7;
+  border-radius: .75rem;
+}
+.sp-modern-app:has(> main > header) > main :where(input, select, textarea)::placeholder {
+  color: #8798a4;
+  opacity: 1;
+}
+.sp-modern-app:has(> main > header) > main :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid #07845b;
+  outline-offset: 2px;
+}
+.sp-modern-app:has(> main > header) > main table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+.sp-modern-app:has(> main > header) > main table thead {
+  background: #edf4f7 !important;
+}
+.sp-modern-app:has(> main > header) > main table th {
+  color: #506779 !important;
+  font-size: .72rem !important;
+  font-weight: 700;
+  letter-spacing: .035em;
+}
+.sp-modern-app:has(> main > header) > main table td {
+  color: #263b4a;
+  border-color: #e7eef2;
+}
+.sp-modern-app:has(> main > header) > main table tbody tr:hover {
+  background: #f7fafb;
+}
+.sp-modern-app:has(> main > header) > main :where(h1, h2, h3) {
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+.sp-modern-app:has(> main > header) > main :where(.sp-glass, .sp-glass-strong) {
+  background-color: rgba(255,255,255,.94);
+  border-color: #dfe8ed;
+  box-shadow: var(--sp-admin-shadow);
+}
+
+/* Keep the existing branded green sidebar; improve its rhythm without changing navigation. */
+.sp-modern-app:has(> main > header) > aside,
+.sp-modern-app:has(> main > header) > div > aside {
+  box-shadow: 5px 0 24px -20px rgba(0, 48, 37, .48);
+}
+.sp-modern-app:has(> main > header) aside nav button {
+  min-height: 42px;
+  border-radius: .8rem;
+  padding-block: .65rem;
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+}
+.sp-modern-app:has(> main > header) aside nav button span {
+  line-height: 1.35;
+}
+.sp-modern-app:has(> main > header) aside nav button:hover {
+  background: rgba(255,255,255,.11);
+}
+.sp-modern-app:has(> main > header) aside nav button:focus-visible {
+  outline-color: #b8f2d6;
+  outline-offset: 1px;
+}
+
+/* Responsive refinements; preserve the current mobile menu and all interactions. */
+@media (max-width: 1023px) {
+  .sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto {
+    padding: 1rem !important;
+  }
+  .sp-modern-app:has(> main > header) > main > header {
+    padding-inline: 1rem;
+    gap: .5rem;
+  }
+  .sp-modern-app:has(> main > header) > main > header > div:first-child {
+    gap: .65rem;
+  }
+}
+@media (max-width: 640px) {
+  .sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto {
+    padding: .75rem !important;
+  }
+  .sp-modern-app:has(> main > header) > main > header input {
+    font-size: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-modern-app:has(> main > header) .sp-page-enter {
+    animation: none !important;
+    transform: none !important;
+  }
+  .sp-modern-app:has(> main > header) :where(button, a, input, select, textarea) {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

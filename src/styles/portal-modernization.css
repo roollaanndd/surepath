@@ -1592,3 +1592,144 @@
 @media (max-width: 1023px) {
   .sp-modern-app:has(aside) main { padding: 1rem; }
 }
+
+
+/* Reference-led admin composition: compact white sidebar, quiet workspace, dense KPI grid. */
+.sp-modern-app:has(> aside) {
+  background: #edf4f8 !important;
+  color: #172b3b;
+  --sp-admin-green: #087b57;
+  --sp-admin-orange: #f28a35;
+}
+.sp-modern-app:has(> aside) > aside {
+  width: 14.25rem;
+  min-width: 14.25rem;
+  padding: 1.15rem .9rem !important;
+  background: #fff !important;
+  color: #34465a !important;
+  border-right: 1px solid #dfe8ee !important;
+  box-shadow: 4px 0 22px -20px rgba(20, 45, 65, .3) !important;
+  backdrop-filter: none !important;
+}
+.sp-modern-app:has(> aside) > aside > .sp-modern-app {
+  background: transparent !important;
+}
+.sp-modern-app:has(> aside) > aside :where(h1,h2,h3,p,span,button) {
+  text-shadow: none !important;
+}
+.sp-modern-app:has(> aside) > aside h1 {
+  color: #123b30 !important;
+  font-size: 1.12rem !important;
+}
+.sp-modern-app:has(> aside) > aside :where(.text-white,.text-emerald-50\/70,.text-emerald-50\/75,.text-emerald-100\/60,.text-emerald-100\/70) {
+  color: #627487 !important;
+}
+.sp-modern-app:has(> aside) > aside :where(.border-white\/10,.border-white\/\[0\.06\]) {
+  border-color: #e4ecf1 !important;
+}
+.sp-modern-app:has(> aside) > aside :where(.bg-white\/\[0\.06\],.bg-white\/10) {
+  background: #f6faf8 !important;
+}
+.sp-modern-app:has(> aside) > aside nav button {
+  min-height: 36px !important;
+  padding: .48rem .62rem !important;
+  margin-block: 2px !important;
+  gap: .55rem !important;
+  border-radius: .65rem !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.sp-modern-app:has(> aside) > aside nav button > :first-child {
+  width: 22px !important;
+  height: 22px !important;
+}
+.sp-modern-app:has(> aside) > aside nav button span {
+  font-size: .72rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+}
+.sp-modern-app:has(> aside) > aside nav button:hover {
+  color: #087b57 !important;
+  background: #f0f8f4 !important;
+}
+.sp-modern-app:has(> aside) > aside nav button.bg-emerald-300\/15 {
+  color: #087b57 !important;
+  background: #e7f6ee !important;
+  border-color: #ccebd9 !important;
+}
+.sp-modern-app:has(> aside) > aside nav button.bg-emerald-300\/15 :where(svg) {
+  color: #087b57 !important;
+}
+.sp-modern-app:has(> aside) > aside > .sp-modern-app > button:first-child {
+  margin-bottom: 1rem !important;
+  font-size: .65rem !important;
+  letter-spacing: .08em !important;
+}
+.sp-modern-app:has(> aside) > aside .mb-6.pb-5 {
+  padding-bottom: .9rem !important;
+  margin-bottom: .85rem !important;
+}
+.sp-modern-app:has(> aside) > aside .mt-4.flex-shrink-0 {
+  padding: .7rem !important;
+  border-radius: .8rem !important;
+}
+.sp-modern-app:has(> aside) > main {
+  min-width: 0;
+  background: #edf4f8 !important;
+}
+.sp-modern-app:has(> aside) > main > header {
+  min-height: 4.25rem !important;
+  padding-inline: clamp(1rem, 2vw, 2rem) !important;
+  background: rgba(255,255,255,.94) !important;
+  border-bottom: 1px solid #e0e9ef !important;
+  box-shadow: 0 2px 10px rgba(20,45,65,.025) !important;
+  backdrop-filter: blur(14px) !important;
+}
+.sp-modern-app:has(> aside) > main > header input {
+  min-height: 2.4rem !important;
+  background: #f5f8fa !important;
+  border-color: #e4ebf0 !important;
+  border-radius: .7rem !important;
+}
+.sp-modern-app:has(> aside) > main > header button {
+  min-height: 2.35rem !important;
+  border-radius: .7rem !important;
+}
+.sp-modern-app:has(> aside) > main > div[ref] {
+  background: #edf4f8 !important;
+  padding: clamp(1rem, 1.8vw, 1.65rem) !important;
+  scrollbar-gutter: stable;
+}
+.sp-modern-app:has(> aside) > main > div[ref] > div {
+  max-width: 1600px !important;
+}
+.sp-modern-app:has(> aside) > main :where(.rounded-3xl) {
+  border-radius: .95rem !important;
+}
+.sp-modern-app:has(> aside) > main :where(.bg-ds-card,.bg-ds-surface,.bg-white) {
+  box-shadow: 0 2px 10px rgba(29, 56, 75, .035) !important;
+  border-color: #e0e9ef !important;
+}
+.sp-modern-app:has(> aside) > main :where(button.bg-ds-card) {
+  background: #fff !important;
+}
+.sp-modern-app:has(> aside) > main :where(.text-2xs) {
+  letter-spacing: .025em;
+}
+.sp-modern-app:has(> aside) > main :where(input,select,textarea) {
+  background-color: #fff;
+  border-color: #dce6ed;
+  border-radius: .7rem;
+}
+.sp-modern-app:has(> aside) > main :where(th) {
+  color: #718096;
+  background: #f7fafc;
+}
+.sp-modern-app:has(> aside) > main :where(td) { border-color: #edf1f5; }
+@media (max-width: 1023px) {
+  .sp-modern-app:has(> aside) > main > div[ref] { padding: 1rem !important; }
+}
+@media (max-width: 640px) {
+  .sp-modern-app:has(> aside) > main > header { gap: .4rem; padding-inline: .75rem !important; }
+  .sp-modern-app:has(> aside) > main > div[ref] { padding: .75rem !important; }
+}

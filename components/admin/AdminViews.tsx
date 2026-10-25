@@ -721,7 +721,7 @@ export const LedgerView = () => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in text-white">
+        <div className="space-y-8 animate-fade-in">
            {loadError && <div role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600">Gagal memuat buku besar: {loadError} <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Coba lagi</button></div>}
            <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
               <div>
@@ -840,7 +840,7 @@ export const ReportsView = ({ compact }: { compact?: boolean }) => {
     };
 
     return (
-        <div className={`space-y-8 ${compact ? '' : 'animate-fade-in text-white'}`}>
+        <div className={`space-y-8 ${compact ? '' : 'animate-fade-in'}`}>
            {!compact && (
               <div className="flex flex-col lg:flex-row justify-between items-end gap-6 mb-4">
                  <div>
@@ -997,7 +997,7 @@ export const ApprovalsView = () => {
     };
 
     return (
-        <div className="space-y-8 animate-fade-in text-white">
+        <div className="space-y-8 animate-fade-in">
             <Card>
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center gap-4">
@@ -1289,7 +1289,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-white">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Akses Menu Per Role</h3>
@@ -1434,7 +1434,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   const safeProducts = Array.isArray(products) ? products : [];
 
   return (
-    <div className="space-y-8 animate-fade-in text-white pb-32">
+    <div className="space-y-8 animate-fade-in pb-32">
        <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Settings size={22}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Sistem</h3>
@@ -2667,7 +2667,7 @@ export const UserManagementView = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in text-white">
+    <div className="space-y-6 animate-fade-in">
       {selectedUserId && <UserDetailModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
       {loadError && (
         <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 font-bold">{loadError}</div>
@@ -2982,7 +2982,7 @@ export const PaymentsAdminView = () => {
     const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '-';
 
     return (
-        <div className="space-y-8 animate-fade-in text-white">
+        <div className="space-y-8 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

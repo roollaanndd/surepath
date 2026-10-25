@@ -1281,6 +1281,18 @@
 :root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) :where(p, h1, h2, h3, h4, label, th, td).text-white {
   color: var(--sp-admin-ink) !important;
 }
+/* Opacity variants (text-white/60 etc.) don't match `.text-white` — catch them
+   too, but only on light card surfaces so always-dark hero banners keep their
+   white text. Muted (not full ink) because these are secondary labels. */
+:root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) [class*="text-white/"] {
+  color: var(--sp-admin-muted) !important;
+}
+/* View roots no longer carry text-white (2026-10-25 revamp), but any element
+   sitting directly on the page background that still hardcodes it must stay
+   legible: headings/paragraphs outside cards get ink, not white. */
+:root:not(.dark) .sp-modern-app:has(> aside) main > div > div > :where(p, h1, h2, h3, h4, span, label, th, td).text-white {
+  color: var(--sp-admin-ink) !important;
+}
 :root:not(.dark) .sp-modern-app:has(> aside) main :where(.text-ds-ink3, .text-gray-400, .text-slate-400) {
   color: var(--sp-admin-muted);
 }

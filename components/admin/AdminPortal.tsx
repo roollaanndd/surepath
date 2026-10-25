@@ -7,6 +7,7 @@ import {
   TrendingUp, BarChart3, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
   Monitor, Sun, Moon, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
+  PanelLeftClose, PanelLeftOpen, UserPlus, CornerDownLeft,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -53,7 +54,7 @@ import {
   SpotOrders, SpotClients, SpotClaims, SpotWallet, SpotNetwork,
   SpotMarket, SpotProfile, SpotEndorse, SpotTrophy, SpotRenewal, SpotBell,
 } from '../agent/AgentArt';
-import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, type SpAdminNotification } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
@@ -183,13 +184,13 @@ class SettingsErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: 32, textAlign: 'center', color: '#fff' }}>
-          <p style={{ marginBottom: 16, fontSize: '0.9rem', fontWeight: 700 }}>
+        <div className="p-8 text-center text-ds-ink">
+          <p className="mb-4 text-sm font-bold text-ds-ink2">
             Terjadi kesalahan saat memuat pengaturan. Coba refresh halaman.
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
-            style={{ padding: '10px 24px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', letterSpacing: '0.1em', textTransform: 'uppercase' }}
+            className="px-6 py-2.5 rounded-xl bg-ds-green-tint border border-ds-green/30 text-ds-green font-extrabold text-[0.7rem] cursor-pointer tracking-[0.1em] uppercase transition-colors hover:bg-ds-green hover:text-white"
           >
             Coba Lagi
           </button>
@@ -244,6 +245,24 @@ const AdminPortal = ({
   const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  // ── Revamp 2026-10-25: interactive shell upgrades ────────────────────────
+  // (a) Collapsible desktop sidebar — icon rail for power users, persisted.
+  const [rail, setRail] = useState(() => localStorage.getItem('SP_ADMIN_RAIL') === '1');
+  const toggleRail = useCallback(() => {
+    setRail(prev => {
+      localStorage.setItem('SP_ADMIN_RAIL', prev ? '0' : '1');
+      return !prev;
+    });
+  }, []);
+  // (b) Live queue badges on nav items — the admin sees pending work WITHOUT
+  // opening each view (audit 6-b #7: approval queues lacked discoverability).
+  const [tierPending, setTierPending] = useState(0);
+  // (c) Command palette (Ctrl/Cmd+K) — the header search was a dead input;
+  // it now drives fuzzy menu navigation.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState('');
+  const [paletteIndex, setPaletteIndex] = useState(0);
+  const paletteInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -270,6 +289,11 @@ const AdminPortal = ({
     loadNotifs();
     const notifInterval = setInterval(loadNotifs, 60000);
 
+    // Pending tier-approval queue — feeds the nav badge on "Tier & Promo".
+    const loadTierQueue = () => getTierChangeRequests('PENDING').then(r => setTierPending(r.length)).catch(() => {});
+    loadTierQueue();
+    const tierInterval = setInterval(loadTierQueue, 60000);
+
     // Auto daily backup — runs silently on admin portal open if >23h since last
     if (shouldAutoBackup()) {
       setBackupStatus('running');
@@ -284,7 +308,29 @@ const AdminPortal = ({
       clearInterval(statsInterval);
       clearInterval(onlineInterval);
       clearInterval(notifInterval);
+      clearInterval(tierInterval);
     };
+  }, []);
+
+  // ── Command palette keyboard wiring ───────────────────────────────────────
+  useEffect(() => {
+    if (!paletteOpen) return;
+    setPaletteIndex(0);
+    const t = setTimeout(() => paletteInputRef.current?.focus(), 30);
+    return () => clearTimeout(t);
+  }, [paletteOpen]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(v => !v);
+      } else if (e.key === 'Escape') {
+        setPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // ── Role-based menu with localStorage overrides ────────────────────────────
@@ -306,6 +352,20 @@ const AdminPortal = ({
     return MENU_ITEMS.filter(m => m.roles.includes(userRole));
   })();
 
+  // Command palette results — declared after filteredMenu (TDZ-safe).
+  const paletteResults = (() => {
+    const items = filteredMenu.filter(m => !m.isSeparator) as Array<{ id: string; label: string; icon: React.ElementType }>;
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return items.slice(0, 8);
+    return items.filter(m => m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
+  })();
+  // Live work-queue badges: order approval queue + tier approval queue.
+  const approvalQueueCount = adminStats
+    ? (adminStats.ordersByStatus?.SUBMITTED ?? 0) + (adminStats.ordersByStatus?.UNDER_REVIEW ?? 0)
+    : 0;
+  const navBadgeFor = (id: string): number =>
+    id === 'approvals' ? approvalQueueCount : id === 'tier_promo' ? tierPending : 0;
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -316,20 +376,38 @@ const AdminPortal = ({
     e.target.value = '';
   };
 
-  // ── Sidebar ────────────────────────────────────────────────────────────────
+  // ── Sidebar ────────────────────────────────────────────────────────────
+  // Revamp 2026-10-25: collapsible icon rail (desktop), live work-queue badges,
+  // active-state accent bar. The sidebar itself is always the dark-green brand
+  // gradient, so white text is intentional there.
+  const isRail = !isMobile && rail;
   const SidebarContent = () => (
     <div className="sp-modern-app flex flex-col h-full min-h-0">
-      {/* Back to website */}
-      <button
-        onClick={onLogout}
-        className={`mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${'text-ds-ink3 hover:text-ds-ink'}`}
-      >
-        <ArrowLeft size={13} /> Kembali ke Website
-      </button>
+      {/* Top row — back link + collapse toggle */}
+      <div className={`mb-4 flex items-center ${isRail ? 'justify-center' : 'justify-between'}`}>
+        {!isRail && (
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 text-[0.65rem] font-bold uppercase tracking-widest transition-colors text-white/50 hover:text-white"
+          >
+            <ArrowLeft size={13} /> Kembali
+          </button>
+        )}
+        {!isMobile && (
+          <button
+            onClick={toggleRail}
+            className="p-1.5 rounded-lg text-white/45 hover:text-white hover:bg-white/10 transition-all"
+            title={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
+            aria-label={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
+          >
+            {isRail ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          </button>
+        )}
+      </div>
 
       {/* Logo */}
-      <div className={`mb-6 pb-5 border-b ${'border-ds-border'}`}>
-        <div className="flex items-center gap-3">
+      <div className={`mb-5 pb-4 border-b border-white/10 ${isRail ? 'flex justify-center' : ''}`}>
+        <div className={`flex items-center gap-3 ${isRail ? 'justify-center' : ''}`}>
           <div className="relative group flex-shrink-0">
             <input
               ref={logoInputRef}
@@ -339,7 +417,7 @@ const AdminPortal = ({
               onChange={handleLogoUpload}
             />
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 overflow-hidden cursor-pointer"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 overflow-hidden cursor-pointer transition-transform hover:scale-105"
               style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
               onClick={() => logoInputRef.current?.click()}
               title="Klik untuk ganti logo"
@@ -352,21 +430,25 @@ const AdminPortal = ({
                 <SurePathLogo className="w-6 h-6 text-white" />
               )}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-600 rounded-full flex items-center justify-center pointer-events-none">
-              <Upload size={8} className="text-white" />
+            {!isRail && (
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-600 rounded-full flex items-center justify-center pointer-events-none">
+                <Upload size={8} className="text-white" />
+              </div>
+            )}
+          </div>
+          {!isRail && (
+            <div className="min-w-0 flex-1">
+              <h1 className="font-black text-lg tracking-tight leading-none text-white">
+                Sure<span className="text-emerald-300">Path</span>
+              </h1>
+              <button
+                onClick={() => logoInputRef.current?.click()}
+                className="text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors text-emerald-100/70 hover:text-white"
+              >
+                {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
+              </button>
             </div>
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="font-black text-lg tracking-tight leading-none text-white">
-              Sure<span className="text-ds-green">Path</span>
-            </h1>
-            <button
-              onClick={() => logoInputRef.current?.click()}
-              className="text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors text-emerald-100/70 hover:text-white"
-            >
-              {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
@@ -378,47 +460,78 @@ const AdminPortal = ({
       >
         {filteredMenu.map(item => {
           if (item.isSeparator) {
+            if (isRail) return <div key={item.id} className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />;
             return (
               <div key={item.id} className="mt-4 mb-1 px-2">
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-emerald-100/55">{(item as any).groupLabel}</p>
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-white/45">{(item as any).groupLabel}</p>
               </div>
             );
           }
           const navItem = item as { id: string; label: string; icon: React.ElementType; roles: UserRole[] };
+          const badge = navBadgeFor(navItem.id);
+          const active = activeTab === navItem.id;
           return (
             <button
               key={navItem.id}
               onClick={() => { goToTab(navItem.id); setMobileOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left sp-interactive-surface ${
-                activeTab === navItem.id
-                  ? 'bg-emerald-300/15 text-white border border-emerald-200/20 shadow-sm shadow-emerald-950/10'
-                  : 'text-emerald-50/70 border border-transparent hover:text-white hover:bg-white/10'
+              title={isRail ? navItem.label : undefined}
+              className={`relative w-full flex items-center rounded-2xl transition-all text-left sp-interactive-surface group/nav ${
+                isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
+              } ${
+                active
+                  ? 'bg-white/[0.14] text-white shadow-sm'
+                  : 'text-white/65 border border-transparent hover:text-white hover:bg-white/[0.08]'
               }`}
             >
-              <PathyNavIcon id={navItem.id} size={30} active={activeTab === navItem.id} className="flex-shrink-0 drop-shadow-sm" />
-              <span className="text-[0.68rem] font-bold tracking-wide">{navItem.label}</span>
+              {active && (
+                <span aria-hidden className={`absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
+              )}
+              <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
+                <PathyNavIcon id={navItem.id} size={isRail ? 30 : 28} active={active} />
+                {isRail && badge > 0 && (
+                  <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center shadow">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+              </span>
+              {!isRail && (
+                <>
+                  <span className="text-[0.68rem] font-bold tracking-wide flex-1 min-w-0 truncate">{navItem.label}</span>
+                  {badge > 0 && (
+                    <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           );
         })}
       </nav>
 
       {/* User footer — always visible */}
-      <div className="mt-4 flex-shrink-0 p-4 rounded-2xl border border-white/10 bg-white/[0.06] space-y-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className={`mt-4 flex-shrink-0 border border-white/10 bg-white/[0.06] rounded-2xl ${isRail ? 'p-2 flex flex-col items-center gap-2' : 'p-4 space-y-3'}`}>
+        <div className={`min-w-0 ${isRail ? '' : 'flex items-center gap-2.5'}`}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white flex-shrink-0 ring-2 ring-emerald-500/25"
-            style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}>
+            style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
+            title={currentUser?.email ?? formatRole(userRole)}>
             {(currentUser?.name ?? userRole)[0].toUpperCase()}
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-black truncate text-white">{formatRole(userRole)}</p>
-            <p className="text-[0.65rem] font-medium truncate text-emerald-100/60">{currentUser?.email ?? 'Admin'}</p>
-          </div>
+          {!isRail && (
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black truncate text-white">{formatRole(userRole)}</p>
+              <p className="text-[0.65rem] font-medium truncate text-white/55">{currentUser?.email ?? 'Admin'}</p>
+            </div>
+          )}
         </div>
         <button
           onClick={onLogout}
-          className="w-full py-2.5 rounded-xl transition-all font-black uppercase text-[0.6rem] tracking-widest flex items-center justify-center gap-2 border border-white/10 bg-white/[0.06] text-emerald-50/75 hover:bg-orange-500 hover:text-white hover:border-orange-400/40"
+          title="Keluar"
+          className={`transition-all font-black uppercase tracking-widest flex items-center justify-center border border-white/10 bg-white/[0.06] text-white/75 hover:bg-rose-500 hover:text-white hover:border-rose-400/40 ${
+            isRail ? 'w-9 h-9 rounded-xl' : 'w-full py-2.5 rounded-xl text-[0.6rem] gap-2'
+          }`}
         >
-          <LogOut size={13} /> Keluar
+          <LogOut size={13} /> {!isRail && 'Keluar'}
         </button>
       </div>
     </div>
@@ -464,6 +577,24 @@ const AdminPortal = ({
             <RefreshCw size={13} /> Refresh
           </button>
         </div>
+      </div>
+
+      {/* Quick actions — one-tap jump into the busiest flows. Only shows
+          actions the current role can actually reach. */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: 'approvals', label: 'Proses Antrean Polis', icon: ClipboardCheck },
+          { id: 'claims_admin', label: 'Tinjau Klaim', icon: ShieldAlert },
+          { id: 'withdrawals', label: 'Cairkan Komisi', icon: Banknote },
+          { id: 'agents', label: 'Kelola Mitra', icon: UserPlus },
+        ]
+          .filter(a => filteredMenu.some(m => !m.isSeparator && m.id === a.id))
+          .map(a => (
+            <button key={a.id} onClick={() => goToTab(a.id)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border bg-ds-card border-ds-border text-ds-ink2 text-2xs font-bold tracking-wide shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40 hover:text-ds-green transition-all active:scale-[0.97]">
+              <a.icon size={14} /> {a.label}
+            </button>
+          ))}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -684,6 +815,9 @@ const AdminPortal = ({
         @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,-40px) scale(1.15)} }
         @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-50px,30px) scale(0.9)} 66%{transform:translate(40px,50px) scale(1.1)} }
         @keyframes orb3 { 0%,100%{transform:translate(0,0) scale(1.05)} 50%{transform:translate(-30px,-60px) scale(0.95)} }
+        @keyframes spPalette { from{opacity:0;transform:translateY(-8px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .sp-palette-pop { animation: spPalette 160ms ease-out both; }
+        @media (prefers-reduced-motion: reduce) { .sp-palette-pop { animation: none; } }
       `}</style>
       <div style={{ position:'fixed', top:'10%', left:'5%', width:600, height:600, borderRadius:'50%', background:'rgba(16,185,129,0.07)', filter:'blur(120px)', animation:'orb1 18s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
       <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(59,130,246,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
@@ -691,7 +825,7 @@ const AdminPortal = ({
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
-        <aside className={`w-64 border-r flex flex-col p-6 flex-shrink-0 z-20 sp-glass-strong ${sidebarBg}`}>
+        <aside className={`border-r flex flex-col flex-shrink-0 z-20 sp-glass-strong transition-[width,padding] duration-300 ease-out ${isRail ? 'w-[76px] p-3' : 'w-64 p-6'} ${sidebarBg}`}>
           {SidebarContent()}
         </aside>
       )}
@@ -706,6 +840,55 @@ const AdminPortal = ({
         </div>
       )}
 
+      {/* ── Command palette (Ctrl/Cmd+K) — replaces the old dead search input ── */}
+      {paletteOpen && (
+        <div className="fixed inset-0 z-[1100] flex items-start justify-center pt-[12vh] px-4" onMouseDown={() => setPaletteOpen(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-lg rounded-3xl border bg-ds-card border-ds-border shadow-2xl overflow-hidden sp-palette-pop"
+            onMouseDown={e => e.stopPropagation()}
+            role="dialog"
+            aria-label="Cari menu"
+          >
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-ds-border">
+              <Search size={17} className="text-ds-ink3 flex-shrink-0" />
+              <input
+                ref={paletteInputRef}
+                value={paletteQuery}
+                onChange={e => setPaletteQuery(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowDown') { e.preventDefault(); setPaletteIndex(i => Math.min(i + 1, Math.max(paletteResults.length - 1, 0))); }
+                  else if (e.key === 'ArrowUp') { e.preventDefault(); setPaletteIndex(i => Math.max(i - 1, 0)); }
+                  else if (e.key === 'Enter' && paletteResults[paletteIndex]) {
+                    goToTab(paletteResults[paletteIndex].id);
+                    setPaletteOpen(false); setPaletteQuery('');
+                  }
+                }}
+                placeholder="Ketik nama menu… (mis. penarikan, tier, klaim)"
+                className="flex-1 bg-transparent outline-none text-sm font-semibold text-ds-ink placeholder-ds-ink3"
+              />
+              <kbd className="px-1.5 py-0.5 rounded-md bg-ds-card2 border border-ds-border text-[0.55rem] font-black text-ds-ink3">ESC</kbd>
+            </div>
+            <div className="max-h-80 overflow-y-auto p-2">
+              {paletteResults.length === 0 ? (
+                <p className="text-center py-8 text-xs font-bold text-ds-ink3">Tidak ada menu yang cocok.</p>
+              ) : paletteResults.map((r, i) => (
+                <button
+                  key={r.id}
+                  onMouseEnter={() => setPaletteIndex(i)}
+                  onClick={() => { goToTab(r.id); setPaletteOpen(false); setPaletteQuery(''); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${i === paletteIndex ? 'bg-ds-green-tint' : 'hover:bg-ds-card2'}`}
+                >
+                  <r.icon size={16} className={i === paletteIndex ? 'text-ds-green' : 'text-ds-ink3'} />
+                  <span className={`text-xs font-bold flex-1 min-w-0 truncate ${i === paletteIndex ? 'text-ds-ink' : 'text-ds-ink2'}`}>{r.label}</span>
+                  {i === paletteIndex && <CornerDownLeft size={13} className="text-ds-green flex-shrink-0" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Main ───────────────────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Header */}
@@ -716,13 +899,17 @@ const AdminPortal = ({
                 <Menu size={20} />
               </button>
             )}
-            <div className="relative flex-1 min-w-0 max-w-xs">
-              <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${'text-ds-ink3'}`} />
-              <input
-                className={`rounded-xl py-2 pl-9 pr-4 text-xs font-medium outline-none w-full border ${inputBg}`}
-                placeholder="Cari data..."
-              />
-            </div>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              title="Cari menu (Ctrl+K)"
+              className={`flex items-center gap-2 flex-1 min-w-0 max-w-xs rounded-xl py-2 px-3 text-xs font-medium outline-none border transition-all hover:border-ds-green/50 focus:border-ds-green/60 ${inputBg}`}
+            >
+              <Search size={15} className="text-ds-ink3 flex-shrink-0" />
+              <span className="text-ds-ink3 truncate">Cari menu…</span>
+              <span className="ml-auto hidden sm:flex items-center flex-shrink-0 px-1.5 py-0.5 rounded-md bg-ds-bg/60 border border-ds-border text-[0.55rem] font-black text-ds-ink3 tracking-wider">
+                {/Mac/i.test(navigator.userAgent) ? '⌘K' : 'Ctrl K'}
+              </span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">

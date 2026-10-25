@@ -8,14 +8,14 @@ import { runAIAdminTick } from './services/aiAdminEngine';
 
 // ════════════════════════════════════════════════════════════════��[...]
 // AI GATEWAY — 6-LAYER CONSISTENCY & ANTI-LEAK SYSTEM
-// ════════════════════════════════════════════════════════════════�[...]
+// ════════════════════════════════════════════════════════�[...]
 // Layer 1: Response Caching — deterministic untuk FAQ
 // Layer 2: Post-LLM Validation — PII leak, hallucination, scope check
 // Layer 3: Temperature Control — 0 untuk analytical, 0.3 untuk chat
 // Layer 4: Fact-Checking — verify AI claims vs reference data
 // Layer 5: Structured Output Validation — JSON schema enforcement
 // Layer 6: Knowledge Base Versioning — track changes, audit trail
-// ════════════════════════════════════════════════════════════════�[...]
+// ════════════════════════════════════════════════════════�[...]
 
 let zaiInstance: any = null;
 let geminiClient: GoogleGenAI | null = null;
@@ -38,19 +38,19 @@ async function initAI() {
   try {
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (!geminiApiKey) {
-      console.log('⚠ GEMINI_API_KEY not set — Gemini provider disabled');
+      console.log('⚠ GEMINI_API_KEY not set — Google AI Studio provider disabled');
       return;
     }
 
     geminiClient = new GoogleGenAI({ apiKey: geminiApiKey });
-    console.log('✓ AI Gateway (Google Gemini API Studio) initialized');
+    console.log('✓ Google AI Studio provider ready (optional integration)');
   } catch (e) {
-    console.error('Failed to init Google Gemini:', e);
-    console.log('⚠ Gemini provider unavailable');
+    console.error('Failed to init Google AI Studio:', e);
+    console.log('⚠ Google AI Studio provider unavailable');
   }
 }
 
-function parseGeminiOutput(payload: any): string {
+function extractGeminiText(payload: any): string {
   if (typeof payload === 'string') return payload;
   if (payload?.text) return payload.text;
 
@@ -376,6 +376,37 @@ async function startServer() {
 
   await initAI();
 
+  app.post('/api/aistudio-test', async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: 'prompt required' });
+      }
+
+      if (!geminiClient) {
+        return res.status(503).json({
+          error: 'Google AI Studio belum terhubung. Set GEMINI_API_KEY terlebih dahulu.',
+        });
+      }
+
+      const result = await geminiClient.models.generateContent({
+        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        contents: prompt,
+      });
+
+      const text = extractGeminiText(result) || '';
+
+      if (!text) {
+        return res.status(500).json({ error: 'Google AI Studio tidak mengembalikan jawaban.' });
+      }
+
+      return res.json({ success: true, text });
+    } catch (error: any) {
+      console.error('AI Studio test error:', error);
+      return res.status(500).json({ error: error.message || 'AI Studio request failed' });
+    }
+  });
+
   // ─── AI Gateway Endpoint (6-layer consistency) ────────────────────────────
   app.post("/api/ai-gateway", async (req, res) => {
     try {
@@ -385,8 +416,8 @@ async function startServer() {
         return res.status(400).json({ error: 'agentType and userMessage required' });
       }
 
-      if (!zaiInstance && !geminiClient) {
-        return res.status(503).json({ error: 'AI service not available. z-ai and Gemini providers are unavailable in this environment.' });
+      if (!zaiInstance) {
+        return res.status(503).json({ error: 'AI service not available. z-ai SDK tidak ditemukan di environment ini.' });
       }
 
       // Rate limit
@@ -457,50 +488,15 @@ async function startServer() {
       const temperature = TEMPERATURE_MAP[agentType] ?? TEMPERATURE_MAP.default;
 
       const startTime = Date.now();
-      let responseContent = '';
-      let activeModel = 'z-ai';
-
-      if (geminiClient) {
-        try {
-          const geminiPrompt = messages
-            .map((msg) => `${msg.role}: ${msg.content}`)
-            .join('\n\n');
-
-          const geminiResponse = await geminiClient.models.generateContent({
-            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-            contents: geminiPrompt,
-            config: { temperature },
-          });
-
-          responseContent = parseGeminiOutput(geminiResponse) || '';
-          activeModel = 'gemini';
-        } catch (error) {
-          console.error('[AI Gateway] Gemini provider failed, falling back to z-ai:', error);
-          if (!zaiInstance) {
-            throw error;
-          }
-
-          const completion = await zaiInstance.chat.completions.create({
-            messages,
-            thinking: { type: 'disabled' },
-            // @ts-ignore — z-ai SDK supports temperature
-            temperature,
-          });
-
-          responseContent = completion.choices[0]?.message?.content ?? '';
-        }
-      } else {
-        const completion = await zaiInstance.chat.completions.create({
-          messages,
-          thinking: { type: 'disabled' },
-          // @ts-ignore — z-ai SDK supports temperature
-          temperature,
-        });
-
-        responseContent = completion.choices[0]?.message?.content ?? '';
-      }
+      const completion = await zaiInstance.chat.completions.create({
+        messages,
+        thinking: { type: 'disabled' },
+        // @ts-ignore — z-ai SDK supports temperature
+        temperature,
+      });
 
       const latencyMs = Date.now() - startTime;
+      let responseContent = completion.choices[0]?.message?.content ?? '';
 
       // ─── Layer 2: Post-LLM Validation ──────────────────────────────────
       const allWarnings: string[] = [];
@@ -568,7 +564,7 @@ async function startServer() {
       res.json({
         data: {
           content: safeOutput,
-          model: activeModel,
+          model: 'z-ai',
           cached: false,
           usage: {
             inputTokens: Math.ceil(JSON.stringify(messages).length / 4),

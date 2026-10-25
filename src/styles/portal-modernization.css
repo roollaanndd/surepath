@@ -1518,3 +1518,77 @@
 @media (prefers-reduced-motion: reduce) {
   .sp-modern-app:has(aside) > main > div:last-child .grid > button { transition: none !important; }
 }
+
+
+/* Admin reference-inspired layout: airy, compact, white workspace with restrained SurePath green/orange. */
+.sp-modern-app:has(aside) {
+  --sp-admin-canvas: #eef5f8;
+  --sp-admin-surface: #ffffff;
+  --sp-admin-muted: #748398;
+  --sp-admin-ink: #18283b;
+  --sp-admin-green: #087b57;
+  color: var(--sp-admin-ink);
+}
+.sp-modern-app:has(aside) aside {
+  background: #fff !important;
+  color: #314155 !important;
+  border-right: 1px solid #e4ebf0 !important;
+  box-shadow: 4px 0 20px -18px rgba(23, 49, 68, .28) !important;
+}
+.sp-modern-app:has(aside) aside :where(h1,h2,h3,p,span,button) {
+  text-shadow: none !important;
+}
+.sp-modern-app:has(aside) aside :where(.text-white,.text-emerald-50\/70,.text-emerald-50\/75,.text-emerald-100\/60,.text-emerald-100\/70) {
+  color: #64748b !important;
+}
+.sp-modern-app:has(aside) aside :where(.bg-white\/\[0\.06\],.bg-white\/10,.border-white\/10,.border-white\/\[0\.06\]) {
+  background: #f7fafc !important;
+  border-color: #e5edf2 !important;
+}
+.sp-modern-app:has(aside) aside nav button {
+  min-height: 38px;
+  padding: .55rem .7rem !important;
+  border-radius: .7rem !important;
+  gap: .65rem !important;
+  box-shadow: none !important;
+}
+.sp-modern-app:has(aside) aside nav button[aria-current="page"],
+.sp-modern-app:has(aside) aside nav button[data-active="true"] {
+  background: #e8f6ef !important;
+  color: #087b57 !important;
+  border-color: #c8ead9 !important;
+}
+.sp-modern-app:has(aside) aside nav button:hover {
+  background: #f1f8f4 !important;
+}
+.sp-modern-app:has(aside) main {
+  background: var(--sp-admin-canvas);
+  padding: clamp(1rem, 2vw, 1.75rem);
+}
+.sp-modern-app:has(aside) main :where(.rounded-2xl,.rounded-3xl) {
+  border-radius: 1rem !important;
+}
+.sp-modern-app:has(aside) main :where(.bg-white,.bg-ds-card,.bg-ds-surface) {
+  border: 1px solid #e5edf2;
+  box-shadow: 0 3px 12px rgba(28, 53, 72, .035) !important;
+}
+.sp-modern-app:has(aside) main :where(input,select,textarea) {
+  background-color: #fff;
+  border-color: #dce6ed;
+}
+.sp-modern-app:has(aside) main :where(th) {
+  color: #718096;
+  background: #f7fafc;
+}
+.sp-modern-app:has(aside) main :where(td) {
+  border-color: #edf1f5;
+}
+.sp-modern-app:has(aside) main :where(button.bg-emerald-600,button.bg-emerald-500,button.bg-green-600) {
+  background: #087b57;
+}
+.sp-modern-app:has(aside) main :where(button.bg-orange-500,button.bg-orange-600) {
+  background: #f28a35;
+}
+@media (max-width: 1023px) {
+  .sp-modern-app:has(aside) main { padding: 1rem; }
+}

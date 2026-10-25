@@ -96,7 +96,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [notificationPopup, setNotificationPopup] = useState<SpNotification | null>(null);
   const seenNotificationIds = useRef<Set<string>>(new Set());
 
-  const [agentTier, setAgentTier] = useState<string | null>(null);
+  const [agentTier, setAgentTier] = useState<string | null>(() => (agent as any)?.tier ?? null);
   const { tiers } = useTierDefinitions();
   const myTierDef = getTierByCode(tiers, agentTier);
   const [stats, setStats] = useState<AgentStats>({
@@ -176,6 +176,43 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   useEffect(() => { loadData(); }, [agent?.id]);
+
+  // ── Tier freshness (fixes "admin changed my tier but the app still shows
+  // the old one") ──────────────────────────────────────────────────────────
+  // loadData() only runs on mount, and mobile PWA agents keep the JS session
+  // alive for days — a tier assigned meanwhile was invisible until a full
+  // reload. This lightweight refresher re-reads sp_users.tier when the app
+  // regains focus and every 5 minutes while visible. It intentionally does
+  // NOT touch the heavy dashboard loaders.
+  useEffect(() => {
+    if (!agent?.id) return;
+    let cancelled = false;
+    const refreshTier = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sp_users')
+          .select('tier')
+          .eq('id', agent.id)
+          .single();
+        if (!cancelled && !error && data) {
+          const next = (data as any).tier ?? null;
+          setAgentTier(prev => (prev === next ? prev : next));
+        }
+      } catch { /* tier is optional — never surface this */ }
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshTier(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshTier();
+    }, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+      window.clearInterval(intervalId);
+    };
+  }, [agent?.id]);
 
   // Account-scoped notification polling. Existing unread items update the badge
   // on login; only newly-arrived items trigger a popup while this account is active.

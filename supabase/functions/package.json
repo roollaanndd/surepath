@@ -1,0 +1,13 @@
+{
+  "name": "surepath-edge-functions",
+  "private": true,
+  "//": "Deno 2 module resolution for `npm:` specifiers used by edge functions (audit H3: CI runs `deno check` over supabase/functions). Versions MUST match the pinned versions at each import site. devDependencies.openai is types-only: jsr @supabase/functions-js edge-runtime.d.ts references npm:openai@^4.52.5. Not installed by the frontend build; the Supabase deploy pipeline bundles imports directly and ignores this file.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "exifr": "7.1.3",
+    "imagescript": "1.3.0"
+  },
+  "devDependencies": {
+    "openai": "^4.52.5"
+  }
+}

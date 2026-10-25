@@ -4,11 +4,11 @@ import {
   TrendingUp, Users, Zap, ShieldCheck,
   ArrowUpRight, Activity,
   CheckCircle2, Search,
-  Eye, FileText,
+  FileText,
   ClipboardCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
   HardDrive, Cpu, RefreshCw,
 
-  Car, Terminal, ShieldX,
+  Terminal, ShieldX,
   Globe, FileDown, Upload, Plus,
   UserPlus, ChevronDown, Pencil, Shield,
   X, Clock, AlertCircle, Send, Sparkles,
@@ -1060,42 +1060,30 @@ export const ApprovalsView = () => {
     );
 }
 
+// FIX 2026-10-25 (audit 6-b CRITICAL #2): this view previously rendered five
+// HARDCODED rows ("Unit-A01..A05 (Matrix)") with a dead refresh button and a
+// dead eye action — fabricated data in a financial CMS. An admin could read
+// it as real inventory. Until a real asset-inventory data source exists, the
+// view now states honestly that the module is not connected.
 export const InventoryView = () => (
-  <div className="space-y-8 animate-fade-in text-white">
+  <div className="space-y-8 animate-fade-in">
     <Card>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><HardDrive size={22}/></div>
-          <h3 className="font-black uppercase tracking-widest text-sm">Active Matrix Inventory</h3>
+          <h3 className="font-black uppercase tracking-widest text-sm text-ds-ink">Active Matrix Inventory</h3>
         </div>
-        <button className="p-2 text-ds-ink3 hover:text-white transition-all"><RefreshCw size={18}/></button>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
-              <th className="pb-4 pl-4">Asset Matrix</th>
-              <th className="pb-4">Status</th>
-              <th className="pb-4">Risk Rating</th>
-              <th className="pb-4 text-right pr-4">Action</th>
-            </tr>
-          </thead>
-          <tbody className="text-xs">
-            {[1,2,3,4,5].map(i => (
-              <tr key={i} className="border-b border-white/[0.02] group hover:bg-white/[0.01]">
-                <td className="py-4 pl-4">
-                  <div className="flex items-center gap-3">
-                    <Car size={16} className="text-ds-ink3"/>
-                    <span className="font-black uppercase">Unit-A0{i} (Matrix)</span>
-                  </div>
-                </td>
-                <td className="py-4"><Badge color="emerald">Active</Badge></td>
-                <td className="py-4 font-mono">0.122-LOW</td>
-                <td className="py-4 text-right pr-4"><button className="text-ds-ink3 hover:text-white"><Eye size={14}/></button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-ds-card2 flex items-center justify-center text-ds-ink3 mb-4">
+          <HardDrive size={26}/>
+        </div>
+        <p className="font-black text-sm text-ds-ink uppercase tracking-widest">Modul belum terhubung</p>
+        <p className="mt-2 max-w-md text-xs leading-relaxed text-ds-ink3">
+          Inventaris aset belum memiliki sumber data. Tampilan sebelumnya menampilkan
+          data contoh yang tidak nyata dan telah dihapus agar tidak keliru dibaca
+          sebagai data produksi.
+        </p>
       </div>
     </Card>
   </div>
@@ -2033,7 +2021,10 @@ export const AgentManagementView = () => {
     { name: string; email: string; password?: string | null; link?: string | null; note: string } | null
   >(null);
   const [pwBusy, setPwBusy] = useState<string | null>(null);
-  const [pendingTierAgentIds, setPendingTierAgentIds] = useState<Set<string>>(new Set());
+  // FIX 2026-10-25 (audit 6-b #7): agent_id → requested tier code. The badge
+  // now states WHICH tier is awaiting approval instead of a bare "pending",
+  // and the initial set is seeded from the real approval queue on mount.
+  const [pendingTierRequests, setPendingTierRequests] = useState<Map<string, string>>(new Map());
   const { tiers } = useTierDefinitions();
   const toast = useToast();
 
@@ -2058,7 +2049,7 @@ export const AgentManagementView = () => {
 
   useEffect(() => {
     getAllAgents().then(data => { setAgents(data); setLoading(false); });
-    getTierChangeRequests('PENDING').then(reqs => setPendingTierAgentIds(new Set(reqs.map(r => r.agent_id))));
+    getTierChangeRequests('PENDING').then(reqs => setPendingTierRequests(new Map(reqs.map(r => [r.agent_id, (r as any).requested_tier_code ?? '']))));
   }, []);
 
   const handleVerify = async (agentId: string, verified: boolean) => {
@@ -2084,10 +2075,14 @@ export const AgentManagementView = () => {
     setSaving(null);
     if (!result.success) { toast.error(result.error ?? 'Gagal mengubah tier'); return; }
     if (result.pending) {
-      setPendingTierAgentIds(prev => new Set(prev).add(agentId));
+      // Keep the requested tier visible: the select snaps back to the stored
+      // tier (correct — the row has not changed), so without this map the
+      // admin reads the snap-back as a failed change (audit 6-b #7).
+      setPendingTierRequests(prev => new Map(prev).set(agentId, tierCode));
       toast.success('Perubahan tier menunggu persetujuan level atas');
     } else {
-      setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier: tierCode } : a));
+      setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier: tierCode } as SpUser : a));
+      setPendingTierRequests(prev => { const n = new Map(prev); n.delete(agentId); return n; });
       toast.success('Tier agen diperbarui');
     }
   };
@@ -2098,7 +2093,7 @@ export const AgentManagementView = () => {
     setSaving(null);
     if (res.error) { toast.error(res.error); return; }
     if (res.pending) {
-      setPendingTierAgentIds(prev => new Set(prev).add(agentId));
+      setPendingTierRequests(prev => new Map(prev).set(agentId, String(res.data?.requested_tier ?? '')));
       toast.success('Tier hasil evaluasi menunggu persetujuan level atas');
     } else if (res.data?.tier) {
       setAgents(prev => prev.map(a => a.id === agentId ? { ...a, tier: res.data.tier } : a));
@@ -2206,9 +2201,11 @@ export const AgentManagementView = () => {
           {/* Tier selector — business manager only */}
           {canAssignTier && (
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              {pendingTierAgentIds.has(a.id) && (
+              {pendingTierRequests.has(a.id) && (
                 <span className="px-2 py-1 rounded-lg text-[0.55rem] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400">
-                  Menunggu Persetujuan
+                  {pendingTierRequests.get(a.id)
+                    ? `→ ${pendingTierRequests.get(a.id)} menunggu persetujuan`
+                    : 'Menunggu Persetujuan'}
                 </span>
               )}
               {isSavingTier ? (
@@ -3104,7 +3101,19 @@ export const WithdrawalsAdminView: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ id: string; agentName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const adminUser = JSON.parse(localStorage.getItem('sp_admin_user') || '{}');
+  // FIX 2026-10-25 (audit 6-b CRITICAL #1): this read the key 'sp_admin_user',
+  // which is written NOWHERE in the repo (App.tsx writes SUREPATH_SESSION).
+  // adminUser.role was therefore always undefined → approvalLevelForUser()
+  // always returned null → the "Setujui" button never rendered for anyone at
+  // any level, and the L1/L2/L3 approval queue was reject-only. Same silent-
+  // failure class the tier selector had (fixed at line ~2047 below). Read order
+  // matches App.tsx: localStorage first, sessionStorage fallback.
+  const adminUser: { role?: string } = (() => {
+    try {
+      const raw = localStorage.getItem('SUREPATH_SESSION') ?? sessionStorage.getItem('SUREPATH_SESSION');
+      return JSON.parse(raw ?? '{}');
+    } catch { return {}; }
+  })();
 
   const load = async () => {
     setLoading(true);
@@ -3137,17 +3146,24 @@ export const WithdrawalsAdminView: React.FC = () => {
   };
 
   const handleApprove = async (wd: Withdrawal & { agent_name?: string }) => {
-    const level = approvalLevelForUser(adminUser.role);
+    const level = approvalLevelForUser(adminUser.role ?? '');
     if (!level) return;
     setActionLoading(wd.id);
     const res = await approveWithdrawal(wd.id, level);
+    if (!res.success) {
+      // Surface the failure — silent failures here hid stuck withdrawals.
+      alert(res.error ?? 'Gagal menyetujui penarikan.');
+    }
     if (res.success) {
       const nextStatus = level === 1 && wd.amount < 10_000_000 ? 'APPROVED'
         : level === 2 && wd.amount < 25_000_000 ? 'APPROVED'
         : level === 3 ? 'APPROVED' : null;
 
       if (nextStatus === 'APPROVED' && !wd.scheduled_disburse_at) {
-        await triggerDisbursement(wd.id);
+        const disb = await triggerDisbursement(wd.id);
+        if (disb && (disb as any).error) {
+          alert(`Disetujui, namun pencairan gagal: ${(disb as any).error}`);
+        }
       }
       await load();
     }

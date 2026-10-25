@@ -188,7 +188,8 @@ Deno.serve(async (req) => {
 
   } catch (e) {
     console.error('AI Gateway error:', e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    // deno check fix (audit H3): catch vars are `unknown` under strict mode.
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 });

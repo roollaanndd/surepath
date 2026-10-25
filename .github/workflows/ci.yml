@@ -74,6 +74,31 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
+  # Audit H3 (2026-10-25): supabase/functions is excluded from the root
+  # tsconfig, so edge functions had NO type-check anywhere — this is how the
+  # xendit-webhook referral block shipped referencing an out-of-scope variable
+  # (TS2304) with zero CI signal. `deno check` is the edge-runtime's own
+  # compiler; it is now a blocking gate. Config lives in
+  # supabase/functions/deno.json (+ package.json for npm: specifiers).
+  edge-function-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check edge functions
+        working-directory: supabase/functions
+        run: |
+          deno install
+          deno check .
+
   browser-smoke-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15

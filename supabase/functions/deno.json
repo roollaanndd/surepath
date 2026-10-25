@@ -1,0 +1,12 @@
+{
+  // Edge-function workspace config. Exists so `deno check` (CI quality gate,
+  // audit H3) can resolve `npm:` specifier imports (imagescript, openai, …)
+  // without a package.json inside supabase/functions — versions are pinned at
+  // each import site. Keep this file; the deploy pipeline ignores it.
+  "nodeModulesDir": "auto",
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any"]
+    }
+  }
+}

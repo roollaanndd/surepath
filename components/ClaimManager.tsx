@@ -259,19 +259,47 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
         // Sync to Supabase for admin visibility. For AUTO claims, analysisId
         // tells the gateway to pull the trusted, server-computed fraud report
         // onto the new claim row (see submit_claim in data-gateway/actions/claims.ts).
-        submitClaim({
-          user_id: currentUser?.id,
-          client_name: currentUser?.name ?? reportForm.contactInfo,
-          policy_number: reportForm.policyNumber,
-          product_type: claimType === 'AUTO' ? 'CAR' : 'HEALTH',
-          date: reportForm.date,
-          location: reportForm.location,
-          chronology: reportForm.chronology,
-          status: 'SUBMITTED',
-          amount_estimated: amount,
-          photos: photosForRecord,
-          analysis_id: claimType === 'AUTO' ? analysisId : undefined,
-        }).catch(() => {});
+        //
+        // FIX 2026-10-25 (audit H6): the server call is now awaited and its
+        // failure is LOUD. This was fire-and-forget (`.catch(() => {})`) while
+        // the local IndexedDB write above succeeded — in production (where the
+        // IndexedDB layer is an empty legacy artifact) the user saw the success
+        // screen while the claim never reached the server. The local row is
+        // kept as an offline receipt; restore the draft on failure so the user
+        // can retry instead of losing the report.
+        let serverOk = true;
+        try {
+          const res = await submitClaim({
+            user_id: currentUser?.id,
+            client_name: currentUser?.name ?? reportForm.contactInfo,
+            policy_number: reportForm.policyNumber,
+            product_type: claimType === 'AUTO' ? 'CAR' : 'HEALTH',
+            date: reportForm.date,
+            location: reportForm.location,
+            chronology: reportForm.chronology,
+            status: 'SUBMITTED',
+            amount_estimated: amount,
+            photos: photosForRecord,
+            analysis_id: claimType === 'AUTO' ? analysisId : undefined,
+          });
+          // submitClaim resolves to null on any gateway error (it logs the
+          // detail itself), so null === server failure here.
+          serverOk = res != null;
+        } catch {
+          serverOk = false;
+        }
+        if (!serverOk) {
+          // Restore the draft so nothing is lost and the user can retry.
+          try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(reportForm));
+          } catch { /* storage full — nothing more we can do here */ }
+          setIsSubmitting(false);
+          alert(t(
+            'Your claim could not be submitted to the server. Please check your connection and try again — your report has been saved locally.',
+            'Klaim Anda gagal terkirim ke server. Periksa koneksi lalu coba lagi — laporan Anda telah disimpan di perangkat.'
+          ));
+          return;
+        }
 
         setTimeout(() => {
             setIsSubmitting(false);

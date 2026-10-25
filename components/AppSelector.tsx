@@ -6,16 +6,21 @@
 // (until user explicitly logs out, which clears the choice).
 
 import React, { useState } from 'react';
-import { Home, Briefcase, ShieldCheck, Settings, ArrowRight, LogOut } from 'lucide-react';
+import { Home, Briefcase, ShieldCheck, Settings, TrendingUp, ArrowRight, LogOut } from 'lucide-react';
+
+type AppId = 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING';
 
 interface AppSelectorProps {
   user: any;
-  onSelect: (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN') => void;
+  /** Normalized app list from App.tsx (effectiveApps) — preferred over the
+   *  raw allowed_apps array, which may contain stale raw-role names. */
+  apps?: string[];
+  onSelect: (app: AppId) => void;
   onLogout: () => void;
 }
 
 const APPS: Array<{
-  id: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN';
+  id: AppId;
   label: string;
   desc: string;
   Icon: React.FC<any>;
@@ -54,10 +59,18 @@ const APPS: Array<{
     color: 'text-purple-600 dark:text-purple-400',
     bg: 'bg-purple-50 dark:bg-purple-950/30',
   },
+  {
+    id: 'MARKETING',
+    label: 'Marketing App',
+    desc: 'CRM, KPI tim sales, dan pipeline mitra',
+    Icon: TrendingUp,
+    color: 'text-rose-600 dark:text-rose-400',
+    bg: 'bg-rose-50 dark:bg-rose-950/30',
+  },
 ];
 
-const AppSelector: React.FC<AppSelectorProps> = ({ user, onSelect, onLogout }) => {
-  const allowedApps: string[] = Array.isArray(user?.allowed_apps) ? user.allowed_apps : [];
+const AppSelector: React.FC<AppSelectorProps> = ({ user, apps, onSelect, onLogout }) => {
+  const allowedApps: string[] = apps ?? (Array.isArray(user?.allowed_apps) ? user.allowed_apps : []);
   const visibleApps = APPS.filter(a => allowedApps.includes(a.id));
   const [hovered, setHovered] = useState<string | null>(null);
 

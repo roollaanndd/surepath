@@ -1782,7 +1782,7 @@
 .sp-modern-app:has(> aside) :where(.bg-ds-bg,.bg-ds-card2,.bg-ds-card,.bg-ds-surface) {
   background-color: #fff !important;
 }
-.sp-modern-app:has(> aside) :where(.text-ds-ink,.text-white) {
+.sp-modern-app:has(> aside) :where(.text-ds-ink) {
   color: #1b2b3b !important;
 }
 .sp-modern-app:has(> aside) :where(.text-ds-ink2) {
@@ -1973,8 +1973,7 @@
 .sp-modern-app:has(> main > header) > main .bg-ds-surface {
   background-color: #fff !important;
 }
-.sp-modern-app:has(> main > header) > main .text-ds-ink,
-.sp-modern-app:has(> main > header) > main .text-white {
+.sp-modern-app:has(> main > header) > main .text-ds-ink {
   color: #1b3040 !important;
 }
 .sp-modern-app:has(> main > header) > main .text-ds-ink2 {

@@ -3,20 +3,22 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import cors from 'cors';
 import crypto from 'crypto';
+import { GoogleGenAI } from '@google/genai';
 import { runAIAdminTick } from './services/aiAdminEngine';
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════��[...]
 // AI GATEWAY — 6-LAYER CONSISTENCY & ANTI-LEAK SYSTEM
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════�[...]
 // Layer 1: Response Caching — deterministic untuk FAQ
 // Layer 2: Post-LLM Validation — PII leak, hallucination, scope check
 // Layer 3: Temperature Control — 0 untuk analytical, 0.3 untuk chat
 // Layer 4: Fact-Checking — verify AI claims vs reference data
 // Layer 5: Structured Output Validation — JSON schema enforcement
 // Layer 6: Knowledge Base Versioning — track changes, audit trail
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════�[...]
 
 let zaiInstance: any = null;
+let geminiClient: GoogleGenAI | null = null;
 
 async function initAI() {
   try {
@@ -32,6 +34,46 @@ async function initAI() {
     console.error('Failed to init z-ai SDK:', e);
     console.log('⚠ AI Gateway running in fallback mode (no LLM)');
   }
+
+  try {
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      console.log('⚠ GEMINI_API_KEY not set — Gemini provider disabled');
+      return;
+    }
+
+    geminiClient = new GoogleGenAI({ apiKey: geminiApiKey });
+    console.log('✓ AI Gateway (Google Gemini API Studio) initialized');
+  } catch (e) {
+    console.error('Failed to init Google Gemini:', e);
+    console.log('⚠ Gemini provider unavailable');
+  }
+}
+
+function parseGeminiOutput(payload: any): string {
+  if (typeof payload === 'string') return payload;
+  if (payload?.text) return payload.text;
+
+  if (payload?.candidates && Array.isArray(payload.candidates)) {
+    const text = payload.candidates
+      .flatMap((candidate: any) => candidate?.content?.parts ?? [])
+      .map((part: any) => part?.text ?? '')
+      .join('');
+
+    if (text) return text;
+  }
+
+  if (payload?.content) {
+    if (typeof payload.content === 'string') return payload.content;
+
+    if (Array.isArray(payload.content)) {
+      return payload.content
+        .map((item: any) => typeof item === 'string' ? item : item?.text ?? '')
+        .join('');
+    }
+  }
+
+  return '';
 }
 
 // ─── Layer 1: Response Caching ───────────────────────────────────────────────
@@ -299,7 +341,7 @@ function detectPromptInjection(text: string): boolean {
   return INJECTION_PATTERNS.some(p => p.test(text));
 }
 
-// ─── Rate Limiting ───────────────────────────────────────────────────────────
+// ─── Rate Limiting ────────────────────────────────────────────────────────[...]
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string, limit: number = 30): boolean {
@@ -313,7 +355,7 @@ function checkRateLimit(ip: string, limit: number = 30): boolean {
   return entry.count <= limit;
 }
 
-// ─── Hash helper ─────────────────────────────────────────────────────────────
+// ─── Hash helper ────────────────────────────────────────────────────────��[...]
 function hashText(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
 }
@@ -321,9 +363,9 @@ function hashText(text: string): string {
 // ─── AI Admin Engine Interval Handle ─────────────────────────────────────────
 let adminInterval: NodeJS.Timeout | null = null;
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 // MAIN SERVER
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════[...]
 
 async function startServer() {
   const app = express();
@@ -343,8 +385,8 @@ async function startServer() {
         return res.status(400).json({ error: 'agentType and userMessage required' });
       }
 
-      if (!zaiInstance) {
-        return res.status(503).json({ error: 'AI service not available. z-ai SDK tidak ditemukan di environment ini.' });
+      if (!zaiInstance && !geminiClient) {
+        return res.status(503).json({ error: 'AI service not available. z-ai and Gemini providers are unavailable in this environment.' });
       }
 
       // Rate limit
@@ -415,15 +457,50 @@ async function startServer() {
       const temperature = TEMPERATURE_MAP[agentType] ?? TEMPERATURE_MAP.default;
 
       const startTime = Date.now();
-      const completion = await zaiInstance.chat.completions.create({
-        messages,
-        thinking: { type: 'disabled' },
-        // @ts-ignore — z-ai SDK supports temperature
-        temperature,
-      });
+      let responseContent = '';
+      let activeModel = 'z-ai';
+
+      if (geminiClient) {
+        try {
+          const geminiPrompt = messages
+            .map((msg) => `${msg.role}: ${msg.content}`)
+            .join('\n\n');
+
+          const geminiResponse = await geminiClient.models.generateContent({
+            model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+            contents: geminiPrompt,
+            config: { temperature },
+          });
+
+          responseContent = parseGeminiOutput(geminiResponse) || '';
+          activeModel = 'gemini';
+        } catch (error) {
+          console.error('[AI Gateway] Gemini provider failed, falling back to z-ai:', error);
+          if (!zaiInstance) {
+            throw error;
+          }
+
+          const completion = await zaiInstance.chat.completions.create({
+            messages,
+            thinking: { type: 'disabled' },
+            // @ts-ignore — z-ai SDK supports temperature
+            temperature,
+          });
+
+          responseContent = completion.choices[0]?.message?.content ?? '';
+        }
+      } else {
+        const completion = await zaiInstance.chat.completions.create({
+          messages,
+          thinking: { type: 'disabled' },
+          // @ts-ignore — z-ai SDK supports temperature
+          temperature,
+        });
+
+        responseContent = completion.choices[0]?.message?.content ?? '';
+      }
 
       const latencyMs = Date.now() - startTime;
-      let responseContent = completion.choices[0]?.message?.content ?? '';
 
       // ─── Layer 2: Post-LLM Validation ──────────────────────────────────
       const allWarnings: string[] = [];
@@ -491,7 +568,7 @@ async function startServer() {
       res.json({
         data: {
           content: safeOutput,
-          model: 'z-ai',
+          model: activeModel,
           cached: false,
           usage: {
             inputTokens: Math.ceil(JSON.stringify(messages).length / 4),

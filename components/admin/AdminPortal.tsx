@@ -13,7 +13,6 @@ import {
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
 // 50-200 KB; loading all 17 eagerly bloated the initial bundle. Now they
 // only load when the admin navigates to them.
-const ApprovalsView = lazy(() => import('./AdminViews').then(m => ({ default: m.ApprovalsView })));
 const SettingsView = lazy(() => import('./AdminViews').then(m => ({ default: m.SettingsView })));
 const SecurityView = lazy(() => import('./AdminViews').then(m => ({ default: m.SecurityView })));
 const OpsConsoleView = lazy(() => import('./OpsConsoleView'));
@@ -295,7 +294,7 @@ const AdminPortal = ({
       // Queue summaries (dashboard KPIs + nav badges). A failed poll must not
       // blank out KPIs that were already rendered; the header shows "sebagian".
       getAllClaims().then(setClaimsQueue),
-      getAdminWithdrawals(200).then(setWithdrawalQueue),
+      getAdminWithdrawals(200, true).then(setWithdrawalQueue),
     ];
     void Promise.allSettled(tasks).then(results => {
       setSyncState(results.some(r => r.status === 'rejected') ? 'partial' : 'ok');
@@ -860,7 +859,9 @@ const AdminPortal = ({
     switch (activeTab) {
       case 'dashboard':        return <DashboardView />;
       case 'analytics':        return <AnalyticsDashboard />;
-      case 'approvals':        return <ApprovalsView />;
+      // Satu layar keputusan: antrean review hanyalah mode "PENDING" dari
+      // Pesanan Polis, lengkap dengan dokumen, pembayaran, dan riwayat.
+      case 'approvals':        return <PolicyOrdersAdmin initialPending />;
       case 'user_mgmt':        return <UserManagementView />;
       case 'policy_orders':    return <PolicyOrdersAdmin />;
       case 'agents':           return <AgentManagementView />;

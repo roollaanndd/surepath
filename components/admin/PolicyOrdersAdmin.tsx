@@ -472,10 +472,13 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-const PolicyOrdersAdmin: React.FC = () => {
+const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPending = false }) => {
   const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('ALL');
+  // Mode antrean: dipakai oleh menu "Antrean Review". Semua keputusan tetap
+  // terjadi di satu layar ini — tidak ada lagi view persetujuan terpisah yang
+  // menyembunyikan dokumen dan riwayat order.
+  const [filter, setFilter] = useState<string>(initialPending ? 'PENDING' : 'ALL');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
   const [adminNotifs, setAdminNotifs] = useState<SpAdminNotification[]>([]);
@@ -508,10 +511,12 @@ const PolicyOrdersAdmin: React.FC = () => {
     setSelected(prev => prev && prev.id === id ? { ...prev, status, ...extras } : prev);
   };
 
-  const FILTERS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED', 'CANCELLED'];
+  const FILTERS = ['ALL', 'PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED', 'CANCELLED'];
 
   const visible = orders.filter(o => {
-    if (filter !== 'ALL' && o.status !== filter) return false;
+    if (filter === 'PENDING') {
+      if (o.status !== 'SUBMITTED' && o.status !== 'UNDER_REVIEW') return false;
+    } else if (filter !== 'ALL' && o.status !== filter) return false;
     const q = search.toLowerCase();
     if (!q) return true;
     const plate = (o.vehicle_details?.plate ?? '').toLowerCase();
@@ -525,7 +530,11 @@ const PolicyOrdersAdmin: React.FC = () => {
   });
 
   const counts: Record<string, number> = { ALL: orders.length };
-  FILTERS.slice(1).forEach(f => { counts[f] = orders.filter(o => o.status === f).length; });
+  FILTERS.slice(1).forEach(f => {
+    counts[f] = f === 'PENDING'
+      ? orders.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW').length
+      : orders.filter(o => o.status === f).length;
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -633,7 +642,7 @@ const PolicyOrdersAdmin: React.FC = () => {
                 filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
-              {f === 'ALL' ? 'Semua' : STATUS_META[f as SpPolicyOrder['status']].label}
+              {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Perlu Keputusan' : STATUS_META[f as SpPolicyOrder['status']].label}
               {` (${counts[f]})`}
             </button>
           ))}

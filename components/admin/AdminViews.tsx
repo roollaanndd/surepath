@@ -4,7 +4,7 @@ import {
   Users, ShieldCheck, ArrowUpRight,
   Search,
   FileText,
-  ClipboardCheck, XCircle, CheckCircle, Check, Settings, ShieldAlert,
+  CheckCircle, Check, Settings, ShieldAlert,
   Cpu, RefreshCw,
 
   Terminal, ShieldX,
@@ -18,7 +18,7 @@ import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
   updateAgentTier, getTierChangeRequests, evaluateAgentTier,
   callGateway,
-  getAllOrders, updateOrderStatus, updateClaimStatus, type SpPolicyOrder,
+  updateClaimStatus,
   type SpUser, type SpClaim,
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
@@ -610,112 +610,6 @@ export const SecurityView = () => {
   );
 };
 
-export const ApprovalsView = () => {
-    const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [acting, setActing] = useState<string | null>(null);
-    const [notes, setNotes] = useState<Record<string, string>>({});
-    const toast = useToast();
-
-    const load = async () => {
-        setLoading(true);
-        // Real pending queue from Supabase (was empty local IndexedDB)
-        try {
-            const all = await getAllOrders();
-            setOrders(all.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW'));
-        } catch (e: any) {
-            toast.error(`Gagal memuat antrean: ${e?.message ?? e}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-    useEffect(() => { load(); }, []);
-
-    // FIX 2026-10-26 (audit): rejection notes were "enforced" with
-    // console.warn only — an admin could reject a policy with no notes and
-    // never learn why the action silently no-op'd. Now enforced via toast,
-    // and gateway failures surface instead of leaving the row stuck on "…".
-    const act = async (id: string, status: SpPolicyOrder['status']) => {
-        if (status === 'REJECTED' && !(notes[id] ?? '').trim()) {
-            toast.error('Wajib isi catatan reviewer sebelum menolak pesanan.');
-            return;
-        }
-        setActing(id);
-        try {
-            await updateOrderStatus(id, status, { reviewer_notes: notes[id] });
-            toast.success(status === 'APPROVED' ? 'Pesanan disetujui.' : 'Pesanan ditolak.');
-            setOrders(prev => prev.filter(o => o.id !== id));
-        } catch (e: any) {
-            toast.error(`Gagal memperbarui pesanan: ${e?.message ?? e}`);
-        } finally {
-            setActing(null);
-        }
-    };
-
-    return (
-        <div className="space-y-8 animate-fade-in">
-            <Card>
-            <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-ds-amber"><ClipboardCheck size={22}/></div>
-                <div>
-                    <h3 className="font-black uppercase tracking-widest text-sm">Antrean Persetujuan Polis</h3>
-                    <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Pesanan menunggu review · untuk terbitkan polis buka menu Pesanan Polis</p>
-                </div>
-                </div>
-                <Badge color="yellow">{orders.length} Pending</Badge>
-            </div>
-
-            {loading ? (
-                <div className="flex justify-center py-16">
-                    <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-                </div>
-            ) : orders.length === 0 ? (
-                <p className="text-center py-12 text-ds-ink3 text-sm font-bold">Tidak ada pesanan menunggu persetujuan.</p>
-            ) : (
-            <div className="space-y-4">
-                {orders.map(o => (
-                <div key={o.id} className="p-6 bg-ds-card2 border border-ds-border rounded-[1.8rem] space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-12 h-12 bg-gray-100/10 rounded-2xl flex items-center justify-center text-ds-ink3 flex-shrink-0"><FileText size={24}/></div>
-                        <div className="min-w-0">
-                            <p className="font-black text-sm uppercase truncate">{o.client_name} · {o.order_number}</p>
-                            <p className="text-[0.55rem] text-ds-ink3 font-bold uppercase tracking-widest">{o.product_name} • {formatIDR(o.total_premium)} • {o.status === 'UNDER_REVIEW' ? 'Sedang Ditinjau' : 'Baru Diajukan'}</p>
-                        </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                            disabled={acting === o.id}
-                            onClick={() => act(o.id, 'REJECTED')}
-                            className="px-4 py-2.5 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-all text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-40"
-                        >
-                            <XCircle size={14}/> Tolak
-                        </button>
-                        <button
-                            disabled={acting === o.id}
-                            onClick={() => act(o.id, 'APPROVED')}
-                            className="px-4 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5 disabled:opacity-40"
-                        >
-                            <CheckCircle size={14}/> {acting === o.id ? '…' : 'Setujui'}
-                        </button>
-                        </div>
-                    </div>
-                    <input
-                        value={notes[o.id] ?? ''}
-                        onChange={e => setNotes(prev => ({ ...prev, [o.id]: e.target.value }))}
-                        placeholder="Catatan reviewer (wajib untuk penolakan)…"
-                        className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 transition-all"
-                    />
-                </div>
-                ))}
-            </div>
-            )}
-            </Card>
-        </div>
-    );
-}
-
 // ── Backup View ──────────────────────────────────────────────────────────────
 
 const BackupView: React.FC = () => {
@@ -1086,6 +980,16 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
        </div>
 
        <div className="grid gap-4 mt-8">
+          {/* Dua katalog produk sempat hidup berdampingan: IndexedDB lokal di
+              sini dan sp_product_configs di Katalog > Produk. Yang lokal tidak
+              pernah dilihat agen, jadi admin bisa mengira sudah menambah produk
+              padahal hanya di browsernya sendiri. */}
+          <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <p className="text-xs font-bold text-amber-600">
+              Katalog ini hanya tersimpan di browser ini dan tidak dipakai agen.
+              Katalog yang berlaku di semua portal ada di Katalog &amp; Harga → Produk.
+            </p>
+          </div>
           <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Tambah Produk Baru</h3>
           <Card className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2649,20 +2553,27 @@ export const UserManagementView = () => {
 export const PaymentsAdminView = () => {
     const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [filter, setFilter] = useState<'ALL'|'PAID'|'PENDING'|'EXPIRED'>('ALL');
 
     const loadPayments = useCallback(async () => {
         setLoading(true);
-        const data = await getAdminPayments(200);
-        if (data.length >= 0) {
+        setLoadError(null);
+        try {
+            const data = await getAdminPayments(200, true);
             setPayments(data.map((p: any) => ({
                 ...p,
                 order_number: p.order_number ?? p.sp_policy_orders?.order_number,
                 client_name: p.client_name ?? p.sp_policy_orders?.client_name,
                 product_name: p.product_name ?? p.sp_policy_orders?.product_name,
             })));
+        } catch (e: any) {
+            // `if (data.length >= 0)` selalu benar: kegagalan tampil sebagai
+            // tabel kosong, seolah tidak ada pembayaran. Sekarang dibedakan.
+            setLoadError(e?.message ?? 'Gagal memuat pembayaran.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
     useEffect(() => { loadPayments(); }, [loadPayments]);
@@ -2692,6 +2603,13 @@ export const PaymentsAdminView = () => {
                     <RefreshCw size={13} /> Refresh
                 </button>
             </div>
+
+            {loadError && (
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+                    <p className="text-xs font-bold text-rose-400">Pembayaran gagal dimuat: {loadError}</p>
+                    <button onClick={loadPayments} className="text-2xs font-black uppercase tracking-widest text-rose-300 hover:text-white">Coba lagi</button>
+                </div>
+            )}
 
             {/* KPI Cards */}
             <div className="grid grid-cols-3 gap-4">
@@ -2798,6 +2716,7 @@ export const WithdrawalsAdminView: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<Array<Withdrawal & { agent_name?: string; agent_email?: string }>>([]);
   const [filter, setFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ id: string; agentName: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -2817,9 +2736,16 @@ export const WithdrawalsAdminView: React.FC = () => {
 
   const load = async () => {
     setLoading(true);
-    const data = await getAdminWithdrawals(200);
-    setWithdrawals(data);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const data = await getAdminWithdrawals(200, true);
+      setWithdrawals(data);
+    } catch (e: any) {
+      // Sebelumnya kegagalan di sini meninggalkan spinner berputar selamanya.
+      setLoadError(e?.message ?? 'Gagal memuat penarikan.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -2931,6 +2857,13 @@ export const WithdrawalsAdminView: React.FC = () => {
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
+
+      {loadError && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
+          <p className="text-xs font-bold text-rose-400">Penarikan gagal dimuat: {loadError}</p>
+          <button onClick={load} className="text-2xs font-black uppercase tracking-widest text-rose-300 hover:text-white">Coba lagi</button>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4">

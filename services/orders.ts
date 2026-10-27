@@ -180,13 +180,17 @@ export async function getAdminStats(): Promise<AdminStats> {
   return (data as any) as AdminStats;
 }
 
-export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
+export async function getAdminPayments(limit = 200, throwOnError = false): Promise<Array<SpPayment & {
   order_number?: string;
   client_name?: string;
   product_name?: string;
 }>> {
   const { data, error } = await callGateway('admin_list_payments', { limit });
-  if (error) { console.error('getAdminPayments:', error); return []; }
+  if (error) {
+    console.error('getAdminPayments:', error);
+    if (throwOnError) throw new Error(typeof error === 'string' ? error : 'Gagal memuat pembayaran.');
+    return [];
+  }
   return (data ?? []) as SpPayment[];
 }
 

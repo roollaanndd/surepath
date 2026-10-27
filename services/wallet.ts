@@ -123,13 +123,17 @@ export async function requestWithdrawal(params: {
   return (data as any) ?? { success: false, error: 'Gagal membuat penarikan' };
 }
 
-export async function getAdminWithdrawals(limit = 200): Promise<Array<Withdrawal & {
+export async function getAdminWithdrawals(limit = 200, throwOnError = false): Promise<Array<Withdrawal & {
   agent_name?: string;
   agent_email?: string;
   agent_phone?: string;
 }>> {
   const { data, error } = await callGateway('admin_list_withdrawals', { limit });
-  if (error) { console.error('getAdminWithdrawals:', error); return []; }
+  if (error) {
+    console.error('getAdminWithdrawals:', error);
+    if (throwOnError) throw new Error(typeof error === 'string' ? error : 'Gagal memuat penarikan.');
+    return [];
+  }
   return (data ?? []).map((w: any) => ({
     ...w,
     agent_name:  w.sp_users?.name,

@@ -53,6 +53,15 @@ verify_jwt = false
 [functions.pathy-agent]
 verify_jwt = true
 
+# pathy-agent-proxy — jembatan Pathy → OpenCode (commit 2026-10-25).
+# Mirroring pathy-agent: platform memverifikasi JWT lebih dulu, fungsi lalu
+# memverifikasi ulang tokennya sendiri via auth.getUser(). Tanpa
+# OPENCODE_API_URL/KEY di Vault ia fallback ke pathy-agent, jadi aman dipakai
+# sebelum variabel itu diisi. TIDAK BOLEH dibiarkan #!undeclared: ia mengandung
+# jalur AI publik yang harus ikut aturan config.toml satu-sumber.
+[functions.pathy-agent-proxy]
+verify_jwt = true
+
 [functions.ai-proxy]
 verify_jwt = true
 

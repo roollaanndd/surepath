@@ -17,6 +17,8 @@ export interface PublicRoutesProps {
   pathname: string;
   lang: Language;
   setLang: (l: Language) => void;
+  /** Language setter that ALSO persists (App.tsx's handleSetLang). Only the financing workspace got the persisting variant in the pre-split tree. */
+  persistLang?: (l: Language) => void;
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
   navigate: (path: string) => void;
@@ -33,7 +35,7 @@ const MARKETING_PAGES: Record<string, React.FC<any>> = {
 
 const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
 
-export const PublicRoutes: React.FC<PublicRoutesProps> = ({ pathname, lang, setLang, darkMode, setDarkMode, navigate, onSignIn }) => {
+export const PublicRoutes: React.FC<PublicRoutesProps> = ({ pathname, lang, setLang, persistLang, darkMode, setDarkMode, navigate, onSignIn }) => {
   if (pathname === '/insurer-portal' || pathname === '/insurerapp') {
     return null;
   }
@@ -58,7 +60,7 @@ export const PublicRoutes: React.FC<PublicRoutesProps> = ({ pathname, lang, setL
   if (pathname === '/financing' || pathname === '/financing/dashboard') {
     return (
       <Suspense fallback={<PortalLoader lang={lang} />}>
-        <FinancingPage onSignIn={onSignIn} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
+        <FinancingPage onSignIn={onSignIn} navigate={navigate} lang={lang} setLang={persistLang ?? setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
       </Suspense>
     );
   }

@@ -22,7 +22,6 @@ import { resolve } from 'node:path';
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 
 const siteLayout = read('src/pages/site/SiteLayout.tsx');
-const appTsx = read('App.tsx');
 const robots = read('public/robots.txt');
 const sitemap = read('public/sitemap.xml');
 const seo = read('src/seo/seo.ts');
@@ -62,13 +61,24 @@ describe('Financing Core tidak terdaftar di situs publik', () => {
 });
 
 describe('tautan langsung harus tetap berfungsi', () => {
-  it('rutenya masih terdaftar di App.tsx', () => {
-    expect(appTsx).toMatch(/pathname === '\/financing'/);
-    expect(appTsx).toMatch(/FinancingPage/);
+  // The route mapping moved to src/app/routes/public.tsx (route split); the
+  // dispatcher in src/app/routes/index.tsx must still WIRE that module into
+  // the app, or the route would exist in neither bundle.
+  const routesPublic = read('src/app/routes/public.tsx');
+  const routesIndex = read('src/app/routes/index.tsx');
+
+  it('rutenya masih terdaftar di module rute publik', () => {
+    expect(routesPublic).toMatch(/pathname === '\/financing'/);
+    expect(routesPublic).toMatch(/FinancingPage/);
   });
 
   it('kedua bentuk alamat tetap dilayani', () => {
-    expect(appTsx).toMatch(/\/financing\/dashboard/);
+    expect(routesPublic).toMatch(/\/financing\/dashboard/);
+  });
+
+  it('module rute publik masih di-wire ke dispatcher rute aplikasi', () => {
+    expect(routesIndex).toMatch(/PublicRoutes/);
+    expect(routesIndex).toMatch(/from '\.\/public'/);
   });
 });
 

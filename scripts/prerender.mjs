@@ -21,13 +21,17 @@
 // The SPA still hydrates and takes over routing exactly as before; these files
 // only change what a crawler sees before any JavaScript runs.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(here, '../dist');
 
-const { indexablePaths, resolveSeo, headTags } = await import(resolve(here, '../src/seo/seo.ts'));
+// pathToFileURL is mandatory on Windows: a bare `C:\…` absolute path is an
+// invalid ESM specifier under Node ≥ 11 (ERR_UNSUPPORTED_ESM_URL_SCHEME).
+const { indexablePaths, resolveSeo, headTags } = await import(
+  pathToFileURL(resolve(here, '../src/seo/seo.ts')).href
+);
 
 const shell = readFileSync(join(distDir, 'index.html'), 'utf8');
 

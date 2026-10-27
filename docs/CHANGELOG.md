@@ -1,5 +1,60 @@
 # SurePath — Changelog
 
+## v2.7.8 — 2026-10-28
+
+Pemisahan routing App.tsx ke `src/app/routes/`: satu dispatcher, modul per
+peran, urutan gerbang tidak berubah sama sekali.
+
+**Refactor routing (perilaku dipertahankan, bukan "diperbaiki")**
+- Seluruh pemetaan pathname → layar pindah dari satu `if`-berantai di
+  `App.tsx` (~790 → ~515 baris) ke `src/app/routes/index.tsx` (dispatcher) dan
+  modul-modul `auth/admin/operator/marketing/agent/b2b/customer/public` +
+  `standalone`/`insurer` yang sudah ada. Urutan lama dipertahankan APA ADANYA —
+  termasuk yang tampak aneh: admin melihat CMS di pathname mana pun, B2B di
+  `/operatorapp` melihat login operator, operator di `/agapps` melihat portal
+  nasabah, dan recovery `?reset=1` menang atas semua tangga. Daftar
+  invarian ditulis di komentar atas `src/app/routes/index.tsx`.
+- `AppRouteProps` ditambahkan di `routeHelpers.ts`; `rolePath` milik App.tsx
+  tetap SATU-SATUNYA otoritas routing lewat prop `resolvePortalPath`
+  (`routeHelpers.rolePath` yang membaca `default_app/active_app` sengaja
+  TIDAK dipasang — risiko membangkitkan bug "semua jadi nasabah" v1.57.0).
+- Keputusan kecil yang dipulihkan saat split: `FinancingPage` tetap menerima
+  `handleSetLang` (pengali bahasa yang persist) lewat prop opsional
+  `persistLang` — halaman publik lain tetap `setLang` mentah, persis pohon lama.
+
+**Perbaikan yang mengikuti refactor**
+- `financingUnlisted.test.ts` (penjaga keputusan "rute /financing tetap hidup
+  walau tak terdaftar") sekarang membaca `routes/public.tsx` + menguji wiring
+  dispatcher di `routes/index.tsx` — maksudnya sama, plus 1 asersi wiring baru.
+- `pathyQuotationPdf.test.ts`: uji PDF diberi takaran 20 dtk untuk uji
+  "menghasilkan PDF dari slip" (berjalan ~7 dtk saat 30 berkas uji paralel;
+  batas 5 dtk terlampaui secara alami karena beban mesin, bukan regresi).
+- `scripts/generate-sitemap.mjs`, `scripts/prerender.mjs`,
+  `scripts/check-prerender.mjs`: bungkus `pathToFileURL()` untuk `await
+  import()` berabsolut-jalur — Windows (Node ≥ 11) menolak penunjuk `c:\…`
+  telanjang (`ERR_UNSUPPORTED_ESM_URL_SCHEME`); POSIX-aman juga.
+
+**Pemeriksaan FUNGSI pada rilis ini**
+- `npm run lint` → edge gate ✓, tsc 0 error, ESLint **0 error / 33 warning**
+  (dasar tidak berubah; tidak ada warning baru), vitest **383/383**.
+- `npm run build` → sitemap 26 URL, vite 3835 modul, prerender 26 rute +
+  fallback, PWA check ✓, dist bersih 155 berkas.
+- Playwright E2E (dev server lokal): **74 pas / 15 dilewati / 0 gagal**.
+- `npm audit`: **15 temuan (0 critical)** — semua pra-eksisting di pohon
+  dev/build (transitif `@capacitor/cli → xcode → uuid`, dll.); pohon
+  dependensi tidak berubah pada rilis ini (diff package-lock hanya versi).
+  Triase: tidak ada jalur di runtime produk; diperlakukan terpisah dari
+  refactor ini.
+
+**Artefak mati dan rencana registrasi**
+- `App.tsx.bak` (cadangan dari refactor sebelumnya) dan `temp_mig.txt` (tersesat
+  saat komit 654c401) dihapus dari repo — riwayat git mengawetkan keduanya,
+  tidak ada yang hilang.
+- `docs/REGISTRATION_VERIFICATION_PLAN.md` — riset + rencana mekanisme daftar
+  yang benar dan verifikasi gratis (Fonnte dulu; email cukup untuk Nasabah; B2B
+  ke formulir unjuk diri; dashboard terbatas sambil menunggu Approval admin).
+  Tidak ada kode implementasi dalam rilis ini; jadwal Tahap 0 mengikuti.
+
 ## v2.7.7 — 2026-10-24
 
 Kelola akun mitra dari CMS admin: tambah manual, dorong setel ulang kata sandi,

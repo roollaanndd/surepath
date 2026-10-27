@@ -7,14 +7,16 @@
 // still sets the right head once JavaScript runs — and is only visible to a
 // crawler that never executes it.
 import { readFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(here, '../dist');
 
+// pathToFileURL is mandatory on Windows: a bare `C:\…` absolute path is an
+// invalid ESM specifier under Node ≥ 11 (ERR_UNSUPPORTED_ESM_URL_SCHEME).
 const { indexablePaths, resolveSeo, canonicalFor } = await import(
-  resolve(here, '../src/seo/seo.ts')
+  pathToFileURL(resolve(here, '../src/seo/seo.ts')).href
 );
 
 const failures = [];

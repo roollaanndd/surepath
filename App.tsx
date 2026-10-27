@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import PromoBanner from './components/PromoBanner';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
@@ -7,16 +6,15 @@ import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordU
 import { applyOjkRateSet } from './services/ojkRates';
 import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
-import { InstallPrompt } from './components/InstallPrompt';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
-import PortalErrorBoundary from './src/routes/PortalErrorBoundary';
 import { useDarkMode } from './components/shared/theme';
 import { RevampedSplashScreen as SplashScreen, RevampedAppEntryScreen as AppEntryScreen } from './src/routes/RevampedSplashScreen';
 import { RevampedPortalLoader as PortalLoader } from './src/routes/RevampedPortalLoader';
 import AppUpdateNotification from './components/AppUpdateNotification';
 import { APP_VERSION } from './src/version';
 import { resolveSeo, applyDocumentHead } from './src/seo/seo';
+import { AppRoutes } from './src/app/routes/index';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
@@ -50,34 +48,9 @@ const rolePath = (user: any) => {
 const isPublicStandalonePath = (path: string) =>
   /^\/(q|review)\//.test(path) || path.startsWith('/payment/');
 
-const AuthGate          = lazy(() => import('./components/AuthGate'));
-const AdminPortal       = lazy(() => import('./components/admin/AdminPortal'));
-const AdminLogin        = lazy(() => import('./components/admin/AdminLogin'));
-const OperatorPortal    = lazy(() => import('./components/operator/OperatorPortal'));
-const MarketingPortal   = lazy(() => import('./components/marketing/MarketingPortal'));
-const OperatorLogin     = lazy(() => import('./components/operator/OperatorLogin'));
-const AppSelector       = lazy(() => import('./components/AppSelector'));
-const AgentPortal       = lazy(() => import('./components/agent/AgentPortal'));
-const CustomerPortal    = lazy(() => import('./components/customer/CustomerPortal'));
-const HomePage          = lazy(() => import('./src/pages/HomePage'));
-const ProductsPage      = lazy(() => import('./src/pages/ProductsPage'));
-const FinancingPage     = lazy(() => import('./src/pages/FinancingPage'));
-const AITechPage        = lazy(() => import('./src/pages/AITechPage'));
-const HowItWorksPage    = lazy(() => import('./src/pages/HowItWorksPage'));
-const AboutPage         = lazy(() => import('./src/pages/AboutPage'));
-const ContactPage       = lazy(() => import('./src/pages/ContactPage'));
-const PaymentRedirect   = lazy(() => import('./components/PaymentRedirect'));
-const InsuranceReviewPage = lazy(() => import('./components/InsuranceReviewPage'));
-const EQuotationPage    = lazy(() => import('./components/public/EQuotationPage'));
-// Old InsurerPortal (legacy) — kept for reference but not routed anymore
-// const OldInsurerPortal     = lazy(() => import('./components/InsurerPortal'));
-const InsurerPortal        = lazy(() => import('./components/insurer/InsurerPortal'));
-const InsurerLogin         = lazy(() => import('./components/insurer/InsurerLogin'));
-const ProductInfoPage   = lazy(() => import('./src/pages/ProductInfoPage'));
-const StaticInfoPage    = lazy(() => import('./src/pages/StaticInfoPage'));
-const BlogPage          = lazy(() => import('./src/pages/BlogPage'));
-const PremiumCalculatorPage = lazy(() => import('./src/pages/PremiumCalculatorPage'));
-const B2BPortal         = lazy(() => import('./components/b2b/B2BPortal'));
+// Every route-level lazy import moved to src/app/routes/* — App no longer
+// renders a single portal, page or gate itself; the dispatcher there owns
+// them (and each module keeps its own Suspense fallbacks).
 
 const detectLang = (): Language => {
   const s = localStorage.getItem('SUREPATH_LANG');
@@ -500,279 +473,40 @@ const App = () => {
     new URLSearchParams(window.location.search).get('reset') === '1' ||
     new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery';
 
-  // Recovery links redirect to the site root with ?reset=1. Mount AuthGate
-  // before the marketing homepage so the PASSWORD_RECOVERY event and session
-  // are handled by the reset form, not the normal post-login router.
-  if (isPasswordRecovery) {
-    return (
-      <Suspense fallback={<PortalLoader lang={lang} />}>
-        <AuthGate
-          initialLang={lang}
-          initialMode="RESET_PASSWORD"
-          onAuthSuccess={handleAuthSuccess}
-          externalError={loginError}
-          onDismissExternalError={() => setLoginError(null)}
-        />
-      </Suspense>
-    );
-  }
-
-  if (pathname === '/payment/success' || pathname === '/payment/failed') {
-    return <Suspense fallback={<PortalLoader />}><PaymentRedirect status={pathname === '/payment/success' ? 'success' : 'failed'} /></Suspense>;
-  }
-
-  if (pathname === '/insurer-portal') {
-    // Legacy route — redirect to new /insurerapp (preserve token if present)
-    const t = new URLSearchParams(window.location.search).get('token');
-    window.location.href = t ? `/insurerapp?token=${encodeURIComponent(t)}` : '/insurerapp';
-    return null;
-  }
-
-  // ── New Insurer App — /insurerapp?token=xxx ──────────────────────────────
-  // Insurers authenticate via a rolling 7-day token (not Supabase Auth).
-  // Token comes from URL param or localStorage (saved from previous login).
-  if (pathname === '/insurerapp') {
-    const urlToken = new URLSearchParams(window.location.search).get('token');
-    const savedToken = sessionStorage.getItem('SUREPATH_INSURER_TOKEN');
-    const token = urlToken ?? savedToken;
-    if (!token) {
-      return (
-        <Suspense fallback={<PortalLoader lang={lang} />}>
-          <InsurerLogin onLoginSuccess={() => window.location.reload()} onBack={() => navigate('/')} />
-        </Suspense>
-      );
-    }
-    return (
-      <Suspense fallback={<PortalLoader />}>
-        <InsurerPortal
-          authToken={token}
-          onLogout={() => { window.location.href = '/'; }}
-          lang={lang}
-        />
-      </Suspense>
-    );
-  }
-
-  const reviewMatch = pathname.match(/^\/review\/([0-9a-f-]{36})$/i);
-  if (reviewMatch) {
-    return <Suspense fallback={<PortalLoader />}><InsuranceReviewPage token={reviewMatch[1]} /></Suspense>;
-  }
-
-  // ── Public e-quotation page (QR target on quotation slip PDFs) ────────────
-  const eQuoteMatch = pathname.match(/^\/q\/([A-Za-z0-9_-]{8,40})$/);
-  if (eQuoteMatch) {
-    return <Suspense fallback={<PortalLoader />}><EQuotationPage code={eQuoteMatch[1]} /></Suspense>;
-  }
-
-  const productMatch = pathname.match(/^\/product\/(car|travel|pa|property|health|climate)$/);
-  if (productMatch) {
-    return <Suspense fallback={<PortalLoader />}><ProductInfoPage productId={productMatch[1]} lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
-  }
-
-  if (pathname === '/kalkulator') {
-    return <Suspense fallback={<PortalLoader />}><PremiumCalculatorPage lang={lang} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} /></Suspense>;
-  }
-
-  // Financing workspace: TIDAK TERDAFTAR (unlisted) — sengaja tanpa tautan dari situs.
+  // ── Route splitting ──────────────────────────────────────────────────────
+  // Every branch that used to follow here — the recovery gate, the standalone
+  // payment/review/e-quotation pages, the insurer token flow, the public
+  // marketing pages, all three login gates and every portal catch-all — now
+  // lives behind src/app/routes/index.tsx, which restores the original
+  // if-chain order via one dispatcher component. Global pre-emptive states
+  // (splash, oauth loading, pending role selection, entry screen, T&C above)
+  // intentionally stayed in App.tsx: they depend on App state, not routes.
   //
-  // Seluruh pintu masuknya dihapus dari SiteLayout (entri navbar + tombol CTA
-  // desktop dan mobile) atas permintaan pemilik: hanya yang punya tautannya yang
-  // masuk. Rutenya DIBIARKAN hidup — itu intinya, bukan kelalaian.
-  //
-  // Yang perlu diingat saat menyentuh ini: tidak terdaftar BUKAN kontrol akses.
-  // Siapa pun yang tahu/menebak alamatnya tetap masuk, dan rutenya ikut terbawa
-  // di bundel JS sehingga bisa ditemukan dari sana. Data produksi tetap dijaga
-  // di sisi server (financing-api menolak tanpa peran financing yang sah), tapi
-  // ruang kerja demo-nya terbuka bagi siapa pun yang sampai ke URL ini. Kalau
-  // suatu saat butuh penjagaan sebenarnya, penjaganya harus ada di pintu ini.
-  if (pathname === '/financing' || pathname === '/financing/dashboard') {
-    return <Suspense fallback={<PortalLoader lang={lang} />}><FinancingPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={handleSetLang} darkMode={darkMode} setDarkMode={setDarkMode} /></Suspense>;
-  }
-
-  const MARKETING_PAGES: Record<string, React.FC<any>> = {
-    '/products': ProductsPage,
-    '/ai': AITechPage,
-    '/how-it-works': HowItWorksPage,
-    '/about': AboutPage,
-    '/contact': ContactPage,
-  };
-  const MarketingPage = MARKETING_PAGES[pathname];
-  if (MarketingPage) {
-    return <Suspense fallback={<PortalLoader />}><MarketingPage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} /></Suspense>;
-  }
-
-  const blogSlugMatch = pathname.match(/^\/blog\/([a-z0-9-]+)$/);
-  if (pathname === '/blog' || blogSlugMatch) {
-    return <Suspense fallback={<PortalLoader />}><BlogPage slug={blogSlugMatch ? blogSlugMatch[1] : undefined} onBack={() => navigate('/')} onSignIn={() => navigate('/login')} navigate={navigate} /></Suspense>;
-  }
-
-  const STATIC_PAGES = ['careers', 'agents', 'partnership', 'privacy', 'terms', 'security', 'cookie'];
-  const staticPageId = STATIC_PAGES.find(p => pathname === `/${p}`);
-  if (staticPageId) {
-    return <Suspense fallback={<PortalLoader />}><StaticInfoPage pageId={staticPageId} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} navigate={navigate} onSignIn={() => navigate('/login')} /></Suspense>;
-  }
-
-  if (['/login', '/custapp', '/agapps'].includes(pathname) && !currentUser) {
-    return <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} onNeedsRoleSelection={setPendingRoleUser} /></Suspense>;
-  }
-
-  // Allow direct navigation to /operatorapp when not signed in (will hit OperatorLogin below).
-  if (pathname === '/operatorapp' && !currentUser) {
-    return (
-      <Suspense fallback={<PortalLoader lang={lang} />}>
-        <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
-      </Suspense>
-    );
-  }
-
-  if ((pathname === '/admin' || pathname.startsWith('/admin/')) && (!currentUser || !ADMIN_ROLES.includes(currentUser.role))) {
-    return (
-      <Suspense fallback={<PortalLoader lang={lang} />}>
-        <AdminLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/admin'); }} onBack={() => navigate('/')} />
-      </Suspense>
-    );
-  }
-
-  if (currentUser && ADMIN_ROLES.includes(currentUser.role)) {
-    return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <AdminPortal onLogout={handleLogout} products={products} setProducts={setProducts} userRole={currentUser.role} currentUser={currentUser} />
-        </Suspense>
-      </PortalErrorBoundary>
-    );
-  }
-
-  // ── Multi-app selector — shown when user has >1 entry in allowed_apps ─────
-  if (pathname === '/select-app' && currentUser) {
-    const allowed: string[] = Array.isArray(currentUser.allowed_apps) ? currentUser.allowed_apps : [];
-    if (allowed.length <= 1) {
-      // Single app or no allowed_apps — redirect to the right place
-      navigate(rolePath(currentUser));
-      return null;
-    }
-    const handleAppSelect = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN') => {
-      const target = app === 'ADMIN' ? '/admin'
-        : app === 'OPERATOR' ? '/operatorapp'
-        : app === 'AGENT' ? '/agapps' : '/custapp';
-      navigate(target);
-    };
-    return (
-      <Suspense fallback={<PortalLoader />}>
-        <AppSelector user={currentUser} onSelect={handleAppSelect} onLogout={handleLogout} />
-      </Suspense>
-    );
-  }
-
-  // ── Helper: does this user have access to a specific app? ─────────────────
-  // Multi-app users (allowed_apps has the app listed) OR legacy single-role users
-  // whose role matches the app's role.
-  const hasAppAccess = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING'): boolean => {
-    if (!currentUser) return false;
-    const allowed: string[] | null | undefined = currentUser.allowed_apps;
-    if (Array.isArray(allowed) && allowed.length > 0) {
-      return allowed.includes(app);
-    }
-    // Legacy: use role
-    if (app === 'ADMIN') return ADMIN_ROLES.includes(currentUser.role);
-    if (app === 'OPERATOR') return currentUser.role === UserRole.OPERATOR;
-    if (app === 'MARKETING') return currentUser.role === UserRole.MARKETING;
-    if (app === 'AGENT') return currentUser.role === UserRole.AGENT;
-    if (app === 'CUSTOMER') return true; // everyone can be a customer
-    return false;
-  };
-
-  // ── Operator app — newly built internal staff portal (parallel to /admin) ──
-  // OPERATOR role is NOT in ADMIN_ROLES above, so they don't get the CMS.
-  // They get their own /operatorapp with bottom-nav UX (matching agent app).
-  if (pathname === '/operatorapp' && (!currentUser || !hasAppAccess('OPERATOR'))) {
-    return (
-      <Suspense fallback={<PortalLoader lang={lang} />}>
-        <OperatorLogin onLoginSuccess={user => { handleAuthSuccess(user); navigate('/operatorapp'); }} onBack={() => navigate('/')} />
-      </Suspense>
-    );
-  }
-
-  // Marketing/sales (CRM + KPI). Memakai AuthGate yang sama seperti agen dan
-  // nasabah — tidak ada layar login tersendiri, karena marketing adalah
-  // pengguna Supabase Auth biasa dengan role MARKETING.
-  if (currentUser && hasAppAccess('MARKETING') && pathname === '/marketingapp') {
-    return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <MarketingPortal marketing={currentUser} onLogout={handleLogout} lang={lang} />
-        </Suspense>
-      </PortalErrorBoundary>
-    );
-  }
-
-  if (currentUser && hasAppAccess('OPERATOR') && pathname === '/operatorapp') {
-    return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <OperatorPortal operator={currentUser} onLogout={handleLogout} lang={lang} />
-        </Suspense>
-      </PortalErrorBoundary>
-    );
-  }
-
-  if (currentUser && hasAppAccess('AGENT') && (pathname === '/agapps' || pathname === '/agentapp')) {
-    const agentWithSupabaseId = currentUser.supabaseId
-      ? { ...currentUser, id: currentUser.supabaseId, agent_code: currentUser.nodeId }
-      : { ...currentUser, agent_code: currentUser.nodeId };
-    return (
-      <>
-        <InstallPrompt lang={lang} />
-        <PortalErrorBoundary onReset={handleLogout}>
-          <Suspense fallback={<PortalLoader />}>
-            <AgentPortal agent={agentWithSupabaseId} onLogout={handleLogout} lang={lang} />
-          </Suspense>
-        </PortalErrorBoundary>
-      </>
-    );
-  }
-
-  if (currentUser && currentUser.role === UserRole.B2B_CLIENT) {
-    return (
-      <PortalErrorBoundary onReset={handleLogout}>
-        <Suspense fallback={<PortalLoader />}>
-          <B2BPortal client={currentUser} onLogout={handleLogout} lang={lang} />
-        </Suspense>
-      </PortalErrorBoundary>
-    );
-  }
-
-  if (currentUser) {
-    return (
-      <>
-        <InstallPrompt lang={lang} />
-        <PromoBanner />
-        <PortalErrorBoundary onReset={handleLogout}>
-          <Suspense fallback={<PortalLoader />}>
-            <CustomerPortal currentUser={currentUser} onLogout={handleLogout} lang={lang} products={products} />
-          </Suspense>
-        </PortalErrorBoundary>
-      </>
-    );
-  }
-
-  if (!appMode) {
-    return (
-      // The theme lives on documentElement (components/shared/theme.ts), so this
-      // no longer needs a `dark` wrapper of its own — one that left `body` and
-      // every token-driven surface out of the switch.
-      <>
-        <Suspense fallback={<PortalLoader />}>
-          <HomePage onSignIn={() => navigate('/login')} navigate={navigate} lang={lang} setLang={setLang} darkMode={darkMode} setDarkMode={setDarkMode} />
-        </Suspense>
-        <InstallPrompt lang={lang} />
-      </>
-    );
-  }
-
-  // Default: render AuthGate (login screen)
+  // rolePath is passed through as the ONLY routing authority. Do not swap in
+  // routeHelpers.rolePath here — it carries unwired default_app/active_app
+  // semantics, and switching to it silently would resurrect the "everyone
+  // lands in the customer app" class of bug fixed in v1.57.0.
   return (
-    <Suspense fallback={<PortalLoader />}><AuthGate onAuthSuccess={handleAuthSuccess} initialLang={lang} externalError={loginError} onDismissExternalError={() => setLoginError(null)} onNeedsRoleSelection={setPendingRoleUser} /></Suspense>
+    <AppRoutes
+      pathname={pathname}
+      lang={lang}
+      setLang={setLang}
+      persistLang={handleSetLang}
+      darkMode={darkMode}
+      setDarkMode={setDarkMode}
+      navigate={navigate}
+      currentUser={currentUser}
+      appMode={appMode}
+      isPasswordRecovery={isPasswordRecovery}
+      loginError={loginError}
+      onDismissLoginError={() => setLoginError(null)}
+      onNeedsRoleSelection={setPendingRoleUser}
+      onAuthSuccess={handleAuthSuccess}
+      onLogout={handleLogout}
+      resolvePortalPath={rolePath}
+      products={products}
+      setProducts={setProducts}
+    />
   );
 };
 

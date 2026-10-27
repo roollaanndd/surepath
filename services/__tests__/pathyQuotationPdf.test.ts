@@ -67,5 +67,9 @@ describe('generator PDF', () => {
     const { generateQuotationSlipPDF } = await import('../quotationSlipPdf');
     const slip = fromAgentQuote(PATHY_QUOTATION);
     await expect(generateQuotationSlipPDF(slip)).resolves.toBeUndefined();
-  });
+  // 20s: under a full parallel vitest run the jsdom canvas rasterizing this
+  // PDF can take ~7s on a loaded machine — 5s timed out spuriously in runs
+  // where transform+import time spikes (seen twice on Oct 28). Raising the
+  // ceiling of THIS test only; the assertion itself is unchanged.
+  }, 20000);
 });

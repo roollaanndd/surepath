@@ -4,11 +4,13 @@
 // seo.ts without ever reaching the sitemap. Generating it means the two cannot
 // disagree. Run via `npm run seo:sitemap`; `npm run build` runs it first.
 import { writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const { SITE, indexablePaths } = await import(resolve(here, '../src/seo/seo.ts'));
+// pathToFileURL is mandatory on Windows: a bare `C:\…` absolute path is an
+// invalid ESM specifier under Node ≥ 11 (ERR_UNSUPPORTED_ESM_URL_SCHEME).
+const { SITE, indexablePaths } = await import(pathToFileURL(resolve(here, '../src/seo/seo.ts')).href);
 
 const entries = indexablePaths();
 const body = entries

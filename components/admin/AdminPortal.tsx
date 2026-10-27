@@ -259,6 +259,10 @@ const AdminPortal = ({
   // use — no new backend surface, no fake numbers.
   const [claimsQueue, setClaimsQueue] = useState<SpClaim[] | null>(null);
   const [withdrawalQueue, setWithdrawalQueue] = useState<Withdrawal[] | null>(null);
+  // Kesegaran data: kapan poll terakhir selesai dan apakah ada yang gagal.
+  // Ditampilkan di header supaya admin tahu angka yang dilihat bukan angka basi.
+  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
+  const [syncState, setSyncState] = useState<'ok' | 'partial' | 'syncing'>('syncing');
   // ── Revamp 2026-10-25: interactive shell upgrades ────────────────────────
   // (a) Collapsible desktop sidebar — icon rail for power users, persisted.
   const [rail, setRail] = useState(() => localStorage.getItem('SP_ADMIN_RAIL') === '1');
@@ -278,21 +282,30 @@ const AdminPortal = ({
   const [paletteIndex, setPaletteIndex] = useState(0);
   const paletteInputRef = useRef<HTMLInputElement>(null);
 
+  // Satu titik refresh untuk KPI + antrean. Status kesegaran ditampilkan di
+  // header supaya admin tahu angka yang dilihat bukan angka basi.
+  const refreshStats = useCallback(() => {
+    setSyncState('syncing');
+    const tasks: Promise<unknown>[] = [
+      getAdminStats().then(setAdminStats),
+      callGateway('admin_transaksi_overview', {}).then(({ data }) => {
+        if (data) setTransaksiStats(data as any);
+      }),
+      // Queue summaries (dashboard KPIs + nav badges). A failed poll must not
+      // blank out KPIs that were already rendered; the header shows "sebagian".
+      getAllClaims().then(setClaimsQueue),
+      getAdminWithdrawals(200).then(setWithdrawalQueue),
+    ];
+    void Promise.allSettled(tasks).then(results => {
+      setSyncState(results.some(r => r.status === 'rejected') ? 'partial' : 'ok');
+      setLastSyncAt(new Date());
+    });
+  }, []);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
 
-    const refreshStats = () => {
-      getAdminStats().then(setAdminStats).catch(() => {});
-      callGateway('admin_transaksi_overview', {}).then(({ data }) => {
-        if (data) setTransaksiStats(data as any);
-      }).catch(() => {});
-      // Queue summaries (dashboard KPIs + nav badges). Failures stay silent
-      // here on purpose — a failed poll must not blank out KPIs that were
-      // already rendered; the views themselves surface their own errors.
-      getAllClaims().then(setClaimsQueue).catch(() => {});
-      getAdminWithdrawals(200).then(setWithdrawalQueue).catch(() => {});
-    };
     refreshStats();
     const statsInterval = setInterval(refreshStats, 120000);
 
@@ -329,7 +342,7 @@ const AdminPortal = ({
       clearInterval(notifInterval);
       clearInterval(tierInterval);
     };
-  }, []);
+  }, [refreshStats]);
 
   // ── Command palette keyboard wiring ───────────────────────────────────────
   useEffect(() => {
@@ -976,6 +989,21 @@ const AdminPortal = ({
                 {currentUser.email}
               </span>
             )}
+            <button
+              type="button"
+              onClick={refreshStats}
+              title="Muat ulang data sekarang"
+              aria-label={`Kesegaran data: ${syncState === 'partial' ? 'sebagian gagal dimuat' : 'tersinkron'}`}
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-2xs font-bold whitespace-nowrap shrink-0 transition-colors ${'bg-ds-card2 border-ds-border text-ds-ink3 hover:border-ds-green/50'}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${syncState === 'partial' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <span>
+                {lastSyncAt
+                  ? `Tersinkron ${lastSyncAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Menyinkronkan…'}
+              </span>
+              <RefreshCw size={11} className={syncState === 'syncing' ? 'animate-spin' : ''} />
+            </button>
             {/* Theme toggle removed 2026-10-26 — the admin portal is light-only
                 by design directive; the visitor's customer-app preference is
                 restored automatically when they leave this portal. */}

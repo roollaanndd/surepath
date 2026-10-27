@@ -36,6 +36,7 @@ const PortalIconManagerView = lazy(() => import('./PortalIconManager'));
 const AIAdminView = lazy(() => import('./AIAdminView'));
 const AIFinanceView = lazy(() => import('./AIFinanceView'));
 const AnalyticsDashboard = lazy(() => import('./AnalyticsDashboard'));
+const AdminDashboard = lazy(() => import('./AdminDashboard'));
 const EndorsementsAdminView = lazy(() => import('./EndorsementsAdminView'));
 const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
@@ -48,13 +49,10 @@ import {
   SpotOrders, SpotClients, SpotClaims, SpotWallet, SpotNetwork,
   SpotMarket, SpotProfile, SpotEndorse, SpotTrophy, SpotRenewal, SpotBell,
 } from '../agent/AgentArt';
-import { getAdminStats, type AdminStats, uploadLogoImage, callGateway, getOnlineUsers, type OnlineUsersResult, getTrafficStats, type TrafficStats, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification, getAllClaims, getAdminWithdrawals, type SpClaim, type Withdrawal } from '../../services/supabaseService';
+import { getAdminStats, type AdminStats, uploadLogoImage, getOnlineUsers, type OnlineUsersResult, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification, getAllClaims, getAdminWithdrawals, type SpClaim, type Withdrawal } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
-import { formatIDR } from '../car-wizard/WizardUI';
-import { formatIDRCompact } from '../../src/i18n';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
-import { AdminKpiCard } from './adminUI';
 import { buildVisibleNav, groupForSection, sectionForLeaf } from './navigation';
 
 // Suspense fallback for lazy-loaded admin views
@@ -243,14 +241,7 @@ const AdminPortal = ({
     setActiveTab(tab);
     scrollPortalToTop(contentRef.current);
   }, []);
-  const [transaksiStats, setTransaksiStats] = useState<{
-    totalCustomers: number;
-    totalOrders: number;
-    totalPembayaranMasuk: number;
-    totalKomisiAgen: number;
-  } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersResult | null>(null);
-  const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [notifications, setNotifications] = useState<SpAdminNotification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   // Live operational queues feeding both the dashboard KPIs and the nav badges:
@@ -288,9 +279,6 @@ const AdminPortal = ({
     setSyncState('syncing');
     const tasks: Promise<unknown>[] = [
       getAdminStats().then(setAdminStats),
-      callGateway('admin_transaksi_overview', {}).then(({ data }) => {
-        if (data) setTransaksiStats(data as any);
-      }),
       // Queue summaries (dashboard KPIs + nav badges). A failed poll must not
       // blank out KPIs that were already rendered; the header shows "sebagian".
       getAllClaims().then(setClaimsQueue),
@@ -312,9 +300,6 @@ const AdminPortal = ({
     // Online users
     getOnlineUsers().then(setOnlineUsers).catch(() => {});
     const onlineInterval = setInterval(() => getOnlineUsers().then(setOnlineUsers).catch(() => {}), 60000);
-
-    // Traffic stats
-    getTrafficStats().then(setTrafficStats).catch(() => {});
 
     // Notifications — load on mount, refresh every 60s
     const loadNotifs = () => getAdminNotifications().then(setNotifications).catch(() => {});
@@ -607,251 +592,17 @@ const AdminPortal = ({
   const sidebarBg = 'bg-gradient-to-b from-[#073F37] via-[#06483D] to-[#052F2A] border-white/10 shadow-[8px_0_32px_-20px_rgba(3,30,25,0.7)]';
 
   // ── Dashboard content ──────────────────────────────────────────────────────
+  // Dashboard baru: layout 3 kolom dengan data yang bisa ditelusuri.
   const DashboardView = () => (
-    <div className="space-y-8">
-      {/* Command banner — bank-grade hero, same theme as Agent/Operator apps */}
-      <div className="relative overflow-hidden rounded-[1.75rem] px-6 py-6 text-white"
-        style={{ background: 'linear-gradient(120deg, #073F37 0%, #08775A 58%, #10A875 100%)', boxShadow: '0 16px 44px -14px rgba(5,75,54,0.28)' }}>
-        <div aria-hidden className="absolute -top-14 -right-12 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
-        <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">
-          <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />
-          <circle cx="176" cy="16" r="48" stroke="#fff" strokeWidth="1.2" />
-          <circle cx="176" cy="16" r="26" stroke="#fff" strokeWidth="1.2" />
-        </svg>
-        <div className="relative z-10 flex items-center gap-5">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-2xs font-black uppercase tracking-[0.2em] text-emerald-300">Sistem aktif</p>
-            </div>
-            <h2 className="text-3xl font-black tracking-tight leading-none">
-              Halo, {(currentUser?.name ?? formatRole(userRole)).split(' ')[0]} 👋
-            </h2>
-            <p className="text-xs text-white/65 mt-2 leading-relaxed">
-              Pusat kendali SurePath — pantau pesanan, pembayaran, komisi, dan mitra dalam satu tempat.
-            </p>
-          </div>
-          <div className="hidden sm:block flex-shrink-0 -my-2"><SpotNetwork size={84} /></div>
-          <button
-            onClick={() => {
-              getAdminStats().then(setAdminStats).catch(() => {});
-              callGateway('admin_transaksi_overview', {}).then(({ data }) => { if (data) setTransaksiStats(data as any); }).catch(() => {});
-            }}
-            className="relative z-10 flex items-center gap-2 px-4 py-2 rounded-2xl text-2xs font-black uppercase tracking-wider transition-all bg-white/10 border border-white/15 text-white/85 hover:bg-white/20 self-start"
-            title="Refresh data"
-          >
-            <RefreshCw size={13} /> Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Quick actions — one-tap jump into the busiest flows. Only shows
-          actions the current role can actually reach. */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'approvals', label: 'Proses Antrean Polis', icon: ClipboardCheck },
-          { id: 'claims_admin', label: 'Tinjau Klaim', icon: ShieldAlert },
-          { id: 'withdrawals', label: 'Cairkan Komisi', icon: Banknote },
-          { id: 'agents', label: 'Kelola Mitra', icon: UserPlus },
-        ]
-          .filter(a => filteredMenu.some(m => !m.isSeparator && m.id === a.id))
-          .map(a => (
-            <button key={a.id} onClick={() => goToTab(a.id)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border bg-ds-card border-ds-border text-ds-ink2 text-2xs font-bold tracking-wide shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40 hover:text-ds-green transition-all active:scale-[0.97]">
-              <a.icon size={14} /> {a.label}
-            </button>
-          ))}
-      </div>
-
-      {/* Primary KPIs — every card names its source screen and jumps there. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <AdminKpiCard
-          label="Total Pesanan" loading={!adminStats} icon={Activity} tone="amber"
-          value={adminStats?.totalOrders ?? '—'}
-          sub={`${(adminStats?.ordersByStatus?.SUBMITTED ?? 0) + (adminStats?.ordersByStatus?.UNDER_REVIEW ?? 0)} menunggu review`}
-          onClick={() => goToTab('policy_orders')}
-        />
-        <AdminKpiCard
-          label="Premi Diterbitkan" loading={!adminStats} icon={TrendingUp} tone="green"
-          value={adminStats ? formatIDRCompact(adminStats.totalPremiumIssued) : '—'}
-          exact={adminStats ? formatIDR(adminStats.totalPremiumIssued) : undefined}
-          sub="GWP polis berstatus ISSUED"
-          onClick={() => goToTab('financial')}
-        />
-        <AdminKpiCard
-          label="Premi Dibayar" loading={!adminStats} icon={CheckCircle} tone="blue"
-          value={adminStats ? formatIDRCompact(adminStats.totalPremiumPaid) : '—'}
-          exact={adminStats ? formatIDR(adminStats.totalPremiumPaid) : undefined}
-          sub="Pembayaran Xendit terkonfirmasi"
-          onClick={() => goToTab('payments')}
-        />
-        <AdminKpiCard
-          label="Mitra Aktif" loading={!adminStats} icon={Users} tone="violet"
-          value={adminStats?.activeAgents ?? '—'}
-          sub="Mitra terverifikasi"
-          onClick={() => goToTab('agents')}
-        />
-      </div>
-
-      {/* Operational exceptions — the two queues an admin must not miss. */}
-      <div>
-        <p className={`text-2xs font-black uppercase tracking-[0.2em] mb-3 ${'text-ds-ink3'}`}>Perlu Perhatian</p>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <AdminKpiCard
-            label="Klaim Menunggu Review" loading={claimsQueue === null} icon={ShieldAlert} tone="rose"
-            value={claimsPendingCount}
-            sub={`${(claimsQueue ?? []).length} klaim total`}
-            onClick={() => goToTab('claims_admin')}
-          />
-          <AdminKpiCard
-            label="Penarikan Pending" loading={withdrawalQueue === null} icon={Banknote} tone="amber"
-            value={withdrawalsPendingCount}
-            sub="Antrean approval L1–L3"
-            onClick={() => goToTab('withdrawals')}
-          />
-          <AdminKpiCard
-            label="Total Pelanggan" loading={!transaksiStats} icon={Users} tone="violet"
-            value={transaksiStats ? transaksiStats.totalCustomers : '—'}
-            onClick={() => goToTab('user_mgmt')}
-          />
-          <AdminKpiCard
-            label="Pembayaran Masuk" loading={!transaksiStats} icon={CreditCard} tone="green"
-            value={transaksiStats ? formatIDRCompact(transaksiStats.totalPembayaranMasuk) : '—'}
-            exact={transaksiStats ? formatIDR(transaksiStats.totalPembayaranMasuk) : undefined}
-            onClick={() => goToTab('payments')}
-          />
-          <AdminKpiCard
-            label="Total Komisi Mitra" loading={!transaksiStats} icon={Coins} tone="lime"
-            value={transaksiStats ? formatIDRCompact(transaksiStats.totalKomisiAgen) : '—'}
-            exact={transaksiStats ? formatIDR(transaksiStats.totalKomisiAgen) : undefined}
-            onClick={() => goToTab('commission_ledger')}
-          />
-        </div>
-      </div>
-
-      {/* Online Users Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <button type="button" onClick={() => goToTab('security')}
-          className={`group p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer active:scale-[0.98] bg-ds-card border-ds-border shadow-ds-sm hover:shadow-ds-md hover:border-ds-green/40`}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-ds-green-tint text-ds-green`}>
-              <Users size={17} />
-            </div>
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          </div>
-          <p className={`text-2xl font-black tracking-tight mb-0.5 ${'text-ds-ink'}`}>
-            {onlineUsers ? onlineUsers.total : '—'}
-          </p>
-          <p className={`text-2xs font-bold uppercase tracking-wider mb-2 ${'text-ds-ink3'}`}>Pengguna Online</p>
-          {onlineUsers && onlineUsers.total > 0 && (
-            <p className={`text-2xs font-bold ${'text-ds-ink3'}`}>
-              {Object.entries(onlineUsers.byRole).map(([role, count]) => `${count} ${role}`).join(' · ')}
-            </p>
-          )}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Order funnel */}
-        <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-          <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Status Pesanan</p>
-          {adminStats
-            ? (['SUBMITTED','UNDER_REVIEW','APPROVED','ISSUED','REJECTED'] as const).map(st => {
-                const count = adminStats.ordersByStatus[st] ?? 0;
-                const pct = adminStats.totalOrders > 0 ? (count / adminStats.totalOrders) * 100 : 0;
-                const clr: Record<string, string> = {
-                  SUBMITTED: 'bg-amber-500', UNDER_REVIEW: 'bg-blue-500',
-                  APPROVED: 'bg-emerald-500', ISSUED: 'bg-orange-500', REJECTED: 'bg-rose-500',
-                };
-                const labels: Record<string, string> = {
-                  SUBMITTED: 'Diajukan', UNDER_REVIEW: 'Ditinjau',
-                  APPROVED: 'Disetujui', ISSUED: 'Diterbitkan', REJECTED: 'Ditolak',
-                };
-                return (
-                  <div key={st} className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className={`font-bold ${'text-ds-ink3'}`}>{labels[st]}</span>
-                      <span className={`font-black ${'text-ds-ink'}`}>{count}</span>
-                    </div>
-                    <div className={`h-1.5 rounded-full overflow-hidden ${'bg-ds-card2'}`}>
-                      <div className={`h-full ${clr[st]} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                );
-              })
-            : <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
-          }
-        </div>
-
-        {/* Top agents */}
-        <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-          <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Mitra Teratas</p>
-          {adminStats
-            ? adminStats.topAgents.length === 0
-              ? <p className={`text-xs ${'text-ds-ink3'}`}>Belum ada data.</p>
-              : adminStats.topAgents.map((a, i) => (
-                  <div key={a.agent_id} className="flex items-center gap-3 mb-3">
-                    <span className={`text-[10px] font-black w-4 ${'text-ds-ink3'}`}>{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold truncate ${'text-ds-ink'}`}>{a.name}</p>
-                      <p className={`text-[9px] ${'text-ds-ink3'}`}>{a.orders} pesanan</p>
-                    </div>
-                    <span className="text-[10px] font-black text-ds-green">{formatIDR(a.premium)}</span>
-                  </div>
-                ))
-            : <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
-          }
-          {adminStats && adminStats.pendingCommissions > 0 && (
-            <div className={`mt-4 pt-4 border-t flex justify-between text-xs ${'border-ds-border'}`}>
-              <span className={'text-ds-ink3'}>Komisi tertunda</span>
-              <span className="font-black text-ds-amber">{formatIDR(adminStats.pendingCommissions)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Traffic 7 Hari */}
-      <div className={`p-6 rounded-3xl border ${'bg-ds-card border-ds-border shadow-ds-sm'}`}>
-        <p className={`text-2xs font-black uppercase tracking-wider mb-5 ${'text-ds-ink3'}`}>Traffic Website — 7 Hari Terakhir</p>
-        {trafficStats ? (
-          <div className="space-y-4">
-            {/* Bar chart */}
-            <div className="flex items-end gap-2 h-28">
-              {trafficStats.daily.map(d => {
-                const maxCount = Math.max(...trafficStats.daily.map(x => x.count), 1);
-                const pct = (d.count / maxCount) * 100;
-                return (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                    <div
-                      className={`w-full rounded-t-sm transition-all duration-700 ${'bg-ds-blue'}`}
-                      style={{ height: `${Math.max(pct, 4)}%` }}
-                      title={`${d.date}: ${d.count} views`}
-                    />
-                    <span className={`text-[0.45rem] font-mono ${'text-ds-ink3'}`}>
-                      {d.date.slice(5)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Top pages */}
-            {trafficStats.topPages.length > 0 && (
-              <div className="space-y-1.5">
-                <p className={`text-[0.5rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Halaman Terpopuler</p>
-                {trafficStats.topPages.map(p => (
-                  <div key={p.page} className="flex items-center justify-between">
-                    <span className={`text-[0.65rem] font-mono truncate max-w-[200px] ${'text-ds-ink2'}`}>{p.page}</span>
-                    <span className={`text-[0.65rem] font-black ${'text-ds-blue'}`}>{p.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className={`text-xs ${'text-ds-ink3'}`}>Memuat…</p>
-        )}
-      </div>
-    </div>
+    <AdminDashboard
+      adminStats={adminStats}
+      claims={claimsQueue}
+      withdrawals={withdrawalQueue}
+      tierPending={tierPending}
+      onlineUsers={onlineUsers}
+      currentUser={currentUser}
+      onNavigate={goToTab}
+    />
   );
 
   // ── Content router ─────────────────────────────────────────────────────────

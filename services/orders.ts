@@ -137,9 +137,13 @@ export async function cancelMyOrder(orderId: string): Promise<SpPolicyOrder | nu
   return (data as SpPolicyOrder) ?? null;
 }
 
-export async function getAllOrders(): Promise<SpPolicyOrder[]> {
-  const { data, error } = await callGateway('admin_list_orders', { limit: 500 });
-  if (error) { console.error('getAllOrders:', error); return []; }
+export async function getAllOrders(limit = 500, throwOnError = false): Promise<SpPolicyOrder[]> {
+  const { data, error } = await callGateway('admin_list_orders', { limit });
+  if (error) {
+    console.error('getAllOrders:', error);
+    if (throwOnError) throw new Error(typeof error === 'string' ? error : 'Gagal memuat pesanan.');
+    return [];
+  }
   return (data ?? []) as SpPolicyOrder[];
 }
 

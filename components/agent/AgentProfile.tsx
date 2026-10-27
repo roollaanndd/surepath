@@ -8,13 +8,14 @@ import {
 import { Language } from '../../types';
 import { APP_VERSION } from '../../src/version';
 import {
-  getAgentProfile, updateAgentProfile, getAgentStats,
+  getAgentProfile, updateAgentProfile, getAgentStats, getAgentOrders,
   uploadAgentAvatar, uploadAgentKtp,
   type SpUser, type AgentStats,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import AgentHandlerCard from './AgentHandlerCard';
+import AgentPartnerCard from './AgentPartnerCard';
 import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements';
 import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
@@ -40,6 +41,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [agreement, setAgreement] = useState<SpAgentAgreement | null>(null);
   const [agreementLoading, setAgreementLoading] = useState(true);
+  const [activeQuotes, setActiveQuotes] = useState(0);
   const [agreementDownloading, setAgreementDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -98,6 +100,16 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       setAgreementLoading(false);
     });
   }, [agentId, statsProp]);
+
+  // Active quotes (open offers) for the Partner Card micro-stat — mirrors AgentHome.
+  useEffect(() => {
+    if (!agentId) return;
+    getAgentOrders(agentId)
+      .then(orders => setActiveQuotes(orders.filter(order =>
+        ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(order.status)
+      ).length))
+      .catch(() => setActiveQuotes(0));
+  }, [agentId]);
 
   const handleSave = async () => {
     if (!agentId) return;
@@ -256,6 +268,20 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               <p className="text-[10px] text-ds-ink3 font-bold mt-0.5 uppercase tracking-widest">{item.label}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* SurePath Partner Card — tier-driven bank card (moved off Beranda v2.7.10) */}
+      {stats && (
+        <div className="mx-5 mt-4">
+          <AgentPartnerCard
+            stats={stats}
+            activeQuotesCount={activeQuotes}
+            monthlyTarget={(profile as any)?.monthly_target ?? agent?.monthly_target ?? 10000000}
+            lang={lang}
+            tier={tierDef}
+            onNavigate={onNavigate}
+          />
         </div>
       )}
 

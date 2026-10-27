@@ -274,9 +274,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="admin@surepath.ai"
                     className="block w-full pl-10 pr-4 py-3 rounded-full text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
-                    onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
+                    style={{ background: 'var(--ds-card2, rgba(255,255,255,0.85))', color: 'var(--ds-ink, #0f172a)', border: '1px solid var(--ds-border, rgba(6,78,59,0.12))', fontFamily: 'monospace', fontSize: '0.78rem' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
+                    onBlur={e  => { e.target.style.borderColor = 'var(--ds-border, rgba(6,78,59,0.12))'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
               </div>
@@ -293,9 +293,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
                     value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     className="block w-full pl-10 pr-11 py-3 rounded-full text-ds-ink placeholder-slate-400 outline-none transition-all duration-200"
-                    style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(6,78,59,0.12)', fontFamily: 'monospace', fontSize: '0.78rem' }}
-                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.background = 'rgba(255,255,255,0.95)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
-                    onBlur={e  => { e.target.style.borderColor = 'rgba(6,78,59,0.12)'; e.target.style.background = 'rgba(255,255,255,0.85)'; e.target.style.boxShadow = 'none'; }}
+                    style={{ background: 'var(--ds-card2, rgba(255,255,255,0.85))', color: 'var(--ds-ink, #0f172a)', border: '1px solid var(--ds-border, rgba(6,78,59,0.12))', fontFamily: 'monospace', fontSize: '0.78rem' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(22,163,74,0.50)'; e.target.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.07), inset 0 0 0 1px rgba(22,163,74,0.10)'; }}
+                    onBlur={e  => { e.target.style.borderColor = 'var(--ds-border, rgba(6,78,59,0.12))'; e.target.style.boxShadow = 'none'; }}
                   />
                   <button
                     type="button" onClick={() => setShowPass(!showPass)}
@@ -336,7 +336,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBack }) => {
               onClick={handleGoogleLogin}
               disabled={loading}
               className="w-full flex justify-center items-center gap-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40"
-              style={{ background: '#ffffff', color: '#334155', border: '1px solid rgba(6,78,59,0.16)', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}
+              style={{ background: 'var(--ds-card2, #ffffff)', color: 'var(--ds-ink2, #334155)', border: '1px solid var(--ds-border, rgba(6,78,59,0.16))', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}
             >
               <span aria-hidden="true" className="flex items-center justify-center w-5 h-5 rounded-full font-bold" style={{ fontSize: '0.95rem', color: '#4285F4', fontFamily: 'Arial, sans-serif' }}>G</span>
               Lanjutkan dengan Google

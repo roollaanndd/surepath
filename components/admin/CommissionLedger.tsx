@@ -33,9 +33,9 @@ function fmtDate(iso?: string): string {
 }
 
 const STATUS_BADGE: Record<CommissionStatus, string> = {
-  PENDING:   'bg-amber-50 text-amber-700',
-  PAID:      'bg-emerald-50 text-emerald-700',
-  CANCELLED: 'bg-red-50 text-red-700',
+  PENDING:   'bg-amber-500/10 text-amber-400',
+  PAID:      'bg-emerald-500/10 text-emerald-400',
+  CANCELLED: 'bg-red-500/10 text-red-400',
 };
 
 const STATUS_LABEL: Record<CommissionStatus, string> = {
@@ -181,7 +181,7 @@ const CommissionLedger: React.FC = () => {
           disabled={bulkSaving || pendingCount === 0}
           className={`h-10 px-4 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
             pendingCount === 0
-              ? 'bg-gray-100 text-ds-ink3 cursor-not-allowed'
+              ? 'bg-ds-card2 text-ds-ink3 border border-ds-border cursor-not-allowed'
               : 'bg-emerald-500 text-white hover:bg-emerald-600'
           }`}
         >
@@ -191,7 +191,7 @@ const CommissionLedger: React.FC = () => {
 
       {/* ── Filter tabs + search ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex gap-1 bg-white p-1 rounded-2xl border border-ds-border shadow-sm flex-wrap">
+        <div className="flex gap-1 bg-ds-card p-1 rounded-2xl border border-ds-border shadow-sm flex-wrap">
           {TABS.map(tab => {
             const count = tab === 'ALL'
               ? rows.length
@@ -219,13 +219,13 @@ const CommissionLedger: React.FC = () => {
             placeholder="Cari agen / klien…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 bg-white border border-ds-border rounded-xl text-sm text-ds-ink outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-ds-ink3"
+            className="w-full h-10 pl-9 pr-3 bg-ds-card border border-ds-border rounded-xl text-sm text-ds-ink outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-ds-ink3"
           />
         </div>
       </div>
 
       {/* ── Summary bar ── */}
-      <div className="bg-white border border-ds-border shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div className="bg-ds-card border border-ds-border shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-ds-ink3 font-semibold uppercase tracking-wide">
           Menampilkan{' '}
           <span className="text-ds-ink font-bold">{filtered.length}</span>{' '}
@@ -243,7 +243,7 @@ const CommissionLedger: React.FC = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-ds-border shadow-sm rounded-2xl text-center py-16 text-ds-ink3 font-medium text-sm">
+        <div className="bg-ds-card border border-ds-border shadow-sm rounded-2xl text-center py-16 text-ds-ink3 font-medium text-sm">
           Tidak ada data komisi.
         </div>
       ) : (
@@ -253,7 +253,7 @@ const CommissionLedger: React.FC = () => {
             return (
               <div
                 key={row.id}
-                className="bg-white border border-ds-border shadow-sm rounded-2xl px-6 py-4 hover:bg-ds-card2 transition-colors"
+                className="bg-ds-card border border-ds-border shadow-sm rounded-2xl px-6 py-4 hover:bg-ds-card2 transition-colors"
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-3">
                   {/* ── Left: identity ── */}

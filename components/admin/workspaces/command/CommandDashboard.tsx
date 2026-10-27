@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Users, ShieldCheck, AlertTriangle, RefreshCw, BarChart3 } from 'lucide-react';
+import { Activity, Users, ShieldCheck, AlertTriangle, RefreshCw, BarChart3, Settings, KeyRound } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { getAdminStats } from '../../../../services/orders';
@@ -91,9 +91,9 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
             <div className="grid gap-2 p-4">
               {[
                 { label: 'Audit Logs', desc: 'Riwayat aksi sensitif', icon: ShieldCheck },
-                { label: 'Manajemen User & Role', desc: 'Assign role & akses' },
-                { label: 'Konfigurasi Sistem', desc: 'Produk, tarif, pengaturan' },
-                { label: 'Keamanan', desc: 'Sesi, izin, hardening' },
+                { label: 'Manajemen User & Role', desc: 'Assign role & akses', icon: Users },
+                { label: 'Konfigurasi Sistem', desc: 'Produk, tarif, pengaturan', icon: Settings },
+                { label: 'Keamanan', desc: 'Sesi, izin, hardening', icon: KeyRound },
               ].map(item => (
                 <button key={item.label} className="flex items-center gap-3 rounded-2xl border border-ds-border px-4 py-3 text-left transition-all hover:border-ds-green/40 hover:shadow-ds-sm">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-green-tint text-ds-green">

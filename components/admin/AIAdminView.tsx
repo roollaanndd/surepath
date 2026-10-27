@@ -12,13 +12,13 @@ import { formatIDR } from '../car-wizard/WizardUI';
 const RISK_COLOR: Record<string, string> = {
   LOW:    'text-ds-green',
   MEDIUM: 'text-ds-amber',
-  HIGH:   'text-red-600',
+  HIGH:   'text-red-400',
 };
 
 const REC_STYLE: Record<string, string> = {
-  APPROVE:      'bg-emerald-100 text-emerald-700',
-  REJECT:       'bg-red-100 text-red-700',
-  REQUEST_INFO: 'bg-amber-100 text-amber-700',
+  APPROVE:      'bg-emerald-500/10 text-emerald-400',
+  REJECT:       'bg-red-500/10 text-red-400',
+  REQUEST_INFO: 'bg-amber-500/10 text-amber-400',
 };
 
 interface OrderWithAI extends SpPolicyOrder {
@@ -112,7 +112,7 @@ const AIAdminView: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 bg-emerald-50 rounded-xl flex items-center justify-center">
+            <div className="w-7 h-7 bg-emerald-500/10 rounded-xl flex items-center justify-center">
               <Bot size={14} className="text-ds-green" />
             </div>
             <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3">AI Admin Agent</p>
@@ -122,11 +122,11 @@ const AIAdminView: React.FC = () => {
         </div>
         <div className="flex flex-col gap-2 items-end">
           {/* Auto-mode toggle */}
-          <div className="flex items-center gap-3 rounded-2xl bg-white border border-ds-border shadow-sm px-4 py-2">
+          <div className="flex items-center gap-3 rounded-2xl bg-ds-card border border-ds-border shadow-sm px-4 py-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-ds-ink3">Auto-Apply</span>
             <button
               onClick={() => setAutoMode(!autoMode)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${autoMode ? 'bg-emerald-500' : 'bg-gray-200'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors ${autoMode ? 'bg-emerald-500' : 'bg-ds-border'}`}
             >
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${autoMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
@@ -137,7 +137,7 @@ const AIAdminView: React.FC = () => {
                   type="number"
                   value={autoThreshold}
                   onChange={e => setAutoThreshold(Math.min(100, Math.max(70, +e.target.value)))}
-                  className="w-12 h-8 px-1 rounded-xl border border-ds-border bg-white text-xs text-ds-ink text-center focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none"
+                  className="w-12 h-8 px-1 rounded-xl border border-ds-border bg-ds-card2 text-xs text-ds-ink text-center focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none"
                 />
                 <span className="text-xs text-ds-ink3">% confidence</span>
               </div>
@@ -152,7 +152,7 @@ const AIAdminView: React.FC = () => {
               {runningBatch ? <RefreshCw size={12} className="animate-spin" /> : <Zap size={12} />}
               {runningBatch ? 'Menganalisis…' : `Analisis Semua (${pendingCount})`}
             </button>
-            <button onClick={load} className="w-10 h-10 rounded-xl border border-ds-border bg-white flex items-center justify-center text-ds-ink3 hover:text-ds-ink">
+            <button onClick={load} className="w-10 h-10 rounded-xl border border-ds-border bg-ds-card flex items-center justify-center text-ds-ink3 hover:text-ds-ink">
               <RefreshCw size={14} />
             </button>
           </div>
@@ -163,10 +163,10 @@ const AIAdminView: React.FC = () => {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Antrean', value: orders.length, color: 'text-ds-ink' },
-          { label: 'Teranalisis', value: analyzedCount, color: 'text-blue-600' },
+          { label: 'Teranalisis', value: analyzedCount, color: 'text-blue-400' },
           { label: 'Siap Diproses', value: orders.filter(o => o._aiReview && (o._aiReview.confidence ?? 0) >= 80).length, color: 'text-ds-green' },
         ].map(s => (
-          <div key={s.label} className="rounded-2xl bg-white border border-ds-border shadow-sm p-4 text-center">
+          <div key={s.label} className="rounded-2xl bg-ds-card border border-ds-border shadow-sm p-4 text-center">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mt-0.5">{s.label}</p>
           </div>
@@ -192,10 +192,10 @@ const AIAdminView: React.FC = () => {
               <div
                 key={order.id}
                 onClick={() => setSelected(order)}
-                className="p-5 rounded-2xl bg-white border border-ds-border shadow-sm cursor-pointer hover:bg-ds-card2 transition-all"
+                className="p-5 rounded-2xl bg-ds-card border border-ds-border shadow-sm cursor-pointer hover:bg-ds-card2 transition-all"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                     {order._analyzing
                       ? <RefreshCw size={16} className="text-ds-green animate-spin" />
                       : ai
@@ -227,12 +227,12 @@ const AIAdminView: React.FC = () => {
                           <span className="text-xs text-ds-ink3">Conf: {ai.confidence}%</span>
                         </>
                       )}
-                      {order._error && <span className="text-xs text-red-600">{order._error}</span>}
+                      {order._error && <span className="text-xs text-red-400">{order._error}</span>}
                     </div>
                     {ai && ai.flags.length > 0 && (
                       <div className="flex gap-1 mt-2 flex-wrap">
                         {ai.flags.slice(0, 3).map((f, i) => (
-                          <span key={i} className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 truncate max-w-[180px]">⚠ {f}</span>
+                          <span key={i} className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-400 truncate max-w-[180px]">⚠ {f}</span>
                         ))}
                       </div>
                     )}
@@ -241,7 +241,7 @@ const AIAdminView: React.FC = () => {
                     {!ai && !order._analyzing && (
                       <button
                         onClick={e => { e.stopPropagation(); analyzeOrder(order); }}
-                        className="text-xs font-semibold rounded-xl border border-ds-border bg-white text-ds-ink2 hover:bg-ds-card2 px-3 py-1.5 transition-colors"
+                        className="text-xs font-semibold rounded-xl border border-ds-border bg-ds-card text-ds-ink2 hover:bg-ds-card2 px-3 py-1.5 transition-colors"
                       >
                         Analisis
                       </button>
@@ -257,21 +257,21 @@ const AIAdminView: React.FC = () => {
 
       {/* Detail modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8 px-4">
-          <div className="rounded-2xl bg-white shadow-xl w-full max-w-xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
+          <div className="rounded-2xl bg-ds-card shadow-xl w-full max-w-xl">
             <div className="flex items-center justify-between p-6 border-b border-ds-border">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mb-1">AI Policy Review</p>
                 <h3 className="font-bold text-lg text-ds-ink">{selected.order_number}</h3>
                 <p className="text-xs text-ds-ink3">{selected.client_name} · {selected.product_name}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">✕</button>
+              <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">✕</button>
             </div>
             <div className="p-6 space-y-5">
               {selected._analyzing && (
-                <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl">
+                <div className="flex items-center gap-3 p-4 bg-emerald-500/10 rounded-2xl">
                   <RefreshCw size={16} className="text-ds-green animate-spin" />
-                  <p className="text-sm text-emerald-700 font-semibold">Menganalisis dengan AI…</p>
+                  <p className="text-sm text-emerald-400 font-semibold">Menganalisis dengan AI…</p>
                 </div>
               )}
               {selected._aiReview && (
@@ -286,7 +286,7 @@ const AIAdminView: React.FC = () => {
                     </div>
                     <div className="p-4 rounded-2xl bg-ds-card2 border border-ds-border text-center">
                       <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mb-1">Confidence</p>
-                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-ds-green' : selected._aiReview.confidence >= 60 ? 'text-ds-amber' : 'text-red-600'}`}>
+                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-ds-green' : selected._aiReview.confidence >= 60 ? 'text-ds-amber' : 'text-red-400'}`}>
                         {selected._aiReview.confidence}%
                       </p>
                     </div>
@@ -322,9 +322,9 @@ const AIAdminView: React.FC = () => {
 
                   {/* Suggested notes */}
                   {selected._aiReview.suggested_notes && (
-                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 mb-1">Catatan untuk File</p>
-                      <p className="text-xs text-blue-700">{selected._aiReview.suggested_notes}</p>
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-300 mb-1">Catatan untuk File</p>
+                      <p className="text-xs text-blue-300">{selected._aiReview.suggested_notes}</p>
                     </div>
                   )}
 
@@ -346,7 +346,7 @@ const AIAdminView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => { setSelected(null); }}
-                        className="h-10 px-5 rounded-xl text-sm font-semibold border border-ds-border bg-white text-ds-ink2 hover:bg-ds-card2"
+                        className="h-10 px-5 rounded-xl text-sm font-semibold border border-ds-border bg-ds-card text-ds-ink2 hover:bg-ds-card2"
                       >
                         Tunda
                       </button>
@@ -373,7 +373,7 @@ const AIAdminView: React.FC = () => {
       {/* Auto-mode banner */}
       {autoMode && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-          <div className="flex items-center gap-3 bg-white border border-ds-border rounded-full px-6 py-3 shadow-xl">
+          <div className="flex items-center gap-3 bg-ds-card border border-ds-border rounded-full px-6 py-3 shadow-xl">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <p className="text-xs font-semibold text-ds-ink2">
               Auto-Apply aktif · Threshold {autoThreshold}% confidence

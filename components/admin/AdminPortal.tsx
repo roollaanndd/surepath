@@ -327,7 +327,7 @@ const AdminPortal = ({
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
   const SidebarContent = () => (
-    <div className="sp-modern-app flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0">
       {/* Back to website */}
       <button
         onClick={onLogout}

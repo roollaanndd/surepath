@@ -1,5 +1,65 @@
 # SurePath — Changelog
 
+## v2.7.10 — 2026-10-28
+
+Batch penyempurnaan lanjutan atas v2.7.9 dari instruksi owner: warna hero
+mengikuti kartu partner, ikon premium, kosakata mudah, Beranda dibersihkan,
+tier mewarnai kartu, dan mode gelap Admin CMS dibereskan.
+
+**Apps Mitra — tier mempengaruhi warna (`components/agent/AgentPartnerCard.tsx`, baru)**
+- Partner Card diekstrak dari Beranda ke komponen sendiri dan kini tinggal di
+  **My Profile** — Beranda jadi bersih (hero + grid, tanpa kartu uang).
+- Palet warna kartu **digerakkan tier** (`resolveTierPalette`): STANDARD/tier
+  awal/tidak dikenal = **grafit abu-abu metalik**; kode mengandung GOLD (atau
+  EMERALD) = tampilan jade + emas saat ini (dipertahankan sebagai template);
+  SILVER = perak, PLATINUM = bak platinum es, DIAMOND = navy/sian, BRONZE/
+  COPPER = tembaga; tier kustom dgn warna DB sendiri memakai grafit + warna
+  tier sebagai aksen (ring, glow, tinta chip). Baris `is_default` selalu
+  grafit meski kodenya memuat kata kunci warna.
+- **Hero band Beranda memakai gradien palet tier yang sama** (permintaan
+  owner: "warna hero disesuaikan partner card"), tinta putih konstan.
+- CTA "Buka dompet" di kartu memakai warna aksen tier, bukan lagi `ds-green`.
+
+**Premium icons + bahasa (`AgentHome`)**
+- Semua tile hero + grid beralih dari ikon lucide ke set duotone
+  `AgentIcons` (IcQuote/IcPolicy/IcClients/IcClaims/IcRenewal/IcNetwork/
+  IcRank/IcEndorse/IcWallet/IcCoin/IcProfile); tile yang dikelola
+  `ManagedPortalIcon` tetap memakai ikon kustom dengan fallback duotone.
+- Kosakata: 'Kutipan' → **Quotation**, 'Jaringan' → **Network**, 'Papan
+  Skor' → **Leaderboard**; Klaim/Klien/Polis/Endorsemen/Renewals tidak
+  berubah. Label 'Leaderboard' diberi soft-hyphen agar melipat rapi
+  ("Leader-board") di grid 4 kolom 390 px (akibat `overflow-wrap: anywhere`
+  global ≤640 px).
+- `AgentProfile` kini menerima `onNavigate` (sebelumnya tidak di-oper oleh
+  `AgentPortal` — nav Bisnis/Penghasilan di profil jadi aktif kembali).
+
+**Admin CMS — dark mode dibereskan**
+- `AdminPortal.tsx`: wrapper `SidebarContent` membawa kelas `sp-modern-app`
+  ganda yang melukis gradien TERANG di atas aside gelap — penyebab
+  "sebagian gelap, sebagian tetap putih" yang dilaporkan owner. Kelas
+  ganda dihapus; sidebar kini mengikuti tema.
+- `CommandDashboard.tsx`: tiga item "Aksi Kritis" tanpa `icon` membuat
+  `<item.icon>` = element `undefined` → crash ke error boundary (dashboard
+  putih kembali lebih dulu). Ikon diisi (Users/Settings/KeyRound).
+- `AIAdminView.tsx`: semua permukaan terang keras → token
+  (`bg-white`→`bg-ds-card`, `bg-gray-100/200`→`bg-ds-card2/ds-border`,
+  chip `bg-*-100/text-*-700` → translusen `bg-*-500/10 text-*-400`,
+  `bg-emerald-50`/`bg-blue-50` → tint translusen, modal & pill
+  auto-apply mengikuti tema).
+- `CommissionLedger.tsx`: 5× `bg-white` → `bg-ds-card`; tombol disabled
+  `bg-gray-100` → `bg-ds-card2` + border; `STATUS_BADGE` translusen
+  (`bg-amber-500/10 text-amber-400`, dst.).
+- `AdminLogin.tsx`: tombol Google + 2 input dengan inline `#ffffff` /
+  `rgba(255,255,255,.85)` kini memakai `var(--ds-card2/--ds-ink/--ds-border)`
+  agar tidak menol di mode gelap.
+
+**Checks:** tsc 0 error; ESLint 0 warning baru; vitest **383/383**;
+`vite build` + PWA ✓; Playwright E2E **74 pass / 15 skipped / 0 failed**;
+detector mekanis impeccable (`detect --json`): 0 failure di
+`components/agent` + `components/admin`. Verifikasi visual (mock e2e,
+390 px + 1366 px): hero GOLD muat palet, beranda bersih, kartu + CTA dompet
+di profil, admin dashboard/AI/ledger serba gelap tanpa error console.
+
 ## v2.7.9 — 2026-10-28
 
 Beranda Apps Mitra (`/agapps`) dirancang ulang mengikuti pola "saturated brand

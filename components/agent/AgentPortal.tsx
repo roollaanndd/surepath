@@ -299,6 +299,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             agentId={agent?.id ?? ''}
             lang={lang}
             onLogout={onLogout}
+            onNavigate={handleTabChange}
             stats={stats}
             agentTier={agentTier}
           />

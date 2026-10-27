@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, ChevronRight, Target, Star, Coins,
-  FilePlus2, UsersRound, ShieldAlert, FileCheck2,
-  Trophy, FileSignature, RefreshCcw, Network, Wallet, UserRound,
+  FilePlus2,
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
@@ -11,11 +10,15 @@ import ManagedPortalIcon from '../shared/ManagedPortalIcon';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
 import RenewalAlerts from './RenewalAlerts';
-import { getAgentOrders } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
-import { AgentArtKeyframes } from './AgentArt';
 import { PATHY_OPEN_EVENT } from '../shared/PathyChat';
+import {
+  IcQuote, IcPolicy, IcClients, IcClaims,
+  IcRank, IcNetwork, IcRenewal, IcEndorse,
+  IcWallet, IcCoin, IcProfile,
+} from './AgentIcons';
+import { resolveTierPalette } from './AgentPartnerCard';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import '../../src/styles/portal-modernization.css';
 
@@ -30,34 +33,26 @@ interface Props {
 }
 
 /* ─── Home in the "saturated brand hero" pattern (ref: messaging-app home) ──
- * Source image: tinted hero band → avatar + 4 round quick icons → dark
- * premium card bridging hero & sheet → white sheet with two icon-grid
- * sections. SurePath translation: the saturated band is ds-green (the fill
- * the app already pairs with ds-on-green ink); the "Mail VIP" card is the
- * agent's own commission/target bank-card — SurePath has no paywall, so the
- * dark premium spot carries real money data, not a fake upsell; and both
- * grids route to real portal destinations (every tile → handleTabChange).
- * Kept 1:1 from the previous home: the draft-resume banner, the monthly
- * target ring with micro-stats, GWP & conversion, the Pathy sales coach,
- * RenewalAlerts and the recent-commissions list. Layout only — no screen,
- * tool or destination was added or removed. */
+ * Source image: tinted hero band → avatar + 4 round quick icons → white
+ * sheet with two icon-grid sections. SurePath translation: the saturated
+ * band carries the agent's TIER palette (v2.7.10 — the same palette that
+ * drives the Partner Card, which now lives in My Profile so Beranda stays
+ * clean); both grids route to real portal destinations (every tile →
+ * handleTabChange). Kept 1:1 from the previous home: the draft-resume
+ * banner, GWP & conversion, the Pathy sales coach, RenewalAlerts and the
+ * recent-commissions list. Layout only — no screen, tool or destination
+ * was added or removed. */
 
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
-  const [activeQuotesCount, setActiveQuotesCount] = useState(0);
   const [savedDraftProduct, setSavedDraftProduct] = useState<string | null>(null);
   const reduce = useReducedMotion();
   const { tiers } = useTierDefinitions();
   const myTierDef = getTierByCode(tiers, agentTier);
+  const palette = resolveTierPalette(myTierDef);
 
   useEffect(() => {
     if (!agentId) return;
-    getAgentOrders(agentId)
-      .then(orders => setActiveQuotesCount(orders.filter(order =>
-        ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(order.status)
-      ).length))
-      .catch(error => console.error('Unable to load active agent quotes:', error));
-
     try {
       const raw = window.sessionStorage.getItem('surepath:agent-quote-draft:' + agentId);
       const draft = raw ? JSON.parse(raw) : null;
@@ -67,8 +62,6 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
     }
   }, [agentId]);
 
-  const monthlyTarget = agent?.monthly_target ?? 10000000;
-  const progress = Math.min((stats.totalCommissionMonth / monthlyTarget) * 100, 100);
   const conversion = stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0;
 
   // Staggered entrance — static under reduced motion (unchanged from before).
@@ -111,19 +104,20 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
     return t('Good Night', 'Selamat Malam');
   };
 
-  /** Round quick-icon tile ON the hero band (ref: Send / Draft / Backup row). */
-  const heroTile = (label: string, target: string, Icon: React.ElementType<{ size?: number; className?: string }>) => (
+  /** Round quick-icon tile ON the hero band (ref: Send / Draft / Backup row).
+   *  Icons are the hand-drawn duotone set; chip ink follows the tier palette. */
+  const heroTile = (label: string, target: string, icon: React.ReactNode) => (
     <button
       key={target + label}
       type="button"
       onClick={() => onNavigate(target)}
-      className="flex flex-col items-center gap-1.5 rounded-2xl py-1.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sp-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-ds-green"
+      className="flex flex-col items-center gap-1.5 rounded-2xl py-1.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       aria-label={label}
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-sp-emerald shadow-[0_6px_16px_-6px_rgba(0,59,47,0.55)] transition-transform duration-200 group-active:scale-95 motion-reduce:transition-none">
-        <Icon size={24} strokeWidth={2} />
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-[0_6px_16px_-6px_rgba(0,59,47,0.55)] transition-transform duration-200 group-active:scale-95 motion-reduce:transition-none" style={{ color: palette.chip }}>
+        {icon}
       </span>
-      <span className="text-2xs font-bold leading-tight text-ds-on-green/95">{label}</span>
+      <span className="text-2xs font-bold leading-tight text-white/95">{label}</span>
     </button>
   );
 
@@ -148,8 +142,8 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   return (
     <div className="sp-agent-home">
-      {/* ─── Saturated brand hero band ─────────────────────────────────────── */}
-      <div className="w-full bg-ds-green text-ds-on-green rounded-b-[2.25rem] pb-24">
+      {/* ─── Saturated brand hero band — tier palette (matches Partner Card) ─ */}
+      <div className="w-full text-white rounded-b-[2.25rem] pb-10" style={{ background: palette.band }}>
         <motion.div className="sp-agent-home__greeting px-5 pt-6 sm:pt-8" {...reveal(0)}>
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
@@ -199,103 +193,16 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
           {...reveal(1)}
         >
           <div className="grid grid-cols-4 gap-2">
-            {heroTile(t('New quote', 'Kutipan'), 'quotes', FilePlus2)}
-            {heroTile(t('Claims', 'Klaim'), 'claims', ShieldAlert)}
-            {heroTile(t('Network', 'Jaringan'), 'network', Network)}
-            {heroTile(t('Renewals', 'Renewals'), 'renewals', RefreshCcw)}
+            {heroTile(t('New quote', 'Quotation'), 'quotes', <IcQuote size={26} />)}
+            {heroTile(t('Claims', 'Klaim'), 'claims', <IcClaims size={26} />)}
+            {heroTile(t('Network', 'Network'), 'network', <IcNetwork size={26} />)}
+            {heroTile(t('Renewals', 'Renewals'), 'renewals', <IcRenewal size={26} />)}
           </div>
         </motion.nav>
       </div>
 
-      {/* ─── Dark premium card — bridges hero band and white sheet ────────── */}
-      <motion.div className="sp-agent-home__commission relative z-10 px-5" style={{ marginTop: '-6.5rem' }} {...reveal(2)}>
-        <AgentArtKeyframes />
-        <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)', boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)' }}>
-          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.22)' }} />
-          <svg aria-hidden className="absolute inset-0 w-full h-full opacity-[0.10] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 320 200" fill="none">
-            <circle cx="290" cy="-10" r="110" stroke="#fff" strokeWidth="1" />
-            <circle cx="290" cy="-10" r="80" stroke="#fff" strokeWidth="1" />
-            <circle cx="290" cy="-10" r="50" stroke="#fff" strokeWidth="1" />
-            <circle cx="10" cy="210" r="90" stroke="#fff" strokeWidth="1" />
-            <circle cx="10" cy="210" r="60" stroke="#fff" strokeWidth="1" />
-          </svg>
-          <div className="relative z-10 flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <span className="inline-block w-9 h-7 rounded-md" style={{ background: 'linear-gradient(135deg, #FDE047, #EAB308)', boxShadow: 'inset 0 0 0 1px rgba(113,63,18,0.35)' }}>
-                <svg viewBox="0 0 36 28" className="w-full h-full" fill="none"><path d="M0 14h36M18 0v28M6 7h24M6 21h24" stroke="rgba(113,63,18,0.45)" strokeWidth="1.4" /></svg>
-              </span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 8c2.2 2.2 2.2 5.8 0 8M12.5 5.5c3.6 3.6 3.6 9.4 0 13M17 3c5 5 5 13 0 18" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" /></svg>
-            </div>
-            <span className="text-2xs font-black uppercase tracking-[0.14em] text-white/45 whitespace-nowrap">SurePath A� Partner Card</span>
-          </div>
-
-          <div className="relative z-10 flex items-center gap-5">
-            <div className="flex-1 min-w-0">
-              <p className="text-2xs font-black uppercase tracking-[0.12em] mb-2 whitespace-nowrap text-ds-amber-on-dark">
-                {t('Commission this month', 'Komisi Bulan Ini')}
-              </p>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-white/40 text-base font-medium">Rp</span>
-                <span className="text-3xl sm:text-4xl font-black font-mono leading-none tracking-tight break-words"
-                  style={{ backgroundImage: 'linear-gradient(160deg, #FFFDF0 10%, #FDE047 55%, #EAB308 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
-                  {stats.totalCommissionMonth >= 1000000
-                    ? `${(stats.totalCommissionMonth / 1000000).toFixed(1)}jt`
-                    : stats.totalCommissionMonth.toLocaleString('id-ID')}
-                </span>
-              </div>
-            </div>
-
-            {/* Progress ring toward monthly target */}
-            <div className="flex-shrink-0 flex flex-col items-center gap-1">
-              <div className="relative">
-                <svg width="78" height="78" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                  <circle
-                    cx="50" cy="50" r="38" fill="none" stroke="#00C16A" strokeWidth="8" strokeLinecap="round"
-                    strokeDasharray="238.76" strokeDashoffset={238.76 * (1 - progress / 100)}
-                    transform="rotate(-90 50 50)"
-                    style={{ transition: reduce ? undefined : 'stroke-dashoffset 1s cubic-bezier(0.16,1,0.3,1)' }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-black text-white leading-none">{Math.round(progress)}%</span>
-                </div>
-              </div>
-              <p className="text-2xs text-white/45 font-bold uppercase tracking-wide whitespace-nowrap">{t('of target', 'dr target')}</p>
-            </div>
-          </div>
-
-          {/* Inline micro-stats */}
-          <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex items-stretch">
-            {[
-              { label: t('Quotes', 'Penawaran'), value: String(activeQuotesCount) },
-              { label: t('Clients', 'Klien'), value: String(stats.clientsCount) },
-              { label: t('Policies', 'Polis'), value: String(stats.policiesCount) },
-            ].map((s, i) => (
-              <div key={s.label} className={`flex-1 min-w-0 flex flex-col ${i > 0 ? 'pl-3 border-l border-white/10' : ''}`}>
-                <p className="flex-1 text-white/45 text-2xs font-medium uppercase tracking-wide leading-tight mb-1">{s.label}</p>
-                <p className="text-white text-base font-black font-mono tabular-nums">{s.value}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative z-10 mt-4 flex items-center justify-between">
-            <p className="text-white/40 text-2xs font-medium">
-              {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
-            </p>
-            <button
-              type="button"
-              onClick={() => onNavigate('commission')}
-              className="rounded-full bg-ds-green px-3.5 py-1.5 text-2xs font-black text-ds-on-green cursor-pointer active:scale-95 transition-transform motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            >
-              {t('View wallet', 'Buka dompet')}
-            </button>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ─── White content sheet — pulls up under the card (ref: Email Function sheet) ── */}
-      <div className="relative z-0 -mt-12 rounded-t-[2rem] bg-ds-bg pt-16 pb-28 shadow-[0_-14px_30px_-18px_rgba(11,17,32,0.18)]">
+      {/* ─── White content sheet (ref: Email Function sheet) ────────────────── */}
+      <div className="relative z-0 rounded-t-[2rem] bg-ds-bg pt-6 pb-28 shadow-[0_-14px_30px_-18px_rgba(11,17,32,0.18)]">
         {savedDraftProduct && (
           <div className="sp-agent-home__draft mx-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3" role="status">
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><FilePlus2 size={18} /></div>
@@ -312,7 +219,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </div>
 
         {/* Fitur Mitra — every tile is a real portal destination */}
-        <motion.section className="sp-agent-home__fitur px-5 mt-5" aria-label={t('Partner features', 'Fitur Mitra')} {...reveal(3)}>
+        <motion.section className="sp-agent-home__fitur px-5 mt-5" aria-label={t('Partner features', 'Fitur Mitra')} {...reveal(2)}>
           <div className="flex items-center justify-between mb-2.5">
             <h3 className="text-sm font-black text-ds-ink">{t('Partner Features', 'Fitur Mitra')}</h3>
             <button onClick={() => onNavigate('policy')} className="text-xs font-bold text-ds-green cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green rounded">
@@ -320,36 +227,36 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </button>
           </div>
           <div className="grid grid-cols-4 gap-2.5">
-            {gridTile({ label: t('New quote', 'Kutipan'), tint: greenTint, onAction: () => onNavigate('quotes'), TintIcon: <ManagedPortalIcon id="quotes" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<FilePlus2 size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
-            {gridTile({ label: t('Policies', 'Polis'), tint: greenTint, onAction: () => onNavigate('policy'), TintIcon: <ManagedPortalIcon id="policy" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<FileCheck2 size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
-            {gridTile({ label: t('Clients', 'Klien'), tint: greenTint, onAction: () => onNavigate('clients'), TintIcon: <ManagedPortalIcon id="clients" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<UsersRound size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
-            {gridTile({ label: t('Claims', 'Klaim'), tint: greenTint, onAction: () => onNavigate('claims'), TintIcon: <ManagedPortalIcon id="claims" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<ShieldAlert size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
-            {gridTile({ label: t('Renewals', 'Renewals'), tint: greenTint, onAction: () => onNavigate('renewals'), TintIcon: <RefreshCcw size={23} strokeWidth={1.9} className="text-ds-green" /> })}
-            {gridTile({ label: t('Network', 'Jaringan'), tint: greenTint, onAction: () => onNavigate('network'), TintIcon: <Network size={23} strokeWidth={1.9} className="text-ds-green" /> })}
-            {gridTile({ label: t('Leaderboard', 'Papan Skor'), tint: greenTint, onAction: () => onNavigate('leaderboard'), TintIcon: <Trophy size={23} strokeWidth={1.9} className="text-ds-green" /> })}
-            {gridTile({ label: t('Endorsements', 'Endorsemen'), tint: greenTint, onAction: () => onNavigate('endorsements'), TintIcon: <FileSignature size={23} strokeWidth={1.9} className="text-ds-green" /> })}
+            {gridTile({ label: t('New quote', 'Quotation'), tint: greenTint, onAction: () => onNavigate('quotes'), TintIcon: <ManagedPortalIcon id="quotes" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<IcQuote size={23} className="text-ds-green" />} /> })}
+            {gridTile({ label: t('Policies', 'Polis'), tint: greenTint, onAction: () => onNavigate('policy'), TintIcon: <ManagedPortalIcon id="policy" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<IcPolicy size={23} className="text-ds-green" />} /> })}
+            {gridTile({ label: t('Clients', 'Klien'), tint: greenTint, onAction: () => onNavigate('clients'), TintIcon: <ManagedPortalIcon id="clients" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<IcClients size={23} className="text-ds-green" />} /> })}
+            {gridTile({ label: t('Claims', 'Klaim'), tint: greenTint, onAction: () => onNavigate('claims'), TintIcon: <ManagedPortalIcon id="claims" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<IcClaims size={23} className="text-ds-green" />} /> })}
+            {gridTile({ label: t('Renewals', 'Renewals'), tint: greenTint, onAction: () => onNavigate('renewals'), TintIcon: <IcRenewal size={23} className="text-ds-green" /> })}
+            {gridTile({ label: t('Network', 'Network'), tint: greenTint, onAction: () => onNavigate('network'), TintIcon: <IcNetwork size={23} className="text-ds-green" /> })}
+            {gridTile({ label: 'Leader\u00ADboard', tint: greenTint, onAction: () => onNavigate('leaderboard'), TintIcon: <IcRank size={23} className="text-ds-green" /> })}
+            {gridTile({ label: t('Endorsements', 'Endorsemen'), tint: greenTint, onAction: () => onNavigate('endorsements'), TintIcon: <IcEndorse size={23} className="text-ds-green" /> })}
           </div>
         </motion.section>
 
         {/* Other Tools — the softer, multicoloured section (ref: Other Tools) */}
-        <motion.section className="sp-agent-home__lainnya px-5 mt-5" aria-label={t('Other tools', 'Lainnya')} {...reveal(4)}>
+        <motion.section className="sp-agent-home__lainnya px-5 mt-5" aria-label={t('Other tools', 'Lainnya')} {...reveal(3)}>
           <div className="flex items-center justify-between mb-2.5">
             <h3 className="text-sm font-black text-ds-ink">{t('Other Tools', 'Lainnya')}</h3>
           </div>
           <div className="grid grid-cols-4 gap-2.5">
-            {gridTile({ label: t('Wallet', 'Dompet'), tint: 'var(--ds-warning-tint)', onAction: () => onNavigate('wallet'), TintIcon: <Wallet size={22} strokeWidth={1.9} className="text-ds-amber" /> })}
-            {gridTile({ label: t('Commission', 'Komisi'), tint: 'var(--ds-info-tint)', onAction: () => onNavigate('commission'), TintIcon: <Coins size={22} strokeWidth={1.9} className="text-ds-blue" /> })}
+            {gridTile({ label: t('Wallet', 'Dompet'), tint: 'var(--ds-warning-tint)', onAction: () => onNavigate('wallet'), TintIcon: <IcWallet size={22} className="text-ds-amber" /> })}
+            {gridTile({ label: t('Commission', 'Komisi'), tint: 'var(--ds-info-tint)', onAction: () => onNavigate('commission'), TintIcon: <IcCoin size={22} className="text-ds-blue" /> })}
             {gridTile({
               label: 'Pathy', tint: 'var(--ds-purple-lt)',
               onAction: () => window.dispatchEvent(new Event(PATHY_OPEN_EVENT)),
               TintIcon: <PathyMascot size={26} />,
             })}
-            {gridTile({ label: t('Profile', 'Profil'), tint: 'var(--ds-green-tint)', onAction: () => onNavigate('profile'), TintIcon: <UserRound size={22} strokeWidth={1.9} className="text-ds-green" /> })}
+            {gridTile({ label: t('Profile', 'Profil'), tint: 'var(--ds-green-tint)', onAction: () => onNavigate('profile'), TintIcon: <IcProfile size={22} className="text-ds-green" /> })}
           </div>
         </motion.section>
 
         {/* Secondary performance — kept, tucks between the grids and the coach */}
-        <motion.div className="sp-agent-home__gwp px-5 mt-5" {...reveal(5)}>
+        <motion.div className="sp-agent-home__gwp px-5 mt-5" {...reveal(4)}>
           <div className="sp-glass rounded-[1.5rem] p-5 flex items-center">
             <div className="flex-1 pr-5">
               <div className="flex items-center gap-1.5 mb-1.5">
@@ -374,7 +281,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </motion.div>
 
         {/* Sales Coach — calm card (kept from previous home) */}
-        <motion.div className="sp-agent-home__coach px-5 mt-5" {...reveal(6)}>
+        <motion.div className="sp-agent-home__coach px-5 mt-5" {...reveal(5)}>
           <div className="sp-glass rounded-[1.5rem] p-5">
             <div className="flex items-start gap-3">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center p-1 flex-shrink-0 animate-float"
@@ -399,12 +306,12 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         </motion.div>
 
         {/* Renewal Alerts */}
-        <motion.div {...reveal(7)}>
+        <motion.div {...reveal(6)}>
           <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
         </motion.div>
 
         {/* Recent Commissions */}
-        <motion.div className="sp-agent-home__commissions px-5 mt-7" {...reveal(8)}>
+        <motion.div className="sp-agent-home__commissions px-5 mt-7" {...reveal(7)}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
             <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green rounded">

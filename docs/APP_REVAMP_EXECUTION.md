@@ -169,6 +169,51 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-28 (later) — tier mewarnai kartu mitra, ikon premium, kosakata, Admin CMS gelap konsisten (v2.7.10)
+
+- **Scope:** `components/agent/AgentPartnerCard.tsx` (BARU — kartu diekstrak
+  dari Beranda + modul palet tier), `components/agent/AgentHome.tsx` (kartu
+  dipindah keluar, hero memakai gradien tier, ikon duotone, kosakata,
+  label leaderboard soft-hyphen), `components/agent/AgentProfile.tsx`
+  (kartu dipasang + mikro-stat penawaran aktif), `components/agent/
+  AgentPortal.tsx` (profil kini di-oper `onNavigate`), `components/admin/
+  AdminPortal.tsx` (kelas `sp-modern-app` ganda di sidebar dihapus),
+  `components/admin/workspaces/command/CommandDashboard.tsx` (3 item tanpa
+  ikon → crash), `components/admin/AIAdminView.tsx`,
+  `components/admin/CommissionLedger.tsx`, `components/admin/AdminLogin.tsx`
+  (permukaan terang keras → token ds / translusen). Bump 2.7.9 → 2.7.10
+  (versionCode 43).
+- **Logika tier (permintaan owner: warna kartu jadi pembeda tier):** tier
+  adalah baris bebas di `sp_agent_tiers` (kode free-form + kolom `color`).
+  `resolveTierPalette()` memetakan: `is_default` → STANDARD grafit (abu-abu
+  metalik); kata kunci kode GOLD/EMERALD → tampilan jade+emas v2.7.9
+  (template); SILVER → perak; PLATINUM/ICE → biru es; DIAMOND → navy/sian;
+  BRONZE/COPPER → tembaga; tanpa kata kunci tapi punya `color` (bukan
+  `#6b7280`) → grafit dengan warna tier sebagai aksen ring/glow/chip. Hero
+  Beranda memakai gradien band palet yang sama, jadi hero selalu pas dengan
+  kartu — permintaan eksplisit owner.
+- **Bug produksi yang ditemukan sambil verifikasi (bukan bagian permintaan
+  awal):** (1) `CommandDashboard` crash "Element type is invalid … got
+  undefined" karena tiga entri "Aksi Kritis" tanpa properti `icon` — admin
+  MASTER melihat error boundary alih-alih dashboard; (2) wrapper
+  `SidebarContent` di AdminPortal membawa `sp-modern-app` ganda yang
+  melukis gradien terang di atas aside gelap — inilah "sebagian gelap
+  sebagian putih" yang dilaporkan owner. Keduanya diperbaiki dan diverifikasi
+  visual.
+- **Verifikasi visual:** skrip sementara (dihapus) dengan mock e2e penuh;
+  tambahan mock: `get_my_profile` per-peran (refresh profil latar mandi
+  `role` admin) dan tier berkode `code`/`is_default` agar palet GOLD
+  terujung. Potret: home 390 px GOLD eks-satu, beranda tanpa kartu; profil
+  menampilkan kartu + CTA "Buka dompet" + nav Bisnis/Penghasilan; admin
+  dashboard/AI/ledger 1366 px serba gelap, `NO CONSOLE ERRORS`.
+- **Checks:** tsc 0 error; ESLint tanpa warning baru; vitest **383/383**;
+  `vite build` + PWA ✓; Playwright E2E **74 passed / 15 skipped /
+  0 failed**; detector mekanis impeccable (`detect --json`) 0 failure /
+  0 advisory di `components/agent` dan `components/admin`.
+- **Version:** v2.7.10 di `src/version.ts`, `package.json` (+lock,
+  diverifikasi `node`, tak ada dependensi yang ikut berganti) dan Android
+  (`versionCode` 43, `versionName` 2.7.10); changelog v2.7.10 ditambahkan.
+
 ### 2026-10-28 (later) — Beranda apps mitra dirancang ulang mengikuti pola "saturated brand hero" (v2.7.9)
 
 - **Scope:** `components/agent/AgentHome.tsx` (dítulis ulang, ±400 baris), `tests/agentApp.spec.ts` (3 perubahan klik + budget), bump versi 2.7.8 → 2.7.9 (versionCode 42). Tidak ada layar/tool yang ditambah atau dihapus — hanya pola layout Beranda.

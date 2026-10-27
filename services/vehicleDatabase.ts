@@ -1,6 +1,8 @@
 // Vehicle database — Halalins MV Pricelist 2025 + 2026 new models
 // 38 brands, 2179 models (2005-2025) + 2026 estimated additions
 
+import { lookupVehicleOverride } from './vehicleOverrides';
+
 export interface VehicleModel {
   model: string;
   listPriceM: number;
@@ -2468,6 +2470,9 @@ export function getModelsForBrand(brand: string): string[] {
 }
 
 export function getMarketValue(brand: string, model: string): number | null {
+  // Harga yang dikelola admin menang atas pricelist statis.
+  const override = lookupVehicleOverride(brand, model);
+  if (override !== null) return override;
   const entry = VEHICLE_DATABASE[brand];
   if (!entry) return null;
   const m = entry.models.find(m => m.model === model);
@@ -2475,6 +2480,8 @@ export function getMarketValue(brand: string, model: string): number | null {
 }
 
 export function getMarketValueForYear(brand: string, model: string, year: number): number | null {
+  const override = lookupVehicleOverride(brand, model, year);
+  if (override !== null) return override;
   const entry = VEHICLE_DATABASE[brand];
   if (!entry) return null;
   const m = entry.models.find(m => m.model === model);

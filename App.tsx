@@ -5,6 +5,7 @@ import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
+import { initVehicleOverrides } from './services/vehicleOverrides';
 import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -187,6 +188,20 @@ const App = () => {
   // is active — falls back silently to services/ojkRates.ts's built-in values.
   useEffect(() => {
     getActiveOjkRateSet().then(row => { if (row) applyOjkRateSet(row as any); }).catch(() => {});
+  }, []);
+
+  // Harga kendaraan dikelola di CMS. Muat sekali saat boot, lalu segarkan saat
+  // app kembali fokus supaya perubahan admin tidak menunggu reload penuh.
+  useEffect(() => {
+    void initVehicleOverrides();
+    const refresh = () => { void initVehicleOverrides(true); };
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', refresh);
+    };
   }, []);
 
   useEffect(() => {

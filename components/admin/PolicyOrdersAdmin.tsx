@@ -16,6 +16,7 @@ import { SecureDocLink } from '../shared/SecureDoc';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import { useToast } from '../ui';
+import { filterLabel } from './filterLabels';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
@@ -606,7 +607,6 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {FILTERS.slice(1).map(f => {
-          const m = STATUS_META[f as SpPolicyOrder['status']];
           return (
             <div
               key={f}
@@ -616,7 +616,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
               }`}
             >
               <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-400' : 'text-white'}`}>{counts[f]}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{m.label}</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{filterLabel(f)}</p>
             </div>
           );
         })}
@@ -642,7 +642,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                 filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
-              {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Perlu Keputusan' : STATUS_META[f as SpPolicyOrder['status']].label}
+              {filterLabel(f)}
               {` (${counts[f]})`}
             </button>
           ))}

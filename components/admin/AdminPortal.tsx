@@ -7,7 +7,7 @@ import {
   TrendingUp, Bell, CheckCircle,
   Coins, DollarSign, Package, Building2, Car, ArrowLeft,
   Monitor, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
-  PanelLeftClose, PanelLeftOpen, UserPlus, CornerDownLeft,
+  PanelLeftClose, PanelLeftOpen, UserPlus, CornerDownLeft, Sun, Moon, Clock,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -44,16 +44,12 @@ const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { scrollPortalToTop } from '../shared/scrollReset';
 import { applyDarkMode, readDarkMode, storeDarkMode } from '../shared/theme';
 import { UserRole } from '../../types';
-import {
-  AgentArtKeyframes, AgentHero,
-  SpotOrders, SpotClients, SpotClaims, SpotWallet, SpotNetwork,
-  SpotMarket, SpotProfile, SpotEndorse, SpotTrophy, SpotRenewal, SpotBell,
-} from '../agent/AgentArt';
 import { getAdminStats, type AdminStats, uploadLogoImage, getOnlineUsers, type OnlineUsersResult, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification, getAllClaims, getAdminWithdrawals, type SpClaim, type Withdrawal } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { buildVisibleNav, groupForSection, sectionForLeaf } from './navigation';
+import { ADMIN_THEME_KEY, nextThemeMode, resolveAdminDark, themeLabel as modeLabel, type AdminThemeMode } from './themeMode';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -126,20 +122,7 @@ const MENU_ITEMS: MenuItem[] = [
 const formatRole = (role: string) =>
   role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-// ── Per-tab hero art + subtitle (visual only) ────────────────────────────────
-const TAB_ART: Record<string, React.ComponentType<{ size?: number }>> = {
-  analytics: SpotNetwork,
-  user_mgmt: SpotClients,
-  payments: SpotWallet, withdrawals: SpotWallet,
-  policy_orders: SpotOrders, approvals: SpotOrders, claims_admin: SpotClaims,
-  endorsements: SpotEndorse, documents: SpotOrders,
-  agents: SpotProfile, agent_agreements: SpotEndorse, commission_ledger: SpotWallet,
-  b2b: SpotMarket, product_config: SpotMarket, tier_promo: SpotTrophy,
-  insurers: SpotMarket, ojk_rates: SpotClaims, financial: SpotWallet,
-  vehicle_pricelist: SpotRenewal, website_editor: SpotMarket,
-  ai_admin: SpotBell, ai_finance: SpotBell, security: SpotClaims, settings: SpotEndorse,
-};
-
+// ── Subjudul per view (visual only) ──────────────────────────────────────────
 const TAB_SUBTITLE: Record<string, string> = {
   analytics: 'Analitik traffic, funnel, dan pertumbuhan.',
   user_mgmt: 'Kelola akun, peran, akses, dan pantau partner teraktif.',
@@ -215,18 +198,42 @@ const AdminPortal = ({
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
-  // Light-only admin (design directive 2026-10-26): the CMS renders exclusively
-  // in light mode — no theme switcher. The visitor's prior preference is
-  // remembered and restored when they leave the admin portal, so the marketing
-  // site / customer app keeps whatever theme the user had chosen there.
+  // Tema admin: default otomatis (gelap 18.00–06.00). Preferensi aplikasi lain
+  // di memori tetap dipulihkan saat keluar dari CMS.
+  const [themeMode, setThemeMode] = useState<AdminThemeMode>(() => {
+    try {
+      const saved = localStorage.getItem(ADMIN_THEME_KEY);
+      return saved === 'light' || saved === 'dark' ? saved : 'auto';
+    } catch { return 'auto'; }
+  });
+  const [isDarkNow, setIsDarkNow] = useState(() => resolveAdminDark('auto'));
   const priorTheme = useRef(readDarkMode(false));
   useEffect(() => {
-    applyDarkMode(false);
-    storeDarkMode(false);
-    return () => {
-      applyDarkMode(priorTheme.current);
-      storeDarkMode(priorTheme.current);
+    // Disalin ke lokal: cleanup tidak boleh membaca ref yang bisa berubah.
+    const restoreTheme = priorTheme.current;
+    const apply = () => {
+      const dark = resolveAdminDark(themeMode);
+      applyDarkMode(dark);
+      storeDarkMode(dark);
+      setIsDarkNow(dark);
     };
+    apply();
+    const timer = window.setInterval(apply, 5 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === 'visible') apply(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      applyDarkMode(restoreTheme);
+      storeDarkMode(restoreTheme);
+    };
+  }, [themeMode]);
+  const cycleTheme = useCallback(() => {
+    setThemeMode(prev => {
+      const next = nextThemeMode(prev);
+      try { localStorage.setItem(ADMIN_THEME_KEY, next); } catch { /* storage blocked */ }
+      return next;
+    });
   }, []);
   // Preserve sidebar position without resetting scroll on every parent render.
   const sidebarScrollTop = useRef(0);
@@ -505,12 +512,12 @@ const AdminPortal = ({
         onScroll={event => { sidebarScrollTop.current = event.currentTarget.scrollTop; }}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-0.5 pr-1"
       >
-        {visibleNav.map(({ group, sections }) => (
+        {visibleNav.map(({ group, sections }, groupIndex) => (
           <div key={group.id}>
             {isRail ? (
               <div className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />
             ) : (
-              <div className="mt-4 mb-1 px-2">
+              <div className={`${groupIndex === 0 ? 'mt-1' : 'mt-4'} mb-1 px-2`}>
                 <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-white/45">{group.label}</p>
               </div>
             )}
@@ -528,8 +535,8 @@ const AdminPortal = ({
                     isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
                   } ${
                     active
-                      ? 'bg-white/[0.14] text-white shadow-sm'
-                      : 'text-white/65 border border-transparent hover:text-white hover:bg-white/[0.08]'
+                      ? 'border border-white/10 bg-white/[0.14] text-white shadow-sm'
+                      : 'border border-transparent text-white/65 hover:text-white hover:bg-white/[0.08]'
                   }`}
                 >
                   {active && (
@@ -647,6 +654,41 @@ const AdminPortal = ({
   const rootBg   = 'bg-ds-bg text-ds-ink';
   const headerBg = 'sp-glass-strong border-ds-border shadow-ds-sm transition-[background-color,border-color,box-shadow] duration-300';
   const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
+
+  const themeLabel = modeLabel(themeMode);
+  const sectionTabs = activeSection && activeSectionChildren.length > 1 ? (
+    <div
+      role="tablist"
+      aria-label={`Tab ${activeSection.label}`}
+      className={`flex gap-1 overflow-x-auto no-scrollbar p-1 rounded-2xl border ${'bg-ds-card border-ds-border'}`}
+    >
+      {activeSectionChildren.map(id => {
+        const leaf = MENU_ITEMS.find(m => !m.isSeparator && m.id === id) as { label?: string } | undefined;
+        const badge = navBadgeFor(id);
+        const selected = id === activeTab;
+        return (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={selected}
+            onClick={() => goToTab(id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+              selected
+                ? 'bg-ds-green-tint text-ds-green shadow-ds-sm'
+                : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
+            }`}
+          >
+            {leaf?.label ?? id}
+            {badge > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center">
+                {badge > 99 ? '99+' : badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
 
   return (
     <div className={`sp-modern-app flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
@@ -776,9 +818,16 @@ const AdminPortal = ({
               </span>
               <RefreshCw size={11} className={syncState === 'syncing' ? 'animate-spin' : ''} />
             </button>
-            {/* Theme toggle removed 2026-10-26 — the admin portal is light-only
-                by design directive; the visitor's customer-app preference is
-                restored automatically when they leave this portal. */}
+            <button
+              type="button"
+              onClick={cycleTheme}
+              title={`Tema: ${themeLabel} (klik untuk ganti)`}
+              aria-label={`Ganti tema admin. Sekarang ${themeLabel}.`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-2xs font-bold whitespace-nowrap shrink-0 transition-colors ${'bg-ds-card2 border-ds-border text-ds-ink3 hover:border-ds-green/50'}`}
+            >
+              {themeMode === 'auto' ? <Clock size={14} /> : isDarkNow ? <Moon size={14} /> : <Sun size={14} />}
+              <span className="hidden xl:inline">{themeLabel}</span>
+            </button>
             {/* Auto-backup status indicator.
                 Hidden below `sm` on purpose: the header already carries the
                 search field and four controls, and at 390px this badge was the
@@ -880,68 +929,29 @@ const AdminPortal = ({
         {/* Content */}
         <div ref={contentRef} className={`flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 no-scrollbar ${'bg-ds-card2'}`}>
           <div className="max-w-7xl mx-auto">
-            <AgentArtKeyframes />
-            {/* Section dengan >1 view memakai header ringkas + tab, bukan hero
-                72px — supaya perpindahan antar view terkait tidak perlu kembali
-                ke sidebar. Section satu view tetap memakai hero lama. */}
-            {activeSection && activeSectionChildren.length > 1 && (
+            {activeTab === 'dashboard' && sectionTabs && (
+              <div className="mb-4">{sectionTabs}</div>
+            )}
+
+            {activeTab !== 'dashboard' && activeSection && (
               <div className="mb-6">
                 {activeGroup && (
                   <p className={`text-[0.58rem] font-black uppercase tracking-[0.22em] mb-1 ${'text-ds-ink3'}`}>
                     {activeGroup.label}
                   </p>
                 )}
-                <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${'text-ds-ink'}`}>
-                  {activeSection.label}
-                </h1>
-                <div
-                  role="tablist"
-                  aria-label={`Tab ${activeSection.label}`}
-                  className={`mt-3 flex gap-1 overflow-x-auto no-scrollbar p-1 rounded-2xl border ${'bg-ds-card border-ds-border'}`}
-                >
-                  {activeSectionChildren.map(id => {
-                    const leaf = MENU_ITEMS.find(m => !m.isSeparator && m.id === id) as { label?: string } | undefined;
-                    const badge = navBadgeFor(id);
-                    const selected = id === activeTab;
-                    return (
-                      <button
-                        key={id}
-                        role="tab"
-                        aria-selected={selected}
-                        onClick={() => goToTab(id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
-                          selected
-                            ? 'bg-ds-green-tint text-ds-green shadow-ds-sm'
-                            : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
-                        }`}
-                      >
-                        {leaf?.label ?? id}
-                        {badge > 0 && (
-                          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center">
-                            {badge > 99 ? '99+' : badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${'text-ds-ink'}`}>
+                    {activeSection.label}
+                  </h1>
+                  {TAB_SUBTITLE[activeTab] && (
+                    <p className="text-xs text-ds-ink3">{TAB_SUBTITLE[activeTab]}</p>
+                  )}
                 </div>
+                {sectionTabs && <div className="mt-3">{sectionTabs}</div>}
               </div>
             )}
 
-            {/* Themed hero banner untuk section satu view (dashboard punya sendiri) */}
-            {activeTab !== 'dashboard' && activeSectionChildren.length <= 1 && (() => {
-              const item = MENU_ITEMS.find(m => !m.isSeparator && m.id === activeTab) as { label?: string } | undefined;
-              if (!item?.label) return null;
-              const Art = TAB_ART[activeTab] ?? SpotOrders;
-              return (
-                <AgentHero
-                  title={item.label}
-                  subtitle={TAB_SUBTITLE[activeTab]}
-                  art={<Art size={72} />}
-                  className="mb-6 lg:mb-8"
-                />
-              );
-            })()}
             <Suspense fallback={<AdminViewLoader />}>
               <div key={activeTab} className="sp-page-enter">
                 {renderContent()}

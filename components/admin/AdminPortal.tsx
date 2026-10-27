@@ -56,6 +56,7 @@ import { formatIDRCompact } from '../../src/i18n';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { AdminKpiCard } from './adminUI';
+import { buildVisibleNav, groupForSection, sectionForLeaf } from './navigation';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -384,6 +385,19 @@ const AdminPortal = ({
     return MENU_ITEMS.filter(m => m.roles.includes(userRole));
   })();
 
+  // Sidebar hanya menampilkan 17 section; view yang bertetangga menjadi tab.
+  // filteredMenu tetap berisi 29 leaf supaya izin per-role dan command palette
+  // tidak berubah perilakunya.
+  const visibleNav = buildVisibleNav(
+    filteredMenu.filter(m => !m.isSeparator).map(m => m.id),
+  );
+  const allowedLeafIds = new Set(filteredMenu.filter(m => !m.isSeparator).map(m => m.id));
+  const activeSection = sectionForLeaf(activeTab);
+  const activeSectionChildren = activeSection
+    ? activeSection.childIds.filter(id => allowedLeafIds.has(id))
+    : [];
+  const activeGroup = activeSection ? groupForSection(activeSection.id) : undefined;
+
   // Command palette results — declared after filteredMenu (TDZ-safe).
   const paletteResults = (() => {
     const items = filteredMenu.filter(m => !m.isSeparator) as Array<{ id: string; label: string; icon: React.ElementType }>;
@@ -412,6 +426,8 @@ const AdminPortal = ({
       default:             return 0;
     }
   };
+  const navBadgeForSection = (childIds: readonly string[]): number =>
+    childIds.reduce((total, id) => total + navBadgeFor(id), 0);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -505,55 +521,59 @@ const AdminPortal = ({
         onScroll={event => { sidebarScrollTop.current = event.currentTarget.scrollTop; }}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-0.5 pr-1"
       >
-        {filteredMenu.map(item => {
-          if (item.isSeparator) {
-            if (isRail) return <div key={item.id} className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />;
-            return (
-              <div key={item.id} className="mt-4 mb-1 px-2">
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-white/45">{(item as any).groupLabel}</p>
+        {visibleNav.map(({ group, sections }) => (
+          <div key={group.id}>
+            {isRail ? (
+              <div className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />
+            ) : (
+              <div className="mt-4 mb-1 px-2">
+                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-white/45">{group.label}</p>
               </div>
-            );
-          }
-          const navItem = item as { id: string; label: string; icon: React.ElementType; roles: UserRole[] };
-          const badge = navBadgeFor(navItem.id);
-          const active = activeTab === navItem.id;
-          return (
-            <button
-              key={navItem.id}
-              onClick={() => { goToTab(navItem.id); setMobileOpen(false); }}
-              title={isRail ? navItem.label : undefined}
-              className={`relative w-full flex items-center rounded-2xl transition-all text-left sp-interactive-surface group/nav ${
-                isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
-              } ${
-                active
-                  ? 'bg-white/[0.14] text-white shadow-sm'
-                  : 'text-white/65 border border-transparent hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              {active && (
-                <span aria-hidden className={`absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
-              )}
-              <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
-                <PathyNavIcon id={navItem.id} size={isRail ? 30 : 28} active={active} />
-                {isRail && badge > 0 && (
-                  <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center shadow">
-                    {badge > 99 ? '99+' : badge}
-                  </span>
-                )}
-              </span>
-              {!isRail && (
-                <>
-                  <span className="text-[0.68rem] font-bold tracking-wide flex-1 min-w-0 truncate">{navItem.label}</span>
-                  {badge > 0 && (
-                    <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
-                      {badge > 99 ? '99+' : badge}
-                    </span>
+            )}
+            {sections.map(section => {
+              const first = section.children[0];
+              const badge = navBadgeForSection(section.children);
+              const active = section.children.includes(activeTab);
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => { goToTab(first); setMobileOpen(false); }}
+                  title={isRail ? section.label : undefined}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative w-full flex items-center rounded-2xl transition-all text-left sp-interactive-surface group/nav ${
+                    isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
+                  } ${
+                    active
+                      ? 'bg-white/[0.14] text-white shadow-sm'
+                      : 'text-white/65 border border-transparent hover:text-white hover:bg-white/[0.08]'
+                  }`}
+                >
+                  {active && (
+                    <span aria-hidden className={`absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
                   )}
-                </>
-              )}
-            </button>
-          );
-        })}
+                  <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
+                    <PathyNavIcon id={first} size={isRail ? 30 : 28} active={active} />
+                    {isRail && badge > 0 && (
+                      <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center shadow">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
+                  </span>
+                  {!isRail && (
+                    <>
+                      <span className="text-[0.68rem] font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
+                      {badge > 0 && (
+                        <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* User footer — always visible */}
@@ -1109,8 +1129,55 @@ const AdminPortal = ({
         <div ref={contentRef} className={`flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 no-scrollbar ${'bg-ds-card2'}`}>
           <div className="max-w-7xl mx-auto">
             <AgentArtKeyframes />
-            {/* Themed hero banner for every view (dashboard has its own) */}
-            {activeTab !== 'dashboard' && (() => {
+            {/* Section dengan >1 view memakai header ringkas + tab, bukan hero
+                72px — supaya perpindahan antar view terkait tidak perlu kembali
+                ke sidebar. Section satu view tetap memakai hero lama. */}
+            {activeSection && activeSectionChildren.length > 1 && (
+              <div className="mb-6">
+                {activeGroup && (
+                  <p className={`text-[0.58rem] font-black uppercase tracking-[0.22em] mb-1 ${'text-ds-ink3'}`}>
+                    {activeGroup.label}
+                  </p>
+                )}
+                <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${'text-ds-ink'}`}>
+                  {activeSection.label}
+                </h1>
+                <div
+                  role="tablist"
+                  aria-label={`Tab ${activeSection.label}`}
+                  className={`mt-3 flex gap-1 overflow-x-auto no-scrollbar p-1 rounded-2xl border ${'bg-ds-card border-ds-border'}`}
+                >
+                  {activeSectionChildren.map(id => {
+                    const leaf = MENU_ITEMS.find(m => !m.isSeparator && m.id === id) as { label?: string } | undefined;
+                    const badge = navBadgeFor(id);
+                    const selected = id === activeTab;
+                    return (
+                      <button
+                        key={id}
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => goToTab(id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                          selected
+                            ? 'bg-ds-green-tint text-ds-green shadow-ds-sm'
+                            : 'text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2'
+                        }`}
+                      >
+                        {leaf?.label ?? id}
+                        {badge > 0 && (
+                          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center">
+                            {badge > 99 ? '99+' : badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Themed hero banner untuk section satu view (dashboard punya sendiri) */}
+            {activeTab !== 'dashboard' && activeSectionChildren.length <= 1 && (() => {
               const item = MENU_ITEMS.find(m => !m.isSeparator && m.id === activeTab) as { label?: string } | undefined;
               if (!item?.label) return null;
               const Art = TAB_ART[activeTab] ?? SpotOrders;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp, ChevronRight, Target, Star, Coins,
-  FilePlus2, UsersRound, ShieldAlert, FileCheck2
+  FilePlus2, UsersRound, ShieldAlert, FileCheck2,
+  Trophy, FileSignature, RefreshCcw, Network, Wallet, UserRound,
 } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
@@ -13,8 +14,10 @@ import RenewalAlerts from './RenewalAlerts';
 import { getAgentOrders } from '../../services/supabaseService';
 import { PathyMascot } from '../shared/cards';
 import { ClayCard } from '../ui';
-import { AgentArtKeyframes, SpotTrophy } from './AgentArt';
+import { AgentArtKeyframes } from './AgentArt';
+import { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import '../../src/styles/portal-modernization.css';
 
 interface Props {
   agent: any;
@@ -25,6 +28,19 @@ interface Props {
   lang: Language;
   agentTier?: string | null;
 }
+
+/* ─── Home in the "saturated brand hero" pattern (ref: messaging-app home) ──
+ * Source image: tinted hero band → avatar + 4 round quick icons → dark
+ * premium card bridging hero & sheet → white sheet with two icon-grid
+ * sections. SurePath translation: the saturated band is ds-green (the fill
+ * the app already pairs with ds-on-green ink); the "Mail VIP" card is the
+ * agent's own commission/target bank-card — SurePath has no paywall, so the
+ * dark premium spot carries real money data, not a fake upsell; and both
+ * grids route to real portal destinations (every tile → handleTabChange).
+ * Kept 1:1 from the previous home: the draft-resume banner, the monthly
+ * target ring with micro-stats, GWP & conversion, the Pathy sales coach,
+ * RenewalAlerts and the recent-commissions list. Layout only — no screen,
+ * tool or destination was added or removed. */
 
 const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
@@ -55,7 +71,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   const progress = Math.min((stats.totalCommissionMonth / monthlyTarget) * 100, 100);
   const conversion = stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0;
 
-  // Subtle staggered entrance — collapses to static under reduced motion.
+  // Staggered entrance — static under reduced motion (unchanged from before).
   const reveal = (i: number) =>
     reduce
       ? {}
@@ -79,9 +95,9 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   };
 
   const salesTips = [
-    t('Clients who buy Travel insurance are 3× more likely to add a PA policy within 6 months.', 'Klien Travel 3× lebih mungkin tambah polis PA dalam 6 bulan. Follow up sekarang!'),
+    t('Clients who buy Travel insurance are 3A- more likely to add a PA policy within 6 months.', 'Klien Travel 3A- lebih mungkin tambah polis PA dalam 6 bulan. Follow up sekarang!'),
     t('Follow up with a prospect within 24 hours to increase conversion by 60%.', 'Follow-up dalam 24 jam tingkatkan konversi 60%. Hubungi 3 prospek hari ini.'),
-    t('Referrals close 4× faster than cold leads. Ask every happy client for one.', 'Referral 4× lebih cepat closing. Minta referensi dari setiap klien puas hari ini.'),
+    t('Referrals close 4A- faster than cold leads. Ask every happy client for one.', 'Referral 4A- lebih cepat closing. Minta referensi dari setiap klien puas hari ini.'),
     t('Cross-selling MPAR to car insurance clients adds avg Rp 90k commission per deal.', 'Cross-sell MPAR ke klien asuransi mobil = tambahan komisi Rp 90rb per deal!'),
   ];
   const dailyTip = salesTips[new Date().getDate() % salesTips.length];
@@ -95,79 +111,106 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
     return t('Good Night', 'Selamat Malam');
   };
 
-  // Custom hand-drawn duotone icons (AgentIcons) — Stitch design system tiles
-  const quickActions = [
-    { tab: 'quotes',  label: t('New quote', 'Penawaran'), Ic: FilePlus2, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
-    { tab: 'clients', label: t('Clients', 'Klien'),       Ic: UsersRound, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
-    { tab: 'claims',  label: t('Claims', 'Klaim'),        Ic: ShieldAlert, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
-    { tab: 'policy',  label: t('Policies', 'Polis'),      Ic: FileCheck2, color: 'text-ds-green', tint: 'rgba(0,193,106,0.14)' },
-  ];
+  /** Round quick-icon tile ON the hero band (ref: Send / Draft / Backup row). */
+  const heroTile = (label: string, target: string, Icon: React.ElementType<{ size?: number; className?: string }>) => (
+    <button
+      key={target + label}
+      type="button"
+      onClick={() => onNavigate(target)}
+      className="flex flex-col items-center gap-1.5 rounded-2xl py-1.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sp-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-ds-green"
+      aria-label={label}
+    >
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-sp-emerald shadow-[0_6px_16px_-6px_rgba(0,59,47,0.55)] transition-transform duration-200 group-active:scale-95 motion-reduce:transition-none">
+        <Icon size={24} strokeWidth={2} />
+      </span>
+      <span className="text-2xs font-bold leading-tight text-ds-on-green/95">{label}</span>
+    </button>
+  );
+
+  /** Section tile for the white sheets (ref: "Email Function" grid). */
+  const gridTile = (opts: {
+    label: string; sub?: string; onAction: () => void; TintIcon: React.ReactNode; tint: string;
+  }) => (
+    <button
+      key={opts.label}
+      type="button"
+      onClick={opts.onAction}
+      aria-label={opts.sub ?? opts.label}
+      className="flex flex-col items-center gap-2 rounded-2xl bg-ds-card py-3.5 px-1 ring-1 ring-ds-border/60 cursor-pointer group active:scale-[0.97] hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-bg"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none" style={{ background: opts.tint }}>
+        {opts.TintIcon}
+      </span>
+      <span className="text-2xs font-bold leading-tight text-ds-ink2 text-center">{opts.label}</span>
+    </button>
+  );
+  const greenTint = 'rgba(0,193,106,0.13)';
 
   return (
-    <div className="sp-agent-home bg-ds-bg min-h-screen pb-28">
-      <PromoBanner />
-
-      {savedDraftProduct && (
-        <div className="mx-5 mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3" role="status">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><FilePlus2 size={18} /></div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-emerald-950">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
-            <p className="text-xs text-emerald-800 mt-0.5">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
-          </div>
-          <button type="button" onClick={() => onNavigate('quotes')} className="min-h-10 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white">{t('Resume', 'Lanjutkan')}</button>
-        </div>
-      )}
-
-      {/* Greeting */}
-      <motion.div className="sp-agent-home__greeting px-5 pt-8 pb-2 sm:pt-10" {...reveal(0)}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-ds-ink3 font-medium">{greeting()},</p>
-            <h2 className="text-[26px] leading-tight font-black text-ds-ink tracking-tight">
-              {agent?.name?.split(' ')[0] ?? 'Mitra'}
-            </h2>
-          </div>
-          <div className="flex items-center gap-2">
-            {myTierDef && !myTierDef.is_default && (
-              <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-bold uppercase tracking-wider"
-                style={{ background: `${myTierDef.color}22`, color: myTierDef.color }}
-              >
-                {myTierDef.emoji ? <span>{myTierDef.emoji}</span> : <Star size={11} />}
-                {myTierDef.name}
-              </span>
-            )}
-            <div className="w-10 h-10 rounded-2xl bg-ds-green flex items-center justify-center text-ds-on-green font-black text-sm shadow-ds-green">
-              {(agent?.name ?? 'A')[0].toUpperCase()}
+    <div className="sp-agent-home">
+      {/* ─── Saturated brand hero band ─────────────────────────────────────── */}
+      <div className="w-full bg-ds-green text-ds-on-green rounded-b-[2.25rem] pb-24">
+        <motion.div className="sp-agent-home__greeting px-5 pt-6 sm:pt-8" {...reveal(0)}>
+          <div className="flex items-center gap-3.5">
+            <div className="relative shrink-0">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sp-emerald text-white text-xl font-black ring-[3px] ring-white/40">
+                {(agent?.name ?? 'A')[0].toUpperCase()}
+              </div>
+              {myTierDef && !myTierDef.is_default && (
+                <span
+                  className="absolute -bottom-1 -right-1.5 rounded-full text-2xs"
+                  title={myTierDef.name}
+                >
+                  {myTierDef.emoji}
+                </span>
+              )}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium opacity-80">{greeting()},</p>
+              <h2 className="text-[22px] leading-tight font-black tracking-tight truncate">
+                {agent?.name?.split(' ')[0] ?? 'Mitra'}
+              </h2>
+              <p className="text-2xs font-bold uppercase tracking-wider opacity-75 truncate">
+                {agent?.agent_code ?? 'SP-AGT'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('profile')}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 cursor-pointer active:scale-90 transition-transform motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sp-emerald focus-visible:ring-offset-2 focus-visible:ring-offset-ds-green"
+              aria-label={t('Open profile', 'Buka profil')}
+            >
+              <ChevronRight size={20} strokeWidth={2.4} aria-hidden="true" />
+            </button>
           </div>
-        </div>
-      </motion.div>
+          {myTierDef && !myTierDef.is_default && (
+            <span
+              className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-2xs font-bold uppercase tracking-wider"
+            >
+              {myTierDef.emoji ?? <Star size={11} />} {myTierDef.name}
+            </span>
+          )}
+        </motion.div>
 
-      {/* Primary action — make the agent's highest-value job obvious immediately. */}
-      <motion.div className="sp-agent-home__primary-cta px-5 pt-3" {...reveal(1)}>
-        <button
-          type="button"
-          onClick={() => onNavigate('quotes')}
-          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2"
-          aria-label={t('Create a new insurance quote', 'Buat penawaran asuransi baru')}
+        {/* Four round quick actions sit ON the band (ref: Send/Draft/Deleted/Backup) */}
+        <motion.nav
+          className="sp-agent-home__quick-actions mt-5 px-5"
+          aria-label={t('Quick actions', 'Aksi cepat')}
+          {...reveal(1)}
         >
-          <span className="sp-agent-home__primary-cta-icon flex items-center justify-center rounded-xl shrink-0">
-            <FilePlus2 size={21} strokeWidth={2.1} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold leading-snug">{t('Create a new quote', 'Buat penawaran baru')}</span>
-            <span className="block text-xs mt-0.5 opacity-75">{t('Get started with your next client', 'Mulai penawaran untuk klien berikutnya')}</span>
-          </span>
-          <ChevronRight size={19} className="shrink-0" aria-hidden="true" />
-        </button>
-      </motion.div>
+          <div className="grid grid-cols-4 gap-2">
+            {heroTile(t('New quote', 'Kutipan'), 'quotes', FilePlus2)}
+            {heroTile(t('Claims', 'Klaim'), 'claims', ShieldAlert)}
+            {heroTile(t('Network', 'Jaringan'), 'network', Network)}
+            {heroTile(t('Renewals', 'Renewals'), 'renewals', RefreshCcw)}
+          </div>
+        </motion.nav>
+      </div>
 
-      {/* Commission Hero — premium bank-card look, the focal point of the screen */}
-      <motion.div className="sp-agent-home__commission px-5 pt-3 sm:pt-4" {...reveal(1)}>
+      {/* ─── Dark premium card — bridges hero band and white sheet ────────── */}
+      <motion.div className="sp-agent-home__commission relative z-10 px-5" style={{ marginTop: '-6.5rem' }} {...reveal(2)}>
         <AgentArtKeyframes />
         <div className="rounded-[1.75rem] p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)', boxShadow: '0 16px 44px -12px rgba(11,17,32,0.55)' }}>
-          {/* glow + fine card pattern */}
           <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(0,193,106,0.22)' }} />
           <svg aria-hidden className="absolute inset-0 w-full h-full opacity-[0.10] pointer-events-none" preserveAspectRatio="none" viewBox="0 0 320 200" fill="none">
             <circle cx="290" cy="-10" r="110" stroke="#fff" strokeWidth="1" />
@@ -176,7 +219,6 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             <circle cx="10" cy="210" r="90" stroke="#fff" strokeWidth="1" />
             <circle cx="10" cy="210" r="60" stroke="#fff" strokeWidth="1" />
           </svg>
-          {/* card chip + contactless (bank-card identity) */}
           <div className="relative z-10 flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <span className="inline-block w-9 h-7 rounded-md" style={{ background: 'linear-gradient(135deg, #FDE047, #EAB308)', boxShadow: 'inset 0 0 0 1px rgba(113,63,18,0.35)' }}>
@@ -184,7 +226,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               </span>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 8c2.2 2.2 2.2 5.8 0 8M12.5 5.5c3.6 3.6 3.6 9.4 0 13M17 3c5 5 5 13 0 18" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" /></svg>
             </div>
-            <span className="text-2xs font-black uppercase tracking-[0.14em] text-white/45 whitespace-nowrap">SurePath · Partner Card</span>
+            <span className="text-2xs font-black uppercase tracking-[0.14em] text-white/45 whitespace-nowrap">SurePath A� Partner Card</span>
           </div>
 
           <div className="relative z-10 flex items-center gap-5">
@@ -223,7 +265,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </div>
           </div>
 
-          {/* Inline micro-stats — the only place coins/clients/policies live */}
+          {/* Inline micro-stats */}
           <div className="relative z-10 mt-5 pt-4 border-t border-white/10 flex items-stretch">
             {[
               { label: t('Quotes', 'Penawaran'), value: String(activeQuotesCount) },
@@ -241,141 +283,166 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             <p className="text-white/40 text-2xs font-medium">
               {t('Target', 'Target')}: <span className="text-white/60 font-bold">{formatIDR(monthlyTarget)}</span>
             </p>
-            <p className="text-white/50 text-2xs font-black tracking-[0.18em] font-mono uppercase whitespace-nowrap">
-              {agent?.agent_code ?? 'SP-AGT'}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Secondary performance — metrics NOT shown in the hero (no duplication) */}
-      <motion.div className="px-5 mt-5" {...reveal(2)}>
-        <div className="sp-glass rounded-[1.5rem] p-5 flex items-center">
-          <div className="flex-1 pr-5">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <TrendingUp size={13} className="text-ds-green" />
-              <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('GWP / Month', 'GWP Bulan Ini')}</p>
-            </div>
-            <p className="text-xl font-black text-ds-ink font-mono leading-none tabular-nums whitespace-nowrap"
-              title={formatIDR(stats.totalCommissionMonth * 8)}>
-              {formatIDRCompact(stats.totalCommissionMonth * 8, lang)}
-            </p>
-            <p className="text-2xs text-ds-ink3 mt-1">{t('estimated', 'estimasi')}</p>
-          </div>
-          <div className="flex-1 pl-5 border-l border-ds-border">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Target size={13} className="text-ds-amber" />
-              <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('Conversion', 'Konversi')}</p>
-            </div>
-            <p className="text-xl font-black text-ds-ink font-mono leading-none">{conversion}%</p>
-            <p className="text-2xs text-ds-ink3 mt-1">{t('clients to policies', 'klien → polis')}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Sales Coach — calm card, deliberately quieter than the hero */}
-      <motion.div className="px-5 mt-5" {...reveal(3)}>
-        <div className="sp-glass rounded-[1.5rem] p-5">
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center p-1 flex-shrink-0 animate-float"
-              style={{ background: 'linear-gradient(135deg, rgba(0,193,106,0.16), rgba(253,224,71,0.20))', boxShadow: 'inset 0 0 0 1.5px rgba(0,193,106,0.25)' }}>
-              <PathyMascot size={32} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-2xs font-black uppercase tracking-wider text-ds-green mb-1.5">{t('AI Sales Coach · Pathy', 'Pelatih AI · Pathy')}</p>
-              <p className="text-sm font-bold text-ds-ink leading-snug">{dailyTip}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
-            <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0 text-ds-green">
-              <Target size={20} />
-            </div>
-            <div>
-              <p className="text-2xs text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
-              <p className="text-xs font-black text-ds-ink">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Renewal Alerts */}
-      <motion.div {...reveal(4)}>
-        <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
-      </motion.div>
-
-      {/* Quick Actions — floating white tiles with custom duotone icons */}
-      <motion.div className="sp-agent-home__quick-actions px-5 mt-7" {...reveal(5)}>
-        <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mb-4">{t('Quick Actions', 'Aksi Cepat')}</p>
-        <div className="grid grid-cols-4 gap-3">
-          {quickActions.map((action) => (
             <button
-              key={`${action.tab}-${action.label}`}
-              onClick={() => onNavigate(action.tab)}
-              className={`flex flex-col items-center gap-2 py-3.5 px-1 rounded-2xl bg-ds-card ${action.color} cursor-pointer group active:scale-[0.98] hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-ds-border/70 dark:ring-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green`}
-              style={{ boxShadow: '0 10px 30px -12px rgba(11,17,32,0.12)', ['--ic-tint' as string]: action.tint }}
+              type="button"
+              onClick={() => onNavigate('commission')}
+              className="rounded-full bg-ds-green px-3.5 py-1.5 text-2xs font-black text-ds-on-green cursor-pointer active:scale-95 transition-transform motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
-              <span className="w-11 h-11 rounded-xl bg-ds-green-tint/70 flex items-center justify-center"><ManagedPortalIcon id={action.tab} size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<action.Ic size={23} strokeWidth={1.9} className="group-hover:scale-105 transition-transform duration-200" />} /></span>
-              <span className="text-2xs font-bold text-ds-ink2 text-center leading-tight">{action.label}</span>
+              {t('View wallet', 'Buka dompet')}
             </button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Recent Commissions */}
-      <motion.div className="sp-agent-home__commissions px-5 mt-7" {...reveal(6)}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
-          <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green">{t('View All', 'Semua')}</button>
-        </div>
-        <ClayCard padding="none" className="overflow-hidden">
-          {recentCommissions.length === 0 ? (
-            <div className="p-8 flex flex-col items-center text-center gap-2">
-              <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
-                <Coins size={20} className="text-ds-green" />
-              </div>
-              <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
-              <p className="text-xs text-ds-ink3 max-w-[14rem]">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>
-            </div>
-          ) : (
-            recentCommissions.slice(0, 3).map((c, i) => (
-              <div
-                key={c.id}
-                className={`flex items-center gap-3 px-4 py-3.5 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
-              >
-                <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                  <TrendingUp size={16} className="text-ds-green" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-ds-ink truncate">{productLabel[c.product_type] ?? c.product_type}</p>
-                  <p className="text-2xs text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-black text-ds-green">+{formatIDR(c.amount)}</p>
-                  <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </ClayCard>
-      </motion.div>
-
-      {/* Leaderboard Teaser */}
-      <motion.div className="px-5 mt-5 pb-4" {...reveal(7)}>
-        <button
-          onClick={() => onNavigate('leaderboard')}
-          className="w-full rounded-[1.75rem] p-4 flex items-center gap-3 active:scale-[0.98] transition-transform relative overflow-hidden text-left"
-          style={{ background: 'linear-gradient(120deg, #0B1120 0%, #1F2937 60%, #78350F 130%)', boxShadow: '0 12px 30px -14px rgba(11,17,32,0.5)' }}
-        >
-          <div aria-hidden className="absolute -top-10 -right-6 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(253,224,71,0.25), transparent 70%)' }} />
-          <div className="flex-1 relative z-10">
-            <p className="text-sm font-black text-white">{t('Agent Leaderboard', 'Papan Peringkat')}</p>
-            <p className="text-xs text-white/55 mt-0.5">{t('See your ranking this month', 'Lihat ranking agen bulan ini')}</p>
           </div>
-          <div className="relative z-10 flex-shrink-0 -my-2"><SpotTrophy size={64} /></div>
-          <ChevronRight size={16} className="text-white/50 flex-shrink-0 relative z-10" />
-        </button>
+        </div>
       </motion.div>
 
+      {/* ─── White content sheet — pulls up under the card (ref: Email Function sheet) ── */}
+      <div className="relative z-0 -mt-12 rounded-t-[2rem] bg-ds-bg pt-16 pb-28 shadow-[0_-14px_30px_-18px_rgba(11,17,32,0.18)]">
+        {savedDraftProduct && (
+          <div className="sp-agent-home__draft mx-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3" role="status">
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><FilePlus2 size={18} /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-emerald-950">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
+              <p className="text-xs text-emerald-800 mt-0.5">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
+            </div>
+            <button type="button" onClick={() => onNavigate('quotes')} className="min-h-10 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white cursor-pointer">{t('Resume', 'Lanjutkan')}</button>
+          </div>
+        )}
+
+        <div className="px-5 pt-4">
+          <PromoBanner />
+        </div>
+
+        {/* Fitur Mitra — every tile is a real portal destination */}
+        <motion.section className="sp-agent-home__fitur px-5 mt-5" aria-label={t('Partner features', 'Fitur Mitra')} {...reveal(3)}>
+          <div className="flex items-center justify-between mb-2.5">
+            <h3 className="text-sm font-black text-ds-ink">{t('Partner Features', 'Fitur Mitra')}</h3>
+            <button onClick={() => onNavigate('policy')} className="text-xs font-bold text-ds-green cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green rounded">
+              {t('View More', 'Selengkapnya')}
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-2.5">
+            {gridTile({ label: t('New quote', 'Kutipan'), tint: greenTint, onAction: () => onNavigate('quotes'), TintIcon: <ManagedPortalIcon id="quotes" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<FilePlus2 size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
+            {gridTile({ label: t('Policies', 'Polis'), tint: greenTint, onAction: () => onNavigate('policy'), TintIcon: <ManagedPortalIcon id="policy" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<FileCheck2 size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
+            {gridTile({ label: t('Clients', 'Klien'), tint: greenTint, onAction: () => onNavigate('clients'), TintIcon: <ManagedPortalIcon id="clients" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<UsersRound size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
+            {gridTile({ label: t('Claims', 'Klaim'), tint: greenTint, onAction: () => onNavigate('claims'), TintIcon: <ManagedPortalIcon id="claims" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<ShieldAlert size={23} strokeWidth={1.9} className="text-ds-green group-hover:scale-105 transition-transform duration-200" />} /> })}
+            {gridTile({ label: t('Renewals', 'Renewals'), tint: greenTint, onAction: () => onNavigate('renewals'), TintIcon: <RefreshCcw size={23} strokeWidth={1.9} className="text-ds-green" /> })}
+            {gridTile({ label: t('Network', 'Jaringan'), tint: greenTint, onAction: () => onNavigate('network'), TintIcon: <Network size={23} strokeWidth={1.9} className="text-ds-green" /> })}
+            {gridTile({ label: t('Leaderboard', 'Papan Skor'), tint: greenTint, onAction: () => onNavigate('leaderboard'), TintIcon: <Trophy size={23} strokeWidth={1.9} className="text-ds-green" /> })}
+            {gridTile({ label: t('Endorsements', 'Endorsemen'), tint: greenTint, onAction: () => onNavigate('endorsements'), TintIcon: <FileSignature size={23} strokeWidth={1.9} className="text-ds-green" /> })}
+          </div>
+        </motion.section>
+
+        {/* Other Tools — the softer, multicoloured section (ref: Other Tools) */}
+        <motion.section className="sp-agent-home__lainnya px-5 mt-5" aria-label={t('Other tools', 'Lainnya')} {...reveal(4)}>
+          <div className="flex items-center justify-between mb-2.5">
+            <h3 className="text-sm font-black text-ds-ink">{t('Other Tools', 'Lainnya')}</h3>
+          </div>
+          <div className="grid grid-cols-4 gap-2.5">
+            {gridTile({ label: t('Wallet', 'Dompet'), tint: 'var(--ds-warning-tint)', onAction: () => onNavigate('wallet'), TintIcon: <Wallet size={22} strokeWidth={1.9} className="text-ds-amber" /> })}
+            {gridTile({ label: t('Commission', 'Komisi'), tint: 'var(--ds-info-tint)', onAction: () => onNavigate('commission'), TintIcon: <Coins size={22} strokeWidth={1.9} className="text-ds-blue" /> })}
+            {gridTile({
+              label: 'Pathy', tint: 'var(--ds-purple-lt)',
+              onAction: () => window.dispatchEvent(new Event(PATHY_OPEN_EVENT)),
+              TintIcon: <PathyMascot size={26} />,
+            })}
+            {gridTile({ label: t('Profile', 'Profil'), tint: 'var(--ds-green-tint)', onAction: () => onNavigate('profile'), TintIcon: <UserRound size={22} strokeWidth={1.9} className="text-ds-green" /> })}
+          </div>
+        </motion.section>
+
+        {/* Secondary performance — kept, tucks between the grids and the coach */}
+        <motion.div className="sp-agent-home__gwp px-5 mt-5" {...reveal(5)}>
+          <div className="sp-glass rounded-[1.5rem] p-5 flex items-center">
+            <div className="flex-1 pr-5">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <TrendingUp size={13} className="text-ds-green" />
+                <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('GWP / Month', 'GWP Bulan Ini')}</p>
+              </div>
+              <p className="text-xl font-black text-ds-ink font-mono leading-none tabular-nums whitespace-nowrap"
+                title={formatIDR(stats.totalCommissionMonth * 8)}>
+                {formatIDRCompact(stats.totalCommissionMonth * 8, lang)}
+              </p>
+              <p className="text-2xs text-ds-ink3 mt-1">{t('estimated', 'estimasi')}</p>
+            </div>
+            <div className="flex-1 pl-5 border-l border-ds-border">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Target size={13} className="text-ds-amber" />
+                <p className="text-2xs text-ds-ink3 font-medium uppercase tracking-wider">{t('Conversion', 'Konversi')}</p>
+              </div>
+              <p className="text-xl font-black text-ds-ink font-mono leading-none">{conversion}%</p>
+              <p className="text-2xs text-ds-ink3 mt-1">{t('clients to policies', 'klien → polis')}</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Sales Coach — calm card (kept from previous home) */}
+        <motion.div className="sp-agent-home__coach px-5 mt-5" {...reveal(6)}>
+          <div className="sp-glass rounded-[1.5rem] p-5">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center p-1 flex-shrink-0 animate-float"
+                style={{ background: 'linear-gradient(135deg, rgba(0,193,106,0.16), rgba(253,224,71,0.20))', boxShadow: 'inset 0 0 0 1.5px rgba(0,193,106,0.25)' }}>
+                <PathyMascot size={32} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-2xs font-black uppercase tracking-wider text-ds-green mb-1.5">{t('AI Sales Coach — Pathy', 'Pelatih AI — Pathy')}</p>
+                <p className="text-sm font-bold text-ds-ink leading-snug">{dailyTip}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
+              <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0 text-ds-green">
+                <Target size={20} />
+              </div>
+              <div>
+                <p className="text-2xs text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
+                <p className="text-xs font-black text-ds-ink">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Renewal Alerts */}
+        <motion.div {...reveal(7)}>
+          <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
+        </motion.div>
+
+        {/* Recent Commissions */}
+        <motion.div className="sp-agent-home__commissions px-5 mt-7" {...reveal(8)}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-black text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
+            <button onClick={() => onNavigate('commission')} className="text-xs font-bold text-ds-green cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green rounded">
+              {t('View All', 'Semua')}
+            </button>
+          </div>
+          <ClayCard padding="none" className="overflow-hidden">
+            {recentCommissions.length === 0 ? (
+              <div className="p-8 flex flex-col items-center text-center gap-2">
+                <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
+                  <Coins size={20} className="text-ds-green" />
+                </div>
+                <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
+                <p className="text-xs text-ds-ink3 max-w-[14rem]">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>
+              </div>
+            ) : (
+              recentCommissions.slice(0, 3).map((c, i) => (
+                <div
+                  key={c.id}
+                  className={`flex items-center gap-3 px-4 py-3.5 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
+                >
+                  <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={16} className="text-ds-green" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-ds-ink truncate">{productLabel[c.product_type] ?? c.product_type}</p>
+                    <p className="text-2xs text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-ds-green">+{formatIDR(c.amount)}</p>
+                    <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </ClayCard>
+        </motion.div>
+      </div>
     </div>
   );
 };

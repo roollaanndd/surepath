@@ -1,5 +1,48 @@
 # SurePath — Changelog
 
+## v2.7.9 — 2026-10-28
+
+Beranda Apps Mitra (`/agapps`) dirancang ulang mengikuti pola "saturated brand
+hero" dari mock yang diberikan owner: band warna jenuh → avatar + 4 ikon
+bulat → kartu gelap menjembatani band & sheet putih → sheet putih berisi dua
+grid ikon. Diterjemahkan ke tema SurePath dan dipetakan ke fitur asli portal —
+tanpa upsell palsu, tanpa layar baru.
+
+**Layout baru (murni layout; tidak ada layar/tool/destinasi yang ditambah
+atau dihapus)**
+- Hero ds-green dengan `ds-on-green`: salam + nama + kode agen + emoji tier,
+  lalu 4 aksi cepat bulat (Kutipan, Klaim, Jaringan, Renewals) — semuanya
+  tujuan `handleTabChange` yang sudah ada.
+- Kartu gelap "SurePath A◆ Partner Card" menjembatani hero dan sheet: kartu
+  uang NYATA mitra (komisi berjalan, ring progres target, mikro-stat
+  Penawaran/Klien/Polis, CTA "Buka dompet"), bukan paywall — SurePath tidak
+  punya paywall.
+- Sheet putih dengan dua grid: **Fitur Mitra** (8 tile seragam hijau:
+  Kutipan/Polis/Klien/Klaim/Renewals/Jaringan/Papan Skor/Endorsemen) dan
+  **Lainnya** (multicolor: Dompet amber, Komisi biru, Pathy ungu — membuka
+  `PATHY_OPEN_EVENT` — dan Profil).
+- Seluruh isi lama dipertahankan 1:1: banner lanjutkan draf penawaran,
+  PromoBanner, GWP/konversi, pelatih AI Pathy, RenewalAlerts, daftar komisi
+  terbaru. `PortalHeader` + `PortalTabBar` tidak disentuh.
+- Ikon grid tetap `ManagedPortalIcon` (fallback duotone AgentIcons) sehingga
+  ikon kustom yang sudah dikelola ikut tampil.
+
+**Perbaikan harness e2e yang mengikuti redesign**
+- `getByText('Dompet'|'Polis'|'Profil').first()` di e2e tersedot ke tile home
+  yang sah (label barunya identik dengan label tab), sehingga uji membuka
+  AgentWallet via tile → `console.error` sesi supabase mock → uji merah
+  4/5 run. Klik tab sekarang dipatok ke `getByRole('navigation',
+  { name: 'Navigasi utama' })` — niat uji "pindah tab via tab bar" jadi
+  persis, dan home bebas punya label apa pun. Klik "Buat" ikut dipatok.
+- Budget default 30 s ternyata terlalu tipis untuk dev-server dingin
+  (wait portal lazy 25 s + 4 screenshot + 3×700 ms): flap `page.screenshot`
+  timeout yang dialami 2× di awal sebelum mask. Test diberi `setTimeout(90 s)`.
+
+**Checks:** tsc 0 error; ESLint 0/22 baseline; vitest 383/383;
+`vite build` + PWA ✓; Playwright E2E **74 pass / 15 skipped / 0 failed**;
+detector mekanis impeccable di AgentHome kosong. Verifikasi visual 390 px
+dilakukan dengan mock penuh milik e2e (potret floating & fullpage).
+
 ## v2.7.8 — 2026-10-28
 
 Pemisahan routing App.tsx ke `src/app/routes/`: satu dispatcher, modul per

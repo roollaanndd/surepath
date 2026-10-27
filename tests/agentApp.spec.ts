@@ -187,6 +187,9 @@ const realErrors = (errs: string[]) =>
 
 test.describe('Apps Mitra — UI/UX', () => {
   test('masuk ke /agapps dan kelima tab berpindah tanpa layar mati', async ({ page }, testInfo) => {
+    // Dev server dingin harus mengubah-ubah chunk lazy AgentHome/TabBar lebih
+    // dulu; budget default 30 detik terlalu ketat dan flap di langkah screenshot.
+    test.setTimeout(90_000);
     const consoleErrors: string[] = [];
     page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
     page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
@@ -199,7 +202,10 @@ test.describe('Apps Mitra — UI/UX', () => {
     await testInfo.attach('01-beranda.png', { body: await page.screenshot({ fullPage: false }), contentType: 'image/png' });
 
     for (const tab of ['Polis', 'Dompet', 'Profil']) {
-      await page.getByText(tab, { exact: true }).first().click();
+      // Patokkan klik ke tab bar bawah — home sah punya tile berlabel sama
+      // (Dompet/Polis/Profil ada di grid "Lainnya"), jadi getByText global
+      // bisa kena tile alih-alih tab.
+      await page.getByRole('navigation', { name: 'Navigasi utama' }).getByText(tab, { exact: true }).click();
       // Layar mati = tidak ada teks sama sekali di area konten.
       await expect(page.locator('body')).not.toHaveText('', { timeout: 10_000 });
       await page.waitForTimeout(700);
@@ -217,7 +223,7 @@ test.describe('Apps Mitra — UI/UX', () => {
     await page.goto('/agapps', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Beranda', { exact: true })).toBeVisible({ timeout: 25_000 });
 
-    await page.getByText('Buat', { exact: true }).first().click();
+    await page.getByRole('navigation', { name: 'Navigasi utama' }).getByText('Buat', { exact: true }).click();
     await page.waitForTimeout(1200);
     await testInfo.attach('tab-Buat.png', { body: await page.screenshot(), contentType: 'image/png' });
     // Sesuatu harus berubah — bukan tab yang diam.

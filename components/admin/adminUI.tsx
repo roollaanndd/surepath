@@ -20,7 +20,7 @@ const KPI_TONE: Record<KpiTone, { icon: string; value: string }> = {
   green:  { icon: 'bg-ds-green-tint text-ds-green',      value: 'text-ds-ink' },
   amber:  { icon: 'bg-ds-amber-lt text-ds-amber',        value: 'text-ds-ink' },
   blue:   { icon: 'bg-ds-blue-lt text-ds-blue',          value: 'text-ds-ink' },
-  rose:   { icon: 'bg-rose-50 text-rose-600',            value: 'text-ds-ink' },
+  rose:   { icon: 'bg-rose-50 text-rose-700 dark:text-rose-200',            value: 'text-ds-ink' },
   violet: { icon: 'bg-ds-purple-lt text-ds-purple',      value: 'text-ds-ink' },
   lime:   { icon: 'bg-lime-50 text-lime-700',            value: 'text-ds-ink' },
 };
@@ -94,8 +94,8 @@ export const AdminStatusBadge: React.FC<{
   const meta = getStatusMeta(status, map);
   const cls =
     size === 'xs'
-      ? 'px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest'
-      : 'px-2.5 py-1 rounded-full text-[0.6rem] font-black uppercase tracking-widest';
+      ? 'px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest'
+      : 'px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest';
   return (
     <span className={`${cls} ${meta.badgeClass} border border-black/5 whitespace-nowrap`}>
       {meta.label}
@@ -142,7 +142,7 @@ export const AdminErrorBanner: React.FC<{
     className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3"
   >
     <div className="flex items-center gap-2.5 min-w-0">
-      <AlertTriangle size={15} className="text-rose-600 flex-shrink-0" />
+      <AlertTriangle size={15} className="text-rose-700 dark:text-rose-200 flex-shrink-0" />
       <p className="text-xs font-bold text-rose-700 truncate">{message}</p>
     </div>
     {onRetry && (
@@ -150,7 +150,7 @@ export const AdminErrorBanner: React.FC<{
         type="button"
         onClick={onRetry}
         disabled={retrying}
-        className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-2xs font-black uppercase tracking-widest text-rose-600 transition-colors hover:bg-rose-100 disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-200 transition-colors hover:bg-rose-100 disabled:opacity-50"
       >
         <RefreshCw size={11} className={retrying ? 'animate-spin' : ''} />
         {retrying ? 'Memuat…' : 'Coba Lagi'}

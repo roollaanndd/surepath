@@ -26,14 +26,14 @@ const B2B_STATUS_CLS: Record<string, string> = {
   REVIEWING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   QUOTED:    'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   ACCEPTED:  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
 };
 
 const LIFE_STATUS_CLS: Record<string, string> = {
   SUBMITTED:   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   UNDERWRITING:'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   APPROVED:    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  DECLINED:    'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  DECLINED:    'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
   ISSUED:      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   DRAFT:       'bg-ds-card2 text-ds-ink2 dark:bg-slate-800 dark:text-ds-ink3',
 };
@@ -64,7 +64,7 @@ const INPUT = 'w-full px-3 py-2 rounded-xl border border-ds-border dark:border-d
 const TEXTAREA = INPUT + ' resize-none';
 
 const Badge: React.FC<{ cls: string; label: string }> = ({ cls, label }) => (
-  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${cls}`}>{label}</span>
+  <span className={`text-2xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${cls}`}>{label}</span>
 );
 
 // ─── B2B Quote Form ───────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ submissionId, clientId, onSaved, 
         <p className="text-sm font-bold text-ds-ink dark:text-white">Add Quote</p>
         <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink2"><ChevronUp size={16} /></button>
       </div>
-      {err && <p className="text-xs text-rose-500 flex items-center gap-1"><AlertTriangle size={12} />{err}</p>}
+      {err && <p className="text-xs text-rose-700 dark:text-rose-200 flex items-center gap-1"><AlertTriangle size={12} />{err}</p>}
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="block text-xs font-semibold text-ds-ink3 mb-1">Insurer Name</label>
@@ -146,7 +146,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({ submissionId, clientId, onSaved, 
             <div key={i} className="flex gap-2 items-center">
               <input value={row.key} onChange={e => updateRow(i, 'key', e.target.value)} placeholder="Key" className={INPUT + ' flex-1'} />
               <input value={row.value} onChange={e => updateRow(i, 'value', e.target.value)} placeholder="Value" className={INPUT + ' flex-1'} />
-              {rows.length > 1 && <button onClick={() => removeRow(i)}><Trash2 size={14} className="text-rose-400" /></button>}
+              {rows.length > 1 && <button onClick={() => removeRow(i)}><Trash2 size={14} className="text-rose-700 dark:text-rose-300" /></button>}
             </div>
           ))}
         </div>
@@ -207,7 +207,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
 
       {/* Status Dropdown */}
       <div>
-        <label className="block text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Change Status</label>
+        <label className="block text-2xs font-semibold text-ds-ink3 uppercase mb-1">Change Status</label>
         <div className="relative">
           <select
             value={status}
@@ -222,7 +222,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
 
       {/* Admin Notes */}
       <div>
-        <label className="block text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Admin Notes</label>
+        <label className="block text-2xs font-semibold text-ds-ink3 uppercase mb-1">Admin Notes</label>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
@@ -236,7 +236,7 @@ const B2BCard: React.FC<{ sub: SpB2BSubmission; onUpdated: () => void; onToast: 
       {/* Documents */}
       {docs.length > 0 && (
         <div>
-          <p className="text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Documents</p>
+          <p className="text-2xs font-semibold text-ds-ink3 uppercase mb-1">Documents</p>
           <div className="flex flex-wrap gap-1.5">
             {docs.map((d, i) => (
               <span key={i} className="flex items-center gap-1 text-xs px-2 py-1 bg-ds-card2 dark:bg-ds-card2 rounded-lg text-ds-ink2 dark:text-ds-ink2">
@@ -299,7 +299,7 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 font-mono">{app.order_number}</span>
+            <span className="text-2xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 dark:text-orange-300 dark:bg-orange-900/30 dark:text-orange-400 font-mono">{app.order_number}</span>
             <Badge cls={LIFE_STATUS_CLS[status] ?? ''} label={status} />
           </div>
           <p className="font-bold text-ds-ink dark:text-white text-sm">{app.client_name}</p>
@@ -307,14 +307,14 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
           <p className="text-xs text-ds-ink3">{app.product_code.replace('_', ' ')} · UP {fmtIDR(app.sum_assured)}</p>
           <p className="text-xs text-ds-ink3">Indicative premium/yr: {fmtIDR(app.indicative_premium)}</p>
         </div>
-        <Heart size={16} className="text-rose-400 flex-shrink-0 mt-1" />
+        <Heart size={16} className="text-rose-700 dark:text-rose-300 flex-shrink-0 mt-1" />
       </div>
 
       {/* Riders */}
       {app.riders.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {app.riders.map(r => (
-            <span key={r} className="text-[10px] px-2 py-0.5 bg-orange-50 dark:bg-orange-900/10 text-orange-600 dark:text-orange-400 rounded-full font-semibold">{r.replace('_', ' ')}</span>
+            <span key={r} className="text-2xs px-2 py-0.5 bg-orange-50 dark:bg-orange-900/10 text-orange-800 dark:text-orange-300 dark:text-orange-400 rounded-full font-semibold">{r.replace('_', ' ')}</span>
           ))}
         </div>
       )}
@@ -322,7 +322,7 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
       {/* Health — Yes answers highlighted */}
       {yesAnswers.length > 0 && (
         <div className="p-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
-          <p className="text-[10px] font-semibold text-ds-amber uppercase mb-1 flex items-center gap-1"><AlertTriangle size={10} />Health Flags</p>
+          <p className="text-2xs font-semibold text-ds-amber uppercase mb-1 flex items-center gap-1"><AlertTriangle size={10} />Health Flags</p>
           {yesAnswers.map(qi => (
             <p key={qi} className="text-xs text-amber-700 dark:text-amber-400">Q{qi + 1}: Yes</p>
           ))}
@@ -336,7 +336,7 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
 
       {/* Status Update */}
       <div>
-        <label className="block text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Change Status</label>
+        <label className="block text-2xs font-semibold text-ds-ink3 uppercase mb-1">Change Status</label>
         <div className="relative">
           <select
             value={status}
@@ -352,14 +352,14 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
       {/* Policy Number */}
       {showPolicyNumber && (
         <div>
-          <label className="block text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Policy Number</label>
+          <label className="block text-2xs font-semibold text-ds-ink3 uppercase mb-1">Policy Number</label>
           <input value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} className={INPUT} placeholder="e.g. PRU-LIFE-2026-XXXXX" />
         </div>
       )}
 
       {/* Insurer Notes */}
       <div>
-        <label className="block text-[10px] font-semibold text-ds-ink3 uppercase mb-1">Insurer Notes</label>
+        <label className="block text-2xs font-semibold text-ds-ink3 uppercase mb-1">Insurer Notes</label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className={TEXTAREA} placeholder="Underwriting notes…" />
       </div>
 
@@ -415,7 +415,7 @@ const B2BAdminView: React.FC = () => {
       <div className="flex items-center gap-1 px-5 pt-5 pb-3">
         <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<Building2 size={14} />} label="B2B Submissions" />
         <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<Heart size={14} />} label="Life Applications" />
-        <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-white">
+        <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-ds-ink">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
@@ -434,7 +434,7 @@ const B2BAdminView: React.FC = () => {
       {/* Content */}
       <div className="px-5 pb-8 space-y-3">
         {loadError && (
-          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
             <span><strong>Data belum berhasil dimuat.</strong> {loadError}</span>
             <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-current px-3 py-2 font-semibold">
               <RefreshCw size={14} /> Coba lagi

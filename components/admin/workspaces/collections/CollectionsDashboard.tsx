@@ -73,7 +73,7 @@ export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, o
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#3B2A08,_#130E02)] p-6 text-white">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-300">Collections Workspace</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-amber-300">Collections Workspace</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Penagihan & aging piutang</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Fokus ke tagihan yang belum dibayar: prioritas umur piutang, follow-up hari ini, dan eskalasi di atas 30 hari.</p>
           </div>
@@ -90,7 +90,7 @@ export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, o
           <div className="xl:col-span-2 rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Penagihan</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Penagihan</p>
                 <h3 className="text-lg font-black tracking-tight">Prioritas Tertua</h3>
               </div>
               <span className="rounded-full bg-ds-card2 px-3 py-1 text-xs font-bold text-ds-ink3">{overdue.length} tagihan</span>
@@ -120,7 +120,7 @@ export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, o
 
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="border-b border-ds-border px-6 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Aging</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Aging</p>
               <h3 className="text-lg font-black tracking-tight">Umur Piutang</h3>
             </div>
             <div className="grid gap-2 p-4">

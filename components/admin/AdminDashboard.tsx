@@ -22,19 +22,19 @@ interface AdminDashboardProps {
 }
 
 const STATUS_STYLE: Record<string, { label: string; className: string }> = {
-  SUBMITTED:    { label: 'Diajukan',     className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-  UNDER_REVIEW: { label: 'Ditinjau',     className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-  APPROVED:     { label: 'Disetujui',    className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
+  SUBMITTED:    { label: 'Diajukan',     className: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20' },
+  UNDER_REVIEW: { label: 'Ditinjau',     className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20' },
+  APPROVED:     { label: 'Disetujui',    className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20' },
   ISSUED:       { label: 'Terbit',       className: 'bg-emerald-600/10 text-emerald-700 border-emerald-600/20' },
-  REJECTED:     { label: 'Ditolak',      className: 'bg-rose-500/10 text-rose-600 border-rose-500/20' },
+  REJECTED:     { label: 'Ditolak',      className: 'bg-rose-500/10 text-rose-700 dark:text-rose-200 border-rose-500/20' },
   CANCELLED:    { label: 'Dibatalkan',   className: 'bg-slate-500/10 text-slate-500 border-slate-500/20' },
 };
 
 const TASK_META: Record<DashboardTask['kind'], { icon: React.ElementType; className: string; label: string }> = {
-  order:      { icon: FileText,    className: 'bg-amber-500/10 text-amber-600',   label: 'Polis' },
-  claim:      { icon: ShieldAlert, className: 'bg-rose-500/10 text-rose-600',     label: 'Klaim' },
-  withdrawal: { icon: Banknote,    className: 'bg-blue-500/10 text-blue-600',     label: 'Penarikan' },
-  tier:       { icon: TrendingUp,  className: 'bg-violet-500/10 text-violet-600', label: 'Tier' },
+  order:      { icon: FileText,    className: 'bg-amber-500/10 text-amber-800 dark:text-amber-300',   label: 'Polis' },
+  claim:      { icon: ShieldAlert, className: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',     label: 'Klaim' },
+  withdrawal: { icon: Banknote,    className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',     label: 'Penarikan' },
+  tier:       { icon: TrendingUp,  className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300', label: 'Tier' },
 };
 
 const DONUT_COLORS = ['#0F9D6E', '#3B82F6', '#F59E0B', '#8B5CF6', '#94A3B8'];
@@ -120,7 +120,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const Icon = value >= 0 ? ArrowUpRight : ArrowDownRight;
     return (
       <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-2xs font-black ${
-        good ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+        good ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 text-rose-700 dark:text-rose-200'
       }`}>
         <Icon size={11} /> {Math.abs(value)}%
       </span>
@@ -196,8 +196,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {loadError && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-          <p className="text-xs font-bold text-rose-600">Dashboard gagal memuat pesanan: {loadError}</p>
-          <button onClick={() => void load()} className="text-2xs font-black uppercase tracking-widest text-rose-500 hover:text-rose-700">
+          <p className="text-xs font-bold text-rose-700 dark:text-rose-200">Dashboard gagal memuat pesanan: {loadError}</p>
+          <button onClick={() => void load()} className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-200 hover:text-rose-700">
             Coba lagi
           </button>
         </div>
@@ -225,7 +225,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onClick={() => onNavigate('withdrawals')}
           className="group relative overflow-hidden rounded-[1.75rem] border border-ds-border bg-gradient-to-r from-[#FFF7E6] via-white to-white p-5 text-left shadow-ds-sm"
         >
-          <p className="text-2xs font-black uppercase tracking-[0.2em] text-amber-600">Penarikan mitra</p>
+          <p className="text-2xs font-black uppercase tracking-[0.2em] text-amber-800 dark:text-amber-300">Penarikan mitra</p>
           <p className="mt-2 text-3xl font-black leading-none text-ds-ink">{model.totals.pendingWithdrawals}</p>
           <p className="mt-2 max-w-[260px] text-xs text-ds-ink3">
             Menunggu persetujuan berlapis, total {idr(model.totals.withdrawalAmount)}.
@@ -399,12 +399,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     const h = m.premium > 0 ? Math.max(6, Math.round((m.premium / maxMonthPremium) * 128)) : 2;
                     return (
                       <div key={m.key} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${m.label}: ${idr(m.premium)} (${m.count} pesanan)`}>
-                        <span className="text-[0.55rem] font-bold text-ds-ink3">{m.premium > 0 ? formatIDRCompact(m.premium) : ''}</span>
+                        <span className="text-2xs font-bold text-ds-ink3">{m.premium > 0 ? formatIDRCompact(m.premium) : ''}</span>
                         <div
                           className="w-full rounded-t-lg bg-gradient-to-t from-emerald-600/80 to-emerald-400 transition-all"
                           style={{ height: `${h}px` }}
                         />
-                        <span className="text-[0.55rem] font-black uppercase tracking-wider text-ds-ink3">{m.label}</span>
+                        <span className="text-2xs font-black uppercase tracking-wider text-ds-ink3">{m.label}</span>
                       </div>
                     );
                   })}
@@ -430,7 +430,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <div className="mt-4 grid grid-cols-7 gap-1 text-center">
               {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(d => (
-                <span key={d} className="pb-1 text-[0.55rem] font-black uppercase tracking-wider text-ds-ink3">{d}</span>
+                <span key={d} className="pb-1 text-2xs font-black uppercase tracking-wider text-ds-ink3">{d}</span>
               ))}
               {Array.from({ length: firstWeekday }).map((_, i) => <span key={`pad-${i}`} />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -480,7 +480,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="mt-4 space-y-2">
               {model.tasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ds-border py-8">
-                  <CheckCircle2 size={22} className="text-emerald-500" />
+                  <CheckCircle2 size={22} className="text-emerald-700 dark:text-emerald-300" />
                   <p className="mt-2 text-xs font-bold text-ds-ink2">Tidak ada tugas menunggu</p>
                   <p className="text-2xs text-ds-ink3">Semua antrean bersih.</p>
                 </div>
@@ -499,7 +499,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="truncate text-xs font-bold text-ds-ink">{task.title}</span>
-                        <span className="flex-shrink-0 rounded-full bg-ds-card2 px-1.5 py-0.5 text-[0.5rem] font-black uppercase tracking-wider text-ds-ink3">{meta.label}</span>
+                        <span className="flex-shrink-0 rounded-full bg-ds-card2 px-1.5 py-0.5 text-2xs font-black uppercase tracking-wider text-ds-ink3">{meta.label}</span>
                       </span>
                       <span className="mt-0.5 flex items-center gap-1.5 text-2xs text-ds-ink3">
                         <span className="truncate">{task.subtitle}</span>
@@ -526,7 +526,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="text-2xs text-ds-ink3">Mitra aktif</p>
               </div>
               <div className="rounded-2xl bg-ds-card2 p-3">
-                <TrendingUp size={15} className="text-amber-600" />
+                <TrendingUp size={15} className="text-amber-800 dark:text-amber-300" />
                 <p className="mt-2 text-lg font-black text-ds-ink">{model.totals.tierPending}</p>
                 <p className="text-2xs text-ds-ink3">Tier menunggu</p>
               </div>

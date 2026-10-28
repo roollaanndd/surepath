@@ -57,7 +57,7 @@ export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUse
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#083344,_#021820)] p-6 text-white">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300">Business Support</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-cyan-300">Business Support</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Tiket, lookup & eskalasi</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Lini pertama untuk nasabah dan mitra: cari order/klaim, jelaskan status, dan eskalasikan ke tim yang tepat.</p>
           </div>
@@ -74,7 +74,7 @@ export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUse
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Klaim</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Klaim</p>
                 <h3 className="text-lg font-black tracking-tight">Klaim Terbaru</h3>
               </div>
               <Search size={16} className="text-ds-ink3" />
@@ -98,7 +98,7 @@ export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUse
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Lookup Order</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Lookup Order</p>
                 <h3 className="text-lg font-black tracking-tight">Order Terbaru</h3>
               </div>
               <Search size={16} className="text-ds-ink3" />

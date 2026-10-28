@@ -36,16 +36,16 @@ const Skeleton = ({ h = 'h-32', cls = '' }: { h?: string; cls?: string }) => (
 // ─── KPI Card ──────────────────────────────────────────────────────────────────
 const KPICard = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
   <div className="p-5 rounded-2xl bg-ds-card2 border border-ds-border flex flex-col gap-1">
-    <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">{label}</p>
-    <p className="text-2xl font-black text-white leading-none">{value}</p>
-    {sub && <p className="text-[0.6rem] text-ds-ink3">{sub}</p>}
+    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{label}</p>
+    <p className="text-2xl font-black text-ds-ink leading-none">{value}</p>
+    {sub && <p className="text-2xs text-ds-ink3">{sub}</p>}
   </div>
 );
 
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="p-5 rounded-2xl bg-ds-card2 border border-ds-border">
-    <p className="text-[0.6rem] font-black uppercase tracking-widest text-ds-ink3 mb-4">{title}</p>
+    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-4">{title}</p>
     {children}
   </div>
 );
@@ -180,7 +180,7 @@ const AnalyticsDashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-ds-green mb-1">Analytics</p>
+        <p className="text-2xs font-black uppercase tracking-[0.35em] text-ds-green mb-1">Analytics</p>
         <h2 className="text-3xl font-black tracking-tight text-ds-ink">Dashboard Analitik</h2>
       </div>
 
@@ -192,8 +192,8 @@ const AnalyticsDashboard = () => {
       ) : loadError && !kpi ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="col-span-full p-8 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-center">
-            <p className="text-rose-600 dark:text-rose-400 font-bold text-sm mb-2">Gagal memuat data analytics</p>
-            <p className="text-rose-500 dark:text-rose-500/70 text-xs mb-4">{loadError}</p>
+            <p className="text-rose-700 dark:text-rose-200 dark:text-rose-300 font-bold text-sm mb-2">Gagal memuat data analytics</p>
+            <p className="text-rose-700 dark:text-rose-200 dark:text-rose-500/70 text-xs mb-4">{loadError}</p>
             <button
               onClick={() => { setLoading(true); setLoadError(null); setRetryKey(v => v + 1); }}
               className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform"
@@ -312,8 +312,8 @@ const AnalyticsDashboard = () => {
               return (
                 <div key={st} className="space-y-2">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-[0.6rem] font-bold uppercase tracking-wide text-ds-ink3">{PIPE_LABELS[st]}</span>
-                    <span className="text-sm font-black text-white">{count}</span>
+                    <span className="text-2xs font-bold uppercase tracking-wide text-ds-ink3">{PIPE_LABELS[st]}</span>
+                    <span className="text-sm font-black text-ds-ink">{count}</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-ds-card2 overflow-hidden">
                     <div className={`h-full rounded-full transition-all duration-700 ${PIPE_COLORS[st]}`} style={{ width: `${pct}%` }} />

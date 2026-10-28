@@ -9,11 +9,11 @@ import { useConfirmDialog, useToast } from '../ui';
 // ─── Shared UI primitives (mirrors InsurerAdmin.tsx conventions) ─────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
+  <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
 );
 
 const inputCls =
-  'bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-40';
@@ -24,8 +24,8 @@ const secondaryBtn =
 const Card: React.FC<{ title: string; sub?: string; children: React.ReactNode }> = ({ title, sub, children }) => (
   <div className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-3">
     <div>
-      <p className="text-xs font-black uppercase tracking-widest text-emerald-400">{title}</p>
-      {sub && <p className="text-[10px] text-ds-ink3 mt-0.5">{sub}</p>}
+      <p className="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">{title}</p>
+      {sub && <p className="text-2xs text-ds-ink3 mt-0.5">{sub}</p>}
     </div>
     {children}
   </div>
@@ -52,7 +52,7 @@ const ZoneMatrix: React.FC<{
       <SectionLabel>{label}</SectionLabel>
       <div className="overflow-x-auto rounded-xl border border-ds-border">
         <table className="w-full text-xs">
-          <thead className="bg-white/[0.04] text-[9px] uppercase tracking-widest text-ds-ink3">
+          <thead className="bg-white/[0.04] text-2xs uppercase tracking-widest text-ds-ink3">
             <tr>
               <th className="px-3 py-2 text-left">Kategori</th>
               {ZONES.map(z => <th key={z} className="px-3 py-2 text-left">Zona {z}</th>)}
@@ -201,15 +201,15 @@ const OjkRateAdmin: React.FC = () => {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-            <ShieldCheck size={22} className="text-emerald-400" /> Rate OJK — Asuransi Kendaraan Bermotor
+          <h2 className="text-2xl font-black tracking-tight text-ds-ink flex items-center gap-2">
+            <ShieldCheck size={22} className="text-emerald-700 dark:text-emerald-400" /> Rate OJK — Asuransi Kendaraan Bermotor
           </h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
             SEOJK No. 6/SEOJK.05/2017 · {sets.length} versi tersimpan
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 hover:text-white transition-all">
+          <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 hover:text-ds-ink transition-all">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
           <button onClick={handleNewBlank} className={secondaryBtn}>+ Versi Baru</button>
@@ -257,7 +257,7 @@ const OjkRateAdmin: React.FC = () => {
               <span className="flex items-center gap-1.5"><Copy size={13} /> Duplikat sebagai Draft</span>
             </button>
             {!form.is_active && (
-              <button onClick={handleDelete} className="text-rose-400 hover:text-rose-300 text-xs font-black uppercase tracking-widest px-4 py-2.5 flex items-center gap-1.5">
+              <button onClick={handleDelete} className="text-rose-700 dark:text-rose-300 hover:text-rose-300 text-xs font-black uppercase tracking-widest px-4 py-2.5 flex items-center gap-1.5">
                 <Trash2 size={13} /> Hapus
               </button>
             )}
@@ -367,7 +367,7 @@ const OjkRateAdmin: React.FC = () => {
                         <input type="number" step="0.01" className={`${inputCls} !px-1.5 text-right`}
                           value={((form[key] as Record<string, number>)[z] * 100 || 0).toFixed(2)}
                           onChange={e => set(key, { ...(form[key] as any), [z]: (parseFloat(e.target.value) || 0) / 100 })} />
-                        <span className="text-[9px] text-ds-ink3">%</span>
+                        <span className="text-2xs text-ds-ink3">%</span>
                       </div>
                     ))}
                   </div>
@@ -400,13 +400,13 @@ const OjkRateAdmin: React.FC = () => {
                 {[1, 2, 3].map(band => (
                   <div key={band} className="grid grid-cols-2 gap-2">
                     <div>
-                      <p className="text-[9px] text-ds-ink3 mb-1">Band {band} tarif (%)</p>
+                      <p className="text-2xs text-ds-ink3 mb-1">Band {band} tarif (%)</p>
                       <input type="number" step="0.01" className={`${inputCls} text-right`}
                         value={(Number(form.addon_rates[`tplBand${band}Rate`]) * 100).toFixed(2)}
                         onChange={e => setAddon(`tplBand${band}Rate`, (parseFloat(e.target.value) || 0) / 100)} />
                     </div>
                     <div>
-                      <p className="text-[9px] text-ds-ink3 mb-1">Batas (Rp)</p>
+                      <p className="text-2xs text-ds-ink3 mb-1">Batas (Rp)</p>
                       <input type="number" className={`${inputCls} text-right`}
                         value={Number(form.addon_rates[`tplBand${band}Cap`])}
                         onChange={e => setAddon(`tplBand${band}Cap`, parseInt(e.target.value) || 0)} />

@@ -1335,7 +1335,7 @@
     linear-gradient(155deg, #F4FBF7 0%, #FFFFFF 44%, #F0FAF5 100%);
   background-attachment: fixed;
 }
-.sp-modern-app.dark {
+html.dark .sp-modern-app {
   background:
     radial-gradient(ellipse at 8% 4%, rgba(249, 115, 22, .12) 0%, transparent 32%),
     radial-gradient(ellipse at 92% 12%, rgba(16, 185, 129, .13) 0%, transparent 36%),
@@ -1416,6 +1416,26 @@
 }
 .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child {
   color: #64748B;
+}
+/* v2.7.13 — dark twin: the white glass pill must not glare inside dark portals
+   (owner report: night mode "hanya bagian tertentu yang berubah"). */
+html.dark .sp-modern-app .sp-bottom-nav {
+  background: rgba(21, 27, 40, .93) !important;
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 18px 48px -20px rgba(0, 0, 0, .65), 0 5px 18px -10px rgba(0, 0, 0, .5) !important;
+}
+html.dark .sp-modern-app .sp-bottom-nav button[aria-current="page"] {
+  background: linear-gradient(180deg, rgba(0, 224, 122, .16), rgba(0, 224, 122, .06));
+}
+html.dark .sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:last-child,
+html.dark .sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:nth-last-child(2) {
+  color: #4ADE80;
+}
+html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:first-child {
+  box-shadow: 0 12px 28px -8px rgba(5, 150, 105, .55), 0 0 0 5px rgba(21, 27, 40, .93), inset 0 1px 0 rgba(255, 255, 255, .28) !important;
+}
+html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child {
+  color: #99A0B2;
 }
 @media (max-width: 420px) {
   .sp-modern-app .sp-bottom-nav { left: 10px; right: 10px; }
@@ -2097,4 +2117,124 @@
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+
+/* ── SurePath Admin Portal redesign v2 — dark twin ─────────────────────────
+   v2.7.13: the light pass above hardcodes near-white surfaces with no dark
+   guard, so with the admin theme in dark/"auto" (#326) cards + canvas stayed
+   near-white while sidebars/nav turned dark and plain text stayed white —
+   the exact "hanya bagian tertentu jadi hitam, tulisan tidak terlihat"
+   report. Values mirror styles.css .dark so tokens stay consistent. */
+html.dark .sp-modern-app:has(> main > header) {
+  color-scheme: dark !important;
+  --ds-bg: #1A1D29;
+  --ds-card: #242836;
+  --ds-card2: #2C3142;
+  --ds-surface: #242836;
+  --ds-border: #3A3F52;
+  --ds-ink: #F8FAFC;
+  --ds-ink2: #B8BFD0;
+  --ds-ink3: #99A0B2;
+  --ds-green: #00E07A;
+  --ds-primary-text: #00E07A;
+  --ds-green-tint: #0D3328;
+  --sp-admin-canvas: #131826;
+  --sp-admin-line: #232B3D;
+  --sp-admin-shadow: 0 2px 8px rgba(0, 0, 0, .28), 0 12px 28px -22px rgba(0, 0, 0, .55);
+  background: var(--sp-admin-canvas) !important;
+  color: var(--ds-ink) !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main {
+  background: var(--sp-admin-canvas) !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main > header {
+  background: rgba(21, 27, 40, .94) !important;
+  color: var(--ds-ink) !important;
+  border-color: var(--sp-admin-line) !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .5);
+}
+html.dark .sp-modern-app:has(> main > header) > main > header input {
+  background: #1B2334 !important;
+  border: 1px solid #232B3D !important;
+  color: #E6EAF2 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main > header input::placeholder {
+  color: #99A0B2 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Terang"],
+html.dark .sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Gelap"] {
+  display: none !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto {
+  background: var(--sp-admin-canvas) !important;
+}
+/* ds utilities inside admin content: dark values (the light pass forces white). */
+html.dark .sp-modern-app:has(> main > header) > main .bg-ds-bg {
+  background-color: #1A1D29 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .bg-ds-card,
+html.dark .sp-modern-app:has(> main > header) > main .bg-ds-surface {
+  background-color: #242836 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .bg-ds-card2 {
+  background-color: #2C3142 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .bg-white:not(.text-white):not([data-sp-preserve-light]) {
+  background-color: #242836 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .bg-slate-50,
+html.dark .sp-modern-app:has(> main > header) > main .bg-gray-50 {
+  background-color: #2C3142 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink {
+  color: #F8FAFC !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink2 {
+  color: #B8BFD0 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink3 {
+  color: #99A0B2 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(.border-ds-border, .border-white\/10, .border-white\/\[0\.06\]) {
+  border-color: #232B3D !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(.rounded-xl, .rounded-2xl, .rounded-3xl):where([class*="bg-ds-"], [class*="bg-white"], [class*="bg-slate-"], [class*="bg-gray-"]) {
+  box-shadow: var(--sp-admin-shadow);
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(input, select, textarea) {
+  color: #E6EAF2;
+  background-color: #1B2334;
+  border-color: #232B3D;
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(input, select, textarea)::placeholder {
+  color: #99A0B2;
+  opacity: 1;
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid #00E07A;
+  outline-offset: 2px;
+}
+html.dark .sp-modern-app:has(> main > header) > main table thead {
+  background: #1B2334 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main table th {
+  color: #B8BFD0 !important;
+}
+html.dark .sp-modern-app:has(> main > header) > main table td {
+  color: #D6DCE8;
+  border-color: #232B3D;
+}
+html.dark .sp-modern-app:has(> main > header) > main table tbody tr:hover {
+  background: #1B2334;
+}
+html.dark .sp-modern-app:has(> main > header) > main :where(.sp-glass, .sp-glass-strong) {
+  background-color: rgba(36, 40, 54, .94);
+  border-color: #232B3D;
+  box-shadow: var(--sp-admin-shadow);
+}
+/* Keep branded green sidebar shadows legible on the dark canvas. */
+html.dark .sp-modern-app:has(> main > header) > aside,
+html.dark .sp-modern-app:has(> main > header) > div > aside {
+  box-shadow: 5px 0 24px -20px rgba(0, 0, 0, .8);
 }

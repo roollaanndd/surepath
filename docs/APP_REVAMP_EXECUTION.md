@@ -169,6 +169,36 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-28 (v2.7.13) — merge main (admin redesign #322–#326) + dark-mode collapse fixed
+
+- **Owner report:** night mode "error dan berantakan" — hanya bagian tertentu
+  berubah hitam, teks/kontras admin tidak terlihat; push AND merge ke main.
+- **merge first:** main had moved (admin redesign #322–#326 incl. new
+  dashboard #325 and admin auto-dark #326). Merged origin/main into the
+  branch (commit `702dc61`), resolving 4 conflicts: App.tsx (kept branch
+  route-split; main's App-level fixes auto-merged), AdminPortal.tsx (took
+  main's redesign, re-applied branch role-workspace routing, wired to
+  `isDarkNow`/`ADMIN_THEME_KEY`), server.ts (kept branch CSP), PDF test
+  (both sides raised the same 20s timeout).
+- **Dark-mode root causes (post-merge audit):**
+  1. `.sp-modern-app.dark` atmosphere twin was DEAD (`dark` lives on `html`)
+     → customer/B2B/insurer canvases stayed white → replaced with
+     `html.dark .sp-modern-app`.
+  2. The admin "redesign v2" pass forced LIGHT variables + `#fff` card
+     backgrounds `!important` with no `.dark` guard, feeding white text into
+     white surfaces → added a complete dark twin for every rule in the pass.
+  3. Bottom nav was a white glass pill for ALL themes → added a dark twin.
+- **Already fixed by the merge:** sp-emerald chips (blocking agent dark
+  screens), SketchPngLibrary dark gradient, operator dark pass.
+- **Checks:** tsc 0; ESLint 0 errors (33 pre-existing warnings); vitest
+  410/410 (35 files, +main suites); Playwright 75 passed / 1 flaky-pass /
+  15 skipped / 0 failed; build + PWA ✓ 26 routes; Android aligned
+  (2.7.13, versionCode 46). `npm audit`: 4 low severity in dev-build chain
+  (workbox/vite-plugin-pwa) — accepted, dev-only, not shipped.
+- **Dependency note:** `@google/genai` (main's Gemini AI Studio integration)
+  needed a fresh `npm install` and a new Playwright browser binary
+  (playwright bumped by main) before e2e could run.
+
 ### 2026-10-28 (v2.7.12) — tier apps ⚖ admin + diagnosis of the photo audit error
 
 - **Scope (two reports from the owner):** tier count mismatch (apps 3 vs admin

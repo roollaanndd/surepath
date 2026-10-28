@@ -1,5 +1,47 @@
 # SurePath — Changelog
 
+## v2.7.13 — 2026-10-28
+
+Gabungan `main` (redesign Admin #322–#326) ke branch + perbaikan dark/night
+mode yang dilaporkan pemilik: "hanya bagian tertentu yang berubah jadi hitam,
+tulisan/kontras di admin tidak kelihatan".
+
+**Merge main → branch (`702dc61`)**
+- Arsitektur route-split branch dipertahankan (`src/app/routes/*`); perbaikan
+  App-level dari main (union `effectiveApps`, refresh harga kendaraan CMS,
+  sinkronisasi profil) ikut masuk.
+- AdminPortal mengambil redesign penuh main (rail + dashboard #325 + dark
+  mode otomatis #326) dan fitur branch **routing workspace per-peran**
+  (`getAdminWorkspace` + 7 dashboard) ditanam kembali di atasnya — tema
+  mengikuti mekanisme aman tema admin (`isDarkNow`, kunci `ADMIN_THEME_KEY`).
+- `server.ts`: CSP/header keamanan produksi milik branch dipertahankan.
+
+**Dark mode — akar masalah & perbaikan (`portal-modernization.css`)**
+- *Kanvas apps tetap putih di malam*: gradien kanvas terang (:1331) dan
+  kembar gelapnya tertulis `.sp-modern-app.dark` — selector MATI sebab kelas
+  `dark` berada di `<html>`, bukan di div. Customer/B2B/Insurer jadi
+  "sebagian hitam". Perbaikan: selector `html.dark .sp-modern-app`.
+- *Admin: kartu putih + teks putih tak terlihat*: pass "redesign v2" admin
+  memaksa variabel terang + `background #fff !important` TANPA guard `.dark`,
+  sementara tema admin (#326) menyalakan `html.dark`. Ditambahkan **dark twin
+  lengkap** untuk seluruh aturan pass v2 (canvas, header, kartu ds-*,
+  `bg-white`/`bg-slate-50`, input/tabel/glass/fokus) — mengikuti nilai tokon
+  `styles.css .dark`.
+- *Bottom nav putih menyala di semua tema*: pertahankan pill kaca putih di
+  portal terang, tambahkan twin gelap (latar `rgba(21,27,40,.93)`, label
+  aktif `#4ADE80`, nonaktif `#99A0B2`).
+- Temuan audit lain sudah beres lewat merge main: chip `bg-white
+  text-sp-emerald` (AgentClaims/AgentEndorsements) kini tertangkap blok umum
+  `.dark .sp-modern-app :where(.bg-white:…)`, SketchPngLibrary punya varian
+  `dark:`, Operator punya aturan gelap sendiri.
+
+**Checks:** tsc 0 · ESLint 0 error (33 warning lama) · vitest **410/410**
+(35 file — bertambah dari merge) · Playwright **75 pass / 0 fail / 1
+flaky-pass / 15 skip** · build+PWA ✓ 26 rute · `check:android` selaras
+(2.7.13, versionCode 46). Audit `npm audit` pasca-merge: 4 low severity di
+rantai build dev (workbox/vite-plugin-pwa via rollup) — diterima: dev-only,
+tidak ter-shipped, pantau di AGENTS.md.
+
 ## v2.7.12 — 2026-10-28
 
 Dua laporan pemilik: (1) jumlah tier di apps (3) ≠ dashboard admin (2);

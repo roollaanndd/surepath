@@ -35,7 +35,7 @@ test.use({
   launchOptions: existsSync(LOCAL_CHROME) ? { executablePath: LOCAL_CHROME } : {},
 });
 
-const APP_VERSION = '2.7.11';
+const APP_VERSION = '2.7.12';
 
 const AGENT = {
   id: 'e2e-agent-0001',
@@ -96,8 +96,20 @@ const RESPONSES: Record<string, unknown> = {
   get_my_commissions: [{ id: 'c1', commission_amount: 500_000, status: 'PAID', created_at: iso(2) }],
   get_my_withdrawals: [],
   get_my_claims: [],
-  get_my_tier_progress: { tier: 'SILVER', points: 320, next_tier: 'GOLD', needed: 180 },
-  get_tier_definitions: [{ id: 't1', name: 'SILVER', min_points: 0 }, { id: 't2', name: 'GOLD', min_points: 500 }],
+  // v2.7.12 — mocks now mirror the REAL sp_agent_tiers rows (the migration
+  // seed): STANDARD is the default baseline that admin summaries exclude;
+  // the two upgradeable tiers show in apps exactly as in admin.
+  get_my_tier_progress: {
+    currentTier: { id: 't1', code: 'STANDARD', name: 'Standard', rank: 0, color: '#6b7280', emoji: null, min_policies_count: null, min_premium_amount: null, coin_bonus_rate: 0, l1_override_rate: 0, l2_override_rate: 0, benefits: {}, requires_approval: false, approval_roles: [], is_default: true, is_active: true },
+    nextTier: { id: 't2', code: 'STAR', name: 'Mitra Bintang', rank: 1, color: '#f59e0b', emoji: '⭐', min_policies_count: 10, min_premium_amount: 150_000_000, coin_bonus_rate: 0.10, l1_override_rate: 0.03, l2_override_rate: 0.01, benefits: {}, requires_approval: false, approval_roles: [], is_default: false, is_active: true },
+    policiesCount: 4,
+    totalPremium: 95_000_000,
+  },
+  get_tier_definitions: [
+    { id: 't1', code: 'STANDARD', name: 'Standard', rank: 0, color: '#6b7280', emoji: null, min_policies_count: null, min_premium_amount: null, coin_bonus_rate: 0, l1_override_rate: 0, l2_override_rate: 0, benefits: {}, requires_approval: false, approval_roles: [], is_default: true, is_active: true },
+    { id: 't2', code: 'STAR', name: 'Mitra Bintang', rank: 1, color: '#f59e0b', emoji: '⭐', min_policies_count: 10, min_premium_amount: 150_000_000, coin_bonus_rate: 0.10, l1_override_rate: 0.03, l2_override_rate: 0.01, benefits: {}, requires_approval: false, approval_roles: [], is_default: false, is_active: true },
+    { id: 't3', code: 'ELITE', name: 'Mitra Elite', rank: 2, color: '#8b5cf6', emoji: '💎', min_policies_count: 25, min_premium_amount: 400_000_000, coin_bonus_rate: 0.15, l1_override_rate: 0.04, l2_override_rate: 0.02, benefits: {}, requires_approval: false, approval_roles: ['MASTER_ADMIN'], is_default: false, is_active: true },
+  ],
   get_leaderboard: [{ agent_id: AGENT.id, agent_name: AGENT.name, agent_code: 'SP-E2E-0001', tier: 'SILVER', total_commission: 500_000 }],
   get_my_clients: [],
   get_my_quotes: [],

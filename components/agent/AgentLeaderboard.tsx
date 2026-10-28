@@ -96,6 +96,12 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang, agentTier }) => {
   useEffect(() => { loadData(); }, [loadData]);
 
   const myCommission = stats?.totalCommissionMonth ?? 0;
+  // v2.7.12 — tier yang ditampilkan di daftar mengikuti aturan dashboard
+  // admin: ringkasan tier tidak memasukkan tier default (Standard = garis
+  // dasar tempat semua mitra mulai). Sebelum ini apps memunculkan semua
+  // baris aktif — "3 syarat tier di apps vs 2 kartu di admin" (laporan
+  // pemilik). Deteksi tier milik mitra tetap memakai daftar penuh.
+  const upgradeTiers = tiers.filter(tr => !tr.is_default);
   const myTier = getTierByCode(tiers, agentTier) ?? tiers.find(t2 => t2.is_default) ?? tiers[0] ?? null;
   const nextTier = myTier ? tiers.find(t2 => t2.rank === myTier.rank + 1) ?? null : null;
   const progress = Math.min((myCommission / MONTHLY_TARGET) * 100, 100);
@@ -202,14 +208,15 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang, agentTier }) => {
           </div>
         </div>
 
-        {/* Tier legend — dynamic, admin-configured */}
-        {tiers.length > 0 && (
+        {/* Tier legend — dynamic, admin-configured; default tier excluded so
+            apps match the admin Agents summary (AdminViews) one-for-one. */}
+        {upgradeTiers.length > 0 && (
           <div className="sp-glass rounded-[2rem] p-5">
             <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mb-3">
               {t('Tier Requirements', 'Syarat Tier')}
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {tiers.map(tierDef => {
+              {upgradeTiers.map(tierDef => {
                 const active = myTier?.code === tierDef.code;
                 return (
                   <div

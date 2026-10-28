@@ -8,8 +8,32 @@ import { ScannerOverlay, SmartProcessingView } from './WizardUI';
 import { validateVehiclePhoto } from '../../services/geminiService';
 import { pathyAnalyzeVehiclePhotos } from '../../services/pathyVision';
 
-/** Pesan yang dilihat pengguna saat analisa Pathy gagal, apa pun sebabnya. */
+/** Pesan ramah pemilik untuk kegagalan jaringan murni. */
 const PESAN_OFFLINE = 'Mohon maaf, kami sedang offline saat ini.';
+
+/**
+ * v2.7.12 — saat diagnosa "audit foto tidak berfungsi": sebab teknis
+ * tercatat di rekaman Pathy dan console sejak 22 Okt, tapi pengguna (dan
+ * pemilik) hanya pernah melihat "sedang offline" — tak bisa dibedakan antara
+ * putus internet, sesi habis, atau kuota AI. Kini sebab yang dikenali
+ * dipetakan ke pesan bisa-ditindaklanjuti; yang tak dikenal tetap offline.
+ */
+function mapAiError(raw: unknown): string {
+  const s = String(raw ?? '').toLowerCase();
+  if (/login|unauthorized|401|sesi/.test(s)) {
+    return 'Sesi loginmu sudah berakhir — keluar dan masuk lagi dulu ya, lalu ulangi analisa.';
+  }
+  if (/\b429\b|hourly ai request cap|rate limit|kuota|quota/.test(s)) {
+    return 'Jatah analisa AI jam ini sudah penuh — coba lagi sejam berikutnya ya.';
+  }
+  if (/not configured|\b503\b|openrouter/.test(s)) {
+    return 'Layanan analisa AI belum aktif di environment ini — hubungi tim kami ya.';
+  }
+  if (/abort|timeout|terlalu lama/.test(s)) {
+    return 'Analisa berjalan terlalu lama dan dihentikan — coba lagi ya.';
+  }
+  return PESAN_OFFLINE;
+}
 import { extractStnkOcr } from '../../services/stnkOcr';
 
 interface StepSurveyProps {
@@ -115,7 +139,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
                 msg: result.issue
               } 
             }));
-          } catch (e) {
+          } catch {
             // A failed AI check is not evidence that the photo is valid.
             setPhotoValidation(prev => ({
               ...prev,
@@ -197,7 +221,7 @@ const StepSurvey: React.FC<StepSurveyProps> = ({
       // membuat laporan "analisa foto tidak berfungsi" pada 21 Okt harus
       // ditelusuri dari nol selama berjam-jam.
       console.warn('[StepSurvey] analisa Pathy gagal:', response?.error);
-      setSurveyActionError(PESAN_OFFLINE);
+      setSurveyActionError(mapAiError(response?.error));
       setSurvey((prev: any) => ({
         ...prev,
         score: 0,

@@ -1,5 +1,43 @@
 # SurePath — Changelog
 
+## v2.7.12 — 2026-10-28
+
+Dua laporan pemilik: (1) jumlah tier di apps (3) ≠ dashboard admin (2);
+(2) "audit foto" di pembelian asuransi mobil dilaporkan error dan tidak jalan.
+
+**Tier apps = dashboard admin (`AgentLeaderboard.tsx`, `AgentNetwork.tsx`)**
+- Root cause: keduanya membaca action yang sama (`get_tier_definitions`),
+  tapi kartu ringkas **Agents** di admin sengaja menyaring tier default
+  (`AdminViews.tsx` `.filter(tier => !tier.is_default)`), sedangkan
+  **Syarat Tier** (Leaderboard) dan tabel **Cara Kerja** (Network) di apps
+  mengulang seluruh baris aktif termasuk *Standard* — baseline, bukan tier
+  yang dikejar.
+- Apps kini memakai aturan yang sama: tier default disembunyikan dari
+  kedua daftar → keduanya menampilkan **Mitra Bintang ⭐ + Mitra Elite 💎**
+  (jumlah identik dengan admin). Deteksi tier milik mitra tetap memakai
+  daftar penuh.
+- Mock e2e diperbarui ke bentuk `sp_agent_tiers` asli (seed migrasi:
+  STANDARD/STAR/ELITE) — dulu masih bentuk *poin* (SILVER/GOLD) lama.
+
+**Audit foto di wizard mobil (`components/car-wizard/StepSurvey.tsx`)**
+- Alur audit kini audit ulang penuh: per-foto kompres 800px ✓ · token sesi
+  (bukan anon key — bug lama v2.1.0 sudah diperbaiki) ✓ · `openai/gpt-4o`
+  ada di whitelist `ai-proxy` ✓ · multim-image survey tsc & build bersih ✓.
+- **Sebab sesungguhnya yang ditemukan:** kegagalan apa pun tersamar jadi
+  "Mohon maaf, kami sedang offline saat ini" — pemilik tak bisa tahu
+  berbedanya jaringan putus / sesi habis / kuota AI harian penuh / layanan
+  AI belum dikonfigurasi. Kini sebab yang dikenali dipetakan jadi pesan
+  bisa-diselesaikan ("Sesi loginmu sudah berakhir — masuk lagi…",
+  "Jatah analisa AI jam ini penuh — coba lagi sejam berikutnya", dll);
+  kegagalan jaringan murni tetap pesan offline. Tekan teknik tetap
+  tercatat di rekaman Pathy + console.
+- Jika pemilik mengujinya di **dev server lokal**, catat: `.env.development`
+  masih placeholder (`your-dev-project-id`) — semua panggilan AI akan gagal
+  di sana; gunakan `.env.development.local` dengan URL proyek sungguhan.
+
+**Checks:** tsc 0 · ESLint 0 error · vitest **383/383** · Playwright agent
+suite **6/6** · build+PWA ✓ · `check:android` selaras (2.7.12, versionCode 45).
+
 ## v2.7.11 — 2026-10-28
 
 Upgrade Pathy AI (permintaan owner: "upgrade pathy ai", "saya mau semuanya,

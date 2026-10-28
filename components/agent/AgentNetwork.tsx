@@ -407,7 +407,10 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ds-border">
-                  {tiers.map(row => (
+                  {/* v2.7.12 — default tier (Standard) tidak masuk tabel
+                      perbandingan: ikut aturan ringkasan admin (AdminViews
+                      tierCounts), jadi jumlah tier di apps & admin identik. */}
+                  {tiers.filter(row => !row.is_default).map(row => (
                     <tr key={row.code}>
                       <td className="py-2 pr-3 font-black" style={{ color: row.color }}>
                         {row.emoji} {row.name}

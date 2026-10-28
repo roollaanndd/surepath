@@ -169,6 +169,35 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-28 (v2.7.12) — tier apps ⚖ admin + diagnosis of the photo audit error
+
+- **Scope (two reports from the owner):** tier count mismatch (apps 3 vs admin
+  2) and non-functioning photo audit on the car purchase wizard.
+- **Tier root cause:** both surfaces read the same `get_tier_definitions`
+  action — the count differs because the admin Agents summary filters out the
+  default tier (`AdminViews.tsx` `.filter(tier => !is_default)`) while
+  `AgentLeaderboard.tsx` (Syarat Tier) and `AgentNetwork.tsx` (Cara Kerja)
+  iterated the full active list including *Standard*. Apps now apply the same
+  rule (default tier hidden) → both sides show exactly *Mitra Bintang ⭐ +
+  Mitra Elite 💎*. Own-tier detection still uses the full list.
+- **Photo audit verdict after re-audit:** the survey chain is sound as of
+  v2.6.1/v2.6.2 (800px/768px compression, session-token auth instead of the
+  v2.1.0 anon-key bug, `openai/gpt-4o` whitelisted, fail-open per-photo
+  validation). The real defect was **error masking**: any failure rendered as
+  the generic PESAN_OFFLINE, so the owner could not tell a dead network from
+  an expired session from a full hourly AI quota from a missing server key.
+  `mapAiError()` now maps known causes to actionable Indonesian messages;
+  unknown ones stay PESAN_OFFLINE. Technical cause remains in the Pathy
+  transcript + console (the 22 Oct guard stands).
+- **Ops note:** `.env.development` is still a placeholder project — testing
+  the wizard locally against the placeholder URL will always fail; use a real
+  project in `.env.development.local` or the APK. If the owner's earlier
+  failure was on production and it repeats, the new message will now name the
+  cause directly (probably the 200/hour AI cap or an expired session).
+- **Checks:** tsc 0; ESLint 0 errors; vitest 383/383; Playwright agent suite
+  6/6 (mocks reshaped to real `sp_agent_tiers` rows incl. `get_leaderboard`);
+  build+PWA ✓; Android aligned (2.7.12, versionCode 45).
+
 ### 2026-10-28 (v2.7.11) — Upgrade Pathy AI: 3 ketukan, suara, briefing, OCR foto dibereskan
 
 - **Scope (owner: "upgrade pathy ai" → semuanya, simple & rapih, OCR/foto

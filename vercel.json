@@ -1,4 +1,33 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "claude/*": false,
+      "claude/**": false,
+      "dependabot/*": false,
+      "dependabot/**": false,
+      "feat/*": false,
+      "feat/**": false,
+      "feature/*": false,
+      "feature/**": false,
+      "fix/*": false,
+      "fix/**": false,
+      "chore/*": false,
+      "chore/**": false,
+      "docs/*": false,
+      "docs/**": false,
+      "design/*": false,
+      "design/**": false,
+      "refactor/*": false,
+      "refactor/**": false,
+      "seo/*": false,
+      "seo/**": false,
+      "test/*": false,
+      "test/**": false,
+      "tmp/*": false,
+      "tmp/**": false,
+      "revert-*": false
+    }
+  },
   "trailingSlash": false,
   "headers": [
     {

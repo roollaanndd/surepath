@@ -11,8 +11,8 @@ android {
         // (run as part of `npm run build:android`). This drifted to 1.0.1 while
         // the app shipped 2.5.11 — a Play upload carrying the wrong version is
         // impossible to correlate with a crash report or a changelog entry.
-        versionCode 47
-        versionName "2.7.14"
+        versionCode 48
+        versionName "2.7.15"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'

@@ -1,0 +1,16 @@
+# SPA fallback for static hosts that read Netlify-style _redirects
+# (Cloudflare Pages, Netlify). Vercel ignores this file and uses the
+# "rewrites" block in vercel.json instead; the two must stay in step.
+#
+# This exists so the frontend can be served from somewhere other than Vercel
+# without a code change. Routing is hand-rolled on the History API (App.tsx),
+# so every deep link — /agapps, /admin, /blog/<slug> — arrives at the host as a
+# path with no file behind it. Without this rule the host answers 404 and the
+# app never boots.
+#
+# Real files win over this rule on both hosts, which is what the prerendered
+# pages depend on: scripts/prerender.mjs writes dist/<route>/index.html for
+# every indexable marketing route, and the host serves those directly. Only
+# paths with nothing on disk fall through to the noindex shell — the same
+# order Vercel applies.
+/*  /_fallback.html  200

@@ -8,3 +8,22 @@
   X-XSS-Protection: 1; mode=block
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+
+# Cache-Control, mirroring the per-source headers in vercel.json. Kept here so
+# a static host (Cloudflare Pages, Netlify) serves the same caching posture as
+# Vercel; without these it would cache the HTML shell and strand viewers on an
+# old bundle while /assets/* went uncached.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: no-cache, must-revalidate
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate

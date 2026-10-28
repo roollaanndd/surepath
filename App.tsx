@@ -4,6 +4,7 @@ import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
 import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
+import { initVehicleOverrides } from './services/vehicleOverrides';
 import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
 import { inject as injectVercelAnalytics } from '@vercel/analytics';
@@ -18,22 +19,58 @@ import { AppRoutes } from './src/app/routes/index';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
+// ── Effective app list (role-authoritative) ──────────────────────────────────
+// allowed_apps is a convenience overlay, but sp_users.role is the source of
+// truth for a user's PRIMARY app. Bug history: the 2026-07-07 backfill froze
+// allowed_apps = ARRAY[role] once, and nothing re-synced it when an admin
+// later changed a role — so agents with a stale ['CUSTOMER'] array were routed
+// into the customer app (or blocked from /agapps) while their role said AGENT.
+// The server now keeps them in sync (trg_sync_allowed_apps_with_role), and
+// this union makes the client correct even against residual bad data: a
+// user can always reach the app their own role entitles them to.
+const APP_FOR_ROLE: Record<string, string> = {
+  OPERATOR: 'OPERATOR',
+  MARKETING: 'MARKETING',
+  AGENT: 'AGENT',
+  B2B_CLIENT: 'CUSTOMER',
+};
+const roleToApp = (role: any): string =>
+  ADMIN_ROLES.includes(role) ? 'ADMIN' : APP_FOR_ROLE[role] ?? 'CUSTOMER';
+
+// Only these ids have a portal route + selector card. The 2026-07-07 backfill
+// wrote RAW role names into allowed_apps (ARRAY[role] → 'MASTER_ADMIN',
+// 'B2B_CLIENT', 'FINANCE_MANAGER', …), so the stored base list must be
+// normalized before it is compared with card ids — otherwise phantom entries
+// inflate the effective list and park users on a one-card selector screen
+// instead of routing them straight into their portal.
+const KNOWN_APP_IDS = ['ADMIN', 'OPERATOR', 'MARKETING', 'AGENT', 'CUSTOMER'];
+
+const effectiveApps = (user: any): string[] => {
+  const allowed: unknown[] | null | undefined = user?.allowed_apps;
+  const base = (Array.isArray(allowed) ? allowed : [])
+    .filter((a): a is string => typeof a === 'string' && KNOWN_APP_IDS.includes(a));
+  const roleApp = roleToApp(user?.role);
+  // B2B_CLIENT routes through its own branch (role check in the render), so its
+  // role-derived app is CUSTOMER — the union below never grants it /agapps.
+  return base.includes(roleApp) ? base : [...base, roleApp];
+};
+
 // Decide where to route a signed-in user.
-// 1. If allowed_apps has 2+ entries → '/select-app' (multi-app selector screen)
-// 2. Else if allowed_apps has 1 entry → that app
-// 3. Else fall back to legacy role-based routing (single-app users)
+// 1. If the effective app list has 2+ entries → '/select-app' (multi-app selector)
+// 2. Else if it has 1 entry → that app
+// 3. Else fall back to role-based routing (no allowed_apps at all)
 const rolePath = (user: any) => {
-  const allowed: string[] | null | undefined = user?.allowed_apps;
-  if (Array.isArray(allowed) && allowed.length > 1) return '/select-app';
-  if (Array.isArray(allowed) && allowed.length === 1) {
+  const allowed = effectiveApps(user);
+  if (allowed.length > 1) return '/select-app';
+  if (allowed.length === 1) {
     const app = allowed[0];
-    if (app === 'ADMIN' || ADMIN_ROLES.includes(user.role)) return '/admin';
+    if (app === 'ADMIN') return '/admin';
     if (app === 'OPERATOR') return '/operatorapp';
     if (app === 'MARKETING') return '/marketingapp';
     if (app === 'AGENT') return '/agapps';
     return '/custapp';
   }
-  // Legacy single-role routing
+  // Legacy single-role routing (unreachable with effectiveApps, kept as a guard)
   const role = user?.role;
   return ADMIN_ROLES.includes(role) ? '/admin'
     : role === UserRole.OPERATOR ? '/operatorapp'
@@ -124,6 +161,20 @@ const App = () => {
   // is active — falls back silently to services/ojkRates.ts's built-in values.
   useEffect(() => {
     getActiveOjkRateSet().then(row => { if (row) applyOjkRateSet(row as any); }).catch(() => {});
+  }, []);
+
+  // Harga kendaraan dikelola di CMS. Muat sekali saat boot, lalu segarkan saat
+  // app kembali fokus supaya perubahan admin tidak menunggu reload penuh.
+  useEffect(() => {
+    void initVehicleOverrides();
+    const refresh = () => { void initVehicleOverrides(true); };
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', refresh);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', refresh);
+    };
   }, []);
 
   useEffect(() => {
@@ -250,7 +301,20 @@ const App = () => {
             callGateway('get_my_profile')
               .then(({ data, error }: any) => {
                 if (!error && data) {
-                  const refreshedUser = { ...user, allowed_apps: (data as any).allowed_apps ?? null, role: (data as any).role ?? user.role, verified: (data as any).verified ?? user.verified };
+                  // Sync every field the portals render from the session object.
+                  // Tier/commission_rate/name used to be missing here, so admin
+                  // changes only reached agents after a full logout/login.
+                  const refreshedUser = {
+                    ...user,
+                    allowed_apps: (data as any).allowed_apps ?? null,
+                    role: (data as any).role ?? user.role,
+                    verified: (data as any).verified ?? user.verified,
+                    tier: (data as any).tier ?? user.tier,
+                    name: (data as any).name ?? user.name,
+                    agent_code: (data as any).agent_code ?? user.agent_code,
+                    commission_rate: (data as any).commission_rate ?? user.commission_rate,
+                    profile_photo_url: (data as any).profile_photo_url ?? user.profile_photo_url,
+                  };
                   setCurrentUser(refreshedUser);
                   localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedUser));
                   // A cached session can leave a user on the wrong portal after

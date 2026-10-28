@@ -8,7 +8,7 @@ import {
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
   createReviewToken, getAdminNotifications, markAdminNotificationRead,
   getPaymentsByOrderIds,
-  type SpPolicyOrder, type SpAdminNotification, type SpPayment,
+  type SpPolicyOrder, type SpAdminNotification, type SpPayment, type SpCommission,
 } from '../../services/supabaseService';
 import { submitPolicyToInsurer } from '../../services/insurerApiService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -16,6 +16,7 @@ import { SecureDocLink } from '../shared/SecureDoc';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import { useToast } from '../ui';
+import { filterLabel } from './filterLabels';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
@@ -140,10 +141,22 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
       ? order.coin_reward
       : Math.floor(order.total_premium * coinRate / 1000);
 
+    // FIX 2026-10-26 (cross-app audit #4): this used to hardcode
+    // product_type: 'CAR' regardless of the order's real product, corrupting
+    // sp_commissions.product_type for every TRAVEL/PA/MPAR/LIFE issuance and
+    // breaking AgentCommission's per-product breakdown. Derive it from the
+    // order: non-vehicle coverage types map directly, else the vehicle type.
+    const commissionProductType: SpCommission['product_type'] =
+      order.coverage_type === 'TRAVEL' ? 'TRAVEL'
+      : order.coverage_type === 'PA' ? 'PA'
+      : order.coverage_type === 'MPAR' ? 'MPAR'
+      : order.coverage_type === 'LIFE' ? 'LIFE'
+      : (order.vehicle_type ?? 'CAR');
+
     await addCommission({
       agent_id: order.agent_id,
       client_name: order.client_name,
-      product_type: 'CAR',
+      product_type: commissionProductType,
       premium_amount: order.total_premium,
       commission_amount: commissionAmount,
       discount_rate: discountRate,
@@ -460,10 +473,13 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-const PolicyOrdersAdmin: React.FC = () => {
+const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPending = false }) => {
   const [orders, setOrders] = useState<SpPolicyOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('ALL');
+  // Mode antrean: dipakai oleh menu "Antrean Review". Semua keputusan tetap
+  // terjadi di satu layar ini — tidak ada lagi view persetujuan terpisah yang
+  // menyembunyikan dokumen dan riwayat order.
+  const [filter, setFilter] = useState<string>(initialPending ? 'PENDING' : 'ALL');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SpPolicyOrder | null>(null);
   const [adminNotifs, setAdminNotifs] = useState<SpAdminNotification[]>([]);
@@ -496,10 +512,12 @@ const PolicyOrdersAdmin: React.FC = () => {
     setSelected(prev => prev && prev.id === id ? { ...prev, status, ...extras } : prev);
   };
 
-  const FILTERS = ['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED', 'CANCELLED'];
+  const FILTERS = ['ALL', 'PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'ISSUED', 'REJECTED', 'CANCELLED'];
 
   const visible = orders.filter(o => {
-    if (filter !== 'ALL' && o.status !== filter) return false;
+    if (filter === 'PENDING') {
+      if (o.status !== 'SUBMITTED' && o.status !== 'UNDER_REVIEW') return false;
+    } else if (filter !== 'ALL' && o.status !== filter) return false;
     const q = search.toLowerCase();
     if (!q) return true;
     const plate = (o.vehicle_details?.plate ?? '').toLowerCase();
@@ -513,7 +531,11 @@ const PolicyOrdersAdmin: React.FC = () => {
   });
 
   const counts: Record<string, number> = { ALL: orders.length };
-  FILTERS.slice(1).forEach(f => { counts[f] = orders.filter(o => o.status === f).length; });
+  FILTERS.slice(1).forEach(f => {
+    counts[f] = f === 'PENDING'
+      ? orders.filter(o => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW').length
+      : orders.filter(o => o.status === f).length;
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -585,7 +607,6 @@ const PolicyOrdersAdmin: React.FC = () => {
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {FILTERS.slice(1).map(f => {
-          const m = STATUS_META[f as SpPolicyOrder['status']];
           return (
             <div
               key={f}
@@ -595,7 +616,7 @@ const PolicyOrdersAdmin: React.FC = () => {
               }`}
             >
               <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-400' : 'text-white'}`}>{counts[f]}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{m.label}</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{filterLabel(f)}</p>
             </div>
           );
         })}
@@ -621,7 +642,7 @@ const PolicyOrdersAdmin: React.FC = () => {
                 filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
-              {f === 'ALL' ? 'Semua' : STATUS_META[f as SpPolicyOrder['status']].label}
+              {filterLabel(f)}
               {` (${counts[f]})`}
             </button>
           ))}

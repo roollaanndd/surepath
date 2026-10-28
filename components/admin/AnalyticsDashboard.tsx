@@ -181,7 +181,7 @@ const AnalyticsDashboard = () => {
       {/* Header */}
       <div>
         <p className="text-[0.55rem] font-black uppercase tracking-[0.35em] text-ds-green mb-1">Analytics</p>
-        <h2 className="text-3xl font-black tracking-tight text-white">Dashboard Analitik</h2>
+        <h2 className="text-3xl font-black tracking-tight text-ds-ink">Dashboard Analitik</h2>
       </div>
 
       {/* KPI Row */}

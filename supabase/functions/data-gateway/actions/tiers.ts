@@ -240,7 +240,10 @@ export async function handleTiersAction(action: string, ctx: GatewayContext): Pr
         if (!params.apply) return json({ data: { changed: true, suggested_tier: suggested.code, current_tier: agentRow?.tier ?? null, metrics } });
         try {
           const result = await applyOrQueueTier(db, String(params.agent_id), suggested, agentRow?.tier ?? null, actorId, caller.role ?? '', 'AUTO');
-          return json({ data: { ...result.data, metrics }, pending: result.pending });
+          // deno check fix (audit H3): result.data is `unknown` (applyOrQueueTier
+          // returns success or queue shapes) — normalize before spreading.
+          const resultData = (result.data ?? {}) as Record<string, unknown>;
+          return json({ data: { ...resultData, metrics }, pending: result.pending });
         } catch (e) {
           return json({ error: (e as Error).message }, 400);
         }

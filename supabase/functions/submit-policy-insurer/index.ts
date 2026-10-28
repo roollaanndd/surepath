@@ -1,5 +1,5 @@
 
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth, adminOnly } from '../_shared/auth.ts';
 
@@ -26,7 +26,10 @@ function isAllowedEndpoint(url: string): boolean {
 async function manualAdapter(
   order: any,
   insurerName: string,
-  supabase: ReturnType<typeof createClient>,
+  // deno check fix (audit H3): ReturnType<typeof createClient> resolves to the
+  // strict default generic (schema = never), so every .from() call typed as
+  // never[]. The real caller passes createClient(...) with default schema.
+  supabase: SupabaseClient<any, any, any, any, any>,
 ): Promise<{ policy_number: string | null; method: 'MANUAL' }> {
   const msg = `Pengajuan polis manual diperlukan untuk order ${order.order_number ?? order.id} ke ${insurerName}`;
 
@@ -46,7 +49,7 @@ async function manualAdapter(
 async function restAdapter(
   order: any,
   config: { api_endpoint: string; api_key: string; headers?: Record<string, string> },
-  _supabase: ReturnType<typeof createClient>,
+  _supabase: SupabaseClient<any, any, any, any, any>,
 ): Promise<{ policy_number: string | null; method: 'API' }> {
   const payload = {
     order_id:     order.id,

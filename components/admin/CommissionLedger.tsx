@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search } from 'lucide-react';
-import { callGateway, supabase } from '../../services/supabaseService';
+import { callGateway } from '../../services/supabaseService';
+import { useToast, useConfirmDialog } from '../ui';
+import { AdminErrorBanner } from './adminUI';
 import { formatIDR } from '../car-wizard/WizardUI';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -47,8 +49,11 @@ const STATUS_LABEL: Record<CommissionStatus, string> = {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const CommissionLedger: React.FC = () => {
+  const toast = useToast();
+  const confirm = useConfirmDialog();
   const [rows, setRows]         = useState<CommissionRow[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter]     = useState<FilterTab>('ALL');
   const [search, setSearch]     = useState('');
   const [saving, setSaving]     = useState<Set<string>>(new Set());
@@ -58,10 +63,13 @@ const CommissionLedger: React.FC = () => {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     const { data, error } = await callGateway('admin_list_commissions', { limit: 1000 });
 
     if (error) {
-      console.error('CommissionLedger load:', error);
+      // FIX 2026-10-26: was console.error only — the admin saw an empty table
+      // with no way to know the load failed or to retry it.
+      setLoadError(String((error as any)?.message ?? error ?? 'Gagal memuat komisi.'));
       setLoading(false);
       return;
     }
@@ -91,16 +99,27 @@ const CommissionLedger: React.FC = () => {
   }, [loadData]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
+  //
+  // FIX 2026-10-26 (financial integrity): mutations previously swallowed
+  // errors (`if (!error)` with no else), and "Bayar Semua PENDING" wrote
+  // sp_commissions DIRECTLY via the anon client — bypassing the data-gateway
+  // and therefore the server-side credit_agent_wallet RPC, so agents' wallets
+  // were never credited for bulk-paid commissions. Bulk pay now routes each
+  // row through admin_update_commission (the same path as the single "Bayar"
+  // button), with a confirmation dialog and a per-row result summary.
 
   const payCommission = async (id: string) => {
     setSaving(prev => new Set(prev).add(id));
     const { error } = await callGateway('admin_update_commission', { commission_id: id, status: 'PAID' });
-    if (!error) {
+    if (error) {
+      toast.error(`Gagal membayar komisi: ${String((error as any)?.message ?? error)}`);
+    } else {
       setRows(prev =>
         prev.map(r =>
           r.id === id ? { ...r, status: 'PAID', paid_at: new Date().toISOString() } : r
         )
       );
+      toast.success('Komisi ditandai dibayar — saldo mitra dikreditkan.');
     }
     setSaving(prev => {
       const next = new Set(prev);
@@ -112,10 +131,11 @@ const CommissionLedger: React.FC = () => {
   const cancelCommission = async (id: string) => {
     setSaving(prev => new Set(prev).add(id));
     const { error } = await callGateway('admin_update_commission', { commission_id: id, status: 'CANCELLED' });
-    if (!error) {
-      setRows(prev =>
-        prev.map(r => (r.id === id ? { ...r, status: 'CANCELLED' } : r))
-      );
+    if (error) {
+      toast.error(`Gagal membatalkan komisi: ${String((error as any)?.message ?? error)}`);
+    } else {
+      setRows(prev => prev.map(r => (r.id === id ? { ...r, status: 'CANCELLED' } : r)));
+      toast.success('Komisi dibatalkan.');
     }
     setSaving(prev => {
       const next = new Set(prev);
@@ -125,24 +145,36 @@ const CommissionLedger: React.FC = () => {
   };
 
   const payAllPending = async () => {
-    const pendingIds = rows
-      .filter(r => r.status === 'PENDING')
-      .map(r => r.id);
-    if (pendingIds.length === 0) return;
+    const pending = rows.filter(r => r.status === 'PENDING');
+    if (pending.length === 0) return;
+    const total = pending.reduce((s, r) => s + r.commission_amount, 0);
+    const ok = await confirm({
+      title: 'Bayar Semua Komisi Pending?',
+      description: `${pending.length} komisi senilai ${formatIDR(total)} akan ditandai PAID dan saldo mitra dikreditkan oleh server per baris. Proses berjalan satu per satu melalui data-gateway.`,
+      confirmLabel: 'Bayar Semua',
+      variant: 'primary',
+    });
+    if (!ok) return;
     setBulkSaving(true);
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from('sp_commissions')
-      .update({ status: 'PAID', paid_at: now })
-      .in('id', pendingIds);
-    if (!error) {
-      setRows(prev =>
-        prev.map(r =>
-          r.status === 'PENDING' ? { ...r, status: 'PAID', paid_at: now } : r
-        )
-      );
+    let okCount = 0;
+    const failedRefs: string[] = [];
+    for (const row of pending) {
+      const { error } = await callGateway('admin_update_commission', { commission_id: row.id, status: 'PAID' });
+      if (error) {
+        failedRefs.push(row.order_number ?? row.id);
+      } else {
+        okCount += 1;
+        setRows(prev => prev.map(r =>
+          r.id === row.id ? { ...r, status: 'PAID', paid_at: new Date().toISOString() } : r
+        ));
+      }
     }
     setBulkSaving(false);
+    if (failedRefs.length === 0) {
+      toast.success(`${okCount} komisi berhasil dibayar.`);
+    } else {
+      toast.error(`${okCount} berhasil, ${failedRefs.length} gagal (${failedRefs.slice(0, 3).join(', ')}${failedRefs.length > 3 ? '…' : ''}). Ulangi baris yang gagal.`);
+    }
   };
 
   // ── Derived state ──────────────────────────────────────────────────────────
@@ -188,6 +220,14 @@ const CommissionLedger: React.FC = () => {
           {bulkSaving ? 'Memproses…' : `Bayar Semua PENDING (${pendingCount})`}
         </button>
       </div>
+
+      {loadError && (
+        <AdminErrorBanner
+          message={loadError}
+          onRetry={loadData}
+          retrying={loading}
+        />
+      )}
 
       {/* ── Filter tabs + search ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">

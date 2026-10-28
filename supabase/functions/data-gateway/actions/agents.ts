@@ -61,13 +61,26 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.agent_id) return json({ error: 'agent_id required' }, 400);
         const approve = params.approve !== false; // default true
+        // FIX 2026-10-26 (cross-app audit #5): this used to overwrite
+        // allowed_apps with ['AGENT'], silently revoking any other grants
+        // (e.g. AGENT+CUSTOMER) every time an agent was re-verified — the same
+        // multi-app union App.tsx explicitly reconciles on login. Merge instead.
+        let allowedApps: string[] | undefined = undefined;
+        if (approve) {
+          const { data: cur } = await db.from('sp_users')
+            .select('allowed_apps')
+            .eq('id', String(params.agent_id))
+            .maybeSingle();
+          const existing = Array.isArray((cur as any)?.allowed_apps) ? (cur as any).allowed_apps as string[] : [];
+          allowedApps = existing.includes('AGENT') ? existing : [...existing, 'AGENT'];
+        }
         const { data, error } = await db.from('sp_users')
           .update({
             verified: !!approve,
             trust_score: approve ? 85 : 50,
-            // FIX: set allowed_apps so routing works correctly after verification
-            // Without this, allowed_apps stays null and routing may fall back incorrectly
-            ...(approve ? { allowed_apps: ['AGENT'] as any } : {}),
+            // Keep routing correct after verification without destroying
+            // other granted apps.
+            ...(allowedApps ? { allowed_apps: allowedApps as any } : {}),
             updated_at: new Date().toISOString(),
           })
           .eq('id', String(params.agent_id))

@@ -11,12 +11,18 @@ import {
 } from '../../services/supabaseService';
 
 const SESSION_KEY = 'SUREPATH_SESSION';
+// FIX 2026-10-26 (audit): these read sessionStorage ONLY, while App.tsx writes
+// the session to localStorage (with sessionStorage fallback). After a reload
+// where the session lives in localStorage, supabaseId/role came back empty —
+// silently hiding every manage button and writing created_by: '' on promo
+// codes. Read order now matches App.tsx and the two other admin call sites
+// (AdminViews AgentManagementView / WithdrawalsAdminView).
 const getAdminId = () => {
-  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? '{}')?.supabaseId ?? ''; }
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY) ?? '{}')?.supabaseId ?? ''; }
   catch { return ''; }
 };
 const getAdminRole = (): string => {
-  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? '{}')?.role ?? ''; }
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY) ?? '{}')?.role ?? ''; }
   catch { return ''; }
 };
 

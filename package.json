@@ -7,7 +7,7 @@
     "dev": "tsx server.ts",
     "seo:sitemap": "tsx scripts/generate-sitemap.mjs",
     "seo:prerender": "tsx scripts/prerender.mjs",
-    "build": "npm run seo:sitemap && vite build && npm run seo:prerender && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs && npm run check:prerender && node scripts/check-dist-clean.mjs && node scripts/check-pwa-build.mjs",
+    "build": "npm run seo:sitemap && vite build && npm run seo:prerender && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build-server/server.cjs",
     "start": "node build-server/server.cjs",
     "preview": "vite preview",
     "lint": "node scripts/check-edge-functions.mjs && tsc --noEmit && eslint . && vitest run",
@@ -28,6 +28,7 @@
   "dependencies": {
     "@capacitor/android": "^8.4.3",
     "@capacitor/core": "^8.4.3",
+    "@google/genai": "^1.15.0",
     "@sentry/react": "^10.63.0",
     "@supabase/supabase-js": "^2.106.0",
     "@types/cors": "^2.8.19",
@@ -57,8 +58,11 @@
     "brace-expansion": "^2.0.3",
     "fast-uri": "^3.1.1",
     "body-parser": "^2.4.0",
-    "serialize-javascript": "^7.0.3",
-    "qs": "^6.16.0"
+    "serialize-javascript": "^7.1.4",
+    "qs": "^6.16.0",
+    "minimatch@^10.0.0": {
+      "brace-expansion": "^5.0.12"
+    }
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.3",

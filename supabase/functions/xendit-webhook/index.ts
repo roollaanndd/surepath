@@ -7,6 +7,14 @@ const CORS = { 'Content-Type': 'application/json' };
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
+  // FIX 2026-10-25 (audit H4): error responses must distinguish "handled"
+  // from "unexpected". Returning 200 on EVERY error told Xendit the callback
+  // succeeded — a transient DB failure between the payment-row claim and the
+  // commission credit was then permanently swallowed (the replay guard skips
+  // already-PAID payments on retry). Failures BEFORE the row is claimed are
+  // safe to 500: Xendit retries and the atomic claim keeps it idempotent.
+  let paymentClaimed = false;
+
   try {
     const SUPABASE_URL          = Deno.env.get('SUPABASE_URL')          ?? '';
     const SUPABASE_SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -100,6 +108,7 @@ Deno.serve(async (req) => {
       // Never repeat downstream credits for a callback that did not claim the row.
       return new Response('ok', { status: 200, headers: CORS });
     }
+    paymentClaimed = true;
 
     // If PAID — advance order to UNDER_REVIEW, auto-generate review token, notify all parties
     if (normalizedStatus === 'PAID' && payment.order_id) {
@@ -359,7 +368,12 @@ Deno.serve(async (req) => {
       // If the paying customer has an upline_id (referrer), and this is the
       // referee's first PAID order, credit both sides with a Rp 25k discount
       // token. Idempotent via UNIQUE(referrer_id, referee_id) constraint.
-      if (order.agent_id) {
+      // deno check fix (audit H3): `order` may be null (deleted order row) —
+      // the optional chain both guards the runtime TypeError and narrows the
+      // type for every use below. The removed `paidOrderCount` query here was
+      // dead code: its result was never read (idempotency is enforced by the
+      // existingReward lookup + UNIQUE constraint), and its typing crashed tsc.
+      if (order?.agent_id) {
         try {
           // Check if the customer (agent_id on a self-purchase order) has a referrer
           const { data: customerProfile } = await supabase
@@ -369,13 +383,6 @@ Deno.serve(async (req) => {
             .single();
 
           if (customerProfile?.upline_id && customerProfile.role === 'CUSTOMER') {
-            // Check if this is the referee's first PAID order
-            const { count: paidOrderCount } = await supabase
-              .from('sp_payments')
-              .select('id', { count: 'exact', head: true })
-              .eq('order_id' as any, payment.order_id)  // current order
-              .eq('status', 'PAID');
-
             // Check if this order_id is the first PAID for this customer
             // (simpler: just check if a referral reward already exists for this pair)
             const { data: existingReward } = await supabase
@@ -397,7 +404,7 @@ Deno.serve(async (req) => {
                 status: 'ISSUED',
                 issued_at: new Date().toISOString(),
                 expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
-                notes: `Referral reward — referrer credit for order ${orderDetails.order_number ?? ''}`,
+                notes: `Referral reward — referrer credit for order ${order.order_number ?? ''}`,
               });
 
               // Credit referee (new customer): Rp 25k discount token
@@ -411,7 +418,7 @@ Deno.serve(async (req) => {
                 status: 'ISSUED',
                 issued_at: new Date().toISOString(),
                 expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
-                notes: `Referral reward — referee credit for order ${orderDetails.order_number ?? ''}`,
+                notes: `Referral reward — referee credit for order ${order.order_number ?? ''}`,
               });
 
               // Notify both parties
@@ -468,6 +475,26 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     console.error('xendit-webhook error:', err);
+    // Before the claim: nothing has been applied — let Xendit retry (500).
+    if (!paymentClaimed) {
+      return new Response('Retry later', { status: 500, headers: CORS });
+    }
+    // After the claim: the payment row is already PAID, so a retry would be
+    // skipped by the replay guard. Surface the failure to admins instead of
+    // silently dropping the commission credit, then ack to stop retry storms.
+    try {
+      const SUPABASE_URL_ = Deno.env.get('SUPABASE_URL') ?? '';
+      const SERVICE_KEY_ = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      if (SUPABASE_URL_ && SERVICE_KEY_) {
+        const admin = createClient(SUPABASE_URL_, SERVICE_KEY_);
+        await admin.from('sp_admin_notifications').insert({
+          type: 'WEBHOOK_PROCESSING_ERROR',
+          title: 'Webhook Xendit gagal diproses setelah pembayaran tercatat',
+          body: `Pembayaran tercatat PAID namun pemrosesan lanjutan (komisi/koin/notifikasi) gagal: ${String((err as Error)?.message ?? err).slice(0, 400)}`,
+          read: false,
+        });
+      }
+    } catch { /* notification must not mask the original failure */ }
     return new Response('ok', { status: 200, headers: CORS });
   }
 });

@@ -141,7 +141,11 @@ const OperatorWithdrawals: React.FC<Props> = ({ lang, refreshTick }) => {
                   >
                     <Eye size={12} /> Detail
                   </button>
-                  {w.status === 'PENDING_L1' && (
+                  {/* FIX 2026-10-26 (cross-app audit #7): reject was gated to
+                      PENDING_L1 only, but the gateway's admin_reject_withdrawal
+                      accepts every PENDING_* state — an L2/L3-stuck request had
+                      no operator exit short of finance. Align with the server. */}
+                  {w.status.startsWith('PENDING') && (
                     <button
                       onClick={() => handleReject(w)}
                       className="flex-1 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white active:scale-95 transition-transform flex items-center justify-center gap-1"

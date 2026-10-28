@@ -137,9 +137,13 @@ export async function cancelMyOrder(orderId: string): Promise<SpPolicyOrder | nu
   return (data as SpPolicyOrder) ?? null;
 }
 
-export async function getAllOrders(): Promise<SpPolicyOrder[]> {
-  const { data, error } = await callGateway('admin_list_orders', { limit: 500 });
-  if (error) { console.error('getAllOrders:', error); return []; }
+export async function getAllOrders(limit = 500, throwOnError = false): Promise<SpPolicyOrder[]> {
+  const { data, error } = await callGateway('admin_list_orders', { limit });
+  if (error) {
+    console.error('getAllOrders:', error);
+    if (throwOnError) throw new Error(typeof error === 'string' ? error : 'Gagal memuat pesanan.');
+    return [];
+  }
   return (data ?? []) as SpPolicyOrder[];
 }
 
@@ -180,13 +184,17 @@ export async function getAdminStats(): Promise<AdminStats> {
   return (data as any) as AdminStats;
 }
 
-export async function getAdminPayments(limit = 200): Promise<Array<SpPayment & {
+export async function getAdminPayments(limit = 200, throwOnError = false): Promise<Array<SpPayment & {
   order_number?: string;
   client_name?: string;
   product_name?: string;
 }>> {
   const { data, error } = await callGateway('admin_list_payments', { limit });
-  if (error) { console.error('getAdminPayments:', error); return []; }
+  if (error) {
+    console.error('getAdminPayments:', error);
+    if (throwOnError) throw new Error(typeof error === 'string' ? error : 'Gagal memuat pembayaran.');
+    return [];
+  }
   return (data ?? []) as SpPayment[];
 }
 

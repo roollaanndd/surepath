@@ -102,14 +102,30 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         if (!params.withdrawal_id || !params.reason) {
           return json({ error: 'withdrawal_id, reason required' }, 400);
         }
-        const { data: wd, error: fetchErr } = await db.from('sp_withdrawals').select('agent_id, amount').eq('id', params.withdrawal_id).single();
+        // FIX 2026-10-25 (audit H1): status guard. This previously updated the
+        // row to REJECTED unconditionally — an APPROVED / PROCESSING / DISBURSED
+        // withdrawal could be "rejected" afterwards, and reverse_withdrawal
+        // would credit funds back to the wallet even though Xendit had already
+        // (or was about to) pay them out. Double payout. Only a withdrawal
+        // still awaiting approval may be rejected, and the update atomically
+        // claims one of those states so it cannot race admin_approve_withdrawal.
+        const PENDING_STATES = ['PENDING_L1', 'PENDING_L2', 'PENDING_L3'];
+        const { data: wd, error: fetchErr } = await db.from('sp_withdrawals')
+          .select('agent_id, amount, status').eq('id', params.withdrawal_id).single();
         if (fetchErr || !wd) return json({ error: 'Withdrawal not found' }, 404);
-        const { error: updErr } = await db.from('sp_withdrawals').update({
+        if (!PENDING_STATES.includes(String(wd.status))) {
+          return json({ error: `Cannot reject a withdrawal in status ${wd.status}; use the reconciliation flow` }, 409);
+        }
+        const { data: claimed, error: updErr } = await db.from('sp_withdrawals').update({
           status: 'REJECTED', rejected_by: caller.authId,
           rejected_at: new Date().toISOString(), rejection_reason: params.reason,
           updated_at: new Date().toISOString(),
-        }).eq('id', params.withdrawal_id);
+        }).eq('id', params.withdrawal_id)
+          .in('status', PENDING_STATES)
+          .select('id')
+          .maybeSingle();
         if (updErr) return json({ error: updErr.message }, 400);
+        if (!claimed) return json({ error: 'Withdrawal state changed, please retry' }, 409);
         await db.rpc('reverse_withdrawal', {
           p_withdrawal_id: params.withdrawal_id, p_agent_id: wd.agent_id,
           p_amount: wd.amount, p_reason: 'Penarikan ditolak: ' + String(params.reason),

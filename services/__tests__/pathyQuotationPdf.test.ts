@@ -63,6 +63,10 @@ describe('generator PDF', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
+  // jsPDF memuat font dan membangun dokumen dari nol. Saat seluruh suite
+  // berjalan paralel biaya itu melewati batas 5 detik bawaan Vitest (terukur
+  // ~5,4 dtk; 0,3 dtk saat diisolasi). Ini hanya melonggarkan waktu tunggu —
+  // assertion-nya tidak berubah.
   it('menghasilkan PDF dari slip hasil adapter', async () => {
     const { generateQuotationSlipPDF } = await import('../quotationSlipPdf');
     const slip = fromAgentQuote(PATHY_QUOTATION);

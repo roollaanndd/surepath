@@ -435,6 +435,14 @@ export interface SpInsurerProduct {
   insurer_name?: string;
   insurer_code?: string;
   insurer_logo_url?: string;
+  // PR #241 — metadata opsional untuk kartu pembanding insurer di wizard
+  // underwriting. Belum ada kolomnya di sp_insurer_products (migrasi belum
+  // dibuat), jadi UI memakai fallback ("Rating belum tersedia") saat null —
+  // tipe dideklarasikan agar konsumen type-safe, bukan (p as any).
+  rating?: number | null;
+  benefits?: string[];
+  advantages?: string[];
+  disadvantages?: string[];
 }
 
 export interface AvailableInsurerProductsResult {

@@ -1,5 +1,48 @@
 # SurePath — Changelog
 
+## v2.7.14 — 2026-10-28
+
+**Integrasi PR #241 ke main terbaru** (permintaan pemilik: "should be good
+if you can make it but update to the newest deployment so there will be no
+errors").
+
+- Isi inti PR #241 (perbandingan insurer + kontrol diskon berbasis komisi)
+  **sudah hidup di main** via sejarah full-portal redesign — tree pr-241
+  nyaris identik dengan main. Delta tersisa hanya satu berkas:
+  `VehicleUnderwritingWizard.tsx`, yang kini dibawa masuk (`ee24b55`).
+- **Pagar bisnis 25%** (title PR: "Enforce 25 percent combined commission
+  and discount ceiling"): rate komisi dasar dibatasi `min(0.25, …)`; diskon
+  maksimum efektif `max(0, min(configured, baseComm))` — diskon nasabah
+  selalu dibiayai dari komisi; premium untuk akuntansi insurer tetap utuh,
+  tampilan neto nasabah dipotong jumlah yang sama; panel diskon di wizard
+  memakai guardrail identik.
+- **Merk insurer + data perbandingan**: kartu insurer memakai
+  `InsurerLogo` / `INSURER_BRANDS` (latar merek per kode), rating ⭐5,
+  manfaat utama, kelebihan/kekurangan — semua opsional dengan fallback
+  ("Rating belum tersedia"), sebab kolom
+  rating/benefits/advantages/disadvantages **belum ada** di
+  `sp_insurer_products` (tidak ada migrasi). `SpInsurerProduct` kini
+  mendeklarasikan kolom itu opsional — type-safe, akses langsung tanpa
+  `p as any` (perbaikan tsc atas state awal PR).
+- **Ketahanan**: gagal muat daftar produk insurer kini tertangkap `.catch`
+  (kosong + log, tidak lagi spinner menggantung); deps effect menyertakan
+  `vehicleType`; state muat spinner + state kosong berbahasa Indonesia yang
+  menjelaskan kenapa daftar kosong (insurer aktif, kecocokan jenis/usia
+  kendaraan) dan apa yang perlu diperiksa admin (menu Mitra Asuransi +
+  pemetaan produk).
+
+**Checks:** tsc 0 · ESLint 0 error · vitest **410/410** · Playwright agent
+**6/6** · build+PWA ✓ · Android selaras (2.7.14, versionCode 47).
+
+**Catatan CI (pre-existing, BUKAN dari release ini):** job CI `unit-tests`
+gagal di main **sebelum** commit kita juga (`9c4f0b2`) — lokal 410/410
+hijau; diduga masalah lingkungan/waktu CI. Job **Deploy Edge Functions**
+gagal di step `supabase functions deploy` (secrets ADA — step guard lolos;
+penyebab pasti butuh log Actions yang butuh hak admin). Push kita mengubah
+`pathy-agent-proxy` (berkas baru dari merge main) → fungsi produksi bisa
+jadi **belum diperbarui**. Rekomendasi: re-run "Deploy Edge Functions" di
+tab Actions.
+
 ## v2.7.13 — 2026-10-28
 
 Gabungan `main` (redesign Admin #322–#326) ke branch + perbaikan dark/night
@@ -41,6 +84,39 @@ flaky-pass / 15 skip** · build+PWA ✓ 26 rute · `check:android` selaras
 (2.7.13, versionCode 46). Audit `npm audit` pasca-merge: 4 low severity di
 rantai build dev (workbox/vite-plugin-pwa via rollup) — diterima: dev-only,
 tidak ter-shipped, pantau di AGENTS.md.
+
+**Pass refinement UI/error-hardening (2026-10-28, lanjutan merge)**
+- Kode mati & hook: `successCount` yang di-increment tapi tak pernah dibaca
+  dihapus dari modal impor CSV (AdminViews); dep `useEffect` dipasang benar
+  (ClaimsAdminView, AdminLogin OAuth-callback via ref agar tetap sekali jalan);
+  `TierRequestsTab` kini menangkap error load (toast + berhenti loading) —
+  sebelumnya `.then` tanpa `.catch` meninggalkan spinner abadi saat gateway
+  gagal. `roleConfig.ts`: dua export tanpa pemakai (`ADMIN_WORKSPACE_ROLES`,
+  `isAdminWorkspaceRole`) dihapus; `WORKSPACE_BY_ROLE` menjadi privat.
+- Ikon admin nav baru (SurePathIcon): kunci artwork `review` (Antrean Review —
+  sebelumnya serial `shield` sama persis dengan Klaim), `tier` & `palette`
+  (menggantikan `spark` generik untuk tier_promo/portal_icons), serta
+  `insurers`/`b2b` ke artwork `bank` (sebelumnya `people` — tiga section
+  bersebelahan ikon identik). Matcher id-spesifik; tab id portal lain tidak
+  berubah.
+- Ikon insurer: kartu "Total Premi" diberi chip `Banknote` (satu-satunya kartu
+  Beranda tanpa ikon).
+- Transisi: momen masuk dashboard yang terkoordinasi — grid kartu KPI/banner
+  admin & Beranda insurer memakai `sp-stagger-cards` (relaks berurutan 40ms,
+  hormat `prefers-reduced-motion`), di atas `sp-page-enter` yang sudah ada.
+- Security/pen-test statis + dinamis: `check:functions` ✓ (22 fungsi, semua
+  punya sikap tertulis), `npm audit --omit=dev` 0, pola berbahaya 0 (tanpa
+  `eval`, tanpa `dangerouslySetInnerHTML`, tanpa secret keras di area
+  admin/insurer/src/services), semua `createObjectURL` di-`revokeObjectURL`,
+  token insurer tersimpan di sessionStorage (komentar usang "localStorage"
+  diperbaiki). e2e smoke lokal 5/5 tanpa overflow horizontal di 1440/390px
+  dan 0 error JS aplikasi (hanya DNS gagal karena env Supabase placeholder).
+- Detector Impeccable: warning "side-tab accent" (garis gradien 3px di kiri
+  tiap kartu admin) dihapus; `font-family: Inter !important` yang redundan
+  (sama dengan tailwind `fontFamily.sans`) dilepas. Advisory ambien grid di
+  `.sp-modern-app` dipertahankan sebagai pilihan desain sengaja.
+
+
 
 ## v2.7.12 — 2026-10-28
 

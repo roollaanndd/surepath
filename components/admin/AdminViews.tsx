@@ -30,6 +30,7 @@ import {
 import { useToast } from '../ui';
 import { AdminEmptyState, AdminErrorBanner } from './adminUI';
 import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
+import { ADMIN_THEME_KEY, readThemeSchedule, storeThemeSchedule, themeLabel as adminThemeLabel, type AdminThemeMode } from './themeMode';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
@@ -776,6 +777,8 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
 
   const handleSave = () => {
     localStorage.setItem(SP_ROLE_PERMISSIONS_KEY, JSON.stringify(perms));
+    // Sidebar shell membaca ulang izin secara live — tanpa reload.
+    window.dispatchEvent(new Event('sp-admin-perms-changed'));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -855,6 +858,33 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   const toast = useToast();
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
+
+  // Preferensi tampilan admin — tersimpan lokal per browser, langsung
+  // berlaku di shell tanpa reload lewat event 'sp-admin-theme-changed'.
+  const initialSchedule = readThemeSchedule();
+  const [themePref, setThemePref] = useState<AdminThemeMode>(() => {
+    try {
+      const saved = localStorage.getItem(ADMIN_THEME_KEY);
+      return saved === 'light' || saved === 'dark' ? saved : 'auto';
+    } catch { return 'auto'; }
+  });
+  const [schedStart, setSchedStart] = useState<number>(initialSchedule.start);
+  const [schedEnd, setSchedEnd] = useState<number>(initialSchedule.end);
+
+  const applyThemePref = (mode: AdminThemeMode) => {
+    setThemePref(mode);
+    try { localStorage.setItem(ADMIN_THEME_KEY, mode); } catch { /* storage blocked */ }
+    window.dispatchEvent(new Event('sp-admin-theme-changed'));
+  };
+  const applySchedule = (nextStart: number, nextEnd: number) => {
+    storeThemeSchedule({ start: nextStart, end: nextEnd });
+    window.dispatchEvent(new Event('sp-admin-theme-changed'));
+  };
+  const clampHour = (v: string): number => {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(23, Math.max(0, n));
+  };
 
   useEffect(() => {
     db.customProducts.toArray().then(setCustomProducts).catch(e => {
@@ -956,6 +986,63 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
           </Card>
 
           <BackupView />
+       </div>
+
+       {/* Preferensi tampilan — tema + jadwal gelap otomatis, live-apply. */}
+       <div className="grid gap-4 mt-8">
+          <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Preferensi Tampilan</h3>
+          <Card className="p-6 space-y-5">
+            <div>
+              <p className="font-black uppercase text-sm">Mode Tema CMS</p>
+              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">
+                Sekarang: {adminThemeLabel(themePref)} — perubahan langsung berlaku tanpa reload.
+              </p>
+              <div className="flex gap-2 mt-3">
+                {(['auto', 'light', 'dark'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => applyThemePref(m)}
+                    className={`px-5 py-2.5 rounded-2xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${
+                      themePref === m
+                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/20 shadow-lg'
+                        : 'bg-ds-card2 text-ds-ink3 border-ds-border hover:border-emerald-500/50'
+                    }`}
+                  >
+                    {m === 'auto' ? 'Otomatis' : m === 'light' ? 'Terang' : 'Gelap'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="font-black uppercase text-sm">Jadwal Gelap Otomatis</p>
+              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">
+                Aktif saat mode Otomatis — CMS gelap di luar jam kerja.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <input
+                  type="number" min={0} max={23}
+                  value={schedStart}
+                  onChange={e => { const v = clampHour(e.target.value); setSchedStart(v); applySchedule(v, schedEnd); }}
+                  className="w-20 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  aria-label="Jam mulai gelap"
+                />
+                <span className="text-xs font-bold text-ds-ink3">sampai</span>
+                <input
+                  type="number" min={0} max={23}
+                  value={schedEnd}
+                  onChange={e => { const v = clampHour(e.target.value); setSchedEnd(v); applySchedule(schedStart, v); }}
+                  className="w-20 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  aria-label="Jam kembali terang"
+                />
+                <span className="text-xs font-bold text-ds-ink3">jam lokal perangkat</span>
+              </div>
+              {schedStart === schedEnd && (
+                <p className="text-xs font-bold text-amber-600 mt-2">
+                  Jam mulai dan selesai tidak boleh sama — jadwal sementara memakai default 18–6.
+                </p>
+              )}
+            </div>
+          </Card>
        </div>
 
        <div className="grid gap-4 mt-8">

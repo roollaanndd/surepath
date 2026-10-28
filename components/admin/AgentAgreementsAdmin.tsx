@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ShieldCheck, Search, FileText } from 'lucide-react';
-import { getAllAgreements, SpAgentAgreement } from '../../services/supabaseService';
+import { RefreshCw, Download, ShieldCheck, Search, FileText, Archive, FileWarning } from 'lucide-react';
+import { getAllAgreements, callGateway, SpAgentAgreement } from '../../services/supabaseService';
 import { generateAgreementPDF } from '../../services/agreementPdf';
 
 type Row = SpAgentAgreement & { agent_email?: string; agent_phone?: string };
@@ -31,6 +31,22 @@ const AgentAgreementsAdmin: React.FC = () => {
   });
 
   const download = async (r: Row) => {
+    // Preferensi: salinan PDF yang diarsipkan saat persetujuan (audit 28 Okt
+    // 2026). Signed URL diterbitkan gateway setelah validasi admin. Fallback:
+    // bangun ulang dari data e-consent untuk arsip lama.
+    if (r.pdf_path) {
+      const { data, error } = await callGateway('documents_signed_url', {
+        bucket: r.pdf_bucket ?? 'agent-docs',
+        path: r.pdf_path,
+        expires_in: 300,
+      });
+      const signedUrl = (data as any)?.signed_url as string | undefined;
+      if (!error && signedUrl) {
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      console.warn('documents_signed_url gagal, fallback regenerasi:', error);
+    }
     await generateAgreementPDF({
       agreementNo: r.agreement_no,
       docVersion: r.doc_version,
@@ -50,7 +66,7 @@ const AgentAgreementsAdmin: React.FC = () => {
             <ShieldCheck size={22} className="text-emerald-400" /> Perjanjian Mitra
           </h2>
           <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
-            {rows.length} mitra menyetujui · audit legal
+            {rows.length} mitra menyetujui · {rows.filter(r => r.pdf_path).length} PDF terarsip · audit legal
           </p>
         </div>
         <button onClick={load}
@@ -108,9 +124,19 @@ const AgentAgreementsAdmin: React.FC = () => {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => download(r)}
-                      className="p-1.5 rounded-lg bg-ds-card2 text-ds-ink3 hover:text-emerald-400 hover:bg-ds-card2 transition-colors" title="Unduh PDF">
-                      <Download size={14} />
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        r.pdf_path
+                          ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                          : 'bg-ds-card2 text-ds-ink3 hover:text-amber-400 hover:bg-ds-card2'
+                      }`}
+                      title={r.pdf_path ? 'Unduh PDF terarsip' : 'Belum ada arsip — PDF akan dibuat ulang dari data e-consent'}>
+                      {r.pdf_path ? <Download size={14} /> : <FileWarning size={14} />}
                     </button>
+                    {r.pdf_path && (
+                      <span className="ml-1.5 inline-flex items-center gap-1 text-[0.55rem] font-black uppercase tracking-widest text-emerald-400">
+                        <Archive size={9} /> Arsip
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

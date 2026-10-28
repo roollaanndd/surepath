@@ -121,6 +121,34 @@ export async function listInsurerPayments(token: string): Promise<InsurerPayment
   return data?.payments ?? [];
 }
 
+export interface InsurerOrderDocument {
+  id: string;
+  doc_type: string;
+  bucket: string;
+  path: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  meta: Record<string, any> | null;
+  created_at: string;
+  signed_url: string | null;
+}
+
+/**
+ * Dokumen pelengkap pengajuan (STNK, foto survey, laporan audit foto) untuk
+ * satu order milik insurer ini. Signed URL diterbitkan server (TTL 300 s).
+ */
+export async function listInsurerOrderDocuments(
+  token: string,
+  orderNumber: string,
+): Promise<InsurerOrderDocument[]> {
+  const { data, error } = await callGatewayToken<{ order_number: string; documents: InsurerOrderDocument[] }>(
+    'insurer_list_order_documents',
+    { token, order_number: orderNumber },
+  );
+  if (error) throw new Error(error);
+  return data?.documents ?? [];
+}
+
 export async function uploadInsurerPolicy(
   token: string,
   orderId: string,

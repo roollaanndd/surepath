@@ -581,6 +581,52 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         return json({ data: { payments: enrichedPayments } });
       }
 
+    // ── Dokumen pengajuan untuk insurer (token-authed) ──────────────────────
+    // Audit 28 Okt 2026: insurer sebelumnya hanya melihat vehicle_image_url
+    // (yang juga tak pernah terisi). Kini STNK, foto survey, dan laporan audit
+    // foto survey tersedia sebagai dokumen pelengkap untuk keputusan
+    // underwriting — signed URL diterbitkan server (service_role) sehingga
+    // tidak perlu policy storage untuk insurer.
+    case 'insurer_list_order_documents': {
+        const token = String(params.token ?? '');
+        const orderNumber = String(params.order_number ?? '').trim();
+        if (!token || !orderNumber) return json({ error: 'token, order_number required' }, 400);
+        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+          .select('id, insurer_id, expires_at')
+          .eq('token', token)
+          .maybeSingle();
+        if (authErr) return json({ error: authErr.message }, 400);
+        if (!authToken) return json({ error: 'Invalid token' }, 404);
+        if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
+        // Order wajib milik insurer ini
+        const { data: order, error: ordErr } = await db.from('sp_policy_orders')
+          .select('id, order_number, insurer_id, vehicle_details')
+          .eq('order_number', orderNumber)
+          .eq('insurer_id', authToken.insurer_id)
+          .maybeSingle();
+        if (ordErr) return json({ error: ordErr.message }, 400);
+        if (!order) return json({ error: 'Order not found or not assigned to your insurer' }, 404);
+
+        const { data: docs, error: docErr } = await db.from('sp_documents')
+          .select('id, doc_type, bucket, path, mime_type, size_bytes, meta, created_at')
+          .eq('entity_type', 'policy_order')
+          .eq('entity_id', String(order.order_number ?? orderNumber))
+          .order('created_at', { ascending: true });
+        if (docErr) return json({ error: docErr.message }, 400);
+
+        // Tandatangani setiap objek privat server-side (TTL 300 detik).
+        const withUrls = await Promise.all((docs ?? []).map(async (d: any) => {
+          let signedUrl: string | null = null;
+          if (d.bucket && d.path) {
+            const { data: sd } = await db.storage.from(d.bucket).createSignedUrl(d.path, 300);
+            signedUrl = sd?.signedUrl ?? null;
+          }
+          return { ...d, signed_url: signedUrl };
+        }));
+
+        return json({ data: { order_number: order.order_number, documents: withUrls } });
+      }
+
     case 'insurer_upload_policy': {
         const token = String(params.token ?? '');
         const orderId = String(params.order_id ?? '');

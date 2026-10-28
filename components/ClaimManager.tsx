@@ -7,6 +7,7 @@ import { SmartProcessingView } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { Badge } from './shared/UI';
 import { submitClaim, uploadClaimPhoto, analyzeClaimPhotos, ClaimPhotoAnalysisResult } from '../services/supabaseService';
+import { dataUrlToBlob } from '../services/orderDocuments';
 import ClaimSensePanel from './shared/ClaimSensePanel';
 import { consumeClaimPrefill } from '../services/claimHandoff';
 
@@ -248,7 +249,24 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
 
     try {
         const amount = claimType === 'AUTO' ? (claimResult?.totalEstimasi || 0) : (healthResult?.totalAmount || 0);
-        const photosForRecord = claimType === 'AUTO' ? photoUrls : [photoBase64];
+        // FIX 2026-10-28 (audit dokumen): struk klaim kesehatan dulu disimpan
+        // sebagai base64 multi-MB di kolom jsonb sp_claims.photos — membengkakkan
+        // DB dan lambat dirender. Kini diunggah ke bucket claim-photos dan yang
+        // tersimpan hanya URL publik; base64 jadi fallback bila unggahan gagal.
+        let photosForRecord: string[];
+        if (claimType === 'AUTO') {
+          photosForRecord = photoUrls;
+        } else {
+          photosForRecord = photoBase64 ? [photoBase64] : [];
+          try {
+            const blob = dataUrlToBlob(photoBase64);
+            const file = new File([blob], 'receipt.jpg', { type: blob.type || 'image/jpeg' });
+            const url = await uploadClaimPhoto(file, currentUser.id, photoUrls.length);
+            if (url) photosForRecord = [url];
+          } catch (e) {
+            console.warn('[claim] unggah struk gagal, fallback base64:', e);
+          }
+        }
 
         const newClaim: Claim = {
             userId: currentUser.id,

@@ -7,7 +7,7 @@ import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
-import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, type InsurerOrder } from '../../services/insurerService';
+import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, listInsurerOrderDocuments, type InsurerOrder, type InsurerOrderDocument } from '../../services/insurerService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import InsurerAIPanel from '../shared/InsurerAIPanel';
@@ -71,6 +71,10 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [insurerName, setInsurerName] = useState('');
   const [downloadingSlip, setDownloadingSlip] = useState(false);
+  // Dokumen pelengkap pengajuan (audit 28 Okt 2026): STNK, foto survey,
+  // laporan audit foto — signed URL server-side, TTL 5 menit.
+  const [orderDocs, setOrderDocs] = useState<InsurerOrderDocument[]>([]);
+  const [orderDocsLoading, setOrderDocsLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,6 +91,18 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
   }, [authToken, toast]);
 
   useEffect(() => { load(); }, [load, refreshTick]);
+
+  // Ambil dokumen pelengkap saat detail order dibuka
+  useEffect(() => {
+    if (!selectedOrder?.order_number) { setOrderDocs([]); return; }
+    let cancelled = false;
+    setOrderDocsLoading(true);
+    listInsurerOrderDocuments(authToken, selectedOrder.order_number)
+      .then(docs => { if (!cancelled) setOrderDocs(docs); })
+      .catch(e => { if (!cancelled) { console.warn('listInsurerOrderDocuments:', e); setOrderDocs([]); } })
+      .finally(() => { if (!cancelled) setOrderDocsLoading(false); });
+    return () => { cancelled = true; };
+  }, [authToken, selectedOrder?.order_number]);
 
   const filtered = allOrders.filter(o => {
     const matchStatus = activeStatus === 'ALL' || o.status === activeStatus;
@@ -459,6 +475,53 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         </div>
                         <ExternalLink size={14} className={SHEET_TEXT_MUTED} />
                       </a>
+                    )}
+                  </Section>
+
+                  {/* Dokumen pelengkap: STNK, foto survey, laporan audit (audit 28 Okt 2026) */}
+                  <Section icon={<FileText size={14} />} title="Dokumen Pelengkap Pengajuan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                    {orderDocsLoading ? (
+                      <div className={`p-4 rounded-xl text-center text-xs ${SHEET_INSET} ${SHEET_TEXT_MUTED}`}>
+                        Memuat dokumen pengajuan…
+                      </div>
+                    ) : orderDocs.length === 0 ? (
+                      <div className={`p-4 rounded-xl text-center text-xs ${SHEET_INSET} ${SHEET_TEXT_MUTED}`}>
+                        Belum ada dokumen pelengkap terdaftar untuk order ini.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {orderDocs.map((d) => {
+                          const label = d.doc_type === 'STNK'
+                            ? 'Foto STNK'
+                            : d.doc_type === 'SURVEY_AUDIT_REPORT'
+                            ? 'Laporan Hasil Audit Foto Survey (PDF)'
+                            : d.doc_type === 'SURVEY_PHOTO'
+                            ? `Foto Survey — ${d.meta?.slot ?? ''}`
+                            : d.doc_type === 'VEHICLE_PHOTO'
+                            ? 'Foto Kendaraan'
+                            : d.doc_type;
+                          const isReport = d.doc_type === 'SURVEY_AUDIT_REPORT';
+                          return (
+                            <button
+                              key={d.id}
+                              disabled={!d.signed_url}
+                              onClick={() => d.signed_url && setLightboxUrl(d.signed_url)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left ${SHEET_BORDER} ${SHEET_INSET} active:scale-[0.98] transition-transform disabled:opacity-50`}
+                            >
+                              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isReport ? 'bg-cyan-100 dark:bg-cyan-950/40' : 'bg-slate-100 dark:bg-slate-900/60'}`}>
+                                <FileText size={16} className={isReport ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500 dark:text-slate-400'} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-bold truncate ${SHEET_TEXT}`}>{label}</p>
+                                <p className={`text-2xs truncate ${SHEET_TEXT_MUTED}`}>
+                                  {d.signed_url ? 'Klik untuk melihat / mengunduh (tautan 5 menit)' : 'Tautan tidak tersedia'}
+                                </p>
+                              </div>
+                              <ExternalLink size={14} className={SHEET_TEXT_MUTED} />
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
                   </Section>
 

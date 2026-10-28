@@ -47,7 +47,7 @@ async function loadLogo(): Promise<string | null> {
 
 const maskKtp = (k: string) => (k.length === 16 ? `${k.slice(0, 6)}******${k.slice(12)}` : k);
 
-export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
+export async function buildAgreementPdfBlob(d: AgreementPDFData): Promise<Blob> {
   const doc = new (await getJsPDF())({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
@@ -150,5 +150,18 @@ export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
   doc.text(disc, mL, y);
 
   drawFooter();
-  doc.save(`SurePath-Perjanjian-Mitra-${d.agreementNo}.pdf`);
+  return doc.output('blob');
+}
+
+/** Unduh PDF perjanjian ke perangkat (perilaku lama, kini memakai builder). */
+export async function generateAgreementPDF(d: AgreementPDFData): Promise<void> {
+  const blob = await buildAgreementPdfBlob(d);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `SurePath-Perjanjian-Mitra-${d.agreementNo}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }

@@ -18,6 +18,10 @@ export interface SpAgentAgreement {
   accepted_at: string;
   user_agent?: string | null;
   created_at?: string;
+  // Arsip PDF (audit 28 Okt 2026) — diunggah ke agent-docs saat persetujuan.
+  pdf_bucket?: string | null;
+  pdf_path?: string | null;
+  pdf_url?: string | null;
 }
 
 // Returns the current agent's signed agreement for the active doc version, or null.
@@ -49,6 +53,24 @@ export async function acceptAgreement(
   }
   if (!data) return { rec: null, error: { code: 'UNKNOWN', message: 'No data returned' } };
   return { rec: data as SpAgentAgreement, error: null };
+}
+
+// Arsipkan PDF perjanjian hasil generate klien ke bucket agent-docs lalu
+// daftarkan path-nya pada baris e-consent (audit 28 Okt 2026: sebelumnya PDF
+// hanya ada di browser agent dan tidak pernah tersimpan server-side).
+// Kegagalan arsip tidak boleh menggagalkan persetujuan — e-consent tetap sah.
+export async function attachAgreementPdf(
+  agreementId: string,
+  pdf: { bucket: string; path: string; url: string | null },
+): Promise<boolean> {
+  const { error } = await callGateway('agreements_attach_pdf', {
+    agreement_id: agreementId,
+    bucket: pdf.bucket,
+    path: pdf.path,
+    url: pdf.url,
+  });
+  if (error) { console.warn('attachAgreementPdf:', error); return false; }
+  return true;
 }
 
 // Admin/CMS: list all signed agreements with agent contact info for audit.

@@ -409,6 +409,12 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           insurer_id:        p.insurer_id        ? String(p.insurer_id)                    : null,
           addons:            p.addons            ? p.addons                                : null,
           ai_findings:       p.ai_findings       ? p.ai_findings                           : null,
+          // FIX 2026-10-28 (audit dokumen): ai_score/ai_verdict selama ini
+          // dikirim wizard tapi dibuang whitelist — InsuranceReviewPage &
+          // AgentOrderStatus membaca order.ai_score dan selalu kosong.
+          ai_score:          p.ai_score != null && Number.isFinite(Number(p.ai_score))
+                             ? Number(p.ai_score) : null,
+          ai_verdict:        p.ai_verdict        ? String(p.ai_verdict).slice(0, 30)       : null,
           agent_code:        p.agent_code        ? String(p.agent_code).slice(0, 50)      : null,
           // commission_amount, coin_reward, discount_rate, discount_amount are set below (server-side)
           // policy_number, policy_document_url, reviewed_at, issued_at, client_id — NEVER accepted from client

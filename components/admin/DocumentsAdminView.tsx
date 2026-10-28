@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  FileText, Image, User, Eye, Filter, Search, FileImage, Shield,
+  FileText, Image, User, Eye, Filter, Search, FileImage, Shield, ClipboardCheck, ScrollText,
 } from 'lucide-react';
-import { getAllOrders, callGateway, supabase, resolveDocumentUrl } from '../../services/supabaseService';
+import { getAllOrders, getAllAgreements, callGateway, supabase, resolveDocumentUrl } from '../../services/supabaseService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type DocType = 'policy' | 'vehicle' | 'ktp' | 'claim';
+type DocType = 'policy' | 'vehicle' | 'stnk' | 'survey-report' | 'ktp' | 'claim' | 'agreement';
 
 interface DocItem {
   id: string;
@@ -24,16 +24,22 @@ type FilterTab = 'all' | DocType;
 const TYPE_META: Record<DocType, { label: string; badgeCls: string; icon: React.ElementType }> = {
   policy:  { label: 'Policy Doc',      badgeCls: 'bg-blue-500/15 text-blue-400 border-blue-500/20',   icon: FileText  },
   vehicle: { label: 'Vehicle Image',   badgeCls: 'bg-green-500/15 text-green-400 border-green-500/20', icon: Image     },
+  stnk:    { label: 'STNK',            badgeCls: 'bg-violet-500/15 text-violet-400 border-violet-500/20', icon: FileImage },
+  'survey-report': { label: 'Laporan Audit Survey', badgeCls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20', icon: ClipboardCheck },
   ktp:     { label: 'KTP',             badgeCls: 'bg-amber-500/15 text-amber-400 border-amber-500/20', icon: User      },
   claim:   { label: 'Claim Photo',     badgeCls: 'bg-rose-500/15 text-rose-400 border-rose-500/20',    icon: Shield    },
+  agreement: { label: 'Perjanjian Mitra', badgeCls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', icon: ScrollText },
 };
 
 const FILTER_TABS: { id: FilterTab; label: string }[] = [
-  { id: 'all',     label: 'Semua'          },
-  { id: 'policy',  label: 'Policy Docs'    },
-  { id: 'vehicle', label: 'Vehicle Images' },
-  { id: 'ktp',     label: 'KTP'            },
-  { id: 'claim',   label: 'Claim Photos'   },
+  { id: 'all',            label: 'Semua'             },
+  { id: 'policy',         label: 'Policy Docs'       },
+  { id: 'vehicle',        label: 'Foto Kendaraan'    },
+  { id: 'stnk',           label: 'STNK'              },
+  { id: 'survey-report',  label: 'Laporan Audit'     },
+  { id: 'ktp',            label: 'KTP'               },
+  { id: 'claim',          label: 'Claim Photos'      },
+  { id: 'agreement',      label: 'Perjanjian'        },
 ];
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
@@ -135,10 +141,11 @@ const DocumentsAdminView: React.FC = () => {
     const fetchDocs = async () => {
       setLoading(true);
 
-      const [ordersResult, usersResult, claimsResult] = await Promise.allSettled([
+      const [ordersResult, usersResult, claimsResult, agreementsResult] = await Promise.allSettled([
         getAllOrders(),
         callGateway('admin_list_users', {}),
         supabase.from('sp_claims').select('*').order('created_at', { ascending: false }),
+        getAllAgreements(),
       ]);
 
       if (cancelled) return;
@@ -174,22 +181,33 @@ const DocumentsAdminView: React.FC = () => {
           });
         }
 
-        // vehicle_details may have stnk_url or survey_photos
+        // vehicle_details may have stnk_url, survey_photos, survey_report_url
+        // (ditulis data-gateway orders_attach_documents sejak 28 Okt 2026).
         if (o.vehicle_details && typeof o.vehicle_details === 'object') {
           const vd = o.vehicle_details as Record<string, any>;
           if (vd.stnk_url && typeof vd.stnk_url === 'string') {
             collected.push({
               id: `order-stnk-${o.id}`,
-              type: 'vehicle',
+              type: 'stnk',
               url: vd.stnk_url,
               ...base,
             });
           }
+          if (vd.survey_report_url && typeof vd.survey_report_url === 'string') {
+            collected.push({
+              id: `order-survey-report-${o.id}`,
+              type: 'survey-report',
+              url: vd.survey_report_url,
+              isPdf: true,
+              ...base,
+            });
+          }
           if (Array.isArray(vd.survey_photos)) {
-            vd.survey_photos.forEach((url: string, idx: number) => {
+            vd.survey_photos.forEach((p: any, idx: number) => {
+              const url = typeof p === 'string' ? p : p?.url;
               if (url) {
                 collected.push({
-                  id: `order-survey-${o.id}-${idx}`,
+                  id: `order-survey-${o.id}-${p?.slot ?? idx}`,
                   type: 'vehicle',
                   url,
                   ...base,
@@ -245,6 +263,23 @@ const DocumentsAdminView: React.FC = () => {
         }
       }
 
+      // ── Perjanjian mitra: PDF terarsip (agent-docs) ──────────────────────────
+      if (agreementsResult.status === 'fulfilled') {
+        for (const a of agreementsResult.value) {
+          if (!a.pdf_path) continue;
+          collected.push({
+            id: `agreement-pdf-${a.id}`,
+            type: 'agreement',
+            url: `/storage/v1/object/${a.pdf_bucket ?? 'agent-docs'}/${a.pdf_path}`,
+            ownerName: a.full_name,
+            ref: a.agreement_no,
+            status: 'ACCEPTED',
+            date: a.accepted_at ?? '',
+            isPdf: true,
+          });
+        }
+      }
+
       // policy/ktp docs live in private buckets — swap for signed URLs before
       // rendering; still-public buckets (vehicle/claim photos) pass through as-is.
       const resolved = await Promise.all(
@@ -277,8 +312,11 @@ const DocumentsAdminView: React.FC = () => {
   const counts = useMemo(() => ({
     policy:  docs.filter(d => d.type === 'policy').length,
     vehicle: docs.filter(d => d.type === 'vehicle').length,
+    stnk:    docs.filter(d => d.type === 'stnk').length,
+    'survey-report': docs.filter(d => d.type === 'survey-report').length,
     ktp:     docs.filter(d => d.type === 'ktp').length,
     claim:   docs.filter(d => d.type === 'claim').length,
+    agreement: docs.filter(d => d.type === 'agreement').length,
   }), [docs]);
 
   return (
@@ -297,10 +335,13 @@ const DocumentsAdminView: React.FC = () => {
         {!loading && (
           <div className="flex flex-wrap gap-2 mt-3">
             {[
-              { label: 'Policy Docs',     count: counts.policy,  cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20'   },
-              { label: 'Vehicle Images',  count: counts.vehicle, cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
-              { label: 'KTP',             count: counts.ktp,     cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-              { label: 'Claim Photos',    count: counts.claim,   cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20'    },
+              { label: 'Policy Docs',        count: counts.policy,  cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20'   },
+              { label: 'Foto Kendaraan',     count: counts.vehicle, cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+              { label: 'STNK',               count: counts.stnk,    cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+              { label: 'Laporan Audit',      count: counts['survey-report'], cls: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+              { label: 'KTP',                count: counts.ktp,     cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+              { label: 'Claim Photos',       count: counts.claim,   cls: 'bg-rose-500/10 text-rose-400 border-rose-500/20'    },
+              { label: 'Perjanjian',         count: counts.agreement, cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
             ].map(chip => (
               <span key={chip.label} className={`text-[0.55rem] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${chip.cls}`}>
                 {chip.count} {chip.label}

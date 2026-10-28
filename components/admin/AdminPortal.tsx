@@ -2,12 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
 import {
-  LayoutDashboard, Users, Settings, LogOut, Search,
-  Activity, Menu, ShieldAlert, ClipboardCheck,
-  TrendingUp, Bell, CheckCircle,
-  Coins, DollarSign, Package, Building2, Car, ArrowLeft,
-  Monitor, X, Bot, Upload, Loader2, CreditCard, Banknote, FileEdit, Tag, FileImage, RefreshCw, ShieldCheck, Gauge, MessageSquare,
-  PanelLeftClose, PanelLeftOpen, UserPlus, CornerDownLeft, Sun, Moon, Clock,
+  LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw,
+  PanelLeftClose, PanelLeftOpen, CornerDownLeft, Sun, Moon, Clock,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -48,7 +44,7 @@ import { getAdminStats, type AdminStats, uploadLogoImage, getOnlineUsers, type O
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
-import { buildVisibleNav, groupForSection, sectionForLeaf } from './navigation';
+import { buildVisibleNav, groupForSection, sectionForLeaf, ADMIN_MENU_ITEMS as MENU_ITEMS } from './navigation';
 import { ADMIN_THEME_KEY, nextThemeMode, resolveAdminDark, themeLabel as modeLabel, type AdminThemeMode } from './themeMode';
 // Workspace dashboards per peran (fitur branch redesign — role workspaces):
 // peran tertentu memperoleh dashboard khusus menggantikan DashboardView umum.
@@ -68,66 +64,9 @@ const AdminViewLoader = () => (
   </div>
 );
 
-// ─── Menu definition ─────────────────────────────────────────────────────────
-const ALL_ROLES = Object.values(UserRole);
-
-type MenuItem =
-  | { id: string; isSeparator: true; groupLabel: string; roles: UserRole[] }
-  | { id: string; isSeparator?: false; label: string; icon: React.ElementType; roles: UserRole[] };
-
-const MENU_ITEMS: MenuItem[] = [
-  // OVERVIEW
-  { id: '_sep1', isSeparator: true, groupLabel: 'Overview',           roles: ALL_ROLES },
-  { id: 'dashboard',        label: 'Dashboard',          icon: LayoutDashboard, roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
-  { id: 'ops_console',      label: 'Konsol Operasi',     icon: Gauge,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
-  { id: 'analytics',        label: 'Analytics',          icon: TrendingUp,      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
-  // NASABAH & TRANSAKSI
-  // Menu cleanup 2026-10-26 (before→after map in the redesign report):
-  //  - 'users' (BizAdminView) removed — duplicate directory; its partner
-  //    leaderboard now lives as the "Partner Aktif" tab of Kelola Akun.
-  //  - 'transactions' (LedgerView) removed — a third read-only aggregation of
-  //    data already managed in Pembayaran, Komisi and Penarikan.
-  //  - 'reports' merged into 'financial' as its "Laporan Periode" tab.
-  { id: '_sep2', isSeparator: true, groupLabel: 'Nasabah & Transaksi', roles: ALL_ROLES },
-  { id: 'user_mgmt',        label: 'Pengguna & Akses',   icon: Users,           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'payments',         label: 'Pembayaran Xendit',  icon: CreditCard,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-  { id: 'withdrawals',      label: 'Penarikan Mitra',    icon: Banknote,        roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
-  // POLIS & KLAIM
-  //  - 'inventory' (honest "module not connected" stub) removed from nav — a
-  //    dead-end menu item; the component stays for future re-wiring.
-  { id: '_sep3', isSeparator: true, groupLabel: 'Polis & Klaim',      roles: ALL_ROLES },
-  { id: 'policy_orders',    label: 'Pesanan Polis',       icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'approvals',        label: 'Antrean Review',      icon: ClipboardCheck,  roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'claims_admin',     label: 'Antrean Klaim',       icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'endorsements',     label: 'Endorsement',         icon: FileEdit,        roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  { id: 'documents',        label: 'Dokumen',             icon: FileImage,       roles: [UserRole.MASTER_ADMIN, UserRole.INSURANCE_ADMIN, UserRole.ADMIN] },
-  // MITRA & KOMISI
-  { id: '_sep4', isSeparator: true, groupLabel: 'Mitra & Komisi',     roles: ALL_ROLES },
-  { id: 'agents',           label: 'Manajemen Mitra',     icon: UserPlus,        roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'agent_agreements', label: 'Perjanjian Mitra',    icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'commission_ledger',label: 'Komisi',              icon: Coins,           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-  { id: 'b2b',              label: 'B2B',                 icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
-  // PRODUK & ASURANSI
-  { id: '_sep5', isSeparator: true, groupLabel: 'Produk & Asuransi',  roles: ALL_ROLES },
-  { id: 'product_config',   label: 'Produk',              icon: Package,         roles: [UserRole.MASTER_ADMIN] },
-  { id: 'tier_promo',       label: 'Tier & Promo',        icon: Tag,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
-  { id: 'insurers',         label: 'Perusahaan Asuransi', icon: Building2,       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'ojk_rates',        label: 'Rate OJK',            icon: ShieldCheck,     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
-  // 'financial' absorbs the former 'reports' menu; ADMIN gains access to match
-  // the reports audience it replaces.
-  { id: 'financial',        label: 'Keuangan & Laporan',  icon: DollarSign,      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
-  // PLATFORM
-  { id: '_sep6', isSeparator: true, groupLabel: 'Platform',           roles: ALL_ROLES },
-  { id: 'vehicle_pricelist',label: 'Database Kendaraan',  icon: Car,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'website_editor',   label: 'Editor Website',      icon: Monitor,         roles: [UserRole.MASTER_ADMIN] },
-  { id: 'portal_icons',     label: 'Icon Manager',         icon: FileImage,       roles: [UserRole.MASTER_ADMIN] },
-  { id: 'ai_admin',         label: 'AI Admin Agent',      icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
-  { id: 'ai_finance',       label: 'AI Finance Agent',    icon: Bot,             roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
-  { id: 'pathy_logs',       label: 'Rekaman Pathy',       icon: MessageSquare,   roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'activity_log',     label: 'Jejak Aktivitas',     icon: Activity,        roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
-  { id: 'security',         label: 'Keamanan',            icon: ShieldAlert,     roles: [UserRole.MASTER_ADMIN] },
-  { id: 'settings',         label: 'Pengaturan',          icon: Settings,        roles: [UserRole.MASTER_ADMIN] },
-];
+// ─── Menu definition ────────────────────────────────────────────────────────
+// MENU_ITEMS kini diimpor dari ./navigation (ADMIN_MENU_ITEMS) — satu sumber
+// kebenaran bersama dengan matriks izin di Pengaturan (anti-drift).
 
 const formatRole = (role: string) =>
   role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -273,10 +212,12 @@ const AdminPortal = ({
   const [syncState, setSyncState] = useState<'ok' | 'partial' | 'syncing'>('syncing');
   // ── Revamp 2026-10-25: interactive shell upgrades ────────────────────────
   // (a) Collapsible desktop sidebar — icon rail for power users, persisted.
-  const [rail, setRail] = useState(() => localStorage.getItem('SP_ADMIN_RAIL') === '1');
+  const [rail, setRail] = useState(() => {
+    try { return localStorage.getItem('SP_ADMIN_RAIL') === '1'; } catch { return false; }
+  });
   const toggleRail = useCallback(() => {
     setRail(prev => {
-      localStorage.setItem('SP_ADMIN_RAIL', prev ? '0' : '1');
+      try { localStorage.setItem('SP_ADMIN_RAIL', prev ? '0' : '1'); } catch { /* storage blocked */ }
       return !prev;
     });
   }, []);
@@ -361,6 +302,8 @@ const AdminPortal = ({
         setPaletteOpen(v => !v);
       } else if (e.key === 'Escape') {
         setPaletteOpen(false);
+        setShowNotifications(false);
+        setMobileOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -368,6 +311,9 @@ const AdminPortal = ({
   }, []);
 
   // ── Role-based menu with localStorage overrides ────────────────────────────
+  // Izin tersimpan kosong diperlakukan salah konfigurasi (bukan "tidak boleh
+  // melihat apa-apa") — kalau tidak, satu klik salah di matriks izin mengunci
+  // seluruh role dari menu DAN dari halaman Pengaturan yang bisa memperbaikinya.
   const filteredMenu = (() => {
     if (userRole === UserRole.MASTER_ADMIN) return MENU_ITEMS.filter(m => m.roles.includes(userRole));
     try {
@@ -375,7 +321,7 @@ const AdminPortal = ({
       if (saved) {
         const perms: Record<string, string[]> = JSON.parse(saved);
         const allowed = perms[userRole] ?? null;
-        if (allowed) {
+        if (allowed && allowed.length > 0) {
           return MENU_ITEMS.filter(m => {
             if (m.isSeparator) return m.roles.includes(userRole);
             return allowed.includes(m.id);
@@ -434,10 +380,20 @@ const AdminPortal = ({
     const file = e.target.files?.[0];
     if (!file) return;
     setLogoUploading(true);
-    const url = await uploadLogoImage(file);
-    setLogoUploading(false);
-    if (url) setLogoUrl(url);
-    e.target.value = '';
+    try {
+      const url = await uploadLogoImage(file);
+      if (url) {
+        setLogoUrl(url);
+      } else {
+        console.error('[AdminPortal] uploadLogoImage returned no url');
+      }
+    } catch (err) {
+      // Upload gagal tidak boleh diam-diam: operator mengira logo sudah ganti.
+      console.error('[AdminPortal] logo upload failed:', err);
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
   };
 
   // ── Sidebar ────────────────────────────────────────────────────────────
@@ -447,31 +403,11 @@ const AdminPortal = ({
   const isRail = !isMobile && rail;
   const SidebarContent = () => (
     <div className="sp-modern-app flex flex-col h-full min-h-0">
-      {/* Top row — back link + collapse toggle */}
-      <div className={`mb-4 flex items-center ${isRail ? 'justify-center' : 'justify-between'}`}>
-        {!isRail && (
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-2 text-[0.65rem] font-bold uppercase tracking-widest transition-colors text-white/50 hover:text-white"
-          >
-            <ArrowLeft size={13} /> Kembali
-          </button>
-        )}
-        {!isMobile && (
-          <button
-            onClick={toggleRail}
-            className="p-1.5 rounded-lg text-white/45 hover:text-white hover:bg-white/10 transition-all"
-            title={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
-            aria-label={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
-          >
-            {isRail ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
-          </button>
-        )}
-      </div>
-
-      {/* Logo */}
-      <div className={`mb-5 pb-4 border-b border-white/10 ${isRail ? 'flex justify-center' : ''}`}>
-        <div className={`flex items-center gap-3 ${isRail ? 'justify-center' : ''}`}>
+      {/* Header sidebar: identitas + toggle collapse dalam satu baris bersih.
+          Logout cukup satu pintu (footer) — tombol "Kembali" duplikat dihapus.
+          Ganti logo tetap lewat klik logo (tooltip menjelaskan). */}
+      <div className={`mb-5 pb-4 border-b border-white/10 ${isRail ? 'flex flex-col items-center gap-2.5' : 'flex items-center justify-between gap-2'}`}>
+        <div className={`flex items-center gap-3 ${isRail ? '' : 'min-w-0'}`}>
           <div className="relative group flex-shrink-0">
             <input
               ref={logoInputRef}
@@ -481,7 +417,7 @@ const AdminPortal = ({
               onChange={handleLogoUpload}
             />
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 overflow-hidden cursor-pointer transition-transform hover:scale-105"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
               style={{ background: 'linear-gradient(135deg, #00C16A, #047857)' }}
               onClick={() => logoInputRef.current?.click()}
               title="Klik untuk ganti logo"
@@ -501,19 +437,26 @@ const AdminPortal = ({
             )}
           </div>
           {!isRail && (
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <h1 className="font-black text-lg tracking-tight leading-none text-white">
                 Sure<span className="text-emerald-300">Path</span>
               </h1>
-              <button
-                onClick={() => logoInputRef.current?.click()}
-                className="text-[0.45rem] font-bold uppercase tracking-[0.3em] mt-0.5 transition-colors text-emerald-100/70 hover:text-white"
-              >
-                {logoUrl ? 'Ganti Logo ↑' : 'Admin Panel · Upload Logo'}
-              </button>
+              <p className="text-[0.5rem] font-bold uppercase tracking-[0.3em] mt-1 text-emerald-100/60">
+                Admin Console
+              </p>
             </div>
           )}
         </div>
+        {!isMobile && (
+          <button
+            onClick={toggleRail}
+            className="p-1.5 rounded-lg text-white/45 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
+            title={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
+            aria-label={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
+          >
+            {isRail ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          </button>
+        )}
       </div>
 
       {/* Nav — scrollable */}
@@ -523,12 +466,12 @@ const AdminPortal = ({
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar space-y-0.5 pr-1"
       >
         {visibleNav.map(({ group, sections }, groupIndex) => (
-          <div key={group.id}>
+          <div key={group.id} className="sp-nav-group">
             {isRail ? (
               <div className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />
             ) : (
-              <div className={`${groupIndex === 0 ? 'mt-1' : 'mt-4'} mb-1 px-2`}>
-                <p className="text-[0.58rem] font-black uppercase tracking-[0.22em] text-white/45">{group.label}</p>
+              <div className={`${groupIndex === 0 ? 'mt-1' : 'mt-5'} mb-1.5 px-2`}>
+                <p className="text-[0.55rem] font-black uppercase tracking-[0.24em] text-white/40">{group.label}</p>
               </div>
             )}
             {sections.map(section => {
@@ -550,7 +493,7 @@ const AdminPortal = ({
                   }`}
                 >
                   {active && (
-                    <span aria-hidden className={`absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
+                    <span aria-hidden className={`sp-accent-bar absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
                   )}
                   <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
                     <PathyNavIcon id={first} size={isRail ? 30 : 28} active={active} />
@@ -564,7 +507,7 @@ const AdminPortal = ({
                     <>
                       <span className="text-[0.68rem] font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
                       {badge > 0 && (
-                        <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
+                        <span className="sp-badge-pop flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
                           {badge > 99 ? '99+' : badge}
                         </span>
                       )}
@@ -610,17 +553,11 @@ const AdminPortal = ({
 
   // ── Dashboard content ──────────────────────────────────────────────────────
   // Dashboard baru: layout 3 kolom dengan data yang bisa ditelusuri.
-  const DashboardView = () => (
-    <AdminDashboard
-      adminStats={adminStats}
-      claims={claimsQueue}
-      withdrawals={withdrawalQueue}
-      tierPending={tierPending}
-      onlineUsers={onlineUsers}
-      currentUser={currentUser}
-      onNavigate={goToTab}
-    />
-  );
+  // PENTING: render <AdminDashboard /> langsung di router (bukan lewat komponen
+  // inline yang didefinisikan di body render) — komponen inline mendapat identitas
+  // fungsi baru setiap render sehingga React me-remount seluruh dashboard pada
+  // setiap poll 60–120 detik dan state internalnya (filter, pilihan) hilang.
+
 
   // ── Content router ─────────────────────────────────────────────────────────
   const renderContent = () => {
@@ -652,7 +589,18 @@ const AdminPortal = ({
       }
     }
     switch (activeTab) {
-      case 'dashboard':        return <DashboardView />;
+      case 'dashboard':
+        return (
+          <AdminDashboard
+            adminStats={adminStats}
+            claims={claimsQueue}
+            withdrawals={withdrawalQueue}
+            tierPending={tierPending}
+            onlineUsers={onlineUsers}
+            currentUser={currentUser}
+            onNavigate={goToTab}
+          />
+        );
       case 'analytics':        return <AnalyticsDashboard />;
       // Satu layar keputusan: antrean review hanyalah mode "PENDING" dari
       // Pesanan Polis, lengkap dengan dokumen, pembayaran, dan riwayat.
@@ -736,7 +684,27 @@ const AdminPortal = ({
         @keyframes orb3 { 0%,100%{transform:translate(0,0) scale(1.05)} 50%{transform:translate(-30px,-60px) scale(0.95)} }
         @keyframes spPalette { from{opacity:0;transform:translateY(-8px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
         .sp-palette-pop { animation: spPalette 160ms ease-out both; }
-        @media (prefers-reduced-motion: reduce) { .sp-palette-pop { animation: none; } }
+        @keyframes spDrawer { from{transform:translateX(-18px);opacity:0} to{transform:translateX(0);opacity:1} }
+        .sp-drawer-in { animation: spDrawer 240ms cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes spFade { from{opacity:0} to{opacity:1} }
+        .sp-fade-in { animation: spFade 200ms ease-out both; }
+        @keyframes spPop { from{opacity:0;transform:translateY(-6px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .sp-pop-in { animation: spPop 160ms cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes spNavGroup { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+        .sp-nav-group { animation: spNavGroup 320ms ease-out both; }
+        .sp-nav-group:nth-child(2) { animation-delay: 40ms; }
+        .sp-nav-group:nth-child(3) { animation-delay: 80ms; }
+        .sp-nav-group:nth-child(4) { animation-delay: 120ms; }
+        .sp-nav-group:nth-child(5) { animation-delay: 160ms; }
+        .sp-nav-group:nth-child(6) { animation-delay: 200ms; }
+        @keyframes spAccent { from{transform:translateY(-50%) scaleY(0)} to{transform:translateY(-50%) scaleY(1)} }
+        .sp-accent-bar { animation: spAccent 180ms cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes spBadgePop { from{transform:scale(.5)} to{transform:scale(1)} }
+        .sp-badge-pop { animation: spBadgePop 220ms cubic-bezier(0.34,1.56,0.64,1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .sp-palette-pop, .sp-drawer-in, .sp-fade-in, .sp-pop-in,
+          .sp-nav-group, .sp-accent-bar, .sp-badge-pop { animation: none; }
+        }
       `}</style>
       <div style={{ position:'fixed', top:'10%', left:'5%', width:600, height:600, borderRadius:'50%', background:'rgba(16,185,129,0.07)', filter:'blur(120px)', animation:'orb1 18s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
       <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(59,130,246,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
@@ -752,8 +720,8 @@ const AdminPortal = ({
       {/* ── Mobile sidebar overlay ─────────────────────────────────────────── */}
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md sp-fade-in" onClick={() => setMobileOpen(false)} />
+          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm sp-drawer-in`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
             {SidebarContent()}
           </aside>
         </div>
@@ -897,9 +865,12 @@ const AdminPortal = ({
                 )}
               </button>
               {showNotifications && (
+                <>
+                {/* Klik di mana pun di luar panel menutupnya (dulu hanya
+                    onMouseLeave, yang membuat panel menempel terbuka). */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} aria-hidden />
                 <div
-                  className={`absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden ${'bg-ds-card border-ds-border shadow-ds-lg'}`}
-                  onMouseLeave={() => setShowNotifications(false)}
+                  className={`absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden sp-pop-in ${'bg-ds-card border-ds-border shadow-ds-lg'}`}
                 >
                   <div className={`px-4 py-3 border-b flex items-center justify-between ${'border-ds-border'}`}>
                     <p className={`text-[0.6rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Notifikasi</p>
@@ -948,6 +919,7 @@ const AdminPortal = ({
                     ))}
                   </div>
                 </div>
+                </>
               )}
             </div>
             {/* Mobile close */}

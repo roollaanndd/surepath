@@ -29,6 +29,7 @@ import {
 } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import { AdminEmptyState, AdminErrorBanner } from './adminUI';
+import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
@@ -700,8 +701,8 @@ const BackupView: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.tables_list?.length ?? 0}</td>
-                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{(b.backup_size_bytes / 1024).toFixed(1)}</td>
-                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{((b.backup_size_bytes ?? 0) / 1024).toFixed(1)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.checksum ? b.checksum.slice(0, 8) : '—'}</td>
                   <td className="py-3 text-right">
                     <button
                       onClick={() => handleDownload(b.id)}
@@ -721,7 +722,12 @@ const BackupView: React.FC = () => {
   );
 };
 
-// ── Role Permissions View (Task 1) ───────────────────────────────────────────
+// ── Role Permissions View (Task 1) ───────────────────────────────────────
+// Matriks izin DITURUNKAN dari ADMIN_MENU_ITEMS (navigation.ts) — sumber yang
+// sama dengan sidebar. Versi lama mendefinisikan daftar manual yang basi:
+// memuat 4 menu yang sudah dihapus (reports/users/transactions/inventory) dan
+// kehilangan 11 menu nyata, sehingga centang tidak berefek dan klik "Simpan"
+// diam-diam mencabut akses menu yang tidak terdaftar di matriks.
 
 const CONFIGURABLE_ROLES = [
   UserRole.ADMIN,
@@ -731,40 +737,11 @@ const CONFIGURABLE_ROLES = [
   UserRole.FINANCE_DIRECTOR,
 ] as const;
 
-const MENU_IDS = [
-  { id: 'dashboard',         label: 'Dashboard' },
-  { id: 'reports',           label: 'Laporan' },
-  { id: 'analytics',         label: 'Analytics' },
-  { id: 'users',             label: 'Pengguna' },
-  { id: 'user_mgmt',         label: 'Kelola Akun' },
-  { id: 'transactions',      label: 'Transaksi' },
-  { id: 'payments',          label: 'Pembayaran' },
-  { id: 'withdrawals',       label: 'Penarikan' },
-  { id: 'policy_orders',     label: 'Pesanan Polis' },
-  { id: 'approvals',         label: 'Antrean Polis' },
-  { id: 'claims_admin',      label: 'Antrean Klaim' },
-  { id: 'inventory',         label: 'Data Polis' },
-  { id: 'endorsements',      label: 'Endorsement' },
-  { id: 'agents',            label: 'Manajemen Mitra' },
-  { id: 'commission_ledger', label: 'Komisi' },
-  { id: 'b2b',               label: 'B2B' },
-  { id: 'product_config',    label: 'Produk' },
-  { id: 'tier_promo',        label: 'Tier & Promo' },
-  { id: 'insurers',          label: 'Asuransi' },
-  { id: 'vehicle_pricelist', label: 'Kendaraan DB' },
-  { id: 'website_editor',    label: 'Editor Website' },
-  { id: 'financial',         label: 'Keuangan' },
-];
+const MENU_IDS = PERMISSION_MENU_IDS;
 
-const DEFAULT_PERMISSIONS: Record<string, string[]> = {
-  ADMIN: ['dashboard','reports','analytics','users','user_mgmt','transactions','payments','withdrawals','policy_orders','approvals','claims_admin','inventory','endorsements','agents','commission_ledger','b2b','product_config','tier_promo','insurers','vehicle_pricelist','website_editor'],
-  FINANCE: ['dashboard','reports','analytics','transactions','payments','withdrawals','commission_ledger','financial'],
-  INSURANCE_ADMIN: ['dashboard','approvals','policy_orders','claims_admin','endorsements','insurers'],
-  FINANCE_MANAGER: ['dashboard','withdrawals','commission_ledger','tier_promo'],
-  FINANCE_DIRECTOR: ['dashboard','withdrawals','financial'],
-};
-
-const SP_ROLE_PERMISSIONS_KEY = 'SP_ROLE_PERMISSIONS';
+const DEFAULT_PERMISSIONS: Record<string, string[]> = Object.fromEntries(
+  CONFIGURABLE_ROLES.map(role => [role, defaultPermissionsFor(role)]),
+);
 
 function loadPermissions(): Record<string, string[]> {
   try {
@@ -904,7 +881,9 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   };
 
   const toggleProduct = (id: string) => {
-    setProducts(products.map((p: any) => p.id === id ? { ...p, active: !p.active } : p));
+    // Guard: products prop bisa belum terisi — jangan crash di klik pertama.
+    const list = Array.isArray(products) ? products : [];
+    setProducts(list.map((p: any) => p.id === id ? { ...p, active: !p.active } : p));
   };
 
   const toggleCustomProduct = async (product: CustomProduct) => {

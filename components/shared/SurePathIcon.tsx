@@ -13,8 +13,18 @@ const paletteFor = (_id: string) => PALETTES[0];
 
 function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; variant: SurePathIconStyle }) {
   const common = { stroke: p.ink, strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  // v2.7.13: 'review', 'tier', 'palette' artwork keys added for admin nav ids
+  // that previously fell through to the generic 'spark' (tier_promo,
+  // portal_icons) or duplicated the shield/people artwork of a neighbouring
+  // section (approvals, insurers, b2b). Matchers are id-specific
+  // (plural/suffix-bearing) so portal tab ids like 'home'/'orders' are
+  // unaffected.
   const key = /pathy|ai_admin|ai_finance|assistant/i.test(id) ? 'pathy'
     : /bank|branch|banking|institution|finance_center/i.test(id) ? 'bank'
+    : /insurers|b2b|corporate/i.test(id) ? 'bank'
+    : /approvals/i.test(id) ? 'review'
+    : /portal_icons/i.test(id) ? 'palette'
+    : /tier/i.test(id) ? 'tier'
     : /library|catalog|resource_center|knowledge/i.test(id) ? 'library'
     : /leaderboard|ranking|trophy|target/i.test(id) ? 'trophy'
     : /network|referral|team/i.test(id) ? 'network'
@@ -62,6 +72,9 @@ function Artwork({ id, p, variant }: { id: string; p: typeof PALETTES[number]; v
     {key === 'bell' && <g {...stroke}><path d="M12 33h24l-3-5V20q0-9-9-9t-9 9v8Z" fill={p.b}/><path d="M20 37q4 5 8 0" fill="none"/><circle cx="36" cy="12" r="6" fill={p.c}/><circle cx="36" cy="12" r="1.5" fill="white"/></g>}
     {key === 'chart' && <g {...stroke}><path d="M8 39V9h31v30Z" fill={p.bg}/><path d="M14 32V24h5v8M22 32V17h5v15M30 32V12h5v20" fill={p.b} stroke={p.a}/><path d="m13 19 8-5 6 2 8-8" fill="none" stroke={p.c} strokeWidth="2.5"/></g>}
     {key === 'box' && <g {...stroke}><path d="m8 16 16-9 16 9-16 9Z" fill={p.b}/><path d="M8 16v19l16 9V25Z" fill={p.a}/><path d="M40 16v19l-16 9V25Z" fill={p.c}/><path d="M24 25v19" stroke="white" strokeOpacity=".8"/><path d="m17 11 16 9" stroke="white" strokeOpacity=".8"/></g>}
+    {key === 'review' && <g {...stroke}><rect x="12" y="9" width="24" height="30" rx="5" fill={p.bg}/><rect x="17" y="5" width="14" height="7" rx="2.5" fill={p.b}/><path d="M19 12h10v2a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2Z" fill={p.a}/><path d="m17 28 4.2 4.2L30.5 22" fill="none" stroke={p.ink} strokeWidth="2.6"/><path d="M18 35h12" stroke={p.a} strokeWidth="2"/><circle cx="39" cy="10" r="4" fill={p.c}/></g>}
+    {key === 'tier' && <g {...stroke}><rect x="7" y="30" width="10" height="9" rx="2" fill={p.b}/><rect x="19" y="24" width="10" height="15" rx="2" fill={p.b}/><rect x="31" y="17" width="10" height="22" rx="2" fill={p.a}/><path d="M10.5 34.5h3M22.5 31h3M33.5 24h5" stroke={p.ink} strokeWidth="1.6" strokeOpacity=".65"/><circle cx="36" cy="8" r="5" fill={p.c}/><circle cx="36" cy="8" r="1.8" fill={p.ink} stroke="none"/><path d="M36 2.8v2M36 11.2v2M40.2 8h2M29.8 8h2" stroke={p.a} strokeWidth="1.6"/><path d="M16 39v4M32 39v4" stroke={p.ink} strokeWidth="2.2"/></g>}
+    {key === 'palette' && <g {...stroke}><rect x="9" y="7" width="30" height="28" rx="7" fill={p.bg}/><rect x="13.5" y="11.5" width="8" height="8" rx="2.4" fill={p.b}/><rect x="24.5" y="11.5" width="8" height="8" rx="2.4" fill={p.c}/><rect x="13.5" y="22.5" width="8" height="8" rx="2.4" fill={p.a}/><rect x="25.8" y="23.8" width="8" height="8" rx="2.4" fill={p.b} stroke={p.ink} strokeWidth="1.4" transform="rotate(-8 29.8 27.8)"/><path d="M11 41h26" stroke={p.b} strokeWidth="2.4" strokeLinecap="round" opacity=".75"/></g>}
     {key === 'spark' && <g {...stroke}><path d="m24 5 5 13 13 6-13 5-5 13-5-13-13-5 13-6Z" fill={p.b}/><circle cx="36" cy="10" r="4" fill={p.c}/><circle cx="10" cy="36" r="3" fill={p.a}/></g>}
     {variant === 'studio' && <path d="M9 42h30" stroke={p.b} strokeWidth="2" strokeLinecap="round" opacity=".7"/>}
     {variant === 'bold' && <circle cx="39" cy="9" r="3" fill={p.c}/>}

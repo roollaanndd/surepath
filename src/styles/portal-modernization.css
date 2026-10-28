@@ -1482,15 +1482,9 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
   overflow: hidden;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
 }
-.sp-modern-app:has(aside) > main > div:last-child .grid > button::after {
-  content: "";
-  position: absolute;
-  left: 0; top: 18px; bottom: 18px;
-  width: 3px;
-  border-radius: 0 4px 4px 0;
-  background: linear-gradient(180deg,#00a86b,#a3d94c);
-  opacity: .85;
-}
+/* v2.7.13: the 3px left-gradient stripe pseudo-element was removed — a colored
+   side-tab on every card is the cheapest artificial accent, and these cards
+   already carry an icon chip, border and hover lift. */
 .sp-modern-app:has(aside) > main > div:last-child .grid > button:hover {
   transform: translateY(-3px) !important;
   border-color: #86cbb0 !important;
@@ -1789,7 +1783,8 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
   color-scheme: light !important;
   background: #f2f6f8 !important;
   color: #1b2b3b !important;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  /* Font comes from the app system (tailwind fontFamily.sans = Inter via
+     AdminPortal's font-sans); an overriding !important here was redundant. */
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2237,4 +2232,23 @@ html.dark .sp-modern-app:has(> main > header) > main :where(.sp-glass, .sp-glass
 html.dark .sp-modern-app:has(> main > header) > aside,
 html.dark .sp-modern-app:has(> main > header) > div > aside {
   box-shadow: 5px 0 24px -20px rgba(0, 0, 0, .8);
+}
+
+/* ── Dashboard entrance moment (v2.7.13) ────────────────────────────────────
+   The page-level fade (sp-page-enter) stays; within dashboards the first
+   cards relax into place with a short index-based stagger so the KPI row
+   reads as one coordinated beat instead of one flat fade. Purely additive:
+   grids without .sp-stagger-cards are untouched. */
+@keyframes sp-card-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.sp-stagger-cards > :nth-child(1) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) both; }
+.sp-stagger-cards > :nth-child(2) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) 40ms both; }
+.sp-stagger-cards > :nth-child(3) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) 80ms both; }
+.sp-stagger-cards > :nth-child(4) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) 120ms both; }
+.sp-stagger-cards > :nth-child(5) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) 160ms both; }
+.sp-stagger-cards > :nth-child(n+6) { animation: sp-card-in 280ms cubic-bezier(.2,.7,.25,1) 200ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-stagger-cards > :nth-child(n) { animation: none !important; transform: none !important; }
 }

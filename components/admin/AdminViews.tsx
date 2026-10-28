@@ -1144,7 +1144,6 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
     if (rows.length === 0) return;
     setImporting(true);
     const updated = [...rows];
-    let successCount = 0;
     setProgress({ done: 0, total: rows.length });
 
     for (let i = 0; i < updated.length; i++) {
@@ -1156,7 +1155,6 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
           const result = await registerAgent({ name: row.name, email: row.email, phone: row.phone });
           if (result) {
             updated[i] = { ...row, status: 'success' };
-            successCount++;
           } else {
             updated[i] = { ...row, status: 'error', error: 'Gagal menyimpan' };
           }
@@ -1955,7 +1953,7 @@ export const ClaimsAdminView = () => {
     }
   }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { void load(); }, [load]);
 
   // FIX 2026-10-26: handleStatus previously sent 'CLOSED' — a status the
   // gateway rejects — with no error handling at all, so an admin clicking

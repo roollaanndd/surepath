@@ -10,18 +10,10 @@ export type AdminWorkspaceKey =
   | 'onboarding'
   | 'insurer';
 
-export const ADMIN_WORKSPACE_ROLES: UserRole[] = [
-  UserRole.MASTER_ADMIN,
-  UserRole.ADMIN,
-  UserRole.FINANCE,
-  UserRole.FINANCE_MANAGER,
-  UserRole.FINANCE_DIRECTOR,
-  UserRole.INSURANCE_ADMIN,
-  UserRole.MARKETING,
-  UserRole.OPERATOR,
-];
-
-export const WORKSPACE_BY_ROLE: Record<string, AdminWorkspaceKey> = {
+// v2.7.13: ADMIN_WORKSPACE_ROLES and isAdminWorkspaceRole were removed — both
+// were exported for the redesign but never imported anywhere (the workspace
+// dashboard is resolved solely via getAdminWorkspace in AdminPortal).
+const WORKSPACE_BY_ROLE: Record<string, AdminWorkspaceKey> = {
   [UserRole.MASTER_ADMIN]: 'command',
   [UserRole.ADMIN]: 'ops',
   [UserRole.FINANCE]: 'finance',
@@ -42,16 +34,6 @@ export function getAdminWorkspace(role?: UserRole | string | null): AdminWorkspa
   if (r === 'BUSINESS_SUPPORT' || r === 'SUPPORT' || r === 'CS') return 'support';
   if (r === 'AGENT_REGISTRATIONS' || r === 'ONBOARDING' || r === 'AGENT_ONBOARDING') return 'onboarding';
   return null;
-}
-
-export function isAdminWorkspaceRole(role?: UserRole | string | null): boolean {
-  if (!role) return false;
-  const r = role as UserRole;
-  if ([UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN, UserRole.MARKETING].includes(r)) {
-    return true;
-  }
-  const s = String(role).toUpperCase();
-  return ['COLLECTIONS', 'BUSINESS_SUPPORT', 'SUPPORT', 'CS', 'AGENT_REGISTRATIONS', 'ONBOARDING', 'AGENT_ONBOARDING'].includes(s);
 }
 
 export const WORKSPACE_META: Record<AdminWorkspaceKey, { title: string; subtitle: string; accent: string }> = {

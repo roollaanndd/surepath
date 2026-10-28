@@ -204,7 +204,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* Banner antrean — dua hal yang paling sering menahan pekerjaan */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="sp-stagger-cards grid gap-4 md:grid-cols-2">
         <button
           onClick={() => onNavigate('approvals')}
           className="group relative overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-[#06483D] via-[#087A58] to-[#0FA36B] p-5 text-left text-white shadow-ds-md"
@@ -237,7 +237,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="sp-stagger-cards grid grid-cols-2 gap-4 xl:grid-cols-4">
         {kpis.map(kpi => {
           const Icon = kpi.icon;
           return (
@@ -519,7 +519,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* Ringkasan cepat */}
           <section className="rounded-[1.75rem] border border-ds-border bg-ds-card p-5 shadow-ds-sm">
             <h2 className="text-sm font-black tracking-tight text-ds-ink">Ringkasan Cepat</h2>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="sp-stagger-cards mt-3 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-ds-card2 p-3">
                 <Users size={15} className="text-ds-blue" />
                 <p className="mt-2 text-lg font-black text-ds-ink">{model.totals.activeAgents}</p>

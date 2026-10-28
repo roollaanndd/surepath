@@ -1,7 +1,9 @@
 // InsurerPortal.tsx — Top-level shell for /insurerapp.
 // 5-tab bottom-nav (Beranda/Polis/Klaim/Bayar/Profil) matching the
-// operator app pattern. Auth via rolling 7-day token stored in localStorage.
-// Realtime subscriptions on sp_policy_orders + sp_payments fire popup toasts.
+// operator app pattern. Auth via rolling 7-day token stored in
+// sessionStorage (narrower blast radius than the localStorage the token
+// previously lived in). Realtime subscriptions on sp_policy_orders +
+// sp_payments fire popup toasts.
 
 import React, { useState, useEffect } from 'react';
 import { Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';

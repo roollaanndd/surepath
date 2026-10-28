@@ -1,7 +1,7 @@
 // InsurerDashboard.tsx — Beranda tab. KPI cards + recent activity.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, TrendingUp, Eye } from 'lucide-react';
+import { FileText, CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, TrendingUp, Eye, Banknote } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
@@ -108,7 +108,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
       {/* KPI grid */}
       <div>
         <SectionLabel>Ringkasan Pengajuan</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="sp-stagger-cards grid grid-cols-2 gap-3">
           {kpiCards.map(c => (
             <button
               key={c.label}
@@ -127,9 +127,14 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
       </div>
 
       {/* Total premium */}
-      <div className="p-4 rounded-2xl border border-ds-border bg-ds-card">
-        <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider">Total Premi (semua order)</p>
-        <p className="text-2xl font-black text-ds-green mt-1">{fmtIdr(totalPremium)}</p>
+      <div className="p-4 rounded-2xl border border-ds-border bg-ds-card flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider">Total Premi (semua order)</p>
+          <p className="text-2xl font-black text-ds-green mt-1 truncate">{fmtIdr(totalPremium)}</p>
+        </div>
+        <span className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-ds-green">
+          <Banknote size={20} />
+        </span>
       </div>
 
       {/* Recent orders */}
@@ -138,7 +143,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
           <SectionLabel action={{ label: 'Lihat semua', onClick: () => onNavigate('orders') }}>
             Pengajuan Terbaru
           </SectionLabel>
-          <div className="space-y-2">
+          <div className="sp-stagger-cards space-y-2">
             {recentOrders.map(o => (
               <button
                 key={o.id}

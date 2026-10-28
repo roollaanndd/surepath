@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, X, Tag, Trash2, ChevronUp, ChevronDown, Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { UserRole } from '../../types';
 import { useToast, useConfirmDialog, usePromptDialog } from '../ui';
@@ -491,11 +491,19 @@ const TierRequestsTab: React.FC = () => {
   const [acting, setActing] = useState<string | null>(null);
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
 
-  const load = () => {
+  // FIX 2026-10-28: `.then` previously had no `.catch`, so a failed poll left
+  // "loading" stuck true and rejected the promise unhandled. Failed loads now
+  // surface a toast; handleApprove/handleReject still trigger an inline re-load.
+  const load = useCallback(() => {
     setLoading(true);
-    getTierChangeRequests(filter).then(data => { setRequests(data); setLoading(false); });
-  };
-  useEffect(() => { load(); }, [filter]);
+    getTierChangeRequests(filter)
+      .then(data => { setRequests(data); setLoading(false); })
+      .catch((e: any) => {
+        toast.error(`Gagal memuat permintaan tier: ${e?.message ?? e}`);
+        setLoading(false);
+      });
+  }, [filter, toast]);
+  useEffect(() => { load(); }, [load]);
 
   const handleApprove = async (id: string) => {
     setActing(id);

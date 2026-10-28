@@ -1,5 +1,71 @@
 # SurePath — Changelog
 
+## v2.7.11 — 2026-10-28
+
+Upgrade Pathy AI (permintaan owner: "upgrade pathy ai", "saya mau semuanya,
+tapi tampilan lebih simple dan rapih; pastikan OCR & foto klaim jalan baik").
+Semua tahap gratis (P0–P4, tanpa layanan berbayar) in one batch, plus
+perbaikan pipeline foto yang ditemukan saat audit.
+
+**Perbaikan foto/OCR (hasil audit `pathy-agent` & layanan OCR)**
+- **KTP kini dipampatkan sebelum dikirim ke OCR** (`services/ktpOcr.ts`): foto
+  ponsel 12 MB utuh terus masuk ai-proxy dan membuat WebView/edge permission
+  sessak — kini 1400px dulu, mengikuti pola STNK 1600px. Kompresi tidak
+  pernah menolak (fallback gambar asli) sehingga pembacaan tetap berjalan.
+- **Jalur proxy tidak lagi membuang dokumen** (`services/website.ts`): jika
+  pesan membawa hasil OCR (STNK/KTP/…), request langsung ke `pathy-agent`
+  (yang punya alat) daripada `pathy-agent-proxy` yang menjalankan mode teks —
+  dulu Pathy menjawab "buta konteks" walau OCR sudah berhasil.
+- **Guard ukuran foto klaim** (`components/ClaimManager.tsx`): foto klaim
+  kendaraan & kuitansi kesehatan >12 MB ditolak dengan pesan sebelum diunggah.
+- **Kuitansi kesehatan dipampatkan 1200px sebelum dianalisa & disimpan** —
+  baris klaim tidak lagi menampung data-URL resolusi penuh (bengkak & lambat).
+- Baris gagal-baca kini punya tombol **"Coba lagi"** yang membuka kamera.
+
+**P0 — Simple: 3 ketukan (`components/shared/PathyChat.tsx`)**
+- **Greet card "Mau mulai dari mana?"**: mitra mendapat ketukan *Buat kutipan ·
+  Tulis balasan · Cek komisi*; nasabah *Status polis · Cara bayar · Ajukan
+  klaim*. Chips footer mengikuti peran yang sama (satu bahasa, satu tata rias).
+- **Kutipan 3 ketukan**: produk (Mobil/Motor) → kartu foto STNK → OCR jalan →
+  request harga dikirim otomatis → kartu opsi → PDF siap. Semua memakai alat
+  yang sudah ada (OCR perangkat, compare_offers, build_quotation).
+- **Bagikan ke WA — dua jalur** (keputusan owner): tombol **Bagikan** (Web
+  Share API, sheet OS) di kartu draft follow-up + tombol **WhatsApp** (link
+  wa.me teks siap-kirim) di kartu kutipan; Pathy tetap tidak pernah mengirim
+  atas nama user.
+- **Resume sesi**: transkrip terakhir (teks saja, per perangkat) ditawarkan
+  kembali "lanjutkan percakapan terakhir?" — Lanjutkan / Mulai baru.
+
+**P1 — Briefing pagi mitra (deterministik, tanpa AI → gratis)**
+- Sekali per hari saat portal dibuka: kartu briefing dari `get_my_orders` +
+  `get_leaderboard` — jumlah pipeline yang belum ditindak, peringkat bulan
+  ini, dan satu CTA follow-up. Tanpa tabel uang (patuh trust rules).
+
+**P2 — Suara (`services/speech.ts`, default MATI — keputusan owner)**
+- Toggle ikon volume di kepala obrolan; saat menyala jawaban dibacakan
+  (teks tetap tampil utuh, offline tidak apa-apa). `speakAnswer`/`stopSpeaking`
+  memilih voice `id-ID` bila ada; gagal = bersuara diam tanpa merusak chat.
+- **Mic tekan-tahan**: tahan = merekam, lepas = transkrip terkirim langsung
+  (mode ketuk-lama ke draf tetap dihapus; diktasi lama ke input dipertahankan
+  sebagai perilaku toggle bila tombol dilepas di perangkat yang sulit).
+
+**P3 — Jalin relasi**
+- **Sapaan perpanjangan** (nasabah, sekali per hari): polis yang jatuh tempo
+  ≤14 hari mendapat kartu hangat + CTA "Siapkan penawaran perpanjangan".
+- **Nada klaim diperbaiki** (`supabase/functions/pathy-agent/index.ts`):
+  setiap jawaban klaim ditutup langkah berikutnya + tawaran bantuan lanjut.
+- **Perayaan halus**: kartu kutipan jadi menampilkan "🎉 Kutipan jadi" dengan
+  animasi pop ringan (CSS, reduksi-gerak dihormati).
+
+**Keputusan yang berlaku**
+- Suara default MATI & tidak pernah menyalakan sendiri (owner, §6 plan).
+- Share memakai keduanya: sheet OS + link WA (owner, §6 plan).
+
+**Checks:** tsc 0 error · ESLint 0 error (33 warning profil lama, tidak ada
+yang baru kunci) · vitest **383/383** · Playwright **76 pass / 15 skip /
+0 fail** (2 uji Pathy baru, APP_VERSION fixture 2.5.19 → 2.7.11) · build+PWA
+✓ 26 rute · `check:android` selaras (2.7.11, versionCode 44).
+
 ## v2.7.10 — 2026-10-28
 
 Batch penyempurnaan lanjutan atas v2.7.9 dari instruksi owner: warna hero

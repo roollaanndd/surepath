@@ -11,6 +11,15 @@
 // where the user reads it and decides whether to send. Chrome routes audio to
 // Google's speech service, so the mic is only ever opened on an explicit tap,
 // never held open, and it stops on the first final result.
+//
+// v2.7.11 adds the OUTPUT half (Track B of the Pathy evolution plan): the same
+// Web Speech stack exposes speechSynthesis, free on every engine we target.
+// Deliberate properties, matching the design reasons above:
+//   - TTS never turns itself on. The chat owns a toggle that starts OFF and
+//     remembers the user's choice; nothing in this file speaks unprompted.
+//   - Speech always accompanies the text — it annotates the answer, it does
+//     not replace it. If synthesis is unavailable (old WebView, iOS audio
+//     policies), callers degrade silently: the text on screen is complete.
 
 type Ctor = new () => SpeechRecognitionLike;
 
@@ -124,4 +133,62 @@ export function startDictation(opts: DictationOptions): DictationHandle | null {
   }
 
   return { stop: () => { try { rec.stop(); } catch { /* already stopped */ } } };
+}
+
+// ─── Voice output (speechSynthesis) ──────────────────────────────────────────
+//
+// v2.7.11 — Track B. Pathy reads its answers aloud when the user has flipped
+// the toggle in the chat header. Free, native, no service: same reasoning as
+// the mic never costing a cent.
+
+/** True when this browser can speak. Almost always true; off-WebView engines vary. */
+export function isTtsSupported(): boolean {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window;
+}
+
+/** Voice preference: exact id-ID, then Indonesian generic, then the default. */
+function pickVoice(): SpeechSynthesisVoice | null {
+  if (!isTtsSupported()) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v => v.lang === 'id-ID')
+    ?? voices.find(v => /^id/i.test(v.lang))
+    ?? voices[0]
+    ?? null;
+}
+
+/** True while the synth queue is audibly busy — used to avoid cutting a sentence off. */
+export function isSpeaking(): boolean {
+  return isTtsSupported() && window.speechSynthesis.speaking;
+}
+
+/**
+ * Speak one bot answer. Reading is an accompaniment to the on-screen text, so
+ * every failure path here is silent — the worst case is a weaker robotic
+ * voice, never a broken chat. Indonesian is preferred; on engines with no
+ * Indonesian voice the platform default speaks, which is still preferable to
+ * nothing for an answer the user is simultaneously reading.
+ */
+export function speakAnswer(text: string, lang: 'id' | 'en' = 'id'): void {
+  if (!isTtsSupported() || !text) return;
+  try {
+    // Reading one answer replaces the previous queue — overlapping speech of
+    // two replies reads as a bug, not a feature.
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === 'id' ? 'id-ID' : 'en-US';
+    u.rate = 1.02; // default 1.0 reads sluggish on several Android voices
+    u.pitch = 1;
+    const voice = pickVoice();
+    if (voice) u.voice = voice;
+    window.speechSynthesis.speak(u);
+  } catch {
+    /* synthesis is best-effort — the text is already on screen */
+  }
+}
+
+/** Stop any ongoing/outstanding speech (panel close, toggle off, unmount). */
+export function stopSpeaking(): void {
+  if (isTtsSupported()) {
+    try { window.speechSynthesis.cancel(); } catch { /* nothing was speaking */ }
+  }
 }

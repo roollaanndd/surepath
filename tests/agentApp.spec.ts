@@ -35,7 +35,7 @@ test.use({
   launchOptions: existsSync(LOCAL_CHROME) ? { executablePath: LOCAL_CHROME } : {},
 });
 
-const APP_VERSION = '2.5.19';
+const APP_VERSION = '2.7.11';
 
 const AGENT = {
   id: 'e2e-agent-0001',
@@ -98,6 +98,7 @@ const RESPONSES: Record<string, unknown> = {
   get_my_claims: [],
   get_my_tier_progress: { tier: 'SILVER', points: 320, next_tier: 'GOLD', needed: 180 },
   get_tier_definitions: [{ id: 't1', name: 'SILVER', min_points: 0 }, { id: 't2', name: 'GOLD', min_points: 500 }],
+  get_leaderboard: [{ agent_id: AGENT.id, agent_name: AGENT.name, agent_code: 'SP-E2E-0001', tier: 'SILVER', total_commission: 500_000 }],
   get_my_clients: [],
   get_my_quotes: [],
   get_my_coins: { balance: 1200 },
@@ -264,6 +265,72 @@ test.describe('Apps Mitra — UI/UX', () => {
     await testInfo.attach('onboarding-selesai.png', { body: await page.screenshot(), contentType: 'image/png' });
     // Setelah carousel, portal yang harus muncul.
     await expect(page.getByText('Beranda', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('tile Pathy membuka asisten: greet card 3 ketukan + briefing pagi', async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    const consoleErrors: string[] = [];
+    page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('pageerror', e => consoleErrors.push(`pageerror: ${e.message}`));
+
+    await installMocks(page);
+    // pathy-agent-proxy/pathy-agent: jawaban tiruan pertanyaan komisi.
+    await page.route('**/functions/v1/pathy-agent*', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { reply: 'Komisimu bulan ini tertunda tiga transaksi.', cards: [], toolsUsed: [] } }),
+      }));
+
+    await page.goto('/agapps', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('Beranda', { exact: true })).toBeVisible({ timeout: 25_000 });
+
+    // Tile Pathy di Beranda membuka panel (PATHY_OPEN_EVENT).
+    await page.getByRole('button', { name: 'Pathy' }).first().click();
+    await expect(page.getByRole('dialog', { name: 'Asisten Pathy' })).toBeVisible({ timeout: 15_000 });
+
+    // Greet card: 3 ketukan kontekstual mitra, bukan kalimat sapa.
+    await expect(page.getByText('Mau mulai dari mana?', { exact: true })).toBeVisible({ timeout: 10_000 });
+    for (const tap of ['Buat kutipan', 'Tulis balasan', 'Cek komisi']) {
+      await expect(page.getByText(tap, { exact: true }).first()).toBeVisible();
+    }
+
+    // Briefing pagi (deterministik): get_my_orders memuat satu SUBMITTED.
+    await expect(page.getByText('Briefing pagi', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
+
+    // TTS: default MATI sampai user menyalakannya sendiri.
+    await expect(page.getByRole('button', { name: /suara Pathy/i })).toHaveAttribute('aria-pressed', 'false');
+
+    const shot = await page.screenshot();
+    await testInfo.attach('pathy-open.png', { body: shot, contentType: 'image/png' });
+    const errs = realErrors(consoleErrors);
+    expect(errs, `error konsol saat membuka Pathy:\n${errs.join('\n')}`).toHaveLength(0);
+  });
+
+  test('kutipan 3 ketukan: produk → kartu foto STNK memakai kamera', async ({ page }, testInfo) => {
+    await installMocks(page);
+    await page.route('**/functions/v1/pathy-agent*', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: { reply: 'Oke.', cards: [], toolsUsed: [] } }),
+      }));
+
+    await page.goto('/agapps', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('Beranda', { exact: true })).toBeVisible({ timeout: 25_000 });
+    await page.getByRole('button', { name: 'Pathy' }).first().click();
+    await expect(page.getByRole('dialog', { name: 'Asisten Pathy' })).toBeVisible({ timeout: 15_000 });
+
+    // Ketukan 1: buka alur kutipan → pilih kartu produk.
+    await page.getByText('Buat kutipan', { exact: true }).first().click();
+    await expect(page.getByText('pilih produknya', { exact: false })).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: /Mobil/ }).click();
+
+    // Ketukan 2: kartu foto STNK dengan tombol kamera nyata.
+    await expect(page.getByText('Ketuk 2: foto STNK', { exact: false })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /Buka kamera/i })).toBeVisible();
+
+    await testInfo.attach('pathy-kutipan-3-ketukan.png', { body: await page.screenshot(), contentType: 'image/png' });
   });
 
   test.afterAll(() => {

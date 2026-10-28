@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, BrainCircuit, CheckCircle2, Smartphone, ArrowRight, MapPin, FileText, AlertCircle, Loader2, ShieldCheck, ShieldAlert, ShieldQuestion, ChevronRight, Rocket, Users, HeartPulse, Receipt, Building2, RefreshCw, Car, Activity, Zap, ClipboardList, ImagePlus, X } from 'lucide-react';
-import { analyzeHealthReceipt, ClaimAnalysisData, HealthClaimData } from '../services/geminiService';
+import { analyzeHealthReceipt, compressImageBase64, ClaimAnalysisData, HealthClaimData } from '../services/geminiService';
 import type { ClaimPhotoForensicReport } from '../services/dbTypes';
 import { db, Claim } from '../db';
 import { SmartProcessingView } from './car-wizard/WizardUI';
@@ -143,10 +143,19 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
   const handleHealthUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 12 * 1024 * 1024) {
+      setAnalyzeError(t('Photo too large (max 12 MB).', 'Fotonya terlalu besar (maks 12 MB).'));
+      return;
+    }
     setStep('analyzing');
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = reader.result as string;
+      // FIX v2.7.11: the raw phone photo used to be kept as a full-resolution
+      // data-URL — posted to the receipt OCR as-is AND stored unchanged in the
+      // claim row (a several-MB string in localStorage and the DB). It is now
+      // compressed at 1200px once, right at capture; a receipt photo loses
+      // nothing the OCR needs, and the claim record stays small enough to sync.
+      const base64 = await compressImageBase64(reader.result as string, 1200);
       setPhotoBase64(base64);
       const response = await analyzeHealthReceipt(base64);
       if (response.success && response.data) {
@@ -168,6 +177,10 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !currentUser?.id) return;
+    if (file.size > 12 * 1024 * 1024) {
+      setAnalyzeError(t('Photo too large (max 12 MB).', 'Fotonya terlalu besar (maks 12 MB).'));
+      return;
+    }
     if (photoUrls.length >= MAX_CLAIM_PHOTOS) return;
     const slot = photoUrls.length;
     setUploadingSlot(slot);

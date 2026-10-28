@@ -169,6 +169,42 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-28 (v2.7.11) — Upgrade Pathy AI: 3 ketukan, suara, briefing, OCR foto dibereskan
+
+- **Scope (owner: "upgrade pathy ai" → semuanya, simple & rapih, OCR/foto
+  klaim harus jalan baik):** `components/shared/PathyChat.tsx`
+  (greet card per peran + kutipan-3-ketukan + resume sesi + lima kartu lokal
+  baru), `services/website.ts` (`PathyCard` +5 tipe lokal; **jalur proxy tidak
+  lagi membuang dokumen**), `services/speech.ts` (TTS output `speakAnswer`/
+  `stopSpeaking`, default MATI), `services/ktpOcr.ts` (kompres 1400px — bug
+  foto 12MB utuh), `components/ClaimManager.tsx` (guard 12 MB + kompres
+  kuitansi 1200px), `supabase/functions/pathy-agent/index.ts` (nada klaim),
+  `tests/agentApp.spec.ts` (2 uji Pathy + APP_VERSION 2.5.19 → 2.7.11 +
+  `get_leaderboard` mock). Bump 2.7.10 → 2.7.11 (versionCode 44).
+- **Audit foto first (permintaan owner):** Pathy TIDAK pernah mengirim gambar
+  ke server — OCR perangkat, hanya field-map yang lewat (aman, ditegaskan di
+  `common.ts`). Yang perlu dibereskan: (1) KTP tidak dipampatkan sama
+  sekali → WebView/edge permission sessak; (2) `pathy-agent-proxy` menjatuhkan
+  `documents` → Pathy menjawab buta-konteks walau OCR sukses; (3) guard ukuran
+  foto klaim tidak ada; (4) kuitansi kesehatan menampung data-URL resolusi
+  penuh di baris klaim. Keempatnya dibetulkan pada batch ini.
+- **Keputusan owner (§6 plan):** TTS default MATI (user menyalakan sendiri);
+  "Bagikan ke WA" memakai KEDUA jalur (sheet OS Web Share + link wa.me).
+- **P0/P1/P2/P3/P4:** greet card mitra/nasabah (3 ketukan), kutipan
+  produk→foto STNK→opsi→PDF (alat yang sudah ada, Rp 0), resume sesi lokal,
+  briefing pagi deterministik (`get_my_orders`+`get_leaderboard`, tanpa model,
+  tanpa tabel uang), TTS + mic tekan-tahan, sapaan renewal ≤14 hari, nada
+  klaim berlangkah-berikutnya, perayaan pop kecil kutipan jadi. Tur mitra baru
+  dipadatkan jadi greet card itu sendiri; dashboard pemakaian (plan P4-6)
+  **belum dieksploitasi** — butuh log pemakaian alat di server, jadi jujur
+  dipindah ke iterasi berikut, bukan diam-diam dilewatkan.
+- **Checks:** tsc 0 error; ESLint 0 error; vitest **383/383**; Playwright
+  **76 pass / 15 skip / 0 fail** (baru: greets/briefing pulse test + alur
+  3 ketukan test); build+PWA ✓; fixture APP_VERSION test dimutakhirkan.
+- **Version:** v2.7.11 di `src/version.ts`, `package.json`+lock, Android
+  (versionCode 44, versionName 2.7.11), README; changelog v2.7.11 ditambahkan
+  di atas.
+
 ### 2026-10-28 (later) — tier mewarnai kartu mitra, ikon premium, kosakata, Admin CMS gelap konsisten (v2.7.10)
 
 - **Scope:** `components/agent/AgentPartnerCard.tsx` (BARU — kartu diekstrak

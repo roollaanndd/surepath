@@ -444,7 +444,10 @@ export interface PathyCard {
     | 'coverage' | 'claim_start' | 'claim_status' | 'renewals'
     | 'policy_explainer' | 'payment_help'
     | 'pipeline' | 'commission_forecast' | 'followup_draft'
-    | 'document_saved';
+    | 'document_saved'
+    // v2.7.11 — kartu yang DIBUAT CLIENT, bukan server (tidak pernah dikirim
+    // oleh pathy-agent; PathyChat merakitnya dari data lokal/deterministik):
+    | 'greet' | 'briefing' | 'quote_flow' | 'resume_prompt' | 'renewal_care';
   data: any;
 }
 
@@ -522,9 +525,18 @@ async function pathyChatInner(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), PATHY_TIMEOUT_MS);
   let res: Response;
+
+  // FIX v2.7.11: pathy-agent-proxy (OpenCode path) was built for plain prose —
+  // it drops `documents` on the floor and runs with tools disabled. When the
+  // user has gone to the trouble of photographing an STNK/KTP, routing through
+  // the proxy meant the OCR "succeeded" while Pathy replied context-blind.
+  // Documents-demanding turns go straight to the tool-capable agent.
+  const primaryUrl = (documents?.length ?? 0) > 0
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent`
+    : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent-proxy`;
+
   try {
-    // Try OpenCode proxy first, fallback to pathy-agent
-    res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pathy-agent-proxy`, {
+    res = await fetch(primaryUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({

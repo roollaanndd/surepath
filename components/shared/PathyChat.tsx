@@ -2,10 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Language } from '../../types';
 import { pathyChat, PathyError } from '../../services/supabaseService';
 import type { PathyCard, PathyDocument } from '../../services/supabaseService';
+import { getAgentOrders, getCustomerOrders, getLeaderboard } from '../../services/supabaseService';
 import { SUREPATH_WHATSAPP } from '../../constants';
 import { extractDocumentOcr, type DocKind } from '../../services/docOcr';
 import { requestClaimStart } from '../../services/claimHandoff';
-import { isSpeechSupported, startDictation, type DictationHandle } from '../../services/speech';
+import {
+  isSpeechSupported, startDictation, type DictationHandle,
+  isTtsSupported, speakAnswer, stopSpeaking,
+} from '../../services/speech';
 
 type Lang = Language | 'EN' | 'ID';
 const isEN = (lang: Lang) => lang === Language.EN;
@@ -72,51 +76,62 @@ interface QuickReply {
   promptEn?: string; promptId?: string;
   /** Canned client-side answer — only for actions that never need the model. */
   answerEn?: string; answerId?: string;
-  action?: 'whatsapp';
-  agentOnly?: boolean;
+  action?: 'whatsapp' | 'flow';
+  /** v2.7.11: taps are role-shaped, not one pile for everybody. */
+  agentOnly?: boolean; customerOnly?: boolean;
 }
 
-// FIX: these used to be canned paragraphs ("open the History tab…") that never
-// touched the user's account. They now ask Pathy the real question, so the
-// answer comes back with the caller's own policies, claims and numbers.
-const QUICK_REPLIES: QuickReply[] = [
+// v2.7.11 — the taps rebuilt. The old list mixed agent and customer intents in
+// one pile and led with reading, not acting. Now each side gets the three
+// actions that pay for themselves — the greet card and the footer chips render
+// the same set, so "what can Pathy do for me" costs one glance.
+const CUSTOMER_TAPS: QuickReply[] = [
   {
-    id: 'policies',
-    chipEn: 'My policies', chipId: 'Polis saya',
-    promptEn: 'Show my policies and their status.',
-    promptId: 'Tampilkan daftar polis saya beserta statusnya.',
+    id: 'status',
+    chipEn: 'Status polis', chipId: 'Status polis',
+    promptEn: 'Show my policies and their current status.',
+    promptId: 'Tampilkan polis saya beserta statusnya saat ini.',
   },
   {
-    id: 'claims',
-    chipEn: 'Claim status', chipId: 'Status klaim',
-    promptEn: 'What is the status of my claims?',
-    promptId: 'Bagaimana status klaim saya?',
+    id: 'pay',
+    chipEn: 'How to pay', chipId: 'Cara bayar',
+    promptEn: 'How do I pay for my policy invoice?',
+    promptId: 'Bagaimana cara membayar tagihan polisku?',
   },
   {
-    id: 'quote',
-    chipEn: 'Create a quote', chipId: 'Buat penawaran',
-    promptEn: 'I want a car insurance quote.',
-    promptId: 'Aku mau buat penawaran asuransi mobil.',
-  },
-  {
-    id: 'proposal',
-    chipEn: 'Proposal from STNK', chipId: 'Proposal dari STNK',
-    promptEn: 'Build a quotation proposal with a few options — I will attach the registration.',
-    promptId: 'Buatkan proposal penawaran beberapa opsi ya, STNK-nya aku lampirkan.',
-  },
-  {
-    id: 'sales',
-    chipEn: 'Sales report', chipId: 'Laporan penjualan',
-    promptEn: 'Show my sales report for this month.',
-    promptId: 'Tampilkan laporan penjualanku bulan ini.',
-    agentOnly: true,
+    id: 'claim',
+    chipEn: 'File a claim', chipId: 'Ajukan klaim',
+    promptEn: 'I want to file a claim — help me prepare the form.',
+    promptId: 'Aku mau mengajukan klaim, siapkan formulirnya.',
   },
   {
     id: 'whatsapp',
     chipEn: 'Chat WhatsApp agent', chipId: 'Chat WhatsApp agen',
     answerEn: 'Opening WhatsApp so you can chat with a SurePath agent...',
     answerId: 'Membuka WhatsApp agar kamu bisa mengobrol dengan agen SurePath...',
-    action: 'whatsapp',
+    action: 'whatsapp', customerOnly: true,
+  },
+];
+
+const AGENT_TAPS: QuickReply[] = [
+  {
+    id: 'quote3',
+    chipEn: 'Quick quote', chipId: 'Buat kutipan',
+    // The 3-tap quotation: product → STNK photo → package. Built by the
+    // client-side flow, using tools that already run (OCR + compare_offers).
+    action: 'flow',
+  },
+  {
+    id: 'followup',
+    chipEn: 'Draft a WhatsApp reply', chipId: 'Tulis balasan',
+    promptEn: 'Draft a WhatsApp follow-up message for a client who has not been followed up yet.',
+    promptId: 'Buatkan draf pesan WhatsApp follow-up untuk nasabah yang belum di-follow-up.',
+  },
+  {
+    id: 'commission',
+    chipEn: 'My commission', chipId: 'Cek komisi',
+    promptEn: 'Show my commission forecast and wallet balance.',
+    promptId: 'Tampilkan perkiraan komisi dan saldo dompetku.',
   },
 ];
 
@@ -241,6 +256,9 @@ const QuotationCard: React.FC<{ data: any; en: boolean; sourceApp: 'AGENT' | 'CU
 
   return (
     <CardShell title={t('Proposal penawaran', 'Quotation proposal')}>
+      <p className="text-[0.62rem] font-bold text-emerald-600 dark:text-emerald-400" data-pathychat-anim style={{ animation: 'pathychat-pop 0.4s ease-out' }}>
+        {t('🎉 Kutipan jadi — siap kirim!', '🎉 Quotation ready — ready to send!')}
+      </p>
       <Row label={t('Nomor', 'Number')} value={data.quotationNumber} />
       <Row label={t('Untuk', 'For')} value={data.clientName} />
       <Row label={t('Kendaraan', 'Vehicle')} value={[data.vehicle, data.plate].filter(Boolean).join(' · ')} />
@@ -260,6 +278,19 @@ const QuotationCard: React.FC<{ data: any; en: boolean; sourceApp: 'AGENT' | 'CU
       >
         {busy ? t('Menyiapkan…', 'Preparing…') : t('Unduh PDF penawaran', 'Download quotation PDF')}
       </button>
+      {/* v2.7.11 — share the offer straight to WhatsApp: the owner-approved
+          safest path. Text-first wa.me link works before AND after the PDF is
+          downloaded; the OS share sheet on the follow-up card covers apps
+          beyond WhatsApp. */}
+      <a
+        href={`https://wa.me/?text=${encodeURIComponent(
+          `${t('Halo! Berikut penawaran', 'Hi! Here is the offer for')} ${data?.clientName ?? ''}: ${[data?.vehicle, data?.plate].filter(Boolean).join(' ')} — ${rp(data?.totalPremium)} (${data?.optionLabel}). ${t('PDF-nya bisa kusertakan juga, mau lanjut buat polisnya?', 'I can also send the PDF — ready to proceed with the policy?')} SurePath 🚗`,
+        )}`}
+        target="_blank" rel="noopener noreferrer"
+        className="w-full py-2 rounded-xl text-center text-[0.66rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 active:scale-[0.98] transition-transform"
+      >
+        {t('Bagikan penawaran ke WhatsApp', 'Share offer to WhatsApp')}
+      </a>
       {err && <p className="text-[0.6rem] text-rose-500 leading-snug">{err}</p>}
       <p className="text-[0.55rem] text-slate-400 leading-snug">
         {t(
@@ -278,6 +309,7 @@ const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
   const t = (id: string, e: string) => (en ? e : id);
   const [text, setText] = useState<string>(String(data?.message ?? ''));
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const copy = async () => {
     try {
@@ -285,6 +317,28 @@ const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* clipboard blocked — the text is on screen and selectable */ }
+  };
+
+  /**
+   * v2.7.11 — the OS share sheet, Web Share API. The user picks the app
+   * (WhatsApp, Telegram, …) themselves. When the device has no share sheet
+   * (desktop) the button degrades to the wa.me link below, which is why both
+   * stay on the card: two ways to the same harmless action, nothing is ever
+   * sent on the agent's behalf by either path.
+   */
+  const shareOs = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: 'SurePath', text });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return; // user dismissed the sheet
+        // fall through to copy — the draft must still move somehow
+      }
+    }
+    await copy();
   };
 
   return (
@@ -298,6 +352,12 @@ const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
         aria-label={t('Isi pesan', 'Message body')}
       />
       <div className="flex gap-2">
+        <button onClick={shareOs}
+          className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-white text-center active:scale-[0.98] transition-transform"
+          style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+          aria-label={t('Bagikan pesan', 'Share message')}>
+          {shared ? t('Terbagikan', 'Shared') : t('Bagikan', 'Share')}
+        </button>
         <button onClick={copy}
           className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 active:scale-[0.98] transition-transform">
           {copied ? t('Tersalin', 'Copied') : t('Salin', 'Copy')}
@@ -305,10 +365,9 @@ const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
         <a
           href={`https://wa.me/?text=${encodeURIComponent(text)}`}
           target="_blank" rel="noopener noreferrer"
-          className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-white text-center active:scale-[0.98] transition-transform"
-          style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+          className="flex-1 py-2 rounded-xl text-[0.62rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 text-center active:scale-[0.98] transition-transform"
         >
-          {t('Buka WhatsApp', 'Open WhatsApp')}
+          WhatsApp
         </a>
       </div>
       <p className="text-[0.55rem] text-slate-400 leading-snug">
@@ -319,11 +378,150 @@ const FollowupCard: React.FC<{ data: any; en: boolean }> = ({ data, en }) => {
   );
 };
 
-const PathyCardView: React.FC<{ card: PathyCard; en: boolean; isAgent: boolean }> = ({ card, en, isAgent }) => {
+const PathyCardView: React.FC<{
+  card: PathyCard; en: boolean; isAgent: boolean;
+  /** v2.7.11 — client-assembled cards act through these callbacks; server
+   *  cards ignore them, which keeps the trust split legible: data from the
+   *  agent, buttons from us. */
+  onAsk?: (msg: string) => void;
+  onFlow?: (action: string, value?: string) => void;
+  onCamera?: () => void;
+}> = ({ card, en, isAgent, onAsk, onFlow, onCamera }) => {
   const t = (id: string, e: string) => (en ? e : id);
   const d = card.data ?? {};
 
   switch (card.type) {
+    // ── v2.7.11 — kartu yang dirakit client (P0/P1/P3/P4, tanpa AI) ──
+    case 'greet': {
+      const openTap = (id: string) => {
+        const qr = (isAgent ? AGENT_TAPS : CUSTOMER_TAPS).find(x => x.id === id);
+        if (!qr) return;
+        if (qr.action === 'flow') { onFlow?.('start-quote'); return; }
+        onAsk?.((en ? qr.promptEn : qr.promptId) ?? (en ? qr.chipEn : qr.chipId));
+      };
+      const taps = isAgent
+        ? [{ id: 'quote3', label: t('Buat kutipan', 'Quick quote') },
+           { id: 'followup', label: t('Tulis balasan', 'Draft a WhatsApp reply') },
+           { id: 'commission', label: t('Cek komisi', 'My commission') }]
+        : [{ id: 'status', label: t('Status polis', 'Policy status') },
+           { id: 'pay', label: t('Cara bayar', 'How to pay') },
+           { id: 'claim', label: t('Ajukan klaim', 'File a claim') }];
+      return (
+        <CardShell title={t('Mau mulai dari mana?', 'Where shall we start?')}>
+          <div className="grid gap-2">
+            {taps.map(tap => (
+              <button key={tap.id} type="button" onClick={() => openTap(tap.id)}
+                className="w-full py-2.5 px-3 rounded-xl text-left text-[0.7rem] font-black uppercase tracking-wide bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20 active:scale-[0.98] transition-transform">
+                {tap.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[0.55rem] text-slate-400">
+            {t('Satu ketukan = satu aksi nyata.', 'One tap = one real action.')}
+          </p>
+        </CardShell>
+      );
+    }
+    case 'quote_flow': {
+      if (d.step === 'product') {
+        return (
+          <CardShell title={t('Kutipan 3 ketukan', '3-tap quotation')}>
+            <p className="text-[0.62rem] text-slate-500 dark:text-slate-400">
+              {t('Produk apa yang mau dikutip?', 'Which product shall we quote?')}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => onFlow?.('product', 'CAR')}
+                className="py-2.5 rounded-xl text-[0.7rem] font-black uppercase tracking-wide bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20 active:scale-[0.98] transition-transform">
+                🚗 {t('Mobil', 'Car')}
+              </button>
+              <button type="button" onClick={() => onFlow?.('product', 'MOTOR')}
+                className="py-2.5 rounded-xl text-[0.7rem] font-black uppercase tracking-wide bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20 active:scale-[0.98] transition-transform">
+                🏍️ {t('Motor', 'Motorbike')}
+              </button>
+            </div>
+            <p className="text-[0.55rem] text-slate-400">
+              {t('Lalu cukup foto STNK — angkanya aku hitung dari data pasar.', 'Then just photograph the registration — I do the math from market data.')}
+            </p>
+          </CardShell>
+        );
+      }
+      return (
+        <CardShell title={t('Ketuk 2: foto STNK', 'Tap 2: photograph the registration')}>
+          <p className="text-[0.62rem] text-slate-500 dark:text-slate-400 leading-snug">
+            {t('Seluruh kartu STNK masuk frame, cahaya cukup — hasil bacaannya akan kutinggalkan di chip di bawah untuk kamu periksa.', 'Fit the whole card in frame with good light — the read lands in a chip below for you to check.')}
+          </p>
+          <button type="button" onClick={() => onCamera?.()}
+            className="w-full py-2.5 rounded-xl text-[0.7rem] font-black uppercase tracking-wide bg-emerald-500 text-white active:scale-[0.98] transition-transform">
+            📷 {t('Buka kamera', 'Open camera')}
+          </button>
+        </CardShell>
+      );
+    }
+    case 'briefing': {
+      const rank = Math.max(0, Number(d.rank) || 0);
+      const total = Math.max(0, Number(d.totalAgents) || 0);
+      return (
+        <CardShell title={t('Briefing pagi', 'Morning briefing')}>
+          <Row
+            label={t('Pipeline menunggu tindak lanjut', 'Pipeline awaiting follow-up')}
+            value={<span className="text-ds-green dark:text-emerald-400">{String(d.pending ?? 0)}</span>}
+          />
+          {rank > 0 && total > 0 && (
+            <Row label={t('Peringkat kamu bulan ini', 'Your rank this month')} value={`#${rank} ${t('dari', 'of')} ${total}`} />
+          )}
+          <button type="button"
+            onClick={() => onAsk?.(
+              t('Tampilkan pipeline yang belum di-follow-up dan draf balasannya.', 'Show the pipeline awaiting follow-up and draft replies for it.'),
+            )}
+            className="w-full py-2 rounded-xl text-[0.66rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/20 active:scale-[0.98] transition-transform">
+            {t('Bantu saya follow-up sekarang', 'Help me follow up now')}
+          </button>
+          <p className="text-[0.55rem] text-slate-400 leading-snug">
+            {t('Dibangun dari datamu sendiri — angka uang tetap aman di halaman Ledger.',
+               'Built from your own data — money figures stay safe on the Ledger page.')}
+          </p>
+        </CardShell>
+      );
+    }
+    case 'resume_prompt':
+      return (
+        <CardShell title={t('Lanjutkan percakapan terakhir?', 'Resume your last conversation?')}>
+          <p className="text-[0.62rem] text-slate-500 dark:text-slate-400">
+            {t('Kamu terakhir kirim pesan', 'You last messaged')} {d?.when ?? '—'}.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => onFlow?.('resume')}
+              className="py-2 rounded-xl text-[0.66rem] font-black uppercase tracking-wider text-white bg-emerald-500 active:scale-[0.98] transition-transform">
+              {t('Lanjutkan', 'Resume')}
+            </button>
+            <button type="button" onClick={() => onFlow?.('fresh')}
+              className="py-2 rounded-xl text-[0.66rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 active:scale-[0.98] transition-transform">
+              {t('Mulai baru', 'Start fresh')}
+            </button>
+          </div>
+        </CardShell>
+      );
+    case 'renewal_care': {
+      const rows = (Array.isArray(d.rows) ? d.rows : []) as any[];
+      return (
+        <CardShell title={t('Sekadar perhatian', 'Just checking in')}>
+          <p className="text-[0.62rem] text-slate-600 dark:text-slate-300 leading-snug">
+            {t('Asuransimu berikutnya akan jatuh tempo:', 'Your next insurance expiry is coming up:')}
+          </p>
+          {rows.map((row, idx) => (
+            <Row key={idx} label={[row.label, row.plate].filter(Boolean).join(' · ')} value={shortDate(row.end_date)} />
+          ))}
+          <button type="button"
+            onClick={() => onAsk?.(
+              t('Buatkan penawaran perpanjangan untuk polis yang akan jatuh tempo ya.', 'Please prepare renewal offers for the policies about to expire.'),
+            )}
+            className="w-full py-2 rounded-xl text-[0.66rem] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/20 active:scale-[0.98] transition-transform">
+            {t('Siapkan penawaran perpanjangan', 'Prepare a renewal offer')}
+          </button>
+        </CardShell>
+      );
+    }
+
     case 'policies': {
       const list = (d.policies ?? []) as any[];
       if (list.length === 0) {
@@ -831,11 +1029,75 @@ interface PathyChatProps {
   hideLauncher?: boolean;
 }
 
+// ─── v2.7.11 helpers (session resume, deterministic daily cards) ─────────────
+
+const RESUME_TEXT_MAX = 400;
+const RESUME_DEPTH = 14;
+
+/** "tadi / kemarin / <date>" style label for the resume card. */
+function relativeWhen(iso: unknown, en: boolean): string {
+  const d = new Date(String(iso ?? ''));
+  if (isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const dayMs = 86_400_000;
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / dayMs);
+  const time = d.toLocaleTimeString(en ? 'en-GB' : 'id-ID', { hour: '2-digit', minute: '2-digit' });
+  if (diffDays <= 0) return en ? `earlier today ${time}` : `tadi ${time}`;
+  if (diffDays === 1) return en ? `yesterday ${time}` : `kemarin pukul ${time}`;
+  return d.toLocaleDateString(en ? 'en-GB' : 'id-ID', { day: '2-digit', month: 'short' });
+}
+
+interface SavedThreadMsg { r: 'b' | 'u'; k: string; }
+
+function readThread(key: string): { at: string; msgs: SavedThreadMsg[] } | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.msgs) && parsed.msgs.length > 0
+      ? { at: String(parsed.at ?? ''), msgs: parsed.msgs as SavedThreadMsg[] }
+      : null;
+  } catch { return null; }
+}
+
+/**
+ * Deterministic "one suggestion" anchor for the agent briefing (P1): which
+ * order statuses still owe the agent an action. Pure read, no money — the
+ * briefing never writes a money table (trust rules of pathy-agent).
+ */
+const PIPELINE_OPEN_STATUSES = new Set(['SUBMITTED', 'UNDER_REVIEW', 'ANALYZING']);
+
 const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher = false }) => {
   const en = isEN(lang);
   const isAgent = AGENT_ROLES.has(String(currentUser?.role ?? '').toUpperCase());
-  const quickReplies = QUICK_REPLIES.filter(qr => !qr.agentOnly || isAgent);
+  // Stable across renders so the callbacks below are not rebuilt on every keystroke.
+  const t = useCallback((idText: string, enText: string) => (en ? enText : idText), [en]);
+  // v2.7.11 — taps are role-shaped: the agent gets acting taps (quote, reply,
+  // commission), the customer gets service taps (status, pay, claim). The greet
+  // card and the footer chips render this same set.
+  const quickReplies = isAgent ? AGENT_TAPS : CUSTOMER_TAPS;
   const [open, setOpen] = useState(false);
+
+  // ── P2: TTS is off until the user says otherwise (owner decision 2.7.11) —
+  // the toggle lives in the header and remembers its state per device.
+  const TTS_KEY = 'sp_pathy_tts';
+  const [ttsOn, setTtsOn] = useState(() => {
+    try { return localStorage.getItem(TTS_KEY) === '1'; } catch { return false; }
+  });
+  const ttsOk = useRef(isTtsSupported()).current;
+  const toggleTts = useCallback(() => {
+    setTtsOn(on => {
+      const next = !on;
+      try { localStorage.setItem(TTS_KEY, next ? '1' : '0'); } catch { /* private mode */ }
+      if (!next) stopSpeaking();
+      else speakAnswer(t('Suara Pathy dinyalakan.', 'Pathy voice is on.'), en ? 'en' : 'id');
+      return next;
+    });
+  }, [t, en]);
+
+  // Session resume storage key, per user, on-device only.
+  const threadKey = `sp_pathy_thread_${currentUser?.id || 'anon'}`;
 
   // Portals with Pathy in their bottom nav open the panel through this event.
   useEffect(() => {
@@ -869,24 +1131,41 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
 
   useEffect(() => { ensurePathyChatKeyframes(); }, []);
 
-  // Stable across renders so the `ask` callback below is not rebuilt on every keystroke.
-  const t = useCallback((idText: string, enText: string) => (en ? enText : idText), [en]);
-
   const greeting = currentUser?.name
     ? t(
-        `Halo, ${currentUser.name}! Aku Pathy, asisten AI SurePath. Ketik pertanyaanmu atau pilih topik di bawah.`,
-        `Hi, ${currentUser.name}! I'm Pathy, SurePath's AI assistant. Type a question or pick a topic below.`,
+        `Halo, ${currentUser.name}! Aku Pathy. ${isAgent ? 'Mau mulai dari mana?' : 'Ada yang bisa kubantu?'}`,
+        `Hi, ${currentUser.name}! I'm Pathy. ${isAgent ? 'Where shall we start?' : 'How can I help?'}`,
       )
     : t(
-        'Halo! Aku Pathy, asisten SurePath. Ada yang bisa kubantu? Pilih salah satu di bawah ya.',
-        "Hi! I'm Pathy, your SurePath assistant. How can I help? Pick one of the options below.",
+        'Halo! Aku Pathy, asisten SurePath. Pilih salah satu di bawah atau ketik langsung ya.',
+        "Hi! I'm Pathy, your SurePath assistant. Pick an option below or just type.",
       );
 
   useEffect(() => {
-    if (open && messages.length === 0) {
+    if (!open || messages.length > 0) return;
+
+    // v2.7.11 — P0 session resume: the last transcript (texts only, never
+    // attachments or previews) is kept on this device. A fresh open offers it
+    // back instead of pretending yesterday never happened.
+    msgIdRef.current += 1;
+    const base: Message[] = [{
+      id: msgIdRef.current,
+      from: 'bot',
+      text: greeting,
+      cards: [{ type: 'greet', data: {} }],
+    }];
+    const saved = readThread(threadKey);
+    if (saved) {
+      resumeSavedRef.current = saved;
       msgIdRef.current += 1;
-      setMessages([{ id: msgIdRef.current, from: 'bot', text: greeting }]);
+      base.push({
+        id: msgIdRef.current,
+        from: 'bot',
+        text: t('Kembali lagi 👋', 'Welcome back 👋'),
+        cards: [{ type: 'resume_prompt', data: { when: relativeWhen(saved.at, en) } }],
+      });
     }
+    setMessages(base);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -912,6 +1191,131 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     const id = msgIdRef.current;
     setMessages(prev => [...prev, { id, from, text, ...extra }]);
   }, []);
+
+  // ── v2.7.11 state machine ────────────────────────────────────────────────
+  // flowRef drives the 3-tap quotation: idle → await-photo (after the product
+  // tap, until an OCR'd STNK lands) → idle with an auto-sent turn. Saving the
+  // transcript (text only, device-local) powers the resume prompt. askRef lets
+  // early callbacks (attachment flow, hold-to-talk, local cards) reach `ask`
+  // without a declaration-order tangle.
+  const flowRef = useRef<'idle' | 'await-photo'>('idle');
+  const cameraHintRef = useRef<DocKind | undefined>(undefined);
+  const resumeSavedRef = useRef<{ at: string; msgs: SavedThreadMsg[] } | null>(null);
+  const askRef = useRef<(msg: string, override?: Attachment[]) => void>(() => undefined);
+
+  /** Persist the last texts so the next open can offer "lanjut?" (P0 item 4). */
+  useEffect(() => {
+    if (!messages.some(m => m.from === 'user')) return; // greet-only session is not a history
+    const msgs: SavedThreadMsg[] = messages.slice(-RESUME_DEPTH).map(m => ({
+      r: m.from === 'bot' ? 'b' : 'u',
+      k: m.text.slice(0, RESUME_TEXT_MAX),
+    }));
+    try { localStorage.setItem(threadKey, JSON.stringify({ at: new Date().toISOString(), msgs })); } catch { /* quota */ }
+  }, [messages, threadKey]);
+
+  // P1 — agent briefing, once per day, deterministic: leaderboard rank + open
+  // pipeline count, straight from the same gateway reads the Home screen
+  // already makes. No model call, so no quota burn; and by the briefing trust
+  // rule it recites counts, never a money table.
+  useEffect(() => {
+    if (!open || !isAgent) return;
+    const key = `sp_pathy_briefing_${new Date().toISOString().slice(0, 10)}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch { return; }
+    void (async () => {
+      try {
+        const [leaderboard, orders] = await Promise.all([
+          getLeaderboard().catch(() => [] as Array<{ agent_id: string; agent_name: string; agent_code: string; tier: string | null; total_commission: number }>),
+          getAgentOrders(currentUser?.id ?? '').catch(() => [] as Array<Record<string, unknown>>),
+        ]);
+        const idx = leaderboard.findIndex(e => e.agent_id === currentUser?.id);
+        const pending = orders.filter(o =>
+          PIPELINE_OPEN_STATUSES.has(String(o?.status ?? '').toUpperCase()),
+        ).length;
+        if (!pending && idx === -1) return; // nothing to say — no noise
+        pushMessage('bot', t('Briefing pagi — dari datamu, bukan tebakan:', 'Morning briefing — from your data, not guesswork:'), {
+          cards: [{ type: 'briefing', data: { pending, rank: idx >= 0 ? idx + 1 : 0, totalAgents: leaderboard.length } }],
+        });
+      } catch { /* data not ready — the briefing skips, the chat keeps working */ }
+    })();
+  }, [open, isAgent, currentUser?.id, pushMessage, t]);  
+
+  // P3 — customer renewal check-in, once per day: orders expiring within 14
+  // days get a warm card and one CTA. Read-only; softens the renewal chase
+  // instead of the panic reminder the app had no piece for before.
+  useEffect(() => {
+    if (!open || isAgent) return;
+    const key = `sp_pathy_renewal_${new Date().toISOString().slice(0, 10)}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch { return; }
+    void (async () => {
+      try {
+        const orders = await getCustomerOrders(currentUser?.id ?? '').catch(() => [] as Array<Record<string, unknown>>);
+        const rows = orders
+          .map(o => ({ o, ts: new Date(String((o as any)?.end_date ?? '')).getTime() }))
+          .filter(x => !isNaN(x.ts))
+          .filter(x => {
+            const diffDays = (x.ts - Date.now()) / 86_400_000;
+            return diffDays >= 0 && diffDays <= 14;
+          })
+          .sort((a, b) => a.ts - b.ts)
+          .slice(0, 3)
+          .map(x => ({
+            label: String((x.o as any)?.product_name ?? (x.o as any)?.product ?? '').slice(0, 30) || t('Polis', 'Policy'),
+            plate: String((x.o as any)?.plate ?? '').trim() || undefined,
+            end_date: (x.o as any)?.end_date,
+          }));
+        if (rows.length === 0) return;
+        pushMessage('bot', t('Aku sempat intip datamu — biar tidak kebablasan:', 'I glanced at your data — so nothing slips by:'), {
+          cards: [{ type: 'renewal_care', data: { rows } }],
+        });
+      } catch { /* fail-quiet */ }
+    })();
+  }, [open, isAgent, currentUser?.id, pushMessage, t]);  
+
+  const startQuoteFlow = useCallback(() => {
+    pushMessage('bot', t('Kutipan 3 ketukan — pilih produknya:', '3-tap quotation — pick the product:'), {
+      cards: [{ type: 'quote_flow', data: { step: 'product' } }],
+    });
+  }, [pushMessage, t]);
+
+  const handleFlow = useCallback((action: string, _value?: string) => {
+    if (action === 'start-quote') { startQuoteFlow(); return; }
+    if (action === 'product') {
+      // The next camera shot is a registration card on purpose (hint), and the
+      // next successful OCR read auto-sends the price request (flowRef).
+      cameraHintRef.current = 'STNK';
+      flowRef.current = 'await-photo';
+      pushMessage('bot', t('Mantap. Ketuk 2: repro STNK-nya ya.', 'Great. Tap 2: photograph the registration.'), {
+        cards: [{ type: 'quote_flow', data: { step: 'foto' } }],
+      });
+      return;
+    }
+    if (action === 'foto') { cameraRef.current?.click(); return; }
+    if (action === 'resume') {
+      const saved = resumeSavedRef.current;
+      if (!saved) return;
+      resumeSavedRef.current = null;
+      const restored: Message[] = saved.msgs.slice(-RESUME_DEPTH).map(m0 => {
+        msgIdRef.current += 1;
+        return { id: msgIdRef.current, from: m0.r === 'b' ? 'bot' : 'user', text: m0.k };
+      });
+      msgIdRef.current += 1;
+      setMessages([
+        ...restored,
+        { id: msgIdRef.current, from: 'bot', text: t('Kita lanjut dari sini 👍', 'Picking up right here 👍') },
+      ]);
+      return;
+    }
+    if (action === 'fresh') {
+      resumeSavedRef.current = null;
+      pushMessage('bot', t('Oke, kita mulai baru. Ada yang bisa kubantu?', 'Okay, a clean slate. What can I do for you?'));
+    }
+  }, [startQuoteFlow, pushMessage, t]);
 
   const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
     const r = new FileReader();
@@ -977,6 +1381,26 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
         return [...deduped, attachment].slice(-MAX_ATTACHMENTS);
       });
 
+      // v2.7.11 — an STNK photographed mid-quote-flow is a complete request:
+      // the goal was already stated by the product tap, and the composer rule
+      // "nobody types a sentence to explain their own STNK" becomes automatic.
+      // The override array keeps `ask` from reading its render-time `pending`
+      // (state set this tick is not yet visible to its closure).
+      if (flowRef.current === 'await-photo' && res.type === 'STNK') {
+        flowRef.current = 'idle';
+        cameraHintRef.current = undefined;
+        pushMessage('bot', t(
+          'STNK terbaca! Aku minta server hitung paket-paketnya sekarang…',
+          'Registration read! Getting the package numbers from the server now…',
+        ));
+        askRef.current(
+          t('Tolong buatkan penawaran dengan beberapa opsi paket dari STNK ini ya.',
+            'Please build a few package options from this registration.'),
+          [attachment],
+        );
+        if (!res.notes) return;
+      }
+
       if (res.notes) setScanError(res.notes);
     } catch (e) {
       console.error('Pathy attachment:', e);
@@ -984,14 +1408,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     } finally {
       setScanning(null);
     }
-  }, [t]);
+  }, [t, pushMessage]);
 
-  // Shared by the composer and the quick-action chips so a chip answer is the
-  // real, data-backed one rather than a canned paragraph.
-  const ask = useCallback(async (msg: string) => {
+  // Shared by the composer, the quick-action chips and the client cards so a
+  // tap answer is the real, data-backed one rather than a canned paragraph.
+  const ask = useCallback(async (msg: string, overrideAttachments?: Attachment[]) => {
     if (!msg || loadingRef.current) return;
     loadingRef.current = true;
-    const attached = pending;
+    const attached = overrideAttachments ?? pending;
     pushMessage('user', msg, attached.length > 0
       ? { attachments: attached.map(a => ({ id: a.id, label: a.label, preview: a.preview })) }
       : undefined);
@@ -1012,6 +1436,13 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
         degraded: res.degraded,
         disclaimer: res.disclaimer,
       });
+      // P2 — when the user turned the voice on, the answer is also read aloud
+      // (toggle-first: nothing here speaks unprompted). setPending([]) set
+      // state, but the live toggle is read from storage so the callback cannot
+      // go stale.
+      let speakNow = false;
+      try { speakNow = localStorage.getItem(TTS_KEY) === '1'; } catch { /* private mode */ }
+      if (speakNow) speakAnswer(res.reply, en ? 'en' : 'id');
     } catch (e: any) {
       // FIX: every failure used to collapse into "Pathy AI is coming soon",
       // which hid expired sessions, rate limits and outages alike.
@@ -1033,35 +1464,60 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [pushMessage, t, pending]);
+  }, [pushMessage, t, pending, en]);
 
-  // ── Voice input. The transcript lands in the box, not straight into a send:
-  // dictation misreads names and plate numbers, and the user must be able to
-  // fix it before Pathy acts on it.
+  // Early callbacks (attachment auto-send, hold-to-talk) call `ask` through
+  // this ref so none of them needs to be declared after it.
+  useEffect(() => { askRef.current = ask; }, [ask]);
+
+  // ── Voice input. Two modes (v2.7.11):
+  //   • tap-toggle (original): transcript lands in the box, user reads and
+  //     fixes it before sending — dictation misreads names and plates.
+  //   • press-and-hold (P2): press starts, release stops; the finished
+  //     transcript goes STRAIGHT out. It is the "ask while holding the phone
+  //     one-handed" case — waiting to read a draft would defeat it.
   const [listening, setListening] = useState(false);
   const dictationRef = useRef<DictationHandle | null>(null);
   /** Whatever was already typed when the mic opened — dictation appends to it. */
   const dictationBaseRef = useRef('');
   const speechOk = useRef(isSpeechSupported()).current;
+  const holdModeRef = useRef(false);
+  const holdFinalRef = useRef('');
 
-  useEffect(() => () => { dictationRef.current?.stop(); }, []);
+  useEffect(() => () => {
+    dictationRef.current?.stop();
+    stopSpeaking();
+  }, []);
 
-  const toggleDictation = useCallback(() => {
-    if (listening) { dictationRef.current?.stop(); return; }
+  const beginDictation = useCallback((mode: 'toggle' | 'hold') => {
     setScanError(null);
-    dictationBaseRef.current = input.trim() ? `${input.trim()} ` : '';
+    dictationBaseRef.current = mode === 'hold' || !input.trim() ? '' : `${input.trim()} `;
+    holdModeRef.current = mode === 'hold';
+    holdFinalRef.current = '';
     const join = (text: string) => `${dictationBaseRef.current}${text}`;
     const handle = startDictation({
       lang: en ? 'en-US' : 'id-ID',
       onPartial: text => setInput(join(text)),
-      onFinal: text => { if (text) setInput(join(text)); },
+      onFinal: text => {
+        if (holdModeRef.current) { holdFinalRef.current = text.trim(); return; }
+        if (text) setInput(join(text));
+      },
       onError: msg => setScanError(msg),
-      onEnd: () => { setListening(false); dictationRef.current = null; },
+      onEnd: () => {
+        setListening(false);
+        dictationRef.current = null;
+        if (holdModeRef.current) {
+          const said = holdFinalRef.current;
+          holdFinalRef.current = '';
+          if (said) askRef.current(said);
+          else setScanError(t('Suara tidak menangkap kalimat. Coba lagi ya.', 'Nothing was captured. Try again.'));
+        }
+      },
     });
     if (!handle) { setScanError(t('Mikrofon belum didukung browser ini.', 'This browser has no microphone input.')); return; }
     dictationRef.current = handle;
     setListening(true);
-  }, [listening, en, input, t]);
+  }, [en, input, t]);
 
   const handleSend = useCallback(() => {
     // An attachment on its own is a complete request — nobody should have to
@@ -1089,8 +1545,9 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       }, 350);
       return;
     }
+    if (qr.action === 'flow') { startQuoteFlow(); return; }
     void ask((en ? qr.promptEn : qr.promptId) ?? (en ? qr.chipEn : qr.chipId));
-  }, [en, ask, pushMessage]);
+  }, [en, ask, pushMessage, startQuoteFlow]);
 
   const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -1149,6 +1606,32 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                 {t('AI Asisten · SurePath', 'AI Assistant · SurePath')}
               </p>
             </div>
+            {/* P2 — voice output toggle. OFF by default; the user flips it,
+                the state is remembered per device, and closing the panel stops
+                any playback immediately. */}
+            {ttsOk && (
+              <button
+                type="button"
+                onClick={toggleTts}
+                aria-label={ttsOn ? t('Matikan suara Pathy', 'Turn Pathy voice off') : t('Nyalakan suara Pathy', 'Turn Pathy voice on')}
+                aria-pressed={ttsOn}
+                className={`w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
+                  ttsOn ? 'bg-white/25' : 'bg-white/10 hover:bg-white/20'
+                }`}
+              >
+                <svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 5 6 9H2v6h4l5 4z" />
+                  {ttsOn ? (
+                    <>
+                      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                      <path d="M18.5 5.5a9.5 9.5 0 0 1 0 13" />
+                    </>
+                  ) : (
+                    <path d="M22 9l-6 6m0-6l6 6" />
+                  )}
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               aria-label={t('Tutup', 'Close')}
@@ -1196,7 +1679,15 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                     </div>
                   )}
                   {m.cards?.map((card, i) => (
-                    <PathyCardView key={`${m.id}-${i}`} card={card} en={en} isAgent={isAgent} />
+                    <PathyCardView
+                      key={`${m.id}-${i}`}
+                      card={card}
+                      en={en}
+                      isAgent={isAgent}
+                      onAsk={(msg: string) => { askRef.current(msg); }}
+                      onFlow={handleFlow}
+                      onCamera={() => cameraRef.current?.click()}
+                    />
                   ))}
                   {m.from === 'bot' && m.disclaimer && (
                     <p className="mt-1 px-1 text-[0.55rem] text-slate-400 dark:text-slate-500 leading-snug">
@@ -1243,7 +1734,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f); }}
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f, cameraHintRef.current); }}
             />
             <input
               ref={cameraRef}
@@ -1251,7 +1742,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
               accept="image/*"
               capture="environment"
               className="hidden"
-              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f); }}
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f, cameraHintRef.current); }}
             />
 
             {(pending.length > 0 || scanning || scanError) && (
@@ -1281,7 +1772,19 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
                     {t(`Membaca ${scanning}…`, `Reading ${scanning}…`)}
                   </span>
                 )}
-                {scanError && <span className="text-[0.6rem] font-medium text-ds-amber dark:text-amber-400">{scanError}</span>}
+                {scanError && (
+                  <span className="text-[0.6rem] font-medium text-ds-amber dark:text-amber-400 flex items-center gap-1.5">
+                    {scanError}
+                    <button
+                      type="button"
+                      onClick={() => cameraRef.current?.click()}
+                      disabled={!!scanning}
+                      className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-300 font-black active:scale-95 transition-transform disabled:opacity-50"
+                    >
+                      {t('Coba lagi', 'Retry')}
+                    </button>
+                  </span>
+                )}
               </div>
             )}
 
@@ -1323,14 +1826,21 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
               {speechOk && (
                 <button
                   type="button"
-                  onClick={toggleDictation}
+                  /* Press-and-hold to ask (P2): left/right press starts,
+                     release stops and the finished words go straight out.
+                     A plain tap still toggles live-caption mode via onClick
+                     fallback when a browser fires click without the hold. */
+                  onPointerDown={e => { e.preventDefault(); if (!listening) beginDictation('hold'); }}
+                  onPointerUp={e => { e.preventDefault(); if (listening && holdModeRef.current) dictationRef.current?.stop(); }}
+                  onPointerLeave={() => { if (listening && holdModeRef.current) dictationRef.current?.stop(); }}
+                  onContextMenu={e => e.preventDefault()}
                   disabled={loading}
-                  aria-label={listening ? t('Berhenti merekam', 'Stop recording') : t('Bicara', 'Speak')}
+                  aria-label={listening ? t('Lepas untuk mengirim', 'Release to send') : t('Tahan untuk bicara', 'Hold to talk')}
                   aria-pressed={listening}
                   className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-all duration-150 flex-shrink-0 ${
                     listening ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
                   }`}
-                  style={listening ? { animation: 'pathy-mic 1.1s ease-in-out infinite' } : undefined}
+                  style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', ...(listening ? { animation: 'pathy-mic 1.1s ease-in-out infinite' } : {}) }}
                 >
                   <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
                     <rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4" />
@@ -1350,10 +1860,12 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
             </div>
           </div>
 
-          {/* Quick reply chips */}
+          {/* Quick reply chips — role-shaped (v2.7.11): the agent sees acting
+              taps, the customer sees service taps. Same set the greet card
+              shows, so nothing surprises twice. */}
           <div className="flex-shrink-0 px-3 pt-1 pb-3 bg-white dark:bg-slate-900">
             <p className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 px-1">
-              {t('Pilihan Cepat', 'Quick Actions')}
+              {t('Ketukan Cepat', 'Quick Taps')}
             </p>
             <div className="flex flex-wrap gap-2">
               {quickReplies.map(qr => (

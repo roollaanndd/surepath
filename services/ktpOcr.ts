@@ -16,7 +16,7 @@
 // before anything reaches a form or a quotation. Pathy uses the same call, so
 // the chat and the buy-wizard read a KTP identically.
 
-import { extractKtpData } from './geminiService';
+import { compressImageBase64, extractKtpData } from './geminiService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,15 @@ const EMPTY: KtpOcrResult = {
 export async function extractKtpOcr(base64: string): Promise<KtpOcrResult> {
   let raw: any = null;
   try {
-    const res = await extractKtpData(base64);
+    // FIX v2.7.11: this used to post the caller's image untouched, so a 12 MB
+    // phone photo — ~16 MB base64 — went to ai-proxy as-is and choked Android
+    // WebView and the edge function alike. STNK compresses to 1600px before its
+    // call; KTP now does the same at 1400px (a KTP is smaller and flatter than
+    // an STNK page; 1400px keeps every security line legible for the model).
+    // compressImageBase64 never rejects — it falls back to the original, so a
+    // compression hiccup can never break the read itself.
+    const compressed = await compressImageBase64(base64, 1400);
+    const res = await extractKtpData(compressed);
     if (!res.success || !res.data) {
       return { ...EMPTY, notes: 'Foto KTP belum bisa dibaca. Coba foto ulang dengan cahaya lebih terang.' };
     }
